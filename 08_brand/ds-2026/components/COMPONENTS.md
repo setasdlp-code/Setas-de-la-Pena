@@ -1,6 +1,6 @@
 # Component spec sheets · DS-2026
 
-Eleven components. Each sheet gives **anatomy** (the parts, in DOM order),
+Sixteen component families. Each sheet gives **anatomy** (the parts, in DOM order),
 **states**, **grid span and mode**, and the **rules** that are not negotiable.
 
 Import order is always: `tokens/tokens.css` → `components/base.css` →
@@ -12,9 +12,9 @@ Import order is always: `tokens/tokens.css` → `components/base.css` →
 
 - **No shadows.** `--shadow-none` is the only legal value. Depth is a rule.
 - **No gradients, no glass, no floating panels.**
-- **One accent per view.**
+- **One identity accent per composition.** Semantic state colours may coexist.
 - **Status is colour *and* word.** Never colour alone.
-- **Mono is uppercase and tracked ≥ 0.15em.** Always.
+- **Mono labels are uppercase and tracked ≥ 0.15em.** Numeric data stays untracked.
 - **Tap targets ≥ 44px** with ≥ 8px between them.
 
 ---
@@ -191,3 +191,37 @@ texture (`.grain`) is permitted on packaging and print only.
 
 **Rules.** Deviations are recorded on the lot ficha, never annotated onto the
 SOP. Every SOP carries a revision number and a stop condition.
+
+---
+
+## 12 · Button — `.sdp-btn`
+
+Variants: base, `--primary` and `--subtle`. Native `button` and `a` elements
+share the same 44px minimum target. Supported states are hover, active,
+focus-visible, disabled and `aria-busy="true"`. A busy button keeps its label so
+the action does not become ambiguous.
+
+## 13 · Field — `.sdp-field`
+
+The visible label precedes `.sdp-field__control`; hint or error copy follows it.
+Placeholder text never replaces a label. `--error` changes the border and
+requires a textual `.sdp-field__error` linked with `aria-describedby`.
+
+## 14 · Segmented selector — `.sdp-segment`
+
+Use native radio inputs for a mutually exclusive choice such as Hogar / Chef.
+The checked and keyboard-focus states remain visible without JavaScript. The
+legend names the decision represented by the group.
+
+## 15 · Operational state and provenance
+
+`.sdp-state` answers **what is happening**: active, attention, blocked, failed
+or unavailable. `.sdp-provenance` answers **how we know**: measured, calculated,
+estimated, target, manual, simulated or pending. They may appear together and
+must never be collapsed into a single badge.
+
+## 16 · View state — `.sdp-view-state`
+
+Loading, empty and error states explain the situation and the next valid action.
+Dynamic messages use `role="status"` or `aria-live="polite"`; errors that need
+immediate attention use `role="alert"`.

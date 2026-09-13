@@ -7,13 +7,14 @@ customer-facing surfaces on one set of tokens.
 imagery, metadata grammar, components, compositions, mockups, sources.
 Per-component detail is in [`components/COMPONENTS.md`](components/COMPONENTS.md).
 References are in [`SOURCES.md`](SOURCES.md).
+The product architecture and content-provenance contract are in
+[`PROFILES.md`](PROFILES.md).
 
-> ⚠️ **This is not FOS.** `08_brand/field-os-identity/` is a separate,
-> independently audited system. Setas OS is the one explicit compatibility
-> surface: it loads FOS first, DS-2026 second, then maps legacy FOS spacing to
-> `--fos-space-*` in `fieldos-tokens.css`. New or migrated UI uses DS-2026
-> tokens and its FIELD/CONTROL instrument layer. Other surfaces must not load
-> both systems. See `DESIGN_SYSTEM.md` §10.
+> `08_brand/field-os-identity/` preserves the earlier FOS identity. Setas OS is
+> the explicit compatibility surface: it loads legacy FOS first, DS-2026 second,
+> then maps legacy spacing to `--fos-space-*` in `fieldos-tokens.css`. New or
+> migrated UI uses the packaged DS-2026 core and its Operations profile. Other
+> surfaces must not mix both systems without an explicit adapter. See §10.
 
 ## Use it
 
@@ -22,7 +23,7 @@ References are in [`SOURCES.md`](SOURCES.md).
 <link rel="stylesheet" href="components/base.css">
 <link rel="stylesheet" href="components/components.css">
 
-<body data-mode="field">                              <!-- archive | field | control -->
+<body data-mode="field">              <!-- archive | field | control | culinary-market -->
   <div class="grid">
     <article class="sdp-lote sdp-lote--ok col-3">…</article>
   </div>
@@ -36,14 +37,14 @@ framework, no runtime. Fonts are vendored: it works offline.
 
 | | |
 |---|---|
-| **Type** | Gaya Patched = species & titles · IBM Plex Sans = prose · IBM Plex Mono = metadata (uppercase, tracked ≥ 0.15em) |
-| **Colour** | 8 roles. Colour is classification or state, never decoration. One accent per view. |
+| **Type** | Gaya Patched = species & titles · IBM Plex Sans = prose · IBM Plex Mono = data and metadata. Labels are uppercase/tracked; measurements are not. |
+| **Colour** | 8 roles. One identity accent per composition; semantic status colours may coexist when they carry real state. |
 | **Ochre** | `WARNING #C49A4C` is 2.39:1 — fills and bars only, never text. Use `WARNING_TEXT #826326` for ochre text. |
-| **Space** | 8px baseline. `--space-half` (4px) is the only exception. |
-| **Grid** | 12 columns always; density is a `data-mode`, not another grid. |
+| **Space** | 8px composition baseline. `--space-half` (4px) and documented internal optical corrections are allowed. |
+| **Grid** | Page compositions align to a 12-column macro-grid; components may use local grids. |
 | **Depth** | No shadows. Frames and rules only. |
-| **Imagery** | Biological imagery is evidence: frame + image + caption, or it doesn't ship. |
-| **Status** | Colour **and** word. Never colour alone. |
+| **Imagery** | Every image declares its role: documentary, illustrative, reconstruction or reference. |
+| **Status** | Operational state and data provenance are independent. Colour **and** word; never colour alone. |
 | **Minimums** | Prose ≥ 16px · operative content ≥ 13px · tap target ≥ 44px · printed lot code ≥ 3mm x-height |
 
 ## Rebuild
@@ -51,7 +52,7 @@ framework, no runtime. Fonts are vendored: it works offline.
 ```bash
 python3 scripts/validate.py          # structural gate — tokens, fonts, assets, parity
 python3 scripts/contrast-audit.py    # WCAG gate — must exit 0 (25/25)
-node     scripts/render.mjs          # eight mockups → mockups/out/*.png
+node     scripts/render.mjs          # ten mockups → mockups/out/*.png
 ```
 
 All three are CI-ready. `validate.py` catches an undefined token, a missing

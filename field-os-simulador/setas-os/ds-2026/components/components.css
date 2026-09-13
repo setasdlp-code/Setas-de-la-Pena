@@ -3,8 +3,8 @@
    Rules of the system, enforced here:
      · No shadows. Depth is a rule, never a blur.
      · No gradient, no glass, no floating panel.
-     · One accent per view. Colour is state, never garnish.
-     · Mono is always uppercase and always tracked ≥ 0.15em.
+     · One identity accent per composition; semantic states may coexist.
+     · Mono labels are uppercase/tracked; numeric data remains untracked.
      · Biological imagery is evidence, not decoration: every image
        carries a frame and a caption, or it does not ship.
    ═══════════════════════════════════════════════════════════════ */
@@ -238,3 +238,68 @@
 .sdp-sop__n { font: var(--t-data); font-size: var(--size-heading-02); color: var(--text-metadata); line-height: 1; }
 .sdp-sop__st { font: var(--t-heading-03); margin-bottom: var(--space-half); }
 .sdp-sop__sb { font: var(--t-small); color: var(--text-primary); }
+
+/* ─────────────────────────────────────────────────────────────
+   M · INTERACTION — shared by Operations and Culinary Market.
+   These primitives keep the same flat, rule-led grammar as the
+   documentary components above. Every control is keyboard-visible.
+   ───────────────────────────────────────────────────────────── */
+.sdp-btn {
+  min-height: var(--tap-target-min); padding: var(--space-1) var(--space-2);
+  border: var(--rule-hairline); border-radius: var(--radius-none);
+  background: var(--surface-page); color: var(--text-primary);
+  font: var(--t-small); font-weight: var(--weight-medium); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
+  text-decoration: none;
+}
+.sdp-btn:hover { background: var(--surface-panel); color: var(--text-primary); }
+.sdp-btn:active { background: var(--surface-recessed); }
+.sdp-btn--primary { background: var(--surface-inverse); color: var(--text-inverse); border-color: var(--border-heavy); }
+.sdp-btn--primary:hover { background: var(--text-primary); color: var(--text-inverse); }
+.sdp-btn--subtle { border-color: transparent; text-decoration: underline; text-underline-offset: 3px; }
+.sdp-btn[disabled], .sdp-btn[aria-disabled="true"] { opacity: .48; cursor: not-allowed; }
+.sdp-btn[aria-busy="true"]::before { content: ""; width: 12px; height: 12px; border: 1px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: sdp-spin .8s linear infinite; }
+@keyframes sdp-spin { to { transform: rotate(360deg); } }
+
+.sdp-field { display: grid; gap: var(--space-half); }
+.sdp-field__label { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-field__control {
+  width: 100%; min-height: var(--tap-target-min); padding: var(--space-1) var(--space-2);
+  border: var(--rule-hairline); border-radius: var(--radius-none);
+  background: var(--surface-page); color: var(--text-primary); font: var(--t-body);
+}
+.sdp-field__control::placeholder { color: var(--text-secondary); }
+.sdp-field__hint, .sdp-field__error { font: var(--t-small); }
+.sdp-field__hint { color: var(--text-secondary); }
+.sdp-field__error { color: var(--status-error); }
+.sdp-field--error .sdp-field__control { border: 2px solid var(--status-error); }
+
+.sdp-segment { border: var(--rule-hairline); padding: var(--space-half); display: inline-grid; grid-auto-flow: column; gap: var(--space-half); }
+.sdp-segment__option { position: relative; }
+.sdp-segment__option input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+.sdp-segment__option span { min-height: var(--tap-target-min); padding: var(--space-1) var(--space-2); display: flex; align-items: center; justify-content: center; font: var(--t-small); cursor: pointer; }
+.sdp-segment__option input:checked + span { background: var(--surface-inverse); color: var(--text-inverse); }
+.sdp-segment__option input:focus-visible + span { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Operational state answers “what is happening?”. */
+.sdp-state { display: inline-flex; align-items: center; gap: var(--space-1); font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.sdp-state::before { content: ""; width: 8px; height: 8px; border: 1px solid currentColor; }
+.sdp-state--active { color: var(--status-ok); }
+.sdp-state--attention { color: var(--status-warn-text); }
+.sdp-state--blocked, .sdp-state--failed { color: var(--status-error); }
+.sdp-state--unavailable { color: var(--text-secondary); }
+
+/* Provenance answers “how do we know?”. It never implies operational state. */
+.sdp-provenance { display: inline-flex; align-items: center; min-height: 28px; padding: var(--space-half) var(--space-1); border: var(--rule-hairline); font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-secondary); background: var(--surface-page); }
+.sdp-provenance--measured { border-color: var(--status-ok); color: var(--status-ok); }
+.sdp-provenance--estimated, .sdp-provenance--simulated { border-color: var(--status-warn-text); color: var(--status-warn-text); }
+.sdp-provenance--pending { border-style: dashed; }
+
+.sdp-view-state { border: var(--rule-hairline); background: var(--surface-panel); padding: var(--space-3); display: grid; gap: var(--space-1); max-width: var(--measure-prose); }
+.sdp-view-state__title { font: var(--t-heading-03); margin: 0; }
+.sdp-view-state__body { font: var(--t-small); color: var(--text-secondary); margin: 0; }
+.sdp-view-state--error { border-left: 4px solid var(--status-error); background: var(--status-error-bg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sdp-btn[aria-busy="true"]::before { animation: none; }
+}

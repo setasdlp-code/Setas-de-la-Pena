@@ -21,7 +21,7 @@
 
   /* Cover scale — one step above --size-display-01 (64px), for ARCHIVE
      cover treatments only: a packaging-front species name, a ficha
-     masthead. Not part of the nine-role type scale in tokens.css; it
+     masthead. Not part of the twelve-role type scale in tokens.css; it
      never appears in running layout, only on the single cover mark
      a surface is allowed. */
   --size-display-cover: 88px;

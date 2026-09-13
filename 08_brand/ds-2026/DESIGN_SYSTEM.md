@@ -1,19 +1,18 @@
 # Setas de la Peña · DS-2026
 
-A design system for a mushroom farm at 2.600 m in Tenjo, Cundinamarca — one
-system covering the field (lot records, substrate recipes, room signage, SOPs)
-and the shelf (packaging, fichas, market cards).
+A design system for a mushroom farm in Tenjo, Cundinamarca. `DS-2026 Core`
+governs the shared visual language, interaction and content provenance. `FOS
+Operations` applies it to field and control surfaces; `Swiss Botanical Market`
+applies it to archive and culinary-market surfaces. See [`PROFILES.md`](PROFILES.md).
 
-**Governing idea:** every mark on the page is either evidence or navigation.
-Colour is classification or state. Imagery is documentation. Type carries the
-difference between what a person reads, what a person acts on, and what a
-machine emitted. Nothing is decoration.
+**Governing idea:** every mark helps a person understand, decide or act. Colour
+is classification or state. Imagery declares whether it is documentary,
+illustrative, reconstructed or referential. Type distinguishes prose, action,
+metadata and machine output.
 
-> **Relationship to FOS.** This is a **standalone** system. The repo also
-> contains `08_brand/field-os-identity/` (the Field Operating System), which is
-> a different, independently audited system with its own palette and rules.
-> DS-2026 does not import from it, alias it, or replace it — the two are kept
-> apart deliberately. See [§10](#10-relationship-to-fos) before mixing them.
+> `08_brand/field-os-identity/` remains a historical identity source. New Setas
+> OS surfaces consume the packaged copy of DS-2026; legacy FOS tokens require an
+> explicit adapter and must not silently override the core. See §10.
 
 ---
 
@@ -35,12 +34,14 @@ with no signal must render the system identically to a desktop.
 Gaya Patched ships the full family: Thin (100), Light (300), Regular (400),
 Medium (500), Bold (700), Black (900), each with a matching italic.
 
-**Mono is always uppercase and always tracked ≥ 0.15em.** Untracked uppercase
-mono is unreadable at 9–11px; the tracking is not a stylistic preference.
+**Mono metadata labels are uppercase and tracked ≥ 0.15em.** Measurements,
+telemetry and table numbers use sentence case where needed and neutral tracking
+so figures remain compact and comparable.
 
 ### 1.2 Type scale
 
-`DISPLAY 01` (64px Gaya Black) down to `MICRO` (9px Mono). Nine roles.
+`DISPLAY 01` (64px Gaya Black) down to `MICRO` (11px screen / 9px print Mono).
+Twelve roles.
 
 | Role | Size | Family | Weight | Leading | Tracking | Case | Use |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +56,7 @@ mono is unreadable at 9–11px; the tracking is not a stylistic preference.
 | `small` | 14px | IBM Plex Sans | 400 Regular | 1.55 | 0 | — | Captions, secondary UI, dense card copy. |
 | `data` | 13px | IBM Plex Mono | 400 Regular | 1.40 | 0 | — | Table numbers, telemetry, measurements. Tabular figures. |
 | `label` | 11px | IBM Plex Mono | 500 Medium | 1.10 | **0.15em** | UPPER | Field keys, table headers, taxon codes, lot lines. |
-| `micro` | 9px | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Plate refs, folio marks, fine print. Never operative content. |
+| `micro` | 11px screen / 9px print | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Plate refs, folio marks, fine print. Never operative content. |
 
 **Normative minimums**
 
@@ -90,8 +91,9 @@ Derived surfaces — mixed from the eight above, introducing no new pigment:
 | `SOIL_TINT` | `#E5DFD3` | 12 % soil on paper — neutral infill |
 | `WARNING_TEXT` | `#826326` | accessible ochre text on paper and warning tint |
 
-**One accent per view.** A dashboard showing moss, ochre and rust at once has
-stopped classifying and started decorating.
+**One identity accent per composition.** Moss, ochre and rust may coexist when
+they communicate genuine semantic states. Repetition without state or hierarchy
+is decoration and is not allowed.
 
 **`--accent-warm` — the archive accent (additive).** `oklch(57% 0.15 38)`,
 scoped to `[data-mode="archive"]` only — it does not exist in FIELD or
@@ -167,19 +169,22 @@ An **8px** baseline. Every gap, pad and offset is a multiple.
 | `--space-3` | 24px | | `--space-8` | 80px |
 | `--space-4` | 32px | | `--space-9` | 96px |
 
-`--space-half` (4px) is the **single** sub-8 exception, for optical alignment
-against a 1px hairline. There is no 2px, no 6px, no 10px.
+`--space-half` (4px) is the shared sub-8 token. Layout gaps and padding use the
+scale above; documented optical corrections inside glyphs, rules or compact
+controls may use another value and do not become reusable spacing tokens.
 
-### 2.2 The 12-column grid and its three modes
+### 2.2 The 12-column macro-grid and its four modes
 
-Twelve columns everywhere. **Density is a mode, not a new grid.** Set
-`data-mode` on any container and the gutter and page margin follow.
+Page compositions align to twelve columns. Component internals and print pieces
+may use local grids. **Density is a mode, not a new grid.** Set `data-mode` on
+any container and the gutter and page margin follow.
 
 | Mode | Gutter | Page margin | Used by |
 |---|---|---|---|
 | `archive` | **32px** | 64px | Editorial and print — fichas, packaging, posters, the folio system. Air is the point. |
 | `field` | **24px** | 32px | Reports, labels, lot records, SOPs. **The default.** |
 | `control` | **12px** | 16px | Dense telemetry — dashboards, metric tables, room monitors. |
+| `culinary-market` | **32px** | 32px | Product choice — profile, use, format, availability and next action. |
 
 ```html
 <div data-mode="control">
@@ -198,11 +203,13 @@ page. Prose is capped at `--measure-prose: 68ch` regardless of column span.
 
 ## 3 · Imagery
 
-> **Biological imagery is evidence, not decoration.**
+> **Biological imagery declares its evidentiary role; it never implies one.**
 
-Every figure is **frame + image + caption**. A specimen photograph with no
-caption is an unlabelled sample; it does not ship. Captions set the latin
-binomial in Gaya italic and the plate reference in mono micro.
+Every figure is **frame + image + caption + provenance role**. A specimen
+photograph with no caption is an unlabelled sample; it does not ship. Captions
+set the latin binomial in Gaya italic and the plate reference in mono micro.
+Allowed roles are `documentary`, `illustrative`, `reconstruction` and
+`reference`; their contract is defined in `PROFILES.md`.
 
 | Class | Ratio | Frame | Caption | Use |
 |---|---|---|---|---|
@@ -227,10 +234,10 @@ tracking. New archive captions should be marked up with `.ed-cartouche`
 directly (§5B); the `.sdp-fig__ref` override exists as a safety net for
 plain component markup that hasn't been converted.
 
-**The species plates.** `assets/img/species/` holds nine specimen plates — one
-per species the farm grows: *Hericium erinaceus* (melena de león), *Ganoderma
-lucidum* (reishi), *Lentinula edodes* (shiitake), *Pleurotus ostreatus* in rosa,
-blanca and grey, *P. eryngii* (cardo), *Flammulina* (enoki), *Pholiota* (nameko).
+**The species plates.** `assets/img/species/` holds nine illustrative plates.
+Their filenames and common names are navigation aids, not a canonical inventory
+of species grown by the farm. Scientific names must be confirmed against the
+Knowledge Base before a plate is published as product or production evidence.
 
 They share one composition — **whole fruiting body on its substrate, a
 cross-section, an underside, and spores** — which is exactly the evidence a
@@ -280,7 +287,7 @@ Altitude uses the Spanish thousands separator (`2.600`) and a capital `M`.
 
 | Line | Format | Example |
 |---|---|---|
-| **Lot / date** | `LOTE nnn · STRAIN · DD MMM YYYY` | `LOTE 026 · HER-01 · 17 AGO 2026` |
+| **Lot / date** | `LOTE nnn · STRAIN · DD MMM YYYY` | `LOTE DEMO · GAN-XX · FECHA POR VALIDAR` |
 | **Environment** | `SALA nn · HR nn% · CO₂ nnn PPM` | `SALA 02 · HR 91% · CO₂ 742 PPM` |
 | **Phase** | `PHASE · D day/total` | `INCUBACIÓN · D 12/19` |
 
@@ -418,7 +425,7 @@ Light is normative here, and the lede differs by **size, not weight**.
 
 `--t-display-cover` (`--size-display-cover: 88px`, Gaya Black, same leading
 as `display-01`) is one step above `display-01` (64px) — defined in
-`editorial.css`, not in the nine-role scale in `tokens.css`, because it is
+`editorial.css`, not in the twelve-role scale in `tokens.css`, because it is
 never for running layout. Its only two uses are cover marks: the species
 name in a `.sdp-ficha__hd` and a `.sdp-pack--front`, each set with the
 `--accent-warm` rule beneath it as a single masthead device.
@@ -503,7 +510,7 @@ every brand face and **fails the build** if one silently falls back.
 
 | # | File | Surface | Type calls |
 |---|---|---|---|
-| 1 | `01-packaging.png` | **Packaging front + back**, Reishi, 420 × 620 each | Front: `font-family:"Gaya Patched"; font-weight:700; font-size:36px` (Reishi) over `font-family:"Gaya Patched"; font-style:italic; font-weight:400; font-size:18px` (*Ganoderma lucidum*). Brand + net weight in Mono 11px/0.15em upper. Back adds the traceability line `LOTE 026 · HER-01 · 17 AGO 2026` and a QR. |
+| 1 | `01-packaging.png` | **Packaging front + back**, Reishi, 420 × 620 each | Front: `font-family:"Gaya Patched"; font-weight:700; font-size:36px` (Reishi) over `font-family:"Gaya Patched"; font-style:italic; font-weight:400; font-size:18px` (*Ganoderma lucidum*). Brand + net weight in Mono 11px/0.15em upper. Back adds the traceability line `LOTE DEMO · GAN-XX · FECHA POR VALIDAR` and a QR. |
 | 2 | `02-ficha.png` | **Ficha botánica**, Reishi, 760px Archive | `species` 28px Gaya Bold, `latin` 18px Gaya Italic, plate in `frame-specimen` 4:5, prose 16px Plex Sans, footer cells presentación / preparación / precio. |
 | 3 | `03-lote-card.png` | **Lote cards** (`--ok`, `--warn`) + all three **alert banners** | Card title 22px Gaya Bold, lot ID Mono 16px, state word Mono 11px/0.15em. Hericium plate on the `--plate` media variant. |
 | 4 | `04-receta.png` | **Receta de sustrato**, melena de león, 640px Field | Heading 24px Gaya Medium, ingredient names 16px Sans, percentages Mono 16px, proportion rules in `SOIL`, steps numbered `01…05` in Mono. Ingredient thumbnail 64px 1:1. |
@@ -543,7 +550,7 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
 │   │   └── species/              ← nine specimen plates, alpha cut
 │   └── textures/                 ← paper-grain.png, paper-fibre.png (tileable RGBA)
 ├── mockups/
-│   ├── *.html                    ← eight mockups on the real tokens
+│   ├── *.html                    ← ten mockups on the real tokens
 │   ├── manifest.json             ← render sizes
 │   └── out/*.png                 ← eight rendered images
 └── scripts/
@@ -574,7 +581,7 @@ python3 scripts/validate.py             # structural gate — exit 0 required
 python3 scripts/contrast-audit.py       # WCAG gate — exit 0 required
 python3 scripts/gen-textures.py         # regenerate paper textures (~1s)
 node     scripts/make-cutout.mjs <out> <files…>   # re-cut a specimen's ground
-node     scripts/render.mjs             # all eight mockups → mockups/out/
+node     scripts/render.mjs             # all ten mockups → mockups/out/
 node     scripts/render.mjs 05          # just one
 ```
 
@@ -586,32 +593,18 @@ Plex Sans and Plex Mono all resolved before it writes a PNG.
 
 ## 10 · Relationship to FOS
 
-`08_brand/field-os-identity/` (FOS) is a **separate, independently audited**
-system in this same repo. DS-2026 was built standalone at the client's
-direction and does **not** import, alias or supersede it.
+DS-2026 is the active core for new work. Its canonical files live here and the
+Setas OS build packages an exact copy under `field-os-simulador/setas-os/ds-2026/`.
+The sync test must pass whenever tokens or components change.
 
-Where they differ materially:
+`08_brand/field-os-identity/` records the earlier FOS identity and remains useful
+for historical decisions and migration. A production surface may keep legacy
+variables through an explicit adapter, but new components use DS-2026 semantic
+aliases. Import order must be deliberate: legacy tokens first, DS-2026 core
+second, application overrides last. A copied component block is generated or
+tested for parity rather than maintained as another source of truth.
 
-| | DS-2026 | FOS |
-|---|---|---|
-| Paper | `#FAF5E9` | `#F7F4EC` |
-| Ink | `#222222` | `#1E1D19` |
-| Rule | `#888888` (3.26:1) | `#988C6C` (3.03:1) |
-| Green | `MOSS #4E6B3F` | `--accent-olive #5B6B44` |
-| Error | `RUST #8E2C14` | `--accent-rust #8C3223` |
-| Caution | `WARNING #C49A4C` + `WARNING_TEXT` | routed through terracotta `#A85C32` |
-| Earth | `SOIL #4A3C31` | `--accent-mushroom #7A6A52` |
-| Editorial face | Gaya Patched | Gaya |
-| Body face | IBM Plex Sans | *(`--font-sans` is set to Gaya — see below)* |
-| Baseline | 8px | 4px |
-| Radius | 0 / 2px | 0 / 2 / 3px |
-
-**Do not mix the two stylesheets on one surface.** Both define `--paper-*`,
-`--ink-*` and `--space-*`; loading both means the later import silently wins and
-you get a page that is neither system.
-
-> **Finding, unrelated to this work.** `field-os-identity/tokens/fonts.css` sets
-> `--font-sans: 'Gaya'` and `--font-display: 'IBM Plex Sans Display'` — the two
-> roles appear inverted relative to how every other FOS document describes them
-> (Gaya is the identity/display face). This was not changed, since FOS was out
-> of scope here, but it is worth a look.
+The profiles do not fork the visual system. `FOS Operations` selects field and
+control density; `Swiss Botanical Market` selects archive and culinary-market
+composition. Both obey the provenance and interaction contracts in
+[`PROFILES.md`](PROFILES.md).
