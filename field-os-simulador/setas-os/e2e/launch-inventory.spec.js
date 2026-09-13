@@ -18,7 +18,9 @@ test('Lanzar Lote descuenta el plan exacto con Calcular apagado y deja trazabili
   await addIngredientByName(page, 'Carbonato de calcio');
   await setIngredientPct(page, 'Paja de trigo', 98);
   await setIngredientPct(page, 'Carbonato de calcio', 2);
-  await page.getByRole('button', { name: /Lanzar Producción/ }).first().click();
+  // Con "Calcular" apagado el único lanzador es el botón de la barra de receta
+  // ("🚀 Lanzar Lote"); "🚀 Lanzar Producción de Lote (…)" solo existe con Calcular encendido.
+  await page.getByRole('button', { name: /^🚀\s*Lanzar Lote$/ }).click();
   const modal = page.getByTestId('prod-launch-modal');
   await expect(modal).toBeVisible();
   await expect(modal).toContainText('Carbonato de calcio');
