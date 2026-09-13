@@ -71,18 +71,19 @@
 <link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
 <link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/tokens/tokens.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
-<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/tokens/tokens.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
+	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/instrument.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="fieldos-tokens.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="sim.css">
 <script type="module" src="firebase/auth-gate.js"></script>
@@ -251,6 +252,14 @@
     .rail-btn span { font-size:10px; }
     .app-main { margin-left:0; padding-bottom:62px; }
     .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
+    /* Auth gate owns the sign-out control. Reserve a real row for it while
+       authenticated so the fixed control never covers workspace tabs. */
+    html[data-setas-auth-state="authenticated"] .workspace-subnav {
+      box-sizing:border-box;
+      min-height:calc(env(safe-area-inset-top) + 96px);
+      padding:calc(env(safe-area-inset-top) + 52px) 10px 0;
+      align-items:flex-end;
+    }
     .workspace-tab { min-height:44px; padding:8px 10px; }
     /* En móvil el interruptor de guantes es solo icono: conserva 48px de área
        táctil sin robar ancho a las pestañas en 390px. */
@@ -262,6 +271,11 @@
        alternativa en móvil desde que el picker de operador (que llevaba
        "Cerrar sesión" en su menú) se reemplazó por el selector de rol —
        queda visible en todos los tamaños. */
+    html[data-setas-auth-state="authenticated"] #setas-auth-signout {
+      top:calc(env(safe-area-inset-top) + 8px) !important;
+      right:8px !important;
+      max-width:calc(100vw - 112px);
+    }
     /* Lotes activos (Hoy): 2 columnas fijas no dejaban espacio para el texto
        (nombre, contenedores, etapa/receta) junto a la miniatura de 101px —
        el texto se salía de la tarjeta. A 1 columna cabe todo sin envolver mal. */
@@ -322,7 +336,7 @@
   <!-- ===================== RAIL / TAB BAR ===================== -->
   <nav class="app-rail" aria-label="Espacios de trabajo">
     <button class="rail-mark" onClick="{{ goWorkspaceControl }}" aria-label="Ir a Control, Hoy">
-      <img data-auth-src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="96" height="50" style="width:96px;height:auto;max-height:54px;object-fit:contain;display:block;margin:0 auto;filter:contrast(1.05);" />
+      <img src="_standalone_imgs/logo-sdlp.png" data-auth-src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="96" height="50" style="width:96px;height:auto;max-height:54px;object-fit:contain;display:block;margin:0 auto;filter:contrast(1.05);" />
     </button>
     <button class="rail-btn {{ navWorkspaceFormularCls }}" data-workspace="formular" onClick="{{ goWorkspaceFormular }}" aria-current="{{ curWorkspaceFormular }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>

@@ -8,8 +8,13 @@
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
+<link rel="stylesheet" href="ds-2026/tokens/tokens.css">
+<link rel="stylesheet" href="ds-2026/components/base.css">
+<link rel="stylesheet" href="ds-2026/components/components.css">
+<link rel="stylesheet" href="ds-2026/components/editorial.css">
+<link rel="stylesheet" href="ds-2026/components/instrument.css">
 <link rel="stylesheet" href="fieldos-tokens.css"><link rel="stylesheet" href="sim.css">
-<style>html,body{margin:0;background:var(--paper-1,#efebe0);}</style></head><body>
+<style>html,body{margin:0;background:var(--paper-1,#efebe0);}</style></head><body data-mode="control">
 <div id="root" class="sim-root"></div>
 <script>window.__setasAuthState=true;</script>
 <script>
@@ -79,5 +84,12 @@ window.SetasFirebase = {
      como simulado, que es lo correcto aquí. -->
 <script>window.__setasFieldMockSync = true;</script>
 <script src="simulador-app.js"></script>
-<script>ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.SimuladorApp));</script>
+<script>
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.SimuladorApp, {
+  hoyPreviewEventos: 0, hoyPreviewBe: 0, hoyPreviewHoras: 0,
+  hoyPreviewAnomalias: 0, hoyPreviewAnomaliasColor: 'var(--ink-muted)',
+  hoyPreviewSalidas: 0, tasksOpenCount: 0, tasksHoyJson: '[]',
+  recentActivityJson: '[]', hasHandoff: false, hasActiveSession: false
+}));
+</script>
 </body></html>

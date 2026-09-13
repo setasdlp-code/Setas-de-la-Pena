@@ -116,7 +116,7 @@ appears on field print at that size.
 **Span** 4–12 · **Mode** any · **States** `--ok`, `--warn`, `--error`.
 
 **Rules.** There is no "info" state — informational text is body text. In
-`--warn` the label uses `WARNING_TEXT #8C6B2E`, never raw ochre (2.39:1). The
+`--warn` the label uses `WARNING_TEXT #826326`, never raw ochre (2.39:1). The
 message always sits in `INK` on the tint. The 4px rule carries the pigment.
 
 ---

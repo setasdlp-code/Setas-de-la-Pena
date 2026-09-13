@@ -578,6 +578,21 @@
       const at = clock();
       const rooms = {};
       roomsState.forEach((entry, roomId) => {
+        // Freshness is a property of each sensor reading, not of the last
+        // packet received for the room. A new temperature packet must not make
+        // yesterday's CO₂ look current.
+        const metricAgeMs = {};
+        const freshMetrics = {};
+        Object.entries(entry.latest).forEach(([metric, reading]) => {
+          const observedAt = reading && Date.parse(reading.observed_at);
+          // Do not substitute the room's last packet time here: it might belong
+          // to a different sensor and would falsely revive a malformed/unknown
+          // timestamp as fresh.
+          const observedMs = Number.isFinite(observedAt) ? observedAt : null;
+          const ageMs = observedMs == null ? null : Math.max(0, at - observedMs);
+          metricAgeMs[metric] = ageMs;
+          freshMetrics[metric] = ageMs != null && ageMs <= freshMs;
+        });
         rooms[roomId] = {
           id: roomId,
           sample: getSample(roomId),
@@ -587,6 +602,8 @@
             return acc;
           }, {}),
           latest: Object.assign({}, entry.latest),
+          metricAgeMs,
+          freshMetrics,
         };
       });
       return { at, status: getStatus(), rooms };

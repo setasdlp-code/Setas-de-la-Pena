@@ -33,9 +33,9 @@
   /* WARNING is 2.39:1 on paper — it cannot carry text and cannot carry
      meaning as a thin rule. It stays the caution pigment (solid fills and
      bars, with INK on top: 6.12:1). --warning-text is the same hue (39°)
-     and saturation darkened to 36.5% lightness, for the rare case where
-     ochre itself must be the text colour: 4.53:1 on paper. */
-  --warning-text: #8C6B2E;
+     and saturation darkened for AA on paper and warning tint, for the rare case where
+     ochre itself must be the text colour: AA on paper *and* on its tint. */
+  --warning-text: #826326;
 
   /* ---- Semantic aliases — prefer these in component CSS ---- */
   --surface-page:     var(--paper);

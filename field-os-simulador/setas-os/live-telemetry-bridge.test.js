@@ -177,6 +177,17 @@ test('dos nodos de la misma sala publicando en el mismo instante no se pisan', (
   assert.equal(bridge.getSeries('martha_01', 'temperature_c').count, 2);
 });
 
+test('la frescura del snapshot se calcula por métrica y no revive un CO₂ retenido', () => {
+  const clock = makeClock();
+  const bridge = createLiveTelemetryBridge({ transports: [], factories: {}, clock: clock.now, freshMs: 90_000 });
+  bridge.ingest(frame({ observed_at: new Date(clock.now() - 180_000).toISOString(), temperature_c: undefined, rh_pct: undefined, co2_ppm: 740 }), { source: 'manual' });
+  bridge.ingest(frame({ observed_at: new Date(clock.now()).toISOString(), temperature_c: 17.4, rh_pct: undefined, co2_ppm: undefined }), { source: 'manual' });
+  const room = bridge.getSnapshot().rooms.martha_01;
+  assert.equal(room.freshMetrics.temperature_c, true);
+  assert.equal(room.freshMetrics.co2_ppm, false);
+  assert.ok(room.metricAgeMs.co2_ppm >= 180_000);
+});
+
 test('el puente reconecta con backoff exponencial tras una caída', () => {
   const clock = makeClock();
   const timers = makeTimers();
