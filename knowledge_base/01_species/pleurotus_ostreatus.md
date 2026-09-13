@@ -3,7 +3,7 @@ title: Pleurotus ostreatus — Oyster / Orellana
 document_id: DOC-0009
 category: species
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-09-13
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -33,6 +33,16 @@ Supported by:
 **Strength of evidence:** ★★★★★
 **Conflicting evidence:** Algunos cultivadores reportan fructificación hasta 10°C (forma pequeña y densa) o hasta 26°C (forma grande y rápida). El rango de producción comercial óptima es 15–22°C.
 **Corrección de altitud (Tenjo 2.600 m):** A 2.600 m s.n.m., la menor densidad atmosférica exige un mayor caudal volumétrico efectivo (~1,37× a nivel molar) para mantener la remoción de CO₂ frente a nivel del mar. No aplicar renovaciones genéricas por hora ("4–6 ACH") sin verificar el caudal real de extracción y la respuesta morfológica de la cepa.
+
+### Relación C:N y nitrógeno por clase de sustrato
+Base de cálculo: mezcla completa, base seca, sin correctores de pH/estructura.
+
+| Clase de sustrato | C:N de la mezcla | N total | Fuente |
+|---|---|---|---|
+| Paja sin suplementar (pasteurizada) | 50–100 : 1 | 0.4–1.5 % | Bellettini et al. 2019 |
+| Bolsa suplementada | 25–50 : 1 | 0.8–1.5 % | Bellettini et al. 2019 |
+
+Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellettini et al. 2019).
 
 # Core Principles
 - Especie robusta y tolerante. Útil para validación y caracterización ambiental de cámaras antes de lotes críticos.
