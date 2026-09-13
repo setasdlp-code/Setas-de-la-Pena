@@ -3,7 +3,7 @@
   "families": {
     "editorial": { "stack": "'Gaya Patched', 'Iowan Old Style', Georgia, serif", "use": "Species names, titles, latin binomials, packaging. The voice of the brand." },
     "sans":      { "stack": "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif", "use": "Body copy, UI, navigation. Everything read as prose." },
-    "mono":      { "stack": "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace", "use": "Field metadata: codes, lots, coordinates, telemetry. Always uppercase, tracking >= 0.15em." }
+    "mono":      { "stack": "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace", "use": "Data and field metadata. Labels are uppercase with tracking >= 0.15em; measurements remain untracked and may use sentence case." }
   },
   "weights": { "thin": 100, "light": 300, "regular": 400, "medium": 500, "semibold": 600, "bold": 700, "black": 900 },
   "scale": {
@@ -18,12 +18,12 @@
     "small":      { "size": "14px", "family": "sans",      "weight": 400, "leading": 1.55, "tracking": "0",       "case": "none",      "use": "Captions, secondary UI, dense card copy." },
     "data":       { "size": "13px", "family": "mono",      "weight": 400, "leading": 1.40, "tracking": "0",       "case": "none",      "numeric": "tabular-nums", "use": "Table numbers, telemetry values, measurements." },
     "label":      { "size": "11px", "family": "mono",      "weight": 500, "leading": 1.10, "tracking": "0.15em",  "case": "uppercase", "use": "Field keys, table headers, taxon codes, lot lines." },
-    "micro":      { "size": "9px",  "family": "mono",      "weight": 400, "leading": 1.10, "tracking": "0.18em",  "case": "uppercase", "use": "Plate refs, folio marks, legal fine print. Never operative content." }
+    "micro":      { "size": "11px screen / 9px print", "family": "mono", "weight": 400, "leading": 1.10, "tracking": "0.18em", "case": "uppercase", "use": "Plate refs, folio marks and fine print. Never operative content." }
   },
   "minimums": {
     "prose": "16px — body copy never goes lower, screen or print",
     "operative": "13px — below this, metadata only; no information a person must act on",
     "printedLotCode": "3mm x-height",
-    "monoTracking": "0.15em — mono is always uppercase and always tracked"
+    "monoTracking": "0.15em — minimum for uppercase metadata labels; numeric data remains untracked"
   }
 }

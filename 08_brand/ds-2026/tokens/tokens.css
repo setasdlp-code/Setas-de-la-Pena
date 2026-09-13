@@ -62,7 +62,7 @@
   --focus-ring: var(--moss);
 
   /* ─────────────────────────────────────────────────────────────
-     2 · TYPE — three families, nine roles.
+     2 · TYPE — three families, twelve roles.
      DISPLAY 01 (64px Gaya Black) → MICRO (9px Mono).
      ───────────────────────────────────────────────────────────── */
   --weight-thin:100; --weight-light:300; --weight-regular:400;
@@ -79,7 +79,9 @@
   --size-small:      14px;
   --size-data:       13px;
   --size-label:      11px;
-  --size-micro:       9px;
+  --size-micro-screen: 11px;
+  --size-micro-print:   9px;
+  --size-micro: var(--size-micro-screen);
 
   --leading-solid:  0.98;
   --leading-tight:  1.10;
@@ -173,3 +175,8 @@
 }
 [data-mode="field"]   { --gutter: var(--gutter-field);   --page-margin: var(--margin-field); }
 [data-mode="control"] { --gutter: var(--gutter-control); --page-margin: var(--margin-control); }
+[data-mode="culinary-market"] { --gutter: var(--gutter-archive); --page-margin: var(--margin-field); }
+
+@media print {
+  :root { --size-micro: var(--size-micro-print); }
+}
