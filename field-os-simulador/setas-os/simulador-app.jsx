@@ -1385,7 +1385,9 @@ const diagnose=(a,sKey)=>{
   // CRA
   const craLbl=avgCra>=4?'Alta — reduce agua de hidratación ~10%':avgCra<=2?'Baja — hidratar bien, revisar punto de campo':null;
   if(craLbl) s.push({t:'warning',i:'',tx:`CRA ${avgCra.toFixed(1)}/5 — ${craLbl}`});
-  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal??'—'}%${sp?.targets?.moisture?.source==='legacy_unverified'?' (valor heredado sin verificar)':''}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
+  const moistLbl=SetasSpeciesTargetsApi?.targetSourceLabel(sp?.targets,'moisture');
+  const moistNote=moistLbl==='Objetivo heredado'?' (valor heredado sin verificar)':moistLbl==='Objetivo genérico'?' (objetivo genérico)':'';
+  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal??'—'}%${moistNote}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
   if(incompat.length) s.push({t:'warning',i:'!',tx:`No ideales para ${sp?.name}: ${incompat.join(', ')}.`});
   // Transparencia del modelo: qué factores penalizan la EB y cuánto
   if(a.ebMods){
@@ -10674,7 +10676,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="form-summary-cell">
                 <span className="form-summary-k">Humedad objetivo</span>
                 <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line">{an?.targets?.moisture?.source==='legacy_unverified'?'Objetivo heredado':'Objetivo con fuente'}{bd?` · agua a añadir ${bd.agua.toFixed(1)} kg`:''}</span>
+                <span className="os-provenance-line">{[SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">BE estimada</span>

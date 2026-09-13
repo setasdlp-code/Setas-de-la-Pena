@@ -125,7 +125,19 @@ function applyToSpp(spp, speciesId, recipe, ings, treatmentClass = 'any') {
   return { ...spp, [speciesId]: toSppEntry(spp[speciesId], resolved) };
 }
 
-const api = { BASIS, SUPPLEMENTED_MIN_PCT, CITATIONS, classifySubstrate, resolveTargets, toSppEntry, applyToSpp };
+// Etiqueta de procedencia de un campo resuelto (ADR-0006): un valor heredado
+// sin verificar nunca se presenta como sourced, y un valor con fuente tomado de
+// la clase por defecto (fallback: la clase de sustrato real no tiene registro)
+// se presenta como objetivo genérico, no como objetivo con fuente.
+function targetSourceLabel(targets, field) {
+  const rec = targets && targets[field];
+  if (!rec) return null;
+  if (rec.source === 'legacy_unverified') return 'Objetivo heredado';
+  if (targets.fallback === true) return 'Objetivo genérico';
+  return 'Objetivo con fuente';
+}
+
+const api = { BASIS, SUPPLEMENTED_MIN_PCT, CITATIONS, classifySubstrate, resolveTargets, toSppEntry, applyToSpp, targetSourceLabel };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

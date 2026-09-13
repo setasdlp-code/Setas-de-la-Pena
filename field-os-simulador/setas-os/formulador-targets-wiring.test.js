@@ -7,7 +7,7 @@ globalThis.SetasRecipeVersion = require('./recipe-version.js');
 
 // DENSOS es un `const` local dentro de `analyze` (no de nivel superior) — no se
 // puede extraer con `extractConsts`, y `analyze` no lo necesita desde afuera.
-const X = extractConsts(['SPP', 'INGS', 'DEFAULT_FRESH_PRICES', 'calcBatch', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'diagnose']);
+const X = extractConsts(['SPP', 'INGS', 'DEFAULT_FRESH_PRICES', 'calcBatch', 'EB_PENALTY_BALANCE_BAND', 'SetasSpeciesTargetsApi', 'analyze', 'diagnose']);
 const T = globalThis.SetasSpeciesTargets;
 const FORMULA_A = [
   { id: 'aserrin_roble', p: 45 }, { id: 'salvado_trigo', p: 25 }, { id: 'cascarilla_soya', p: 15 },
@@ -33,6 +33,16 @@ test('diagnose cita la humedad objetivo resuelta, no un literal (D5)', () => {
   const msgs = X.diagnose(X.analyze(FORMULA_A, 'p_eryngii', X.INGS, spp), 'p_eryngii').sugs.map(m => m.tx);
   assert.ok(!msgs.some(t => /67–68%/.test(t)), 'literal 67–68% debe desaparecer');
   assert.ok(msgs.some(t => /humedad objetivo 65%/.test(t)));
+});
+
+test('diagnose marca "(objetivo genérico)" en la humedad cuando la clase de sustrato cae al objetivo por defecto (I3)', () => {
+  const STRAW = [{ id: 'paja_trigo', p: 97 }, { id: 'carbonato_calcio', p: 3 }];
+  const sppStraw = T.applyToSpp(X.SPP, 'p_eryngii', STRAW, X.INGS);
+  assert.equal(sppStraw.p_eryngii.targets.fallback, true);
+  const tenjo = sp => X.diagnose(X.analyze(sp === sppStraw ? STRAW : FORMULA_A, 'p_eryngii', X.INGS, sp), 'p_eryngii').sugs.map(m => m.tx).find(t => /^Tenjo/.test(t));
+  assert.match(tenjo(sppStraw), /humedad objetivo 65% \(objetivo genérico\)/);
+  const sppA = T.applyToSpp(X.SPP, 'p_eryngii', FORMULA_A, X.INGS);
+  assert.doesNotMatch(tenjo(sppA), /objetivo genérico|heredado/);
 });
 
 // ── Regresión: calcBatch.freshPriceKg no debe colapsar a 0 cuando no hay

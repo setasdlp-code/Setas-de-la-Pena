@@ -108,3 +108,33 @@ test('el módulo puede evaluarse de nuevo sin redeclarar globals', () => {
   new Function(src)(); new Function(src)();
   assert.ok(globalThis.SetasSpeciesTargets.resolveTargets);
 });
+
+// ── I3 (ADR-0006): la etiqueta de procedencia distingue objetivo con fuente,
+// objetivo genérico (clase de sustrato no cubierta → clase por defecto) y
+// objetivo heredado sin verificar. ──
+test('targetSourceLabel: clase exacta con fuente → "Objetivo con fuente"', () => {
+  const t = T.resolveTargets({ speciesId: 'p_eryngii', substrateClass: 'bag_supplemented', legacySpp: LEGACY });
+  assert.equal(t.fallback, false);
+  assert.equal(T.targetSourceLabel(t, 'moisture'), 'Objetivo con fuente');
+  assert.equal(T.targetSourceLabel(t, 'cn'), 'Objetivo con fuente');
+});
+test('targetSourceLabel: clase no cubierta (fallback) con valor de literatura → "Objetivo genérico"', () => {
+  const t = T.resolveTargets({ speciesId: 'p_eryngii', substrateClass: 'straw_unsupplemented', legacySpp: LEGACY });
+  assert.equal(t.fallback, true);
+  assert.equal(t.moisture.source, 'literature');
+  assert.equal(T.targetSourceLabel(t, 'moisture'), 'Objetivo genérico');
+  assert.equal(T.targetSourceLabel(t, 'cn'), 'Objetivo genérico');
+});
+test('targetSourceLabel: campo legacy_unverified → "Objetivo heredado" aunque haya fallback', () => {
+  const exact = T.resolveTargets({ speciesId: 'p_ostreatus_gris', substrateClass: 'straw_unsupplemented', legacySpp: LEGACY });
+  assert.equal(exact.fallback, false);
+  assert.equal(T.targetSourceLabel(exact, 'moisture'), 'Objetivo heredado');
+  assert.equal(T.targetSourceLabel(exact, 'cn'), 'Objetivo con fuente');
+  const noTable = T.resolveTargets({ speciesId: 'shiitake', substrateClass: 'bag_supplemented', legacySpp: LEGACY });
+  assert.equal(noTable.fallback, true);
+  assert.equal(T.targetSourceLabel(noTable, 'moisture'), 'Objetivo heredado');
+});
+test('targetSourceLabel: sin targets o sin el campo → null', () => {
+  assert.equal(T.targetSourceLabel(null, 'moisture'), null);
+  assert.equal(T.targetSourceLabel({ fallback: false }, 'moisture'), null);
+});
