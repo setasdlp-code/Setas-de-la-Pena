@@ -4198,6 +4198,24 @@ const precioPonderado=(ingredienteId,lotes)=>{
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
 };
 
+// Costo real de bodega en COP/kg de mezcla SECA (I6): los precios de lote son
+// por kg tal cual se recibe, así que se pasan a base seca con la misma cuenta y
+// el mismo tope de humedad que analyze() usa para an.cost — solo así las dos
+// cifras se pueden comparar. null si ningún ingrediente tiene lote con precio.
+const realCostPerKgSeco=(recipe,invLotes,ings)=>{
+  if(!recipe||!recipe.length) return null;
+  let known=false;
+  const total=recipe.reduce((s,r)=>{
+    const pp=precioPonderado(r.id,invLotes||[]);
+    const g=(ings||[]).find(i=>i.id===r.id);
+    if(pp!=null) known=true;
+    const price=pp!=null?pp:(g?g.cost:0);
+    const m=Math.min(0.92,Math.max(0,(Number(g?.moisture)||0)/100));
+    return s+(price/(1-m))*(parseFloat(r.p)||0)/100;
+  },0);
+  return known?Math.round(total):null;
+};
+
 const SEED_PROVEEDORES=[
   {id:'prov_paloquemao',nombre:'Plaza de Paloquemao',tipo:'plaza',municipio:'Bogotá'},
   {id:'prov_bavaria',nombre:'Bavaria Tocancipá',tipo:'industrial',municipio:'Tocancipá'},
@@ -6151,18 +6169,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // de compra distinto en bodega — se muestra aparte, sin tocar el score, para
   // no introducir un cambio de comportamiento en runAutoOptimizer/scoreCost
   // que ya son consumidos en varios sitios con el costo de catálogo.
-  const realCostPerKg=useMemo(()=>{
-    if(!recipe.length) return null;
-    let known=false;
-    const total=recipe.reduce((s,r)=>{
-      const pp=precioPonderado(r.id,invLotes);
-      const g=effectiveINGS.find(i=>i.id===r.id);
-      if(pp!=null) known=true;
-      const price=pp!=null?pp:(g?g.cost:0);
-      return s+price*(parseFloat(r.p)||0)/100;
-    },0);
-    return known?Math.round(total):null;
-  },[recipe,invLotes,effectiveINGS]);
+  const realCostPerKg=useMemo(()=>realCostPerKgSeco(recipe,invLotes,effectiveINGS),[recipe,invLotes,effectiveINGS]);
   // Similitud de Jaccard entre conjuntos de ingredientes (ignora %, solo IDs).
   const recipeSimilarity=(recA,recB)=>{
     const a=new Set(recA.map(r=>r.id)),b=new Set(recB.map(r=>r.id));
@@ -11461,7 +11468,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
                         </div>}
                       {histStats&&histStats.n>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
