@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-08-03
+last_reviewed: 2026-09-13
 ---
 
 # CHANGELOG

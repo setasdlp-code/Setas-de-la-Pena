@@ -43,6 +43,7 @@ Base de cálculo: mezcla completa, base seca, sin correctores de pH/estructura.
 | Bolsa suplementada | 25–50 : 1 | 0.8–1.5 % | Bellettini et al. 2019 |
 
 Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellettini et al. 2019).
+**Strength of evidence:** ★★★☆☆ para los rangos de C:N; ★★☆☆☆ para los rangos de N (Bellettini et al. 2019, revisión; sin validación local en Tenjo todavía)
 
 # Core Principles
 - Especie robusta y tolerante. Útil para validación y caracterización ambiental de cámaras antes de lotes críticos.
