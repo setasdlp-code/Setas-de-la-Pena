@@ -8,6 +8,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const ROOT = __dirname;
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
@@ -16,6 +17,15 @@ const jsx = read('simulador-app.jsx');
 const css = read('sim.css');
 const authGate = read('firebase/auth-gate.js');
 const shell = read('Setas OS v5.dc.html');
+
+function livePresentation() {
+  const start = jsx.indexOf('function liveSeverityOf(');
+  const end = jsx.indexOf('// "hace 45 s"', start);
+  const source = jsx.slice(start, end) + '\nthis.present = liveClimatePresentation;';
+  const sandbox = {};
+  vm.runInNewContext(source, sandbox);
+  return sandbox.present;
+}
 
 test('auth-gate carga el contrato, el adaptador y el puente en orden de dependencia', () => {
   const order = ['climate-math.js', 'telemetry-contract.js', 'esp32-telemetry-adapter.js', 'anomaly-thresholds.js', 'live-telemetry-bridge.js']
@@ -72,6 +82,20 @@ test('el cockpit de Hoy muestra solo telemetría medida y señala lecturas ausen
   assert.match(strip, /today-climate-card--missing/);
   assert.match(strip, /sin telemetría conectada · sin lectura/);
   assert.match(strip, /<button\s+type="button"/);
+});
+
+test('la presentación conserva alertas parciales y no llama sana una métrica vencida', () => {
+  const present = livePresentation();
+  const criticalPartial = present({ hasAnyLive: true, completeFresh: false, alerts: [{ severity: 'critico' }] });
+  assert.equal(criticalPartial.severity, 'critical');
+  assert.equal(criticalPartial.badge, 'Alerta');
+  assert.equal(criticalPartial.statusClass, 'fos-status--error');
+  const healthyPartial = present({ hasAnyLive: true, completeFresh: false, alerts: [] });
+  assert.equal(healthyPartial.severity, 'partial');
+  assert.equal(healthyPartial.badge, 'Lectura parcial');
+  assert.equal(healthyPartial.statusClass, 'fos-status--pending');
+  const healthyFresh = present({ hasAnyLive: true, completeFresh: true, alerts: [] });
+  assert.equal(healthyFresh.badge, 'En rango');
 });
 
 test('Hoy publica las alertas de umbral con su acción correctiva', () => {

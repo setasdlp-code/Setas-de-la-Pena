@@ -2686,6 +2686,27 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   line-height:1.7!important;
   max-width:200px!important;
 }
+.sim-root .rec-empty-action{
+  min-height:44px;
+  padding:9px 16px;
+  border:1px solid var(--moss-700);
+  border-radius:0;
+  background:var(--moss-700);
+  color:var(--paper-0);
+  font:800 var(--text-sm)/1.2 var(--font-body);
+  letter-spacing:var(--tracking-button);
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.sim-root .rec-empty-action:focus-visible{outline:2px solid var(--ink-900);outline-offset:3px}
+.sim-root .climate-module-reference{
+  display:block;
+  margin-top:6px;
+  color:var(--ink-600);
+  font:500 11px/1.3 var(--font-mono);
+  letter-spacing:var(--tracking-label);
+  text-transform:uppercase;
+}
 
 /* ── rec-row ingredient name → display italic ── */
 .sim-root .rec-row > div:first-child > div:first-child > div:first-child{
@@ -3898,7 +3919,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media(max-width:560px){
   .sim-root .formular-mode-wrapper{grid-template-columns:1fr;gap:4px;margin-bottom:10px}
   .sim-root .formular-mode-nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-  .sim-root .formular-mode-btn{min-height:48px;gap:4px;padding:6px 4px;font-size:var(--text-xs)}
+  .sim-root .formular-mode-btn{min-height:48px;gap:4px;padding:6px 4px;font-size:13px}
+  .sim-root .rec-empty{padding:24px 16px 28px!important}
+  .sim-root .rec-empty-hed{font-size:22px!important}
+  .sim-root .rec-empty-sub{font-size:13px!important;line-height:1.45!important;max-width:270px!important;margin-bottom:14px!important}
   .sim-root .formular-mode-badge{min-width:18px;padding:2px 4px}
   .sim-root .formular-coform-toggle{min-height:46px}
   .sim-root .co-form-panel{gap:10px;padding:10px}
@@ -5910,6 +5934,15 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: var(--warning-tint, #F4EAD6);
   border-color: var(--warning, #C49A4C);
   color: var(--warning-text, #8C6B2E);
+}
+
+/* Alertas críticas de cámara usan el rust de error; el ochre queda reservado
+   para vigilancia. */
+.sim-root .fos-status--error,
+.fos-status--error {
+  background: var(--rust-tint, #EDDDCF);
+  border-color: var(--rust, #8E2C14);
+  color: var(--rust, #8E2C14);
 }
 
 /* 4. En cuarentena */

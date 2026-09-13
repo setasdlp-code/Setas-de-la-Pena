@@ -4738,6 +4738,23 @@ function liveSeverityOf(alerts) {
   return 'warning';
 }
 
+// Presentation policy for the compact room strip. It intentionally consumes
+// the bridge's per-metric freshness rather than re-evaluating cultivation
+// thresholds in the UI.
+function liveClimatePresentation({ hasAnyLive, completeFresh, alerts }) {
+  const alertSeverity = hasAnyLive ? liveSeverityOf(alerts) : 'optimal';
+  const severity = alertSeverity === 'critical' || alertSeverity === 'warning'
+    ? alertSeverity
+    : completeFresh ? 'optimal'
+    : hasAnyLive ? 'partial'
+    : 'unknown';
+  return {
+    severity,
+    badge: severity === 'critical' ? 'Alerta' : severity === 'warning' ? 'Vigilar' : completeFresh ? 'En rango' : hasAnyLive ? 'Lectura parcial' : 'Sin lectura',
+    statusClass: severity === 'critical' ? 'fos-status--error' : severity === 'warning' ? 'fos-status--attention' : completeFresh ? 'fos-status--within-target' : 'fos-status--pending',
+  };
+}
+
 // "hace 45 s" / "hace 3 min" — la frescura del dato es parte del dato.
 function liveAgeLabel(ms) {
   if (!Number.isFinite(ms)) return 'sin datos';
@@ -7687,18 +7704,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const live = liveTelemetry.roomLive(r.id);
           const sample = (live && live.sample) || {};
           const isLive = (metric) => Number.isFinite(sample[metric]);
+          const isFresh = (metric) => isLive(metric) && live && live.freshMetrics && live.freshMetrics[metric] === true;
           const t = isLive('temperature_c') ? sample.temperature_c : null;
           const rh = isLive('rh_pct') ? sample.rh_pct : null;
           const co2 = isLive('co2_ppm') ? sample.co2_ppm : null;
           const anyLive = isLive('temperature_c') || isLive('rh_pct') || isLive('co2_ppm');
           const completeLive = isLive('temperature_c') && isLive('rh_pct') && isLive('co2_ppm');
+          const completeFresh = isFresh('temperature_c') && isFresh('rh_pct') && isFresh('co2_ppm');
           const vpd = climateMath && t != null && rh != null ? climateMath.calcVPD(t, rh) : null;
           const roomAlerts = liveTelemetry.roomAlerts(r.id);
-          // Only the threshold engine may classify a measured room. Without a
-          // measurement the truthful state is unknown, never "en rango".
-          const severity = completeLive ? liveSeverityOf(roomAlerts) : anyLive ? 'partial' : 'unknown';
-          const badge = severity === 'critical' ? 'Alerta' : severity === 'warning' ? 'Vigilar' : completeLive ? 'En rango' : anyLive ? 'Lectura parcial' : 'Sin lectura';
-          const statusClass = severity === 'critical' ? 'fos-status--error' : severity === 'warning' ? 'fos-status--attention' : completeLive ? 'fos-status--within-target' : 'fos-status--pending';
+          // An actual threshold alert always wins. Completeness and freshness
+          // only decide whether an otherwise healthy room can say "En rango".
+          const { severity, badge, statusClass } = liveClimatePresentation({
+            hasAnyLive: anyLive, completeFresh, alerts: roomAlerts,
+          });
           const formatMetric = (value, unit, decimals=1) => value == null ? `— ${unit}` : `${Number(value).toFixed(decimals)} ${unit}`;
 
           return (
@@ -7729,7 +7748,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   presentado como medición vale menos que no mostrar nada. */}
               <div className="today-climate-card__prov">
                 {anyLive
-                  ? `${liveAgeLabel(live.ageMs)} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
+                  ? `${completeFresh ? liveAgeLabel(live.ageMs) : 'lectura parcial o vencida'} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
                   : 'sin telemetría conectada · sin lectura'}
               </div>
             </button>
@@ -7921,7 +7940,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
-    const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'valores de referencia' };
+    const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'referencia de modelo · sin lectura de sonda' };
     const physicalMetrics=selectedCamera?{
       temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'monitor de cámara'
     }:{};
@@ -8379,10 +8398,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
           {cameras.length>0?<div className="climate-module-grid">
             {cameras.map(c=>{
               const roomId=CAMERA_TO_ROOM[c.id]||selectedClimateRoom;
+              const cardLive = liveTelemetry.roomLive(roomId);
+              const cardSample = (cardLive && cardLive.sample) || {};
+              const cardHasLive = ['temperature_c','rh_pct','co2_ppm'].some(metric => Number.isFinite(cardSample[metric]));
               return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
                 <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
                 <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
                 <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
+                {!cardHasLive&&<span className="climate-module-reference">Referencia de modelo · sin lectura de sonda</span>}
                 <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
                 {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}
               </button>;
@@ -10407,30 +10430,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada en Mesa de Mezcla</div>}
 
-          {/* 5.1 Encabezado contextual editorial */}
-          <header className="form-editorial-context-header" aria-labelledby="form-editorial-title">
-            <div className="form-editorial-context-head">
-              <span className="os-provenance-line" style={{marginTop:0}}>Setas OS · Swiss Botanical</span>
-              <span className={`fos-status ${recipe.length>0?'fos-status--attention':'fos-status--available'}`}>
-                <span className="fos-status__dot" aria-hidden="true"></span>
-                {recipe.length>0?'Borrador activo':'Listo para formular'}
-              </span>
-            </div>
-            <h1 id="form-editorial-title" className="form-editorial-context-title">
-              Formulador de receta · {hasPickedSpecies?(sp?.name||'Especie activa'):'Especie por definir'}
-            </h1>
-            <div className="form-editorial-context-meta">
-              <span>{hasPickedSpecies?<em>{sp?.scientific||'Sin clasificación'}</em>:'Sin especie asignada'}</span>
-              <span aria-hidden="true">·</span>
-              <span>Objetivo: {globalMode==='produccion'?'Producción comercial (Bodega)':'Investigación (Catálogo)'}</span>
-              <span aria-hidden="true">·</span>
-              <span>{recipe.length} ingrediente{recipe.length===1?'':'s'} en mezcla</span>
-            </div>
-            <p className="form-editorial-context-desc">
-              Diseño agronómico y balance de masa para sustratos de fructificación en Tenjo, Cundinamarca (2.600 msnm).
-            </p>
-          </header>
-
           {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
           {recipe.length>0&&(
             <section className="form-summary-strip" aria-label="Resumen de receta activa">
@@ -10625,12 +10624,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="live-dash-tray" id="bl-receta">
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
-                    <div className="rec-empty-sub">Selecciona ingredientes a la izquierda para comenzar a formular.</div>
-                    <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                      <button onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Abrir Generador</button>
-                    </div>
+                    <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
+                    <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
                   </div>
                 </div>
               </div>

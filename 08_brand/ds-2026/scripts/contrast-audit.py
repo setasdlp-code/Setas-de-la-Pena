@@ -9,7 +9,7 @@ Every pair the system actually uses is asserted here, with an expectation:
 Exit 0 only when every expectation holds.
 Run:  python3 scripts/contrast-audit.py [--md]
 """
-import pathlib, re, sys
+import math, pathlib, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOKEN_NAMES = ('PAPER', 'INK', 'INK_MUTED', 'RULE', 'SOIL', 'MOSS', 'RUST',
@@ -18,11 +18,40 @@ TOKEN_NAMES = ('PAPER', 'INK', 'INK_MUTED', 'RULE', 'SOIL', 'MOSS', 'RUST',
 
 def load_palette():
     css = (ROOT / 'tokens' / 'tokens.css').read_text()
-    values = dict(re.findall(r'(--[a-z-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;', css))
-    palette = {name: values.get('--' + name.lower().replace('_', '-')) for name in TOKEN_NAMES}
-    # Accent warm is intentionally OKLCH in the source; the rendered hex is the
-    # documented fallback used for contrast checks.
-    palette['ACCENT_WARM'] = '#BE512D'
+    values = dict(re.findall(r'(--[a-z-]+)\s*:\s*([^;]+);', css))
+
+    def resolve(token, seen=()):
+        if token in seen:
+            raise RuntimeError('circular token alias: ' + ' -> '.join((*seen, token)))
+        value = values.get(token)
+        if value is None:
+            return None
+        value = value.strip()
+        if re.fullmatch(r'#[0-9a-fA-F]{6}', value):
+            return value
+        alias = re.fullmatch(r'var\((--[a-z-]+)\)', value)
+        if alias:
+            return resolve(alias.group(1), (*seen, token))
+        oklch = re.fullmatch(r'oklch\(([-.\d]+)%\s+([-.\d]+)\s+([-.\d]+)\)', value)
+        if not oklch:
+            return None
+        # CSS OKLCH → sRGB, following the CSS Color 4 conversion matrices.
+        l, chroma, hue = float(oklch.group(1)) / 100, float(oklch.group(2)), math.radians(float(oklch.group(3)))
+        a, b = chroma * math.cos(hue), chroma * math.sin(hue)
+        lp = l + 0.3963377774 * a + 0.2158037573 * b
+        mp = l - 0.1055613458 * a - 0.0638541728 * b
+        sp = l - 0.0894841775 * a - 1.2914855480 * b
+        lin_rgb = (
+            +4.0767416621 * lp**3 - 3.3077115913 * mp**3 + 0.2309699292 * sp**3,
+            -1.2684380046 * lp**3 + 2.6097574011 * mp**3 - 0.3413193965 * sp**3,
+            -0.0041960863 * lp**3 - 0.7034186147 * mp**3 + 1.7076147010 * sp**3,
+        )
+        def srgb(channel):
+            channel = max(0, min(1, channel))
+            return round(255 * (12.92 * channel if channel <= 0.0031308 else 1.055 * channel ** (1 / 2.4) - 0.055))
+        return '#' + ''.join(f'{srgb(channel):02X}' for channel in lin_rgb)
+
+    palette = {name: resolve('--' + name.lower().replace('_', '-')) for name in TOKEN_NAMES}
     missing = [name for name, value in palette.items() if value is None]
     if missing:
         raise RuntimeError('missing canonical token(s): ' + ', '.join(missing))
@@ -104,6 +133,13 @@ component_contract = (
 )
 if not component_contract:
     bad.append(('COMPONENT', 'WARNING', 'warning alert must use warning text on warning tint', 4.5, 0, 'ALLOW', False, False))
+token_css = (ROOT / 'tokens' / 'tokens.css').read_text()
+if not (
+    re.search(r'--status-warn\s*:\s*var\(--warning\)', token_css)
+    and re.search(r'--status-warn-bg\s*:\s*var\(--warning-tint\)', token_css)
+    and re.search(r'--status-warn-text\s*:\s*var\(--warning-text\)', token_css)
+):
+    bad.append(('TOKENS', 'WARNING', 'warning component aliases must resolve to audited canonical pigments', 4.5, 0, 'ALLOW', False, False))
 print(f"\n{len(rows)-len(bad)}/{len(rows)} expectations hold"
       f"{'' if not bad else '  — ' + str(len(bad)) + ' VIOLATED'}")
 sys.exit(1 if bad else 0)
