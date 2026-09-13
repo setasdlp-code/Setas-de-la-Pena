@@ -1249,7 +1249,8 @@ const SppSvg=({sKey,c})=>{
   return <svg viewBox="0 0 70 90" width="66" height="79" style={{display:'block',overflow:'visible'}}>{m[sKey]||m.p_ostreatus_gris}</svg>;
 };
 
-const analyze=(recipe,sKey,ings=INGS)=>{
+const EB_PENALTY_BALANCE_BAND={min:95,max:105}; // castigo de EB por balance muy fuera de 100 — no es la tolerancia de guardado
+const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
   if(!recipe.length) return null;
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
   let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
@@ -1262,10 +1263,9 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     // relación C:N — se usan solo como modificadores de pH y textura. Evita el sesgo de
     // dilución del denominador lignocelulósico.
     const esAditivoSeco=(g.role==='aditivo_ph'||g.role==='aditivo_estructura');
-    // C:N BASE SECA: los valores c/n de la BD son % materia seca → ponderar por fracción seca
-    // para corregir diferencias de humedad entre insumos (borra café 60% vs paja 12%).
-    const dryFrac=p*(1-Math.min(0.92,Math.max(0,(g.moisture||0)/100)));
-    if(g.cn>0&&!esAditivoSeco){wC+=g.c*dryFrac;wN+=g.n*dryFrac;nP+=dryFrac;}
+    // Los % de la receta ya están en base seca ("Porcentaje en base seca"): ponderar por p.
+    // Descontar humedad aquí la aplicaba dos veces y subestimaba insumos húmedos (D18).
+    if(g.cn>0&&!esAditivoSeco){wC+=g.c*p;wN+=g.n*p;nP+=p;}
     wPh+=g.ph*p; wDig+=g.dig*p; wCra+=g.cra*p;
     if(g.role==='suplemento_n') suppP+=p;
     if(g.role==='suplemento_medio') suppMedP+=p;
@@ -1283,8 +1283,9 @@ const analyze=(recipe,sKey,ings=INGS)=>{
   const avgCra=tot?wCra/tot:3;
   const suppTotalP=suppP+suppMedP;
   const suppEffectiveP=suppP+(suppMedP*0.6);
-  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);return g?s+(g.cost*(parseFloat(r.p)||0)/100):s;},0);
-  const sp=SPP[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
+  // COP por kg de mezcla SECA: el precio de bodega es por kg tal cual se recibe (D6).
+  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);if(!g) return s;const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100));return s+(g.cost/(1-m))*(parseFloat(r.p)||0)/100;},0);
+  const sp=spp[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
   if(sp){
     const cF=Math.max(0,1-Math.pow(Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)/2),1.5));
     const nF=Math.max(0,1-Math.pow(Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)/2),1.5));
@@ -1295,7 +1296,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
     else if(needsAutoclave) eb*=.85;
     if(incompat.length) eb*=.9;
-    if(tot<95||tot>105) eb*=.95;
+    if(tot<EB_PENALTY_BALANCE_BAND.min||tot>EB_PENALTY_BALANCE_BAND.max) eb*=.95;
     // ── Modificadores multifactor de EB (penalizaciones ≤1: una receta en óptimo no se ve afectada) ──
     // pH fuera de rango: la acidez excesiva bloquea más que la alcalinidad ligera
     var phF=1;

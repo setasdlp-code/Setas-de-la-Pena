@@ -4,6 +4,8 @@
 // receta actual, inventarios) como argumentos explícitos.
 (function () {
 
+  const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
+
   const SetasScoring = (typeof require !== 'undefined')
     ? require('./scoring.js')
     : (globalThis.SetasScoring || {});
@@ -25,8 +27,8 @@
       if (!g) return;
       const p = parseFloat(r.p) || 0;
       const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
-      const dryFrac = p * (1 - Math.min(0.92, Math.max(0, (g.moisture || 0) / 100)));
-      if (g.cn > 0 && !esAditivoSeco) { wC += g.c * dryFrac; wN += g.n * dryFrac; nP += dryFrac; }
+      // % de receta en base seca: ponderar por p (D18).
+      if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
       wPh += g.ph * p; wDig += g.dig * p; wCra += g.cra * p;
       if (g.role === 'suplemento_n') suppP += p;
       if (g.role === 'base_carbono') baseP += p;
@@ -42,9 +44,12 @@
     const avgPh = tot ? wPh / tot : 7;
     const avgDig = tot ? wDig / tot : 5;
     const avgCra = tot ? wCra / tot : 3;
+    // COP por kg de mezcla seca (precio por kg tal cual se recibe) — D6.
     const cost = recipe.reduce((s, r) => {
       const g = effectiveINGS.find(i => i.id === r.id);
-      return g ? s + (g.cost * (parseFloat(r.p) || 0) / 100) : s;
+      if (!g) return s;
+      const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
+      return s + (g.cost / (1 - m)) * (parseFloat(r.p) || 0) / 100;
     }, 0);
     const sp = effectiveSPP[sKey];
     let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
@@ -72,7 +77,7 @@
       else if (avgN > nThresh && needsAutoclave) { eb *= 0.80; }
       else if (needsAutoclave) eb *= 0.85;
       if (incompat.length) eb *= 0.9;
-      if (tot < 95 || tot > 105) eb *= 0.95;
+      if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
       phF = 1;
       if (sp.ph_optimal) {
         if (avgPh < sp.ph_optimal.min) phF = Math.max(0.70, 1 - (sp.ph_optimal.min - avgPh) * 0.12);

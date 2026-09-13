@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 74f4ae669142cf33e76e0ab253ea630c4a8c0d7a546471cce642e9c23719add8
+// source-hash: e626b06ba17a29035dc1dd6887b403cd887313490d6abc4e9baa24e759ed15b4
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -987,7 +987,8 @@ const SppSvg = ({ sKey, c }) => {
   };
   return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 70 90", width: "66", height: "79", style: { display: "block", overflow: "visible" } }, m[sKey] || m.p_ostreatus_gris);
 };
-const analyze = (recipe, sKey, ings = INGS) => {
+const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
+const analyze = (recipe, sKey, ings = INGS, spp = SPP) => {
   if (!recipe.length) return null;
   const tot = recipe.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
   if (!tot) return null;
@@ -998,11 +999,10 @@ const analyze = (recipe, sKey, ings = INGS) => {
     if (!g) return;
     const p = parseFloat(r.p) || 0;
     const esAditivoSeco = g.role === "aditivo_ph" || g.role === "aditivo_estructura";
-    const dryFrac = p * (1 - Math.min(0.92, Math.max(0, (g.moisture || 0) / 100)));
     if (g.cn > 0 && !esAditivoSeco) {
-      wC += g.c * dryFrac;
-      wN += g.n * dryFrac;
-      nP += dryFrac;
+      wC += g.c * p;
+      wN += g.n * p;
+      nP += p;
     }
     wPh += g.ph * p;
     wDig += g.dig * p;
@@ -1025,9 +1025,11 @@ const analyze = (recipe, sKey, ings = INGS) => {
   const suppEffectiveP = suppP + suppMedP * 0.6;
   const cost = recipe.reduce((s, r) => {
     const g = ings.find((i) => i.id === r.id);
-    return g ? s + g.cost * (parseFloat(r.p) || 0) / 100 : s;
+    if (!g) return s;
+    const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
+    return s + g.cost / (1 - m) * (parseFloat(r.p) || 0) / 100;
   }, 0);
-  const sp = SPP[sKey];
+  const sp = spp[sKey];
   let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
   if (sp) {
     const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - sp.cn_optimal.ideal) / ((sp.cn_optimal.max - sp.cn_optimal.min) / 2), 1.5));
@@ -1042,7 +1044,7 @@ const analyze = (recipe, sKey, ings = INGS) => {
       eb *= 0.8;
     } else if (needsAutoclave) eb *= 0.85;
     if (incompat.length) eb *= 0.9;
-    if (tot < 95 || tot > 105) eb *= 0.95;
+    if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
     var phF = 1;
     if (sp.ph_optimal) {
       if (avgPh < sp.ph_optimal.min) phF = Math.max(0.7, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
