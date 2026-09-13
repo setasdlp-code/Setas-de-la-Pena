@@ -6349,8 +6349,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
       setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
       setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-      window.SetasBitacoraDB?.guardarLote?.(lote);
-      window.SetasBitacoraDB?.guardarBolsas?.(bolsas);
+      if (window.SetasBitacoraDB) {
+        (async () => {
+          try {
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          } catch (e) {
+            console.warn('Error respaldando lote en Firestore:', e);
+          }
+        })();
+      }
 
       setLoteBatchConfirm(null);
       setLoteSyncErr('');

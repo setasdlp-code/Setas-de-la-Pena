@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 93ea272e6e8298e3d886f1f378b3257e4484ee8179f1ec576a2f51b8bafe0e65
+// source-hash: e51e0f71dbbd85c04fb68f10cf586c765c5b8e4e20caeb98b786abc5a6a612c9
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4852,8 +4852,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
         return upd;
       });
-      window.SetasBitacoraDB?.guardarLote?.(lote);
-      window.SetasBitacoraDB?.guardarBolsas?.(bolsas);
+      if (window.SetasBitacoraDB) {
+        (async () => {
+          try {
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          } catch (e) {
+            console.warn("Error respaldando lote en Firestore:", e);
+          }
+        })();
+      }
       setLoteBatchConfirm(null);
       setLoteSyncErr("");
       setEjecutandoLote(false);
