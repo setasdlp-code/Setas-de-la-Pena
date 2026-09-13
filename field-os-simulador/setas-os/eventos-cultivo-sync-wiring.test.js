@@ -38,17 +38,19 @@ test('reportarEventoCultivo construye el evento con batchSheetApi.buildCultivoEv
   assert.ok(start > -1, 'no se encontró reportarEventoCultivo');
   const body = jsx.slice(start, end);
   assert.match(body, /batchSheetApi\.buildCultivoEvento\(/);
-  assert.match(body, /window\.SetasEventosCultivoDB\.registrarEvento\(evento\)/);
-  assert.match(body, /else\s*\{\s*console\.warn\(/, 'debe avisar por consola si SetasEventosCultivoDB no está disponible');
+  assert.match(body, /(?:window\.SetasEventosCultivoDB\.registrarEvento\(evento\)|persistQuickEvent\()/,
+    'debe respaldar el evento mediante el límite async de persistencia');
+  assert.match(body, /updateStatus\(\{status:'error'/, 'los fallos de persistencia deben ser visibles');
 });
 
-test('reportarEventoCultivo refleja riego y observación en la bitácora del lote vía updateBitLote', () => {
+test('reportarEventoCultivo confirma guardado local y respalda el log del lote', () => {
   const jsx = read('simulador-app.jsx');
   const start = jsx.indexOf('const reportarEventoCultivo = ');
   const end = jsx.indexOf('// Registra la acción elegida en la ficha');
   const body = jsx.slice(start, end);
-  assert.match(body, /appendBatchEvent\(lote\.lifecycleEvents \|\| \[\]/);
-  assert.match(body, /updateBitLote\(lote\.id,\s*\{\s*lifecycleEvents:\s*nextLog\s*\}\)/);
+  assert.match(body, /appendBatchEvent\(previousLog/);
+  assert.match(body, /localStorage\.setItem\('sdp_bit_lotes'/);
+  assert.match(body, /actualizarLote\(lote\.id,\{lifecycleEvents:nextLog\}\)/);
 });
 
 test('reportarEventoCultivo abre setShowDiagModal para contaminación y setShowBitCosecha para cosecha parcial', () => {
