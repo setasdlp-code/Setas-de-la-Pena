@@ -1522,18 +1522,19 @@ const DEFAULT_FRESH_PRICES={
   nameko:32000
 };
 
-const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300)=>{
+const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300,preparation=null)=>{
   if(!Array.isArray(recipe)||!recipe.length||!Number.isFinite(Number(n))||Number(n)<=0||!Number.isFinite(Number(kg))||Number(kg)<=0) return null;
   const wet=n*kg;                                   // sustrato húmedo final objetivo (kg)
   const hF=Math.min(0.85,Math.max(0.40,(Number(hObj)||67)/100));  // fracción de humedad objetivo
-  const dry=wet*(1-hF);                             // masa seca total requerida (kg)
+  const dry=preparation?preparation.totals.dryKg:wet*(1-hF);                             // masa seca total requerida (kg)
   const spawnRate=Math.min(0.15,Math.max(0.05,(Number(dynSpawn)||8)/100));
   const effectiveIngs=Array.isArray(ings)&&ings.length?ings:INGS;
   const items=recipe.map(r=>{
     const g=effectiveIngs.find(i=>i.id===r.id);if(!g) return null;
-    const masaSeca=dry*(parseFloat(r.p||r.pct||0)/100);       // aporte seco del insumo
+    const spec=preparation?.items.find(i=>i.ingredientId===r.id);
+    const masaSeca=spec?spec.dryKg:dry*(parseFloat(r.p||r.pct||0)/100);       // aporte seco del insumo
     const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100)); // humedad intrínseca
-    const kr=masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
+    const kr=spec?spec.asReceivedKg:masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
     const aguaOculta=kr*m;                           // agua que ya trae el insumo
     return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*(Number(g.cost)||0),unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
   }).filter(Boolean);
@@ -5060,11 +5061,11 @@ function SimuladorShell(props){
   const [recipe,setRecipe]=useState(()=>initialFormDraft?.recipe||[]);
   const [search,setSearch]=useState('');
   const [cat,setCat]=useState('all');
-  const [numBags,setNumBags]=useState(6);
-  const [kgBag,setKgBag]=useState(1.5);
+  const [numBags,setNumBags]=useCaptureDraft('prodBags',6);
+  const [kgBag,setKgBag]=useCaptureDraft('prodKg',1.5);
   const [spawnCost,setSpawnCost]=useState(12000);
   const [showOpt,setShowOpt]=useState(false);
-  const [hObj,setHObj]=useState(67);
+  const [hObj,setHObj]=useCaptureDraft('prodH',67);
   const [showGuide,setShowGuide]=useState(false);
   const [showBatch,setShowBatch]=useState(false);
   const [saved,setSaved]=useState([]);
@@ -5652,9 +5653,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
-  const [prodBags,setProdBags]=useCaptureDraft('prodBags',6);
-  const [prodKg,setProdKg]=useCaptureDraft('prodKg',1.5);
-  const [prodH,setProdH]=useCaptureDraft('prodH',67);
+  const [prodBags,setProdBags]=[numBags,setNumBags];
+  const [prodKg,setProdKg]=[kgBag,setKgBag];
+  const [prodH,setProdH]=[hObj,setHObj];
   const [prodDate,setProdDate]=useCaptureDraft('prodDate',(()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
   const [prodScaleG,setProdScaleG]=useCaptureDraft('prodScaleG',0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
   const [prodMoist,setProdMoist]=useCaptureDraft('prodMoist',{});    // override de humedad real por insumo {id: %} para el lote del día
@@ -6103,11 +6104,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Los inputs de humedad del batch siguen el objetivo resuelto (D5) al cambiar
   // de especie o de clase de sustrato, salvo que el operador ya los haya editado
   // a mano — en cuyo caso su valor manual no se pisa.
-  const moistureTouched=useRef({hObj:false,prodH:false});
+  const moistureTouched=useRef({hObj:sessionStorage.getItem('setas_capture_v1:prodH')!=null});
   useEffect(()=>{
     const t=an?.moistureTarget; if(t==null) return;
     if(!moistureTouched.current.hObj) setHObj(t);
-    if(!moistureTouched.current.prodH) setProdH(t);
   },[sKey,an?.targets?.resolvedClass,an?.moistureTarget]);
   const coAnalysis=useMemo(()=>{
     if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
@@ -6115,8 +6115,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   },[coFormMode,recipe,coSpecConfig,effectiveINGS,effectiveSPP]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
-  const readyForProduction=balanced&&hasPickedSpecies;
-  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg;
   const optimalAn=useMemo(()=>{try{
     const r=runHybridRecipeSearch({
       targetKey:sKey,
@@ -6133,31 +6131,32 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   }catch(e){return null;}},[sKey,invLotes,optimizerINGS,searchSPP]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
   const tr=useMemo(()=>calcTreatment(an, sKey, effectiveSPP),[an,sKey,effectiveSPP]);
-  const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
-  // ── Ficha: rows precalculados para botón Ejecutar Lote ──
+  const preparationResult=useMemo(()=>{
+    try{return {snapshot:SetasLaunchPlanApi.buildPreparationSnapshot({recipe,ingredients:effectiveINGS,moistureOverrides:prodMoist,lockedIds:[...lockedIds],speciesKey:sKey,bags:numBags,kgPerBag:kgBag,moistureTarget:hObj,scaleG:prodScaleG,spawnPct:an?.dynSpawn}),error:''};}
+    catch(e){return {snapshot:null,error:e.message};}
+  },[recipe,effectiveINGS,prodMoist,lockedIds,sKey,numBags,kgBag,hObj,prodScaleG,an?.dynSpawn]);
+  const preparation=preparationResult.snapshot;
+  const prepValid=!!preparation;
+  const readyForProduction=balanced&&hasPickedSpecies&&prepValid;
+  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg||preparationResult.error;
+  const prodIngs=useMemo(()=>effectiveINGS.map(g=>{
+    const item=preparation?.items.find(i=>i.ingredientId===g.id);
+    return item?{...g,moisture:item.moisture.pct}:g;
+  }),[effectiveINGS,preparation]);
+  const preparedBatch=useMemo(()=>preparation?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice,300,preparation):null,[preparation,recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
+  const bd=showBatch?preparedBatch:null;
   const validatePreparation=()=>{
-    const fields=[['prod-bags',prodBags,{required:true,min:1,integer:true}],['prod-kg',prodKg,{required:true,min:0.1}],['prod-h',prodH,{required:true,min:55,max:75}],...Object.entries(prodMoist).map(([id,v])=>['ingredient-moisture-'+id,v,{min:0,max:92}])];
-    const first=fields.find(([,value,rules])=>SetasBitacora.captureError(value,rules));
-    if(first){const el=document.getElementById(first[0]);el?.focus();el?.dispatchEvent(new FocusEvent('focusout',{bubbles:true}));return false;}return true;
+    if(preparation)return true;
+    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult.error});return false;
   };
-  const prepValid=!SetasBitacora.captureError(prodBags,{required:true,min:1,integer:true})&&!SetasBitacora.captureError(prodKg,{required:true,min:0.1})&&!SetasBitacora.captureError(prodH,{required:true,min:55,max:75});
-  const prodRows=useMemo(()=>{
-    if(!recipe.length||!balanced||!prepValid) return null;
-    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null&&prodMoist[g.id]!==''&&!SetasBitacora.captureError(prodMoist[g.id],{min:0,max:92})?{...g,moisture:Number(prodMoist[g.id])}:g);
-    const pb=calcBatch(recipe,Number(prodBags),Number(prodKg),Number(prodH),spawnCost,prodIngs,an?.dynSpawn);
-    if(!pb) return null;
-    const resG=prodScaleG||0.1;
-    const roundG=x=>Math.round(x/resG)*resG;
-    return recipe.map(r=>{
-      const g=prodIngs.find(x=>x.id===r.id);
-      const it=g?pb.items.find(x=>x.name===g.name):null;
-      const krTeo=it?it.kr:0;
-      const grR=roundG(krTeo*1000);
-      const m=g?Math.min(0.92,Math.max(0,(g.moisture||0)/100)):0;
-      const masaSecaR=(grR/1000)*(1-m);
-      return{g,r,krTeo,grR,m,masaSecaR};
-    });
-  },[recipe,effectiveINGS,prodMoist,prodBags,prodKg,prodH,spawnCost,prodScaleG,an]);
+  const prodRows=useMemo(()=>preparation?preparation.items.map(item=>({
+    g:prodIngs.find(g=>g.id===item.ingredientId),r:recipe.find(r=>r.id===item.ingredientId),
+    krTeo:item.theoreticalWetKg,grR:item.asReceivedKg*1000,m:item.moisture.pct/100,masaSecaR:item.dryKg,
+  })):null,[preparation,prodIngs,recipe]);
+  const launchRevision=JSON.stringify([preparation,invLotes,prodBagType,an,tr,saveName,hasPickedSpecies]);
+  useEffect(()=>{
+    setLoteBatchConfirm(null);setShowProdLaunchModal(false);setCheckedSteps({});
+  },[launchRevision]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
   const lowStockCount=useMemo(()=>{
@@ -6257,17 +6256,18 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       species:{key:sKey,name:sp?.name||sKey,confirmed:hasPickedSpecies},
       recipe:recipe.map(r=>({id:r.id,p:Number(r.p)})),
       lockedIds:[...lockedIds],
-      batch:{wetKg:Number(numBags)*Number(kgBag),targetMoisturePct:Number(hObj)},
+      preparation,
+      batch:{wetKg:Number(numBags)*Number(kgBag),targetMoisturePct:preparation?.target.moisturePct??Number(hObj)},
       inventory:{available:peritoInventoryLoaded,stockKgById:{...stockMap},source:'Bodega activa'},
       ingredients:effectiveINGS.map(g=>({id:g.id,name:g.name})),
-      ingredientMoistureById:Object.fromEntries(effectiveINGS.map(g=>[g.id,g.moisture??null])),
+      ingredientMoistureById:Object.fromEntries(prodIngs.map(g=>[g.id,g.moisture??null])),
       processCapabilities:null,approval:null,
       treatment:tr,an,
       historicalEvidence:{trials:saved,lotes:bitLotes,harvests:bitCosechas},
     };
     globalThis.__setasPeritoInput=input;
     window.dispatchEvent(new CustomEvent('setas-perito-input',{detail:input}));
-  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded]);
+  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded,preparation,prodIngs]);
   useEffect(()=>{
     const navigate=event=>{
       const action=event.detail?.action;
@@ -6375,7 +6375,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Usa getComputedStyle para resolver variables CSS (oklab, etc.) antes de escribir la ventana.
   // Recoge solo <style> inline (sin CORS) para evitar ventana en blanco.
   const openPrintWindow=(mode)=>{
-    const el=document.querySelector('.prod-sheet');
+    const el=document.querySelector('.prod-sheet[data-preparation-revision]');
     if(!el){setNoticeDlg({msg:'Genera la hoja primero (debe haber una receta activa).'});return;}
     el.querySelectorAll('input').forEach(inp=>inp.setAttribute('value',inp.value));
     const nombre=(an?.sp?.name||'Sustrato').replace(/\s+/g,'_');
@@ -6439,28 +6439,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
       return;
     }
-    // Mismo insumo moisture-override que alimenta el useMemo de prodRows (línea
-    // ~6010) y la hoja imprimible (línea ~12519) — prodIngs no es una variable de
-    // ámbito de componente, así que se recalcula aquí con la misma expresión para
-    // que el plan de lanzamiento vea exactamente la misma humedad por insumo que
-    // ya se usó para construir `rows`.
-    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null&&prodMoist[g.id]!==''&&!SetasBitacora.captureError(prodMoist[g.id],{min:0,max:92})?{...g,moisture:Number(prodMoist[g.id])}:g);
     const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
-    // x.m (prodRows) es una fracción 0–0.92 (Math.min(0.92,Math.max(0,(g.moisture||0)/100))),
-    // pero buildLaunchPlan's moistureOverrides/clampMoisture espera un porcentaje
-    // (pct/100) como g.moisture — se multiplica ×100 para no dividir dos veces.
-    const moistureOverrides=Object.fromEntries(rows.filter(x=>x.g&&x.m!=null).map(x=>[x.g.id,x.m*100]));
     const plan=SetasLaunchPlanApi.buildLaunchPlan({
-      recipe, bags:Number(prodBags), kgPerBag:Number(prodKg), moistureTarget:Number(prodH),
-      ingredients:prodIngs, inventoryLots:invLotes, moistureOverrides,
-      // Mismo ítem de spawn que "Lanzar Lote" (I5a): el grano también sale de bodega.
-      spawn:launchSpawn(Number(prodBags),Number(prodKg),an?.dynSpawn),
-      // prodScaleG está en GRAMOS (select: 0.1/1/5/10/50 g — comentario de useState:
-      // "resolución de báscula en gramos (0.1 g = 100 mg)"; roundG lo usa directo
-      // contra grR=krTeo*1000, es decir gramos), igual que buildLaunchPlan's scaleG.
-      scaleG:prodScaleG||0,
-      bagUnit: bagType?.stockId ? { ingredientId:bagType.stockId, units:parseInt(prodBags)||0 } : null,
-      unitIngredientIds: UNIT_INGREDIENT_IDS,
+      preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bagType?.stockId?{ingredientId:bagType.stockId,units:preparation.target.bags}:null,
+      unitIngredientIds:UNIT_INGREDIENT_IDS,
     });
     const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
     const preview=[
@@ -6471,7 +6454,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Nueva sesión de "Ejecutar Lote": rearma la guarda de re-entrancia (Task 8).
     ejecutarLoteInFlight.current=false;
     setEjecutandoLote(false);
-    setLoteBatchConfirm({preview,plan,loteNum,fecha});
+    setLoteBatchConfirm({preview,plan,loteNum,fecha,launchRevision});
   };
 
   // ── Guarda de re-entrancia contra doble clic — "Ejecutar Lote" (Task 8) ──
@@ -6502,6 +6485,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const confirmarEjecucion=conGuardaEjecucion(()=>{
     if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
+      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
+    }
     const{preview,plan,loteNum,fecha}=loteBatchConfirm;
     let consumoRegistrado=false;
     try{
@@ -6660,15 +6646,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const sp = effectiveSPP[sKey];
     const codigo = sugerirCodigoLote(sKey);
 
-    // Plan de lanzamiento — independiente del toggle "Calcular batch" (showBatch)
-    const nb=numBags||10, kb=kgBag||1.5;
-    const humedadLote=launchMoisture({touched:moistureTouched.current.hObj,manual:hObj,target:an?.moistureTarget});
+    const nb=preparation.target.bags,kb=preparation.target.kgPerBag;
+    const humedadLote=preparation.target.moisturePct;
     const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
     const plan=SetasLaunchPlanApi.buildLaunchPlan({
-      recipe, bags:nb, kgPerBag:kb, moistureTarget:humedadLote, ingredients:effectiveINGS, inventoryLots:invLotes,
-      spawn: launchSpawn(nb,kb,an?.dynSpawn),
-      bagUnit: bagType?.stockId ? { ingredientId:bagType.stockId, units:nb } : null,
-      unitIngredientIds: UNIT_INGREDIENT_IDS,
+      preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bagType?.stockId?{ingredientId:bagType.stockId,units:nb}:null,
+      unitIngredientIds:UNIT_INGREDIENT_IDS,
     });
     const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
     const insumos=[
@@ -6684,13 +6668,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
       cepa: '',
       fechaMezcla: today,
       fechaInoculacion: today,
-      numBolsas: numBags || 10,
-      pesoHumedo: kgBag || 1.5,
+      numBolsas: nb,
+      pesoHumedo: kb,
       humedad: humedadLote,
       sala: selectedClimateRoom || 'martha_01',
       operador: 'Operario Granja Tenjo',
       notas: '',
       printQr: true,
+      launchRevision,
       plan,
       insumos
     });
@@ -6734,6 +6719,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
     if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
     const f = prodLaunchForm;
+    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
+      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
+    }
     let consumoRegistrado = false;
     try {
       const now = Date.now();
@@ -7264,12 +7252,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const exportR=()=>{
     if(!recipe.length) return;
-    const t=calcTreatment(an, sKey, effectiveSPP);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
+    const t=calcTreatment(an, sKey, effectiveSPP);const batch=preparedBatch;
     let txt=`SETAS DE LA PEÑA — FICHA DE RECETA\nValle de Tenjo · ${new Date().toLocaleDateString('es-CO')}\n${'─'.repeat(44)}\nESPECIE: ${sp.name} (${sp.scientific})\n\nINGREDIENTES:\n`;
     recipe.forEach(r=>{const g=INGS.find(i=>i.id===r.id);if(g) txt+=`  ${g.name.padEnd(32)}${r.p}%\n`;});
     if(an) txt+=`\nANÁLISIS:\n  C:N ${an.cn.toFixed(1)}:1  ·  N ${an.avgN.toFixed(2)}%  ·  EB ${an.eb.toFixed(0)}%  ·  $${Math.round(an.cost)}/kg\n`;
     if(t) txt+=`\nTRATAMIENTO: ${t.name}\n  ${t.temp}  ·  ${t.time}  ·  Spawn ${t.spawn}%\n  ${t.prep}\n`;
-    if(batch){txt+=`\nBATCH (${numBags}×${kgBag} kg):\n`;batch.items.forEach(i=>{txt+=`  ${i.name.padEnd(32)}${i.unit.padStart(9)}  $${Math.round(i.cost).toLocaleString()}\n`;});txt+=`  Spawn ${batch.spawn.toFixed(2)} kg  ·  TOTAL $${Math.round(batch.cost).toLocaleString()} COP\n`;}
+    if(batch){txt+=`\nBATCH (${numBags}×${kgBag} kg):\n`;batch.items.forEach(i=>{txt+=`  ${i.name.padEnd(32)}${i.unit.padStart(9)}  $${Math.round(i.cost).toLocaleString()}\n`;});txt+=`  Spawn ${batch.spawn.toFixed(2)} kg · Agua ${batch.agua.toFixed(3)} L · ${preparation.revision}  ·  TOTAL $${Math.round(batch.cost).toLocaleString()} COP\n`;}
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download=`receta_${sp.name.replace(/\s+/g,'_')}.txt`;a.click();
   };
 
@@ -13073,7 +13061,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div>
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.prodH=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.hObj=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                       <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
@@ -13099,35 +13087,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
               )}
             </div>
 
+            {recipe.length>0&&<section aria-label="Humedad de preparación" style={{margin:'16px 0',padding:16,border:'1px solid var(--border-soft)'}}>
+              <p>Una preparación compartida con Formulador. Ingresa humedad medida para este lote; vacío conserva la estimación del catálogo.</p>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,240px),1fr))',gap:12}}>
+                {recipe.map(r=>{const g=effectiveINGS.find(g=>g.id===r.id);return <label key={r.id} htmlFor={`ingredient-moisture-${r.id}`}>
+                  {g?.name||r.id} · catálogo: {g?.moisture??'sin dato'}%
+                  <CaptureInput id={`ingredient-moisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
+                </label>;})}
+              </div>
+              {!prepValid&&<p role="alert">{preparationResult.error}</p>}
+            </section>}
+
             {/* LA HOJA IMPRIMIBLE — bloqueada si la receta no cierra en 100% (balance de masa) */}
             {recipe.length>0&&an&&balanced&&prepValid&&(()=>{
-              // Override de humedad por insumo: usa el valor real medido del lote del día
-              const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null&&prodMoist[g.id]!==''&&!SetasBitacora.captureError(prodMoist[g.id],{min:0,max:92})?{...g,moisture:Number(prodMoist[g.id])}:g);
-              const ptr=calcTreatment(an, sKey, effectiveSPP);
-              const pb=calcBatch(recipe,Number(prodBags),Number(prodKg),Number(prodH),spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
+              const ptr=tr;
+              const pb=preparedBatch;
               const psch=calcSchedule(sKey,prodDate,an?.eb);
-              const spn=an?.dynSpawn||ptr?.spawn||8;
-              if(!pb) return null;
-              // ── Redondeo a resolución real de báscula + recálculo del C:N efectivo ──
-              const resG=prodScaleG||0.1;
-              const roundG=x=>Math.round(x/resG)*resG;
-              const rows=recipe.map(r=>{
-                const g=prodIngs.find(x=>x.id===r.id);
-                const it=g?pb.items.find(x=>x.name===g.name):null;
-                const krTeo=it?it.kr:0;
-                const grR=roundG(krTeo*1000);                 // gramos redondeados a báscula
-                const m=g?Math.min(0.92,Math.max(0,(g.moisture||0)/100)):0;
-                const masaSecaR=(grR/1000)*(1-m);             // masa seca real tras redondeo
-                return{g,r,krTeo,grR,m,masaSecaR};
-              });
-              const dryR=rows.reduce((s,x)=>s+x.masaSecaR,0);
-              const kgComR=rows.reduce((s,x)=>s+x.grR/1000,0);
+              const spn=preparation.spawn.pct;
+              if(!pb)return null;
+              const resG=preparation.weighing.resolutionG;
+              const rows=prodRows;
+              const dryR=preparation.totals.dryKg;
+              const kgComR=preparation.totals.asReceivedKg;
               const recipeR=rows.filter(x=>x.g).map(x=>({id:x.g.id,p:dryR>0?(x.masaSecaR/dryR*100):0}));
               const anR=analyze(recipeR,sKey,effectiveINGS)||an;
-              const hFr=Math.min(0.85,Math.max(0.40,(prodH||67)/100));
-              const aguaTotR=dryR*(hFr/(1-hFr));
-              const aguaInhR=rows.reduce((s,x)=>s+(x.grR/1000)*x.m,0);
-              const aguaR=Math.max(0,aguaTotR-aguaInhR);
+              const aguaInhR=preparation.totals.intrinsicWaterKg;
+              const aguaTotR=aguaInhR+preparation.totals.waterToAddKg;
+              const aguaR=preparation.totals.waterToAddKg;
               const cnDrift=Math.abs(anR.cn-an.cn);
               const trSteps={
                 autoclave:`Esterilizar en autoclave a ${ptr?.temp||'121°C/18.5–19 PSI'} durante ${ptr?.time||'90–120 min'}. Purgar aire al inicio. A 2.600 msnm, 15 PSI no alcanza 121°C real — usar 18.5–19 PSI manométricos o sensor de núcleo.`,
@@ -13171,7 +13157,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-700)',whiteSpace:'nowrap'}}>{doneChecks}/{totalChecks} pasos</span>
                   </div>
                 </div>
-              <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
+              <div className="panel prod-sheet" data-preparation-revision={preparation.revision} style={{padding:'26px 28px'}}>
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
                   <div>
@@ -13181,7 +13167,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                     <div>Fecha lote: <b style={{color:'var(--ink-900)'}}>{prodDate}</b></div>
-                    <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo</div>
+                    <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo objetivo</div>
+                    <div data-preparation-revision={preparation.revision}>Preparación v1 · {preparation.revision}</div>
+                    <div>Receta en base seca · pesos de insumos tal como se reciben · báscula {resG} g · Bodega redondea a 1 g.</div>
+                    <div>Spawn: {preparation.spawn.pct}% del sustrato húmedo objetivo, adicional al sustrato.</div>
+                    <div>Mezcla calculada tras redondeo: {preparation.totals.preparedWetKg.toFixed(4)} kg · agua a añadir {aguaR.toFixed(4)} L. Cantidades planificadas, no mediciones de ejecución.</div>
                     <div>{(()=>{const bt=BAG_TYPES.find(b=>b.id===prodBagType);return bt?<span>{bt.icon} {bt.name.split('·')[0].trim()} · {bt.dim}</span>:null;})()}</div>
                     <div style={{fontWeight:700,color:'var(--ink-900)'}}>{'N.\u00ba '+(prodLoteNum||'___________')}</div>
                   </div>
@@ -13259,21 +13249,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca tras redondeo: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> · objetivo seco: {preparation.target.dryKg.toFixed(3)} kg. Gramos redondeados a la báscula ({resG} g). Edita la humedad del insumo del día en los controles de preparación. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
                 <div className="ps-tbl-wrap">
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
-                    {rows.map((x,i)=>{const id=x.r.id;const baseM=x.g?x.g.moisture:0;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
+                    {rows.map((x,i)=>{const id=x.r.id;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
                       <tr key={i}>
                         <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · medido</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
                         <td style={{textAlign:'center'}}>
-                          <CaptureInput id={`ingredient-moisture-${id}`} rules={{min:0,max:92}} placeholder={String(baseM)} name={`ingredientMoisture-${id}`} aria-label={`Humedad real de ${x.g?x.g.name:id}, porcentaje`} type="number" min="0" max="92" step="1" value={prodMoist[id]??''}
-                            onChange={e=>setProdMoist(prev=>({...prev,[id]:e.target.value}))}
-                            style={{width:64,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
+                          {preparation.items[i].moisture.pct}% · {ov?'medido':'estimación catálogo'}
                         </td>
-                        <td className="num">{Math.round(x.grR).toLocaleString()}</td>
+                        <td className="num">{x.grR.toLocaleString('es-CO',{maximumFractionDigits:3})}</td>
                         <td className="num">{x.grR>=500?(x.grR/1000).toFixed(2):'—'}</td>
                         <td className="num" style={{color:'var(--ink-500)'}}>{x.masaSecaR.toFixed(2)}</td>
                         <td style={{textAlign:'center'}}><input name={`ingredientDone-${id}`} type="checkbox" aria-label={`${x.g?x.g.name:id} pesado`} checked={!!checkedSteps['ing_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['ing_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer'}}/></td>
@@ -13291,8 +13279,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="ps-3col" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:18}}>
                   {[
                     ['Agua neta a inyectar',`${aguaR.toFixed(2)} L`,`req. ${aguaTotR.toFixed(1)} L − ${aguaInhR.toFixed(1)} L ya en insumos`],
-                    [`Spawn (${spn}%)`,`${pb.spawn.toFixed(2)} kg`,'micelio en grano · 8% del húmedo'],
-                    ['Sustrato húmedo final',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
+                    [`Spawn (${spn}%)`,`${pb.spawn.toFixed(2)} kg`,`micelio en grano · ${spn}% del húmedo objetivo`],
+                    ['Sustrato húmedo objetivo',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{border:'1px solid var(--paper-300)',padding:'10px 12px',background:'var(--paper-50)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
@@ -13387,6 +13375,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {loteBatchConfirm&&(
           <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
+              <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
               <div className="inv-modal-table-wrap">
                 <table style={{width:'100%',minWidth:340,borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:0}}>
@@ -14181,6 +14170,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
+                <p>{f.plan.preparation.revision} · agua {f.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {f.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
                 {/* Desglose de Insumos y Descuento en Bodega */}
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
