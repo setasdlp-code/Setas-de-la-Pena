@@ -27,7 +27,7 @@ test('el hook se vuelve a enganchar si el runtime .dc reemplaza SetasScoring sin
 test('Bodega and moisture arrive from the active React snapshot, never compiled code or DOM inputs', () => {
   const jsx = fs.readFileSync(path.join(ROOT, 'simulador-app.jsx'), 'utf8');
   assert.match(jsx, /stockKgById:\{\.\.\.stockMap\}/);
-  assert.match(jsx, /ingredientMoistureById:Object.fromEntries\(effectiveINGS/);
+  assert.match(jsx, /ingredientMoistureById:Object.fromEntries\(prodIngs/);
   assert.match(bridge, /batchWetKg: detail.batch.wetKg/);
   assert.doesNotMatch(bridge, /fetch\(|localStorage\.getItem|parseMoistureCatalog|findBatchWetKg/);
 });
