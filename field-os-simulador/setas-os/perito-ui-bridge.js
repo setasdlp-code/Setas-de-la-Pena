@@ -7,7 +7,6 @@
   const CONFIDENCE_ES = { low: 'BAJA', medium: 'MEDIA', high: 'ALTA' };
   const VIABILITY_ES = { approved: 'SIN BLOQUEO DEL MODELO', review: 'REVISAR', hold: 'REQUIERE CORRECCIÓN' };
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const n = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? Number(value) : null;
   let lastEvent = null;
   let pendingFrame = null;
   const historyCalibrationFor = input => {
@@ -18,9 +17,9 @@
     // Source stores: setas_v6, sdp_bit_lotes, sdp_bit_cosechas. Their current
     // React values are supplied together, so history belongs to this snapshot.
     const data = input.historicalEvidence || {};
-    const trialRows = (data.trials || []).filter(r => r && r.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
-    const rows = [...(calib.bitacoraAsTrialRows ? calib.bitacoraAsTrialRows(sKey, data.lotes || [], data.harvests || []) : []), ...trialRows];
-    return calib.weightedCalibration(input.recipe, rows, engine.recipeDistance);
+    const trialRows = (data.trials || []).filter(r => r && r.sKey === sKey);
+    const rows = [...(calib.bitacoraAsTrialRows ? calib.bitacoraAsTrialRows(sKey, data.lotes || [], data.harvests || [], {includeIncomplete:true}) : []), ...trialRows];
+    return {calibration:calib.weightedCalibration(input.recipe, rows, engine.recipeDistance), eligibility:calib.assessHistory(rows)};
   };
   const softenLegacyText = root => {
     if (!root) return;
@@ -67,7 +66,8 @@
       return true;
     }
     if (!globalThis.SetasScoring || !globalThis.SetasPeritoReadiness) return false;
-    const history = historyCalibrationFor(detail);
+    const historyReport = historyCalibrationFor(detail);
+    const history = historyReport?.calibration || null;
     const sev = globalThis.SetasScoring.assessSeverity(detail.an);
     // Unknown quantities stay unavailable in the readiness assessment. Only
     // pass the quantitative context to scoring when all its inputs are known.
@@ -117,6 +117,7 @@
           <div><b>pH</b><br>${escapeHtml(ph.trend || 'tendencia no disponible')}<br>medir mezcla hidratada; no es una medición calculada</div>
           <div><b>Riesgo</b><br>inferido, no observado<br>${escapeHtml(model.uncertainty?.risk?.note || '')}</div>
         </div>
+        <p data-history-eligibility>${escapeHtml(globalThis.SetasHistoricalCalibration?.describeHistory(historyReport?.eligibility))}. Las observaciones excluidas se conservan como contexto.</p>
         <p>Índice global ${escapeHtml(model.score)}/100: heurística comparativa. Cantidades de Bodega activa; humedad del catálogo efectivo. No son mediciones nuevas.</p>
       </details>`;
     box.querySelectorAll('[data-perito-action]').forEach(button => button.addEventListener('click', () => {
@@ -125,7 +126,7 @@
     replaceLegacyMetric(root, 'EB esperada', `${eb.low ?? '—'}–${eb.high ?? '—'}%`, `Conf. ${CONFIDENCE_ES[eb.confidence] || 'BAJA'}`);
     replaceLegacyMetric(root, 'pH estimado', ph.trend || 'tendencia', 'Medir');
     softenLegacyText(root);
-    globalThis.__setasPeritoAssessment = {inputRevision:detail.inputRevision,assessment,model};
+    globalThis.__setasPeritoAssessment = {inputRevision:detail.inputRevision,assessment,model,historyEligibility:historyReport?.eligibility};
     return true;
   };
   // Coalesce pending frames and always read the latest snapshot inside the

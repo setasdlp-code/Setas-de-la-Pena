@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 15d8ad47bbb023df69405a3cf87457448329f97011ab156835596745ca52775e
+// source-hash: 9ffb6b0bd9fc9dd01c56e255bb780ec2634211d5b2e8a073dbc6e2edc1467504
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1167,7 +1167,7 @@ const SetasSpeciesTargetsApi = typeof SetasSpeciesTargets !== "undefined" ? Seta
 const SetasLaunchPlanApi = typeof SetasLaunchPlan !== "undefined" ? SetasLaunchPlan : typeof require !== "undefined" ? require("./launch-plan.js") : null;
 const SetasInventoryConsumptionApi = typeof SetasInventoryConsumption !== "undefined" ? SetasInventoryConsumption : typeof require !== "undefined" ? require("./inventory-consumption.js") : null;
 const UNIT_INGREDIENT_IDS = BAG_TYPES.map((b) => b.stockId).filter(Boolean);
-const { bitacoraEBRows, historicalEB } = typeof SetasHistoricalCalibration !== "undefined" ? SetasHistoricalCalibration : typeof require !== "undefined" ? require("./historical-calibration.js") : {};
+const { bitacoraObservations, historicalEB, assessHistory, finiteEB, confirmedOutcome, describeHistory } = typeof SetasHistoricalCalibration !== "undefined" ? SetasHistoricalCalibration : typeof require !== "undefined" ? require("./historical-calibration.js") : {};
 const {
   SPECIES_FLUSH_PROFILES,
   calcThermalDelayFactor,
@@ -3106,9 +3106,11 @@ const hybridOptimizerDiag = (out, targetKey, ingredients, useStock, invLotes, pr
 const PERITO_EVIDENCE_CONFIDENCE_LABEL = { low: "baja", medium: "media" };
 const describePeritoEvidence = (evidence) => {
   const sampleSize = evidence?.summary?.sampleSize || 0;
-  if (!evidence || sampleSize === 0) return { hasEvidence: false, sampleSize: 0 };
+  const exclusions = evidence?.summary?.excludedRecords > 0 ? describeHistory({ eligibleN: sampleSize, excludedN: evidence.summary.excludedRecords, exclusionReasons: evidence.summary.exclusionReasons }) : null;
+  if (!evidence || sampleSize === 0) return { hasEvidence: false, sampleSize: 0, exclusions };
   return {
     hasEvidence: true,
+    exclusions,
     sampleSize,
     recordsWithEnvironment: evidence.summary?.recordsWithEnvironment || 0,
     confidenceLabel: PERITO_EVIDENCE_CONFIDENCE_LABEL[evidence.confidence] || evidence.confidence
@@ -4580,10 +4582,11 @@ function SimuladorShell(props) {
   const setEbRealFor = (id) => {
     const entry = saved.find((s) => s.id === id);
     if (!entry) return;
-    setPromptDlg({ title: "Registrar EB real", label: `EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`, placeholder: String(entry.eb), confirmLabel: "Guardar", onSubmit: (val) => {
-      const n = parseFloat(val);
-      if (!Number.isFinite(n)) return;
-      const u = saved.map((s) => s.id === id ? { ...s, ebReal: Math.round(n * 10) / 10 } : s);
+    setPromptDlg({ title: "Registrar EB real", label: `EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`, placeholder: String(entry.eb), confirmLabel: "Confirmar resultado final", onSubmit: (val) => {
+      const n = finiteEB(val);
+      if (n == null) return;
+      const ebReal = Math.round(n * 10) / 10;
+      const u = saved.map((s) => s.id === id ? { ...s, ebReal, outcome: confirmedOutcome(ebReal) } : s);
       setSaved(u);
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
@@ -4620,7 +4623,7 @@ function SimuladorShell(props) {
     setGroupByRole(true);
     setAllRoleGroups(false);
   };
-  const histRows = useMemo(() => bitacoraEBRows(bitLotes, bitCosechas), [bitLotes, bitCosechas]);
+  const histRows = useMemo(() => bitacoraObservations(bitLotes, bitCosechas), [bitLotes, bitCosechas]);
   const histStats = useMemo(() => historicalEB(sKey, histRows, recipe), [sKey, histRows, recipe]);
   const effectiveSPP = useMemo(() => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, recipe, effectiveINGS), [sKey, recipe, effectiveINGS]);
   const searchSPP = useMemo(() => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, [], optimizerINGS), [sKey, optimizerINGS]);
@@ -4841,10 +4844,12 @@ function SimuladorShell(props) {
     const union = (/* @__PURE__ */ new Set([...a, ...b])).size;
     return union ? inter / union : 0;
   };
-  const trialsWithReal = useMemo(() => saved.filter((s) => s.sKey === sKey && s.ebReal != null), [saved, sKey]);
+  const trialsWithReal = useMemo(() => assessHistory(saved.filter((s) => s.sKey === sKey)).eligibleRows, [saved, sKey]);
   const modelAccuracy = useMemo(() => {
     if (!trialsWithReal.length) return null;
-    const avgAbsDiff = trialsWithReal.reduce((s, t) => s + Math.abs(t.ebReal - parseFloat(t.eb)), 0) / trialsWithReal.length;
+    const comparable = trialsWithReal.filter((t) => finiteEB(t.eb) != null);
+    if (!comparable.length) return null;
+    const avgAbsDiff = comparable.reduce((s, t) => s + Math.abs(t.ebReal - finiteEB(t.eb)), 0) / comparable.length;
     return Math.round(avgAbsDiff * 10) / 10;
   }, [trialsWithReal]);
   const similarTrial = useMemo(() => {
@@ -7736,7 +7741,7 @@ BATCH (${numBags}×${kgBag} kg):
       return /* @__PURE__ */ React.createElement("div", { key: e.id, "data-recipe-id": e.id, className: "sdp-receta dash-card", style: { borderTopColor: band } }, /* @__PURE__ */ React.createElement("div", { className: "dash-card-top sdp-receta__hd" }, /* @__PURE__ */ React.createElement("div", { className: "dash-card-name", style: { fontFamily: "var(--font-editorial)", fontWeight: 700 } }, e.name), /* @__PURE__ */ React.createElement("div", { className: "dash-card-spp sdp-plateline" }, s2?.name, " · ", e.date)), /* @__PURE__ */ React.createElement("div", { className: "dash-card-body" }, /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "EB estimada"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: eb >= 100 ? "var(--moss-500)" : eb >= 80 ? "var(--ochre-500,#A07828)" : "var(--coral-500)" } }, e.eb, "%")), sc > 0 && /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Score"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)" } }, sc, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "/100"))), /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "dv" }, e.cn, ":1")), /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Ingredientes"), /* @__PURE__ */ React.createElement("span", { className: "dv" }, e.recipe.length)), costKg > 0 && /* @__PURE__ */ React.createElement("div", { className: "dash-kv" }, /* @__PURE__ */ React.createElement("span", { className: "dk" }, "Costo total/kg"), /* @__PURE__ */ React.createElement("span", { className: "dv", style: { color: "var(--ink-900)", fontFamily: "var(--font-num)", fontSize: "var(--text-base)" }, title: `Ingredientes: $${costIngKg.toLocaleString("es-CO")} + Energía proceso: $${eDash.toLocaleString("es-CO")}` }, "$", costKg.toLocaleString("es-CO"), " COP", eDash > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: 4 } }, "⚡+$", eDash.toLocaleString())))), costKg > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, borderTop: "1px solid var(--paper-300)" } }, [{ nom: "20×50", kgH: 1.8 }, { nom: "18×35", kgH: 1 }, { nom: "Punch", kgH: 3.5 }].map((b) => /* @__PURE__ */ React.createElement("div", { key: b.nom, style: { flex: 1, padding: "4px 6px", borderRight: "1px solid var(--paper-300)", textAlign: "center", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)", marginBottom: 1 } }, b.nom), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-sm)", color: "var(--ink-900)", fontWeight: 700 } }, "$", Math.round(costKg * b.kgH * hFactor).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-500)" } }, "COP/bolsa")))), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 16px 10px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, e.recipe.slice(0, 4).map((r) => {
         const g = INGS.find((i) => i.id === r.id);
         return g ? /* @__PURE__ */ React.createElement("div", { key: r.id, style: { display: "grid", gridTemplateColumns: "1fr auto", gap: 2, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)" } }, /* @__PURE__ */ React.createElement("span", null, g.name.length > 18 ? g.name.slice(0, 18) + "…" : g.name), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, r.p, "%")), /* @__PURE__ */ React.createElement("div", { className: "sdp-receta__prop", style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("span", { style: { width: `${r.p}%` } }))) : null;
-      }), e.recipe.length > 4 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", padding: "1px 3px" } }, "+", e.recipe.length - 4, " más"))), /* @__PURE__ */ React.createElement("div", { className: "dash-card-foot", style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sload", style: { background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--border-hairline,#8C7F5B)", padding: "4px 10px" }, onClick: () => {
+      }), e.recipe.length > 4 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", padding: "1px 3px" } }, "+", e.recipe.length - 4, " más"))), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px", fontSize: "var(--text-sm)", lineHeight: 1.5 }, "data-trial-outcome": true }, /* @__PURE__ */ React.createElement("div", null, finiteEB(e.ebReal) != null ? `EB observada: ${finiteEB(e.ebReal)}%. ` : "", describeHistory(assessHistory([e]))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", style: { minHeight: 44, marginTop: 8 }, onClick: () => setEbRealFor(e.id) }, "Registrar resultado final")), /* @__PURE__ */ React.createElement("div", { className: "dash-card-foot", style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "dash-sload", style: { background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--border-hairline,#8C7F5B)", padding: "4px 10px" }, onClick: () => {
         setTastingSpeciesKey(e.sKey);
         setShowTastingModal(true);
       }, title: "Abrir dossier gastronómico y maridaje" }, "🍷 Cata"), /* @__PURE__ */ React.createElement("button", { className: "dash-sload", style: { flex: 1 }, onClick: () => {
@@ -8438,7 +8443,7 @@ Click para ver análisis completo`
     return sc > 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--moss-50,#F0F4EB)", border: "1px solid var(--moss-300,#B8C9A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700,var(--accent-olive))", marginBottom: 12 } }, "Usando solo ingredientes en stock · ", sc, " disponibles en inventario") : /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 14px", background: "#FBF6E8", border: "1px solid #D4A838", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "#7A5A10", marginBottom: 12 } }, "Inventario vacío. Cambia a ", /* @__PURE__ */ React.createElement("strong", null, "Paleta completa"), " para generar recetas con toda la paleta, o registra compras en Inventario.");
   })() : /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--coral-50,#FCEEE9)", border: "1px solid var(--coral-300,#E8B4A0)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", marginBottom: 12 } }, "Generando con toda la paleta compatible con ", SPP[optTarget]?.name, " · ignora inventario · ideal para diseñar la receta antes de comprar"), optResults && optResults[optProfile] && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { id: "generator-results-heading", tabIndex: -1, className: "generator-results-heading", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", margin: "0 0 12px", paddingBottom: 8, borderBottom: "1px solid var(--border-soft)" } }, optResults[optProfile].length, " combinaciones exclusivas · perfil ", /* @__PURE__ */ React.createElement("b", null, OPT_PROFILES[optProfile]?.label), " · ", optUseStock ? "solo stock" : "paleta completa", " · C:N objetivo ", SPP[optTarget]?.cn_optimal.ideal, ":1"), (() => {
     const evi = describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
-    return /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: evi.hasEvidence ? "var(--moss-50,#F0F4EB)" : "var(--paper-100)", border: `1px solid ${evi.hasEvidence ? "var(--moss-300,#B8C9A0)" : "var(--border-soft)"}`, borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: evi.hasEvidence ? "var(--moss-700,var(--accent-olive))" : "var(--ink-500)", marginBottom: 12 } }, evi.hasEvidence ? `Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize === 1 ? "" : "s"} real${evi.sampleSize === 1 ? "" : "es"} de ${SPP[optTarget]?.name || optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)` : `Sin evidencia de producción registrada aún para ${SPP[optTarget]?.name || optTarget} — Escenarios calculados solo con el modelo teórico.`);
+    return /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: evi.hasEvidence ? "var(--moss-50,#F0F4EB)" : "var(--paper-100)", border: `1px solid ${evi.hasEvidence ? "var(--moss-300,#B8C9A0)" : "var(--border-soft)"}`, borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: evi.hasEvidence ? "var(--moss-700,var(--accent-olive))" : "var(--ink-500)", marginBottom: 12 } }, evi.hasEvidence ? `Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize === 1 ? "" : "s"} real${evi.sampleSize === 1 ? "" : "es"} de ${SPP[optTarget]?.name || optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)` : `Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name || optTarget} — Escenarios calculados solo con el modelo teórico.`, evi.exclusions && /* @__PURE__ */ React.createElement("div", null, evi.exclusions, ". Observaciones disponibles como contexto."));
   })(), optResults[optProfile].map((r, i) => {
     const mainIngs = r.recipe.map((x) => {
       const g = INGS.find((ing) => ing.id === x.id);
