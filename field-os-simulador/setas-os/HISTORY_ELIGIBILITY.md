@@ -51,7 +51,7 @@ The browser test uses the repository's real React harness, native adapter and sc
 
 Legacy room-stage snapshots without explicit outcomes remain contextual. Contradictory stage snapshots remain excluded until reconciled; no new reconciliation workflow or automatic migration is introduced. Physical duplicates lacking a shared batch/source identity cannot be inferred from recipe similarity. There are no prototype production data or verified yield improvements.
 
-The initial delivery was local and uncommitted. A subsequent user instruction authorized committing and pushing this isolated branch. PR creation, merge and deployment remain unauthorized.
+The initial delivery was local and uncommitted. A subsequent user instruction authorized committing and pushing this isolated branch. A further user instruction authorized PR creation. Merge and deployment remain unauthorized. Before opening the PR, origin/main 3d9eb1c was integrated and the build, 896-test suite and desktop/mobile browser checks passed again.
 
 Verified final results: build completed; focused suite 50/50; `npm test` 896/896; browser 1280px and 390px passed with no page errors; both screenshots inspected without overflow; `git diff --check` clean.
 

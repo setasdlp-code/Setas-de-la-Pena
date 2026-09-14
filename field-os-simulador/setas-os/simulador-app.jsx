@@ -3324,11 +3324,17 @@ const CaptureInput=({rules={},style,...props})=>{
   const error=touched?SetasBitacora.captureError(props.value,rules):'';
   return <><input {...props} data-capture="true" onBlur={()=>setTouched(true)} aria-invalid={!!error} aria-describedby={error?props.id+'-error':undefined} style={{...style,minHeight:44,fontSize:16}}/>{error&&<span id={props.id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{error}</span>}</>;
 };
-const AccessibleModal=({onClose,label,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle})=>{
+const AccessibleModal=({onClose,label,title,ariaLabel,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle,width,maxWidth,id})=>{
   const dialogRef=useDialogA11y(onClose);
+  const resolvedLabel=label||ariaLabel||title;
+  const mergedStyle={
+    ...(width?{width}:{}),
+    ...(maxWidth?{maxWidth}:{}),
+    ...dialogStyle
+  };
   return(
     <div className={backdropClassName} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha'].includes(label)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={label} style={dialogStyle}>
+      <div id={id} onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha'].includes(resolvedLabel)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={resolvedLabel} style={Object.keys(mergedStyle).length>0?mergedStyle:undefined}>
         {children}
       </div>
     </div>
@@ -3338,10 +3344,10 @@ const ConfirmModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+      <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
         <button onClick={()=>{dlg.onConfirm();onClose();}} className={`inv-btn ${dlg.danger?'inv-btn-danger':'inv-btn-pri'}`}>{dlg.confirmLabel||'Confirmar'}</button>
       </div>
@@ -3355,11 +3361,11 @@ const PromptModal=({dlg,onClose})=>{
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
+      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
         {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
         <input data-autofocus id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
-        <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+        <div className="inv-modal-actions">
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
         </div>
@@ -3371,10 +3377,10 @@ const NoticeModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
-      <div style={{display:'flex',justifyContent:'flex-end'}}>
+      <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-pri">Aceptar</button>
       </div>
     </div>
@@ -7775,7 +7781,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <input id="provider-city" name="providerCity" autoComplete="address-level2" className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
                     </div>
                   </div>
-                  <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                  <div className="inv-modal-actions">
                     <button className="inv-btn inv-btn-sec" onClick={()=>setShowProvModal(false)}>Cancelar</button>
                     <button className="inv-btn inv-btn-pri" onClick={agregarProveedor}>Guardar proveedor</button>
                   </div>
@@ -8432,8 +8438,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
 
-            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
-              <table className="prod-tbl" style={{marginBottom:0}}>
+            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+              <table className="prod-tbl" style={{marginBottom:0,minWidth:480}}>
                 <thead>
                   <tr>
                     <th style={{textAlign:'left'}}>Oleada</th>
@@ -13379,24 +13385,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
-          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:520,maxWidth:'calc(100vw - 32px)'}}>
+          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
-              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
-                <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
-                <tbody>
-                  {loteBatchConfirm.preview.map(row=>(
-                    <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="inv-modal-table-wrap">
+                <table style={{width:'100%',minWidth:340,borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:0}}>
+                  <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px',whiteSpace:'nowrap'}}>{h}</th>))}</tr></thead>
+                  <tbody>
+                    {loteBatchConfirm.preview.map(row=>(
+                      <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end',paddingTop:4}}>
+              <div className="inv-modal-actions">
                 <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
               </div>
@@ -13404,7 +13412,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
-          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:'min(560px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <style>{`[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Nueva prueba experimental</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña.</p><p>Plan de preparación: {prodBags} bolsas × {prodKg} kg · {prodH}% humedad. No confirma medidas.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" aria-invalid={!!captureErrors["bit-codigo"]} aria-describedby={captureErrors["bit-codigo"]?"bit-codigo-error":undefined} onBlur={()=>validateCaptureField("bit-codigo")} name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/>{captureErrorNode("bit-codigo")}</div>
@@ -13431,7 +13439,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" aria-invalid={!!captureErrors["bit-objective"]} aria-describedby={captureErrors["bit-objective"]?"bit-objective-error":undefined} onBlur={()=>validateCaptureField("bit-objective")} name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/>{captureErrorNode("bit-objective")}</div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="bit-notes">Notas</label><textarea id="bit-notes" name="testNotes" autoComplete="off" className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+              <div className="inv-modal-actions">
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={()=>{if(!validateCapture('trial'))return;const newId=crearBitLote(SetasBitacora.normalizeTrialCapture(bitNuevoForm));if(!newId)return;setBitNuevoForm({});setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
@@ -13439,7 +13447,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, 95vw)'}}>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <style>{`[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Registrar cosecha</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición. Borrador conservado en esta pestaña.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" aria-invalid={!!captureErrors["harvest-bag"]} aria-describedby={captureErrors["harvest-bag"]?"harvest-bag-error":undefined} onBlur={()=>validateCaptureField("harvest-bag")} name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select>{captureErrorNode("harvest-bag")}</div>
@@ -13521,7 +13529,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 );
               })()}
-              <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
+              <div className="inv-modal-actions">
                 <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button
                   type="button"
@@ -14190,8 +14198,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
 
-                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
-                    <table className="prod-launch-table">
+                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+                    <table className="prod-launch-table" style={{minWidth:360}}>
                       <thead>
                         <tr>
                           <th>Insumo</th>
@@ -14341,7 +14349,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* Botones de Cierre */}
-                <div style={{display:'flex',justifyContent:'flex-end',gap:8,borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
+                <div className="inv-modal-actions" style={{borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
                   <button
                     type="button"
                     onClick={() => setShowProdLaunchModal(false)}

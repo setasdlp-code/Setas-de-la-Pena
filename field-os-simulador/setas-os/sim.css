@@ -1837,7 +1837,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 14px;background:var(--paper-200);color:inherit;border:0;font:inherit;text-align:left;cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
 .sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);font-variant-numeric:tabular-nums;}
-.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding-top:var(--sp-20);overscroll-behavior:contain;}
+.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:var(--sp-20) var(--sp-6) var(--sp-12);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
 .sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--sp-16) var(--sp-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
@@ -1845,8 +1845,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
 .sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);font-size:16px;line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:var(--text-on-dark);border-color:var(--coral-500);}
-.sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--sp-10);width:440px;max-width:calc(100vw - 32px);}
+.sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--sp-10);width:440px;max-width:calc(100vw - 32px);box-sizing:border-box;}
 .sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--sp-10);padding-bottom:var(--sp-7);border-bottom:1px solid var(--border-soft);}
+.sim-root .inv-modal-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;border:1px solid var(--border-soft);border-radius:0;}
+.sim-root .inv-modal-actions{display:flex;gap:10px;justify-content:flex-end;align-items:center;padding-top:8px;flex-wrap:wrap;}
 .sim-root .prov-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--paper-300);}
 .sim-root .prov-row:last-child{border-bottom:none;}
 .sim-root .prov-tipo-chip{font-family:var(--font-mono);font-size:12px;padding:3px 8px;border-radius:var(--radius-sm);background:var(--paper-200);color:var(--ink-700);flex-shrink:0;font-weight:600;}
@@ -2126,8 +2128,11 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .prod-batch-grid{ grid-template-columns:1fr 1fr!important; }
 
   /* 23. Modal: full ancho + alto seguro con scroll interno (aplica a todos los modales, no solo los que traen override inline) */
-  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; padding:var(--sp-9)!important; max-height:calc(100vh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; }
-  .sim-root .inv-modal-bg{ padding-top:50px; }
+  .sim-root .inv-modal{ width:calc(100vw - 24px)!important; max-width:calc(100vw - 24px)!important; padding:var(--sp-8)!important; max-height:calc(100dvh - 32px)!important; overflow-y:auto!important; box-sizing:border-box!important; margin:auto!important; }
+  .sim-root .inv-modal-bg{ padding:var(--sp-4) var(--sp-3)!important; align-items:center!important; overflow-y:auto!important; -webkit-overflow-scrolling:touch!important; }
+  .sim-root .inv-modal-title{ font-size:11px!important; letter-spacing:.12em!important; word-break:break-word; }
+  .sim-root .inv-modal-actions{ flex-direction:column-reverse!important; align-items:stretch!important; width:100%!important; gap:8px!important; }
+  .sim-root .inv-modal-actions .btn, .sim-root .inv-modal-actions .inv-btn{ width:100%!important; min-height:44px!important; justify-content:center!important; }
 
   /* 24. Botones de acción: ancho completo */
   .sim-root .act-row{ flex-direction:column; gap:8px; }
