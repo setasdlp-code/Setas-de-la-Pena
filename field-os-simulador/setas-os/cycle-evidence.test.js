@@ -8,7 +8,7 @@ const cycle = {
   startAt: '2026-08-24T08:00:00-05:00', endAt: '2026-08-24T20:00:00-05:00'
 };
 const lote = {
-  id: 'BIT_1', codigo: 'SDP-TEST-001', peseSeco: 2, costoIngKg: 1500,
+  id: 'BIT_1', estado:'completado', codigo: 'SDP-TEST-001', peseSeco: 2, costoIngKg: 1500,
   fechaInoculacion: '2026-08-01'
 };
 const bolsas = [
@@ -52,7 +52,8 @@ test('harvestByFlush consolida registros por flush sin inventar peso comercial',
 
 test('HistoricalEvidence filtra por especie/receta y nunca sube a high por observación sola', () => {
   const mk = (id, speciesId = 'lions_mane', recipeVersionId = 'R1v2') => ({
-    schema: 'setas.cycle-evidence.v1', sourceId: id, speciesId,
+    schema: 'setas.cycle-evidence.v1', sourceId: id, batchId:id, speciesId,
+    outcome:{status:'completed-success',verified:true},
     recipeSnapshot: { versionId: recipeVersionId }, ingredientLots: [{ inventoryLotId: 'INV_1' }],
     metrics: { total_fresh_kg: 1, be_pct: 80 }, telemetrySummary: { metricsWithValidData: 2 },
   });
@@ -62,4 +63,20 @@ test('HistoricalEvidence filtra por especie/receta y nunca sube a high por obser
   assert.equal(hist.summary.sampleSize, 3);
   assert.equal(hist.confidence, 'medium');
   assert.notEqual(hist.confidence, 'high');
+});
+test('closed room stage cannot turn an unfinished batch into a final outcome', () => {
+  const ev=buildCycleEvidence({cycle,lote:{...lote,estado:'fructificacion'},bolsas,cosechas});
+  const report=buildHistoricalEvidence([ev]);
+  assert.equal(report.summary.sampleSize,0);
+  assert.equal(report.observations.length,1);
+  assert.equal(report.observations[0].status,'partial');
+  assert.equal(ev.metrics.be_pct,75);
+});
+test('final batch outcomes deduplicate across room stages and retain verified zero', () => {
+  const ev=buildCycleEvidence({cycle,lote,bolsas,cosechas});
+  const zero=buildCycleEvidence({cycle,lote:{...lote,id:'ZERO',outcome:{status:'completed-zero-yield',verified:true}},bolsas,cosechas:[]});
+  const report=buildHistoricalEvidence([ev,{...ev,sourceId:'another-stage'},zero]);
+  assert.equal(report.summary.sampleSize,2);
+  assert.equal(report.summary.exclusionReasons['duplicate-source-record'],1);
+  assert.equal(report.records[1].metrics.be_pct,0);
 });

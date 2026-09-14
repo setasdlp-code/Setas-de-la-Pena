@@ -1,6 +1,7 @@
 'use strict';
 import './room-cycle.js';
 import './telemetry-contract.js';
+import './historical-calibration.js';
 import './cycle-evidence.js';
 import './batch-traceability.js';
 

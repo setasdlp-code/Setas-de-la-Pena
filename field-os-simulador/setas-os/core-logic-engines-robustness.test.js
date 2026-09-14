@@ -154,14 +154,14 @@ test('actuators: resetea pulseStartMs a 0 cuando FAE se apaga', () => {
 // ── 3. HISTORICAL CALIBRATION ROBUSTNESS ──────────────────────────────
 test('calibration: bitacoraEBRows acepta pesoSeco o peseSeco y descarta BE imposible', () => {
   const lotes = [
-    { id: 'L1', codigo: 'LOT-1', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, pesoSeco: 2.0 },
-    { id: 'L2', codigo: 'LOT-2', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, peseSeco: 2.5 },
-    { id: 'L_BAD', codigo: 'LOT-BAD', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, pesoSeco: 1.0 }
+    { id: 'L1', estado:'completado', codigo: 'LOT-1', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, pesoSeco: 2.0 },
+    { id: 'L2', estado:'completado', codigo: 'LOT-2', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, peseSeco: 2.5 },
+    { id: 'L_BAD', estado:'completado', codigo: 'LOT-BAD', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, pesoSeco: 1.0 }
   ];
   const cosechas = [
-    { loteId: 'L1', pesoFresco: 1800 }, // 1.8 kg fresco / 2.0 kg seco = 90% BE
-    { loteId: 'L2', pesoFresco: 2250 }, // 2.25 kg fresco / 2.5 kg seco = 90% BE
-    { loteId: 'L_BAD', pesoFresco: 10000 } // 10.0 kg fresco / 1.0 kg seco = 1000% BE (imposible)
+    { id:'H_L1', loteId: 'L1', pesoFresco: 1800 }, // 1.8 kg fresco / 2.0 kg seco = 90% BE
+    { id:'H_L2', loteId: 'L2', pesoFresco: 2250 }, // 2.25 kg fresco / 2.5 kg seco = 90% BE
+    { id:'H_L_BAD', loteId: 'L_BAD', pesoFresco: 10000 } // 10.0 kg fresco / 1.0 kg seco = 1000% BE (imposible)
   ];
 
   const rows = calibration.bitacoraEBRows(lotes, cosechas);
@@ -367,8 +367,8 @@ test('actuators: deriva punto de rocio y activa corte anti-condensacion aun con 
 
 test('calibration: weightedCalibration tolera funcion de distancia que devuelva NaN', () => {
   const rows = [
-    { recipe: [{ id: 'paja_trigo', p: 80 }], ebReal: 90, fecha: '2026-05-01' },
-    { recipe: [{ id: 'paja_trigo', p: 80 }], ebReal: 85, fecha: '2026-06-01' }
+    { recipe: [{ id: 'paja_trigo', p: 80 }], id:'T90', outcome:{status:'completed-success',verified:true}, ebReal: 90, fecha: '2026-05-01' },
+    { recipe: [{ id: 'paja_trigo', p: 80 }], id:'T85', outcome:{status:'completed-success',verified:true}, ebReal: 85, fecha: '2026-06-01' }
   ];
   // distance function returns NaN
   const res = calibration.weightedCalibration(
@@ -385,12 +385,12 @@ test('calibration: weightedCalibration tolera funcion de distancia que devuelva 
 
 test('calibration: bitacoraEBRows acepta alias peso_seco y dryWeightKg', () => {
   const lotes = [
-    { id: 'L_UNDERSCORE', codigo: 'LOT-U', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, peso_seco: 2.0 },
-    { id: 'L_CAMEL', codigo: 'LOT-C', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, dryWeightKg: 2.5 }
+    { id: 'L_UNDERSCORE', estado:'completado', codigo: 'LOT-U', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, peso_seco: 2.0 },
+    { id: 'L_CAMEL', estado:'completado', codigo: 'LOT-C', recipeRef: { sKey: 'p_ostreatus_gris', recipe: [] }, dryWeightKg: 2.5 }
   ];
   const cosechas = [
-    { loteId: 'L_UNDERSCORE', pesoFresco: 1800 },
-    { loteId: 'L_CAMEL', pesoFresco: 2250 }
+    { id:'H_L_UNDERSCORE', loteId: 'L_UNDERSCORE', pesoFresco: 1800 },
+    { id:'H_L_CAMEL', loteId: 'L_CAMEL', pesoFresco: 2250 }
   ];
 
   const rows = calibration.bitacoraEBRows(lotes, cosechas);

@@ -14,6 +14,7 @@ test('el módulo puede evaluarse de nuevo en navegador sin redeclarar globals l�
 // (crearBitLote / addBitCosecha), not the shell's demo `yields` array.
 const lote = (overrides = {}) => ({
   id: 'BIT_1',
+  estado: 'completado',
   codigo: 'SDP-260819-PO-R01',
   peseSeco: 2,
   recipeRef: {
@@ -55,7 +56,8 @@ test('cada lote agrega solo sus propias cosechas', () => {
 });
 
 // ── historicalEB — mezcla histórica con la curva suave ──────────────
-const row = (sKey, be, recipe) => ({ loteId: 'BIT_' + be, codigo: '', sKey, be, recipe: recipe || [] });
+let fixtureId = 0;
+const row = (sKey, be, recipe) => ({ outcome:{status:be === 0 ? 'completed-zero-yield' : 'completed-success', verified:true}, loteId: 'BIT_' + (++fixtureId), codigo: '', sKey, be, recipe: recipe || [] });
 const REC = [{ id: 'paja_trigo' }, { id: 'salvado_trigo' }];
 
 test('sin lotes reales no hay mezcla: peso 0 y sin promedio', () => {
@@ -204,7 +206,7 @@ const distL1 = (a = [], b = []) => {
   ids.forEach((id) => { l1 += Math.abs((aa[id] || 0) - (bb[id] || 0)); });
   return Math.min(1, l1 / 200);
 };
-const trial = (recipe, ebReal) => ({ recipe, ebReal });
+const trial = (recipe, ebReal) => ({ id:'T_' + (++fixtureId), outcome:{status:ebReal === 0 ? 'completed-zero-yield' : 'completed-success', verified:true}, recipe, ebReal });
 
 test('weightedCalibration es null sin filas — no inventa evidencia de la nada', () => {
   assert.equal(weightedCalibration([{ id: 'a', p: 100 }], [], distL1), null);
@@ -275,7 +277,7 @@ test('la calibración del motor ya no se alimenta del array de demo del shell', 
 
 test('la calibración se deriva de lotes y cosechas reales de Bitácora', () => {
   const jsx = read('simulador-app.jsx');
-  assert.match(jsx, /bitacoraEBRows\s*\(\s*bitLotes\s*,\s*bitCosechas\s*\)/);
+  assert.match(jsx, /bitacoraObservations\s*\(\s*bitLotes\s*,\s*bitCosechas\s*\)/);
   assert.match(jsx, /historicalEB\s*\(\s*sKey/);
 });
 

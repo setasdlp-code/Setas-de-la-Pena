@@ -1444,7 +1444,7 @@ const UNIT_INGREDIENT_IDS=BAG_TYPES.map(b=>b.stockId).filter(Boolean);
 // ── Calibración histórica — puente hacia historical-calibration.js ──
 // Deriva la eficiencia biológica de lotes REALES de Bitácora. Antes esto se
 // alimentaba del array `yields` del shell, que son 5 filas de demo inventadas.
-const { bitacoraEBRows, historicalEB } = (typeof SetasHistoricalCalibration !== 'undefined'
+const { bitacoraObservations, historicalEB, assessHistory, finiteEB, confirmedOutcome, describeHistory } = (typeof SetasHistoricalCalibration !== 'undefined'
   ? SetasHistoricalCalibration
   : (typeof require !== 'undefined' ? require('./historical-calibration.js') : {}));
 
@@ -4499,9 +4499,11 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
 const PERITO_EVIDENCE_CONFIDENCE_LABEL={low:'baja',medium:'media'};
 const describePeritoEvidence=(evidence)=>{
   const sampleSize=evidence?.summary?.sampleSize||0;
-  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0};
+  const exclusions=evidence?.summary?.excludedRecords>0 ? describeHistory({eligibleN:sampleSize,excludedN:evidence.summary.excludedRecords,exclusionReasons:evidence.summary.exclusionReasons}) : null;
+  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0,exclusions};
   return{
     hasEvidence:true,
+    exclusions,
     sampleSize,
     recordsWithEnvironment:evidence.summary?.recordsWithEnvironment||0,
     confidenceLabel:PERITO_EVIDENCE_CONFIDENCE_LABEL[evidence.confidence]||evidence.confidence,
@@ -6044,10 +6046,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const setEbRealFor=id=>{
     const entry=saved.find(s=>s.id===id);
     if(!entry) return;
-    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Guardar',onSubmit:val=>{
-      const n=parseFloat(val);
-      if(!Number.isFinite(n)) return;
-      const u=saved.map(s=>s.id===id?{...s,ebReal:Math.round(n*10)/10}:s);
+    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Confirmar resultado final',onSubmit:val=>{
+      const n=finiteEB(val);
+      if(n==null) return;
+      const ebReal=Math.round(n*10)/10;
+      const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
       try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
     }});
@@ -6086,7 +6089,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Calibración por evidencia real: lotes de Bitácora con peso seco y cosechas
   // registradas. Sin lotes reales n=0 y weight=0 — el score cae limpio al EB
   // teórico en vez de mezclarse con las filas de demo del shell.
-  const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
+  const histRows=useMemo(()=>bitacoraObservations(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
   const effectiveSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,recipe,effectiveINGS),[sKey,recipe,effectiveINGS]);
   // Búsquedas híbridas desde receta vacía: objetivos de la clase por defecto de
@@ -6302,10 +6305,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // setEbRealFor) en pruebas guardadas de la misma especie, se usa para (a)
   // mostrar qué tan preciso ha sido el modelo aquí en esta bodega y (b) avisar
   // si la receta activa se parece a una prueba ya hecha, con su resultado real.
-  const trialsWithReal=useMemo(()=>saved.filter(s=>s.sKey===sKey&&s.ebReal!=null),[saved,sKey]);
+  const trialsWithReal=useMemo(()=>assessHistory(saved.filter(s=>s.sKey===sKey)).eligibleRows,[saved,sKey]);
   const modelAccuracy=useMemo(()=>{
     if(!trialsWithReal.length) return null;
-    const avgAbsDiff=trialsWithReal.reduce((s,t)=>s+Math.abs(t.ebReal-parseFloat(t.eb)),0)/trialsWithReal.length;
+    const comparable=trialsWithReal.filter(t=>finiteEB(t.eb)!=null);
+    if(!comparable.length) return null;
+    const avgAbsDiff=comparable.reduce((s,t)=>s+Math.abs(t.ebReal-finiteEB(t.eb)),0)/comparable.length;
     return Math.round(avgAbsDiff*10)/10;
   },[trialsWithReal]);
   const similarTrial=useMemo(()=>{
@@ -10848,6 +10853,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
                               </div>
                             </div>
+                            <div style={{padding:'12px 16px',fontSize:'var(--text-sm)',lineHeight:1.5}} data-trial-outcome>
+                              <div>{finiteEB(e.ebReal)!=null?`EB observada: ${finiteEB(e.ebReal)}%. `:''}{describeHistory(assessHistory([e]))}</div>
+                              <button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginTop:8}} onClick={()=>setEbRealFor(e.id)}>Registrar resultado final</button>
+                            </div>
                             <div className="dash-card-foot" style={{display:'flex',gap:6}}>
                               <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
@@ -12389,7 +12398,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-50,#F0F4EB)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300,#B8C9A0)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
                                       {evi.hasEvidence
                                         ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
-                                        :`Sin evidencia de producción registrada aún para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                        :`Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                      {evi.exclusions&&<div>{evi.exclusions}. Observaciones disponibles como contexto.</div>}
                                     </div>
                                   );
                                 })()}

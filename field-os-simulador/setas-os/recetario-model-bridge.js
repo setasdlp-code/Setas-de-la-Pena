@@ -39,7 +39,7 @@
   const bitacoraTrialRows = sKey => {
     const calib = globalThis.SetasHistoricalCalibration;
     if (!calib?.bitacoraAsTrialRows) return [];
-    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
+    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []), {includeIncomplete:true});
   };
 
   const historyFor = (sKey, recipe) => {
@@ -47,7 +47,7 @@
     const engine = globalThis.SetasPeritoScenarios;
     const calib = globalThis.SetasHistoricalCalibration;
     if (!engine?.recipeDistance || !calib?.weightedCalibration) return null;
-    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && num(r.ebReal) != null && Array.isArray(r.recipe));
+    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey);
     const rows = [...bitacoraTrialRows(sKey), ...trialRows];
     return calib.weightedCalibration(recipe, rows, engine.recipeDistance);
   };
@@ -135,7 +135,8 @@
   }
 
   const fmtDiff = r => {
-    if (num(r.ebReal) == null) return 'EB real pendiente';
+    const outcome = globalThis.SetasHistoricalCalibration?.classifyOutcome(r);
+    if (!outcome?.eligible) return globalThis.SetasHistoricalCalibration?.describeHistory(globalThis.SetasHistoricalCalibration.assessHistory([r])) || 'Resultado final pendiente';
     const snap = r.modelSnapshot;
     const central = num(snap?.uncertainty?.eb?.central) ?? num(r.eb);
     if (central == null) return `EB real ${Number(r.ebReal).toFixed(1)}%`;

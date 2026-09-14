@@ -35,7 +35,7 @@ test('Bodega and moisture arrive from the active React snapshot, never compiled 
 test('Recetario calibra EB real solo para la misma especie y pondera similitud', () => {
   assert.match(bridge, /setas_v6/);
   assert.match(bridge, /r\.sKey\s*===\s*sKey/);
-  assert.match(bridge, /ebReal/);
+  assert.match(bridge, /assessHistory/);
   assert.match(bridge, /weightedCalibration/);
   assert.match(bridge, /historyCalibration/);
 });
