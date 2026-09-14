@@ -629,48 +629,13 @@
       </div>
       </sc-if>
 
-      <!-- HARVEST -->
+      <!-- Harvest uses canonical Bitácora records; legacy demonstration containers never become observations. -->
       <sc-if value="{{ isHarvest }}" hint-placeholder-val="{{ false }}">
-      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
-        <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
-          <div style="margin-top:8px;">
-            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
-            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h1>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
-            <div style="font:var(--t-label);color:var(--ink-0);">Contenedor</div>
-            <button onClick="{{ openScanHarvest }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.05em;color:var(--accent-terracotta);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M3 12h18"></path></svg>Escanear</button>
-          </div>
-          <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
-            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
-              <button onClick="{{ c.pickH }}" style="{{ c.pickStyleH }}">
-                <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
-                <span style="font:var(--t-caption);opacity:var(--opacity-secondary);">{{ c.species }}</span>
-              </button>
-            </sc-for>
-          </div>
-          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Peso fresco</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-md);padding:10px 12px;max-width:340px;">
-            <button onClick="{{ weightDown }}" aria-label="Disminuir peso en 10 gramos" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">–</button>
-            <div style="text-align:center;"><span style="font-family:var(--font-mono);font-weight:600;font-size:38px;letter-spacing:-.02em;color:var(--ink-0);">{{ weight }}</span><span style="font:var(--t-label);color:var(--text-metadata);margin-left:4px;">g</span></div>
-            <button onClick="{{ weightUp }}" aria-label="Aumentar peso en 10 gramos" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">+</button>
-          </div>
-          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Cierre del contenedor</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <sc-for list="{{ closeOptions }}" as="o" hint-placeholder-count="2">
-              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></button>
-            </sc-for>
-          </div>
-          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Destino de la cosecha</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <sc-for list="{{ destOptions }}" as="o" hint-placeholder-count="4">
-              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="display:flex;flex-direction:column;gap:2px;text-align:left;"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></span></button>
-            </sc-for>
-          </div>
-          <button onClick="{{ confirmHarvest }}" disabled="{{ harvestDisabled }}" style="{{ harvestBtnStyle }};margin-top:20px;">{{ harvestBtnLabel }}</button>
+        <div class="col" style="padding:24px;">
+          <h1>Registrar cosecha</h1>
+          <p>Selecciona un lote y una bolsa en Bitácora para registrar el peso medido en gramos. Los contenedores de demostración no son registros operativos.</p>
+          <button onClick="{{ confirmHarvest }}" style="min-height:44px;padding:12px 20px;font-size:16px;">Abrir Bitácora de cosechas</button>
         </div>
-      </div>
       </sc-if>
 
       <!-- QUICK EVENT -->
@@ -2926,7 +2891,7 @@ class Component extends DCLogic {
     }));
     if(this.state.online) this.drainSync();
   }
-  go(screen){ this.setState({ screen, capture:false }); }
+  go(screen){ if(screen==='harvest'){this.confirmHarvest();return;} this.setState({ screen, capture:false }); }
 
   todayShort(){ const d=new Date(); const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']; return d.getDate()+' '+m[d.getMonth()]; }
   nextLote(spKey){ const d=new Date(); const mm=String(d.getMonth()+1).padStart(2,'0'); const n=String(Math.max(1,this.state.seq-414)).padStart(3,'0'); return d.getFullYear()+'-'+mm+'-'+spCode(spKey)+'-'+n; }
@@ -2982,18 +2947,7 @@ class Component extends DCLogic {
     oContainers.forEach(id=>this.push({ type:'observacion', container:id, note }));
     this.go('home'); this.toastWithUndo('Observación registrada en '+oContainers.length+' contenedor'+(oContainers.length>1?'es':'')+(obsPhoto?' con foto':'')+'.', _snap);
   }
-  confirmHarvest(){
-    const { hContainer, weight, hClose, hDest, operator } = this.state;
-    if(!hContainer) return;
-    const _snap = { ledger:[...this.state.ledger], containers:[...this.state.containers], salidas:[...this.state.salidas], seq:this.state.seq };
-    const closed = hClose==='cosechado';
-    const cont = this.state.containers.find(c=>c.id===hContainer) || {};
-    const note = weight+' g fresco · '+destLabel(hDest)+'. '+(closed?'Contenedor cerrado.':'Contenedor sigue activo (más flushes).');
-    const salida = { fecha:this.todayShort(), lote:cont.batch||'—', container:hContainer, spp:cont.key, pesoG:weight, dest:hDest, grade:'A' };
-    this.setState(s=>({ containers:s.containers.map(c=>c.id===hContainer?{...c, status:closed?'cosechado':c.status, stage:closed?'ciclo cerrado':c.stage, tl:[...c.tl,{type:'cosecha', date:this.todayShort()+' · '+this.now(), note, by:operator}]}:c), salidas:[salida, ...s.salidas], hContainer:null, weight:240, hClose:'cosechado', hDest:'restaurante' }));
-    this.push({ type:'cosecha', container:hContainer, note:weight+' g fresco · '+destLabel(hDest)+'.' });
-    this.go('home'); this.toastWithUndo(weight+' g cosechados de '+hContainer+' → '+destLabel(hDest)+'.', _snap);
-  }
+  confirmHarvest(){ this.goBitTab('bit_dash'); this.toast('Selecciona un lote y registra su cosecha en Bitácora.'); }
   confirmQuick(){
     const { quickType, qContainers, qNote, qCause, qPhoto } = this.state;
     if(!qContainers.length) return;

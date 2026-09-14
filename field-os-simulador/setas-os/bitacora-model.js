@@ -115,7 +115,35 @@
     return dCol.getTime() >= dIno.getTime();
   };
 
-  const api = { calcLoteStats, calcLoteScore, isFechaColValida };
+  // Capture boundaries: legacy pesoFresco is grams; peseSeco/pesoHumedo are kg.
+  // Empty input is unknown, never an observed zero. Bounds are physical/type
+  // constraints, not recommended biological operating thresholds.
+  const captureNumber = value => value == null || String(value).trim() === '' ? null : Number(value);
+  const captureError = (value, {required=false,min=0,max=Infinity,integer=false}={}) => {
+    const n=captureNumber(value);
+    if(n===null) return required?'Completa este campo.':'';
+    if(!Number.isFinite(n)) return 'Escribe un número válido.';
+    if(integer&&!Number.isInteger(n)) return 'Escribe un número entero.';
+    if(n<min||n>max) return `Valor fuera de rango (${min}–${max===Infinity?'∞':max}).`;
+    return '';
+  };
+  const normalizeTrialCapture = form => ({...form,
+    numBolsas:captureNumber(form.numBolsas),pesoHumedo:captureNumber(form.pesoHumedo),
+    peseSeco:captureNumber(form.peseSeco),spawnPct:captureNumber(form.spawnPct),humedad:captureNumber(form.humedad),
+    fechaMezcla:form.fechaMezcla||null,fechaInoculacion:form.fechaInoculacion||null,
+    tratamiento:form.tratamiento||null
+  });
+  const normalizeHarvestCapture = form => ({...form,
+    pesoFresco:captureNumber(form.pesoFresco),flush:captureNumber(form.flush),calidad:captureNumber(form.calidad)
+  });
+  // Both local collections must persist before UI state changes. Roll back the
+  // first key if the second write fails; callers keep their draft on failure.
+  const persistCapture = (storage, entries) => {
+    const before=entries.map(([key])=>[key,storage.getItem(key)]);
+    try { entries.forEach(([key,value])=>storage.setItem(key,JSON.stringify(value))); }
+    catch(error) { before.forEach(([key,value])=>{try{value===null?storage.removeItem(key):storage.setItem(key,value);}catch{}}); throw error; }
+  };
+  const api = { calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasBitacora = api;
 })();

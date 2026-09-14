@@ -2383,7 +2383,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
 const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>{
   const lote=lotes.find(l=>l.id===loteId||l.codigo===loteCode||l.id===loteCode)||lotes[0];
   const harvests=lote?cosechas.filter(c=>c.loteId===lote.id):[];
-  const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
+  const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
   const spImg=lote?.especieKey?(IMG[lote.especieKey]||IMG.p_ostreatus_gris):IMG.p_ostreatus_gris;
   const [copied,setCopied]=useState(false);
   const traceUrl=lote?.codigo?`${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`:(typeof window!=='undefined'?window.location.href:PUBLIC_TRACE_BASE_URL);
@@ -3313,11 +3313,22 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   );
 };
 
+// Drafts live in this tab's session namespace, separate from operational collections.
+const useCaptureDraft=(key,initial)=>{
+  const [value,setValue]=useState(()=>{try{const d=JSON.parse(sessionStorage.getItem('setas_capture_v1:'+key));if(d?.version===1)return d.value;}catch{}return typeof initial==='function'?initial():initial;});
+  useEffect(()=>{try{sessionStorage.setItem('setas_capture_v1:'+key,JSON.stringify({version:1,value}));}catch{}},[key,value]);
+  return [value,setValue];
+};
+const CaptureInput=({rules={},style,...props})=>{
+  const [touched,setTouched]=useState(false);
+  const error=touched?SetasBitacora.captureError(props.value,rules):'';
+  return <><input {...props} data-capture="true" onBlur={()=>setTouched(true)} aria-invalid={!!error} aria-describedby={error?props.id+'-error':undefined} style={{...style,minHeight:44,fontSize:16}}/>{error&&<span id={props.id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{error}</span>}</>;
+};
 const AccessibleModal=({onClose,label,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
     <div className={backdropClassName} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={label} style={dialogStyle}>
+      <div onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha'].includes(label)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={label} style={dialogStyle}>
         {children}
       </div>
     </div>
@@ -5633,14 +5644,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
-  const [prodBags,setProdBags]=useState(6);
-  const [prodKg,setProdKg]=useState(1.5);
-  const [prodH,setProdH]=useState(67);
-  const [prodDate,setProdDate]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
-  const [prodScaleG,setProdScaleG]=useState(0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
-  const [prodMoist,setProdMoist]=useState({});    // override de humedad real por insumo {id: %} para el lote del día
-  const [prodLoteNum,setProdLoteNum]=useState('');  // número de lote imprimible
-  const [checkedSteps,setCheckedSteps]=useState({}); // checkboxes interactivos de la hoja
+  const [prodBags,setProdBags]=useCaptureDraft('prodBags',6);
+  const [prodKg,setProdKg]=useCaptureDraft('prodKg',1.5);
+  const [prodH,setProdH]=useCaptureDraft('prodH',67);
+  const [prodDate,setProdDate]=useCaptureDraft('prodDate',(()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
+  const [prodScaleG,setProdScaleG]=useCaptureDraft('prodScaleG',0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
+  const [prodMoist,setProdMoist]=useCaptureDraft('prodMoist',{});    // override de humedad real por insumo {id: %} para el lote del día
+  const [prodLoteNum,setProdLoteNum]=useCaptureDraft('prodLoteNum','');  // número de lote imprimible
+  // These checks are operator progress during preparation, so keep them with
+  // the tab-scoped preparation draft instead of losing them on navigation.
+  const [checkedSteps,setCheckedSteps]=useCaptureDraft('checkedSteps',{});
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
   const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
@@ -5677,12 +5690,41 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   },[props.bitSubtab,props.bitSubtabNonce,bitActiveLoteId]);
   const [bitDashView,setBitDashView]=useState('grid');
   const [showBitNuevo,setShowBitNuevo]=useState(false);
-  const [bitNuevoForm,setBitNuevoForm]=useState({});
+  const [bitNuevoForm,setBitNuevoForm]=useCaptureDraft('bitNuevoForm',{});
   const [showBitCosecha,setShowBitCosecha]=useState(false);
-  const [bitCosechaForm,setBitCosechaForm]=useState({});
+  const [bitCosechaForm,setBitCosechaForm]=useCaptureDraft('bitCosechaForm',{});
+  const [captureErrors,setCaptureErrors]=useState({});
+  const [captureSaveError,setCaptureSaveError]=useState('');
+  const captureFields={
+    'bit-codigo':[bitNuevoForm.codigo,{required:true},'text'], 'bit-especie':[bitNuevoForm.especie,{required:true},'text'],
+    'bit-bags':[bitNuevoForm.numBolsas,{required:true,min:1,integer:true}],
+    'bit-wet-kg':[bitNuevoForm.pesoHumedo,{min:0}], 'bit-spawn':[bitNuevoForm.spawnPct,{min:0,max:100}],
+    'bit-moisture':[bitNuevoForm.humedad,{min:0,max:100}], 'bit-dry-weight':[bitNuevoForm.peseSeco,{min:0}],
+    'harvest-bag':[bitBolsas.some(b=>b.id===bitCosechaForm.bolsaId&&b.loteId===bitCosechaForm.loteId)?bitCosechaForm.bolsaId:'',{required:true},'text'],
+    'harvest-flush':[bitCosechaForm.flush,{required:true,min:1,integer:true}],
+    'harvest-date':[bitCosechaForm.fecha,{required:true},'text'],
+    'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}]
+  };
+  const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Completa este campo.':''):SetasBitacora.captureError(f[0],f[1]);};
+  const validateCaptureField=id=>setCaptureErrors(p=>({...p,[id]:captureFieldError(id)}));
+  const captureErrorNode=id=>captureErrors[id]?<span id={id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{captureErrors[id]}</span>:null;
+  const validateCapture=kind=>{
+    setCaptureSaveError('');
+    const errors=Object.fromEntries(Object.keys(captureFields).filter(id=>id.startsWith(kind==='trial'?'bit-':'harvest-')).map(id=>[id,captureFieldError(id)]));
+    setCaptureErrors(errors);const first=Object.keys(errors).find(id=>errors[id]);
+    if(first){document.getElementById(first)?.focus();return false;}return true;
+  };
+  const harvestDraftKey=form=>'setas_capture_v1:harvest:'+form.loteId+':'+(form.bolsaId||'batch');
+  useEffect(()=>{if(bitCosechaForm.loteId){try{sessionStorage.setItem(harvestDraftKey(bitCosechaForm),JSON.stringify(bitCosechaForm));}catch{}}},[bitCosechaForm]);
+  const openHarvestCapture=form=>{
+    setCaptureErrors({});
+    try{const saved=JSON.parse(sessionStorage.getItem(harvestDraftKey(form)));if(saved?.loteId===form.loteId){setBitCosechaForm(saved);return;}}catch{}
+    setBitCosechaForm(form);
+  };
+  const clearHarvestCapture=()=>{try{sessionStorage.removeItem(harvestDraftKey(bitCosechaForm));}catch{}setBitCosechaForm({});};
   const [showBatchSheetModal,setShowBatchSheetModal]=useState(false);
   const [batchSheetModalLote,setBatchSheetModalLote]=useState(null);
-  const [prodBagType,setProdBagType]=useState('bolsa_20x50'); // tipo de contenedor activo
+  const [prodBagType,setProdBagType]=useCaptureDraft('prodBagType','bolsa_20x50'); // tipo de contenedor activo
   const [showFlush,setShowFlush]=useState(false);
   const [showCompChart,setShowCompChart]=useState(false);
   const [showSpeciesRec,setShowSpeciesRec]=useState(false);
@@ -6084,10 +6126,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const tr=useMemo(()=>calcTreatment(an, sKey, effectiveSPP),[an,sKey,effectiveSPP]);
   const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
   // ── Ficha: rows precalculados para botón Ejecutar Lote ──
+  const validatePreparation=()=>{
+    const fields=[['prod-bags',prodBags,{required:true,min:1,integer:true}],['prod-kg',prodKg,{required:true,min:0.1}],['prod-h',prodH,{required:true,min:55,max:75}],...Object.entries(prodMoist).map(([id,v])=>['ingredient-moisture-'+id,v,{min:0,max:92}])];
+    const first=fields.find(([,value,rules])=>SetasBitacora.captureError(value,rules));
+    if(first){const el=document.getElementById(first[0]);el?.focus();el?.dispatchEvent(new FocusEvent('focusout',{bubbles:true}));return false;}return true;
+  };
+  const prepValid=!SetasBitacora.captureError(prodBags,{required:true,min:1,integer:true})&&!SetasBitacora.captureError(prodKg,{required:true,min:0.1})&&!SetasBitacora.captureError(prodH,{required:true,min:55,max:75});
   const prodRows=useMemo(()=>{
-    if(!recipe.length||!balanced) return null;
-    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-    const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn);
+    if(!recipe.length||!balanced||!prepValid) return null;
+    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null&&prodMoist[g.id]!==''&&!SetasBitacora.captureError(prodMoist[g.id],{min:0,max:92})?{...g,moisture:Number(prodMoist[g.id])}:g);
+    const pb=calcBatch(recipe,Number(prodBags),Number(prodKg),Number(prodH),spawnCost,prodIngs,an?.dynSpawn);
     if(!pb) return null;
     const resG=prodScaleG||0.1;
     const roundG=x=>Math.round(x/resG)*resG;
@@ -6367,12 +6415,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     pw.document.title=filename;
     setTimeout(()=>{if(pw&&!pw.closed){pw.focus();pw.print();}},900);
   };
-  const printProdSheet=()=>openPrintWindow('print');
+  const printProdSheet=()=>{if(validatePreparation())openPrintWindow('print');};
   // Exporta la hoja como PDF — misma ventana, mismo mecanismo; el usuario elige "Guardar como PDF".
-  const exportPDF=()=>openPrintWindow('pdf');
+  const exportPDF=()=>{if(validatePreparation())openPrintWindow('pdf');};
   // ── Ejecutar Lote: muestra modal de confirmación antes de descontar inventario ──
   const ejecutarLote=(rows,loteNum,fecha)=>{
-    if(!rows||!rows.length) return;
+    if(!validatePreparation())return;
+    if(!prepValid||!rows||!rows.length) return;
     // Misma compuerta que "Lanzar Lote" (openProdLauncher): receta balanceada y
     // especie elegida explícitamente antes de descontar bodega (I5c).
     if(!readyForProduction){
@@ -6384,17 +6433,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // ámbito de componente, así que se recalcula aquí con la misma expresión para
     // que el plan de lanzamiento vea exactamente la misma humedad por insumo que
     // ya se usó para construir `rows`.
-    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
+    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null&&prodMoist[g.id]!==''&&!SetasBitacora.captureError(prodMoist[g.id],{min:0,max:92})?{...g,moisture:Number(prodMoist[g.id])}:g);
     const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
     // x.m (prodRows) es una fracción 0–0.92 (Math.min(0.92,Math.max(0,(g.moisture||0)/100))),
     // pero buildLaunchPlan's moistureOverrides/clampMoisture espera un porcentaje
     // (pct/100) como g.moisture — se multiplica ×100 para no dividir dos veces.
     const moistureOverrides=Object.fromEntries(rows.filter(x=>x.g&&x.m!=null).map(x=>[x.g.id,x.m*100]));
     const plan=SetasLaunchPlanApi.buildLaunchPlan({
-      recipe, bags:parseInt(prodBags)||1, kgPerBag:prodKg||1.5, moistureTarget:prodH||an?.moistureTarget||65,
+      recipe, bags:Number(prodBags), kgPerBag:Number(prodKg), moistureTarget:Number(prodH),
       ingredients:prodIngs, inventoryLots:invLotes, moistureOverrides,
       // Mismo ítem de spawn que "Lanzar Lote" (I5a): el grano también sale de bodega.
-      spawn:launchSpawn(parseInt(prodBags)||1,prodKg||1.5,an?.dynSpawn),
+      spawn:launchSpawn(Number(prodBags),Number(prodKg),an?.dynSpawn),
       // prodScaleG está en GRAMOS (select: 0.1/1/5/10/50 g — comentario de useState:
       // "resolución de báscula en gramos (0.1 g = 100 mg)"; roundG lo usa directo
       // contra grR=krTeo*1000, es decir gramos), igual que buildLaunchPlan's scaleG.
@@ -6537,7 +6586,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // sigue vacío: si el operador ya escribió algo (o lo borró a propósito),
   // un cambio de especie no se lo pisa.
   useEffect(()=>{
-    if(!prodLoteNum && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+    if(!sessionStorage.getItem('setas_capture_v1:prodLoteNum') && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
   },[sKey]);
   // Tras un "Ejecutar Lote" exitoso: nueva sugerencia con el mismo generador,
   // calculada cuando bitLotes ya incluye el lote recién creado.
@@ -6554,9 +6603,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return{
       codigo:sugerirCodigoLote(sKey),
       especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',
-      fechaMezcla:today,fechaInoculacion:today,
-      numBolsas:nb,pesoHumedo:kb,peseSeco:parseFloat((nb*kb*(1-hm/100)).toFixed(3)),
-      spawnPct:an?.dynSpawn||tr?.spawn||8,humedad:hm,tratamiento:tr?.name||'',
+      fechaMezcla:'',fechaInoculacion:'',
+      numBolsas:'',pesoHumedo:'',peseSeco:'',
+      spawnPct:'',humedad:'',tratamiento:'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'incubacion',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
@@ -6753,10 +6802,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
-    const nb=parseInt(form.numBolsas)||1;const ts=Date.now();
-    const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
-    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    const nb=Number(form.numBolsas);const ts=Date.now();
+    const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:null,col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_lotes',[lote,...bitLotes]],['sdp_bit_bolsas',[...bitBolsas,...bolsas]]]);}catch(e){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return null;}
+    setBitLotes([lote,...bitLotes]);setBitBolsas([...bitBolsas,...bolsas]);
     if(window.SetasBitacoraDB){
       (async()=>{
         // allSettled, no await secuencial: un fallo en guardarLote no debe
@@ -6812,7 +6861,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:'COS_'+Date.now()};
-    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){bitQuotaWarn();}return upd;});
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
+    setBitCosechas([...bitCosechas,e]);
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
@@ -6823,6 +6873,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(loteCosecha?.codigo){
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
     }
+    return true;
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
@@ -7860,14 +7911,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     if (tipo === 'cosecha_parcial') {
       setBitActiveLoteId(lote.id);
-      setBitCosechaForm({
+      openHarvestCapture({
         loteId: lote.id,
         bolsaId: bag ? bag.id : '',
         codigo: bag ? bag.codigo : '',
         flush: 1,
         fecha: new Date().toISOString().split('T')[0],
         pesoFresco: '',
-        calidad: 3,
+        calidad: '',
         observaciones: '',
       });
       setShowQrSheet(false);
@@ -8005,7 +8056,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(lote&&lote.id!==bitActiveLoteId) setBitActiveLoteId(lote.id);
     if(action==='harvest'){
       const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
-      setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
+      openHarvestCapture({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});
       setShowBitCosecha(true);return;
     }
     if(action==='advance_stage'){
@@ -9679,11 +9730,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:6}}>
                     <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>⊞ Cuadrícula</button>
                     <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>≡ Tabla</button>
-                    <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
                   </div>
                 </div>
                 {bitLotes.length>0&&(()=>{const allStats=bitLotes.map(lt=>({lt,s:calcLoteStats(lt.id)}));const wd=allStats.filter(x=>x.s&&x.s.totalFresco>0);const avgBE=wd.length?wd.reduce((s,x)=>s+(x.s.be||0),0)/wd.length:null;const ws=allStats.filter(x=>x.s);const avgCont=ws.length?ws.reduce((s,x)=>s+(x.s.contPct||0),0)/ws.length:null;const totalKg=allStats.reduce((s,x)=>s+(x.s?.totalFresco||0),0);return(<div className="inv-stat-row" style={{marginBottom:16}}><div className="inv-stat"><div className="inv-stat-val">{bitLotes.length}</div><div className="inv-stat-lbl">Lotes</div></div><div className="inv-stat"><div className="inv-stat-val">{avgBE!=null?avgBE.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE media</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:avgCont!=null&&avgCont>15?'var(--coral-700)':'inherit'}}>{avgCont!=null?avgCont.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">Contam. media</div></div><div className="inv-stat"><div className="inv-stat-val">{totalKg.toFixed(2)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>);})()} 
-                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
+                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
                 {bitLotes.length>0&&bitDashView==='grid'&&(
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
                     {bitLotes.map(lote=>{
@@ -9745,7 +9796,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const bolsas=bitBolsas.filter(b=>b.loteId===bitActiveLoteId);
               const stats=calcLoteStats(bitActiveLoteId);
-              const EB={sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
+              const EB={'':{c:'var(--ink-500)',l:'Sin evaluar'},sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
               return(
                 <div className="panel" data-testid="active-lote" data-lote-id={lote.id}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>
@@ -9831,12 +9882,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <tbody>{bolsas.map(bolsa=>{
                         const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
                         const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
-                        const est=EB[bolsa.estado]||EB.sana;
+                        const est=EB[bolsa.estado]||EB[''];
                         return(
                           <tr key={bolsa.id}>
                             <td data-label="Código" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",whiteSpace:'nowrap'}}>{bolsa.codigo}</td>
                             <td data-label="Estado">
-                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
+                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado??''} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value||null})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
                                 {Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
                               </select>
                             </td>
@@ -9856,7 +9907,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <td data-label="Cosechas">
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
                                 <span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span>
-                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button>
+                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{openHarvestCapture({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+</button>
                               </div>
                             </td>
                             <td data-label="Etiqueta" style={{textAlign:'center'}}>
@@ -9888,7 +9939,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="panel">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Cosechas — {lote.codigo}</div>
-                    <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');setBitCosechaForm({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
+                    <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');openHarvestCapture({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
                   </div>
                   {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
                   {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
@@ -10416,7 +10467,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                       No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
@@ -12997,16 +13048,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div>
                     <label htmlFor="prod-bags" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}># Bolsas</label>
-                    <input id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>{const v=e.target.value;setProdBags(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodBags===''||isNaN(prodBags))setProdBags(1);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>setProdBags(e.target.value)} rules={{required:true,min:1,integer:true}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-kg" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>kg / bolsa</label>
-                    <input id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>{const v=e.target.value;setProdKg(v===''?'':(parseFloat(v)||''));}} onBlur={()=>{if(prodKg===''||isNaN(prodKg))setProdKg(1.5);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>setProdKg(e.target.value)} rules={{required:true,min:0.1}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.prodH=true;const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.prodH=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                       <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
@@ -13024,7 +13075,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
                   </div>
                 </div>
@@ -13033,11 +13084,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
 
             {/* LA HOJA IMPRIMIBLE — bloqueada si la receta no cierra en 100% (balance de masa) */}
-            {recipe.length>0&&an&&balanced&&(()=>{
+            {recipe.length>0&&an&&balanced&&prepValid&&(()=>{
               // Override de humedad por insumo: usa el valor real medido del lote del día
-              const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
+              const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null&&prodMoist[g.id]!==''&&!SetasBitacora.captureError(prodMoist[g.id],{min:0,max:92})?{...g,moisture:Number(prodMoist[g.id])}:g);
               const ptr=calcTreatment(an, sKey, effectiveSPP);
-              const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
+              const pb=calcBatch(recipe,Number(prodBags),Number(prodKg),Number(prodH),spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
               const psch=calcSchedule(sKey,prodDate,an?.eb);
               const spn=an?.dynSpawn||ptr?.spawn||8;
               if(!pb) return null;
@@ -13192,19 +13243,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
                 <div className="ps-tbl-wrap">
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
-                    {rows.map((x,i)=>{const id=x.r.id;const baseM=x.g?x.g.moisture:0;const ov=prodMoist[id]!=null;return(
+                    {rows.map((x,i)=>{const id=x.r.id;const baseM=x.g?x.g.moisture:0;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
                       <tr key={i}>
-                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · ajustado</span>:null}</td>
+                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · medido</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
                         <td style={{textAlign:'center'}}>
-                          <input name={`ingredientMoisture-${id}`} aria-label={`Humedad real de ${x.g?x.g.name:id}, porcentaje`} type="number" min="0" max="92" step="1" value={prodMoist[id]!=null?prodMoist[id]:baseM}
-                            onChange={e=>{const v=e.target.value;setProdMoist(prev=>{const n={...prev};if(v==='')delete n[id];else n[id]=Math.min(92,Math.max(0,parseFloat(v)||0));return n;});}}
-                            style={{width:44,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
+                          <CaptureInput id={`ingredient-moisture-${id}`} rules={{min:0,max:92}} placeholder={String(baseM)} name={`ingredientMoisture-${id}`} aria-label={`Humedad real de ${x.g?x.g.name:id}, porcentaje`} type="number" min="0" max="92" step="1" value={prodMoist[id]??''}
+                            onChange={e=>setProdMoist(prev=>({...prev,[id]:e.target.value}))}
+                            style={{width:64,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
                         </td>
                         <td className="num">{Math.round(x.grR).toLocaleString()}</td>
                         <td className="num">{x.grR>=500?(x.grR/1000).toFixed(2):'—'}</td>
@@ -13344,52 +13395,52 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
           <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
-              <div className="inv-modal-title">Nueva prueba experimental</div>
+              <style>{`[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Nueva prueba experimental</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña.</p><p>Plan de preparación: {prodBags} bolsas × {prodKg} kg · {prodH}% humedad. No confirma medidas.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" aria-invalid={!!captureErrors["bit-codigo"]} aria-describedby={captureErrors["bit-codigo"]?"bit-codigo-error":undefined} onBlur={()=>validateCaptureField("bit-codigo")} name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/>{captureErrorNode("bit-codigo")}</div>
+                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" aria-invalid={!!captureErrors["bit-especie"]} aria-describedby={captureErrors["bit-especie"]?"bit-especie-error":undefined} onBlur={()=>validateCaptureField("bit-especie")} name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/>{captureErrorNode("bit-especie")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
+                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" aria-invalid={!!captureErrors["bit-operador"]} aria-describedby={captureErrors["bit-operador"]?"bit-operador-error":undefined} onBlur={()=>validateCaptureField("bit-operador")} name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/>{captureErrorNode("bit-operador")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" aria-invalid={!!captureErrors["bit-fecha-mezcla"]} aria-describedby={captureErrors["bit-fecha-mezcla"]?"bit-fecha-mezcla-error":undefined} onBlur={()=>validateCaptureField("bit-fecha-mezcla")} name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/>{captureErrorNode("bit-fecha-mezcla")}</div>
+                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" aria-invalid={!!captureErrors["bit-fecha-inoculacion"]} aria-describedby={captureErrors["bit-fecha-inoculacion"]?"bit-fecha-inoculacion-error":undefined} onBlur={()=>validateCaptureField("bit-fecha-inoculacion")} name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/>{captureErrorNode("bit-fecha-inoculacion")}</div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa</label><input id="bit-wet-kg" name="wetKgPerBag" type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-spawn">% spawn</label><input id="bit-spawn" name="spawnPercent" type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-moisture">Humedad %</label><input id="bit-moisture" name="moisturePercent" type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" aria-invalid={!!captureErrors["bit-bags"]} aria-describedby={captureErrors["bit-bags"]?"bit-bags-error":undefined} onBlur={()=>validateCaptureField("bit-bags")} name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas??''} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:e.target.value}))}/>{captureErrorNode("bit-bags")}</div>
+                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa medidos · opcional</label><input id="bit-wet-kg" aria-invalid={!!captureErrors["bit-wet-kg"]} aria-describedby={captureErrors["bit-wet-kg"]?"bit-wet-kg-error":undefined} onBlur={()=>validateCaptureField("bit-wet-kg")} name="wetKgPerBag" type="number" className="inv-input" min={0} step={0.1} value={bitNuevoForm.pesoHumedo??''} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:e.target.value}))}/>{captureErrorNode("bit-wet-kg")}</div>
+                <div><label className="inv-label" htmlFor="bit-spawn">% spawn confirmado · opcional</label><input id="bit-spawn" aria-invalid={!!captureErrors["bit-spawn"]} aria-describedby={captureErrors["bit-spawn"]?"bit-spawn-error":undefined} onBlur={()=>validateCaptureField("bit-spawn")} name="spawnPercent" type="number" className="inv-input" min={0} max={100} value={bitNuevoForm.spawnPct??''} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:e.target.value}))}/>{captureErrorNode("bit-spawn")}</div>
+                <div><label className="inv-label" htmlFor="bit-moisture">Humedad medida % · opcional</label><input id="bit-moisture" aria-invalid={!!captureErrors["bit-moisture"]} aria-describedby={captureErrors["bit-moisture"]?"bit-moisture-error":undefined} onBlur={()=>validateCaptureField("bit-moisture")} name="moisturePercent" type="number" className="inv-input" min={0} max={100} value={bitNuevoForm.humedad??''} onChange={e=>setBitNuevoForm(p=>({...p,humedad:e.target.value}))}/>{captureErrorNode("bit-moisture")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco (kg)</label><input id="bit-dry-weight" name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="Calculado automáticamente…" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" aria-invalid={!!captureErrors["bit-treatment"]} aria-describedby={captureErrors["bit-treatment"]?"bit-treatment-error":undefined} onBlur={()=>validateCaptureField("bit-treatment")} name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select>{captureErrorNode("bit-treatment")}</div>
+                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco medido total (kg) · opcional</label><input id="bit-dry-weight" aria-invalid={!!captureErrors["bit-dry-weight"]} aria-describedby={captureErrors["bit-dry-weight"]?"bit-dry-weight-error":undefined} onBlur={()=>validateCaptureField("bit-dry-weight")} name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco??''} min={0} placeholder="Sin medición" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:e.target.value}))}/>{captureErrorNode("bit-dry-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
+              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" aria-invalid={!!captureErrors["bit-objective"]} aria-describedby={captureErrors["bit-objective"]?"bit-objective-error":undefined} onBlur={()=>validateCaptureField("bit-objective")} name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/>{captureErrorNode("bit-objective")}</div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="bit-notes">Notas</label><textarea id="bit-notes" name="testNotes" autoComplete="off" className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
               <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!validateCapture('trial'))return;const newId=crearBitLote(SetasBitacora.normalizeTrialCapture(bitNuevoForm));if(!newId)return;setBitNuevoForm({});setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
           </AccessibleModal>
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
           <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, 95vw)'}}>
-              <div className="inv-modal-title">Registrar cosecha</div>
+              <style>{`[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Registrar cosecha</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición. Borrador conservado en esta pestaña.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
-                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" aria-invalid={!!captureErrors["harvest-bag"]} aria-describedby={captureErrors["harvest-bag"]?"harvest-bag-error":undefined} onBlur={()=>validateCaptureField("harvest-bag")} name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select>{captureErrorNode("harvest-bag")}</div>
+                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" aria-invalid={!!captureErrors["harvest-flush"]} aria-describedby={captureErrors["harvest-flush"]?"harvest-flush-error":undefined} onBlur={()=>validateCaptureField("harvest-flush")} name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush??''} onChange={e=>setBitCosechaForm(p=>({...p,flush:e.target.value}))}/>{captureErrorNode("harvest-flush")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" aria-invalid={!!captureErrors["harvest-date"]} aria-describedby={captureErrors["harvest-date"]?"harvest-date-error":undefined} onBlur={()=>validateCaptureField("harvest-date")} name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/>{captureErrorNode("harvest-date")}</div>
+                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
-              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" aria-invalid={!!captureErrors["harvest-observations"]} aria-describedby={captureErrors["harvest-observations"]?"harvest-observations-error":undefined} onBlur={()=>validateCaptureField("harvest-observations")} name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/>{captureErrorNode("harvest-observations")}</div>
 
               {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
               {(() => {
@@ -13465,9 +13516,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button
                   type="button"
                   onClick={()=>{
-                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
-                    const cData = {...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId};
-                    addBitCosecha(cData);
+                    if(!validateCapture('harvest'))return;
+                    const cData = SetasBitacora.normalizeHarvestCapture(bitCosechaForm);
+                    if(!addBitCosecha(cData))return;clearHarvestCapture();
                     setShowBitCosecha(false);
                     openThermalForCosecha(cData.loteId, cData);
                   }}
@@ -13479,8 +13530,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button
                   type="button"
                   onClick={()=>{
-                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
-                    addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});
+                    if(!validateCapture('harvest'))return;
+                    if(!addBitCosecha(SetasBitacora.normalizeHarvestCapture(bitCosechaForm)))return;clearHarvestCapture();
                     setShowBitCosecha(false);
                   }}
                   className="inv-btn inv-btn-pri"

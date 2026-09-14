@@ -12,7 +12,7 @@ const harness=({failLocal=false,actions=['inspection'],eventWrite=async()=>{},lo
   localStorage:{setItem:(key,value)=>{if(failLocal)throw Error('quota');local=JSON.parse(value)}},
   setQrEventoStatuses:fn=>{statuses=fn(statuses)},setBitLotes:()=>{},setQrEventoObsAbierta:()=>{},setQrEventoObsNota:()=>{},setNoticeDlg:n=>notices.push(n),
   setDiagLoteId:()=>{},setDiagBolsaId:()=>{},setDiagImageBase64:()=>{},setDiagResult:()=>{},setDiagError:()=>{},setDiagNotes:()=>{},setShowQrSheet:()=>{},setShowFieldActionModal:()=>{},setShowDiagModal:()=>{},bitBolsas:[],
-  setBitActiveLoteId:()=>{},setBitCosechaForm:()=>{},setShowBitCosecha:()=>{},console,
+  setBitActiveLoteId:()=>{},openHarvestCapture:()=>{},setShowBitCosecha:()=>{},console,
  };
  const run=vm.runInNewContext(`${jsx.slice(start,end)};reportarEventoCultivo`,context);
  return {run:(event=null,tipo='observacion')=>run(tipo,{id:'L1'},null,'Observación de prueba',event),statuses:()=>statuses,writes,local:()=>local,notices,context};
