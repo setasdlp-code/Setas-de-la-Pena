@@ -70,6 +70,7 @@ test('auth-gate.js registra los nuevos motores en PROTECTED_APP_SCRIPTS', () => 
   assert.match(authGate, /"(\.\.\/)?co-cultivation-matrix\.js"/);
   assert.match(authGate, /"(\.\.\/)?post-harvest-engine\.js"/);
   assert.match(authGate, /"(\.\.\/)?flush-forecast-engine\.js"/);
+  assert.match(authGate, /"(\.\.\/)?perito-workbench-core\.js"/);
 });
 
 test('simulador-app.jsx integra puentes de importación para los nuevos motores', () => {
@@ -188,4 +189,25 @@ test('simulador-app.js bundle generado está actualizado y compila sin errores',
   assert.match(js, /SetasCoCultivation/);
   assert.match(js, /SetasPostHarvest/);
   assert.match(js, /showAutoclaveModal/);
+});
+
+test('perito-workbench-core.js y el Workbench Perito & Optimizador unificado', () => {
+  const core = require('./perito-workbench-core.js');
+  assert.equal(typeof core.calcLiebigBottleneck, 'function');
+  assert.equal(typeof core.simulateSuggestionDelta, 'function');
+  assert.equal(typeof core.morphRecipes, 'function');
+  assert.equal(typeof core.filterParetoFrontier, 'function');
+
+  assert.match(jsx, /SetasPeritoWorkbench/);
+  assert.match(jsx, /engineCalcLiebigBottleneck/);
+  assert.match(jsx, /engineSimulateSuggestionDelta/);
+  assert.match(jsx, /engineMorphRecipes/);
+  assert.match(jsx, /Perito & Generador de Recetas/);
+  assert.match(jsx, /workbenchMode/);
+  assert.match(jsx, /perito-standalone-panel/);
+  assert.match(jsx, /perito-morph-panel/);
+
+  assert.match(js, /SetasPeritoWorkbench/);
+  assert.match(js, /perito-standalone-panel/);
+  assert.match(js, /perito-morph-panel/);
 });

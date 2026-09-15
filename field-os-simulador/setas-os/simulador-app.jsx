@@ -1470,6 +1470,7 @@ const {
   calcRequiredGaugePressurePsi: engineCalcRequiredGaugePressurePsi,
   calcTimeCompFactorAt15Psi: engineCalcTimeCompFactorAt15Psi,
   simulateCorePenetration: engineSimulateCorePenetration,
+  calcOptimalHoldTime: engineCalcOptimalHoldTime,
 } = (typeof SetasSterilization !== 'undefined'
   ? SetasSterilization
   : (typeof require !== 'undefined' ? require('./sterilization-kinetics.js') : {}));
@@ -1493,6 +1494,16 @@ const {
 } = (typeof SetasPostHarvest !== 'undefined'
   ? SetasPostHarvest
   : (typeof require !== 'undefined' ? require('./post-harvest-engine.js') : {}));
+
+// ── Perito Workbench Core — puente hacia perito-workbench-core.js ──
+const {
+  calcLiebigBottleneck: engineCalcLiebigBottleneck,
+  simulateSuggestionDelta: engineSimulateSuggestionDelta,
+  morphRecipes: engineMorphRecipes,
+  filterParetoFrontier: engineFilterParetoFrontier,
+} = (typeof SetasPeritoWorkbench !== 'undefined'
+  ? SetasPeritoWorkbench
+  : (typeof require !== 'undefined' ? require('./perito-workbench-core.js') : {}));
 
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
@@ -2074,11 +2085,33 @@ const PeritoChangePreview=({changes})=>(
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
   </details>
 );
-const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients})=>{
+const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,speciesKey,onMorph})=>{
   const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
   const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
   const hasPrediction=item.predictedScore!=null&&baseScore!=null;
   const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
+
+  const deltaSim=React.useMemo(()=>{
+    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length) return null;
+    try{
+      const sK=speciesKey||(item.speciesKey)||'p_ostreatus_gris';
+      const curAn=analyze(recipe,sK,ingredients,SPP);
+      return engineSimulateSuggestionDelta({
+        recipe,
+        apply:item.apply,
+        lockedIds,
+        ingredients,
+        applyOptToRecipe,
+        analyze:(r)=>analyze(r,sK,ingredients,SPP),
+        score:(anObj,extra)=>scoreAn(anObj,extra),
+        baseAn:curAn,
+        baseScore,
+      });
+    }catch(_){
+      return null;
+    }
+  },[recipe,item.apply,lockedIds,ingredients,speciesKey,baseScore]);
+
   return(
   <div className={`perito-item pi-${item.priority}`}>
     <div className="pi-icon-col">
@@ -2094,6 +2127,26 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
+      {deltaSim?.diff&&(
+        <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
+            ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
+          </span>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} ({deltaSim.diff.newEb}%)
+          </span>
+          {deltaSim.diff.deltaCost!==0&&(
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
+              ΔCosto: {deltaSim.diff.deltaCost<=0?`-$${Math.abs(deltaSim.diff.deltaCost)}/kg`:`+$${deltaSim.diff.deltaCost}/kg`}
+            </span>
+          )}
+          {deltaSim.diff.deltaCn!==0&&(
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:'var(--paper-200)',color:'var(--ink-700)'}}>
+              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({deltaSim.diff.newCn}:1)
+            </span>
+          )}
+        </div>
+      )}
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
@@ -2108,10 +2161,19 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
     </div>
-    <div className="pi-actions">
+    <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
         ?<button disabled={!changes.length} aria-label={`Aplicar ajuste: ${item.label}`} onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar ajuste</button>
         :<div className="pi-spacer"/>}
+      {deltaSim?.resultingRecipe&&onMorph&&(
+        <button
+          type="button"
+          title="Hibridar interactivamente la receta activa con esta sugerencia"
+          onClick={()=>onMorph(deltaSim.resultingRecipe)}
+          style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>
+          ⚖️ Morph
+        </button>
+      )}
     </div>
   </div>
   );
@@ -6158,6 +6220,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
+  const [workbenchMode,setWorkbenchMode]=useState('all');
+  const [morphTargetRecipe,setMorphTargetRecipe]=useState(null);
+  const [morphAlpha,setMorphAlpha]=useState(0.5);
   const focusFormTop=()=>requestAnimationFrame(()=>{
     const main=document.getElementById('setas-main');
     if(main) main.scrollTo({top:0,left:0});
@@ -11392,8 +11457,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
-                <span aria-hidden="true">⚡</span>
-                <span>Generador de Recetas</span>
+                <span aria-hidden="true">🧠</span>
+                <span>Perito & Generador de Recetas</span>
               </button>
             </nav>
             <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
@@ -12332,9 +12397,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS}/>)}</details>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
@@ -12655,7 +12720,383 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='generador'&&(
           <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
-{/* ── GENERADOR DE RECETAS ── */}
+            {/* ── WORKBENCH PERITO & OPTIMIZADOR BAR ── */}
+            <div className="workbench-top-bar" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,margin:'12px 0 16px',flexWrap:'wrap',paddingBottom:12,borderBottom:'1.5px solid var(--border-soft)'}}>
+              <div>
+                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Intelligence & Optimization Suite</div>
+                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Workbench Perito & Generador de Recetas</h1>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <button type="button" className="btn sm" onClick={()=>openBuilderSubTab('formular')}>← Volver a Mesa de Mezcla</button>
+              </div>
+            </div>
+
+            <div className="seg-row perito-workbench-modes" style={{marginBottom:18,display:'flex',gap:6,background:'var(--paper-200)',padding:4,borderRadius:'var(--r-sm)',flexWrap:'wrap'}}>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='all'?' on':''}`}
+                onClick={()=>setWorkbenchMode('all')}>
+                🌐 Vista Integral
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='perito'?' on':''}`}
+                onClick={()=>setWorkbenchMode('perito')}>
+                🔍 Perito Diagnóstico Vivo
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='optimizador'?' on':''}`}
+                onClick={()=>setWorkbenchMode('optimizador')}>
+                ⚡ Optimizador Generativo
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='morphing'?' on':''}`}
+                onClick={()=>setWorkbenchMode('morphing')}>
+                ⚖️ Comparador & Morphing {morphTargetRecipe?'(1 activo)':''}
+              </button>
+            </div>
+
+            {/* ── SECCIÓN 1: PERITO DIAGNÓSTICO VIVO (STANDALONE) ── */}
+            {['all','perito'].includes(workbenchMode)&&(()=>{
+              const hasPer=recipe.length>0;
+              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+              const criticals=items.filter(s=>s.priority==='critical');
+              const warnings=items.filter(s=>s.priority==='warning');
+              const tips=items.filter(s=>s.priority==='tip');
+              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+              const liebig=engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null;
+              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+              const cur=sp?Math.min(an?.cn||0,max):0;
+              const cnOk=sp&&an&&an.cn>=oMin&&an.cn<=oMax;
+              const reqPsi=engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.04;
+              const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+
+              return (
+                <section className="panel perito-standalone-panel" style={{background:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,marginBottom:16,paddingBottom:14,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap'}}>
+                    <div style={{display:'flex',gap:14,alignItems:'center'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:68,height:68,borderRadius:'50%',background:sm.badge,flexShrink:0,boxShadow:'0 4px 10px rgba(0,0,0,.1)'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.8)',letterSpacing:'var(--tracking-button)',marginTop:2}}>PERITO</span>
+                      </div>
+                      <div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,fontWeight:800}}>Dictamen Pericial Dinámico · Receta Activa</div>
+                        <h2 style={{fontFamily:'var(--font-display)',fontSize:"var(--text-xl)",fontWeight:700,color:sm.txt,margin:'2px 0 4px'}}>{sm.veredicto}</h2>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)'}}>
+                          {sm.accion} · Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                      {recipeHistory.length>0&&<button type="button" onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>Deshacer ({recipeHistory.length})</button>}
+                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer'}}>🤖 Consultar IA</button>
+                    </div>
+                  </div>
+
+                  {/* Factor Limitante (Ley del Mínimo de Liebig) */}
+                  {liebig&&liebig.factor!=='none'&&(
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:liebig.severity==='critical'?'rgba(197,48,48,.08)':liebig.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${liebig.severity==='critical'?'rgba(197,48,48,.3)':liebig.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                        <span style={{fontSize:16}}>{liebig.severity==='critical'?'🚨':liebig.severity==='warning'?'⚖️':'🌿'}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:liebig.severity==='critical'?'#C53030':liebig.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                          Factor Limitante (Ley del Mínimo de Liebig): {liebig.label}
+                        </span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
+                        <b>Diagnóstico:</b> {liebig.rationale}
+                      </div>
+                      {liebig.actionRequired&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:liebig.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                          ➜ Acción correctiva: {liebig.actionRequired}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Cinética de Esterilización Térmica en Altitud (Tenjo 2.600 msnm) */}
+                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
+                        🏔️ Cinética de Esterilización Térmica en Altitud (Tenjo · 2.600 msnm / 74.5 kPa)
+                      </div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                        All American 1941X: {reqPsi.toFixed(2)} psig
+                      </span>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
+                      <div>
+                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                      </div>
+                      <div>
+                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
+                      </div>
+                      <div>
+                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumen Métricas */}
+                  {an&&(
+                    <div className="mgrid" style={{marginBottom:14}}>
+                      {[
+                        {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
+                        {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                        {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                        {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                      ].map(m=>(
+                        <div key={m.l} className="mc">
+                          <div className="mlbl">{m.l}</div>
+                          <div className="mval">{m.v}</div>
+                          <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Gauges */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginBottom:16}}>
+                    <EBDial an={an} sp={sp}/>
+                    {sp&&an?.cn>0&&(
+                      <div className="gauge-wrap" style={{marginTop:0}}>
+                        <div className="gauge-hdr">
+                          <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                          <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                        </div>
+                        <div className="gauge-tr">
+                          <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                          <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                        </div>
+                        <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                        <NitrogenChart recipe={recipe}/>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sugerencias Dinámicas con Simulación Delta */}
+                  <div className="perito-suggestions-deck" style={{marginTop:12}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,paddingBottom:6,borderBottom:'1px solid var(--border-soft)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                        Sugerencias Inteligentes con Simulación Delta ({items.length})
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                        Simulación de impacto en vivo sin mutar mesa
+                      </div>
+                    </div>
+
+                    {criticals.length===0&&warnings.length===0&&tips.length===0&&(
+                      <div style={{padding:'12px 16px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#2F4A24'}}>
+                        ✓ Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
+                      </div>
+                    )}
+
+                    {criticals.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)',marginBottom:6}}>
+                          Críticos ({criticals.length})
+                        </div>
+                        {criticals.map((item,i)=>(
+                          <PeritoItem
+                            key={i}
+                            item={item}
+                            onApply={applyOptStep}
+                            baseScore={opt.score}
+                            recipe={recipe}
+                            lockedIds={lockedIds}
+                            ingredients={optimizerINGS}
+                            speciesKey={sKey}
+                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {warnings.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)',marginBottom:6}}>
+                          Mejoras y Balance ({warnings.length})
+                        </div>
+                        {warnings.map((item,i)=>(
+                          <PeritoItem
+                            key={i}
+                            item={item}
+                            onApply={applyOptStep}
+                            baseScore={opt.score}
+                            recipe={recipe}
+                            lockedIds={lockedIds}
+                            ingredients={optimizerINGS}
+                            speciesKey={sKey}
+                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {tips.length>0&&(
+                      <details style={{marginBottom:10}}>
+                        <summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'6px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}>
+                          <span>Opcionales &amp; Ajustes Finos ({tips.length})</span>
+                          <span style={{fontSize:"var(--text-xs)"}}>▾</span>
+                        </summary>
+                        <div style={{marginTop:6}}>
+                          {tips.map((item,i)=>(
+                            <PeritoItem
+                              key={i}
+                              item={item}
+                              onApply={applyOptStep}
+                              baseScore={opt.score}
+                              recipe={recipe}
+                              lockedIds={lockedIds}
+                              ingredients={optimizerINGS}
+                              speciesKey={sKey}
+                              onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                            />
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
+
+            {/* ── SECCIÓN 2: COMPARADOR & MORPHING DE RECETAS ── */}
+            {['all','morphing'].includes(workbenchMode)&&(()=>{
+              const activeCandidate = morphTargetRecipe || (optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe) || [];
+              const hasCandidate = activeCandidate && activeCandidate.length > 0;
+              const hasBase = recipe && recipe.length > 0;
+              const morphedRec = (hasBase && hasCandidate && engineMorphRecipes)
+                ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds)
+                : (recipe || []);
+              const anMorph = (hasBase && hasCandidate)
+                ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP)
+                : an;
+              const scoreMorphObj = (hasBase && hasCandidate && anMorph)
+                ? scoreAn(anMorph, { recipe: morphedRec })
+                : opt;
+              const scoreMorph = Math.round(scoreMorphObj?.score || 0);
+
+              return (
+                <section className="panel perito-morph-panel" style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap',gap:12}}>
+                    <div>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
+                        Interpolación Convexa & Exploración de Transición
+                      </div>
+                      <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
+                        ⚖️ Comparador & Morphing de Recetas
+                      </h2>
+                    </div>
+                    {hasCandidate&&hasBase&&(
+                      <button
+                        type="button"
+                        className="btn pri"
+                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 14px'}}
+                        onClick={()=>{
+                          setRecipe(morphedRec);
+                          openBuilderSubTab('formular');
+                          setNoticeDlg({msg:'Receta morfeada aplicada exitosamente en la Mesa de Mezcla'});
+                        }}>
+                        🥣 Aplicar en Mesa de Mezcla
+                      </button>
+                    )}
+                  </div>
+
+                  {(!hasBase || !hasCandidate)?(
+                    <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
+                      {!hasBase
+                        ? 'Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
+                        : 'Calcula escenarios en el Optimizador o selecciona una sugerencia del Perito para activar el Morphing.'}
+                    </div>
+                  ):(
+                    <div>
+                      <div style={{margin:'14px 0 20px',background:'var(--paper-100)',padding:16,borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
+                          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                            Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
+                          </span>
+                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--moss-800)'}}>
+                            α = {morphAlpha.toFixed(2)}
+                          </span>
+                          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                            Candidato Objetivo ({(morphAlpha * 100).toFixed(0)}%)
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={morphAlpha}
+                          onChange={(e)=>setMorphAlpha(parseFloat(e.target.value)||0)}
+                          aria-label="Factor de interpolación convexa de recetas"
+                          style={{width:'100%',accentColor:'var(--moss-600)',cursor:'pointer'}}
+                        />
+                      </div>
+
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))',gap:10,marginBottom:18}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Score Morfeado</div>
+                          <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--ink-900)'}}>{scoreMorph}/100</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>EB Morfeada</div>
+                          <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--moss-700)'}}>{anMorph?.eb?.toFixed(0)||'—'}%</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N Morfeado</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{anMorph?.cn?.toFixed(1)||'—'}:1</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Costo / kg Seco</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>${Math.round(anMorph?.cost||0).toLocaleString('es-CO')}</div>
+                        </div>
+                      </div>
+
+                      <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}>
+                          <thead>
+                            <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
+                              <th style={{padding:'8px 12px'}}>Insumo</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Receta Activa</th>
+                              <th style={{padding:'8px 12px',textAlign:'right',background:'rgba(77,98,53,.08)'}}>% Morfeado</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Candidato</th>
+                              <th style={{padding:'8px 12px',textAlign:'center'}}>Candado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {morphedRec.map((mItem,mIdx)=>{
+                              const ingDef=INGS.find(g=>g.id===mItem.id);
+                              const pA=recipe.find(r=>r.id===mItem.id)?.p||0;
+                              const pB=activeCandidate.find(r=>r.id===mItem.id)?.p||0;
+                              const isLocked=lockedIds.includes(mItem.id);
+                              return (
+                                <tr key={mIdx} style={{borderBottom:'1px solid var(--border-soft)'}}>
+                                  <td style={{padding:'8px 12px',fontWeight:700}}>{ingDef?.name||mItem.id}</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pA.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',fontWeight:800,color:'var(--moss-800)',background:'rgba(77,98,53,.05)'}}>{mItem.p.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pB.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'center'}}>{isLocked?'🔒':'—'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              );
+            })()}
+
+            {/* ── SECCIÓN 3: GENERADOR DE RECETAS (OPTIMIZADOR) ── */}
+            {['all','optimizador'].includes(workbenchMode)&&(
             <section id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" aria-busy={optRunning} style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Automejora · Generador de recetas</h2>
@@ -12818,6 +13259,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}>⚖️ Hibridar / Morph</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
@@ -13100,7 +13542,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             )}
                 </div>
               </>)}
-            </section>
+            </section>)}
           </div>
         )}
 

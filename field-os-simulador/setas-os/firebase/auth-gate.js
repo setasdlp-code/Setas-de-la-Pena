@@ -58,6 +58,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
   "../post-harvest-engine.js",
+  "../perito-workbench-core.js",
   "../historical-calibration.js",
   "../species-targets.js",
   "../recipe-version.js",
