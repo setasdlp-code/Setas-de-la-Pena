@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 25be418da2271062bda0353d2bff23197c03d9131555cbc80d31c8807ac7febe
+// source-hash: 4ee2584b48488fbe35f4603c925df32c002e6c55c655dd5a5c248e9588be0df6
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3797,8 +3797,53 @@ function SimuladorShell(props) {
   const qrCanvasRef = React.useRef(null);
   const cameraStreamRef = React.useRef(null);
   const scanResolvingRef = React.useRef(false);
+  const isDecodingPausedRef = React.useRef(false);
+  const isSavingHarvestRef = React.useRef(false);
+  const [qrScanMode, setQrScanMode] = useState("round");
+  const [harvestActiveCrate, setHarvestActiveCrate] = useState(null);
+  const [harvestGrossInput, setHarvestGrossInput] = useState("");
+  const [harvestTareInput, setHarvestTareInput] = useState("");
+  const [harvestTareSource, setHarvestTareSource] = useState("unverified");
+  const [harvestFlush, setHarvestFlush] = useState(1);
+  const [harvestCalidad, setHarvestCalidad] = useState(1);
+  const [harvestError, setHarvestError] = useState("");
+  const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
+  const [sweepQueue, setSweepQueue] = useState([]);
+  const [sweepRiskModalOpen, setSweepRiskModalOpen] = useState(false);
+  const [sweepRiskType, setSweepRiskType] = useState("micelio_debil");
+  const [sweepRiskNota, setSweepRiskNota] = useState("");
+  const [sweepStatusBanner, setSweepStatusBanner] = useState("");
+  const playSweepBeep = (freq = 880, durationMs = 100) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+      const ctx = window.__setasAudioCtx;
+      if (ctx.state === "suspended") ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(1e-3, ctx.currentTime + durationMs / 1e3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + durationMs / 1e3);
+    } catch (e) {
+    }
+  };
+  const triggerHaptic = (pattern = [50]) => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    } catch (e) {
+    }
+  };
   const stopCameraScanner = () => {
     setIsCameraActive(false);
+    isDecodingPausedRef.current = false;
     if (scannerIntervalRef.current) {
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
@@ -3854,7 +3899,7 @@ function SimuladorShell(props) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
         consecutiveErrors = 0;
-        if (code && code.data) handleScannedValue(code.data);
+        if (code && code.data && !isDecodingPausedRef.current) handleScannedValue(code.data);
       } catch (e) {
         consecutiveErrors += 1;
         if (consecutiveErrors >= 10) {
@@ -3866,6 +3911,7 @@ function SimuladorShell(props) {
   };
   const startCameraScanner = async () => {
     scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
     setCameraError("");
     setScanMiss("");
     try {
@@ -3900,7 +3946,7 @@ function SimuladorShell(props) {
           const barcodes = await detector.detect(videoRef.current);
           if (barcodes && barcodes.length > 0) {
             const rawVal = barcodes[0].rawValue;
-            handleScannedValue(rawVal);
+            if (!isDecodingPausedRef.current) handleScannedValue(rawVal);
           }
         } catch (e) {
         }
@@ -3917,7 +3963,101 @@ function SimuladorShell(props) {
   const qrSavingRef = useRef(/* @__PURE__ */ new Set());
   const handleScannedValue = (raw) => {
     if (!raw || scanResolvingRef.current) return;
+    if (isDecodingPausedRef.current) return;
     const sheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
+    if (qrScanMode === "harvest") {
+      let resolved2 = null;
+      if (sheetApi) {
+        resolved2 = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas, crates: sheetApi.CONFIG_CRATES || [] });
+      } else {
+        resolved2 = { kind: "unknown", reason: "no_match" };
+      }
+      if (resolved2.kind === "crate" || resolved2.kind === "crate_unregistered") {
+        if (resolved2.reason === "inactive_crate") {
+          setScanMiss(`La canastilla ${resolved2.crateCode || raw} está marcada como inactiva.`);
+          return;
+        }
+        isDecodingPausedRef.current = true;
+        playSweepBeep(980, 100);
+        triggerHaptic([40, 50]);
+        setHarvestActiveCrate({
+          crateId: resolved2.crateId || "crate_" + resolved2.crateCode,
+          crateCode: resolved2.crateCode,
+          taraGramos: resolved2.taraGramos,
+          taraSource: resolved2.taraSource || (resolved2.taraGramos !== null ? "catalog_default" : "unverified"),
+          harvestId: "COS_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8)
+        });
+        setHarvestGrossInput("");
+        setHarvestTareInput(resolved2.taraGramos !== null ? String(resolved2.taraGramos) : "");
+        setHarvestTareSource(resolved2.taraSource || (resolved2.taraGramos !== null ? "catalog_default" : "unverified"));
+        setHarvestError("");
+        setScanMiss("");
+        return;
+      }
+      if (resolved2.kind === "batch" && resolved2.batchId) {
+        setQrSelectedLoteId(resolved2.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote activo para cosecha cambiado a ${resolved2.batchCode || resolved2.batchId}. Ahora escanea una canastilla.`);
+        return;
+      }
+      setScanMiss(`Código "${String(raw).slice(0, 30)}" no es una canastilla registrada. Escanea una canastilla (CAN-01) o ingresa el peso.`);
+      return;
+    }
+    if (qrScanMode === "sweep") {
+      let resolved2 = null;
+      if (sheetApi) {
+        resolved2 = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+      } else {
+        resolved2 = { kind: "unknown", reason: "no_match" };
+      }
+      let targetBag = null;
+      if (resolved2.kind === "bag" && resolved2.bagId) {
+        targetBag = bitBolsas.find((b) => b.id === resolved2.bagId || b.codigo === resolved2.bagId);
+      }
+      if (!targetBag) {
+        const rawStr = String(raw).trim();
+        targetBag = bitBolsas.find((b) => b.codigo === rawStr || b.id === rawStr);
+        if (!targetBag) {
+          const bagMatch = rawStr.match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+          if (bagMatch) {
+            const suffix = bagMatch[1].toUpperCase();
+            targetBag = bitBolsas.find((b) => (b.codigo?.endsWith(suffix) || b.id?.endsWith(suffix)) && (!qrSelectedLoteId || b.loteId === qrSelectedLoteId));
+          }
+        }
+      }
+      if (targetBag) {
+        if (sweepQueue.some((item) => item.bagId === targetBag.id)) {
+          triggerHaptic([20]);
+          return;
+        }
+        playSweepBeep(880, 80);
+        triggerHaptic([40]);
+        const entry = window.SetasSweepJournal ? window.SetasSweepJournal.createSweepEntry(targetBag) : {
+          bagId: targetBag.id,
+          codigo: targetBag.codigo || targetBag.id,
+          loteId: targetBag.loteId,
+          estado: targetBag.estado || "sana",
+          colonizacion: targetBag.colonizacion || 0,
+          col100: targetBag.col100 || null,
+          expectedRevision: targetBag.revision || 0,
+          scannedAt: Date.now()
+        };
+        setSweepQueue((prev) => [entry, ...prev]);
+        setScanMiss("");
+        if (targetBag.loteId && targetBag.loteId !== qrSelectedLoteId) {
+          setQrSelectedLoteId(targetBag.loteId);
+        }
+        return;
+      }
+      if (resolved2.kind === "batch" && resolved2.batchId) {
+        setQrSelectedLoteId(resolved2.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote fijado a ${resolved2.batchCode || resolved2.batchId}. Continúa escaneando las bolsas de la hilera.`);
+        return;
+      }
+      setScanMiss(`Etiqueta "${String(raw).slice(0, 30)}" no encontrada entre las bolsas.`);
+      return;
+    }
     let resolved = null;
     if (sheetApi) {
       resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
@@ -3947,8 +4087,14 @@ function SimuladorShell(props) {
       setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };
-  const openFieldScanSheet = () => {
+  const openFieldScanSheet = (initialMode = "round") => {
     scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
+    isSavingHarvestRef.current = false;
+    setQrScanMode(initialMode);
+    setHarvestActiveCrate(null);
+    setSweepQueue([]);
+    setSweepStatusBanner("");
     const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
     setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
     setQrScannedBagId("");
@@ -3956,6 +4102,173 @@ function SimuladorShell(props) {
     setCameraError("");
     setManualScanCode("");
     setShowQrSheet(true);
+  };
+  const handleSaveHarvestCrate = () => {
+    if (isSavingHarvestRef.current) return;
+    if (!harvestActiveCrate || !harvestGrossInput) return;
+    const gross = parseFloat(harvestGrossInput);
+    if (!gross || gross <= 0) {
+      setHarvestError("Ingresa un peso bruto válido.");
+      return;
+    }
+    const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+    if (tare !== null && tare > gross) {
+      setHarvestError(`La tara (${tare}g) no puede exceder el peso bruto (${gross}g).`);
+      return;
+    }
+    const activeLot = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    if (!activeLot) {
+      setHarvestError("No hay un lote seleccionado para registrar la cosecha.");
+      return;
+    }
+    isSavingHarvestRef.current = true;
+    try {
+      const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot.operador || "operario_local";
+      const harvestRecord = {
+        id: harvestActiveCrate.harvestId,
+        loteId: activeLot.id,
+        crateId: harvestActiveCrate.crateId,
+        crateCode: harvestActiveCrate.crateCode,
+        pesoBrutoGramos: gross,
+        taraGramos: tare,
+        taraSource: tare !== null ? harvestTareSource : "unverified",
+        flush: harvestFlush,
+        calidad: harvestCalidad,
+        fecha: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+        operador: uid
+      };
+      const normalized = window.SetasBitacora.normalizeHarvestCapture(harvestRecord);
+      const ok = addBitCosecha(normalized);
+      if (ok) {
+        setHarvestSessionStats((prev) => ({
+          count: prev.count + 1,
+          totalNetGrams: prev.totalNetGrams + (normalized.pesoFrescoGramos || 0),
+          totalGrossGrams: prev.totalGrossGrams + normalized.pesoBrutoGramos
+        }));
+        playSweepBeep(1200, 80);
+        triggerHaptic([30, 40]);
+        setHarvestActiveCrate(null);
+        isDecodingPausedRef.current = false;
+      }
+    } catch (err) {
+      setHarvestError(err.message || "Error al guardar la cosecha");
+    } finally {
+      isSavingHarvestRef.current = false;
+    }
+  };
+  const handleApplySweepColonizacion = (targetPct) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || "operario_local";
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) {
+      setScanMiss("Módulo SetasSweepJournal no disponible.");
+      return;
+    }
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      targetColonizacion: targetPct,
+      operator: uid,
+      now: Date.now()
+    });
+    if (opResult.status !== "failed") {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      if (window.SetasBitacoraDB) {
+        for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
+          window.SetasBitacoraDB.actualizarBolsa(bId, updatedBag).catch(() => {
+          });
+        }
+      }
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: "note",
+          operatorId: uid,
+          at: (/* @__PURE__ */ new Date()).toISOString(),
+          payload: {
+            nota: `Barrido de sala: ${opResult.totalUpdated} de ${opResult.totalScanned} bolsas actualizadas al ${targetPct}%.`,
+            operationId: opResult.operationId
+          }
+        });
+        const updLotes = bitLotes.map((l) => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem("sdp_bit_lotes", JSON.stringify(updLotes));
+        } catch (e) {
+        }
+        if (window.SetasBitacoraDB?.actualizarLote) {
+          window.SetasBitacoraDB.actualizarLote(activeLot.id, { lifecycleEvents: nextLog }).catch(() => {
+          });
+        }
+      }
+      playSweepBeep(1040, 120);
+      triggerHaptic([50, 60]);
+      setSweepStatusBanner(`✓ Barrido aplicado: ${opResult.totalUpdated} bolsas actualizadas al ${targetPct}%${opResult.totalScanned > opResult.totalUpdated ? ` (${opResult.totalScanned - opResult.totalUpdated} protegidas)` : ""}.`);
+      setSweepQueue([]);
+    } else {
+      setSweepStatusBanner("❌ No se pudo aplicar el barrido a las bolsas seleccionadas.");
+    }
+  };
+  const handleApplySweepRisk = (riskType, riskNota) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || "operario_local";
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) return;
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      isRiskObservation: true,
+      riskType,
+      riskNota,
+      operator: uid,
+      now: Date.now()
+    });
+    if (opResult.status !== "failed") {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: "note",
+          operatorId: uid,
+          at: (/* @__PURE__ */ new Date()).toISOString(),
+          payload: {
+            nota: `Observación de riesgo en barrido (${riskType}): ${riskNota || "sin nota adicional"} en ${opResult.totalUpdated} bolsas.`,
+            operationId: opResult.operationId
+          }
+        });
+        const updLotes = bitLotes.map((l) => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem("sdp_bit_lotes", JSON.stringify(updLotes));
+        } catch (e) {
+        }
+      }
+      playSweepBeep(660, 150);
+      triggerHaptic([60, 40]);
+      setSweepStatusBanner(`✓ Observación de riesgo registrada para ${opResult.totalUpdated} bolsas.`);
+      setSweepQueue([]);
+      setSweepRiskModalOpen(false);
+      setSweepRiskNota("");
+    }
   };
   useEffect(() => {
     if (!Number(props.scanNonce)) return;
@@ -5443,7 +5756,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
   const addBitCosecha = (cosecha) => {
-    const e = { ...cosecha, id: "COS_" + Date.now() };
+    const e = { ...cosecha, id: cosecha.id || "COS_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) };
     try {
       SetasBitacora.persistCapture(localStorage, [["sdp_bit_cosechas", [...bitCosechas, e]]]);
     } catch (err) {
@@ -8890,7 +9203,7 @@ Click para ver análisis completo`
         label: "Captura rápida de campo",
         dialogStyle: { width: "min(460px,94vw)", padding: "18px 16px", background: "var(--paper-1,#EFEBE0)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-md,3px)" }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "camera", size: 14, color: "var(--ink-0)" }), " Ronda de Campo · Registro Rápido"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-0)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "camera", size: 14, color: "var(--ink-0)" }), " ", qrScanMode === "harvest" ? "Báscula Cosecha · Pesaje Rápido" : qrScanMode === "sweep" ? "Barrido Sala · Auditoría Masiva" : "Ronda de Campo · Registro Rápido"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar captura rápida", onClick: () => {
         stopCameraScanner();
         setShowQrSheet(false);
         setQrScannedBagId("");
@@ -8899,8 +9212,158 @@ Click para ver análisis completo`
         setCameraError("");
         setQrEventoObsAbierta(false);
         setQrEventoObsNota("");
+        setHarvestActiveCrate(null);
+        setSweepQueue([]);
+        setSweepRiskModalOpen(false);
+        setSweepStatusBanner("");
       } }, "✕")),
-      isCameraActive ? /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-viewport" }, /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, background: "var(--paper-2, #E5DFC8)", padding: 3, borderRadius: "var(--radius-sm, 3px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: `inv-btn inv-btn-sm ${qrScanMode === "round" ? "inv-btn-pri" : "inv-btn-sec"}`,
+          style: { flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === "round" ? 700 : 500 },
+          onClick: () => {
+            setQrScanMode("round");
+            isDecodingPausedRef.current = false;
+            setHarvestActiveCrate(null);
+          }
+        },
+        "🔍 Ronda Lote"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: `inv-btn inv-btn-sm ${qrScanMode === "harvest" ? "inv-btn-pri" : "inv-btn-sec"}`,
+          style: { flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === "harvest" ? 700 : 500 },
+          onClick: () => {
+            setQrScanMode("harvest");
+            isDecodingPausedRef.current = false;
+            setHarvestActiveCrate(null);
+          }
+        },
+        "⚖️ Báscula Cosecha"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: `inv-btn inv-btn-sm ${qrScanMode === "sweep" ? "inv-btn-pri" : "inv-btn-sec"}`,
+          style: { flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === "sweep" ? 700 : 500 },
+          onClick: () => {
+            setQrScanMode("sweep");
+            isDecodingPausedRef.current = false;
+            setHarvestActiveCrate(null);
+          }
+        },
+        "⚡ Barrido Sala"
+      )),
+      qrScanMode === "harvest" && harvestActiveCrate ? /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", background: "var(--paper-0, #F7F4EC)", border: "2px solid var(--accent-olive, #5B6B44)", borderRadius: "var(--radius-md, 3px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--ink-2)" } }, "Canastilla"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 16, fontWeight: 700, color: "var(--accent-olive, #5B6B44)" } }, harvestActiveCrate.crateCode)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--ink-2)" } }, "Lote Destino"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: "var(--ink-0)" } }, currentLote ? currentLote.codigo : "Sin lote"))), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "var(--paper-1, #EFEBE0)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: 2, marginBottom: 10, fontSize: 11 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: "var(--ink-1)" } }, "Tara: ", harvestTareInput ? `${harvestTareInput} g` : "Sin verificar"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Fuente: ", harvestTareSource === "field_measured" ? "Balanza campo" : harvestTareSource === "catalog_default" ? "Catálogo" : harvestTareSource === "manual" ? "Manual" : "Sin verificar")), (!harvestTareInput || harvestTareSource === "unverified") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--warning-text, #8C6B2E)", flex: 1 } }, "⚠️ Ingresa la tara (g) para calcular peso neto honesto:"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          inputMode: "numeric",
+          placeholder: "Tara g",
+          value: harvestTareInput,
+          onChange: (e) => {
+            setHarvestTareInput(e.target.value);
+            setHarvestTareSource(e.target.value ? "manual" : "unverified");
+          },
+          style: { width: 80, padding: "4px 6px", fontSize: 11, fontFamily: "var(--font-mono)" }
+        }
+      ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, marginBottom: 4, color: "var(--ink-0)" } }, "Peso Bruto Total (g):"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "number",
+          inputMode: "numeric",
+          autoFocus: true,
+          placeholder: "Ej: 1450",
+          value: harvestGrossInput,
+          onChange: (e) => {
+            setHarvestGrossInput(e.target.value);
+            setHarvestError("");
+          },
+          onKeyDown: (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSaveHarvestCrate();
+            }
+          },
+          style: { width: "100%", minHeight: 48, fontSize: 24, fontWeight: 700, textAlign: "center", fontFamily: "var(--font-mono)", border: "2px solid var(--accent-olive, #5B6B44)", borderRadius: 2 }
+        }
+      ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, marginTop: 6 } }, [100, 250, 500, 1e3].map((inc) => /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: inc,
+          type: "button",
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          style: { flex: 1, padding: "4px 2px", fontSize: 10, fontFamily: "var(--font-mono)" },
+          onClick: () => {
+            const cur = parseFloat(harvestGrossInput) || 0;
+            setHarvestGrossInput(String(cur + inc));
+          }
+        },
+        "+",
+        inc >= 1e3 ? `${inc / 1e3}kg` : `${inc}g`
+      )))), (() => {
+        const gross = parseFloat(harvestGrossInput);
+        const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+        if (!gross || isNaN(gross)) return null;
+        if (tare !== null && !isNaN(tare)) {
+          if (tare > gross) {
+            return /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 8px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", fontSize: 11, marginBottom: 10, fontWeight: 700 } }, "❌ Tara (", tare, "g) excede el peso bruto (", gross, "g).");
+          }
+          const net = gross - tare;
+          return /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#DCFCE7", color: "#15803D", borderLeft: "3px solid #16A34A", fontSize: 12, marginBottom: 10, fontWeight: 700, display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "✓ Peso Neto: ", net, " g"), /* @__PURE__ */ React.createElement("span", null, "(", (net / 1e3).toFixed(3), " kg)"));
+        }
+        return /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 8px", background: "var(--paper-2, #E5DFC8)", color: "var(--ink-1)", borderLeft: "3px solid var(--accent-terracotta)", fontSize: 11, marginBottom: 10 } }, "Bruto: ", gross, " g · Neto: No calculado (bloqueado por falta de tara verificada)");
+      })(), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: 10, fontWeight: 700, marginBottom: 2 } }, "Oleada (Flush):"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 3 } }, [1, 2, 3].map((f) => /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: f,
+          type: "button",
+          className: `inv-btn inv-btn-sm ${harvestFlush === f ? "inv-btn-pri" : "inv-btn-sec"}`,
+          style: { flex: 1, padding: "3px 0", fontSize: 10 },
+          onClick: () => setHarvestFlush(f)
+        },
+        "F",
+        f
+      )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: 10, fontWeight: 700, marginBottom: 2 } }, "Calidad:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 3 } }, [
+        { val: 1, lbl: "1ra" },
+        { val: 2, lbl: "2da" },
+        { val: 3, lbl: "Merma" }
+      ].map((q) => /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: q.val,
+          type: "button",
+          className: `inv-btn inv-btn-sm ${harvestCalidad === q.val ? "inv-btn-pri" : "inv-btn-sec"}`,
+          style: { flex: 1, padding: "3px 0", fontSize: 10 },
+          onClick: () => setHarvestCalidad(q.val)
+        },
+        q.lbl
+      ))))), harvestError && /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 8px", background: "#FEE2E2", color: "#991B1B", fontSize: 11, marginBottom: 10 } }, harvestError), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          disabled: !harvestGrossInput || harvestTareInput && parseFloat(harvestTareInput) > parseFloat(harvestGrossInput),
+          onClick: handleSaveHarvestCrate,
+          className: "inv-btn inv-btn-pri",
+          style: { flex: 1, minHeight: 40, fontSize: 12, fontWeight: 700 }
+        },
+        "Guardar Canastilla (Enter)"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => {
+            setHarvestActiveCrate(null);
+            isDecodingPausedRef.current = false;
+          },
+          className: "inv-btn inv-btn-sec",
+          style: { minHeight: 40, fontSize: 12 }
+        },
+        "Cancelar"
+      ))) : /* @__PURE__ */ React.createElement(React.Fragment, null, isCameraActive ? /* @__PURE__ */ React.createElement("div", { className: "qr-scanner-viewport" }, /* @__PURE__ */ React.createElement(
         "video",
         {
           ref: videoRef,
@@ -8925,9 +9388,7 @@ Click para ver análisis completo`
           style: { minHeight: 42, width: "100%", cursor: "pointer", background: "var(--paper-0,#F7F4EC)", color: "var(--accent-olive,#5B6B44)", border: "1px solid var(--accent-olive,#5B6B44)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 }
         },
         "📷 Iniciar Escaneo con Cámara Móvil"
-      ),
-      cameraError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, "⚠️ ", cameraError),
-      /* @__PURE__ */ React.createElement(
+      ), cameraError && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "#FEE2E2", color: "#991B1B", borderLeft: "3px solid #DC2626", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, "⚠️ ", cameraError), /* @__PURE__ */ React.createElement(
         "form",
         {
           "data-testid": "scan-manual-code",
@@ -8946,7 +9407,7 @@ Click para ver análisis completo`
             type: "text",
             value: manualScanCode,
             onChange: (e) => setManualScanCode(e.target.value),
-            placeholder: "Código impreso en la etiqueta (p. ej. SHI-260714-03)",
+            placeholder: qrScanMode === "harvest" ? "Código de canastilla (p. ej. CAN-01)" : qrScanMode === "sweep" ? "Código de bolsa (p. ej. OST-01-B12)" : "Código impreso en la etiqueta",
             "aria-label": "Código impreso en la etiqueta",
             autoComplete: "off",
             autoCapitalize: "characters",
@@ -8964,9 +9425,127 @@ Click para ver análisis completo`
           },
           "Abrir"
         )
-      ),
-      scanMiss && /* @__PURE__ */ React.createElement("div", { role: "status", "data-testid": "scan-unresolved", style: { padding: "8px 10px", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", borderLeft: "3px solid var(--accent-terracotta,#A85C32)", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, scanMiss, " Elige el lote manualmente o vuelve a escanear."),
-      currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 } }, /* @__PURE__ */ React.createElement(
+      ), scanMiss && /* @__PURE__ */ React.createElement("div", { role: "status", "data-testid": "scan-unresolved", style: { padding: "8px 10px", background: "var(--accent-terracotta-dim,#EFE0D3)", color: "var(--accent-terracotta,#A85C32)", borderLeft: "3px solid var(--accent-terracotta,#A85C32)", borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: "var(--font-sans)" } }, scanMiss, " Elige el lote manualmente o vuelve a escanear."), qrScanMode === "harvest" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: 2, fontSize: 11, fontFamily: "var(--font-mono)", display: "flex", justifyContent: "space-between", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", null, "📦 Sesión de Pesaje: ", /* @__PURE__ */ React.createElement("b", null, harvestSessionStats.count), " canastillas"), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("b", null, (harvestSessionStats.totalNetGrams / 1e3).toFixed(2), " kg"), " netos")), activeBatches.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-sans)" } }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontWeight: 600, color: "var(--ink-1)", marginBottom: 2 } }, "Lote activo a cosechar:"), /* @__PURE__ */ React.createElement(
+        "select",
+        {
+          className: "inv-input",
+          style: { fontSize: 11, minHeight: 34 },
+          value: currentLote?.id,
+          onChange: (e) => setQrSelectedLoteId(e.target.value)
+        },
+        activeBatches.map((l) => /* @__PURE__ */ React.createElement("option", { key: l.id, value: l.id }, l.codigo, " — ", l.especie, " (", l.estado, ")"))
+      ))), qrScanMode === "sweep" && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, marginBottom: 12, padding: 10, background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-sm, 2px)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-0)" } }, "⚡ Hilera Actual: ", sweepQueue.length, " ", sweepQueue.length === 1 ? "bolsa" : "bolsas"), sweepQueue.length > 0 && /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => setSweepQueue([]),
+          style: { background: "none", border: "none", color: "var(--accent-terracotta)", fontSize: 10, cursor: "pointer", fontFamily: "var(--font-mono)" }
+        },
+        "Limpiar cola"
+      )), sweepQueue.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, maxHeight: 72, overflowY: "auto", marginBottom: 8, padding: 2 } }, sweepQueue.map((item) => /* @__PURE__ */ React.createElement(
+        "span",
+        {
+          key: item.bagId,
+          style: {
+            padding: "2px 6px",
+            background: item.estado === "contaminada" ? "#FEE2E2" : "var(--paper-1)",
+            color: item.estado === "contaminada" ? "#991B1B" : "var(--ink-0)",
+            border: "1px solid var(--border-hairline)",
+            borderRadius: 2,
+            fontSize: 10,
+            fontFamily: "var(--font-mono)"
+          }
+        },
+        item.codigo,
+        " (",
+        item.colonizacion,
+        "%)"
+      ))) : /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--ink-2)", marginBottom: 8, fontFamily: "var(--font-sans)" } }, "Pasa la cámara sobre las bolsas. Sonará un pitido y se agregarán a la hilera automáticamente."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, marginBottom: 4 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          disabled: sweepQueue.length === 0,
+          onClick: () => handleApplySweepColonizacion(100),
+          className: "inv-btn inv-btn-pri inv-btn-sm",
+          style: { padding: "6px 4px", fontSize: 11, fontWeight: 700 }
+        },
+        "✓ 100% Sano"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          disabled: sweepQueue.length === 0,
+          onClick: () => handleApplySweepColonizacion(75),
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          style: { padding: "6px 4px", fontSize: 11 }
+        },
+        "75%"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          disabled: sweepQueue.length === 0,
+          onClick: () => handleApplySweepColonizacion(50),
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          style: { padding: "6px 4px", fontSize: 11 }
+        },
+        "50%"
+      )), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          disabled: sweepQueue.length === 0,
+          onClick: () => setSweepRiskModalOpen(true),
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          style: { width: "100%", padding: "5px 4px", fontSize: 11, color: "var(--accent-terracotta)" }
+        },
+        "⚠️ Registrar Observación de Riesgo (",
+        sweepQueue.length,
+        ")"
+      ), sweepStatusBanner && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, padding: "6px 8px", background: "var(--paper-1)", borderLeft: "3px solid var(--accent-olive)", fontSize: 11, fontFamily: "var(--font-sans)" } }, sweepStatusBanner), sweepRiskModalOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: 10, background: "var(--paper-1)", border: "1px solid var(--accent-terracotta)", borderRadius: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 700, marginBottom: 6, color: "var(--accent-terracotta)" } }, "Observación de Riesgo (", sweepQueue.length, " bolsas)"), /* @__PURE__ */ React.createElement(
+        "select",
+        {
+          className: "inv-input",
+          style: { fontSize: 11, minHeight: 32, marginBottom: 6 },
+          value: sweepRiskType,
+          onChange: (e) => setSweepRiskType(e.target.value)
+        },
+        /* @__PURE__ */ React.createElement("option", { value: "micelio_debil" }, "Micelio débil o lento"),
+        /* @__PURE__ */ React.createElement("option", { value: "humedad_baja" }, "Sustrato seco / Humedad baja"),
+        /* @__PURE__ */ React.createElement("option", { value: "humedad_excesiva" }, "Condensación / Humedad excesiva"),
+        /* @__PURE__ */ React.createElement("option", { value: "posible_contaminacion" }, "Sospecha de contaminación"),
+        /* @__PURE__ */ React.createElement("option", { value: "fuga_filtro" }, "Fuga o daño en filtro"),
+        /* @__PURE__ */ React.createElement("option", { value: "deformidad_primordio" }, "Deformidad en primordios"),
+        /* @__PURE__ */ React.createElement("option", { value: "general" }, "Otro riesgo")
+      ), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "text",
+          className: "inv-input",
+          placeholder: "Detalle u observación...",
+          style: { fontSize: 11, minHeight: 32, marginBottom: 8 },
+          value: sweepRiskNota,
+          onChange: (e) => setSweepRiskNota(e.target.value)
+        }
+      ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-pri inv-btn-sm",
+          style: { flex: 1 },
+          onClick: () => handleApplySweepRisk(sweepRiskType, sweepRiskNota)
+        },
+        "Registrar Riesgo"
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          className: "inv-btn inv-btn-sec inv-btn-sm",
+          onClick: () => setSweepRiskModalOpen(false)
+        },
+        "Cancelar"
+      ))))),
+      qrScanMode === "round" && currentLote ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 } }, /* @__PURE__ */ React.createElement(
         "button",
         {
           type: "button",
@@ -9135,7 +9714,7 @@ Click para ver análisis completo`
         },
         /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 14, color: "var(--moss-700)" }),
         " Ver Ficha Pública QR (Trazabilidad)"
-      ))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px 0", fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)" } }, "No hay lotes activos registrados para escanear.")
+      ))) : qrScanMode === "round" ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px 0", fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)" } }, "No hay lotes activos registrados para escanear.") : null
     );
   })(), showThermalModal && thermalLote && (() => {
     const lote = thermalLote;

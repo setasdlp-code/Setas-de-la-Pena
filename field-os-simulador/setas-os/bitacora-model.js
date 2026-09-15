@@ -133,9 +133,52 @@
     fechaMezcla:form.fechaMezcla||null,fechaInoculacion:form.fechaInoculacion||null,
     tratamiento:form.tratamiento||null
   });
-  const normalizeHarvestCapture = form => ({...form,
-    pesoFresco:captureNumber(form.pesoFresco),flush:captureNumber(form.flush),calidad:captureNumber(form.calidad)
-  });
+  const normalizeHarvestCapture = form => {
+    const rawPesoFresco = captureNumber(form.pesoFresco ?? form.pesoFrescoGramos);
+    const bruto = captureNumber(form.pesoBrutoGramos ?? form.pesoBruto);
+    const tara = captureNumber(form.taraGramos ?? form.tara);
+    const flush = captureNumber(form.flush);
+    const calidad = captureNumber(form.calidad);
+
+    let neto = rawPesoFresco;
+    let netCalculationStatus = form.netCalculationStatus || (rawPesoFresco !== null ? 'verified' : 'blocked_missing_tare');
+
+    if (bruto !== null) {
+      if (tara !== null) {
+        if (tara > bruto) {
+          throw new Error('tara_exceeds_gross_weight');
+        }
+        neto = bruto - tara;
+        netCalculationStatus = 'verified';
+      } else {
+        neto = null;
+        netCalculationStatus = 'blocked_missing_tare';
+      }
+    } else if (rawPesoFresco !== null) {
+      neto = rawPesoFresco;
+      netCalculationStatus = 'verified';
+    }
+
+    const bagId = form.bagId || form.bolsaId || null;
+
+    return {
+      ...form,
+      bagId,
+      bolsaId: bagId,
+      crateId: form.crateId || null,
+      crateCode: form.crateCode || null,
+      pesoBrutoGramos: bruto,
+      taraGramos: tara,
+      taraSource: form.taraSource || (tara !== null ? 'manual' : 'unverified'),
+      pesoFresco: neto,
+      pesoFrescoGramos: neto,
+      netCalculationStatus,
+      unit: form.unit || form.unidad || 'g',
+      unidad: form.unit || form.unidad || 'g',
+      flush,
+      calidad,
+    };
+  };
   // Both local collections must persist before UI state changes. Roll back the
   // first key if the second write fails; callers keep their draft on failure.
   const persistCapture = (storage, entries) => {
