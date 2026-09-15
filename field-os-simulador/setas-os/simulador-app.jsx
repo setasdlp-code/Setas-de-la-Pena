@@ -1497,9 +1497,12 @@ const {
 
 // ── Perito Workbench Core — puente hacia perito-workbench-core.js ──
 const {
+  TENJO_PHYSICAL_CONTEXT: engineTenjoPhysicalContext,
+  calcRestrictiveFactor: engineCalcRestrictiveFactor,
   calcLiebigBottleneck: engineCalcLiebigBottleneck,
   simulateSuggestionDelta: engineSimulateSuggestionDelta,
   morphRecipes: engineMorphRecipes,
+  analyzeMorphTrajectory: engineAnalyzeMorphTrajectory,
   filterParetoFrontier: engineFilterParetoFrontier,
 } = (typeof SetasPeritoWorkbench !== 'undefined'
   ? SetasPeritoWorkbench
@@ -2133,8 +2136,13 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
-            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} ({deltaSim.diff.newEb}%)
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({deltaSim.diff.newEb}%)
           </span>
+          {deltaSim.diff.confidence&&(
+            <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>
+              confianza: {deltaSim.diff.confidence==='high'?'alta':deltaSim.diff.confidence==='low'?'baja':'media'}
+            </span>
+          )}
           {deltaSim.diff.deltaCost!==0&&(
             <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
               ΔCosto: {deltaSim.diff.deltaCost<=0?`-$${Math.abs(deltaSim.diff.deltaCost)}/kg`:`+$${deltaSim.diff.deltaCost}/kg`}
@@ -6223,6 +6231,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [workbenchMode,setWorkbenchMode]=useState('all');
   const [morphTargetRecipe,setMorphTargetRecipe]=useState(null);
   const [morphAlpha,setMorphAlpha]=useState(0.5);
+  const peritoWorkerRef=useRef(null);
+  const peritoRequestIdRef=useRef(0);
   const focusFormTop=()=>requestAnimationFrame(()=>{
     const main=document.getElementById('setas-main');
     if(main) main.scrollTo({top:0,left:0});
@@ -12766,11 +12776,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const warnings=items.filter(s=>s.priority==='warning');
               const tips=items.filter(s=>s.priority==='tip');
               const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const liebig=engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null;
+              const restrictiveFactor=engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null);
               const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
               const cur=sp?Math.min(an?.cn||0,max):0;
               const cnOk=sp&&an&&an.cn>=oMin&&an.cn<=oMax;
-              const reqPsi=engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.04;
+              const reqPsi=engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03);
               const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
 
               return (
@@ -12796,31 +12806,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
 
-                  {/* Factor Limitante (Ley del Mínimo de Liebig) */}
-                  {liebig&&liebig.factor!=='none'&&(
-                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:liebig.severity==='critical'?'rgba(197,48,48,.08)':liebig.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${liebig.severity==='critical'?'rgba(197,48,48,.3)':liebig.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
+                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{fontSize:16}}>{liebig.severity==='critical'?'🚨':liebig.severity==='warning'?'⚖️':'🌿'}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:liebig.severity==='critical'?'#C53030':liebig.severity==='warning'?'#7A5A10':'#2F4A24'}}>
-                          Factor Limitante (Ley del Mínimo de Liebig): {liebig.label}
+                        <span style={{fontSize:16}}>{restrictiveFactor.severity==='critical'?'🚨':restrictiveFactor.severity==='warning'?'⚖️':'🌿'}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                          Factor Restrictivo Estimado: {restrictiveFactor.label}
                         </span>
                       </div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
-                        <b>Diagnóstico:</b> {liebig.rationale}
+                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
                       </div>
-                      {liebig.actionRequired&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:liebig.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
-                          ➜ Acción correctiva: {liebig.actionRequired}
+                      {restrictiveFactor.counterfactualOpportunity&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
+                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
+                        </div>
+                      )}
+                      {restrictiveFactor.actionRequired&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                          ➜ Acción correctiva: {restrictiveFactor.actionRequired}
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Cinética de Esterilización Térmica en Altitud (Tenjo 2.600 msnm) */}
+                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
                   <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
-                        🏔️ Cinética de Esterilización Térmica en Altitud (Tenjo · 2.600 msnm / 74.5 kPa)
+                        🏔️ Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
                       </div>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
                         All American 1941X: {reqPsi.toFixed(2)} psig
@@ -12982,12 +12997,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 : opt;
               const scoreMorph = Math.round(scoreMorphObj?.score || 0);
 
+              const trajectoryAnalysis = (hasBase && hasCandidate && engineAnalyzeMorphTrajectory)
+                ? engineAnalyzeMorphTrajectory({
+                    recipeA: recipe,
+                    recipeB: activeCandidate,
+                    lockedIds,
+                    species: sp,
+                    analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+                    requestedAlpha: morphAlpha,
+                  })
+                : null;
+              const isMorphFeasible = trajectoryAnalysis ? trajectoryAnalysis.isFeasibleAtRequestedAlpha : true;
+
               return (
                 <section className="panel perito-morph-panel" style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap',gap:12}}>
                     <div>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
-                        Interpolación Convexa & Exploración de Transición
+                        Interpolación Convexa Lineal R(α) = (1-α)R₀ + αR₁
                       </div>
                       <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
                         ⚖️ Comparador & Morphing de Recetas
@@ -12997,13 +13024,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button
                         type="button"
                         className="btn pri"
-                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 14px'}}
+                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 14px',opacity:isMorphFeasible?1:0.6}}
+                        title={!isMorphFeasible?'La receta actual en este punto de transición no cumple los criterios agronómicos':''}
                         onClick={()=>{
                           setRecipe(morphedRec);
                           openBuilderSubTab('formular');
-                          setNoticeDlg({msg:'Receta morfeada aplicada exitosamente en la Mesa de Mezcla'});
+                          setNoticeDlg({msg:isMorphFeasible?'Receta morfeada aplicada exitosamente en la Mesa de Mezcla':'Receta aplicada (Atención: se encuentra fuera de rango óptimo)'});
                         }}>
-                        🥣 Aplicar en Mesa de Mezcla
+                        🥣 Aplicar en Mesa de Mezcla {!isMorphFeasible?'⚠️':''}
                       </button>
                     )}
                   </div>
@@ -13016,13 +13044,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   ):(
                     <div>
+                      {!isMorphFeasible&&trajectoryAnalysis&&(
+                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
+                          <b>⚠️ Estado agronómicamente no permitido en α = {morphAlpha.toFixed(2)}:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                          {trajectoryAnalysis.feasibleInterval&&(
+                            <div style={{marginTop:4,color:'var(--ink-800)'}}>
+                              ➜ Intervalo seguro para esta especie: <b>α ∈ [{trajectoryAnalysis.feasibleInterval[0].toFixed(2)}, {trajectoryAnalysis.feasibleInterval[1].toFixed(2)}]</b>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div style={{margin:'14px 0 20px',background:'var(--paper-100)',padding:16,borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
                             Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
                           </span>
-                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:'var(--moss-800)'}}>
-                            α = {morphAlpha.toFixed(2)}
+                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'#C53030'}}>
+                            α = {morphAlpha.toFixed(2)} {!isMorphFeasible?'(Inválido)':''}
                           </span>
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
                             Candidato Objetivo ({(morphAlpha * 100).toFixed(0)}%)
@@ -13150,7 +13188,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 disabled={optRunning}
                                 onClick={()=>{
                                   setOptRunning(true);setOptResults(null);setGeneratorStatus('Calculando escenarios…');
+                                  const reqId=++peritoRequestIdRef.current;
                                   setTimeout(()=>{
+                                    if(reqId!==peritoRequestIdRef.current) return;
                                     let noStock=false;let _diag=null;
                                     const byProfile={};
                                     // Objetivos resueltos para la especie objetivo del generador (C1).
@@ -13188,6 +13228,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         if(pk===optProfile)_diag={stockCount:0,diag};
                                       }
                                     });
+                                    if(reqId!==peritoRequestIdRef.current) return;
                                     // Sin fallback — cada perfil muestra solo lo que le corresponde
                                     setOptResults({...byProfile,noStock,_diag});
                                     setOptRunning(false);
