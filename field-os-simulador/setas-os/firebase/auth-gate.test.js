@@ -364,7 +364,7 @@ test('all scripts in PROTECTED_APP_SCRIPTS, DC_RUNTIME_SCRIPTS, and AUTH_RUNTIME
   const extract = (name) => {
     const match = src.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`));
     assert.ok(match, `debe definir ${name}`);
-    return match[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+    return match[1].replace(/\/\/.*$/gm, '').split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
   };
 
   const allScripts = [

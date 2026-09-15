@@ -78,7 +78,7 @@
     for(var i=17;i>=12;i--){ if((b>>i)&1) b^=g<<(i-12); } return (ver<<12)|(b&0xFFF); }
 
   function placeFormat(m,mask){ var n=m.length; var fmt=bchFormat((0b00<<3)|mask); // level M = 00
-    for(var i=0;i<15;i++){ var bit=(fmt>>i)&1;
+    for(var i=0;i<15;i++){ var bit=(fmt>>(14-i))&1;
       // around top-left
       if(i<6) m[8][i]=bit; else if(i===6) m[8][7]=bit; else if(i===7) m[8][8]=bit;
       else if(i===8) m[7][8]=bit; else m[14-i][8]=bit;
@@ -122,10 +122,52 @@
     var ratio=dark/(n*n)*100; p+=Math.floor(Math.abs(ratio-50)/5)*10;
     return p; }
 
+  function toUtf8Bytes(text) {
+    if (typeof TextEncoder !== 'undefined') {
+      return Array.from(new TextEncoder().encode(text));
+    }
+    var bytes = [];
+    for (var i = 0; i < text.length; i++) {
+      var code = text.charCodeAt(i);
+      if (code >= 0xD800 && code <= 0xDBFF) {
+        if (i + 1 < text.length) {
+          var next = text.charCodeAt(i + 1);
+          if (next >= 0xDC00 && next <= 0xDFFF) {
+            code = ((code - 0xD800) << 10) + (next - 0xDC00) + 0x10000;
+            i++;
+          } else {
+            bytes.push(0xEF, 0xBF, 0xBD);
+            continue;
+          }
+        } else {
+          bytes.push(0xEF, 0xBF, 0xBD);
+          continue;
+        }
+      } else if (code >= 0xDC00 && code <= 0xDFFF) {
+        bytes.push(0xEF, 0xBF, 0xBD);
+        continue;
+      }
+      if (code < 128) {
+        bytes.push(code);
+      } else if (code < 2048) {
+        bytes.push(192 | (code >> 6));
+        bytes.push(128 | (code & 63));
+      } else if (code < 65536) {
+        bytes.push(224 | (code >> 12));
+        bytes.push(128 | ((code >> 6) & 63));
+        bytes.push(128 | (code & 63));
+      } else {
+        bytes.push(240 | (code >> 18));
+        bytes.push(128 | ((code >> 12) & 63));
+        bytes.push(128 | ((code >> 6) & 63));
+        bytes.push(128 | (code & 63));
+      }
+    }
+    return bytes;
+  }
+
   function matrix(text){
-    var bytes=[]; for(var i=0;i<text.length;i++){ var ch=text.charCodeAt(i);
-      if(ch<128) bytes.push(ch); else if(ch<2048){ bytes.push(192|(ch>>6)); bytes.push(128|(ch&63)); }
-      else { bytes.push(224|(ch>>12)); bytes.push(128|((ch>>6)&63)); bytes.push(128|(ch&63)); } }
+    var bytes = toUtf8Bytes(text == null ? '' : String(text));
     var version=pickVersion(bytes.length); if(version<0) throw new Error('QR: payload too long');
     var dataCw=encodeData(bytes,version);
     var codewords=buildCodewords(dataCw,version);

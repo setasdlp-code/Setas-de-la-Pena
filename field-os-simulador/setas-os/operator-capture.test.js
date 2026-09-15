@@ -38,6 +38,48 @@ test('legacy shell harvest routes to canonical records and cannot save demonstra
  const source=fs.readFileSync(`${__dirname}/Setas OS v5.dc.html`,'utf8');
  const start=source.indexOf('  confirmHarvest(){');const end=source.indexOf('  confirmQuick(){',start);
  const run=vm.runInNewContext('({'+source.slice(start,end)+'})');
- const calls=[];run.goBitTab=tab=>calls.push(tab);run.toast=()=>{};run.confirmHarvest();
- assert.deepEqual(calls,['bit_dash']);
+  const calls=[];run.goBitTab=tab=>calls.push(tab);run.toast=()=>{};run.confirmHarvest();
+  assert.deepEqual(calls,['bit_dash']);
+});
+
+test('normalizeHarvestCapture calculates net weight with verified tara and rejects tara > gross weight', () => {
+  // 1. Con tara verificada: neto = bruto - tara
+  const valid = normalizeHarvestCapture({
+    pesoBrutoGramos: '870',
+    taraGramos: '420',
+    taraSource: 'field_measured',
+    flush: '1',
+    crateId: 'crate_CAN-01',
+    crateCode: 'CAN-01',
+    bagId: 'B-02',
+  });
+  assert.equal(valid.pesoFresco, 450);
+  assert.equal(valid.pesoFrescoGramos, 450);
+  assert.equal(valid.pesoBrutoGramos, 870);
+  assert.equal(valid.taraGramos, 420);
+  assert.equal(valid.taraSource, 'field_measured');
+  assert.equal(valid.netCalculationStatus, 'verified');
+  assert.equal(valid.bagId, 'B-02');
+  assert.equal(valid.bolsaId, 'B-02');
+  assert.equal(valid.unit, 'g');
+  assert.equal(valid.unidad, 'g');
+
+  // 2. Tara mayor al peso bruto: rechazo estricto con error
+  assert.throws(
+    () => normalizeHarvestCapture({ pesoBrutoGramos: 400, taraGramos: 500, flush: 1 }),
+    /tara_exceeds_gross_weight/
+  );
+
+  // 3. Bruto presente pero tara null (no verificada): bloquea cálculo neto honestamente
+  const missingTare = normalizeHarvestCapture({
+    pesoBrutoGramos: 870,
+    taraGramos: null,
+    flush: 1,
+    crateId: 'crate_CAN-01',
+  });
+  assert.equal(missingTare.pesoBrutoGramos, 870);
+  assert.equal(missingTare.taraGramos, null);
+  assert.equal(missingTare.pesoFresco, null);
+  assert.equal(missingTare.pesoFrescoGramos, null);
+  assert.equal(missingTare.netCalculationStatus, 'blocked_missing_tare');
 });

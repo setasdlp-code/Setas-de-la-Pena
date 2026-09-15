@@ -128,3 +128,61 @@ test('respeta el límite de capacidad de versión 10 (213 bytes) y rechaza carga
     /QR: payload too long/
   );
 });
+
+test('soporta emojis y caracteres de 4 bytes UTF-8 sin degradación', () => {
+  const m = QRMini.matrix('🍄 Setas de la Peña 🌿 Tenjo');
+  assert.ok(m.length >= 21);
+  checkFinder(m, 0, 0);
+});
+
+test('decodificación round-trip con jsQR verifica validez ISO/IEC 18004 completa', () => {
+  const jsQR = require('./vendor/jsQR.js');
+
+  function decodeWithJsQR(matrix, scale = 6, quiet = 4) {
+    const n = matrix.length;
+    const dim = n + quiet * 2;
+    const width = dim * scale;
+    const height = dim * scale;
+    const data = new Uint8ClampedArray(width * height * 4);
+    data.fill(255);
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (matrix[r][c] === 1) {
+          for (let py = 0; py < scale; py++) {
+            for (let px = 0; px < scale; px++) {
+              const x = (c + quiet) * scale + px;
+              const y = (r + quiet) * scale + py;
+              const idx = (y * width + x) * 4;
+              data[idx] = 0;
+              data[idx + 1] = 0;
+              data[idx + 2] = 0;
+              data[idx + 3] = 255;
+            }
+          }
+        }
+      }
+    }
+    return jsQR(data, width, height);
+  }
+
+  const vectors = [
+    'SHI-260714-03',
+    'setas:bag:SHI-260714-03-B02',
+    'https://setasdelapena.co/public/trace.html?codigo=SHI-260714-03',
+    'SDP-CERT-2026-09-A',
+    '🍄 Pleurotus ostreatus · Tenjo 2.592 msnm',
+  ];
+
+  for (const v of vectors) {
+    const m = QRMini.matrix(v);
+    const decoded = decodeWithJsQR(m);
+    assert.ok(decoded, `jsQR no pudo decodificar el payload: ${v}`);
+    assert.equal(decoded.data, v, `El texto decodificado no coincide con el original`);
+  }
+
+  // Verificar que la capacidad se evalúa en BYTES y no en caracteres (54 emojis * 4 bytes = 216 bytes > 213)
+  assert.throws(
+    () => QRMini.matrix('🍄'.repeat(54)),
+    /QR: payload too long/
+  );
+});

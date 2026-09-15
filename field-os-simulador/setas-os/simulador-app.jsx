@@ -4587,18 +4587,24 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   ctx.setLineDash([]);
 
   // .thermal-aside: columna centrada — el QR se centra verticalmente en el
-  // alto disponible entre el padding vertical.
+  // alto disponible entre el padding vertical con quiet zone de 2 módulos.
   const qrX = padX;
   const qrY = (h - qrSize) / 2;
   const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
   if (qrMini && typeof qrMini.matrix === 'function') {
     const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
     const n = m.length;
-    const cell = qrSize / n;
+    const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos) idéntica a generateQrSvgDataUrl
+    const dim = n + q * 2;
+    const cell = qrSize / dim;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
     ctx.fillStyle = '#000';
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
-        if (m[r][c]) ctx.fillRect(qrX + c * cell, qrY + r * cell, Math.ceil(cell), Math.ceil(cell));
+        if (m[r][c]) {
+          ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+        }
       }
     }
   }
@@ -5248,6 +5254,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   useEffect(()=>{
     let active=true;
     getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
+    if (typeof window !== 'undefined' && !('BarcodeDetector' in window)) {
+      const prewarm = () => { loadJsQR().catch(() => {}); };
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(prewarm, { timeout: 3000 });
+      } else {
+        setTimeout(prewarm, 1500);
+      }
+    }
     return ()=>{active=false;};
   },[]);
   // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
@@ -5282,9 +5296,56 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
   // quedaba encendida con el modal cerrado.
   const cameraStreamRef = React.useRef(null);
+  // Invariante de seguridad contra carreras asíncronas de la cámara:
+  // A lo sumo un payload decodificado puede transicionar la UI de activa a resuelta.
+  const scanResolvingRef = React.useRef(false);
+  const isDecodingPausedRef = React.useRef(false);
+  const isSavingHarvestRef = React.useRef(false);
+  const [qrScanMode, setQrScanMode] = useState('round'); // 'round' | 'harvest' | 'sweep'
+  const [harvestActiveCrate, setHarvestActiveCrate] = useState(null);
+  const [harvestGrossInput, setHarvestGrossInput] = useState('');
+  const [harvestTareInput, setHarvestTareInput] = useState('');
+  const [harvestTareSource, setHarvestTareSource] = useState('unverified');
+  const [harvestFlush, setHarvestFlush] = useState(1);
+  const [harvestCalidad, setHarvestCalidad] = useState(1);
+  const [harvestError, setHarvestError] = useState('');
+  const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
+  const [sweepQueue, setSweepQueue] = useState([]);
+  const [sweepRiskModalOpen, setSweepRiskModalOpen] = useState(false);
+  const [sweepRiskType, setSweepRiskType] = useState('micelio_debil');
+  const [sweepRiskNota, setSweepRiskNota] = useState('');
+  const [sweepStatusBanner, setSweepStatusBanner] = useState('');
+
+  const playSweepBeep = (freq = 880, durationMs = 100) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+      const ctx = window.__setasAudioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (durationMs / 1000));
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + (durationMs / 1000));
+    } catch (e) {}
+  };
+  const triggerHaptic = (pattern = [50]) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    } catch (e) {}
+  };
 
   const stopCameraScanner = () => {
     setIsCameraActive(false);
+    isDecodingPausedRef.current = false;
     if (scannerIntervalRef.current) {
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
@@ -5367,7 +5428,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
         consecutiveErrors = 0;
-        if (code && code.data) handleScannedValue(code.data);
+        if (code && code.data && !isDecodingPausedRef.current) handleScannedValue(code.data);
       } catch (e) {
         consecutiveErrors += 1;
         if (consecutiveErrors >= 10) {
@@ -5379,6 +5440,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   };
 
   const startCameraScanner = async () => {
+    scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
     setCameraError('');
     setScanMiss('');
     try {
@@ -5428,7 +5491,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           const barcodes = await detector.detect(videoRef.current);
           if (barcodes && barcodes.length > 0) {
             const rawVal = barcodes[0].rawValue;
-            handleScannedValue(rawVal);
+            if (!isDecodingPausedRef.current) handleScannedValue(rawVal);
           }
         } catch (e) {}
       }, 300);
@@ -5450,8 +5513,118 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [qrEventoStatuses, setQrEventoStatuses] = useState([]);
   const qrSavingRef=useRef(new Set());
   const handleScannedValue = (raw) => {
-    if (!raw) return;
+    if (!raw || scanResolvingRef.current) return;
+    if (isDecodingPausedRef.current) return;
     const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
+
+    // --- MODO BÁSCULA COSECHA ---
+    if (qrScanMode === 'harvest') {
+      let resolved = null;
+      if (sheetApi) {
+        resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas, crates: sheetApi.CONFIG_CRATES || [] });
+      } else {
+        resolved = { kind: 'unknown', reason: 'no_match' };
+      }
+
+      if (resolved.kind === 'crate' || resolved.kind === 'crate_unregistered') {
+        if (resolved.reason === 'inactive_crate') {
+          setScanMiss(`La canastilla ${resolved.crateCode || raw} está marcada como inactiva.`);
+          return;
+        }
+        isDecodingPausedRef.current = true;
+        playSweepBeep(980, 100);
+        triggerHaptic([40, 50]);
+        setHarvestActiveCrate({
+          crateId: resolved.crateId || ('crate_' + resolved.crateCode),
+          crateCode: resolved.crateCode,
+          taraGramos: resolved.taraGramos,
+          taraSource: resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'),
+          harvestId: 'COS_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        });
+        setHarvestGrossInput('');
+        setHarvestTareInput(resolved.taraGramos !== null ? String(resolved.taraGramos) : '');
+        setHarvestTareSource(resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'));
+        setHarvestError('');
+        setScanMiss('');
+        return;
+      }
+
+      if (resolved.kind === 'batch' && resolved.batchId) {
+        setQrSelectedLoteId(resolved.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote activo para cosecha cambiado a ${resolved.batchCode || resolved.batchId}. Ahora escanea una canastilla.`);
+        return;
+      }
+
+      setScanMiss(`Código "${String(raw).slice(0, 30)}" no es una canastilla registrada. Escanea una canastilla (CAN-01) o ingresa el peso.`);
+      return;
+    }
+
+    // --- MODO BARRIDO SALA (AUDIT SWEEP) ---
+    if (qrScanMode === 'sweep') {
+      let resolved = null;
+      if (sheetApi) {
+        resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+      } else {
+        resolved = { kind: 'unknown', reason: 'no_match' };
+      }
+
+      let targetBag = null;
+      if (resolved.kind === 'bag' && resolved.bagId) {
+        targetBag = bitBolsas.find(b => b.id === resolved.bagId || b.codigo === resolved.bagId);
+      }
+      if (!targetBag) {
+        const rawStr = String(raw).trim();
+        targetBag = bitBolsas.find(b => b.codigo === rawStr || b.id === rawStr);
+        if (!targetBag) {
+          const bagMatch = rawStr.match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+          if (bagMatch) {
+            const suffix = bagMatch[1].toUpperCase();
+            targetBag = bitBolsas.find(b => (b.codigo?.endsWith(suffix) || b.id?.endsWith(suffix)) && (!qrSelectedLoteId || b.loteId === qrSelectedLoteId));
+          }
+        }
+      }
+
+      if (targetBag) {
+        if (sweepQueue.some(item => item.bagId === targetBag.id)) {
+          triggerHaptic([20]);
+          return;
+        }
+
+        playSweepBeep(880, 80);
+        triggerHaptic([40]);
+        const entry = window.SetasSweepJournal
+          ? window.SetasSweepJournal.createSweepEntry(targetBag)
+          : {
+              bagId: targetBag.id,
+              codigo: targetBag.codigo || targetBag.id,
+              loteId: targetBag.loteId,
+              estado: targetBag.estado || 'sana',
+              colonizacion: targetBag.colonizacion || 0,
+              col100: targetBag.col100 || null,
+              expectedRevision: targetBag.revision || 0,
+              scannedAt: Date.now(),
+            };
+        setSweepQueue(prev => [entry, ...prev]);
+        setScanMiss('');
+        if (targetBag.loteId && targetBag.loteId !== qrSelectedLoteId) {
+          setQrSelectedLoteId(targetBag.loteId);
+        }
+        return;
+      }
+
+      if (resolved.kind === 'batch' && resolved.batchId) {
+        setQrSelectedLoteId(resolved.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote fijado a ${resolved.batchCode || resolved.batchId}. Continúa escaneando las bolsas de la hilera.`);
+        return;
+      }
+
+      setScanMiss(`Etiqueta "${String(raw).slice(0, 30)}" no encontrada entre las bolsas.`);
+      return;
+    }
+
+    // --- MODO RONDA TRADICIONAL (DEFAULT) ---
     let resolved = null;
     if (sheetApi) {
       resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
@@ -5462,9 +5635,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       resolved = foundLote ? { kind: 'batch', batchId: foundLote.id, bagId: null } : { kind: 'unknown', batchId: null, reason: 'no_match' };
     }
     if (resolved.batchId) {
+      scanResolvingRef.current = true; // Invariante: a lo sumo un payload decodificado transiciona la UI de activa a resuelta
       setScanMiss('');
       setQrSelectedLoteId(resolved.batchId);
-      setQrScannedBagId(resolved.bagId||'');
+      const bagSuffix = String(raw).match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+      const matchedBagId = resolved.bagId || (bagSuffix ? bagSuffix[1].toUpperCase() : '');
+      setQrScannedBagId(matchedBagId);
       setQrEventoObsAbierta(false);
       setQrEventoObsNota('');
       stopCameraScanner();
@@ -5479,7 +5655,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Único punto de entrada al escáner real. La hoja resuelve la etiqueta contra
   // los lotes de la bitácora; el escáner del shell (openScan en el .dc) trabaja
   // sobre contenedores de demostración y no sabe nada de estos lotes.
-  const openFieldScanSheet = () => {
+  const openFieldScanSheet = (initialMode = 'round') => {
+    scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
+    isSavingHarvestRef.current = false;
+    setQrScanMode(initialMode);
+    setHarvestActiveCrate(null);
+    setSweepQueue([]);
+    setSweepStatusBanner('');
     const firstActive = bitLotes.find(l => !['completado','descartado'].includes(l.estado));
     setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || '');
     setQrScannedBagId('');
@@ -5487,6 +5670,183 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setCameraError('');
     setManualScanCode('');
     setShowQrSheet(true);
+  };
+
+  const handleSaveHarvestCrate = () => {
+    if (isSavingHarvestRef.current) return;
+    if (!harvestActiveCrate || !harvestGrossInput) return;
+    const gross = parseFloat(harvestGrossInput);
+    if (!gross || gross <= 0) {
+      setHarvestError('Ingresa un peso bruto válido.');
+      return;
+    }
+    const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+    if (tare !== null && tare > gross) {
+      setHarvestError(`La tara (${tare}g) no puede exceder el peso bruto (${gross}g).`);
+      return;
+    }
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    if (!activeLot) {
+      setHarvestError('No hay un lote seleccionado para registrar la cosecha.');
+      return;
+    }
+
+    isSavingHarvestRef.current = true;
+    try {
+      const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot.operador || 'operario_local';
+      const harvestRecord = {
+        id: harvestActiveCrate.harvestId,
+        loteId: activeLot.id,
+        crateId: harvestActiveCrate.crateId,
+        crateCode: harvestActiveCrate.crateCode,
+        pesoBrutoGramos: gross,
+        taraGramos: tare,
+        taraSource: tare !== null ? harvestTareSource : 'unverified',
+        flush: harvestFlush,
+        calidad: harvestCalidad,
+        fecha: new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toISOString(),
+        operador: uid,
+      };
+
+      const normalized = window.SetasBitacora.normalizeHarvestCapture(harvestRecord);
+      const ok = addBitCosecha(normalized);
+      if (ok) {
+        setHarvestSessionStats(prev => ({
+          count: prev.count + 1,
+          totalNetGrams: prev.totalNetGrams + (normalized.pesoFrescoGramos || 0),
+          totalGrossGrams: prev.totalGrossGrams + normalized.pesoBrutoGramos,
+        }));
+        playSweepBeep(1200, 80);
+        triggerHaptic([30, 40]);
+        setHarvestActiveCrate(null);
+        isDecodingPausedRef.current = false;
+      }
+    } catch (err) {
+      setHarvestError(err.message || 'Error al guardar la cosecha');
+    } finally {
+      isSavingHarvestRef.current = false;
+    }
+  };
+
+  const handleApplySweepColonizacion = (targetPct) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || 'operario_local';
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) {
+      setScanMiss('Módulo SetasSweepJournal no disponible.');
+      return;
+    }
+
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      targetColonizacion: targetPct,
+      operator: uid,
+      now: Date.now(),
+    });
+
+    if (opResult.status !== 'failed') {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+
+      if (window.SetasBitacoraDB) {
+        for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
+          window.SetasBitacoraDB.actualizarBolsa(bId, updatedBag).catch(() => {});
+        }
+      }
+
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: 'note',
+          operatorId: uid,
+          at: new Date().toISOString(),
+          payload: {
+            nota: `Barrido de sala: ${opResult.totalUpdated} de ${opResult.totalScanned} bolsas actualizadas al ${targetPct}%.`,
+            operationId: opResult.operationId,
+          },
+        });
+        const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+        } catch (e) {}
+        if (window.SetasBitacoraDB?.actualizarLote) {
+          window.SetasBitacoraDB.actualizarLote(activeLot.id, { lifecycleEvents: nextLog }).catch(() => {});
+        }
+      }
+
+      playSweepBeep(1040, 120);
+      triggerHaptic([50, 60]);
+      setSweepStatusBanner(`✓ Barrido aplicado: ${opResult.totalUpdated} bolsas actualizadas al ${targetPct}%${opResult.totalScanned > opResult.totalUpdated ? ` (${opResult.totalScanned - opResult.totalUpdated} protegidas)` : ''}.`);
+      setSweepQueue([]);
+    } else {
+      setSweepStatusBanner('❌ No se pudo aplicar el barrido a las bolsas seleccionadas.');
+    }
+  };
+
+  const handleApplySweepRisk = (riskType, riskNota) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || 'operario_local';
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) return;
+
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      isRiskObservation: true,
+      riskType,
+      riskNota,
+      operator: uid,
+      now: Date.now(),
+    });
+
+    if (opResult.status !== 'failed') {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: 'note',
+          operatorId: uid,
+          at: new Date().toISOString(),
+          payload: {
+            nota: `Observación de riesgo en barrido (${riskType}): ${riskNota || 'sin nota adicional'} en ${opResult.totalUpdated} bolsas.`,
+            operationId: opResult.operationId,
+          },
+        });
+        const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+        } catch (e) {}
+      }
+
+      playSweepBeep(660, 150);
+      triggerHaptic([60, 40]);
+      setSweepStatusBanner(`✓ Observación de riesgo registrada para ${opResult.totalUpdated} bolsas.`);
+      setSweepQueue([]);
+      setSweepRiskModalOpen(false);
+      setSweepRiskNota('');
+    }
   };
 
   // El botón «Escanear» del shell no abre su propio escáner: sube el nonce y
@@ -6859,7 +7219,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const addBitCosecha=(cosecha)=>{
-    const e={...cosecha,id:'COS_'+Date.now()};
+    const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
     try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
     setBitCosechas([...bitCosechas,e]);
     if(window.SetasBitacoraDB){
@@ -13561,7 +13921,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <FieldActionModal
               onClose={() => setShowFieldActionModal(false)}
               lote={currentLote}
-              captureContent={renderQrCaptures(currentLote,bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id)||null,buildSheetFor(currentLote))}
+              captureContent={renderQrCaptures(currentLote,bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id)||null,buildSheetFor(currentLote))}
               db={fieldDb}
               operatorRole={operatorRole}
               operatorId={operatorId}
@@ -13581,90 +13941,472 @@ body{margin:0;padding:20px 24px;background:#fff;}
           // La ficha resuelve qué cabe ahora; la ronda ya no muestra el mismo
           // menú fijo para un lote en enfriamiento que para uno en fructificación.
           const currentSheet=currentLote?buildSheetFor(currentLote):null;
-          const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
+          const scannedBag=qrScannedBagId?bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
               onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
-                    <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
+                    <AppIcon name="camera" size={14} color="var(--ink-0)" /> {qrScanMode === 'harvest' ? 'Báscula Cosecha · Pesaje Rápido' : qrScanMode === 'sweep' ? 'Barrido Sala · Auditoría Masiva' : 'Ronda de Campo · Registro Rápido'}
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');setHarvestActiveCrate(null);setSweepQueue([]);setSweepRiskModalOpen(false);setSweepStatusBanner('');}}>✕</button>
                 </div>
 
-                {/* ESCÁNER DE CÁMARA EN VIVO */}
-                {isCameraActive ? (
-                  <div className="qr-scanner-viewport">
-                    <video
-                      ref={videoRef}
-                      className="qr-scanner-video"
-                      autoPlay
-                      playsInline
-                      muted
-                    />
-                    <div className="qr-scanner-reticle">
-                      <div className="qr-scanner-laser" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={stopCameraScanner}
-                      style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
-                    >
-                      ⏹ Detener Cámara
-                    </button>
-                  </div>
-                ) : (
+                {/* SELECTOR DE MODO DE ESCANEO */}
+                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2, #E5DFC8)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
                   <button
                     type="button"
-                    onClick={startCameraScanner}
-                    style={{ minHeight: 42, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    📷 Iniciar Escaneo con Cámara Móvil
+                    🔍 Ronda Lote
                   </button>
-                )}
-
-                {cameraError && (
-                  <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                    ⚠️ {cameraError}
-                  </div>
-                )}
-
-                <form
-                  data-testid="scan-manual-code"
-                  onSubmit={(e)=>{e.preventDefault();const code=manualScanCode.trim();if(!code)return;handleScannedValue(code);setManualScanCode('');}}
-                  style={{display:'flex',gap:6,marginBottom:12}}
-                >
-                  <input
-                    type="text"
-                    value={manualScanCode}
-                    onChange={(e)=>setManualScanCode(e.target.value)}
-                    placeholder="Código impreso en la etiqueta (p. ej. SHI-260714-03)"
-                    aria-label="Código impreso en la etiqueta"
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck={false}
-                    style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
-                  />
                   <button
-                    type="submit"
-                    disabled={!manualScanCode.trim()}
-                    className="inv-btn inv-btn-sec"
-                    style={{minHeight:42,padding:'8px 14px',fontSize:12,fontWeight:700}}
+                    type="button"
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'harvest' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    Abrir
+                    ⚖️ Báscula Cosecha
                   </button>
-                </form>
+                  <button
+                    type="button"
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'sweep' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                  >
+                    ⚡ Barrido Sala
+                  </button>
+                </div>
 
-                {scanMiss && (
-                  <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                    {scanMiss} Elige el lote manualmente o vuelve a escanear.
+                {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}
+                {qrScanMode === 'harvest' && harvestActiveCrate ? (
+                  <div style={{ padding: '12px 14px', background: 'var(--paper-0, #F7F4EC)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 'var(--radius-md, 3px)', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Canastilla</span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-olive, #5B6B44)' }}>
+                          {harvestActiveCrate.crateCode}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Lote Destino</span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {currentLote ? currentLote.codigo : 'Sin lote'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* TARA CARD */}
+                    <div style={{ padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, marginBottom: 10, fontSize: 11 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ink-1)' }}>
+                          Tara: {harvestTareInput ? `${harvestTareInput} g` : 'Sin verificar'}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                          Fuente: {harvestTareSource === 'field_measured' ? 'Balanza campo' : harvestTareSource === 'catalog_default' ? 'Catálogo' : harvestTareSource === 'manual' ? 'Manual' : 'Sin verificar'}
+                        </span>
+                      </div>
+                      {(!harvestTareInput || harvestTareSource === 'unverified') && (
+                        <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span style={{ fontSize: 10, color: 'var(--warning-text, #8C6B2E)', flex: 1 }}>
+                            ⚠️ Ingresa la tara (g) para calcular peso neto honesto:
+                          </span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="Tara g"
+                            value={harvestTareInput}
+                            onChange={(e) => {
+                              setHarvestTareInput(e.target.value);
+                              setHarvestTareSource(e.target.value ? 'manual' : 'unverified');
+                            }}
+                            style={{ width: 80, padding: '4px 6px', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PESO BRUTO INPUT */}
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, marginBottom: 4, color: 'var(--ink-0)' }}>
+                        Peso Bruto Total (g):
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        autoFocus
+                        placeholder="Ej: 1450"
+                        value={harvestGrossInput}
+                        onChange={(e) => { setHarvestGrossInput(e.target.value); setHarvestError(''); }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveHarvestCrate();
+                          }
+                        }}
+                        style={{ width: '100%', minHeight: 48, fontSize: 24, fontWeight: 700, textAlign: 'center', fontFamily: 'var(--font-mono)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 2 }}
+                      />
+                      {/* QUICK PRESETS */}
+                      <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                        {[100, 250, 500, 1000].map(inc => (
+                          <button
+                            key={inc}
+                            type="button"
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ flex: 1, padding: '4px 2px', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                            onClick={() => {
+                              const cur = parseFloat(harvestGrossInput) || 0;
+                              setHarvestGrossInput(String(cur + inc));
+                            }}
+                          >
+                            +{inc >= 1000 ? `${inc / 1000}kg` : `${inc}g`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CÁLCULO NETO EN VIVO */}
+                    {(() => {
+                      const gross = parseFloat(harvestGrossInput);
+                      const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+                      if (!gross || isNaN(gross)) return null;
+                      if (tare !== null && !isNaN(tare)) {
+                        if (tare > gross) {
+                          return (
+                            <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
+                              ❌ Tara ({tare}g) excede el peso bruto ({gross}g).
+                            </div>
+                          );
+                        }
+                        const net = gross - tare;
+                        return (
+                          <div style={{ padding: '8px 10px', background: '#DCFCE7', color: '#15803D', borderLeft: '3px solid #16A34A', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>✓ Peso Neto: {net} g</span>
+                            <span>({(net / 1000).toFixed(3)} kg)</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div style={{ padding: '6px 8px', background: 'var(--paper-2, #E5DFC8)', color: 'var(--ink-1)', borderLeft: '3px solid var(--accent-terracotta)', fontSize: 11, marginBottom: 10 }}>
+                          Bruto: {gross} g · Neto: No calculado (bloqueado por falta de tara verificada)
+                        </div>
+                      );
+                    })()}
+
+                    {/* FLUSH & CALIDAD */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {[1, 2, 3].map(f => (
+                            <button
+                              key={f}
+                              type="button"
+                              className={`inv-btn inv-btn-sm ${harvestFlush === f ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              onClick={() => setHarvestFlush(f)}
+                            >
+                              F{f}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Calidad:</label>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {[
+                            { val: 1, lbl: '1ra' },
+                            { val: 2, lbl: '2da' },
+                            { val: 3, lbl: 'Merma' }
+                          ].map(q => (
+                            <button
+                              key={q.val}
+                              type="button"
+                              className={`inv-btn inv-btn-sm ${harvestCalidad === q.val ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              onClick={() => setHarvestCalidad(q.val)}
+                            >
+                              {q.lbl}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {harvestError && (
+                      <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', fontSize: 11, marginBottom: 10 }}>
+                        {harvestError}
+                      </div>
+                    )}
+
+                    {/* ACCIONES DE PESADA */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        disabled={!harvestGrossInput || (harvestTareInput && parseFloat(harvestTareInput) > parseFloat(harvestGrossInput))}
+                        onClick={handleSaveHarvestCrate}
+                        className="inv-btn inv-btn-pri"
+                        style={{ flex: 1, minHeight: 40, fontSize: 12, fontWeight: 700 }}
+                      >
+                        Guardar Canastilla (Enter)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHarvestActiveCrate(null);
+                          isDecodingPausedRef.current = false;
+                        }}
+                        className="inv-btn inv-btn-sec"
+                        style={{ minHeight: 40, fontSize: 12 }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* ESCÁNER DE CÁMARA EN VIVO */}
+                    {isCameraActive ? (
+                      <div className="qr-scanner-viewport">
+                        <video
+                          ref={videoRef}
+                          className="qr-scanner-video"
+                          autoPlay
+                          playsInline
+                          muted
+                        />
+                        <div className="qr-scanner-reticle">
+                          <div className="qr-scanner-laser" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={stopCameraScanner}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                        >
+                          ⏹ Detener Cámara
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={startCameraScanner}
+                        style={{ minHeight: 42, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                      >
+                        📷 Iniciar Escaneo con Cámara Móvil
+                      </button>
+                    )}
+
+                    {cameraError && (
+                      <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        ⚠️ {cameraError}
+                      </div>
+                    )}
+
+                    <form
+                      data-testid="scan-manual-code"
+                      onSubmit={(e)=>{e.preventDefault();const code=manualScanCode.trim();if(!code)return;handleScannedValue(code);setManualScanCode('');}}
+                      style={{display:'flex',gap:6,marginBottom:12}}
+                    >
+                      <input
+                        type="text"
+                        value={manualScanCode}
+                        onChange={(e)=>setManualScanCode(e.target.value)}
+                        placeholder={qrScanMode === 'harvest' ? 'Código de canastilla (p. ej. CAN-01)' : qrScanMode === 'sweep' ? 'Código de bolsa (p. ej. OST-01-B12)' : 'Código impreso en la etiqueta'}
+                        aria-label="Código impreso en la etiqueta"
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!manualScanCode.trim()}
+                        className="inv-btn inv-btn-sec"
+                        style={{minHeight:42,padding:'8px 14px',fontSize:12,fontWeight:700}}
+                      >
+                        Abrir
+                      </button>
+                    </form>
+
+                    {scanMiss && (
+                      <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        {scanMiss} Elige el lote manualmente o vuelve a escanear.
+                      </div>
+                    )}
+
+                    {/* MODO BÁSCULA: RESUMEN DE SESIÓN Y SELECCIÓN DE LOTE */}
+                    {qrScanMode === 'harvest' && (
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ padding: '8px 10px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, fontSize: 11, fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span>📦 Sesión de Pesaje: <b>{harvestSessionStats.count}</b> canastillas</span>
+                          <span><b>{(harvestSessionStats.totalNetGrams / 1000).toFixed(2)} kg</b> netos</span>
+                        </div>
+                        {activeBatches.length > 0 && (
+                          <div style={{ fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                            <label style={{ display: 'block', fontWeight: 600, color: 'var(--ink-1)', marginBottom: 2 }}>Lote activo a cosechar:</label>
+                            <select
+                              className="inv-input"
+                              style={{ fontSize: 11, minHeight: 34 }}
+                              value={currentLote?.id}
+                              onChange={e=>setQrSelectedLoteId(e.target.value)}
+                            >
+                              {activeBatches.map(l=>(
+                                <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.estado})</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* MODO BARRIDO: COLA DE BOLSAS Y ACCIONES MASIVAS */}
+                    {qrScanMode === 'sweep' && (
+                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-0)' }}>
+                            ⚡ Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
+                          </strong>
+                          {sweepQueue.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSweepQueue([])}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent-terracotta)', fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                            >
+                              Limpiar cola
+                            </button>
+                          )}
+                        </div>
+
+                        {sweepQueue.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 72, overflowY: 'auto', marginBottom: 8, padding: 2 }}>
+                            {sweepQueue.map(item => (
+                              <span
+                                key={item.bagId}
+                                style={{
+                                  padding: '2px 6px',
+                                  background: item.estado === 'contaminada' ? '#FEE2E2' : 'var(--paper-1)',
+                                  color: item.estado === 'contaminada' ? '#991B1B' : 'var(--ink-0)',
+                                  border: '1px solid var(--border-hairline)',
+                                  borderRadius: 2,
+                                  fontSize: 10,
+                                  fontFamily: 'var(--font-mono)',
+                                }}
+                              >
+                                {item.codigo} ({item.colonizacion}%)
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 8, fontFamily: 'var(--font-sans)' }}>
+                            Pasa la cámara sobre las bolsas. Sonará un pitido y se agregarán a la hilera automáticamente.
+                          </div>
+                        )}
+
+                        {/* ACCIONES MASIVAS DE BARRIDO */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(100)}
+                            className="inv-btn inv-btn-pri inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11, fontWeight: 700 }}
+                          >
+                            ✓ 100% Sano
+                          </button>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(75)}
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11 }}
+                          >
+                            75%
+                          </button>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(50)}
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11 }}
+                          >
+                            50%
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={sweepQueue.length === 0}
+                          onClick={() => setSweepRiskModalOpen(true)}
+                          className="inv-btn inv-btn-sec inv-btn-sm"
+                          style={{ width: '100%', padding: '5px 4px', fontSize: 11, color: 'var(--accent-terracotta)' }}
+                        >
+                          ⚠️ Registrar Observación de Riesgo ({sweepQueue.length})
+                        </button>
+
+                        {sweepStatusBanner && (
+                          <div style={{ marginTop: 8, padding: '6px 8px', background: 'var(--paper-1)', borderLeft: '3px solid var(--accent-olive)', fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                            {sweepStatusBanner}
+                          </div>
+                        )}
+
+                        {/* SUB-PANEL OBSERVACIÓN DE RIESGO */}
+                        {sweepRiskModalOpen && (
+                          <div style={{ marginTop: 10, padding: 10, background: 'var(--paper-1)', border: '1px solid var(--accent-terracotta)', borderRadius: 2 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 6, color: 'var(--accent-terracotta)' }}>
+                              Observación de Riesgo ({sweepQueue.length} bolsas)
+                            </div>
+                            <select
+                              className="inv-input"
+                              style={{ fontSize: 11, minHeight: 32, marginBottom: 6 }}
+                              value={sweepRiskType}
+                              onChange={(e) => setSweepRiskType(e.target.value)}
+                            >
+                              <option value="micelio_debil">Micelio débil o lento</option>
+                              <option value="humedad_baja">Sustrato seco / Humedad baja</option>
+                              <option value="humedad_excesiva">Condensación / Humedad excesiva</option>
+                              <option value="posible_contaminacion">Sospecha de contaminación</option>
+                              <option value="fuga_filtro">Fuga o daño en filtro</option>
+                              <option value="deformidad_primordio">Deformidad en primordios</option>
+                              <option value="general">Otro riesgo</option>
+                            </select>
+                            <input
+                              type="text"
+                              className="inv-input"
+                              placeholder="Detalle u observación..."
+                              style={{ fontSize: 11, minHeight: 32, marginBottom: 8 }}
+                              value={sweepRiskNota}
+                              onChange={(e) => setSweepRiskNota(e.target.value)}
+                            />
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-pri inv-btn-sm"
+                                style={{ flex: 1 }}
+                                onClick={() => handleApplySweepRisk(sweepRiskType, sweepRiskNota)}
+                              >
+                                Registrar Riesgo
+                              </button>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-sec inv-btn-sm"
+                                onClick={() => setSweepRiskModalOpen(false)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {currentLote?(
+                {/* MODO RONDA: CARRUSEL Y ACCIONES CONTEXTUALES DE LOTE */}
+                {qrScanMode === 'round' && currentLote ? (
                   <>
                     {/* NAVEGACIÓN SECUENCIAL DE LOTES (CARRUSEL DE SALA) */}
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,gap:8}}>
@@ -13711,9 +14453,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
                           :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
-                      {scannedBag&&(
+                      {(scannedBag||qrScannedBagId)&&(
                         <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
-                          Etiqueta leída: bolsa {scannedBag.codigo}
+                          Etiqueta leída: bolsa {scannedBag ? scannedBag.codigo : qrScannedBagId}
                         </div>
                       )}
                       {currentSheet&&currentSheet.blocks.length>0&&(
@@ -13865,11 +14607,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     </div>
                   </>
-                ):(
+                ) : (qrScanMode === 'round' ? (
                   <div style={{textAlign:'center',padding:'16px 0',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)'}}>
                     No hay lotes activos registrados para escanear.
                   </div>
-                )}
+                ) : null)}
             </AccessibleModal>
           );
         })()}
@@ -13913,7 +14655,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
                 recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
-                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
+                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
               });
             }
           }
