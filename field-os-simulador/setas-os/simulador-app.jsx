@@ -4587,18 +4587,24 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   ctx.setLineDash([]);
 
   // .thermal-aside: columna centrada — el QR se centra verticalmente en el
-  // alto disponible entre el padding vertical.
+  // alto disponible entre el padding vertical con quiet zone de 2 módulos.
   const qrX = padX;
   const qrY = (h - qrSize) / 2;
   const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
   if (qrMini && typeof qrMini.matrix === 'function') {
     const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
     const n = m.length;
-    const cell = qrSize / n;
+    const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos) idéntica a generateQrSvgDataUrl
+    const dim = n + q * 2;
+    const cell = qrSize / dim;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
     ctx.fillStyle = '#000';
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
-        if (m[r][c]) ctx.fillRect(qrX + c * cell, qrY + r * cell, Math.ceil(cell), Math.ceil(cell));
+        if (m[r][c]) {
+          ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+        }
       }
     }
   }
@@ -5248,6 +5254,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   useEffect(()=>{
     let active=true;
     getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
+    if (typeof window !== 'undefined' && !('BarcodeDetector' in window)) {
+      const prewarm = () => { loadJsQR().catch(() => {}); };
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(prewarm, { timeout: 3000 });
+      } else {
+        setTimeout(prewarm, 1500);
+      }
+    }
     return ()=>{active=false;};
   },[]);
   // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
@@ -5282,6 +5296,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
   // quedaba encendida con el modal cerrado.
   const cameraStreamRef = React.useRef(null);
+  // Invariante de seguridad contra carreras asíncronas de la cámara:
+  // A lo sumo un payload decodificado puede transicionar la UI de activa a resuelta.
+  const scanResolvingRef = React.useRef(false);
 
   const stopCameraScanner = () => {
     setIsCameraActive(false);
@@ -5379,6 +5396,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   };
 
   const startCameraScanner = async () => {
+    scanResolvingRef.current = false;
     setCameraError('');
     setScanMiss('');
     try {
@@ -5450,7 +5468,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [qrEventoStatuses, setQrEventoStatuses] = useState([]);
   const qrSavingRef=useRef(new Set());
   const handleScannedValue = (raw) => {
-    if (!raw) return;
+    if (!raw || scanResolvingRef.current) return;
     const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
     let resolved = null;
     if (sheetApi) {
@@ -5462,9 +5480,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       resolved = foundLote ? { kind: 'batch', batchId: foundLote.id, bagId: null } : { kind: 'unknown', batchId: null, reason: 'no_match' };
     }
     if (resolved.batchId) {
+      scanResolvingRef.current = true; // Invariante: a lo sumo un payload decodificado transiciona la UI de activa a resuelta
       setScanMiss('');
       setQrSelectedLoteId(resolved.batchId);
-      setQrScannedBagId(resolved.bagId||'');
+      const bagSuffix = String(raw).match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+      const matchedBagId = resolved.bagId || (bagSuffix ? bagSuffix[1].toUpperCase() : '');
+      setQrScannedBagId(matchedBagId);
       setQrEventoObsAbierta(false);
       setQrEventoObsNota('');
       stopCameraScanner();
@@ -5480,6 +5501,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // los lotes de la bitácora; el escáner del shell (openScan en el .dc) trabaja
   // sobre contenedores de demostración y no sabe nada de estos lotes.
   const openFieldScanSheet = () => {
+    scanResolvingRef.current = false;
     const firstActive = bitLotes.find(l => !['completado','descartado'].includes(l.estado));
     setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || '');
     setQrScannedBagId('');
@@ -13561,7 +13583,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <FieldActionModal
               onClose={() => setShowFieldActionModal(false)}
               lote={currentLote}
-              captureContent={renderQrCaptures(currentLote,bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id)||null,buildSheetFor(currentLote))}
+              captureContent={renderQrCaptures(currentLote,bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id)||null,buildSheetFor(currentLote))}
               db={fieldDb}
               operatorRole={operatorRole}
               operatorId={operatorId}
@@ -13581,7 +13603,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           // La ficha resuelve qué cabe ahora; la ronda ya no muestra el mismo
           // menú fijo para un lote en enfriamiento que para uno en fructificación.
           const currentSheet=currentLote?buildSheetFor(currentLote):null;
-          const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
+          const scannedBag=qrScannedBagId?bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
               onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}
@@ -13711,9 +13733,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
                           :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
-                      {scannedBag&&(
+                      {(scannedBag||qrScannedBagId)&&(
                         <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
-                          Etiqueta leída: bolsa {scannedBag.codigo}
+                          Etiqueta leída: bolsa {scannedBag ? scannedBag.codigo : qrScannedBagId}
                         </div>
                       )}
                       {currentSheet&&currentSheet.blocks.length>0&&(
@@ -13913,7 +13935,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
                 recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
-                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
+                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
               });
             }
           }

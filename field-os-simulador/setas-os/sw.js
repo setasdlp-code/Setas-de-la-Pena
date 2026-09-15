@@ -19,11 +19,11 @@
  */
 
 // build:cache-version
-const CACHE_VERSION = '2c3660d7ea29';
+const CACHE_VERSION = '25be418da227';
 const CACHE = `setas-os-${CACHE_VERSION}`;
 
 // Lo imprescindible para pintar algo y llegar al gate de autenticación.
-const BOOT = ['./', './Setas OS v5.dc.html', './error-buffer.js', './favicon.svg'];
+const BOOT = ['./', './Setas OS v5.dc.html', './error-buffer.js', './favicon.svg', './vendor/jsQR.js'];
 
 const CACHEABLE = /\.(?:js|css|otf|ttf|woff2?|svg|png|jpe?g|webp|json)$/i;
 

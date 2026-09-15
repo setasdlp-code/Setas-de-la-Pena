@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 2c3660d7ea29c66f991bdf79f9b1f30e1d5425dbfd58fcadadc410a38b77286e
+// source-hash: 25be418da2271062bda0353d2bff23197c03d9131555cbc80d31c8807ac7febe
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3177,11 +3177,17 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   if (qrMini && typeof qrMini.matrix === "function") {
     const m = qrMini.matrix(item.qrUrl || item.id || "SETAS-OS");
     const n = m.length;
-    const cell = qrSize / n;
+    const q = 4;
+    const dim = n + q * 2;
+    const cell = qrSize / dim;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
     ctx.fillStyle = "#000";
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
-        if (m[r][c]) ctx.fillRect(qrX + c * cell, qrY + r * cell, Math.ceil(cell), Math.ceil(cell));
+        if (m[r][c]) {
+          ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+        }
       }
     }
   }
@@ -3753,6 +3759,17 @@ function SimuladorShell(props) {
       if (active) setFieldDb(d);
     }).catch(() => {
     });
+    if (typeof window !== "undefined" && !("BarcodeDetector" in window)) {
+      const prewarm = () => {
+        loadJsQR().catch(() => {
+        });
+      };
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(prewarm, { timeout: 3e3 });
+      } else {
+        setTimeout(prewarm, 1500);
+      }
+    }
     return () => {
       active = false;
     };
@@ -3779,6 +3796,7 @@ function SimuladorShell(props) {
   const scannerIntervalRef = React.useRef(null);
   const qrCanvasRef = React.useRef(null);
   const cameraStreamRef = React.useRef(null);
+  const scanResolvingRef = React.useRef(false);
   const stopCameraScanner = () => {
     setIsCameraActive(false);
     if (scannerIntervalRef.current) {
@@ -3847,6 +3865,7 @@ function SimuladorShell(props) {
     }, 300);
   };
   const startCameraScanner = async () => {
+    scanResolvingRef.current = false;
     setCameraError("");
     setScanMiss("");
     try {
@@ -3897,7 +3916,7 @@ function SimuladorShell(props) {
   const [qrEventoStatuses, setQrEventoStatuses] = useState([]);
   const qrSavingRef = useRef(/* @__PURE__ */ new Set());
   const handleScannedValue = (raw) => {
-    if (!raw) return;
+    if (!raw || scanResolvingRef.current) return;
     const sheetApi = typeof window !== "undefined" ? window.SetasBatchSheet : null;
     let resolved = null;
     if (sheetApi) {
@@ -3909,9 +3928,12 @@ function SimuladorShell(props) {
       resolved = foundLote ? { kind: "batch", batchId: foundLote.id, bagId: null } : { kind: "unknown", batchId: null, reason: "no_match" };
     }
     if (resolved.batchId) {
+      scanResolvingRef.current = true;
       setScanMiss("");
       setQrSelectedLoteId(resolved.batchId);
-      setQrScannedBagId(resolved.bagId || "");
+      const bagSuffix = String(raw).match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+      const matchedBagId = resolved.bagId || (bagSuffix ? bagSuffix[1].toUpperCase() : "");
+      setQrScannedBagId(matchedBagId);
       setQrEventoObsAbierta(false);
       setQrEventoObsNota("");
       stopCameraScanner();
@@ -3926,6 +3948,7 @@ function SimuladorShell(props) {
     }
   };
   const openFieldScanSheet = () => {
+    scanResolvingRef.current = false;
     const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
     setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
     setQrScannedBagId("");
@@ -8836,7 +8859,7 @@ Click para ver análisis completo`
       {
         onClose: () => setShowFieldActionModal(false),
         lote: currentLote,
-        captureContent: renderQrCaptures(currentLote, bitBolsas.find((b) => b.id === qrScannedBagId && b.loteId === currentLote?.id) || null, buildSheetFor(currentLote)),
+        captureContent: renderQrCaptures(currentLote, bitBolsas.find((b) => (b.id === qrScannedBagId || b.codigo === qrScannedBagId) && b.loteId === currentLote?.id) || null, buildSheetFor(currentLote)),
         db: fieldDb,
         operatorRole: operatorRole2,
         operatorId,
@@ -8850,7 +8873,7 @@ Click para ver análisis completo`
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
     const currentSheet = currentLote ? buildSheetFor(currentLote) : null;
-    const scannedBag = qrScannedBagId ? bitBolsas.find((b) => b.id === qrScannedBagId && b.loteId === currentLote?.id) : null;
+    const scannedBag = qrScannedBagId ? bitBolsas.find((b) => (b.id === qrScannedBagId || b.codigo === qrScannedBagId) && b.loteId === currentLote?.id) : null;
     return /* @__PURE__ */ React.createElement(
       AccessibleModal,
       {
@@ -8975,7 +8998,7 @@ Click para ver análisis completo`
         },
         "Siguiente ",
         /* @__PURE__ */ React.createElement(AppIcon, { name: "chevron-right", size: 12 })
-      )), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, currentSheet ? `${currentSheet.stateLabel}${currentSheet.daysInStage != null ? ` · día ${currentSheet.daysInStage}` : ""} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room ? currentSheet.room.name : "sin sala"}` : `Estado: ${currentLote.estado} · ${currentLote.numBolsas || 0} bolsas`), scannedBag && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-olive,#5B6B44)", marginTop: 3 } }, "Etiqueta leída: bolsa ", scannedBag.codigo), currentSheet && currentSheet.blocks.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--accent-terracotta,#A85C32)", marginTop: 4 } }, currentSheet.blocks.map((b) => b.detail).join(" · ")), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px", background: "var(--paper-0,#F7F4EC)", border: "1px solid var(--border-hairline,#8C7F5B)", borderRadius: "var(--radius-sm,2px)", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--ink-0)" } }, currentLote.codigo), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)" } }, currentLote.especie)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 4 } }, currentSheet ? `${currentSheet.stateLabel}${currentSheet.daysInStage != null ? ` · día ${currentSheet.daysInStage}` : ""} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room ? currentSheet.room.name : "sin sala"}` : `Estado: ${currentLote.estado} · ${currentLote.numBolsas || 0} bolsas`), (scannedBag || qrScannedBagId) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-olive,#5B6B44)", marginTop: 3 } }, "Etiqueta leída: bolsa ", scannedBag ? scannedBag.codigo : qrScannedBagId), currentSheet && currentSheet.blocks.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 10, color: "var(--accent-terracotta,#A85C32)", marginTop: 4 } }, currentSheet.blocks.map((b) => b.detail).join(" · ")), activeBatches.length > 1 && /* @__PURE__ */ React.createElement(
         "select",
         {
           className: "inv-input",
@@ -9152,7 +9175,7 @@ Click para ver análisis completo`
           date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
           recipe: SPP_CODE2[lote.recipeRef?.sKey] || lote.recipeRef?.name || "Receta Estándar",
           bagsText: `Bolsa ${i}/${totalBags}`,
-          qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
+          qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
         });
       }
     }
