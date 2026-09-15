@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 4ee2584b48488fbe35f4603c925df32c002e6c55c655dd5a5c248e9588be0df6
+// source-hash: 100a0b3cf5f6c1e1a372226f781bd8de8c6ce06de8fc99b72c4e885659f09e75
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3151,7 +3151,7 @@ const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
 const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
 const THERMAL_LABEL_SPECS = {
-  "40x30": { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 17, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
+  "40x30": { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 20, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
   "50x30": { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 }
 };
 function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
@@ -3862,6 +3862,10 @@ function SimuladorShell(props) {
     cameraStreamRef.current = null;
   }, []);
   const detectQrSupport = async () => {
+    if (typeof navigator !== "undefined") {
+      const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1 || /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+      if (isWebKit) return false;
+    }
     if (typeof window === "undefined" || !("BarcodeDetector" in window)) return false;
     try {
       const formats = await window.BarcodeDetector.getSupportedFormats();
@@ -3875,8 +3879,12 @@ function SimuladorShell(props) {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
     if (!videoRef.current) return false;
-    videoRef.current.srcObject = stream;
-    const playing = videoRef.current.play();
+    const v = videoRef.current;
+    v.srcObject = stream;
+    v.setAttribute("playsinline", "true");
+    v.setAttribute("webkit-playsinline", "true");
+    v.muted = true;
+    const playing = v.play();
     if (playing && typeof playing.catch === "function") playing.catch(() => {
     });
     return true;
@@ -3915,6 +3923,17 @@ function SimuladorShell(props) {
     setCameraError("");
     setScanMiss("");
     try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+        if (window.__setasAudioCtx.state === "suspended") {
+          window.__setasAudioCtx.resume().catch(() => {
+          });
+        }
+      }
+    } catch (e) {
+    }
+    try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Cámara no disponible o no compatible en este navegador");
       }
@@ -3929,9 +3948,25 @@ function SimuladorShell(props) {
         }
       }
       setIsCameraActive(true);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
-      });
+      let stream = null;
+      const constraintsTiers = [
+        { video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+        { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: { ideal: "environment" } } },
+        { video: true }
+      ];
+      let lastMediaErr = null;
+      for (const c of constraintsTiers) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          if (stream) break;
+        } catch (err) {
+          lastMediaErr = err;
+        }
+      }
+      if (!stream) {
+        throw lastMediaErr || new Error("No se pudo acceder al hardware de cámara");
+      }
       cameraStreamRef.current = stream;
       await attachCameraStream(stream);
       if (jsQR) {
@@ -3940,15 +3975,28 @@ function SimuladorShell(props) {
       }
       const detector = new window.BarcodeDetector({ formats: ["qr_code", "code_128", "ean_13"] });
       if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      let nativeFailures = 0;
       scannerIntervalRef.current = setInterval(async () => {
         if (!videoRef.current || videoRef.current.readyState < 2) return;
         try {
           const barcodes = await detector.detect(videoRef.current);
+          nativeFailures = 0;
           if (barcodes && barcodes.length > 0) {
             const rawVal = barcodes[0].rawValue;
             if (!isDecodingPausedRef.current) handleScannedValue(rawVal);
           }
         } catch (e) {
+          nativeFailures++;
+          if (nativeFailures >= 3) {
+            try {
+              const fallbackJsQR = await loadJsQR();
+              if (fallbackJsQR) {
+                startJsQRLoop(fallbackJsQR);
+                return;
+              }
+            } catch (err) {
+            }
+          }
         }
       }, 300);
     } catch (err) {
