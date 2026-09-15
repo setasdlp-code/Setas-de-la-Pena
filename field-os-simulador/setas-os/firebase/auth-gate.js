@@ -40,6 +40,8 @@ const DC_RUNTIME_SCRIPTS = [
   "../support.js",
 ];
 const PROTECTED_APP_SCRIPTS = [
+  "../trace-identity.js",
+  "../public-trace-dto.js",
   "../recipe-recommender.js",
   "../scoring.js",
   "../bitacora-model.js",

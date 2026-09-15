@@ -28,6 +28,7 @@
   const workflowRef = () => (isNode ? require('./setas-os-workflow.js') : (glob && glob.SetasOSWorkflow) || null);
   const bitacoraRef = () => (isNode ? require('./bitacora-model.js') : (glob && glob.SetasBitacora) || null);
   const flushForecastRef = () => (isNode ? require('./flush-forecast-engine.js') : (glob && glob.SetasFlushForecast) || null);
+  const traceIdentityRef = () => (isNode ? require('./trace-identity.js') : (glob && glob.SetasTraceIdentity) || null);
 
   const DAY_MS = 86400000;
 
@@ -260,101 +261,42 @@
     const text = raw == null ? '' : String(raw).trim();
     if (!text) return emptyResolution(raw, 'unknown', 'empty_payload');
 
-    let candidate = text;
-    let explicitIntent = null;
+    // Compatibilidad y parsing rápido de query
+    const query = text.includes('?') ? text.slice(text.indexOf('?') + 1) : '';
+    const queryCodeFallback = readScanCodeParam(query);
 
-    // 1. Payloads JSON
-    if (text.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(text);
-        if (parsed.crate) { candidate = parsed.crate; explicitIntent = 'crate'; }
-        else if (parsed.batch || parsed.batchCode) { candidate = parsed.batch || parsed.batchCode; explicitIntent = 'batch'; }
-        else if (parsed.bag || parsed.bolsa) { candidate = parsed.bag || parsed.bolsa; explicitIntent = 'bag'; }
-        else { candidate = parsed.codigo || parsed.id || text; }
-      } catch (err) { /* payload no-JSON */ }
-    }
-
-    // 2. Esquemas explícitos o URLs / deep-links
-    if (/[:/]/.test(candidate)) {
-      if (/^setas:crate:/i.test(candidate)) {
-        explicitIntent = 'crate';
-        candidate = candidate.replace(/^setas:crate:/i, '').trim();
-      } else if (/^setas:(?:lote):|^SDP-CERT-/i.test(candidate)) {
-        explicitIntent = 'batch';
-        candidate = candidate.replace(/^(?:setas:lote:|SDP-CERT-)/i, '').trim();
-      } else if (/^setas:(?:bag|bolsa):/i.test(candidate)) {
-        explicitIntent = 'bag';
-        candidate = candidate.replace(/^setas:(?:bag|bolsa):/i, '').trim();
-      } else {
-        const [beforeHash, ...hashRest] = candidate.split('#');
-        const queryAt = beforeHash.indexOf('?');
-        const pathPart = queryAt >= 0 ? beforeHash.slice(0, queryAt) : beforeHash;
-        const query = queryAt >= 0 ? beforeHash.slice(queryAt + 1) : '';
-        const fullQuery = [query, hashRest.join('#')].filter(Boolean).join('&');
-
-        let foundParam = false;
-        // Revisar parámetros con intención explícita primero
-        for (const { key, intent } of INTENT_PARAMS) {
-          const val = readParamValue(fullQuery, key);
-          if (val) {
-            candidate = val;
-            explicitIntent = intent;
-            foundParam = true;
-            break;
-          }
-        }
-        // Si no hay parámetro con intención explícita, revisar genéricos mediante readScanCodeParam
-        if (!foundParam) {
-          const fromQuery = readScanCodeParam(query) || readScanCodeParam(hashRest.join('#'));
-          if (fromQuery) {
-            candidate = fromQuery;
-            foundParam = true;
-          }
-        }
-        // Si no hay query, extraer de la ruta limpia (/c/<codigo>, /trace/<codigo>)
-        if (!foundParam) {
-          const segments = pathPart.split('/').filter(Boolean);
-          if (segments.length) {
-            const last = safeDecode(segments[segments.length - 1]);
-            candidate = (last && !last.endsWith('.html')) ? last : (segments.length > 1 ? safeDecode(segments[segments.length - 2]) : last);
-          }
-        }
+    const ti = traceIdentityRef();
+    const identity = ti && ti.resolveTraceIdentity ? ti.resolveTraceIdentity(raw) : null;
+    if (!identity || !identity.valid) {
+      let failReason = identity ? identity.reason : 'invalid_payload';
+      if (identity && identity.intent === 'crate' && (failReason === 'invalid-crate-code' || failReason === 'invalid_crate_code')) {
+        failReason = 'unregistered_crate';
       }
-    }
-
-    candidate = candidate.trim();
-    if (!candidate) return emptyResolution(text, 'unknown', 'empty_payload');
-
-    // 3. Entregas históricas de cosecha (formato CAN-<lote>-F<flush> o CAN-<lote>-FLUSH<flush>)
-    const histMatch = candidate.match(/^CAN-(.+?)-(?:F|FLUSH)(\d+)$/i);
-    if (histMatch) {
-      const potentialBatchCode = histMatch[1];
-      const normHist = s => String(s == null ? '' : s).trim().toLowerCase();
-      const matchedBatch = lotes.find(l => normHist(l.codigo) === normHist(potentialBatchCode) || normHist(l.id) === normHist(potentialBatchCode));
-      if (matchedBatch) {
-        const res = emptyResolution(text, 'batch', null);
-        res.batchId = matchedBatch.id;
-        res.batchCode = matchedBatch.codigo || matchedBatch.id;
-        return res;
-      }
-      return emptyResolution(text, 'unknown', 'historical_batch_not_found');
+      return emptyResolution(text, 'unknown', failReason);
     }
 
     const norm = s => String(s == null ? '' : s).trim().toLowerCase();
-    const target = norm(candidate);
 
-    // Coincidencias en catálogo de canastillas y sintaxis CAN-XXXX
-    const matchedCrate = crates.find(c => norm(c.codigo) === target || norm(c.id) === target);
-    const isCrateSyntax = /^CAN-\d{1,4}$/i.test(candidate);
+    // 1. Detección de colisión / ambigüedad si no hubo intención explícita:
+    // Si el código coincide simultáneamente con más de una entidad en los catálogos proporcionados
+    if (!identity.intent) {
+      const candidateCode = identity.crateCode || identity.batchCode;
+      const targetNorm = norm(candidateCode);
+      const matchedCrateInCat = crates.find(c => norm(c.codigo) === targetNorm || norm(c.id) === targetNorm);
+      const isCrateSyntax = ti.CRATE_CODE_REGEX ? ti.CRATE_CODE_REGEX.test(candidateCode) : /^CAN-\d{1,4}$/i.test(candidateCode);
+      const hasCrateMatch = Boolean(matchedCrateInCat || isCrateSyntax);
+      const hasLotMatch = lotes.some(l => norm(l.codigo) === targetNorm || norm(l.id) === targetNorm);
+      const hasBagMatch = bolsas.some(b => norm(b.codigo) === targetNorm || norm(b.id) === targetNorm);
 
-    // Coincidencias en bolsas y lotes
-    const cleanTarget = norm(candidate.replace(/^(?:setas:(?:lote|bag|bolsa):|SDP-CERT-)/i, '').trim());
-    const matchedBag = bolsas.find(b => norm(b.codigo) === cleanTarget || norm(b.id) === cleanTarget || norm(b.codigo) === target || norm(b.id) === target);
-    const matchedLot = lotes.find(l => norm(l.codigo) === cleanTarget || norm(l.id) === cleanTarget || norm(l.codigo) === target || norm(l.id) === target);
-    const prefixedLot = lotes.find(l => l.codigo && (cleanTarget.startsWith(norm(l.codigo) + '-') || target.startsWith(norm(l.codigo) + '-')));
+      if ((hasCrateMatch && hasLotMatch) || (hasCrateMatch && hasBagMatch) || (hasLotMatch && hasBagMatch)) {
+        return emptyResolution(text, 'unknown', 'ambiguous_identifier');
+      }
+    }
 
-    // 4. Resolución con intención explícita
-    if (explicitIntent === 'crate') {
+    // 2. Canastillas (crate)
+    if (identity.kind === 'crate') {
+      const targetNorm = norm(identity.crateCode);
+      const matchedCrate = crates.find(c => norm(c.codigo) === targetNorm || norm(c.id) === targetNorm);
       if (matchedCrate) {
         if (matchedCrate.activa === false) {
           const res = emptyResolution(text, 'unknown', 'inactive_crate');
@@ -369,93 +311,72 @@
         res.taraSource = matchedCrate.taraSource ?? 'unverified';
         return res;
       }
-      if (isCrateSyntax) {
-        const res = emptyResolution(text, 'crate_unregistered', 'unregistered_crate');
-        res.crateCode = candidate.toUpperCase();
-        return res;
-      }
-      return emptyResolution(text, 'unknown', 'unregistered_crate');
+      const res = emptyResolution(text, 'crate_unregistered', 'unregistered_crate');
+      res.crateCode = identity.crateCode;
+      return res;
     }
 
-    if (explicitIntent === 'batch') {
+    // 3. Bolsas (bag)
+    if (identity.kind === 'bag') {
+      const bagNorm = norm(identity.bagCode);
+      const batchNorm = norm(identity.batchCode);
+      const matchedBag = bolsas.find(b => norm(b.codigo) === bagNorm || norm(b.id) === bagNorm);
+      const parentLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+
+      if (matchedBag) {
+        const resolvedParent = parentLot || lotes.find(l => l.id === matchedBag.loteId) || null;
+        const res = emptyResolution(text, 'bag', null);
+        res.batchId = matchedBag.loteId || (resolvedParent ? resolvedParent.id : null);
+        res.batchCode = resolvedParent ? (resolvedParent.codigo || resolvedParent.id) : identity.batchCode;
+        res.bagId = matchedBag.id;
+        return res;
+      }
+
+      // Si la bolsa específica no está en el array bolsas pero el lote padre sí, cae al lote (resolved_by_prefix)
+      if (parentLot) {
+        const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
+        res.batchId = parentLot.id;
+        res.batchCode = parentLot.codigo || parentLot.id;
+        return res;
+      }
+
+      return emptyResolution(text, 'unknown', 'no_match');
+    }
+
+    // 4. Flush (histórico o por query)
+    if (identity.kind === 'flush') {
+      const batchNorm = norm(identity.batchCode);
+      const matchedLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
       if (matchedLot) {
         const res = emptyResolution(text, 'batch', null);
         res.batchId = matchedLot.id;
         res.batchCode = matchedLot.codigo || matchedLot.id;
         return res;
       }
+      return emptyResolution(text, 'unknown', 'historical_batch_not_found');
+    }
+
+    // 5. Lote Maestro (batch)
+    if (identity.kind === 'batch') {
+      const batchNorm = norm(identity.batchCode);
+      const matchedLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+      if (matchedLot) {
+        const res = emptyResolution(text, 'batch', null);
+        res.batchId = matchedLot.id;
+        res.batchCode = matchedLot.codigo || matchedLot.id;
+        return res;
+      }
+
+      // Prefijo si algún lote coincide con el inicio del código
+      const prefixedLot = lotes.find(l => l.codigo && (batchNorm.startsWith(norm(l.codigo) + '-') || norm(l.codigo).startsWith(batchNorm)));
       if (prefixedLot) {
         const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
         res.batchId = prefixedLot.id;
         res.batchCode = prefixedLot.codigo;
         return res;
       }
+
       return emptyResolution(text, 'unknown', 'no_match');
-    }
-
-    if (explicitIntent === 'bag') {
-      if (matchedBag) {
-        const parentLote = lotes.find(l => l.id === matchedBag.loteId) || null;
-        const res = emptyResolution(text, 'bag', null);
-        res.batchId = matchedBag.loteId || (parentLote ? parentLote.id : null);
-        res.batchCode = parentLote ? (parentLote.codigo || parentLote.id) : null;
-        res.bagId = matchedBag.id;
-        return res;
-      }
-      return emptyResolution(text, 'unknown', 'no_match');
-    }
-
-    // 5. Resolución genérica (código crudo o URL ?codigo=): Detección de Colisión / Ambigüedad
-    const hasCrateMatch = Boolean(matchedCrate || isCrateSyntax);
-    const hasLotMatch = Boolean(matchedLot);
-    const hasBagMatch = Boolean(matchedBag);
-
-    if ((hasCrateMatch && hasLotMatch) || (hasCrateMatch && hasBagMatch) || (hasLotMatch && hasBagMatch)) {
-      return emptyResolution(text, 'unknown', 'ambiguous_identifier');
-    }
-
-    if (matchedBag) {
-      const parentLote = lotes.find(l => l.id === matchedBag.loteId) || null;
-      const res = emptyResolution(text, 'bag', null);
-      res.batchId = matchedBag.loteId || (parentLote ? parentLote.id : null);
-      res.batchCode = parentLote ? (parentLote.codigo || parentLote.id) : null;
-      res.bagId = matchedBag.id;
-      return res;
-    }
-
-    if (matchedCrate) {
-      if (matchedCrate.activa === false) {
-        const res = emptyResolution(text, 'unknown', 'inactive_crate');
-        res.crateId = matchedCrate.id;
-        res.crateCode = matchedCrate.codigo;
-        return res;
-      }
-      const res = emptyResolution(text, 'crate', null);
-      res.crateId = matchedCrate.id;
-      res.crateCode = matchedCrate.codigo;
-      res.taraGramos = matchedCrate.taraGramos ?? null;
-      res.taraSource = matchedCrate.taraSource ?? 'unverified';
-      return res;
-    }
-
-    if (isCrateSyntax) {
-      const res = emptyResolution(text, 'crate_unregistered', 'unregistered_crate');
-      res.crateCode = candidate.toUpperCase();
-      return res;
-    }
-
-    if (matchedLot) {
-      const res = emptyResolution(text, 'batch', null);
-      res.batchId = matchedLot.id;
-      res.batchCode = matchedLot.codigo || matchedLot.id;
-      return res;
-    }
-
-    if (prefixedLot) {
-      const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
-      res.batchId = prefixedLot.id;
-      res.batchCode = prefixedLot.codigo;
-      return res;
     }
 
     return emptyResolution(text, 'unknown', 'no_match');
