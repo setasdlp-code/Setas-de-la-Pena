@@ -4556,7 +4556,7 @@ const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospa
 // título +20% acordado) — si el diseño de la etiqueta cambia ahí, hay que
 // actualizar esto también para que "Compartir" no se desalinee otra vez.
 const THERMAL_LABEL_SPECS = {
-  '40x30': { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 17, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
+  '40x30': { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 20, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
   '50x30': { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 },
 };
 
@@ -5373,6 +5373,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // la cámara "escaneando" para siempre sin detectar nada ni avisar) — caer
   // al respaldo jsQR es la opción segura.
   const detectQrSupport = async () => {
+    // En WebKit/Safari (iOS/iPadOS y Safari macOS), BarcodeDetector es experimental
+    // y falla al procesar HTMLVideoElement (lanza excepciones o devuelve vacío).
+    // jsQR sobre canvas es el motor probado y 100% fiable en WebKit.
+    if (typeof navigator !== 'undefined') {
+      const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+        (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent));
+      if (isWebKit) return false;
+    }
     if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return false;
     try {
       const formats = await window.BarcodeDetector.getSupportedFormats();
@@ -5390,8 +5399,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       await new Promise(resolve => setTimeout(resolve, 25));
     }
     if (!videoRef.current) return false;
-    videoRef.current.srcObject = stream;
-    const playing = videoRef.current.play();
+    const v = videoRef.current;
+    v.srcObject = stream;
+    // Atributos DOM críticos para iOS Safari / WebKit PWA inline playback:
+    v.setAttribute('playsinline', 'true');
+    v.setAttribute('webkit-playsinline', 'true');
+    v.muted = true;
+    const playing = v.play();
     if (playing && typeof playing.catch === 'function') playing.catch(() => {});
     return true;
   };
@@ -5444,15 +5458,25 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     isDecodingPausedRef.current = false;
     setCameraError('');
     setScanMiss('');
+
+    // Desbloqueo proactivo de AudioContext en respuesta directa al tap del usuario (requerido por iOS Safari)
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+        if (window.__setasAudioCtx.state === 'suspended') {
+          window.__setasAudioCtx.resume().catch(() => {});
+        }
+      }
+    } catch (e) {}
+
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Cámara no disponible o no compatible en este navegador');
       }
-      // BarcodeDetector nativo es la vía rápida cuando existe; si no, se
-      // intenta el respaldo jsQR antes de rendirse — no encender la cámara
-      // para mostrar un vídeo que nunca decodifica nada sigue siendo peor
-      // que decirlo de frente, pero eso solo pasa si ninguno de los dos
-      // decodificadores está disponible.
+      // BarcodeDetector nativo es la vía rápida cuando existe (Chrome/Android); si no, se
+      // intenta el respaldo jsQR antes de rendirse. En WebKit/iOS detectQrSupport devuelve false
+      // para ir directo a jsQR y evitar cuelgues con BarcodeDetector experimental.
       const nativeOk = await detectQrSupport();
       let jsQR = null;
       if (!nativeOk) {
@@ -5464,17 +5488,28 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         }
       }
       setIsCameraActive(true);
-      // Sin pedir resolución, el navegador puede entregar un stream de baja
-      // definición (640×480 o menos) — suficiente para verse fluido en
-      // pantalla, pero no para resolver los módulos finos de un QR denso
-      // impreso en solo 17-22mm de lado (la URL completa de trazabilidad
-      // que codifica cada etiqueta no es corta). La cámara sigue
-      // "funcionando" (se ve el video) pero nunca detecta nada — pedir
-      // 1080p como ideal (el navegador cae a lo que el hardware soporte si
-      // no llega) es lo que le da al decodificador píxeles suficientes.
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
-      });
+
+      // Cadena de fallback escalonada para máxima compatibilidad con iPads, iPhones y Android
+      // (evita OverconstrainedError en iPads con cámara única o en Desktop Mode)
+      let stream = null;
+      const constraintsTiers = [
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: { ideal: 'environment' } } },
+        { video: true }
+      ];
+      let lastMediaErr = null;
+      for (const c of constraintsTiers) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          if (stream) break;
+        } catch (err) {
+          lastMediaErr = err;
+        }
+      }
+      if (!stream) {
+        throw (lastMediaErr || new Error('No se pudo acceder al hardware de cámara'));
+      }
       cameraStreamRef.current = stream;
       await attachCameraStream(stream);
 
@@ -5485,15 +5520,29 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
       const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
       if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      let nativeFailures = 0;
       scannerIntervalRef.current = setInterval(async () => {
         if (!videoRef.current || videoRef.current.readyState < 2) return;
         try {
           const barcodes = await detector.detect(videoRef.current);
+          nativeFailures = 0;
           if (barcodes && barcodes.length > 0) {
             const rawVal = barcodes[0].rawValue;
             if (!isDecodingPausedRef.current) handleScannedValue(rawVal);
           }
-        } catch (e) {}
+        } catch (e) {
+          nativeFailures++;
+          // Si el detector nativo falla repetidamente (e.g. bug de WebKit en video), caer a jsQR dinámicamente
+          if (nativeFailures >= 3) {
+            try {
+              const fallbackJsQR = await loadJsQR();
+              if (fallbackJsQR) {
+                startJsQRLoop(fallbackJsQR);
+                return;
+              }
+            } catch (err) {}
+          }
+        }
       }, 300);
     } catch (err) {
       setCameraError(err && err.message ? err.message : 'No se pudo acceder al hardware de cámara');

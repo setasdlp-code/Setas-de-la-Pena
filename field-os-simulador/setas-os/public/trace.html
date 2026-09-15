@@ -507,10 +507,12 @@
     };
 
     const SCAN_CODE_PARAMS = ['codigo', 'code', 'lote', 'batch'];
+    const CRATE_CODE_PARAMS = ['crate', 'canastilla'];
 
     function extraerParametros() {
       let rawCode = '';
       let flush = null;
+      let isCrate = false;
 
       try {
         const search = new URLSearchParams(location.search);
@@ -518,7 +520,14 @@
         for (const key of SCAN_CODE_PARAMS) {
           const val = search.get(key);
           if (val) {
-            const clean = val.replace(/^(?:setas:(?:lote|bag|bolsa):|SDP-CERT-|CAN-)/i, '').trim();
+            const clean = val.replace(/^(?:setas:(?:lote|bag|bolsa|crate):|SDP-CERT-)/i, '').trim();
+            if (clean) presentValues.add(clean);
+          }
+        }
+        for (const key of CRATE_CODE_PARAMS) {
+          const val = search.get(key);
+          if (val) {
+            const clean = val.replace(/^(?:setas:crate:)/i, '').trim();
             if (clean) presentValues.add(clean);
           }
         }
@@ -527,12 +536,22 @@
           return { codigo: '', flush: null, error: 'conflicting_parameters' };
         }
         if (presentValues.size === 1) {
-          // Precedencia determinista: codigo > code > lote > batch
+          // Precedencia determinista: codigo > code > lote > batch > crate > canastilla
           for (const key of SCAN_CODE_PARAMS) {
             const val = search.get(key);
             if (val) {
               rawCode = val;
               break;
+            }
+          }
+          if (!rawCode) {
+            for (const key of CRATE_CODE_PARAMS) {
+              const val = search.get(key);
+              if (val) {
+                rawCode = val;
+                isCrate = true;
+                break;
+              }
             }
           }
         }
@@ -560,14 +579,17 @@
         } catch (e) {}
       }
 
-      if (!rawCode) return { codigo: '', flush: null, error: null };
+      if (!rawCode) return { codigo: '', flush: null, isCrate: false, error: null };
 
       // Normalizar: strip de esquemas conocidos y sanitización estricta [A-Za-z0-9_-]{1,64}
-      const cleaned = rawCode.replace(/^(?:setas:(?:lote|bag|bolsa):|SDP-CERT-|CAN-)/i, '').trim();
+      const cleaned = rawCode.replace(/^(?:setas:(?:lote|bag|bolsa|crate):|SDP-CERT-)/i, '').trim();
       if (!/^[A-Za-z0-9_-]{1,64}$/.test(cleaned)) {
         return { codigo: '', flush: null, error: 'invalid_characters' };
       }
-      return { codigo: cleaned, flush, error: null };
+      if (/^CAN-\d+/i.test(cleaned)) {
+        isCrate = true;
+      }
+      return { codigo: cleaned, flush, isCrate, error: null };
     }
 
     function esc(s) {
@@ -766,8 +788,46 @@
         </footer>`;
     }
 
+    function renderCrate(crateCode) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <header>
+          <div class="badge-stamp">Canastilla</div>
+          <div class="eyebrow">Activo de Cosecha · Tenjo, Colombia</div>
+          <h1>Canastilla de Cosecha</h1>
+          <div class="sci">${esc(crateCode)}</div>
+        </header>
+
+        <main>
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Identidad Operativa</span>
+              <span class="tag">Báscula Continua</span>
+            </div>
+            <div class="section-body">
+              <p class="tasting-lead">
+                Contenedor plástico grado alimentario para recolección en sala de fructificación y pesaje continuo en Setas OS.
+              </p>
+              <div class="lot-row">
+                <span class="lbl">Identificador</span>
+                <span class="codigo-mono">${esc(crateCode)}</span>
+              </div>
+              <div class="lot-row">
+                <span class="lbl">Uso en Granja</span>
+                <span class="val">Corte y pesaje de flushes</span>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <footer>
+          Setas de la Peña · Sabana Centro, Colombia<br>
+          <a href="https://setasdelapena.co">setasdelapena.co</a> · <span style="font-family:var(--font-mono);">FOS v3.0</span>
+        </footer>`;
+    }
+
     (async () => {
-      const { codigo, flush, error } = extraerParametros();
+      const { codigo, flush, isCrate, error } = extraerParametros();
       if (error === 'conflicting_parameters') {
         document.getElementById('app').innerHTML = `
           <header>
@@ -796,6 +856,10 @@
       }
       if (!codigo) {
         render(null, [], '');
+        return;
+      }
+      if (isCrate || /^CAN-\d+/i.test(codigo)) {
+        renderCrate(codigo);
         return;
       }
       try {
