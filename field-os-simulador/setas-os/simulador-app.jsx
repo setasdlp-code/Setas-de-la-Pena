@@ -2451,12 +2451,14 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
   );
 };
 
-const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>{
+const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],onClose})=>{
   const lote=lotes.find(l=>l.id===loteId||l.codigo===loteCode||l.id===loteCode)||lotes[0];
   const harvests=lote?cosechas.filter(c=>c.loteId===lote.id):[];
   const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
   const spImg=lote?.especieKey?(IMG[lote.especieKey]||IMG.p_ostreatus_gris):IMG.p_ostreatus_gris;
   const [copied,setCopied]=useState(false);
+  const [syncing,setSyncing]=useState(false);
+  const [syncResult,setSyncResult]=useState(lote?.publicTrace||null);
   const traceUrl=lote?.codigo?`${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`:(typeof window!=='undefined'?window.location.href:PUBLIC_TRACE_BASE_URL);
   const qrDataUrl=generateQrSvgDataUrl(traceUrl);
 
@@ -2497,6 +2499,63 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
       </div>
 
       <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:16}}>
+        {/* ESTADO DE SINCRONIZACIÓN EN FIRESTORE */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--paper-100,#F5F2E9)',borderRadius:4,border:'1px solid var(--border-soft,#D8D3C5)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-500)'}}>
+              Ficha en Nube:
+            </span>
+            <span style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 3,
+              background: syncResult?.status === 'synced' ? 'var(--moss-100,#E8F0E0)' : syncResult?.status === 'failed' ? 'var(--coral-100,#FDE8E8)' : 'var(--paper-200,#E5E0D3)',
+              color: syncResult?.status === 'synced' ? 'var(--moss-800,#3B5A24)' : syncResult?.status === 'failed' ? 'var(--coral-800,#9B1C1C)' : 'var(--ink-600)'
+            }}>
+              {syncResult?.status === 'synced' ? '✓ Publicado' : syncResult?.status === 'failed' ? '⚠ Error al publicar' : 'Pendiente de Sincronización'}
+            </span>
+            {syncResult?.lastPublishedAt && (
+              <span style={{fontSize: 10, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)'}}>
+                {new Date(syncResult.lastPublishedAt).toLocaleDateString('es-CO')}
+              </span>
+            )}
+            {syncResult?.lastError && (
+              <span style={{fontSize: 10, color: 'var(--coral-700)', fontFamily: 'var(--font-mono)'}}>
+                ({syncResult.lastError})
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            disabled={syncing || !lote}
+            style={{fontSize:10.5,padding:'4px 10px',minHeight:32,display:'flex',alignItems:'center',gap:4}}
+            onClick={async () => {
+              if (!window.SetasPublicTraceDB?.publicarLote) {
+                setSyncResult({ status: 'failed', lastError: 'SetasPublicTraceDB no disponible' });
+                return;
+              }
+              setSyncing(true);
+              try {
+                const loteBolsas = bolsas.filter(b => b.loteId === lote.id);
+                const res = await window.SetasPublicTraceDB.publicarLote(lote, harvests, loteBolsas);
+                if (res && res.ok) {
+                  setSyncResult({ status: 'synced', lastPublishedAt: new Date().toISOString(), lastError: null, publicSchemaVersion: 2 });
+                } else {
+                  setSyncResult({ status: 'failed', lastError: res?.reason || 'Error' });
+                }
+              } catch (err) {
+                setSyncResult({ status: 'failed', lastError: err?.message || 'Error' });
+              } finally {
+                setSyncing(false);
+              }
+            }}
+          >
+            {syncing ? 'Sincronizando...' : 'Publicar ahora'}
+          </button>
+        </div>
+
         {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
         <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100,#F5F2E9)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft,#D8D3C5)'}}>
           <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -6148,6 +6207,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
+  const [bitLotesLoaded,setBitLotesLoaded]=useState(false);
+  const initialDeepLinkHandled=useRef(false);
+  const [publicSyncStatus,setPublicSyncStatus]=useState(null);
   const qrLotesRef=useRef(bitLotes);
   qrLotesRef.current=bitLotes;
   const [bitBolsas,setBitBolsas]=useState([]);
@@ -6426,8 +6488,67 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
     }catch(e){
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
+    }finally{
+      setBitLotesLoaded(true);
     }
   },[]);
+
+  // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales
+  useEffect(()=>{
+    if(!bitLotesLoaded||initialDeepLinkHandled.current) return;
+    initialDeepLinkHandled.current=true;
+    try{
+      const navigation=typeof window!=='undefined'?window.SetasOSNavigation:null;
+      const target=navigation?.resolveOperationalTarget
+        ?navigation.resolveOperationalTarget(window.location)
+        :null;
+      if(!target) return;
+
+      if(target.kind==='crate'&&target.crateCode){
+        goTab('bitacora');
+        openFieldScanSheet('harvest');
+        const sheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
+        const resolved=sheetApi?sheetApi.resolveScan(target.crateCode,{crates:sheetApi.CONFIG_CRATES||[]}):null;
+        if(resolved&&(resolved.kind==='crate'||resolved.kind==='crate_unregistered')){
+          setHarvestActiveCrate({
+            crateId:resolved.crateId||('crate_'+resolved.crateCode),
+            crateCode:resolved.crateCode,
+            taraGramos:resolved.taraGramos,
+            taraSource:resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'),
+            harvestId:'COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+          });
+          setHarvestGrossInput('');
+          setHarvestTareInput(resolved.taraGramos!==null?String(resolved.taraGramos):'');
+          setHarvestTareSource(resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'));
+        }
+        return;
+      }
+
+      if(target.batchCode){
+        const found=bitLotes.find(l=>
+          l.codigo===target.batchCode||
+          l.id===target.batchCode||
+          (l.codigo&&target.batchCode&&l.codigo.toUpperCase()===target.batchCode.toUpperCase())
+        );
+        if(found){
+          setBitActiveLoteId(found.id);
+          goTab('bitacora');
+          goBitTab('bit_ficha',true);
+          if(target.kind==='bag'&&target.bagCode){
+            setQrScannedBagId(target.bagCode);
+          }
+        }else{
+          goTab('bitacora');
+          setNoticeDlg({
+            title:'Lote no encontrado localmente',
+            msg:`Se intentó abrir el lote o bolsa "${target.bagCode||target.batchCode}", pero no está registrado en los datos locales de este dispositivo. Si fue registrado recientemente en otro equipo, sincroniza la bitácora desde la nube.`
+          });
+        }
+      }
+    }catch(err){
+      console.warn('Error resolviendo target operativo de navegación:', err);
+    }
+  },[bitLotesLoaded,bitLotes]);
 
   // ── v4: sincronizar pantry con stock
   useEffect(()=>{
@@ -7121,6 +7242,69 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowThermalModal(true);
   };
 
+  const openThermalForCrate = (crateCode = 'CAN-01') => {
+    const dummyLote = bitLotes[0] || { codigo: 'SDP-CANASTILLA', especie: 'Canastilla Grado Alimentario', numBolsas: 1 };
+    setThermalLote(dummyLote);
+    setThermalScope('crate');
+    setThermalCosechaItem({ crateCode });
+    setShowThermalModal(true);
+  };
+
+  const sincronizarFichasPublicas = async (onlyLoteId = null) => {
+    if (!window.SetasPublicTraceDB) {
+      setNoticeDlg({
+        title: 'Servicio no disponible',
+        msg: 'El módulo de sincronización pública (SetasPublicTraceDB) no está cargado o Firestore no está conectado.'
+      });
+      return;
+    }
+    const targetLotes = onlyLoteId
+      ? bitLotes.filter(l => l.id === onlyLoteId)
+      : bitLotes;
+
+    if (!targetLotes.length) {
+      setNoticeDlg({ title: 'Sin lotes', msg: 'No hay lotes disponibles para sincronizar.' });
+      return;
+    }
+
+    setPublicSyncStatus({ running: true, message: `Sincronizando ${targetLotes.length} lote(s)...`, type: 'info' });
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    for (const lt of targetLotes) {
+      const harvests = bitCosechas.filter(c => c.loteId === lt.id);
+      const bolsas = bitBolsas.filter(b => b.loteId === lt.id);
+      try {
+        const res = await window.SetasPublicTraceDB.publicarLote(lt, harvests, bolsas);
+        if (res && res.ok) {
+          successCount++;
+        } else {
+          failedCount++;
+          errors.push(`${lt.codigo}: ${res?.reason || 'falló'}`);
+        }
+      } catch (err) {
+        failedCount++;
+        errors.push(`${lt.codigo}: ${err?.message || 'error'}`);
+      }
+    }
+
+    try {
+      localStorage.setItem('sdp_bit_lotes', JSON.stringify(bitLotes));
+    } catch (e) {}
+
+    const summaryMsg = `${targetLotes.length} lotes procesados: ${successCount} sincronizados, ${failedCount} con error.` + (errors.length ? `\nDetalles:\n${errors.slice(0, 5).join('\n')}` : '');
+    setPublicSyncStatus({
+      running: false,
+      message: summaryMsg,
+      type: failedCount > 0 ? 'warning' : 'success'
+    });
+    setNoticeDlg({
+      title: 'Trazabilidad Pública · Resultado de Sincronización',
+      msg: summaryMsg
+    });
+  };
+
   const openProdLauncher = () => {
     if (!readyForProduction || !recipe.length || !an) {
       setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
@@ -7235,7 +7419,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           }
         })();
       }
-      window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
+      window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter(b => b.loteId === lote.id)).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
 
       // 3. Cerrar modal y proceder
       setShowProdLaunchModal(false);
@@ -7308,7 +7492,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
       })();
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
-    window.SetasPublicTraceDB?.publicarLote(lote).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+    window.SetasPublicTraceDB?.publicarLote(lote, [], bolsas).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
@@ -7321,7 +7505,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
-      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+      const cos=bitCosechas.filter(c=>c.loteId===loteId);
+      const bol=bitBolsas.filter(b=>b.loteId===loteId);
+      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, cos, bol).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     }
   };
   const updateBitBolsa=(bolsaId,fields)=>{
@@ -10188,7 +10374,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const BitacoraSection=()=>(
 <div>
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
-              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8}}>
+              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8,flexWrap:'wrap'}}>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
                 {bitActiveLoteId&&(
@@ -10201,6 +10387,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     🖨 Etiquetas
                   </button>
                 )}
+                <button
+                  className="inv-btn inv-btn-sec inv-btn-sm"
+                  onClick={()=>sincronizarFichasPublicas()}
+                  title="Sincronizar fichas públicas de trazabilidad con Firestore"
+                  style={{display:'flex',alignItems:'center',gap:4}}
+                >
+                  🌐 Sincronizar Fichas
+                </button>
+                <button
+                  className="inv-btn inv-btn-sec inv-btn-sm"
+                  onClick={()=>openThermalForCrate('CAN-01')}
+                  title="Imprimir etiquetas de canastilla grado alimentario (CAN-XX)"
+                  style={{display:'flex',alignItems:'center',gap:4}}
+                >
+                  🏷 Canastilla
+                </button>
+                {publicSyncStatus?.running&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginLeft:6,alignSelf:'center'}}>⏳ Sincronizando...</span>}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
                 {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center'}} title={bitSyncErr}>⚠ sin sincronizar</span>}
               </div>
@@ -15153,7 +15356,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalBags = Math.max(1, lote.numBolsas || 12);
           const items = [];
 
-          if (thermalScope === 'cosecha' && thermalCosechaItem) {
+          if (thermalScope === 'crate') {
+            const crateCode = thermalCosechaItem?.crateCode || 'CAN-01';
+            items.push({
+              id: crateCode,
+              bagCode: 'CANASTILLA REUTILIZABLE',
+              species: 'Tara 420g · Grado Alimentario',
+              date: new Date().toISOString().split('T')[0],
+              recipe: 'Báscula continua · Cosecha y pesaje',
+              bagsText: `Tara fija 420 g · ${crateCode}`,
+              qrUrl: `${PUBLIC_TRACE_BASE_URL}?crate=${encodeURIComponent(crateCode)}`
+            });
+          } else if (thermalScope === 'cosecha' && thermalCosechaItem) {
             const c = thermalCosechaItem;
             items.push({
               id: `CAN-${lote.codigo}-F${c.flush || 1}`,
@@ -15285,6 +15499,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <option value="lote">Solo etiqueta maestra de lote</option>
                       <option value="custom">Rango personalizado</option>
                       <option value="cosecha">Etiqueta de Canastilla / Cosecha</option>
+                      <option value="crate">Canastilla Reutilizable (CAN-XX)</option>
                     </select>
                   </div>
                 </div>
@@ -17384,6 +17599,7 @@ interval:
             loteCode={publicTraceModalLoteId}
             lotes={bitLotes}
             cosechas={bitCosechas}
+            bolsas={bitBolsas}
             onClose={() => setPublicTraceModalLoteId(null)}
           />
         )}
