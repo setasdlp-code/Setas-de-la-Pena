@@ -6669,7 +6669,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   },[]);
 
-  // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales
+  // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
   useEffect(()=>{
     if(!bitLotesLoaded||initialDeepLinkHandled.current) return;
     initialDeepLinkHandled.current=true;
