@@ -23,7 +23,7 @@ const CACHE_VERSION = '633b7e344c80';
 const CACHE = `setas-os-${CACHE_VERSION}`;
 
 // Lo imprescindible para pintar algo y llegar al gate de autenticación.
-const BOOT = ['./', './Setas OS v5.dc.html', './error-buffer.js', './favicon.svg', './vendor/jsQR.js'];
+const BOOT = ['./', './Setas OS v5.dc.html', './error-buffer.js', './favicon.svg', './vendor/jsQR.js', './_standalone_imgs/logo-sdlp.png'];
 
 const CACHEABLE = /\.(?:js|css|otf|ttf|woff2?|svg|png|jpe?g|webp|json)$/i;
 
