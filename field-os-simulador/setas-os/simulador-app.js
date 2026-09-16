@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 31c728d25c10252f0473aebb68bbde52b307badbe521180814df1541d27b6912
+// source-hash: caf45befea585efc62fb2670492b79778e79945c39b4c8bfd79c0347b1e334a0
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
