@@ -9,24 +9,6 @@
    ──────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── DS-2026 STANDALONE SYSTEM PALETTE ── */
-  --paper:          #FAF5E9;  /* warm ivory — every page ground        */
-  --ink:            #222222;  /* charcoal — primary text               */
-  --ink-muted:      #555555;  /* warm gray — secondary text, captions  */
-  --rule:           #888888;  /* mineral gray — hairlines, frames      */
-  --soil:           #4A3C31;  /* dark earth — infill, inverted blocks  */
-  --moss:           #4E6B3F;  /* forest green — OK / active / success  */
-  --rust:           #8E2C14;  /* oxidised red-brown — error only       */
-  --warning:        #C49A4C;  /* muted ochre — caution                 */
-  --warning-text:   #8C6B2E;  /* accessible ochre text on paper        */
-
-  --paper-panel:    #F3EEE2;  /* paper +4% soil — panels, table stripe */
-  --paper-recessed: #EAE4D8;  /* paper +9% soil — wells, placeholders  */
-  --moss-tint:      #E5E4D5;  /* 12% moss on paper — status field ground */
-  --rust-tint:      #EDDDCF;  /* 12% rust on paper */
-  --warning-tint:   #F4EAD6;  /* 12% warning on paper */
-  --soil-tint:      #E5DFD3;  /* 12% soil on paper */
-
   /* ── PAPER / INK — alias old 4-step naming to DS-2026 ── */
   --paper-0:   var(--paper, #FAF5E9);
   --paper-1:   var(--paper-panel, #F3EEE2);
@@ -52,9 +34,7 @@
   --line-0: var(--rule, #888888);
   --line-1: var(--rule, #888888);
   --line-2: var(--ink, #222222);
-  --border-hairline: var(--rule, #888888);
   --border-strong:   var(--rule, #888888);
-  --border-heavy:    var(--ink, #222222);
 
   --accent-terracotta:      var(--warning-text, #8C6B2E);
   --accent-terracotta-dark: color-mix(in oklab, var(--warning-text, #8C6B2E) 80%, black);
@@ -109,14 +89,6 @@
   --sky-500:  var(--accent-blue-grey);
   --sky-200:  var(--accent-blue-grey-dim);
 
-  --status-ok:             var(--moss);
-  --status-ok-bg:          var(--moss-tint);
-  --status-warn:           var(--warning);
-  --status-warn-bg:        var(--warning-tint);
-  --status-warn-text:      var(--warning-text);
-  --status-error:          var(--rust);
-  --status-error-bg:       var(--rust-tint);
-
   --status-active:         var(--moss);
   --status-active-bg:      var(--moss-tint);
   --status-attention:      var(--warning);
@@ -124,26 +96,14 @@
   --status-attention-text: var(--warning-text);
 
   --success: var(--status-active);
-  --warning: var(--status-attention);
   --danger:  var(--status-error);
 
-  /* ── SEMANTIC SURFACES / TEXT — alias to DS-2026 semantic names ── */
-  --surface-page:     var(--paper);
-  --surface-panel:    var(--paper-panel);
-  --surface-recessed: var(--paper-recessed);
-  --surface-inverse:  var(--soil);
-
+  /* ── LEGACY BG / FG / ACCENT ALIASES ── */
   --bg-page:     var(--surface-page);
   --bg-elevated: var(--surface-panel);
   --bg-sunken:   var(--surface-recessed);
   --bg-card:     var(--surface-panel);
   --bg-inverse:  var(--ink-0);
-
-  --text-primary:   var(--ink);
-  --text-secondary: var(--ink-muted);
-  --text-metadata:  var(--ink-muted);
-  --text-disabled:  var(--rule);
-  --text-inverse:   var(--paper);
 
   --fg-primary:   var(--text-primary);
   --fg-secondary: var(--text-secondary);
