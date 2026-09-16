@@ -65,9 +65,7 @@
   --line-0: var(--rule, #888888);
   --line-1: var(--rule, #888888);
   --line-2: var(--ink, #222222);
-  --border-hairline: var(--rule, #888888);
   --border-strong:   var(--rule, #888888);
-  --border-heavy:    var(--ink, #222222);
 
   --accent-terracotta:      var(--warning-text, #8C6B2E);
   --accent-terracotta-dark: color-mix(in oklab, var(--warning-text, #8C6B2E) 80%, black);
@@ -142,23 +140,12 @@
   --warning: var(--warning-pigment);
   --danger:  var(--status-error);
 
-  /* ── SEMANTIC SURFACES / TEXT — alias to DS-2026 semantic names ── */
-  --surface-page:     var(--paper);
-  --surface-panel:    var(--paper-panel);
-  --surface-recessed: var(--paper-recessed);
-  --surface-inverse:  var(--soil);
-
+  /* ── LEGACY BG / FG / ACCENT ALIASES ── */
   --bg-page:     var(--surface-page);
   --bg-elevated: var(--surface-panel);
   --bg-sunken:   var(--surface-recessed);
   --bg-card:     var(--surface-panel);
   --bg-inverse:  var(--ink-0);
-
-  --text-primary:   var(--ink);
-  --text-secondary: var(--ink-muted);
-  --text-metadata:  var(--ink-muted);
-  --text-disabled:  var(--rule);
-  --text-inverse:   var(--paper);
 
   --fg-primary:   var(--text-primary);
   --fg-secondary: var(--text-secondary);
@@ -195,9 +182,9 @@
   --t-h4:         var(--weight-black)  var(--text-md)/var(--leading-snug) var(--font-sans);
   --t-lede:       var(--weight-regular) var(--text-lg)/var(--leading-relaxed) var(--font-sans);
   --t-body:       var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);
-  --t-body-sm:    var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);
-  --t-caption:    var(--weight-regular) var(--text-xs)/var(--leading-snug) var(--font-sans);
-  --t-eyebrow:    var(--weight-bold) var(--text-2xs)/1.0 var(--font-mono);
+  --t-body-sm:    var(--weight-regular) var(--size-small, 14px)/var(--leading-normal) var(--font-sans);
+  --t-caption:    var(--weight-regular) var(--size-data, 13px)/var(--leading-snug) var(--font-sans);
+  --t-eyebrow:    var(--weight-bold) var(--size-label, 11px)/1.0 var(--font-mono);
   --t-label:      var(--weight-bold) var(--text-base)/1.2 var(--font-sans);
   --t-button:     var(--weight-bold) var(--text-sm)/1.0 var(--font-sans);
   --t-quote:      italic var(--weight-light) var(--text-xl)/var(--leading-snug) var(--font-sans);

@@ -71,20 +71,20 @@
 <link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/GayaPatched-Bold.otf" as="font" type="font/otf" crossorigin>
 <link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link data-auth-managed="true" data-auth-rel="preload" data-auth-href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/fonts.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/colors.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/typography.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/spacing.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/structure.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/tokens/tokens.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
-	<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/instrument.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="fieldos-tokens.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/tokens/tokens.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/instrument.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="sim.css">
 <script type="module" src="firebase/auth-gate.js"></script>
 <!-- auth-gate.js inicia Firebase Auth. Tras una sesión válida inicializa
@@ -174,8 +174,8 @@
   .rail-btn:hover { color:var(--ink-1); }
   .rail-btn.on { color:var(--ink-0); }
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
-  .rail-btn span { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
-  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:16px; height:16px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:9px; font-weight:700; font-variant-numeric:tabular-nums; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
+  .rail-btn span { font-family:var(--font-mono); font-size:var(--size-label, 11px); font-weight:600; letter-spacing:0.15em; text-transform:uppercase; }
+  .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:18px; height:18px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
   .rail-mark { display:flex; align-items:center; justify-content:center; padding:12px 2px 8px; border:0; background:none; cursor:pointer; width:100%; }
@@ -185,10 +185,10 @@
   .rail-item { position:relative; display:flex; }
   .rail-item .rail-btn { flex:1; width:100%; }
   .rail-flyout { position:absolute; left:100%; top:0; margin-left:-4px; background:var(--paper-0); border:1px solid var(--border-strong); box-shadow:none; width:118px; padding:0 8px; display:flex; flex-direction:column; gap:2px; z-index:var(--z-rail-flyout); animation:fos-fade .22s cubic-bezier(.32,.72,.36,1); }
-  .rail-flyout-title { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-metadata); padding:22px 4px 12px; text-align:center; }
+  .rail-flyout-title { font-family:var(--font-mono); font-size:var(--size-label, 11px); font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-metadata); padding:22px 4px 12px; text-align:center; }
   .rail-flyout-item { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; background:none; border:none; cursor:pointer; padding:9px 4px; border-radius:var(--radius-sm); color:var(--ink-2); position:relative; }
   .rail-flyout-item svg { width:22px; height:22px; flex-shrink:0; }
-  .rail-flyout-item span { font-family:var(--font-mono); font-size:var(--text-2xs,10.5px); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  .rail-flyout-item span { font-family:var(--font-mono); font-size:var(--size-label, 11px); font-weight:600; letter-spacing:0.15em; text-transform:uppercase; }
   .rail-flyout-item:hover { color:var(--ink-1); }
   .rail-flyout-item.on { color:var(--ink-0); background:var(--paper-2); }
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
@@ -222,7 +222,7 @@
     .rail-flyout-title { display:none; }
     .rail-flyout-item { flex:0 0 auto; min-width:54px; padding:8px 6px; gap:3px; }
     .rail-flyout-item svg { width:20px; height:20px; }
-    .rail-flyout-item span { font-size:10px; }
+    .rail-flyout-item span { font-size:var(--size-label, 11px); letter-spacing:0.15em; }
     .rail-flyout-item.on::before { display:none; }
     .rail-flyout-item.on { background:var(--paper-2); border-bottom:2px solid var(--accent-terracotta); }
   }
@@ -253,7 +253,7 @@
     .rail-item { flex:0 0 auto; }
     .rail-item .rail-btn { width:auto; }
     .rail-btn.on { background:var(--paper-2); }
-    .rail-btn span { font-size:10px; }
+    .rail-btn span { font-size:var(--size-label, 11px); letter-spacing:0.15em; }
     .app-main { margin-left:0; padding-bottom:62px; }
     .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
     /* Auth gate owns the sign-out control. Reserve a real row for it while
@@ -405,7 +405,7 @@
               <span style="font:var(--t-label);color:var(--ink-0);">Sesión de {{ sessionLabel }}</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
-              <button onClick="{{ toggleOnline }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:4px 9px;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:{{ syncPillColor }};">
+              <button onClick="{{ toggleOnline }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:4px 9px;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:{{ syncPillColor }};">
                 <span style="width:7px;height:7px;border-radius:50%;background:{{ syncPillColor }};"></span>{{ syncPillText }}
               </button>
               <span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--text-metadata);">{{ sessionClock }}</span>
@@ -742,7 +742,7 @@
               <sc-for list="{{ photoStrip }}" as="p" hint-placeholder-count="3">
                 <div style="flex:none;display:flex;flex-direction:column;gap:5px;">
                   <img ref="{{ p.ref }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Foto de seguimiento" width="132" height="132" style="width:132px;height:132px;object-fit:cover;border:1px solid var(--border-soft);border-radius:var(--radius-sm);">
-                  <span style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-1);">{{ p.label }}</span>
+                  <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-1);">{{ p.label }}</span>
                   <span style="font:var(--t-caption);color:var(--text-metadata);">{{ p.date }}</span>
                 </div>
               </sc-for>

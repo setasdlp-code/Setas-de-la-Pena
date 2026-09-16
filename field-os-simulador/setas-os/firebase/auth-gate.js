@@ -267,7 +267,7 @@ export function buildGate() {
   Object.assign(signoutBtn.style, {
     position: "fixed", top: "10px", right: "10px", zIndex: "var(--z-fab, 65)",
     minHeight: "44px", padding: "8px 12px", background: "var(--paper-0,#f7f4ec)", border: "1px solid var(--border-hairline,#8c7f5b)",
-    borderRadius: "var(--radius-sm,2px)", fontFamily: "var(--font-mono,monospace)", fontSize: "10.5px", fontWeight: "700",
+    borderRadius: "var(--radius-sm,2px)", fontFamily: "var(--font-mono,monospace)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "700",
     color: "var(--ink-2,#6b6759)", cursor: "pointer", display: "none",
   });
 
