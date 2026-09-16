@@ -89,6 +89,7 @@ let protectedAppScriptsPromise = null;
 let authRuntimePromise = null;
 let dcRuntimePromise = null;
 let authDocumentResourcesObserver = null;
+let authGatedResourcesObserver = null;
 
 function loadClassicScript(src) {
   return new Promise((resolve, reject) => {
@@ -216,15 +217,38 @@ function syncAuthGatedResources(authenticated) {
   const scope = document.querySelector("#dc-root") || document;
   scope.querySelectorAll("[data-auth-src]").forEach((node) => {
     if (authenticated) {
-      if (!node.getAttribute("src")) node.setAttribute("src", node.dataset.authSrc);
+      const authSrc = (node.dataset.authSrc === "_standalone_imgs/logo-sdlp.png" && window.__resources && window.__resources.imgLogoSdlp)
+        ? window.__resources.imgLogoSdlp
+        : node.dataset.authSrc;
+      if (!node.getAttribute("src") || (window.__resources && window.__resources.imgLogoSdlp && node.dataset.authSrc === "_standalone_imgs/logo-sdlp.png" && node.getAttribute("src") !== window.__resources.imgLogoSdlp)) {
+        node.setAttribute("src", authSrc);
+      } else if (!node.getAttribute("src")) {
+        node.setAttribute("src", node.dataset.authSrc);
+      }
     } else {
       node.removeAttribute("src");
     }
   });
 }
 
+function setAuthGatedResources(authenticated) {
+  if (authenticated) {
+    syncAuthGatedResources(true);
+    if (!authGatedResourcesObserver) {
+      authGatedResourcesObserver = new MutationObserver(() => syncAuthGatedResources(true));
+      const target = document.querySelector("#dc-root") || document.body || document.documentElement;
+      authGatedResourcesObserver.observe(target, { childList: true, subtree: true });
+    }
+  } else {
+    authGatedResourcesObserver?.disconnect();
+    authGatedResourcesObserver = null;
+    syncAuthGatedResources(false);
+  }
+}
+
 function publishAuthState(authenticated) {
   setAuthDocumentResources(authenticated);
+  setAuthGatedResources(authenticated);
   window.__setasAuthState = authenticated;
   document.documentElement.dataset.setasAuthState = authenticated ? "authenticated" : "unauthenticated";
   syncAuthGatedResources(authenticated);
