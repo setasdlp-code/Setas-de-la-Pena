@@ -1,7 +1,7 @@
 
 
 
-const {useState,useMemo,useEffect,useRef}=React;
+const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // --- Bio-Check & Lab Extraction storage helpers ---
 const BIO_CHECK_KEY = 'setas_os_bio_check';
@@ -265,6 +265,28 @@ function calculateCost(biomassGrams, solventLiters, speciesKey, methodKey, rawBi
   const { yieldGrams } = calculateYield(biomassGrams, speciesKey, methodKey, factors);
   const costPerGramExtract = yieldGrams > 0 ? Math.round(totalCost / yieldGrams) : 0;
   return { biomassCost, solventCost, totalCost, costPerGramExtract };
+}
+
+// Decodificador QR de respaldo para navegadores sin BarcodeDetector — todo
+// iOS hoy, por obligación de Apple de correr sobre WebKit. jsQR es puro JS
+// (decodifica ImageData de un canvas, sin depender de una API nativa), así
+// que funciona igual en Safari/Chrome-iOS que en cualquier escritorio.
+// Se carga bajo demanda (no en el arranque) porque la mayoría de operadores
+// en Android/desktop nunca lo necesita — cachea la promesa para no pedirlo
+// dos veces si el operador abre y cierra el escáner varias veces.
+let jsQRLoadPromise = null;
+function loadJsQR() {
+  if (typeof window !== 'undefined' && window.jsQR) return Promise.resolve(window.jsQR);
+  if (jsQRLoadPromise) return jsQRLoadPromise;
+  jsQRLoadPromise = new Promise((resolve, reject) => {
+    if (typeof document === 'undefined') { reject(new Error('Sin document')); return; }
+    const script = document.createElement('script');
+    script.src = 'vendor/jsQR.js';
+    script.onload = () => (window.jsQR ? resolve(window.jsQR) : reject(new Error('jsQR no se expuso en window tras cargar')));
+    script.onerror = () => { jsQRLoadPromise = null; reject(new Error('No se pudo cargar el decodificador QR (sin conexión y sin caché previa)')); };
+    document.head.appendChild(script);
+  });
+  return jsQRLoadPromise;
 }
 
 function generateBatchQrDataUrl(batch) {
@@ -1004,7 +1026,7 @@ const SPP={
   p_ostreatus_gris:{name:'Orellana Gris',scientific:'Pleurotus ostreatus',cn_optimal:{min:25,max:50,ideal:35},n_optimal:{min:0.8,max:2.0,ideal:1.4},ph_optimal:{min:6.0,max:7.5},moisture:{ideal:65},eb_baseline:90,eb_optimal:130,supplementation_max:20,spawn_rate:8,notes:'La más fácil de cultivar. Tolera amplio rango de C:N. Ideal clima Sabana.',temp_fruit:'12–22°C'},
   p_ostreatus_blanco:{name:'Orellana Blanca',scientific:'Pleurotus florida',cn_optimal:{min:25,max:45,ideal:30},n_optimal:{min:1.0,max:2.0,ideal:1.5},ph_optimal:{min:6.0,max:7.0},moisture:{ideal:65},eb_baseline:80,eb_optimal:120,supplementation_max:18,spawn_rate:8,notes:'Tallos blancos premium.',temp_fruit:'14–20°C'},
   p_djamor_rosa:{name:'Orellana Rosa',scientific:'Pleurotus djamor',cn_optimal:{min:30,max:50,ideal:40},n_optimal:{min:0.8,max:1.8,ideal:1.2},ph_optimal:{min:5.5,max:6.5},moisture:{ideal:67},eb_baseline:70,eb_optimal:110,supplementation_max:15,spawn_rate:7,notes:'TERMÓFILA. Aborta primordios bajo 15°C.',temp_fruit:'20–28°C'},
-  p_eryngii:{name:'Seta de Cardo',scientific:'Pleurotus eryngii',cn_optimal:{min:40,max:65,ideal:50},n_optimal:{min:0.8,max:1.6,ideal:1.2},ph_optimal:{min:5.5,max:7.0},moisture:{ideal:63},eb_baseline:60,eb_optimal:90,supplementation_max:25,spawn_rate:5,notes:'PREMIUM. Requiere esterilización. C:N alto 40–65 (literatura Kim 2011). Precio 2–3× orellana.',temp_fruit:'12–18°C'},
+  p_eryngii:{name:'Seta de Cardo',scientific:'Pleurotus eryngii',cn_optimal:{min:40,max:65,ideal:50},n_optimal:{min:0.8,max:1.6,ideal:1.2},ph_optimal:{min:5.5,max:7.0},moisture:{ideal:63},eb_baseline:60,eb_optimal:90,supplementation_max:25,spawn_rate:5,notes:'PREMIUM. Requiere esterilización. C:N 25–40 en bolsa suplementada esterilizada (Li 2024). Precio 2–3× orellana.',temp_fruit:'12–18°C'},
   shiitake:{name:'Shiitake',scientific:'Lentinula edodes',cn_optimal:{min:35,max:70,ideal:50},n_optimal:{min:0.6,max:1.2,ideal:0.9},ph_optimal:{min:5.0,max:6.0},moisture:{ideal:60},eb_baseline:50,eb_optimal:100,supplementation_max:20,spawn_rate:5,notes:'Ciclo largo 90–120 d. REQUIERE ESTERILIZACIÓN.',temp_fruit:'12–18°C'},
   lions_mane:{name:'Melena de León',scientific:'Hericium erinaceus',cn_optimal:{min:25,max:48,ideal:33},n_optimal:{min:1.0,max:2.0,ideal:1.5},ph_optimal:{min:5.0,max:6.5},moisture:{ideal:65},eb_baseline:50,eb_optimal:160,supplementation_max:25,spawn_rate:5,notes:'MEDICINAL premium. Master Mix (madera dura + cascarilla de soya 50:50) = sustrato óptimo, EB 150–180%. Evitar eucalipto.',temp_fruit:'15–20°C'},
   reishi:{name:'Reishi',scientific:'Ganoderma lucidum',cn_optimal:{min:35,max:65,ideal:50},n_optimal:{min:0.7,max:1.2,ideal:0.9},ph_optimal:{min:4.5,max:6.0},moisture:{ideal:60},eb_baseline:30,eb_optimal:60,supplementation_max:15,spawn_rate:5,notes:'MEDICINAL. Ciclo 4–6 meses.',temp_fruit:'20–26°C'},
@@ -1227,7 +1249,8 @@ const SppSvg=({sKey,c})=>{
   return <svg viewBox="0 0 70 90" width="66" height="79" style={{display:'block',overflow:'visible'}}>{m[sKey]||m.p_ostreatus_gris}</svg>;
 };
 
-const analyze=(recipe,sKey,ings=INGS)=>{
+const EB_PENALTY_BALANCE_BAND={min:95,max:105}; // castigo de EB por balance muy fuera de 100 — no es la tolerancia de guardado
+const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
   if(!recipe.length) return null;
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
   let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
@@ -1240,10 +1263,9 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     // relación C:N — se usan solo como modificadores de pH y textura. Evita el sesgo de
     // dilución del denominador lignocelulósico.
     const esAditivoSeco=(g.role==='aditivo_ph'||g.role==='aditivo_estructura');
-    // C:N BASE SECA: los valores c/n de la BD son % materia seca → ponderar por fracción seca
-    // para corregir diferencias de humedad entre insumos (borra café 60% vs paja 12%).
-    const dryFrac=p*(1-Math.min(0.92,Math.max(0,(g.moisture||0)/100)));
-    if(g.cn>0&&!esAditivoSeco){wC+=g.c*dryFrac;wN+=g.n*dryFrac;nP+=dryFrac;}
+    // Los % de la receta ya están en base seca ("Porcentaje en base seca"): ponderar por p.
+    // Descontar humedad aquí la aplicaba dos veces y subestimaba insumos húmedos (D18).
+    if(g.cn>0&&!esAditivoSeco){wC+=g.c*p;wN+=g.n*p;nP+=p;}
     wPh+=g.ph*p; wDig+=g.dig*p; wCra+=g.cra*p;
     if(g.role==='suplemento_n') suppP+=p;
     if(g.role==='suplemento_medio') suppMedP+=p;
@@ -1261,8 +1283,9 @@ const analyze=(recipe,sKey,ings=INGS)=>{
   const avgCra=tot?wCra/tot:3;
   const suppTotalP=suppP+suppMedP;
   const suppEffectiveP=suppP+(suppMedP*0.6);
-  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);return g?s+(g.cost*(parseFloat(r.p)||0)/100):s;},0);
-  const sp=SPP[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
+  // COP por kg de mezcla SECA: el precio de bodega es por kg tal cual se recibe (D6).
+  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);if(!g) return s;const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100));return s+(g.cost/(1-m))*(parseFloat(r.p)||0)/100;},0);
+  const sp=spp[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
   if(sp){
     const cF=Math.max(0,1-Math.pow(Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)/2),1.5));
     const nF=Math.max(0,1-Math.pow(Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)/2),1.5));
@@ -1273,7 +1296,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
     else if(needsAutoclave) eb*=.85;
     if(incompat.length) eb*=.9;
-    if(tot<95||tot>105) eb*=.95;
+    if(tot<EB_PENALTY_BALANCE_BAND.min||tot>EB_PENALTY_BALANCE_BAND.max) eb*=.95;
     // ── Modificadores multifactor de EB (penalizaciones ≤1: una receta en óptimo no se ve afectada) ──
     // pH fuera de rango: la acidez excesiva bloquea más que la alcalinidad ligera
     var phF=1;
@@ -1305,14 +1328,18 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
 
 // ── Balance de masa: única fuente de verdad usada por Formulador, Ficha,
-//    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp.
-const MASS_BALANCE_TOL=0.5;
+//    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp,
+//    definida una sola vez en recipe-version.js (declarado antes de usarse
+//    aquí; el resto de los puentes UMD vive más abajo, junto a los módulos
+//    que importan).
+const SetasRecipeVersionApi=(typeof SetasRecipeVersion!=='undefined'?SetasRecipeVersion:(typeof require!=='undefined'?require('./recipe-version.js'):null));
+const MASS_BALANCE_TOL=SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced=a=>!!a&&Math.abs(a.tot-100)<=MASS_BALANCE_TOL;
 const massBalanceMsg=a=>{
   if(!a) return'';
@@ -1358,7 +1385,9 @@ const diagnose=(a,sKey)=>{
   // CRA
   const craLbl=avgCra>=4?'Alta — reduce agua de hidratación ~10%':avgCra<=2?'Baja — hidratar bien, revisar punto de campo':null;
   if(craLbl) s.push({t:'warning',i:'',tx:`CRA ${avgCra.toFixed(1)}/5 — ${craLbl}`});
-  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo 67–68%. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
+  const moistLbl=SetasSpeciesTargetsApi?.targetSourceLabel(sp?.targets,'moisture');
+  const moistNote=moistLbl==='Objetivo heredado'?' (valor heredado sin verificar)':moistLbl==='Objetivo genérico'?' (objetivo genérico)':'';
+  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal??'—'}%${moistNote}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
   if(incompat.length) s.push({t:'warning',i:'!',tx:`No ideales para ${sp?.name}: ${incompat.join(', ')}.`});
   // Transparencia del modelo: qué factores penalizan la EB y cuánto
   if(a.ebMods){
@@ -1398,10 +1427,24 @@ const {
   ? SetasRecipeOptimizer
   : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}));
 
+// ── Objetivos de formulación sourced por especie × sustrato — puente hacia
+//    species-targets.js. Solo se lee dentro del componente (effectiveSPP), en
+//    tiempo de render — no en la inicialización de este módulo — así que da
+//    igual que este bloque quede antes o después de que species-targets.js
+//    registre su global.
+const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
+
+// ── Plan de lanzamiento de lote y consumo de inventario — puente hacia
+//    launch-plan.js / inventory-consumption.js. BAG_TYPES ya está definido
+//    (línea ~1199), así que UNIT_INGREDIENT_IDS puede construirse aquí.
+const SetasLaunchPlanApi=(typeof SetasLaunchPlan!=='undefined'?SetasLaunchPlan:(typeof require!=='undefined'?require('./launch-plan.js'):null));
+const SetasInventoryConsumptionApi=(typeof SetasInventoryConsumption!=='undefined'?SetasInventoryConsumption:(typeof require!=='undefined'?require('./inventory-consumption.js'):null));
+const UNIT_INGREDIENT_IDS=BAG_TYPES.map(b=>b.stockId).filter(Boolean);
+
 // ── Calibración histórica — puente hacia historical-calibration.js ──
 // Deriva la eficiencia biológica de lotes REALES de Bitácora. Antes esto se
 // alimentaba del array `yields` del shell, que son 5 filas de demo inventadas.
-const { bitacoraEBRows, historicalEB } = (typeof SetasHistoricalCalibration !== 'undefined'
+const { bitacoraObservations, historicalEB, assessHistory, finiteEB, confirmedOutcome, describeHistory } = (typeof SetasHistoricalCalibration !== 'undefined'
   ? SetasHistoricalCalibration
   : (typeof require !== 'undefined' ? require('./historical-calibration.js') : {}));
 
@@ -1410,6 +1453,7 @@ const {
   SPECIES_FLUSH_PROFILES,
   calcThermalDelayFactor,
   calculateLotYieldAndFlushes,
+  calculateRemainingFlushes,
   calculateSowingRequirement,
   sowingRecommendation: engineSowingRecommendation,
   matchWeeklyCoverage: engineMatchWeeklyCoverage,
@@ -1426,6 +1470,7 @@ const {
   calcRequiredGaugePressurePsi: engineCalcRequiredGaugePressurePsi,
   calcTimeCompFactorAt15Psi: engineCalcTimeCompFactorAt15Psi,
   simulateCorePenetration: engineSimulateCorePenetration,
+  calcOptimalHoldTime: engineCalcOptimalHoldTime,
 } = (typeof SetasSterilization !== 'undefined'
   ? SetasSterilization
   : (typeof require !== 'undefined' ? require('./sterilization-kinetics.js') : {}));
@@ -1442,12 +1487,26 @@ const {
 // ── Fisiología Poscosecha y Cadena de Frío — puente hacia post-harvest-engine.js ──
 const {
   predictShelfLife: enginePredictShelfLife,
+  assessCondensationRiskOnUnpack: engineAssessCondensationRiskOnUnpack,
   calcPostHarvestRespiration: engineCalcPostHarvestRespiration,
   calcTranspirationLoss: engineCalcTranspirationLoss,
   SPECIES_POSTHARVEST_PROFILES,
 } = (typeof SetasPostHarvest !== 'undefined'
   ? SetasPostHarvest
   : (typeof require !== 'undefined' ? require('./post-harvest-engine.js') : {}));
+
+// ── Perito Workbench Core — puente hacia perito-workbench-core.js ──
+const {
+  TENJO_PHYSICAL_CONTEXT: engineTenjoPhysicalContext,
+  calcRestrictiveFactor: engineCalcRestrictiveFactor,
+  calcLiebigBottleneck: engineCalcLiebigBottleneck,
+  simulateSuggestionDelta: engineSimulateSuggestionDelta,
+  morphRecipes: engineMorphRecipes,
+  analyzeMorphTrajectory: engineAnalyzeMorphTrajectory,
+  filterParetoFrontier: engineFilterParetoFrontier,
+} = (typeof SetasPeritoWorkbench !== 'undefined'
+  ? SetasPeritoWorkbench
+  : (typeof require !== 'undefined' ? require('./perito-workbench-core.js') : {}));
 
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
@@ -1477,40 +1536,47 @@ const DEFAULT_FRESH_PRICES={
   nameko:32000
 };
 
-const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300)=>{
-  if(!recipe.length||!n||!kg) return null;
+const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300,preparation=null)=>{
+  if(!Array.isArray(recipe)||!recipe.length||!Number.isFinite(Number(n))||Number(n)<=0||!Number.isFinite(Number(kg))||Number(kg)<=0) return null;
   const wet=n*kg;                                   // sustrato húmedo final objetivo (kg)
-  const hF=Math.min(0.85,Math.max(0.40,hObj/100));  // fracción de humedad objetivo
-  const dry=wet*(1-hF);                             // masa seca total requerida (kg)
-  const spawnRate=Math.min(0.15,Math.max(0.05,dynSpawn/100));
+  const hF=Math.min(0.85,Math.max(0.40,(Number(hObj)||67)/100));  // fracción de humedad objetivo
+  const dry=preparation?preparation.totals.dryKg:wet*(1-hF);                             // masa seca total requerida (kg)
+  const spawnRate=Math.min(0.15,Math.max(0.05,(Number(dynSpawn)||8)/100));
+  const effectiveIngs=Array.isArray(ings)&&ings.length?ings:INGS;
   const items=recipe.map(r=>{
-    const g=ings.find(i=>i.id===r.id);if(!g) return null;
-    const masaSeca=dry*(parseFloat(r.p)/100);       // aporte seco del insumo
-    const m=Math.min(0.92,Math.max(0,(g.moisture||0)/100)); // humedad intrínseca
-    const kr=masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
+    const g=effectiveIngs.find(i=>i.id===r.id);if(!g) return null;
+    const spec=preparation?.items.find(i=>i.ingredientId===r.id);
+    const masaSeca=spec?spec.dryKg:dry*(parseFloat(r.p||r.pct||0)/100);       // aporte seco del insumo
+    const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100)); // humedad intrínseca
+    const kr=spec?spec.asReceivedKg:masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
     const aguaOculta=kr*m;                           // agua que ya trae el insumo
-    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*g.cost,unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
+    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*(Number(g.cost)||0),unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
   }).filter(Boolean);
+  if(!items.length) return null;
   const aguaTot=dry*(hF/(1-hF));                     // agua total que debe contener la mezcla
   const aguaInh=items.reduce((s,i)=>s+i.aguaOculta,0); // agua aportada por los insumos
   const agua=Math.max(0,aguaTot-aguaInh);            // agua neta a inyectar (L ≈ kg)
+  const waterExcessKg=Math.max(0,aguaInh-aguaTot);
+  const actualWetTotal=dry+aguaInh+agua;
+  const resultingMoisturePct=actualWetTotal>0?Math.round(((aguaInh+agua)/actualWetTotal)*1000)/10:Math.round(hF*1000)/10;
+  const isOverhydrated=waterExcessKg>0.05;
   const kgComercialTotal=items.reduce((s,i)=>s+i.kr,0); // peso total a pesar (base húmeda comercial)
   const sustCost=items.reduce((s,i)=>s+i.cost,0);
   const spawnKg=wet*spawnRate;
-  const spawnCostTotal=spawnKg*spawnCostKg;
-  const energyCostKgSeco=tr?.energy?.cop_per_kg_seco||0;
+  const spawnCostTotal=spawnKg*(Number(spawnCostKg)||12000);
+  const energyCostKgSeco=Number.isFinite(Number(tr?.energy?.cop_per_kg_seco))?Number(tr.energy.cop_per_kg_seco):0;
   const energyCostTotal=dry*energyCostKgSeco;
-  const bagConsumableCostUnit=customBagConsumable!=null?customBagConsumable:300;
+  const bagConsumableCostUnit=customBagConsumable!=null?Number(customBagConsumable):300;
   const bagConsumableCostTotal=n*bagConsumableCostUnit;
   const totalCost=sustCost+spawnCostTotal+energyCostTotal+bagConsumableCostTotal;
   const costPerBag=n>0?totalCost/n:0;
 
   // Proyección de cosecha en fresco y margen comercial
   const dryPerBag=n>0?dry/n:0;
-  const ebRate=Math.max(0,(eb!=null?eb:85)/100);
+  const ebRate=Math.max(0,(eb!=null?Number(eb):85)/100);
   const projectedFreshKgPerBag=dryPerBag*ebRate;
   const projectedFreshKgTotal=dry*ebRate;
-  const freshPriceKg=customFreshPrice||DEFAULT_FRESH_PRICES[sKey]||22000;
+  const freshPriceKg=(customFreshPrice!=null&&Number.isFinite(Number(customFreshPrice))&&Number(customFreshPrice)>=0)?Number(customFreshPrice):(DEFAULT_FRESH_PRICES[sKey]??22000);
   const projectedRevenuePerBag=projectedFreshKgPerBag*freshPriceKg;
   const projectedGrossMarginPerBag=projectedRevenuePerBag-costPerBag;
   const projectedMarginPct=projectedRevenuePerBag>0?(projectedGrossMarginPerBag/projectedRevenuePerBag)*100:0;
@@ -1522,6 +1588,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
     energyCostTotal,energyCostKgSeco,
     bagConsumableCostUnit,bagConsumableCostTotal,
     totalCost,costPerBag,agua,hObj,
+    waterExcessKg,resultingMoisturePct,isOverhydrated,
     dryPerBag,ebRate,
     projectedFreshKgPerBag,projectedFreshKgTotal,
     freshPriceKg,projectedRevenuePerBag,
@@ -1545,6 +1612,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
 const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   const sp=SPP[sKey];if(!sp||!dateStr) return null;
   const base=new Date(dateStr+'T12:00:00');
+  if(isNaN(base.getTime())) return null;
   const add=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
   const fmt=d=>d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};
@@ -1625,7 +1693,7 @@ const PasteGuide=({tr,recipe,numBags,kgBag})=>{
   };
   const steps=guides[tr.col]||[];
   return(
-    <div style={{marginTop:14,background:'var(--paper-200)',border:'1px solid var(--border-soft)',padding:'var(--space-4)'}}>
+    <div style={{marginTop:14,background:'var(--paper-200)',border:'1px solid var(--border-soft)',padding:'var(--fos-space-4)'}}>
       <div className="sec">Guía de {tr.name} · Tenjo 2.580 msnm</div>
       {steps.map(st=>(
         <div key={st.n} style={{display:'flex',gap:14,marginBottom:12,paddingBottom:12,borderBottom:'1px solid var(--paper-300)'}}>
@@ -1699,9 +1767,9 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   );
   
   return(
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--space-5) 0 var(--space-4)',background:'var(--paper-200)',marginBottom:14}}>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--fos-space-5) 0 var(--fos-space-4)',background:'var(--paper-200)',marginBottom:14}}>
       <RadarSVG size={260}/>
-      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--space-2) var(--space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
+      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
     </div>
   );
 };
@@ -1981,9 +2049,9 @@ const SpeciesRecommender=({recipe})=>{
 
 // ── PERITO: componente estable a nivel módulo (no redefinido en cada render) ──
 const PERITO_STATUS={
-  excellent:{label:'Apta',veredicto:'Apta',accion:'Producir normalmente.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
-  good:{label:'Apta con ajustes',veredicto:'Apta con ajustes',accion:'Aplicar las mejoras del Perito antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
-  needs_work:{label:'Experimental',veredicto:'Experimental',accion:'Máximo 3–5 bolsas de prueba. Registrar colonización al día 7, 14 y 21.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
+  excellent:{label:'Ajuste favorable',veredicto:'Ajuste favorable del modelo',accion:'Revisar preparación y aprobación humana antes de producir.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
+  good:{label:'Revisar ajustes',veredicto:'Modelo con ajustes pendientes',accion:'Revisar recomendaciones, existencias y proceso antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
+  needs_work:{label:'Requiere validación',veredicto:'Requiere validación',accion:'Definir una prueba y su seguimiento con el responsable antes de escalar.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
@@ -2001,9 +2069,52 @@ const peritoCorreccionMinima=(opt)=>{
   if(!first) return null;
   return first.action.replace(/<[^>]+>/g,'');
 };
-const PeritoItem=React.memo(({item,onApply,baseScore})=>{
+// Preview uses the same transformation and live inputs as applyOptStep.
+const describePeritoChanges=(recipe,apply,lockedIds,ingredients)=>{
+  if(!apply) return [];
+  const next=applyOptToRecipe(recipe,apply,lockedIds,ingredients);
+  const before=new Map(recipe.map(r=>[r.id,Number(r.p)||0]));
+  const after=new Map(next.map(r=>[r.id,Number(r.p)||0]));
+  return [...new Set([...before.keys(),...after.keys()])].map(id=>({
+    id,name:ingredients.find(g=>g.id===id)?.name||id,
+    before:before.get(id)||0,after:after.get(id)||0,
+  })).filter(row=>Math.abs(row.after-row.before)>0.000001);
+};
+const PeritoChangePreview=({changes})=>(
+  <details style={{marginTop:6,fontSize:'var(--text-sm)'}}>
+    <summary style={{cursor:'pointer',fontWeight:700}}>Ver cambios de la receta ({changes.length})</summary>
+    <p style={{margin:'5px 0',color:'var(--ink-600)'}}>Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo.</p>
+    <ul style={{margin:0,paddingLeft:18}}>{changes.map(row=><li key={row.id} style={{overflowWrap:'anywhere'}}>{row.name}: {Number(row.before.toFixed(2))}% → {Number(row.after.toFixed(2))}%</li>)}</ul>
+    {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
+  </details>
+);
+const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,speciesKey,onMorph})=>{
+  const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
+  const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
   const hasPrediction=item.predictedScore!=null&&baseScore!=null;
   const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
+
+  const deltaSim=React.useMemo(()=>{
+    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length) return null;
+    try{
+      const sK=speciesKey||(item.speciesKey)||'p_ostreatus_gris';
+      const curAn=analyze(recipe,sK,ingredients,SPP);
+      return engineSimulateSuggestionDelta({
+        recipe,
+        apply:item.apply,
+        lockedIds,
+        ingredients,
+        applyOptToRecipe,
+        analyze:(r)=>analyze(r,sK,ingredients,SPP),
+        score:(anObj,extra)=>scoreAn(anObj,extra),
+        baseAn:curAn,
+        baseScore,
+      });
+    }catch(_){
+      return null;
+    }
+  },[recipe,item.apply,lockedIds,ingredients,speciesKey,baseScore]);
+
   return(
   <div className={`perito-item pi-${item.priority}`}>
     <div className="pi-icon-col">
@@ -2019,21 +2130,58 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
+      {deltaSim?.diff&&(
+        <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
+            ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
+          </span>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({deltaSim.diff.newEb}%)
+          </span>
+          {deltaSim.diff.confidence&&(
+            <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>
+              confianza: {deltaSim.diff.confidence==='high'?'alta':deltaSim.diff.confidence==='low'?'baja':'media'}
+            </span>
+          )}
+          {deltaSim.diff.deltaCost!==0&&(
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
+              ΔCosto: {deltaSim.diff.deltaCost<=0?`-$${Math.abs(deltaSim.diff.deltaCost)}/kg`:`+$${deltaSim.diff.deltaCost}/kg`}
+            </span>
+          )}
+          {deltaSim.diff.deltaCn!==0&&(
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:'var(--paper-200)',color:'var(--ink-700)'}}>
+              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({deltaSim.diff.newCn}:1)
+            </span>
+          )}
+        </div>
+      )}
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
-      {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+      {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+      {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+      {item.apply&&<PeritoChangePreview changes={changes}/>}
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>⚠ {item.sideEffect}</div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
-        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Score si se aplica junto: {Math.round(item.comboPredictedScore)}/100</div>
-        <button onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
+        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
+        <PeritoChangePreview changes={comboChanges}/>
+        <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
     </div>
-    <div className="pi-actions">
+    <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
-        ?<button onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar</button>
+        ?<button disabled={!changes.length} aria-label={`Aplicar ajuste: ${item.label}`} onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar ajuste</button>
         :<div className="pi-spacer"/>}
+      {deltaSim?.resultingRecipe&&onMorph&&(
+        <button
+          type="button"
+          title="Hibridar interactivamente la receta activa con esta sugerencia"
+          onClick={()=>onMorph(deltaSim.resultingRecipe)}
+          style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>
+          ⚖️ Morph
+        </button>
+      )}
     </div>
   </div>
   );
@@ -2303,12 +2451,14 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
   );
 };
 
-const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>{
+const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],onClose})=>{
   const lote=lotes.find(l=>l.id===loteId||l.codigo===loteCode||l.id===loteCode)||lotes[0];
   const harvests=lote?cosechas.filter(c=>c.loteId===lote.id):[];
-  const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
+  const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
   const spImg=lote?.especieKey?(IMG[lote.especieKey]||IMG.p_ostreatus_gris):IMG.p_ostreatus_gris;
   const [copied,setCopied]=useState(false);
+  const [syncing,setSyncing]=useState(false);
+  const [syncResult,setSyncResult]=useState(lote?.publicTrace||null);
   const traceUrl=lote?.codigo?`${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`:(typeof window!=='undefined'?window.location.href:PUBLIC_TRACE_BASE_URL);
   const qrDataUrl=generateQrSvgDataUrl(traceUrl);
 
@@ -2349,6 +2499,63 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
       </div>
 
       <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:16}}>
+        {/* ESTADO DE SINCRONIZACIÓN EN FIRESTORE */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--paper-100,#F5F2E9)',borderRadius:4,border:'1px solid var(--border-soft,#D8D3C5)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-500)'}}>
+              Ficha en Nube:
+            </span>
+            <span style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 3,
+              background: syncResult?.status === 'synced' ? 'var(--moss-100,#E8F0E0)' : syncResult?.status === 'failed' ? 'var(--coral-100,#FDE8E8)' : 'var(--paper-200,#E5E0D3)',
+              color: syncResult?.status === 'synced' ? 'var(--moss-800,#3B5A24)' : syncResult?.status === 'failed' ? 'var(--coral-800,#9B1C1C)' : 'var(--ink-600)'
+            }}>
+              {syncResult?.status === 'synced' ? '✓ Publicado' : syncResult?.status === 'failed' ? '⚠ Error al publicar' : 'Pendiente de Sincronización'}
+            </span>
+            {syncResult?.lastPublishedAt && (
+              <span style={{fontSize: 10, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)'}}>
+                {new Date(syncResult.lastPublishedAt).toLocaleDateString('es-CO')}
+              </span>
+            )}
+            {syncResult?.lastError && (
+              <span style={{fontSize: 10, color: 'var(--coral-700)', fontFamily: 'var(--font-mono)'}}>
+                ({syncResult.lastError})
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            disabled={syncing || !lote}
+            style={{fontSize:10.5,padding:'4px 10px',minHeight:32,display:'flex',alignItems:'center',gap:4}}
+            onClick={async () => {
+              if (!window.SetasPublicTraceDB?.publicarLote) {
+                setSyncResult({ status: 'failed', lastError: 'SetasPublicTraceDB no disponible' });
+                return;
+              }
+              setSyncing(true);
+              try {
+                const loteBolsas = bolsas.filter(b => b.loteId === lote.id);
+                const res = await window.SetasPublicTraceDB.publicarLote(lote, harvests, loteBolsas);
+                if (res && res.ok) {
+                  setSyncResult({ status: 'synced', lastPublishedAt: new Date().toISOString(), lastError: null, publicSchemaVersion: 2 });
+                } else {
+                  setSyncResult({ status: 'failed', lastError: res?.reason || 'Error' });
+                }
+              } catch (err) {
+                setSyncResult({ status: 'failed', lastError: err?.message || 'Error' });
+              } finally {
+                setSyncing(false);
+              }
+            }}
+          >
+            {syncing ? 'Sincronizando...' : 'Publicar ahora'}
+          </button>
+        </div>
+
         {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
         <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100,#F5F2E9)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft,#D8D3C5)'}}>
           <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -2735,7 +2942,7 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
   }
 };
 
-const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectReading, setSelectedClimateRoom, setNoticeDlg }) => {
+const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectReading, setSelectedClimateRoom, setNoticeDlg, liveTelemetry = null }) => {
   const [tab, setTab] = useState('nodos');
   const [nodes, setNodes] = useState(DEFAULT_IOT_NODES);
   const [fwMcu, setFwMcu] = useState('esp32dev');
@@ -2747,6 +2954,16 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   const [fwServerHost, setFwServerHost] = useState('192.168.1.100');
   const [fwServerPort, setFwServerPort] = useState('8080');
   const [fwFormat, setFwFormat] = useState('esphome');
+  // Formulario de conexión en vivo. Se siembra con la configuración vigente del
+  // puente: sin esto el operario no tiene forma de apuntar la app a su gateway
+  // o su broker, y los transportes WebSocket/MQTT quedan inalcanzables.
+  const liveCfg = (liveTelemetry && liveTelemetry.config) || {};
+  const [connWs, setConnWs] = useState(liveCfg.websocketUrl || '');
+  const [connMqtt, setConnMqtt] = useState(liveCfg.mqttUrl || '');
+  const [connTopics, setConnTopics] = useState((liveCfg.mqttTopics || ['setas/+/+/#']).join(', '));
+  const [connFirestore, setConnFirestore] = useState(liveCfg.firestore !== false);
+  const [connPressure, setConnPressure] = useState(String(liveCfg.pressureHpa || 745));
+  const [connSaved, setConnSaved] = useState(false);
 
   const [webhookJson, setWebhookJson] = useState(`{\n  "room_id": "${selectedRoomId || 'martha_01'}",\n  "temperature_c": 18.4,\n  "rh_pct": 89.2,\n  "co2_ppm": 710,\n  "substrate_temperature_c": 19.3\n}`);
   const [webhookFeedback, setWebhookFeedback] = useState(null);
@@ -2806,6 +3023,9 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'webhook' ? 'on' : ''}`} onClick={() => setTab('webhook')}>
             🧪 Consola Webhook / Test
+          </button>
+          <button type="button" className={`iot-hub-pill ${tab === 'conexion' ? 'on' : ''}`} onClick={() => setTab('conexion')}>
+            🔌 Conexión en Vivo
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'reglas' ? 'on' : ''}`} onClick={() => setTab('reglas')}>
             ⚙ Reglas de Automatización
@@ -3048,6 +3268,100 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
           </div>
         )}
 
+        {tab === 'conexion' && (
+          <div data-testid="iot-hub-conexion">
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-2)', marginBottom: 14 }}>
+              El puente ingiere por los tres transportes a la vez y deduplica las lecturas repetidas:
+              si el WebSocket cae, Firestore ya venía llenando el mismo buffer y la curva no queda con un hueco.
+              El de mayor prioridad con datos frescos es el que se reporta como fuente activa.
+            </div>
+
+            {liveTelemetry && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginBottom: 16 }}>
+                {(liveTelemetry.status.transports || []).map(t => (
+                  <div key={t.kind} style={{ padding: '8px 10px', border: '1px solid var(--border-hairline)', borderRadius: 4, background: 'var(--paper-100)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{t.kind}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
+                      {t.state}{t.fresh ? ' · datos frescos' : t.lastDataAt ? ' · sin datos recientes' : ''}
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                      {t.readingsIn} lecturas · {t.attempts} reintento{t.attempts === 1 ? '' : 's'}
+                    </div>
+                    {t.lastError && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)' }}>{t.lastError}</div>}
+                  </div>
+                ))}
+                {(liveTelemetry.status.transports || []).length === 0 && (
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
+                    Ningún transporte configurado todavía.
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                  WebSocket del gateway (prioridad 1 · menor latencia)
+                </label>
+                <input type="text" className="field-input" value={connWs} onChange={e => { setConnWs(e.target.value); setConnSaved(false); }}
+                  placeholder="wss://gateway.setasdelapena.local/telemetry" style={{ width: '100%', fontSize: 12 }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                  Broker MQTT sobre WebSocket (prioridad 2)
+                </label>
+                <input type="text" className="field-input" value={connMqtt} onChange={e => { setConnMqtt(e.target.value); setConnSaved(false); }}
+                  placeholder="wss://broker.setasdelapena.local:9001" style={{ width: '100%', fontSize: 12 }} />
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)', marginTop: 3 }}>
+                  Mosquitto necesita <code>listener 9001</code> + <code>protocol websockets</code>. Topics: <code>setas/&lt;sala&gt;/&lt;nodo&gt;/&lt;métrica&gt;</code>.
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Topics suscritos</label>
+                <input type="text" className="field-input" value={connTopics} onChange={e => { setConnTopics(e.target.value); setConnSaved(false); }}
+                  style={{ width: '100%', fontSize: 12 }} />
+              </div>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={connFirestore} onChange={() => { setConnFirestore(v => !v); setConnSaved(false); }} />
+                  Firestore (prioridad 3 · sobrevive a NAT y firewalls)
+                </label>
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                    Presión barométrica local (hPa)
+                  </label>
+                  <input type="number" className="field-input" value={connPressure} onChange={e => { setConnPressure(e.target.value); setConnSaved(false); }}
+                    style={{ width: 120, fontSize: 12 }} />
+                </div>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación
+                de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico.
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button type="button" className="btn btn--sm btn--primary" disabled={!liveTelemetry}
+                  onClick={() => {
+                    liveTelemetry.setConfig({
+                      websocketUrl: connWs.trim(),
+                      mqttUrl: connMqtt.trim(),
+                      mqttTopics: connTopics.split(',').map(t => t.trim()).filter(Boolean),
+                      firestore: connFirestore,
+                      pressureHpa: Number(connPressure) || 745,
+                    });
+                    setConnSaved(true);
+                  }}>
+                  Guardar y reconectar
+                </button>
+                {connSaved && (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
+                    ✓ Puente reiniciado con la configuración nueva
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'reglas' && (
           <div>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', marginBottom: 14 }}>
@@ -3129,11 +3443,28 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   );
 };
 
-const AccessibleModal=({onClose,label,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle})=>{
+// Drafts live in this tab's session namespace, separate from operational collections.
+const useCaptureDraft=(key,initial)=>{
+  const [value,setValue]=useState(()=>{try{const d=JSON.parse(sessionStorage.getItem('setas_capture_v1:'+key));if(d?.version===1)return d.value;}catch{}return typeof initial==='function'?initial():initial;});
+  useEffect(()=>{try{sessionStorage.setItem('setas_capture_v1:'+key,JSON.stringify({version:1,value}));}catch{}},[key,value]);
+  return [value,setValue];
+};
+const CaptureInput=({rules={},style,...props})=>{
+  const [touched,setTouched]=useState(false);
+  const error=touched?SetasBitacora.captureError(props.value,rules):'';
+  return <><input {...props} data-capture="true" onBlur={()=>setTouched(true)} aria-invalid={!!error} aria-describedby={error?props.id+'-error':undefined} style={{...style,minHeight:44,fontSize:16}}/>{error&&<span id={props.id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{error}</span>}</>;
+};
+const AccessibleModal=({onClose,label,title,ariaLabel,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle,width,maxWidth,id})=>{
   const dialogRef=useDialogA11y(onClose);
+  const resolvedLabel=label||ariaLabel||title;
+  const mergedStyle={
+    ...(width?{width}:{}),
+    ...(maxWidth?{maxWidth}:{}),
+    ...dialogStyle
+  };
   return(
     <div className={backdropClassName} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={label} style={dialogStyle}>
+      <div id={id} onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha'].includes(resolvedLabel)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={resolvedLabel} style={Object.keys(mergedStyle).length>0?mergedStyle:undefined}>
         {children}
       </div>
     </div>
@@ -3143,10 +3474,10 @@ const ConfirmModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+      <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
         <button onClick={()=>{dlg.onConfirm();onClose();}} className={`inv-btn ${dlg.danger?'inv-btn-danger':'inv-btn-pri'}`}>{dlg.confirmLabel||'Confirmar'}</button>
       </div>
@@ -3160,11 +3491,11 @@ const PromptModal=({dlg,onClose})=>{
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
+      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
         {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
         <input data-autofocus id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
-        <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+        <div className="inv-modal-actions">
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
         </div>
@@ -3176,16 +3507,408 @@ const NoticeModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
-      <div style={{display:'flex',justifyContent:'flex-end'}}>
+      <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-pri">Aceptar</button>
       </div>
     </div>
   </div>
   );
 };
+
+const FieldActionModal = ({
+  onClose,
+  lote,
+  db,
+  operatorRole = 'produccion',
+  operatorId = 'operario_local',
+  accountId = 'setas_default_account',
+  onTransitionConfirmed,
+  captureContent,
+}) => {
+  const [selectedTo, setSelectedTo] = React.useState('');
+  const [inFlight, setInFlight] = React.useState(false);
+  const [queueEntry, setQueueEntry] = React.useState(null);
+  const [actionError, setActionError] = React.useState('');
+  const [actionSuccess, setActionSuccess] = React.useState('');
+  const [localBatch, setLocalBatch] = React.useState(lote);
+
+  React.useEffect(() => {
+    setLocalBatch(lote);
+    setSelectedTo('');
+    setActionError('');
+    setActionSuccess('');
+  }, [lote]);
+
+  React.useEffect(() => {
+    if (!localBatch || !db) return;
+    let active = true;
+    const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+    if (queue && typeof queue.getReservation === 'function') {
+      const batchId = localBatch.id || localBatch.codigo;
+      queue.getReservation(db, accountId, batchId).then(reservation => {
+        if (!active) return;
+        if (!reservation) {
+          setQueueEntry(null);
+          return;
+        }
+        try {
+          const tx = db.transaction('queue_entries', 'readonly');
+          const req = tx.objectStore('queue_entries').get(reservation.eventId);
+          req.onsuccess = () => {
+            if (active) setQueueEntry(req.result || null);
+          };
+          req.onerror = () => {
+            if (active) setQueueEntry(null);
+          };
+        } catch (_) {
+          if (active) setQueueEntry(null);
+        }
+      }).catch(() => {
+        if (active) setQueueEntry(null);
+      });
+    }
+    return () => { active = false; };
+  }, [localBatch, db, accountId]);
+
+  const actionSheetModule = typeof window !== 'undefined' ? window.SetasFieldActionSheet : null;
+  // acceptFieldEvent ya está desplegada, así que la confirmación es real salvo
+  // que alguien haya pedido el simulacro a propósito.
+  const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === 'function'
+    ? actionSheetModule.buildActionSheetModel({
+        simulated: fieldMockRequested(),
+        batch: localBatch,
+        batchId: localBatch?.id || localBatch?.codigo,
+        state: localBatch?.workflowState || localBatch?.state,
+        operatorRole,
+        queueEntry,
+        inFlight,
+      })
+    : {
+        title: localBatch ? `Lote ${localBatch.codigo || localBatch.id}` : 'Lote',
+        subtitle: localBatch?.especie || '',
+        state: localBatch?.workflowState || localBatch?.estado || 'inoculated',
+        options: [],
+        status: 'idle',
+        statusLabel: 'Listo para registrar',
+        canConfirm: false,
+        canRefresh: false,
+      };
+
+  React.useEffect(() => {
+    if (model.options && model.options.length > 0 && !selectedTo) {
+      setSelectedTo(model.options[0].to);
+    }
+  }, [model.options, selectedTo]);
+
+  const STATUS_ICONS = { saved_local: '📱', sending: '📡', confirmed: '☁️', simulated: '🧪', conflict: '⚠️', rejected: '⛔' };
+
+  const handleConfirm = async () => {
+    if (!selectedTo) return;
+    setActionError('');
+    setActionSuccess('');
+    setInFlight(true);
+
+    try {
+      if (!actionSheetModule || typeof actionSheetModule.confirmTransition !== 'function') {
+        throw new Error('field_action_sheet_unavailable: módulo de hoja de acción no cargado');
+      }
+      if (!db) {
+        throw new Error('db_unavailable: base de datos local no inicializada');
+      }
+
+      const fromState = model.state;
+      const expectedBatchRevision = Number.isInteger(localBatch?.revision) ? localBatch.revision : 0;
+
+      const result = await actionSheetModule.confirmTransition({
+        db,
+        batch: localBatch,
+        from: fromState,
+        to: selectedTo,
+        accountId,
+        operatorId,
+        operatorRole,
+        expectedBatchRevision,
+        confirmed: true,
+      });
+
+      setQueueEntry(result.queueEntry);
+      setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+
+      // Sincronizar de inmediato. Sin esto el evento se quedaría en
+      // "Guardado en este equipo" para siempre, que es justo el estado que el
+      // operario no debe confundir con una confirmación.
+      await runFieldSync(db, accountId, result.event.id, setQueueEntry);
+      setInFlight(false);
+
+      if (typeof onTransitionConfirmed === 'function') {
+        onTransitionConfirmed(localBatch.id, selectedTo, result.event);
+      }
+    } catch (err) {
+      setInFlight(false);
+      setActionError(err.message || 'Error al confirmar transición');
+    }
+  };
+
+  const handleRefresh = () => {
+    setQueueEntry(null);
+    setActionError('');
+    setActionSuccess('');
+  };
+
+  return (
+    <AccessibleModal
+      onClose={onClose}
+      label="Hoja de acción de campo (QR)"
+      dialogStyle={{
+        width: 'min(480px, 94vw)',
+        padding: '20px 18px',
+        background: 'var(--paper-1, #EFEBE0)',
+        border: '1px solid var(--border-hairline, #8C7F5B)',
+        borderRadius: 'var(--radius-md, 3px)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2, #6B7280)', marginBottom: 2 }}>
+            Registro de campo · Acciones del lote
+          </div>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: 'var(--ink-0, #1F2937)', fontWeight: 700 }}>
+            {model.title}
+          </h2>
+          {model.subtitle && (
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #4B5563)', marginTop: 2 }}>
+              {model.subtitle}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className="modal-icon-close"
+          aria-label="Cerrar hoja de acción"
+          onClick={onClose}
+          style={{ background: 'transparent', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ink-2)' }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div style={{ padding: '10px 12px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2, #6B7280)', display: 'block' }}>
+            Estado Actual
+          </span>
+          <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0, #111827)' }}>
+            {actionSheetModule?.STATE_LABELS?.[model.state] || model.state}
+          </strong>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2, #6B7280)', background: 'var(--paper-100, #E5E0D0)', padding: '3px 7px', borderRadius: 2 }}>
+          Rol: {operatorRole}
+        </span>
+      </div>
+
+      {['saved_local', 'sending', 'confirmed', 'conflict', 'rejected'].includes(model.status) && (
+        <div
+          data-testid={`status-${model.status.replace('_', '-')}`}
+          data-simulated={model.simulated ? 'true' : 'false'}
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: model.statusPalette.bg,
+            border: `1.5px solid ${model.statusPalette.border}`,
+            borderRadius: 3,
+            color: model.statusPalette.fg,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <span>{STATUS_ICONS[model.simulated ? 'simulated' : model.status] || ''}</span>
+            <span>{model.statusHeading}</span>
+          </div>
+          {model.showStatusLabel && (
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+              {model.statusLabel}
+            </div>
+          )}
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub }}>
+            {model.statusDetail}
+          </div>
+        </div>
+      )}
+
+      {captureContent}
+
+      {model.status === 'sending' && (
+        <div
+          data-testid="status-sending"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#EFF6FF',
+            border: '1px solid #3B82F6',
+            borderRadius: 3,
+            color: '#1E40AF',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <span>⏳</span> <span>ENVIANDO AL SERVIDOR...</span>
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>
+            Transmitiendo evento de campo al servidor central...
+          </div>
+        </div>
+      )}
+
+      {model.status === 'conflict' && (
+        <div
+          data-testid="status-conflict"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#FEF2F2',
+            border: '1.5px solid #DC2626',
+            borderRadius: 3,
+            color: '#991B1B',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <span>⚠️</span> <span>CONFLICTO DE REVISIÓN</span>
+          </div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>
+            El lote cambió de versión en el servidor o fue actualizado desde otro equipo.
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
+            onClick={handleRefresh}
+          >
+            🔄 Refrescar lote
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          ⚠️ {actionError}
+        </div>
+      )}
+      {actionSuccess && (
+        <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          ✓ {actionSuccess}
+        </div>
+      )}
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-1, #374151)', marginBottom: 8 }}>
+          Transiciones Disponibles
+        </div>
+
+        {model.options.length === 0 ? (
+          <div style={{ padding: '12px', background: 'var(--paper-0, #F7F4EC)', border: '1px dashed var(--border-hairline, #8C7F5B)', borderRadius: 3, fontSize: 12, color: 'var(--ink-2, #6B7280)', textAlign: 'center' }}>
+            No hay transiciones disponibles para este lote en su estado actual ({model.state}).
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {model.options.map(opt => {
+              const isSelected = selectedTo === opt.to;
+              const isDiscard = opt.transitionClass === 'discard';
+              const isException = opt.transitionClass === 'exception';
+
+              return (
+                <label
+                  key={opt.to}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: isSelected ? 'var(--paper-0, #F7F4EC)' : '#fff',
+                    border: isSelected ? '2px solid var(--accent-olive, #5B6B44)' : '1px solid var(--border-hairline, #8C7F5B)',
+                    borderRadius: 3,
+                    cursor: model.canConfirm ? 'pointer' : 'default',
+                    opacity: model.canConfirm ? 1 : 0.7,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="radio"
+                      name="transitionTarget"
+                      value={opt.to}
+                      checked={isSelected}
+                      disabled={!model.canConfirm}
+                      onChange={() => setSelectedTo(opt.to)}
+                    />
+                    <div>
+                      <strong style={{ fontSize: 13, color: isDiscard ? 'var(--coral-700, #C53030)' : (isException ? 'var(--ochre-700, #B45309)' : 'var(--ink-0, #111827)') }}>
+                        {opt.label}
+                      </strong>
+
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    padding: '2px 6px',
+                    borderRadius: 2,
+                    background: isDiscard ? '#FEE2E2' : (isException ? '#FEF3C7' : '#E0E7FF'),
+                    color: isDiscard ? '#991B1B' : (isException ? '#92400E' : '#3730A3'),
+                  }}>
+                    {{advance:'Avance',exception:'Excepción',discard:'Descarte'}[opt.transitionClass]||'Cambio'}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap:'wrap', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <button
+          type="button"
+          className="inv-btn inv-btn-sec"
+          onClick={onClose}
+          style={{ minHeight: 48, padding: '0 14px', fontSize: 12 }}
+        >
+          Cerrar
+        </button>
+
+        {model.canRefresh && (
+          <button
+            type="button"
+            className="inv-btn inv-btn-pri"
+            onClick={handleRefresh}
+            style={{ minHeight: 48, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta, #A85C32)' }}
+          >
+            🔄 Refrescar Lote
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="inv-btn inv-btn-pri"
+          disabled={!model.canConfirm || inFlight || !selectedTo}
+          onClick={handleConfirm}
+          data-testid="btn-confirm-field-transition"
+          style={{
+            minHeight: 48,
+            maxWidth:'100%',whiteSpace:'normal',
+            padding: '8px 16px',
+            fontSize: 12,
+            fontWeight: 700,
+            background: model.canConfirm && selectedTo ? 'var(--accent-olive, #5B6B44)' : 'var(--border-soft)',
+            cursor: model.canConfirm && selectedTo ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {inFlight ? '⏳ Guardando...' : (selectedTo ? `Confirmar: ${model.options.find(option=>option.to===selectedTo)?.label||selectedTo}` : 'Confirmar transición')}
+        </button>
+      </div>
+    </AccessibleModal>
+  );
+};
+
 
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
@@ -3609,12 +4332,15 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
 
 
 // ── v4: INVENTARIO helpers ──
-// Duplicados a propósito respecto a inventario.js (mismo patrón que MASS_BALANCE_TOL
-// en firebase/db.js): el bundler de este .dc.html (dc-runtime, ver support.js) ejecuta
-// este archivo dentro de un `new Function(...)` propio y no engancha de forma confiable
-// los globals de un <script src> añadido a mano, así que no puede depender en vivo de
-// inventario.js. inventario.js + inventario.test.js son la fuente de verdad probada;
-// si cambias la lógica aquí, cambia también inventario.js (y viceversa).
+// Lecturas de bodega (stock y precio ponderado) duplicadas a propósito respecto a
+// inventario.js (mismo patrón que MASS_BALANCE_TOL en firebase/db.js): el bundler de
+// este .dc.html (dc-runtime, ver support.js) ejecuta este archivo dentro de un
+// `new Function(...)` propio y no engancha de forma confiable los globals de un
+// <script src> añadido a mano. inventario.js + inventario.test.js solo prueban estas
+// dos lecturas — si cambias una, cambia la otra. No son la fuente de verdad del
+// consumo: el plan y la asignación FIFO viven en launch-plan.js y el descuento
+// idempotente por lote en inventory-consumption.js; la bodega de registro es
+// localStorage sdp_lotes.
 const stockActual=(ingredienteId,lotes)=>
   lotes.filter(l=>l.activo&&l.ingredienteId===ingredienteId)
        .reduce((s,l)=>s+(l.cantidadKgDisponible||0),0);
@@ -3626,21 +4352,22 @@ const precioPonderado=(ingredienteId,lotes)=>{
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
 };
 
-// Descuenta inventario FIFO — misma lógica que SetasInventario.consumirInventarioFIFO
-// en inventario.js (ver el comentario de arriba sobre por qué está duplicada).
-const consumirInventarioFIFOLocal=(lotes,rows)=>{
-  let updated=[...lotes];
-  for(const row of rows){
-    let remaining=row.krKg;
-    const lotesIng=updated.filter(l=>l.activo&&l.ingredienteId===row.id).sort((a,b)=>new Date(a.fechaIngreso)-new Date(b.fechaIngreso));
-    for(const lote of lotesIng){
-      if(remaining<=0.001) break;
-      const consume=Math.min(lote.cantidadKgDisponible,remaining);
-      updated=updated.map(l=>l.id===lote.id?{...l,cantidadKgDisponible:Math.max(0,Math.round((l.cantidadKgDisponible-consume)*1000)/1000)}:l);
-      remaining-=consume;
-    }
-  }
-  return updated;
+// Costo real de bodega en COP/kg de mezcla SECA (I6): los precios de lote son
+// por kg tal cual se recibe, así que se pasan a base seca con la misma cuenta y
+// el mismo tope de humedad que analyze() usa para an.cost — solo así las dos
+// cifras se pueden comparar. null si ningún ingrediente tiene lote con precio.
+const realCostPerKgSeco=(recipe,invLotes,ings)=>{
+  if(!recipe||!recipe.length) return null;
+  let known=false;
+  const total=recipe.reduce((s,r)=>{
+    const pp=precioPonderado(r.id,invLotes||[]);
+    const g=(ings||[]).find(i=>i.id===r.id);
+    if(pp!=null) known=true;
+    const price=pp!=null?pp:(g?g.cost:0);
+    const m=Math.min(0.92,Math.max(0,(Number(g?.moisture)||0)/100));
+    return s+(price/(1-m))*(parseFloat(r.p)||0)/100;
+  },0);
+  return known?Math.round(total):null;
 };
 
 const SEED_PROVEEDORES=[
@@ -3744,10 +4471,13 @@ const runHybridRecipeSearch=({
   profileKey='produccion',
   stockMap={},
   lockedIds=[],
+  // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
+  // spp explícito se conserva el catálogo heredado para los llamadores viejos.
+  spp=SPP,
 })=>{
   const engine=globalThis.SetasPeritoScenarios;
   if(!engine?.searchScenarios) throw new Error('SetasPeritoScenarios no disponible');
-  const target=SPP[targetKey];
+  const target=spp[targetKey];
   if(!target) return{ranked:[],pareto:[],recommended:[],noStock:false,diagnostics:{error:'Especie no encontrada'}};
   const stockIds = new Set([
     ...Object.keys(stockMap || {}).filter(k => Number(stockMap[k]) > 0),
@@ -3757,9 +4487,9 @@ const runHybridRecipeSearch=({
     (!useStock || stockIds.has(g.id)) &&
     (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients);
+  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients,spp);
   const scoreAdapter=(analysis,ctx)=>{
-    const treatment=calcTreatment(analysis,targetKey,SPP);
+    const treatment=calcTreatment(analysis,targetKey,spp);
     return scoreAn(analysis,{
       treatment,
       recipe:ctx.recipe,
@@ -3768,10 +4498,10 @@ const runHybridRecipeSearch=({
   };
   return engine.searchScenarios({
     recipe,
-    context:{sKey:targetKey,spp:SPP,stockIds},
+    context:{sKey:targetKey,spp,stockIds},
     searchMode:'hybrid',
     targetKey,
-    spp:SPP,
+    spp,
     ingredients:compatible,
     analyze:analyzeAdapter,
     score:scoreAdapter,
@@ -3790,9 +4520,60 @@ const runHybridRecipeSearch=({
     lockedIds:new Set(lockedIds||[]),
   });
 };
+// ── Auto-mejorar: aplica en cadena la sugerencia crítica/advertencia que de
+//    verdad mejora el score global (hasta maxIter pasos) — prueba las 3 de
+//    mayor score predicho y se queda con la mejor tras aplicarla, no solo con la
+//    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
+//    análisis y las cantidades de cada paso usan los mismos rangos que la UI
+//    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
+const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+  let cur=recipe;let bestScore=-1;
+  for(let i=0;i<maxIter;i++){
+    const a=analyze(cur,sKey,ings,spp);
+    if(!a) break;
+    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,spp,usageCounts);
+    if(o.score<=bestScore) break;
+    bestScore=o.score;
+    const candidates=o.items
+      .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
+      .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
+      .slice(0,3);
+    if(!candidates.length) break;
+    let bestCandScore=-1,bestCandidate=null,bestO2=null;
+    for(const cand of candidates){
+      const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
+      const tryA=analyze(tryRec,sKey,ings,spp);
+      if(!tryA) continue;
+      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,spp,usageCounts);
+      if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
+    }
+    if(!bestCandidate) break;
+    if(bestO2.score<=o.score) break; // no aceptar si no mejora el score global
+    cur=bestCandidate;
+  }
+  return cur;
+};
+// ── Entradas del plan de lanzamiento compartidas por "Lanzar Lote" y
+//    "Ejecutar Lote" (I4/I5). La humedad que el operador editó a mano manda;
+//    si no la tocó, el objetivo resuelto de la especie. El spawn es grano
+//    tal cual se recibe: bolsas × kg/bolsa × tasa dinámica de spawn.
+const launchMoisture=({touched,manual,target})=>touched?manual:(target??manual??65);
+const launchSpawn=(bags,kgPerBag,dynSpawn)=>dynSpawn?{ingredientId:'spawn_grano',kg:bags*kgPerBag*(dynSpawn/100)}:null;
+// Resumen del descuento para el aviso de éxito (m2): con faltantes no se afirma
+// que todo salió de bodega — solo se descontó lo disponible.
+// Humedad dentro del objetivo (m3): rango resuelto de la especie cuando trae
+// min y max; si no (heredado solo con ideal), el umbral histórico ≥67%.
+const moistureInTargetRange=(h,m)=>(m?.min!=null&&m?.max!=null)?(h>=m.min&&h<=m.max):h>=67;
+const launchDiscountSummary=(plan,ings=[])=>{
+  const sf=plan?.shortfalls||[];
+  if(!sf.length) return 'Las materias primas fueron descontadas de Bodega.';
+  const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
+  return `Se descontó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
+};
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
-  const sp=SPP[targetKey];
+  // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
+  const sp=an?.sp||SPP[targetKey];
   const profile=OPT_PROFILES[profileKey]||OPT_PROFILES.produccion;
   const speciesSupp=Number(sp?.supplementation_max)||20;
   const suppLimit=profile.maxSupp!=null?Math.min(speciesSupp,profile.maxSupp):speciesSupp;
@@ -3814,7 +4595,7 @@ const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>
     scenario:candidate,
   };
 };
-const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey)=>{
+const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey,spp=SPP)=>{
   const stockIds=new Set((invLotes||[]).filter(l=>l?.activo&&Number(l.cantidadKgDisponible)>0).map(l=>l.ingredienteId));
   const pool=useStock
     ?(ingredients||[]).filter(g=>stockIds.has(g.id))
@@ -3831,7 +4612,7 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     aers:aers.length,
     tried:Number(out?.explored)||0,
     resultsRaw:Number(out?.diagnostics?.allowedCount??out?.ranked?.length??0),
-    suppLimit:Number(out?.profile?.maxSupp??SPP[targetKey]?.supplementation_max??20),
+    suppLimit:Number(out?.profile?.maxSupp??spp[targetKey]?.supplementation_max??20),
     profileKey,
     targetKey,
     baseNames:bases.map(g=>g.name),
@@ -3848,9 +4629,11 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
 const PERITO_EVIDENCE_CONFIDENCE_LABEL={low:'baja',medium:'media'};
 const describePeritoEvidence=(evidence)=>{
   const sampleSize=evidence?.summary?.sampleSize||0;
-  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0};
+  const exclusions=evidence?.summary?.excludedRecords>0 ? describeHistory({eligibleN:sampleSize,excludedN:evidence.summary.excludedRecords,exclusionReasons:evidence.summary.exclusionReasons}) : null;
+  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0,exclusions};
   return{
     hasEvidence:true,
+    exclusions,
     sampleSize,
     recordsWithEnvironment:evidence.summary?.recordsWithEnvironment||0,
     confidenceLabel:PERITO_EVIDENCE_CONFIDENCE_LABEL[evidence.confidence]||evidence.confidence,
@@ -3880,6 +4663,125 @@ const generateQrSvgDataUrl = (text) => {
   }
 };
 
+// Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
+// es Bluetooth propietario, no AirPrint, así que window.print() nunca lo
+// detecta desde Safari/iOS (WebKit tampoco expone Web Bluetooth). En vez de
+// depender de una captura de pantalla manual, se genera aquí la misma
+// información que ya pinta la vista previa (QR + especie + código + fecha)
+// directo a un PNG que el share sheet del sistema puede mandar a la app de
+// Phomemo en un solo toque.
+// Escala de exportación: cuántos px de canvas equivalen a 1mm real de la
+// etiqueta. 12 da buena nitidez sin generar PNGs pesados en el share sheet.
+const THERMAL_PX_PER_MM = 12;
+// 1mm de CSS a 96dpi (el estándar del navegador) son 3.7795px — todo valor
+// del diseño que en sim.css está en px (fuentes, gaps, letter-spacing), no en
+// mm, se reescala con este factor para guardar la misma proporción visual
+// que ve el operador en la vista previa, sin importar THERMAL_PX_PER_MM.
+const CSS_PX_PER_MM = 96 / 25.4;
+const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
+const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
+const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
+// Mismos valores que .thermal-card-40x30/50x30 en sim.css (incluye el
+// título +20% acordado) — si el diseño de la etiqueta cambia ahí, hay que
+// actualizar esto también para que "Compartir" no se desalinee otra vez.
+const THERMAL_LABEL_SPECS = {
+  '40x30': { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 20, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
+  '50x30': { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 },
+};
+
+// Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
+// es Bluetooth propietario, no AirPrint, así que window.print() nunca lo
+// detecta desde Safari/iOS (WebKit tampoco expone Web Bluetooth). En vez de
+// depender de una captura de pantalla manual, se genera aquí el mismo
+// diseño que ya pinta la vista previa/impresión (.thermal-card-* en
+// sim.css: QR a la izquierda, especie/código/fecha a la derecha) directo a
+// un PNG que el share sheet del sistema puede mandar a PrintMaster.
+function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  const w = spec.wMm * THERMAL_PX_PER_MM;
+  const h = spec.hMm * THERMAL_PX_PER_MM;
+  const padX = spec.padXMm * THERMAL_PX_PER_MM;
+  const padY = spec.padYMm * THERMAL_PX_PER_MM;
+  const gap = cssPxToCanvas(spec.gapPx);
+  const qrSize = spec.qrMm * THERMAL_PX_PER_MM;
+
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#777';
+  ctx.setLineDash([2, 2]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([]);
+
+  // .thermal-aside: columna centrada — el QR se centra verticalmente en el
+  // alto disponible entre el padding vertical con quiet zone de 2 módulos.
+  const qrX = padX;
+  const qrY = (h - qrSize) / 2;
+  const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
+  if (qrMini && typeof qrMini.matrix === 'function') {
+    const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
+    const n = m.length;
+    const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos) idéntica a generateQrSvgDataUrl
+    const dim = n + q * 2;
+    const cell = qrSize / dim;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+    ctx.fillStyle = '#000';
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (m[r][c]) {
+          ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+        }
+      }
+    }
+  }
+
+  // .thermal-body: columna centrada verticalmente, texto alineado a la
+  // izquierda — se arma cada línea primero para poder centrar el bloque
+  // completo como hace justify-content:center en flexbox.
+  const textX = qrX + qrSize + gap;
+  const textW = w - textX - padX;
+  const lines = [];
+  lines.push({ text: (item.species || '').toUpperCase(), font: `900 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_SANS}`, lineHeight: cssPxToCanvas(spec.speciesPx) * 1.1, marginTop: 0 });
+  lines.push({ text: item.id || '', font: `900 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`, lineHeight: cssPxToCanvas(spec.codePx) * 1.15, marginTop: cssPxToCanvas(spec.codeMarginTopPx) });
+  const metaFont = `700 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
+  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.25;
+  let metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
+  if (item.bagCode && item.bagCode !== 'LOTE MAESTRO') {
+    lines.push({ text: item.bagCode, font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+    metaMarginTop = 0;
+  }
+  lines.push({ text: item.date || '', font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+
+  const blockHeight = lines.reduce((sum, l) => sum + l.marginTop + l.lineHeight, 0);
+  let textY = (h - blockHeight) / 2;
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'top';
+  lines.forEach((l) => {
+    textY += l.marginTop;
+    ctx.font = l.font;
+    ctx.fillText(l.text, textX, textY, textW);
+    textY += l.lineHeight;
+  });
+  ctx.restore();
+}
+function buildThermalShareCanvas(items, sizeKey) {
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  const wPx = spec.wMm * THERMAL_PX_PER_MM;
+  const hPx = spec.hMm * THERMAL_PX_PER_MM;
+  const gap = Math.round(THERMAL_PX_PER_MM); // 1mm de separación entre etiquetas apiladas
+  const canvas = document.createElement('canvas');
+  canvas.width = wPx;
+  canvas.height = items.length * hPx + Math.max(0, items.length - 1) * gap;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), sizeKey));
+  return canvas;
+}
+
 const FORM_DRAFT_KEY='setas_formulator_draft_v1';
 const readFormDraft=()=>{
   try{
@@ -3907,6 +4809,342 @@ const readFormDraft=()=>{
       saveName:typeof draft.saveName==='string'?draft.saveName.slice(0,60):'',
     };
   }catch(e){return null;}
+};
+
+// ── Telemetría en vivo: configuración, bandas y hook de suscripción ─────────
+//
+// Fuente única de bandas objetivo por sala. Antes vivían duplicadas: una copia
+// dentro de `ClimateDashboardSection` (defaultTargets) y otra, con números
+// distintos, incrustada en el strip de Hoy — la misma sala podía decir "EN
+// RANGO" en Hoy y "fuera de banda" en Cámaras. Los límites `critical*` marcan
+// el punto en que el motor de anomalías deja de esperar el dwell y avisa ya.
+const ROOM_TARGET_BANDS = {
+  martha_01: {
+    temperature_c: { min: 14.0, max: 20.0, target: 17.0, criticalMin: 8.0, criticalMax: 26.0 },
+    rh_pct:        { min: 85.0, max: 95.0, target: 90.0, criticalMin: 65.0, criticalMax: 99.0 },
+    co2_ppm:       { min: 400,  max: 900,  target: 600,  criticalMax: 2500 },
+  },
+  cloudlab_844: {
+    temperature_c: { min: 16.0, max: 22.0, target: 18.5, criticalMin: 10.0, criticalMax: 28.0 },
+    rh_pct:        { min: 80.0, max: 92.0, target: 86.0, criticalMin: 60.0, criticalMax: 99.0 },
+    co2_ppm:       { min: 450,  max: 1000, target: 700,  criticalMax: 2500 },
+  },
+  incubacion_01: {
+    temperature_c: { min: 20.0, max: 24.0, target: 22.0, criticalMin: 12.0, criticalMax: 30.0 },
+    rh_pct:        { min: 65.0, max: 80.0, target: 72.0, criticalMin: 45.0, criticalMax: 98.0 },
+    co2_ppm:       { min: 400,  max: 1500, target: 800,  criticalMax: 5000 },
+  },
+};
+
+// Valores de respaldo por sala cuando todavía no ha entrado telemetría real.
+// Se muestran SIEMPRE etiquetados como demo: un número inventado presentado
+// como medición es peor que no mostrar nada.
+const DEMO_ROOM_METRICS = {
+  martha_01:     { temperature_c: 17.2, rh_pct: 91.5, co2_ppm: 680, substrate_temperature_c: 17.8 },
+  cloudlab_844:  { temperature_c: 18.4, rh_pct: 88.0, co2_ppm: 750, substrate_temperature_c: 18.9 },
+  incubacion_01: { temperature_c: 23.4, rh_pct: 72.0, co2_ppm: 1200, substrate_temperature_c: 24.8 },
+};
+
+const LIVE_TELEMETRY_STORAGE_KEY = 'setas_live_telemetry_config';
+
+// Tenjo está a 2.600 msnm: ~745 hPa. Es el default de toda la compensación NDIR.
+const DEFAULT_LIVE_TELEMETRY_CONFIG = {
+  websocketUrl: '',
+  mqttUrl: '',
+  mqttTopics: ['setas/+/+/#'],
+  firestore: true,
+  pressureHpa: 745,
+};
+
+// La configuración puede venir (1) inyectada por el shell/deploy en
+// window.SETAS_LIVE_TELEMETRY, o (2) guardada por el operario desde el Hub IoT.
+// Sin ninguna de las dos, el puente arranca solo con Firestore — que ya existe
+// y no necesita que nadie abra un puerto.
+function loadLiveTelemetryConfig() {
+  const injected = (typeof window !== 'undefined' && window.SETAS_LIVE_TELEMETRY) || {};
+  let stored = {};
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(LIVE_TELEMETRY_STORAGE_KEY) : null;
+    stored = raw ? JSON.parse(raw) : {};
+  } catch (e) { stored = {}; }
+  return Object.assign({}, DEFAULT_LIVE_TELEMETRY_CONFIG, injected, stored);
+}
+
+function saveLiveTelemetryConfig(config) {
+  try {
+    localStorage.setItem(LIVE_TELEMETRY_STORAGE_KEY, JSON.stringify(config || {}));
+    return true;
+  } catch (e) { return false; }
+}
+
+// Un transporte sin URL no se configura: `createLiveTelemetryBridge` lo marcaría
+// como fallido y la píldora de estado mostraría un error que no es un error.
+function buildLiveTransports(config) {
+  const transports = [];
+  if (config.websocketUrl) transports.push({ kind: 'websocket', url: config.websocketUrl });
+  if (config.mqttUrl) transports.push({ kind: 'mqtt', url: config.mqttUrl, topics: config.mqttTopics });
+  if (config.firestore !== false && typeof window !== 'undefined' && window.SetasFirebase && typeof window.SetasFirebase.subscribeToLiveClimate === 'function') {
+    transports.push({ kind: 'firestore' });
+  }
+  return transports;
+}
+
+const LIVE_CONNECTIVITY_LABEL = {
+  en_vivo: 'En vivo',
+  degradado: 'Sin datos recientes',
+  offline: 'Sin conexión',
+  detenido: 'Detenido',
+};
+
+/**
+ * Suscribe la app al puente de telemetría y al motor de anomalías, y devuelve
+ * un estado listo para render: métricas por sala, series para las curvas,
+ * alertas activas y estado de conexión.
+ *
+ * El refresco es por tick de 2 s y no por lectura: con tres salas publicando
+ * cuatro métricas cada 5 s, renderizar en cada lectura repinta el cockpit ~144
+ * veces por minuto para mover una curva dos píxeles. El tick agrupa, y la firma
+ * evita incluso ese render cuando de verdad no cambió nada.
+ */
+function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = [], tickMs = 2000 } = {}) {
+  const [config, setConfigState] = useState(loadLiveTelemetryConfig);
+  const [snapshot, setSnapshot] = useState({ at: 0, rooms: {}, status: { connectivity: 'offline', transports: [], activeSource: null, altitudeM: 2600 } });
+  const [alerts, setAlerts] = useState([]);
+  const bridgeRef = useRef(null);
+  const engineRef = useRef(null);
+  const signatureRef = useRef('');
+
+  useEffect(() => {
+    const bridgeLib = typeof window !== 'undefined' ? window.SetasLiveBridge : null;
+    const anomalyLib = typeof window !== 'undefined' ? window.SetasAnomaly : null;
+    if (!enabled || !bridgeLib || !anomalyLib) return undefined;
+
+    const engine = anomalyLib.createAnomalyEngine({ bands });
+    const bridge = bridgeLib.createLiveTelemetryBridge({
+      transports: buildLiveTransports(config),
+      factories: bridgeLib.browserFactories,
+      pressureHpa: config.pressureHpa,
+      cycles,
+      // Cada muestra pasa por los umbrales en el momento en que llega; lo que se
+      // agrupa en el tick es el render, no la detección.
+      onSample: (roomId, sample) => { engine.evaluate(roomId, sample); },
+    });
+
+    engineRef.current = engine;
+    bridgeRef.current = bridge;
+    bridge.start();
+
+    const pump = () => {
+      engine.checkStale();
+      const next = bridge.getSnapshot({ buckets: 24 });
+      const activeAlerts = engine.activeAlerts();
+      const signature = [
+        next.status.connectivity,
+        next.status.activeSource || '-',
+        Object.values(next.rooms).map(r => `${r.id}@${r.sample && r.sample.lastUpdateAt}`).join(','),
+        activeAlerts.map(a => `${a.key}:${a.severity}`).join(','),
+      ].join('|');
+      if (signature === signatureRef.current) return;
+      signatureRef.current = signature;
+      setSnapshot(next);
+      setAlerts(activeAlerts);
+    };
+
+    pump();
+    const timer = setInterval(pump, tickMs);
+    return () => {
+      clearInterval(timer);
+      bridge.stop();
+      bridgeRef.current = null;
+      engineRef.current = null;
+      signatureRef.current = '';
+    };
+  }, [enabled, config, tickMs]);
+
+  // Inyección manual: el probador de webhooks del Hub IoT y cualquier pegado de
+  // JSON entran por la misma puerta que los sockets, así que se compensan por
+  // altitud y evalúan umbrales exactamente igual.
+  const ingest = (packet) => {
+    const bridge = bridgeRef.current;
+    if (!bridge) return [];
+    return bridge.ingest(packet, { source: 'manual' });
+  };
+
+  const setConfig = (next) => {
+    const merged = Object.assign({}, config, next || {});
+    saveLiveTelemetryConfig(merged);
+    setConfigState(merged);
+  };
+
+  const roomsWithData = Object.keys(snapshot.rooms || {});
+  return {
+    snapshot,
+    alerts,
+    config,
+    setConfig,
+    ingest,
+    status: snapshot.status,
+    hasLiveData: roomsWithData.length > 0,
+    roomLive: (roomId) => (snapshot.rooms || {})[roomId] || null,
+    roomAlerts: (roomId) => alerts.filter(a => a.roomId === roomId),
+    getSeries: (roomId, metric, opts) => (bridgeRef.current ? bridgeRef.current.getSeries(roomId, metric, opts) : null),
+  };
+}
+
+// Severidad agregada de una lista de alertas → vocabulario de la UI existente
+// ('critical' / 'warning' / 'optimal', el mismo que devuelve evalClimateHealth).
+function liveSeverityOf(alerts) {
+  if (!alerts || !alerts.length) return 'optimal';
+  if (alerts.some(a => a.severity === 'critico')) return 'critical';
+  if (alerts.some(a => a.severity === 'alarma')) return 'critical';
+  return 'warning';
+}
+
+// Presentation policy for the compact room strip. It intentionally consumes
+// the bridge's per-metric freshness rather than re-evaluating cultivation
+// thresholds in the UI.
+function liveClimatePresentation({ hasAnyLive, completeFresh, alerts }) {
+  const alertSeverity = hasAnyLive ? liveSeverityOf(alerts) : 'optimal';
+  const severity = alertSeverity === 'critical' || alertSeverity === 'warning'
+    ? alertSeverity
+    : completeFresh ? 'optimal'
+    : hasAnyLive ? 'partial'
+    : 'unknown';
+  return {
+    severity,
+    badge: severity === 'critical' ? 'Alerta' : severity === 'warning' ? 'Vigilar' : completeFresh ? 'En rango' : hasAnyLive ? 'Lectura parcial' : 'Sin lectura',
+    statusClass: severity === 'critical' ? 'fos-status--error' : severity === 'warning' ? 'fos-status--attention' : completeFresh ? 'fos-status--within-target' : 'fos-status--pending',
+  };
+}
+
+// "hace 45 s" / "hace 3 min" — la frescura del dato es parte del dato.
+function liveAgeLabel(ms) {
+  if (!Number.isFinite(ms)) return 'sin datos';
+  if (ms < 60000) return `hace ${Math.max(1, Math.round(ms / 1000))} s`;
+  if (ms < 3600000) return `hace ${Math.round(ms / 60000)} min`;
+  return `hace ${Math.round(ms / 3600000)} h`;
+}
+
+
+let _fieldDbPromise = null;
+const getFieldDb = () => {
+  if (_fieldDbPromise) return _fieldDbPromise;
+  const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+  if (!queue || typeof queue.initializeQueue !== 'function') {
+    return Promise.reject(new Error('field_event_queue_unavailable: SetasFieldEventQueue no cargado'));
+  }
+  _fieldDbPromise = queue.initializeQueue().catch(err => {
+    _fieldDbPromise = null;
+    throw err;
+  });
+  return _fieldDbPromise;
+};
+
+// Servidor de aceptación simulado. acceptFieldEvent exige el plan Blaze y el
+// proyecto sigue en Spark, así que el prototipo ejercita el ciclo completo
+// contra un simulacro que respeta el mismo contrato de idempotencia. Los
+// recibos que emite llevan `simulated`, y la hoja de acción los rotula como
+// tales: el operario nunca debe leer un simulacro como confirmación real.
+// El rol que gobierna las transiciones sale de `usuarios/{uid}.rol` del usuario
+// autenticado, traducido con la tabla compartida — la misma que aplica
+// acceptFieldEvent. Antes se derivaba de props.isAdmin, que viene del selector
+// de operario del encabezado y no de la sesión de Firebase: un operario veía
+// ofrecidas acciones de cuarentena que el servidor rechazaba.
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import('./vendor/firebase/firebase-firestore.js');
+      const snap = await getDoc(doc(fb.db, 'usuarios', uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      // Mínimo privilegio si no se puede leer: mejor ofrecer de menos que
+      // ofrecer acciones que el servidor va a rechazar.
+      return 'operario';
+    }
+  })();
+  return _fieldRolePromise;
+};
+
+let _fieldMock = null;
+const getFieldMockTransport = () => {
+  if (_fieldMock) return _fieldMock;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventMockTransport : null;
+  if (!mod || typeof mod.createMockTransport !== 'function') return null;
+  _fieldMock = mod.createMockTransport();
+  return _fieldMock;
+};
+
+// El simulacro sólo se usa si alguien lo pide explícitamente (banco de pruebas,
+// demo sin sesión). Nunca como respaldo silencioso: si el transporte real
+// fallara y el simulacro lo tapara, la hoja diría "confirmado" sin que el
+// servidor tenga nada, que es exactamente la mentira que este cuaderno existe
+// para evitar.
+const fieldMockRequested = () =>
+  typeof window !== 'undefined' && window.__setasFieldMockSync === true;
+
+let _fieldCallable = null;
+const getFieldCallableTransport = () => {
+  if (_fieldCallable) return _fieldCallable;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventCallableTransport : null;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const projectId = fb && fb.app && fb.app.options && fb.app.options.projectId;
+  if (!mod || typeof mod.createCallableTransport !== 'function' || !fb || !fb.auth || !projectId) return null;
+
+  _fieldCallable = mod.createCallableTransport({
+    projectId,
+    getIdToken: () => {
+      const user = fb.auth.currentUser;
+      if (!user) return Promise.reject(new Error('sin sesión activa'));
+      return user.getIdToken();
+    },
+  });
+  return _fieldCallable;
+};
+
+// Devuelve { transport, simulated }. `simulated` gobierna el rótulo de la hoja.
+const getFieldSyncTransport = () => {
+  if (fieldMockRequested()) {
+    const mock = getFieldMockTransport();
+    return mock ? { transport: mock.transport, simulated: true } : null;
+  }
+  const real = getFieldCallableTransport();
+  return real ? { transport: real, simulated: false } : null;
+};
+
+const readQueueEntry = (db, eventId) => new Promise((resolve) => {
+  try {
+    const req = db.transaction('queue_entries', 'readonly').objectStore('queue_entries').get(eventId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  } catch (e) { resolve(null); }
+});
+
+/**
+ * Empuja los eventos pendientes de la cuenta y refresca la entrada de cola.
+ * Un fallo aquí no es un error del operario: el evento ya está guardado en el
+ * equipo y el motor lo reintentará, así que se refleja el estado y no se lanza.
+ */
+const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
+  try {
+    const sync = typeof window !== 'undefined' ? window.SetasFieldEventSync : null;
+    const chosen = getFieldSyncTransport();
+    if (!db || !sync || !chosen || typeof sync.createSyncEngine !== 'function') return;
+
+    const engine = sync.createSyncEngine({ db, accountId, transport: chosen.transport });
+    await engine.syncOnce();
+  } catch (e) {
+    // Silencio deliberado: el estado real lo cuenta la entrada de cola.
+  }
+  if (typeof setQueueEntry === 'function' && db && eventId) {
+    setQueueEntry(await readQueueEntry(db, eventId));
+  }
 };
 
 function SimuladorShell(props){
@@ -3958,11 +5196,11 @@ function SimuladorShell(props){
   const [recipe,setRecipe]=useState(()=>initialFormDraft?.recipe||[]);
   const [search,setSearch]=useState('');
   const [cat,setCat]=useState('all');
-  const [numBags,setNumBags]=useState(6);
-  const [kgBag,setKgBag]=useState(1.5);
+  const [numBags,setNumBags]=useCaptureDraft('prodBags',6);
+  const [kgBag,setKgBag]=useCaptureDraft('prodKg',1.5);
   const [spawnCost,setSpawnCost]=useState(12000);
   const [showOpt,setShowOpt]=useState(false);
-  const [hObj,setHObj]=useState(67);
+  const [hObj,setHObj]=useCaptureDraft('prodH',67);
   const [showGuide,setShowGuide]=useState(false);
   const [showBatch,setShowBatch]=useState(false);
   const [saved,setSaved]=useState([]);
@@ -4032,8 +5270,8 @@ function SimuladorShell(props){
   const [schKey,setSchKey]=useState('p_ostreatus_gris');
   const [normMode,setNormMode]=useState(false);
   const [coFormMode,setCoFormMode]=useState(false);
-  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosada:40});
-  const [vegPrice,setVegPrice]=useState(12000);
+  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosa:40});
+  const [vegPrice,setVegPrice]=useState(null);
   const [priceOverrides,setPriceOverrides]=useState({});
   const [showPrices,setShowPrices]=useState(false);
   const [invBase,setInvBase]=useState('');
@@ -4140,7 +5378,28 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [optProfile,setOptProfile]=useState('produccion');
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
+  const [showFieldActionModal,setShowFieldActionModal]=useState(false);
+  const [fieldDb,setFieldDb]=useState(null);
+  useEffect(()=>{
+    let active=true;
+    getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
+    if (typeof window !== 'undefined' && !('BarcodeDetector' in window)) {
+      const prewarm = () => { loadJsQR().catch(() => {}); };
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(prewarm, { timeout: 3000 });
+      } else {
+        setTimeout(prewarm, 1500);
+      }
+    }
+    return ()=>{active=false;};
+  },[]);
+  // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
+  const [qrScannedBagId,setQrScannedBagId]=useState('');
   const [isCameraActive,setIsCameraActive]=useState(false);
+  // El render de la captura rápida lee cameraError; sin este estado el modal
+  // entero reventaba con ReferenceError al abrirse y no se escaneaba nada.
+  const [cameraError,setCameraError]=useState('');
+  const [manualScanCode,setManualScanCode]=useState('');
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
   const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
@@ -4159,65 +5418,621 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  // Canvas fuera de pantalla para el respaldo jsQR — nunca se monta en el DOM,
+  // solo sirve para volcar cada fotograma del <video> y leer sus píxeles.
+  const qrCanvasRef = React.useRef(null);
+  // El stream vive en su propia ref y no colgado del <video>: al cerrar la hoja
+  // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
+  // quedaba encendida con el modal cerrado.
+  const cameraStreamRef = React.useRef(null);
+  // Invariante de seguridad contra carreras asíncronas de la cámara:
+  // A lo sumo un payload decodificado puede transicionar la UI de activa a resuelta.
+  const scanResolvingRef = React.useRef(false);
+  const isDecodingPausedRef = React.useRef(false);
+  const isSavingHarvestRef = React.useRef(false);
+  const [qrScanMode, setQrScanMode] = useState('round'); // 'round' | 'harvest' | 'sweep'
+  const [harvestActiveCrate, setHarvestActiveCrate] = useState(null);
+  const [harvestGrossInput, setHarvestGrossInput] = useState('');
+  const [harvestTareInput, setHarvestTareInput] = useState('');
+  const [harvestTareSource, setHarvestTareSource] = useState('unverified');
+  const [harvestFlush, setHarvestFlush] = useState(1);
+  const [harvestCalidad, setHarvestCalidad] = useState(1);
+  const [harvestError, setHarvestError] = useState('');
+  const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
+  const [sweepQueue, setSweepQueue] = useState([]);
+  const [sweepRiskModalOpen, setSweepRiskModalOpen] = useState(false);
+  const [sweepRiskType, setSweepRiskType] = useState('micelio_debil');
+  const [sweepRiskNota, setSweepRiskNota] = useState('');
+  const [sweepStatusBanner, setSweepStatusBanner] = useState('');
+
+  const playSweepBeep = (freq = 880, durationMs = 100) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+      const ctx = window.__setasAudioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (durationMs / 1000));
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + (durationMs / 1000));
+    } catch (e) {}
+  };
+  const triggerHaptic = (pattern = [50]) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    } catch (e) {}
+  };
 
   const stopCameraScanner = () => {
     setIsCameraActive(false);
+    isDecodingPausedRef.current = false;
     if (scannerIntervalRef.current) {
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
     }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') {
       stream.getTracks().forEach(t => t.stop());
-      videoRef.current.srcObject = null;
+    }
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+
+  // Apagar la cámara si el componente se va sin pasar por el botón de cerrar.
+  useEffect(() => () => {
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') stream.getTracks().forEach(t => t.stop());
+    cameraStreamRef.current = null;
+  }, []);
+
+  // Formatos que el navegador sabe decodificar de verdad. Chrome expone
+  // BarcodeDetector con la lista vacía en algunos escritorios: comprobar sólo
+  // que el constructor existe deja la cámara encendida sin leer nunca nada.
+  // Si getSupportedFormats() falla, NO asumir que sí hay soporte (eso dejaba
+  // la cámara "escaneando" para siempre sin detectar nada ni avisar) — caer
+  // al respaldo jsQR es la opción segura.
+  const detectQrSupport = async () => {
+    // En WebKit/Safari (iOS/iPadOS y Safari macOS), BarcodeDetector es experimental
+    // y falla al procesar HTMLVideoElement (lanza excepciones o devuelve vacío).
+    // jsQR sobre canvas es el motor probado y 100% fiable en WebKit.
+    if (typeof navigator !== 'undefined') {
+      const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+        (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent));
+      if (isWebKit) return false;
+    }
+    if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return false;
+    try {
+      const formats = await window.BarcodeDetector.getSupportedFormats();
+      return Array.isArray(formats) ? formats.includes('qr_code') : true;
+    } catch (e) {
+      return false;
     }
   };
 
+  // setIsCameraActive(true) sólo pide el render; el <video> aparece un tick
+  // después. Esperar a la ref evita el fotograma en negro cuando el permiso ya
+  // estaba concedido y getUserMedia resuelve de inmediato.
+  const attachCameraStream = async (stream) => {
+    for (let i = 0; i < 40 && !videoRef.current; i++) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    if (!videoRef.current) return false;
+    const v = videoRef.current;
+    v.srcObject = stream;
+    // Atributos DOM críticos para iOS Safari / WebKit PWA inline playback:
+    v.setAttribute('playsinline', 'true');
+    v.setAttribute('webkit-playsinline', 'true');
+    v.muted = true;
+    const playing = v.play();
+    if (playing && typeof playing.catch === 'function') playing.catch(() => {});
+    return true;
+  };
+
+  // Bucle de decodificación con jsQR sobre un <canvas> fuera de pantalla —
+  // el respaldo para iOS (y cualquier otro navegador sin BarcodeDetector).
+  // Más lento que la API nativa (dibuja + decodifica cada fotograma en JS
+  // puro), pero es justamente lo que hace que funcione en Safari/WebKit.
+  const startJsQRLoop = (jsQR) => {
+    if (!qrCanvasRef.current) qrCanvasRef.current = document.createElement('canvas');
+    const canvas = qrCanvasRef.current;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    // Si dibujar/leer el fotograma falla de verdad (no "no hay QR en cuadro",
+    // sino una excepción real: canvas contaminado, decodificador roto, etc.)
+    // no hay que quedarse escaneando en silencio para siempre — tras unos
+    // intentos seguidos fallidos se corta el bucle y se avisa.
+    let consecutiveErrors = 0;
+    scannerIntervalRef.current = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      try {
+        // El stream de cámara pide 1080p como ideal (ver getUserMedia) para
+        // que el QR denso e impreso en 17-22mm tenga detalle suficiente —
+        // pero decodificar esa resolución completa con jsQR (JS puro) cada
+        // 300ms es pesado. Se topa el lado mayor del canvas: conserva casi
+        // todo el detalle que importa y evita que el teléfono se quede sin
+        // aire a mitad de escaneo.
+        const MAX_DECODE_SIDE = 1280;
+        const scale = Math.min(1, MAX_DECODE_SIDE / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+        consecutiveErrors = 0;
+        if (code && code.data && !isDecodingPausedRef.current) handleScannedValue(code.data);
+      } catch (e) {
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 10) {
+          stopCameraScanner();
+          setCameraError('El escáner dejó de poder leer la cámara (' + (e && e.message ? e.message : 'error desconocido') + ') — escribe abajo el código impreso en la etiqueta.');
+        }
+      }
+    }, 300);
+  };
+
   const startCameraScanner = async () => {
+    scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
     setCameraError('');
-    setIsCameraActive(true);
+    setScanMiss('');
+
+    // Desbloqueo proactivo de AudioContext en respuesta directa al tap del usuario (requerido por iOS Safari)
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+        if (window.__setasAudioCtx.state === 'suspended') {
+          window.__setasAudioCtx.resume().catch(() => {});
+        }
+      }
+    } catch (e) {}
+
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Cámara no disponible o no compatible en este navegador');
       }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      // BarcodeDetector nativo es la vía rápida cuando existe (Chrome/Android); si no, se
+      // intenta el respaldo jsQR antes de rendirse. En WebKit/iOS detectQrSupport devuelve false
+      // para ir directo a jsQR y evitar cuelgues con BarcodeDetector experimental.
+      const nativeOk = await detectQrSupport();
+      let jsQR = null;
+      if (!nativeOk) {
+        try {
+          jsQR = await loadJsQR();
+        } catch (e) {
+          setCameraError('No se pudo cargar el decodificador de QR (revisa tu conexión la primera vez que uses el escáner) — escribe abajo el código impreso en la etiqueta.');
+          return;
+        }
+      }
+      setIsCameraActive(true);
+
+      // Cadena de fallback escalonada para máxima compatibilidad con iPads, iPhones y Android
+      // (evita OverconstrainedError en iPads con cámara única o en Desktop Mode)
+      let stream = null;
+      const constraintsTiers = [
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: { ideal: 'environment' } } },
+        { video: true }
+      ];
+      let lastMediaErr = null;
+      for (const c of constraintsTiers) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          if (stream) break;
+        } catch (err) {
+          lastMediaErr = err;
+        }
+      }
+      if (!stream) {
+        throw (lastMediaErr || new Error('No se pudo acceder al hardware de cámara'));
+      }
+      cameraStreamRef.current = stream;
+      await attachCameraStream(stream);
+
+      if (jsQR) {
+        startJsQRLoop(jsQR);
+        return;
       }
 
-      if ('BarcodeDetector' in window) {
-        const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
-        scannerIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes && barcodes.length > 0) {
-              const rawVal = barcodes[0].rawValue;
-              handleScannedValue(rawVal);
-            }
-          } catch (e) {}
-        }, 300);
+      const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
+      if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      let nativeFailures = 0;
+      scannerIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return;
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          nativeFailures = 0;
+          if (barcodes && barcodes.length > 0) {
+            const rawVal = barcodes[0].rawValue;
+            if (!isDecodingPausedRef.current) handleScannedValue(rawVal);
+          }
+        } catch (e) {
+          nativeFailures++;
+          // Si el detector nativo falla repetidamente (e.g. bug de WebKit en video), caer a jsQR dinámicamente
+          if (nativeFailures >= 3) {
+            try {
+              const fallbackJsQR = await loadJsQR();
+              if (fallbackJsQR) {
+                startJsQRLoop(fallbackJsQR);
+                return;
+              }
+            } catch (err) {}
+          }
+        }
+      }, 300);
+    } catch (err) {
+      setCameraError(err && err.message ? err.message : 'No se pudo acceder al hardware de cámara');
+      stopCameraScanner();
+    }
+  };
+
+  // Escanear resuelve el objeto, no abre un menú genérico: batch-sheet.js
+  // interpreta código de lote, id, etiqueta de bolsa, URL de trazabilidad y
+  // payload JSON, y devuelve un motivo explícito cuando no resuelve.
+  const [scanMiss, setScanMiss] = useState('');
+  // "Reportar evento" del action sheet móvil: Observación pide texto antes de
+  // registrar, por eso vive en su propio estado en vez de resolverse en un
+  // solo clic como Riego, Contaminación y Cosecha parcial.
+  const [qrEventoObsAbierta, setQrEventoObsAbierta] = useState(false);
+  const [qrEventoObsNota, setQrEventoObsNota] = useState('');
+  const [qrEventoStatuses, setQrEventoStatuses] = useState([]);
+  const qrSavingRef=useRef(new Set());
+  const handleScannedValue = (raw) => {
+    if (!raw || scanResolvingRef.current) return;
+    if (isDecodingPausedRef.current) return;
+    const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
+
+    // --- MODO BÁSCULA COSECHA ---
+    if (qrScanMode === 'harvest') {
+      let resolved = null;
+      if (sheetApi) {
+        resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas, crates: sheetApi.CONFIG_CRATES || [] });
+      } else {
+        resolved = { kind: 'unknown', reason: 'no_match' };
+      }
+
+      if (resolved.kind === 'crate' || resolved.kind === 'crate_unregistered') {
+        if (resolved.reason === 'inactive_crate') {
+          setScanMiss(`La canastilla ${resolved.crateCode || raw} está marcada como inactiva.`);
+          return;
+        }
+        isDecodingPausedRef.current = true;
+        playSweepBeep(980, 100);
+        triggerHaptic([40, 50]);
+        setHarvestActiveCrate({
+          crateId: resolved.crateId || ('crate_' + resolved.crateCode),
+          crateCode: resolved.crateCode,
+          taraGramos: resolved.taraGramos,
+          taraSource: resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'),
+          harvestId: 'COS_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        });
+        setHarvestGrossInput('');
+        setHarvestTareInput(resolved.taraGramos !== null ? String(resolved.taraGramos) : '');
+        setHarvestTareSource(resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'));
+        setHarvestError('');
+        setScanMiss('');
+        return;
+      }
+
+      if (resolved.kind === 'batch' && resolved.batchId) {
+        setQrSelectedLoteId(resolved.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote activo para cosecha cambiado a ${resolved.batchCode || resolved.batchId}. Ahora escanea una canastilla.`);
+        return;
+      }
+
+      setScanMiss(`Código "${String(raw).slice(0, 30)}" no es una canastilla registrada. Escanea una canastilla (CAN-01) o ingresa el peso.`);
+      return;
+    }
+
+    // --- MODO BARRIDO SALA (AUDIT SWEEP) ---
+    if (qrScanMode === 'sweep') {
+      let resolved = null;
+      if (sheetApi) {
+        resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+      } else {
+        resolved = { kind: 'unknown', reason: 'no_match' };
+      }
+
+      let targetBag = null;
+      if (resolved.kind === 'bag' && resolved.bagId) {
+        targetBag = bitBolsas.find(b => b.id === resolved.bagId || b.codigo === resolved.bagId);
+      }
+      if (!targetBag) {
+        const rawStr = String(raw).trim();
+        targetBag = bitBolsas.find(b => b.codigo === rawStr || b.id === rawStr);
+        if (!targetBag) {
+          const bagMatch = rawStr.match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+          if (bagMatch) {
+            const suffix = bagMatch[1].toUpperCase();
+            targetBag = bitBolsas.find(b => (b.codigo?.endsWith(suffix) || b.id?.endsWith(suffix)) && (!qrSelectedLoteId || b.loteId === qrSelectedLoteId));
+          }
+        }
+      }
+
+      if (targetBag) {
+        if (sweepQueue.some(item => item.bagId === targetBag.id)) {
+          triggerHaptic([20]);
+          return;
+        }
+
+        playSweepBeep(880, 80);
+        triggerHaptic([40]);
+        const entry = window.SetasSweepJournal
+          ? window.SetasSweepJournal.createSweepEntry(targetBag)
+          : {
+              bagId: targetBag.id,
+              codigo: targetBag.codigo || targetBag.id,
+              loteId: targetBag.loteId,
+              estado: targetBag.estado || 'sana',
+              colonizacion: targetBag.colonizacion || 0,
+              col100: targetBag.col100 || null,
+              expectedRevision: targetBag.revision || 0,
+              scannedAt: Date.now(),
+            };
+        setSweepQueue(prev => [entry, ...prev]);
+        setScanMiss('');
+        if (targetBag.loteId && targetBag.loteId !== qrSelectedLoteId) {
+          setQrSelectedLoteId(targetBag.loteId);
+        }
+        return;
+      }
+
+      if (resolved.kind === 'batch' && resolved.batchId) {
+        setQrSelectedLoteId(resolved.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote fijado a ${resolved.batchCode || resolved.batchId}. Continúa escaneando las bolsas de la hilera.`);
+        return;
+      }
+
+      setScanMiss(`Etiqueta "${String(raw).slice(0, 30)}" no encontrada entre las bolsas.`);
+      return;
+    }
+
+    // --- MODO RONDA TRADICIONAL (DEFAULT) ---
+    let resolved = null;
+    if (sheetApi) {
+      resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+    } else {
+      const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
+      const code = match ? match[1] : raw;
+      const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
+      resolved = foundLote ? { kind: 'batch', batchId: foundLote.id, bagId: null } : { kind: 'unknown', batchId: null, reason: 'no_match' };
+    }
+    if (resolved.batchId) {
+      scanResolvingRef.current = true; // Invariante: a lo sumo un payload decodificado transiciona la UI de activa a resuelta
+      setScanMiss('');
+      setQrSelectedLoteId(resolved.batchId);
+      const bagSuffix = String(raw).match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+      const matchedBagId = resolved.bagId || (bagSuffix ? bagSuffix[1].toUpperCase() : '');
+      setQrScannedBagId(matchedBagId);
+      setQrEventoObsAbierta(false);
+      setQrEventoObsNota('');
+      stopCameraScanner();
+      setShowQrSheet(false);
+      setShowFieldActionModal(true);
+      try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
+    } else {
+      setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
+    }
+  };
+
+  // Único punto de entrada al escáner real. La hoja resuelve la etiqueta contra
+  // los lotes de la bitácora; el escáner del shell (openScan en el .dc) trabaja
+  // sobre contenedores de demostración y no sabe nada de estos lotes.
+  const openFieldScanSheet = (initialMode = 'round') => {
+    scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
+    isSavingHarvestRef.current = false;
+    setQrScanMode(initialMode);
+    setHarvestActiveCrate(null);
+    setSweepQueue([]);
+    setSweepStatusBanner('');
+    const firstActive = bitLotes.find(l => !['completado','descartado'].includes(l.estado));
+    setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || '');
+    setQrScannedBagId('');
+    setScanMiss('');
+    setCameraError('');
+    setManualScanCode('');
+    setShowQrSheet(true);
+  };
+
+  const handleSaveHarvestCrate = () => {
+    if (isSavingHarvestRef.current) return;
+    if (!harvestActiveCrate || !harvestGrossInput) return;
+    const gross = parseFloat(harvestGrossInput);
+    if (!gross || gross <= 0) {
+      setHarvestError('Ingresa un peso bruto válido.');
+      return;
+    }
+    const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+    if (tare !== null && tare > gross) {
+      setHarvestError(`La tara (${tare}g) no puede exceder el peso bruto (${gross}g).`);
+      return;
+    }
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    if (!activeLot) {
+      setHarvestError('No hay un lote seleccionado para registrar la cosecha.');
+      return;
+    }
+
+    isSavingHarvestRef.current = true;
+    try {
+      const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot.operador || 'operario_local';
+      const harvestRecord = {
+        id: harvestActiveCrate.harvestId,
+        loteId: activeLot.id,
+        crateId: harvestActiveCrate.crateId,
+        crateCode: harvestActiveCrate.crateCode,
+        pesoBrutoGramos: gross,
+        taraGramos: tare,
+        taraSource: tare !== null ? harvestTareSource : 'unverified',
+        flush: harvestFlush,
+        calidad: harvestCalidad,
+        fecha: new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toISOString(),
+        operador: uid,
+      };
+
+      const normalized = window.SetasBitacora.normalizeHarvestCapture(harvestRecord);
+      const ok = addBitCosecha(normalized);
+      if (ok) {
+        setHarvestSessionStats(prev => ({
+          count: prev.count + 1,
+          totalNetGrams: prev.totalNetGrams + (normalized.pesoFrescoGramos || 0),
+          totalGrossGrams: prev.totalGrossGrams + normalized.pesoBrutoGramos,
+        }));
+        playSweepBeep(1200, 80);
+        triggerHaptic([30, 40]);
+        setHarvestActiveCrate(null);
+        isDecodingPausedRef.current = false;
       }
     } catch (err) {
-      setCameraError(err.message || 'No se pudo acceder al hardware de cámara');
-      setIsCameraActive(false);
+      setHarvestError(err.message || 'Error al guardar la cosecha');
+    } finally {
+      isSavingHarvestRef.current = false;
     }
   };
 
-  const handleScannedValue = (raw) => {
-    if (!raw) return;
-    const match = raw.match(/(?:(?:trace|c|l)\/|CAN-)?([A-Za-z0-9_-]+)/);
-    const code = match ? match[1] : raw;
-    const foundLote = bitLotes.find(l => l.codigo === code || l.id === code || raw.includes(l.codigo) || (code && code.startsWith(l.codigo)));
-    if (foundLote) {
-      setQrSelectedLoteId(foundLote.id);
-      stopCameraScanner();
-      try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
+  const handleApplySweepColonizacion = (targetPct) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || 'operario_local';
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) {
+      setScanMiss('Módulo SetasSweepJournal no disponible.');
+      return;
+    }
+
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      targetColonizacion: targetPct,
+      operator: uid,
+      now: Date.now(),
+    });
+
+    if (opResult.status !== 'failed') {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+
+      if (window.SetasBitacoraDB) {
+        for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
+          window.SetasBitacoraDB.actualizarBolsa(bId, updatedBag).catch(() => {});
+        }
+      }
+
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: 'note',
+          operatorId: uid,
+          at: new Date().toISOString(),
+          payload: {
+            nota: `Barrido de sala: ${opResult.totalUpdated} de ${opResult.totalScanned} bolsas actualizadas al ${targetPct}%.`,
+            operationId: opResult.operationId,
+          },
+        });
+        const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+        } catch (e) {}
+        if (window.SetasBitacoraDB?.actualizarLote) {
+          window.SetasBitacoraDB.actualizarLote(activeLot.id, { lifecycleEvents: nextLog }).catch(() => {});
+        }
+      }
+
+      playSweepBeep(1040, 120);
+      triggerHaptic([50, 60]);
+      setSweepStatusBanner(`✓ Barrido aplicado: ${opResult.totalUpdated} bolsas actualizadas al ${targetPct}%${opResult.totalScanned > opResult.totalUpdated ? ` (${opResult.totalScanned - opResult.totalUpdated} protegidas)` : ''}.`);
+      setSweepQueue([]);
+    } else {
+      setSweepStatusBanner('❌ No se pudo aplicar el barrido a las bolsas seleccionadas.');
     }
   };
+
+  const handleApplySweepRisk = (riskType, riskNota) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || 'operario_local';
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) return;
+
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      isRiskObservation: true,
+      riskType,
+      riskNota,
+      operator: uid,
+      now: Date.now(),
+    });
+
+    if (opResult.status !== 'failed') {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: 'note',
+          operatorId: uid,
+          at: new Date().toISOString(),
+          payload: {
+            nota: `Observación de riesgo en barrido (${riskType}): ${riskNota || 'sin nota adicional'} en ${opResult.totalUpdated} bolsas.`,
+            operationId: opResult.operationId,
+          },
+        });
+        const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+        } catch (e) {}
+      }
+
+      playSweepBeep(660, 150);
+      triggerHaptic([60, 40]);
+      setSweepStatusBanner(`✓ Observación de riesgo registrada para ${opResult.totalUpdated} bolsas.`);
+      setSweepQueue([]);
+      setSweepRiskModalOpen(false);
+      setSweepRiskNota('');
+    }
+  };
+
+  // El botón «Escanear» del shell no abre su propio escáner: sube el nonce y
+  // esta hoja se abre aquí, donde están los lotes de verdad.
+  useEffect(()=>{
+    if(!Number(props.scanNonce)) return;
+    openFieldScanSheet();
+  },[props.scanNonce]);
 
   const [showThermalModal,setShowThermalModal]=useState(false);
   const [thermalLote,setThermalLote]=useState(null);
@@ -4235,7 +6050,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
   const [diagRunning,setDiagRunning]=useState(false);
   const [diagResult,setDiagResult]=useState(null);
+  const [diagNotes,setDiagNotes]=useState('');
+  const [diagError,setDiagError]=useState('');
   const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [showTriageModal,setShowTriageModal]=useState(false);
+  const [triageLoteId,setTriageLoteId]=useState('');
+  const [triagePathogenKey,setTriagePathogenKey]=useState('trichoderma');
+  const [triageAffectedBags,setTriageAffectedBags]=useState(1);
+  const [triageLocation,setTriageLocation]=useState('');
+  const [triageDecision,setTriageDecision]=useState('isolate_bags');
+  const [triageNotes,setTriageNotes]=useState('');
   const [showAIFormModal,setShowAIFormModal]=useState(false);
   const [aiFormGoal,setAiFormGoal]=useState('');
   const [aiFormLoading,setAiFormLoading]=useState(false);
@@ -4278,6 +6102,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [prodLaunchForm,setProdLaunchForm]=useState(null);
   const [showIoTHub,setShowIoTHub]=useState(false);
   const [injectedClimateReadings,setInjectedClimateReadings]=useState({});
+  // Puente de telemetría en vivo (WebSocket / MQTT / Firestore) + motor de
+  // umbrales. Se monta una sola vez en el shell y alimenta a la vez el strip de
+  // Hoy, el bloque de alertas y las curvas del dashboard de Cámaras — antes cada
+  // uno inventaba sus propios números por su lado.
+  const liveTelemetry = useLiveTelemetry({ bands: ROOM_TARGET_BANDS });
 
 
 
@@ -4362,20 +6191,27 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
-  const [prodBags,setProdBags]=useState(6);
-  const [prodKg,setProdKg]=useState(1.5);
-  const [prodH,setProdH]=useState(67);
-  const [prodDate,setProdDate]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
-  const [prodScaleG,setProdScaleG]=useState(0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
-  const [prodMoist,setProdMoist]=useState({});    // override de humedad real por insumo {id: %} para el lote del día
-  const [prodLoteNum,setProdLoteNum]=useState('');  // número de lote imprimible
-  const [checkedSteps,setCheckedSteps]=useState({}); // checkboxes interactivos de la hoja
+  const [prodBags,setProdBags]=[numBags,setNumBags];
+  const [prodKg,setProdKg]=[kgBag,setKgBag];
+  const [prodH,setProdH]=[hObj,setHObj];
+  const [prodDate,setProdDate]=useCaptureDraft('prodDate',(()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
+  const [prodScaleG,setProdScaleG]=useCaptureDraft('prodScaleG',0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
+  const [prodMoist,setProdMoist]=useCaptureDraft('prodMoist',{});    // override de humedad real por insumo {id: %} para el lote del día
+  const [prodLoteNum,setProdLoteNum]=useCaptureDraft('prodLoteNum','');  // número de lote imprimible
+  // These checks are operator progress during preparation, so keep them with
+  // the tab-scoped preparation draft instead of losing them on navigation.
+  const [checkedSteps,setCheckedSteps]=useCaptureDraft('checkedSteps',{});
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
   const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
+  const [bitLotesLoaded,setBitLotesLoaded]=useState(false);
+  const initialDeepLinkHandled=useRef(false);
+  const [publicSyncStatus,setPublicSyncStatus]=useState(null);
+  const qrLotesRef=useRef(bitLotes);
+  qrLotesRef.current=bitLotes;
   const [bitBolsas,setBitBolsas]=useState([]);
   const [bitCosechas,setBitCosechas]=useState([]);
   const [bitTab,setBitTab]=useState('bit_dash');
@@ -4404,10 +6240,41 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   },[props.bitSubtab,props.bitSubtabNonce,bitActiveLoteId]);
   const [bitDashView,setBitDashView]=useState('grid');
   const [showBitNuevo,setShowBitNuevo]=useState(false);
-  const [bitNuevoForm,setBitNuevoForm]=useState({});
+  const [bitNuevoForm,setBitNuevoForm]=useCaptureDraft('bitNuevoForm',{});
   const [showBitCosecha,setShowBitCosecha]=useState(false);
-  const [bitCosechaForm,setBitCosechaForm]=useState({});
-  const [prodBagType,setProdBagType]=useState('bolsa_20x50'); // tipo de contenedor activo
+  const [bitCosechaForm,setBitCosechaForm]=useCaptureDraft('bitCosechaForm',{});
+  const [captureErrors,setCaptureErrors]=useState({});
+  const [captureSaveError,setCaptureSaveError]=useState('');
+  const captureFields={
+    'bit-codigo':[bitNuevoForm.codigo,{required:true},'text'], 'bit-especie':[bitNuevoForm.especie,{required:true},'text'],
+    'bit-bags':[bitNuevoForm.numBolsas,{required:true,min:1,integer:true}],
+    'bit-wet-kg':[bitNuevoForm.pesoHumedo,{min:0}], 'bit-spawn':[bitNuevoForm.spawnPct,{min:0,max:100}],
+    'bit-moisture':[bitNuevoForm.humedad,{min:0,max:100}], 'bit-dry-weight':[bitNuevoForm.peseSeco,{min:0}],
+    'harvest-bag':[bitBolsas.some(b=>b.id===bitCosechaForm.bolsaId&&b.loteId===bitCosechaForm.loteId)?bitCosechaForm.bolsaId:'',{required:true},'text'],
+    'harvest-flush':[bitCosechaForm.flush,{required:true,min:1,integer:true}],
+    'harvest-date':[bitCosechaForm.fecha,{required:true},'text'],
+    'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}]
+  };
+  const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Completa este campo.':''):SetasBitacora.captureError(f[0],f[1]);};
+  const validateCaptureField=id=>setCaptureErrors(p=>({...p,[id]:captureFieldError(id)}));
+  const captureErrorNode=id=>captureErrors[id]?<span id={id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{captureErrors[id]}</span>:null;
+  const validateCapture=kind=>{
+    setCaptureSaveError('');
+    const errors=Object.fromEntries(Object.keys(captureFields).filter(id=>id.startsWith(kind==='trial'?'bit-':'harvest-')).map(id=>[id,captureFieldError(id)]));
+    setCaptureErrors(errors);const first=Object.keys(errors).find(id=>errors[id]);
+    if(first){document.getElementById(first)?.focus();return false;}return true;
+  };
+  const harvestDraftKey=form=>'setas_capture_v1:harvest:'+form.loteId+':'+(form.bolsaId||'batch');
+  useEffect(()=>{if(bitCosechaForm.loteId){try{sessionStorage.setItem(harvestDraftKey(bitCosechaForm),JSON.stringify(bitCosechaForm));}catch{}}},[bitCosechaForm]);
+  const openHarvestCapture=form=>{
+    setCaptureErrors({});
+    try{const saved=JSON.parse(sessionStorage.getItem(harvestDraftKey(form)));if(saved?.loteId===form.loteId){setBitCosechaForm(saved);return;}}catch{}
+    setBitCosechaForm(form);
+  };
+  const clearHarvestCapture=()=>{try{sessionStorage.removeItem(harvestDraftKey(bitCosechaForm));}catch{}setBitCosechaForm({});};
+  const [showBatchSheetModal,setShowBatchSheetModal]=useState(false);
+  const [batchSheetModalLote,setBatchSheetModalLote]=useState(null);
+  const [prodBagType,setProdBagType]=useCaptureDraft('prodBagType','bolsa_20x50'); // tipo de contenedor activo
   const [showFlush,setShowFlush]=useState(false);
   const [showCompChart,setShowCompChart]=useState(false);
   const [showSpeciesRec,setShowSpeciesRec]=useState(false);
@@ -4416,11 +6283,18 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invProveedores,setInvProveedores]=useState([]);
   const [invCompras,setInvCompras]=useState([]);
   const [invLotes,setInvLotes]=useState([]);
+  const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
   const [invTab,setInvTab]=useState('stock');
+  const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
+  const [workbenchMode,setWorkbenchMode]=useState('all');
+  const [morphTargetRecipe,setMorphTargetRecipe]=useState(null);
+  const [morphAlpha,setMorphAlpha]=useState(0.5);
+  const peritoWorkerRef=useRef(null);
+  const peritoRequestIdRef=useRef(0);
   const focusFormTop=()=>requestAnimationFrame(()=>{
     const main=document.getElementById('setas-main');
     if(main) main.scrollTo({top:0,left:0});
@@ -4479,12 +6353,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -4605,6 +6479,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(l) setInvLotes(JSON.parse(l));
         if(m) setInvMovimientos(JSON.parse(m));
       }
+      setPeritoInventoryLoaded(true);
     }catch(e){}
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
@@ -4613,8 +6488,67 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
     }catch(e){
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
+    }finally{
+      setBitLotesLoaded(true);
     }
   },[]);
+
+  // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales
+  useEffect(()=>{
+    if(!bitLotesLoaded||initialDeepLinkHandled.current) return;
+    initialDeepLinkHandled.current=true;
+    try{
+      const navigation=typeof window!=='undefined'?window.SetasOSNavigation:null;
+      const target=navigation?.resolveOperationalTarget
+        ?navigation.resolveOperationalTarget(window.location)
+        :null;
+      if(!target) return;
+
+      if(target.kind==='crate'&&target.crateCode){
+        goTab('bitacora');
+        openFieldScanSheet('harvest');
+        const sheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
+        const resolved=sheetApi?sheetApi.resolveScan(target.crateCode,{crates:sheetApi.CONFIG_CRATES||[]}):null;
+        if(resolved&&(resolved.kind==='crate'||resolved.kind==='crate_unregistered')){
+          setHarvestActiveCrate({
+            crateId:resolved.crateId||('crate_'+resolved.crateCode),
+            crateCode:resolved.crateCode,
+            taraGramos:resolved.taraGramos,
+            taraSource:resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'),
+            harvestId:'COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+          });
+          setHarvestGrossInput('');
+          setHarvestTareInput(resolved.taraGramos!==null?String(resolved.taraGramos):'');
+          setHarvestTareSource(resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'));
+        }
+        return;
+      }
+
+      if(target.batchCode){
+        const found=bitLotes.find(l=>
+          l.codigo===target.batchCode||
+          l.id===target.batchCode||
+          (l.codigo&&target.batchCode&&l.codigo.toUpperCase()===target.batchCode.toUpperCase())
+        );
+        if(found){
+          setBitActiveLoteId(found.id);
+          goTab('bitacora');
+          goBitTab('bit_ficha',true);
+          if(target.kind==='bag'&&target.bagCode){
+            setQrScannedBagId(target.bagCode);
+          }
+        }else{
+          goTab('bitacora');
+          setNoticeDlg({
+            title:'Lote no encontrado localmente',
+            msg:`Se intentó abrir el lote o bolsa "${target.bagCode||target.batchCode}", pero no está registrado en los datos locales de este dispositivo. Si fue registrado recientemente en otro equipo, sincroniza la bitácora desde la nube.`
+          });
+        }
+      }
+    }catch(err){
+      console.warn('Error resolviendo target operativo de navegación:', err);
+    }
+  },[bitLotesLoaded,bitLotes]);
 
   // ── v4: sincronizar pantry con stock
   useEffect(()=>{
@@ -4632,7 +6566,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
-    const trSave=an?calcTreatment(an, sKey, SPP):null;
+    const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
@@ -4718,16 +6652,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const setEbRealFor=id=>{
     const entry=saved.find(s=>s.id===id);
     if(!entry) return;
-    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Guardar',onSubmit:val=>{
-      const n=parseFloat(val);
-      if(!Number.isFinite(n)) return;
-      const u=saved.map(s=>s.id===id?{...s,ebReal:Math.round(n*10)/10}:s);
+    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Confirmar resultado final',onSubmit:val=>{
+      const n=finiteEB(val);
+      if(n==null) return;
+      const ebReal=Math.round(n*10)/10;
+      const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
       try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
     }});
   };
 
-  const sp=SPP[sKey];
   const effectiveINGS=useMemo(()=>INGS.map(ing=>{
     const invPr=precioPonderado(ing.id,invLotes);
     if(invPr!==null) return{...ing,cost:Math.round(invPr)};
@@ -4761,17 +6695,31 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Calibración por evidencia real: lotes de Bitácora con peso seco y cosechas
   // registradas. Sin lotes reales n=0 y weight=0 — el score cae limpio al EB
   // teórico en vez de mezclarse con las filas de demo del shell.
-  const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
+  const histRows=useMemo(()=>bitacoraObservations(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
-  const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
+  const effectiveSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,recipe,effectiveINGS),[sKey,recipe,effectiveINGS]);
+  // Búsquedas híbridas desde receta vacía: objetivos de la clase por defecto de
+  // la especie (sin receta no hay sustrato que clasificar). No depende de
+  // `recipe`, así que no relanza la búsqueda en cada edición de la receta.
+  const searchSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],optimizerINGS),[sKey,optimizerINGS]);
+  // Especie activa con targets resueltos (D5/D8) — todo el render de este
+  // componente lee `sp` de aquí, no del catálogo legado SPP[sKey].
+  const sp=effectiveSPP[sKey];
+  const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS,effectiveSPP),[recipe,sKey,effectiveINGS,effectiveSPP]);
+  // Los inputs de humedad del batch siguen el objetivo resuelto (D5) al cambiar
+  // de especie o de clase de sustrato, salvo que el operador ya los haya editado
+  // a mano — en cuyo caso su valor manual no se pisa.
+  const moistureTouched=useRef({hObj:sessionStorage.getItem('setas_capture_v1:prodH')!=null});
+  useEffect(()=>{
+    const t=an?.moistureTarget; if(t==null) return;
+    if(!moistureTouched.current.hObj) setHObj(t);
+  },[sKey,an?.targets?.resolvedClass,an?.moistureTarget]);
   const coAnalysis=useMemo(()=>{
     if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
-    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,SPP);
-  },[coFormMode,recipe,coSpecConfig,effectiveINGS]);
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,effectiveSPP);
+  },[coFormMode,recipe,coSpecConfig,effectiveINGS,effectiveSPP]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
-  const readyForProduction=balanced&&hasPickedSpecies;
-  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg;
   const optimalAn=useMemo(()=>{try{
     const r=runHybridRecipeSearch({
       targetKey:sKey,
@@ -4782,30 +6730,38 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       useStock:false,
       profileKey:'produccion',
       stockMap:{},
+      spp:searchSPP,
     });
     return r.ranked?.[0]?.evaluation?.analysis||null;
-  }catch(e){return null;}},[sKey,invLotes,optimizerINGS]);
+  }catch(e){return null;}},[sKey,invLotes,optimizerINGS,searchSPP]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
-  const tr=useMemo(()=>calcTreatment(an, sKey, SPP),[an,sKey]);
-  const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn]);
-  // ── Ficha: rows precalculados para botón Ejecutar Lote ──
-  const prodRows=useMemo(()=>{
-    if(!recipe.length||!balanced) return null;
-    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-    const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn);
-    if(!pb) return null;
-    const resG=prodScaleG||0.1;
-    const roundG=x=>Math.round(x/resG)*resG;
-    return recipe.map(r=>{
-      const g=prodIngs.find(x=>x.id===r.id);
-      const it=g?pb.items.find(x=>x.name===g.name):null;
-      const krTeo=it?it.kr:0;
-      const grR=roundG(krTeo*1000);
-      const m=g?Math.min(0.92,Math.max(0,(g.moisture||0)/100)):0;
-      const masaSecaR=(grR/1000)*(1-m);
-      return{g,r,krTeo,grR,m,masaSecaR};
-    });
-  },[recipe,effectiveINGS,prodMoist,prodBags,prodKg,prodH,spawnCost,prodScaleG,an]);
+  const tr=useMemo(()=>calcTreatment(an, sKey, effectiveSPP),[an,sKey,effectiveSPP]);
+  const preparationResult=useMemo(()=>{
+    try{return {snapshot:SetasLaunchPlanApi.buildPreparationSnapshot({recipe,ingredients:effectiveINGS,moistureOverrides:prodMoist,lockedIds:[...lockedIds],speciesKey:sKey,bags:numBags,kgPerBag:kgBag,moistureTarget:hObj,scaleG:prodScaleG,spawnPct:an?.dynSpawn}),error:''};}
+    catch(e){return {snapshot:null,error:e.message};}
+  },[recipe,effectiveINGS,prodMoist,lockedIds,sKey,numBags,kgBag,hObj,prodScaleG,an?.dynSpawn]);
+  const preparation=preparationResult.snapshot;
+  const prepValid=!!preparation;
+  const readyForProduction=balanced&&hasPickedSpecies&&prepValid;
+  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg||preparationResult.error;
+  const prodIngs=useMemo(()=>effectiveINGS.map(g=>{
+    const item=preparation?.items.find(i=>i.ingredientId===g.id);
+    return item?{...g,moisture:item.moisture.pct}:g;
+  }),[effectiveINGS,preparation]);
+  const preparedBatch=useMemo(()=>preparation?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice,300,preparation):null,[preparation,recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
+  const bd=showBatch?preparedBatch:null;
+  const validatePreparation=()=>{
+    if(preparation)return true;
+    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult.error});return false;
+  };
+  const prodRows=useMemo(()=>preparation?preparation.items.map(item=>({
+    g:prodIngs.find(g=>g.id===item.ingredientId),r:recipe.find(r=>r.id===item.ingredientId),
+    krTeo:item.theoreticalWetKg,grR:item.asReceivedKg*1000,m:item.moisture.pct/100,masaSecaR:item.dryKg,
+  })):null,[preparation,prodIngs,recipe]);
+  const launchRevision=JSON.stringify([preparation,invLotes,prodBagType,an,tr,saveName,hasPickedSpecies]);
+  useEffect(()=>{
+    setLoteBatchConfirm(null);setShowProdLaunchModal(false);setCheckedSteps({});
+  },[launchRevision]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
   const lowStockCount=useMemo(()=>{
@@ -4832,6 +6788,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         stockMap,
         ingredients:INGS,
         profileKey:optProfile||'produccion',
+        spp:SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],INGS),
       });
       let cand = (r.recommended && r.recommended[0]) || (r.ranked && r.ranked[0]) || (r.pareto && r.pareto[0]) || (r.best?.recipe?.length ? r.best : null);
       if (!cand || !cand.recipe || !cand.recipe.length) {
@@ -4894,25 +6851,53 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,undefined,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,usageCounts]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts]);
+  // One committed React snapshot for the presentation bridge. Batch size,
+  // locks, inventory and evidence changes invalidate it even without a recipe edit.
+  const peritoRevisionRef=React.useRef(0);
+  useEffect(()=>{
+    const input={
+      inputRevision:++peritoRevisionRef.current,
+      species:{key:sKey,name:sp?.name||sKey,confirmed:hasPickedSpecies},
+      recipe:recipe.map(r=>({id:r.id,p:Number(r.p)})),
+      lockedIds:[...lockedIds],
+      preparation,
+      batch:{wetKg:Number(numBags)*Number(kgBag),targetMoisturePct:preparation?.target.moisturePct??Number(hObj)},
+      inventory:{available:peritoInventoryLoaded,stockKgById:{...stockMap},source:'Bodega activa'},
+      ingredients:effectiveINGS.map(g=>({id:g.id,name:g.name})),
+      ingredientMoistureById:Object.fromEntries(prodIngs.map(g=>[g.id,g.moisture??null])),
+      processCapabilities:null,approval:null,
+      treatment:tr,an,
+      historicalEvidence:{trials:saved,lotes:bitLotes,harvests:bitCosechas},
+    };
+    globalThis.__setasPeritoInput=input;
+    window.dispatchEvent(new CustomEvent('setas-perito-input',{detail:input}));
+  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded,preparation,prodIngs]);
+  useEffect(()=>{
+    const navigate=event=>{
+      const action=event.detail?.action;
+      if(action==='inventory'){goTab('inventario');return;}
+      if(action==='history'){goTab('catalogo');return;}
+      if(action==='recipe'){focusActiveRecipe();return;}
+      if(action==='species'){focusFormTop();requestAnimationFrame(()=>document.getElementById('form-species-context-select')?.focus());return;}
+      if(action==='batch') setShowBatch(true);
+      const id={batch:'bl-batch',process:'bl-tratamiento',recommendations:'perito-recommendations'}[action];
+      if(id) requestAnimationFrame(()=>{
+        const target=document.getElementById(id);
+        target?.scrollIntoView({behavior:'smooth',block:'start'});
+        if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
+      });
+    };
+    window.addEventListener('setas-perito-navigate',navigate);
+    return()=>window.removeEventListener('setas-perito-navigate',navigate);
+  });
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
   // de compra distinto en bodega — se muestra aparte, sin tocar el score, para
   // no introducir un cambio de comportamiento en runAutoOptimizer/scoreCost
   // que ya son consumidos en varios sitios con el costo de catálogo.
-  const realCostPerKg=useMemo(()=>{
-    if(!recipe.length) return null;
-    let known=false;
-    const total=recipe.reduce((s,r)=>{
-      const pp=precioPonderado(r.id,invLotes);
-      const g=effectiveINGS.find(i=>i.id===r.id);
-      if(pp!=null) known=true;
-      const price=pp!=null?pp:(g?g.cost:0);
-      return s+price*(parseFloat(r.p)||0)/100;
-    },0);
-    return known?Math.round(total):null;
-  },[recipe,invLotes,effectiveINGS]);
+  const realCostPerKg=useMemo(()=>realCostPerKgSeco(recipe,invLotes,effectiveINGS),[recipe,invLotes,effectiveINGS]);
   // Similitud de Jaccard entre conjuntos de ingredientes (ignora %, solo IDs).
   const recipeSimilarity=(recA,recB)=>{
     const a=new Set(recA.map(r=>r.id)),b=new Set(recB.map(r=>r.id));
@@ -4925,10 +6910,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // setEbRealFor) en pruebas guardadas de la misma especie, se usa para (a)
   // mostrar qué tan preciso ha sido el modelo aquí en esta bodega y (b) avisar
   // si la receta activa se parece a una prueba ya hecha, con su resultado real.
-  const trialsWithReal=useMemo(()=>saved.filter(s=>s.sKey===sKey&&s.ebReal!=null),[saved,sKey]);
+  const trialsWithReal=useMemo(()=>assessHistory(saved.filter(s=>s.sKey===sKey)).eligibleRows,[saved,sKey]);
   const modelAccuracy=useMemo(()=>{
     if(!trialsWithReal.length) return null;
-    const avgAbsDiff=trialsWithReal.reduce((s,t)=>s+Math.abs(t.ebReal-parseFloat(t.eb)),0)/trialsWithReal.length;
+    const comparable=trialsWithReal.filter(t=>finiteEB(t.eb)!=null);
+    if(!comparable.length) return null;
+    const avgAbsDiff=comparable.reduce((s,t)=>s+Math.abs(t.ebReal-finiteEB(t.eb)),0)/comparable.length;
     return Math.round(avgAbsDiff*10)/10;
   },[trialsWithReal]);
   const similarTrial=useMemo(()=>{
@@ -4986,42 +6973,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
   const autoImprove=()=>{
-    let cur=recipe;let bestScore=-1;
-    for(let i=0;i<6;i++){
-      const a=analyze(cur,sKey,effectiveINGS);
-      if(!a) break;
-      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),optUseStock,undefined,undefined,usageCounts);
-      if(o.score<=bestScore) break;
-      bestScore=o.score;
-      const candidates=o.items
-        .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
-        .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
-        .slice(0,3);
-      if(!candidates.length) break;
-      let bestCandScore=-1,bestCandidate=null,bestA2=null,bestO2=null;
-      for(const cand of candidates){
-        const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-        const tryA=analyze(tryRec,sKey,effectiveINGS);
-        if(!tryA) continue;
-        const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),optUseStock,undefined,undefined,usageCounts);
-        if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestA2=tryA;bestO2=tryO;}
-      }
-      if(!bestCandidate) break;
-      const candidate=bestCandidate;
-      const a2=bestA2;
-      if(!a2) break;
-      const o2=bestO2;
-      if(o2.score<=o.score) break; // no aceptar si no mejora el score global
-      cur=candidate;
-    }
-    setRecipe(cur);
+    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
   };
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
   // Usa getComputedStyle para resolver variables CSS (oklab, etc.) antes de escribir la ventana.
   // Recoge solo <style> inline (sin CORS) para evitar ventana en blanco.
   const openPrintWindow=(mode)=>{
-    const el=document.querySelector('.prod-sheet');
+    const el=document.querySelector('.prod-sheet[data-preparation-revision]');
     if(!el){setNoticeDlg({msg:'Genera la hoja primero (debe haber una receta activa).'});return;}
     el.querySelectorAll('input').forEach(inp=>inp.setAttribute('value',inp.value));
     const nombre=(an?.sp?.name||'Sustrato').replace(/\s+/g,'_');
@@ -5072,77 +7031,183 @@ body{margin:0;padding:20px 24px;background:#fff;}
     pw.document.title=filename;
     setTimeout(()=>{if(pw&&!pw.closed){pw.focus();pw.print();}},900);
   };
-  const printProdSheet=()=>openPrintWindow('print');
+  const printProdSheet=()=>{if(validatePreparation())openPrintWindow('print');};
   // Exporta la hoja como PDF — misma ventana, mismo mecanismo; el usuario elige "Guardar como PDF".
-  const exportPDF=()=>openPrintWindow('pdf');
+  const exportPDF=()=>{if(validatePreparation())openPrintWindow('pdf');};
   // ── Ejecutar Lote: muestra modal de confirmación antes de descontar inventario ──
   const ejecutarLote=(rows,loteNum,fecha)=>{
-    if(!rows||!rows.length) return;
-    const preview=rows.filter(x=>x.g).map(x=>{
-      const krKg=x.grR/1000;
-      const stock=invLotes.filter(l=>l.activo&&l.ingredienteId===x.g.id).reduce((s,l)=>s+l.cantidadKgDisponible,0);
-      return{id:x.g.id,name:x.g.name,krKg,stockActual:stock,unit:'kg',ok:stock>=krKg*0.999};
-    });
-    // La bolsa seleccionada en "Tipo de contenedor" también se descuenta del inventario
-    // (en unidades, no kg) — comparte el mismo modelo FIFO que el sustrato vía stockId.
-    const bt=BAG_TYPES.find(b=>b.id===prodBagType);
-    if(bt&&bt.stockId){
-      const needed=parseInt(prodBags)||0;
-      const stock=stockActual(bt.stockId,invLotes);
-      preview.push({id:bt.stockId,name:bt.name,krKg:needed,stockActual:stock,unit:'uds',ok:stock>=needed});
+    if(!validatePreparation())return;
+    if(!prepValid||!rows||!rows.length) return;
+    // Misma compuerta que "Lanzar Lote" (openProdLauncher): receta balanceada y
+    // especie elegida explícitamente antes de descontar bodega (I5c).
+    if(!readyForProduction){
+      setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
+      return;
     }
-    setLoteBatchConfirm({preview,loteNum,fecha});
-  };
-  const confirmarEjecucion=()=>{
-    if(!loteBatchConfirm) return;
-    const{preview,loteNum,fecha}=loteBatchConfirm;
-    const now=new Date().toISOString();
-    setInvLotes(prev=>{
-      const updated=consumirInventarioFIFOLocal(prev,preview);
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
-      return updated;
+    const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
+    const plan=SetasLaunchPlanApi.buildLaunchPlan({
+      preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bagType?.stockId?{ingredientId:bagType.stockId,units:preparation.target.bags}:null,
+      unitIngredientIds:UNIT_INGREDIENT_IDS,
     });
-    const ts=Date.now();
-    const newMovs=preview.map((row,i)=>({id:'mov_lote_'+ts+'_'+i,tipo:'consumo_lote',ingredienteId:row.id,kgMovidos:row.krKg,loteNum:loteNum||'—',fecha,nota:`Lote ${loteNum||'—'} · ${fecha}`,timestamp:now}));
-    saveMovimientos([...invMovimientos,...newMovs]);
-    setLoteBatchConfirm(null);
-    setLoteSyncErr('');
-    // localStorage ya descontó al instante (mismo patrón que saveR): la transacción de
-    // Firestore corre en segundo plano y es la que de verdad evita el doble descuento
-    // entre operadores/dispositivos concurrentes — un fallo de red no bloquea al operador,
-    // solo se avisa si no sincronizó.
-    if(window.SetasDB){
-      (async()=>{
-        try{
-          for(const row of preview){
-            await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
+    const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
+    const preview=[
+      ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,stockActual:stockActual(i.ingredientId,invLotes),unit:'kg',ok:!faltante(i.ingredientId)})),
+      ...(plan.spawnItem?[{id:plan.spawnItem.ingredientId,name:'Spawn (grano)',krKg:plan.spawnItem.asReceivedKg,stockActual:stockActual(plan.spawnItem.ingredientId,invLotes),unit:'kg',ok:!faltante(plan.spawnItem.ingredientId)}]:[]),
+      ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,stockActual:stockActual(u.ingredientId,invLotes),unit:'uds',ok:!faltante(u.ingredientId)})),
+    ];
+    // Nueva sesión de "Ejecutar Lote": rearma la guarda de re-entrancia (Task 8).
+    ejecutarLoteInFlight.current=false;
+    setEjecutandoLote(false);
+    setLoteBatchConfirm({preview,plan,loteNum,fecha,launchRevision});
+  };
+
+  // ── Guarda de re-entrancia contra doble clic — "Ejecutar Lote" (Task 8) ──
+  // Ref/estado propios, NO compartidos con launchInFlight/conGuardaLanzamiento
+  // (Task 7, "Lanzar Lote"): son dos flujos distintos, visibles a la vez en el
+  // mismo Formulador, con sus propios modales (loteBatchConfirm vs.
+  // prodLaunchForm/showProdLaunchModal) y sus propios puntos de reapertura. Si
+  // compartieran una sola bandera, abrir uno de los dos flujos (que rearma su
+  // guarda al abrirse, igual que openProdLauncher) podría liberar de golpe la
+  // guarda del otro flujo mientras éste sigue latched en caso 2 (consumo ya
+  // registrado, a la espera de que el operador abra una sesión nueva) —
+  // reintroduciendo el riesgo de doble descuento que la guarda existe para
+  // evitar. Mismo patrón que conGuardaLanzamiento, aplicado a su propio ref.
+  const ejecutarLoteInFlight=useRef(false);
+  const [ejecutandoLote,setEjecutandoLote]=useState(false);
+  const conGuardaEjecucion=fn=>(...args)=>{
+    if(ejecutarLoteInFlight.current) return;
+    ejecutarLoteInFlight.current=true;
+    setEjecutandoLote(true);
+    try{
+      return fn(...args);
+    }catch(e){
+      ejecutarLoteInFlight.current=false;
+      setEjecutandoLote(false);
+      console.error('Error en operación protegida por conGuardaEjecucion:',e);
+    }
+  };
+
+  const confirmarEjecucion=conGuardaEjecucion(()=>{
+    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
+      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
+    }
+    const{preview,plan,loteNum,fecha}=loteBatchConfirm;
+    let consumoRegistrado=false;
+    try{
+      const now=Date.now();
+      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now});
+      const registered=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,nota:`Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}`});
+      if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+      consumoRegistrado=true;
+
+      // Al entrar el lote en bitLotes, el N.º de lote del Formulador pasa a la
+      // siguiente sugerencia (I5b) — un segundo "Ejecutar" no reusa el código.
+      refrescarCodigoTrasEjecutar.current=true;
+      setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+      setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+      if (window.SetasBitacoraDB) {
+        (async () => {
+          try {
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
+          } catch (e) {
+            console.warn('Error respaldando lote en Firestore:', e);
           }
-          await window.SetasDB.crearLoteProduccion({
-            codigo: loteNum || ('LOTE-'+ts),
-            especie: SPP[sKey]?.name || sKey,
-            camara: '—',
-            operador: '—',
-            receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
-          });
-        }catch(err){
-          setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
-        }
-      })();
+        })();
+      }
+
+      setLoteBatchConfirm(null);
+      setLoteSyncErr('');
+      setEjecutandoLote(false);
+      // El descuento de bodega ya quedó hecho arriba por registrarConsumo: aplicado al
+      // instante en localStorage (sdp_lotes) y encolado en sdp_inventory_ops, cuya
+      // identidad es el loteId — enqueue rechaza un segundo consumo del mismo lote y
+      // el servidor guarda inventory_consumptions/{loteId} append-only. Eso es lo que
+      // evita el doble descuento; aquí solo se crea en segundo plano el registro del
+      // lote de producción en Firestore — un fallo de red no bloquea al operador,
+      // solo se avisa si no sincronizó.
+      if(window.SetasDB){
+        (async()=>{
+          try{
+            await window.SetasDB.crearLoteProduccion({
+              codigo: lote.codigo,
+              especie: SPP[sKey]?.name || sKey,
+              camara: '—',
+              operador: '—',
+              receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
+            });
+          }catch(err){
+            setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
+          }
+        })();
+      }
+    }catch(e){
+      console.error('Error al ejecutar lote:',e);
+      if(consumoRegistrado){
+        // Caso 2: el consumo de bodega YA quedó registrado (idempotente, por
+        // loteId) antes de que algo más fallara. Reintentar acuñaría un loteId
+        // nuevo y descontaría el inventario una segunda vez, así que la guarda
+        // NO se libera aquí — solo se reabre al volver a llamar ejecutarLote.
+        setLoteBatchConfirm(null);
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title:'Lote ejecutado con errores',
+          msg:`El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
+        });
+      }else{
+        // Caso 1: nada se registró todavía — es seguro reintentar. Se libera
+        // la guarda y se deja el modal de confirmación abierto.
+        ejecutarLoteInFlight.current=false;
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title:'No se pudo ejecutar el lote',
+          msg:`Ocurrió un error antes de registrar el consumo de bodega: ${e?.message||'error desconocido'}. Intenta de nuevo.`
+        });
+      }
     }
-  };
+  });
   // ── Bitácora helpers ──
-  const buildBitNuevoForm=()=>{
+  // Código SDP-{fecha}-{especie}-R{n}: misma nomenclatura en Bitácora (nuevo
+  // lote), Producción (Lanzar producción) y Formulador (N.º lote a imprimir/
+  // ejecutar) — un solo lugar para no repetir el mapa de especie→código ni
+  // dejar que una de las tres se desactualice sola.
+  const SPP_CODE={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
+  const sugerirCodigoLote=(key)=>{
     const today=new Date().toISOString().split('T')[0];
-    const sp=SPP[sKey];const tr=an?calcTreatment(an, sKey, SPP):null;
-    const SC={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
-    const sppCode=SC[sKey]||'EXP';const dc=today.replace(/-/g,'').slice(2);
-    const cnt=bitLotes.length+1;const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
+    const sppCode=SPP_CODE[key]||'EXP';const dc=today.replace(/-/g,'').slice(2);
+    const cnt=bitLotes.length+1;
+    return `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+  };
+  // Precarga el N.º de lote del Formulador con la sugerencia — sin esto el
+  // campo se queda vacío hasta que el operador escribe algo a mano, con
+  // riesgo de que invente un formato distinto al SDP-{fecha}-{especie}-R{n}
+  // que usan Bitácora y Producción. Solo autocompleta mientras el campo
+  // sigue vacío: si el operador ya escribió algo (o lo borró a propósito),
+  // un cambio de especie no se lo pisa.
+  useEffect(()=>{
+    if(!sessionStorage.getItem('setas_capture_v1:prodLoteNum') && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  },[sKey]);
+  // Tras un "Ejecutar Lote" exitoso: nueva sugerencia con el mismo generador,
+  // calculada cuando bitLotes ya incluye el lote recién creado.
+  const refrescarCodigoTrasEjecutar=useRef(false);
+  useEffect(()=>{
+    if(!refrescarCodigoTrasEjecutar.current) return;
+    refrescarCodigoTrasEjecutar.current=false;
+    if(sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  },[bitLotes]);
+  const buildBitNuevoForm=()=>{
+    const sp=effectiveSPP[sKey];const tr=an?calcTreatment(an, sKey, effectiveSPP):null;
+    const today=new Date().toISOString().split('T')[0];
+    const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
     return{
-      codigo:`SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`,
+      codigo:sugerirCodigoLote(sKey),
       especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',
-      fechaMezcla:today,fechaInoculacion:today,
-      numBolsas:nb,pesoHumedo:kb,peseSeco:parseFloat((nb*kb*(1-hm/100)).toFixed(3)),
-      spawnPct:an?.dynSpawn||tr?.spawn||8,humedad:hm,tratamiento:tr?.name||'',
+      fechaMezcla:'',fechaInoculacion:'',
+      numBolsas:'',pesoHumedo:'',peseSeco:'',
+      spawnPct:'',humedad:'',tratamiento:'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'incubacion',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
@@ -5177,44 +7242,92 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowThermalModal(true);
   };
 
+  const openThermalForCrate = (crateCode = 'CAN-01') => {
+    const dummyLote = bitLotes[0] || { codigo: 'SDP-CANASTILLA', especie: 'Canastilla Grado Alimentario', numBolsas: 1 };
+    setThermalLote(dummyLote);
+    setThermalScope('crate');
+    setThermalCosechaItem({ crateCode });
+    setShowThermalModal(true);
+  };
+
+  const sincronizarFichasPublicas = async (onlyLoteId = null) => {
+    if (!window.SetasPublicTraceDB) {
+      setNoticeDlg({
+        title: 'Servicio no disponible',
+        msg: 'El módulo de sincronización pública (SetasPublicTraceDB) no está cargado o Firestore no está conectado.'
+      });
+      return;
+    }
+    const targetLotes = onlyLoteId
+      ? bitLotes.filter(l => l.id === onlyLoteId)
+      : bitLotes;
+
+    if (!targetLotes.length) {
+      setNoticeDlg({ title: 'Sin lotes', msg: 'No hay lotes disponibles para sincronizar.' });
+      return;
+    }
+
+    setPublicSyncStatus({ running: true, message: `Sincronizando ${targetLotes.length} lote(s)...`, type: 'info' });
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    for (const lt of targetLotes) {
+      const harvests = bitCosechas.filter(c => c.loteId === lt.id);
+      const bolsas = bitBolsas.filter(b => b.loteId === lt.id);
+      try {
+        const res = await window.SetasPublicTraceDB.publicarLote(lt, harvests, bolsas);
+        if (res && res.ok) {
+          successCount++;
+        } else {
+          failedCount++;
+          errors.push(`${lt.codigo}: ${res?.reason || 'falló'}`);
+        }
+      } catch (err) {
+        failedCount++;
+        errors.push(`${lt.codigo}: ${err?.message || 'error'}`);
+      }
+    }
+
+    try {
+      localStorage.setItem('sdp_bit_lotes', JSON.stringify(bitLotes));
+    } catch (e) {}
+
+    const summaryMsg = `${targetLotes.length} lotes procesados: ${successCount} sincronizados, ${failedCount} con error.` + (errors.length ? `\nDetalles:\n${errors.slice(0, 5).join('\n')}` : '');
+    setPublicSyncStatus({
+      running: false,
+      message: summaryMsg,
+      type: failedCount > 0 ? 'warning' : 'success'
+    });
+    setNoticeDlg({
+      title: 'Trazabilidad Pública · Resultado de Sincronización',
+      msg: summaryMsg
+    });
+  };
+
   const openProdLauncher = () => {
     if (!readyForProduction || !recipe.length || !an) {
       setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
       return;
     }
     const today = new Date().toISOString().split('T')[0];
-    const sp = SPP[sKey];
-    const SC = { p_ostreatus_gris:'OST', p_ostreatus_blanco:'OBL', p_djamor_rosa:'ROS', p_eryngii:'ERY', shiitake:'SHI', lions_mane:'MEL', reishi:'REI', enoki:'ENO', nameko:'NAM' };
-    const sppCode = SC[sKey] || 'EXP';
-    const dc = today.replace(/-/g,'').slice(2);
-    const cnt = bitLotes.length + 1;
-    const codigo = `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+    const sp = effectiveSPP[sKey];
+    const codigo = sugerirCodigoLote(sKey);
 
-    // Desglose de insumos a descontar
-    const insumos = (bd?.items || []).map(it => {
-      const g = INGS.find(i => i.name === it.name || i.id === it.id);
-      const id = g ? g.id : it.name;
-      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
-      const stockActual = invLotes.filter(l => l.activo && l.ingredienteId === id).reduce((s,l) => s + l.cantidadKgDisponible, 0);
-      return {
-        id,
-        name: it.name,
-        krKg,
-        stockActual,
-        ok: stockActual >= krKg * 0.999
-      };
+    const nb=preparation.target.bags,kb=preparation.target.kgPerBag;
+    const humedadLote=preparation.target.moisturePct;
+    const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
+    const plan=SetasLaunchPlanApi.buildLaunchPlan({
+      preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bagType?.stockId?{ingredientId:bagType.stockId,units:nb}:null,
+      unitIngredientIds:UNIT_INGREDIENT_IDS,
     });
-
-    if (bd?.spawn && bd.spawn > 0) {
-      const spawnStock = invLotes.filter(l => l.activo && l.ingredienteId === 'spawn_grano').reduce((s,l) => s + l.cantidadKgDisponible, 0);
-      insumos.push({
-        id: 'spawn_grano',
-        name: `Spawn / Micelio (${sp?.name || sKey})`,
-        krKg: bd.spawn,
-        stockActual: spawnStock,
-        ok: spawnStock >= bd.spawn * 0.999
-      });
-    }
+    const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
+    const insumos=[
+      ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,unit:'kg',stockActual:stockActual(i.ingredientId,invLotes),ok:!faltante(i.ingredientId)})),
+      ...(plan.spawnItem?[{id:plan.spawnItem.ingredientId,name:'Spawn (grano)',krKg:plan.spawnItem.asReceivedKg,unit:'kg',stockActual:stockActual(plan.spawnItem.ingredientId,invLotes),ok:!faltante(plan.spawnItem.ingredientId)}]:[]),
+      ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,unit:'uds',stockActual:stockActual(u.ingredientId,invLotes),ok:!faltante(u.ingredientId)})),
+    ];
 
     setProdLaunchForm({
       codigo,
@@ -5223,159 +7336,143 @@ body{margin:0;padding:20px 24px;background:#fff;}
       cepa: '',
       fechaMezcla: today,
       fechaInoculacion: today,
-      numBolsas: numBags || 10,
-      pesoHumedo: kgBag || 1.5,
-      humedad: hObj || 67,
+      numBolsas: nb,
+      pesoHumedo: kb,
+      humedad: humedadLote,
       sala: selectedClimateRoom || 'martha_01',
       operador: 'Operario Granja Tenjo',
       notas: '',
       printQr: true,
+      launchRevision,
+      plan,
       insumos
     });
+    // Nueva sesión de lanzamiento: rearma la guarda de re-entrancia.
+    launchInFlight.current = false;
+    setLaunching(false);
     setShowProdLaunchModal(true);
   };
 
-  const ejecutarLanzamientoProduccion = () => {
-    if (!prodLaunchForm) return;
-    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
-    const nb = parseInt(numBolsas) || 1;
-    const kb = parseFloat(pesoHumedo) || 1.5;
-    const hm = parseFloat(humedad) || 67;
-    const now = new Date().toISOString();
-    const ts = Date.now();
+  // ── Guarda de re-entrancia contra doble clic / doble envío — Task 7/8.
+  // Es un ref, no un estado: toma efecto de inmediato (síncrono), antes de
+  // que React re-renderice y deshabilite el botón. No se libera solo al
+  // terminar la función (eso no protegería un segundo clic separado — cada
+  // evento de clic corre como una llamada íntegra e independiente, así que
+  // un `finally` síncrono ya habría desbloqueado la guarda para cuando el
+  // segundo clic llega). Se libera explícitamente al reabrir el lanzador
+  // (nueva sesión) o si el intento de lanzamiento no llegó a completarse.
+  const launchInFlight = useRef(false);
+  const [launching, setLaunching] = useState(false);
+  const conGuardaLanzamiento = fn => (...args) => {
+    if (launchInFlight.current) return;
+    launchInFlight.current = true;
+    setLaunching(true);
+    try {
+      return fn(...args);
+    } catch (e) {
+      // Red de seguridad genérica (Task 7/8): si la función envuelta deja
+      // escapar un error sin manejarlo ella misma, por defecto se libera
+      // la guarda — equivale al caso 1 (nada se alcanzó a registrar). Una
+      // operación que SÍ necesita mantener la guarda cerrada tras un
+      // registro parcial (caso 2) debe atrapar su propio error y decidirlo
+      // explícitamente, como hace ejecutarLanzamientoProduccion abajo — en
+      // ese caso este catch nunca se alcanza porque el error ya fue
+      // absorbido adentro.
+      launchInFlight.current = false;
+      setLaunching(false);
+      console.error('Error en operación protegida por conGuardaLanzamiento:', e);
+    }
+  };
 
-    // 1. Descontar Inventario en Bodega (FIFO)
-    const insumosADescontar = (insumos || []).filter(i => i.krKg > 0);
-    if (insumosADescontar.length > 0) {
-      setInvLotes(prev => {
-        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
-        try { localStorage.setItem('sdp_lotes', JSON.stringify(updated)); } catch(e) {}
-        return updated;
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
+    const f = prodLaunchForm;
+    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
+      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
+    }
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
+      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+      if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
+      consumoRegistrado = true;
+
+      setBitLotes(prev => {
+        const upd = [lote, ...prev];
+        try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+        return upd;
       });
-      const newMovs = insumosADescontar.map((row, i) => ({
-        id: 'mov_lote_' + ts + '_' + i,
-        tipo: 'consumo_lote',
-        ingredienteId: row.id,
-        kgMovidos: row.krKg,
-        loteNum: codigo,
-        fecha: fechaInoculacion,
-        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
-        timestamp: now
-      }));
-      saveMovimientos([...invMovimientos, ...newMovs]);
+      setBitBolsas(prev => {
+        const upd = [...prev, ...bolsas];
+        try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+        return upd;
+      });
 
-      if (window.SetasDB) {
+      if (window.SetasBitacoraDB) {
         (async () => {
           try {
-            for (const row of insumosADescontar) {
-              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
-            }
+            await window.SetasBitacoraDB.guardarLote(lote);
+            await window.SetasBitacoraDB.guardarBolsas(bolsas);
           } catch (e) {
-            console.warn('Error sincronizando descuento FIFO a Firestore:', e);
+            console.warn('Error respaldando lote en Firestore:', e);
           }
         })();
       }
+      window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter(b => b.loteId === lote.id)).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
+
+      // 3. Cerrar modal y proceder
+      setShowProdLaunchModal(false);
+
+      if (f.printQr) {
+        setThermalLote(lote);
+        setThermalBagEnd(lote.numBolsas || 12);
+        setThermalScope('all');
+        setShowThermalModal(true);
+      } else {
+        setBitActiveLoteId(lote.id);
+        goTab('bitacora');
+      }
+
+      setNoticeDlg({
+        title: '🚀 Producción de Lote Lanzada',
+        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
+      });
+    } catch (e) {
+      console.error('Error al lanzar producción de lote:', e);
+      if (consumoRegistrado) {
+        // Caso 2: el consumo de bodega YA quedó registrado (idempotente,
+        // por loteId) antes de que algo más fallara. Reintentar acuñaría
+        // un loteId nuevo y descontaría el inventario una segunda vez, así
+        // que la guarda NO se libera aquí — solo se reabre al abrir un
+        // nuevo lanzamiento (openProdLauncher). Se cierra el modal porque
+        // no hay nada seguro que reintentar desde él.
+        setShowProdLaunchModal(false);
+        setLaunching(false);
+        setNoticeDlg({
+          title: 'Lote lanzado con errores',
+          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
+        });
+      } else {
+        // Caso 1: nada se registró todavía — es seguro reintentar. Se
+        // libera la guarda y se deja el modal de lanzamiento abierto.
+        launchInFlight.current = false;
+        setLaunching(false);
+        setNoticeDlg({
+          title: 'No se pudo lanzar el lote',
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || 'error desconocido'}. Intenta de nuevo.`
+        });
+      }
     }
-
-    // 2. Crear Lote y Bolsas en Bitácora
-    const lote = {
-      id: 'BIT_' + ts,
-      codigo,
-      especie,
-      especieCientifico,
-      cepa,
-      fechaMezcla,
-      fechaInoculacion,
-      numBolsas: nb,
-      pesoHumedo: kb,
-      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
-      spawnPct: an?.dynSpawn || 8,
-      humedad: hm,
-      tratamiento: tr?.name || 'Pasteurización Térmica',
-      costoIngKg: an ? Math.round(an.cost) : 0,
-      operador,
-      objetivo: 'Lanzamiento directo desde Formulador',
-      notas,
-      estado: 'incubacion',
-      veredicto: '',
-      sala,
-      ubicacion: sala,
-      recipeRef: {
-        id: ts,
-        name: saveName || `Receta ${especie} (${codigo})`,
-        sKey,
-        recipe: [...recipe],
-        cn: an ? an.cn.toFixed(1) : '—',
-        eb: an ? an.eb.toFixed(0) : '—',
-        score: opt ? opt.score : 0,
-        cost: an ? Math.round(an.cost) : 0
-      },
-      createdAt: now
-    };
-
-    const bolsas = Array.from({ length: nb }, (_, i) => ({
-      id: 'BOLSA_' + ts + '_' + i,
-      loteId: lote.id,
-      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, '0')}`,
-      num: i + 1,
-      estado: 'sana',
-      col25: null,
-      col50: null,
-      col100: null,
-      pesoInicial: kb,
-      fechaDescarte: null,
-      motivoDescarte: '',
-      observaciones: '',
-      foto: null
-    }));
-
-    setBitLotes(prev => {
-      const upd = [lote, ...prev];
-      try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-      return upd;
-    });
-    setBitBolsas(prev => {
-      const upd = [...prev, ...bolsas];
-      try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-      return upd;
-    });
-
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
-        } catch (e) {
-          console.warn('Error respaldando lote en Firestore:', e);
-        }
-      })();
-    }
-    window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
-
-    // 3. Cerrar modal y proceder
-    setShowProdLaunchModal(false);
-
-    if (printQr) {
-      setThermalLoteId(lote.id);
-      setShowThermalModal(true);
-    } else {
-      setBitActiveLoteId(lote.id);
-      goTab('bitacora');
-    }
-
-    setNoticeDlg({
-      title: '🚀 Producción de Lote Lanzada',
-      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
-    });
-  };
+  });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
-    const nb=parseInt(form.numBolsas)||1;const ts=Date.now();
-    const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
-    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    const nb=Number(form.numBolsas);const ts=Date.now();
+    const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:null,col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_lotes',[lote,...bitLotes]],['sdp_bit_bolsas',[...bitBolsas,...bolsas]]]);}catch(e){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return null;}
+    setBitLotes([lote,...bitLotes]);setBitBolsas([...bitBolsas,...bolsas]);
     if(window.SetasBitacoraDB){
       (async()=>{
         // allSettled, no await secuencial: un fallo en guardarLote no debe
@@ -5395,7 +7492,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
       })();
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
-    window.SetasPublicTraceDB?.publicarLote(lote).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+    window.SetasPublicTraceDB?.publicarLote(lote, [], bolsas).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
@@ -5408,7 +7505,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
-      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+      const cos=bitCosechas.filter(c=>c.loteId===loteId);
+      const bol=bitBolsas.filter(b=>b.loteId===loteId);
+      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, cos, bol).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     }
   };
   const updateBitBolsa=(bolsaId,fields)=>{
@@ -5430,8 +7529,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
   };
   const addBitCosecha=(cosecha)=>{
-    const e={...cosecha,id:'COS_'+Date.now()};
-    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){bitQuotaWarn();}return upd;});
+    const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
+    setBitCosechas([...bitCosechas,e]);
     if(window.SetasBitacoraDB){
       (async()=>{
         try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
@@ -5442,6 +7542,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(loteCosecha?.codigo){
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
     }
+    return true;
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
@@ -5488,6 +7589,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         useStock:false,
         profileKey:'produccion',
         stockMap:{},
+        spp:searchSPP,
       });
       if(r.ranked?.length){setRecipe(r.ranked[0].recipe);setLockedIds([]);}
       else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
@@ -5519,6 +7621,59 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
   const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
   const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+
+  // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
+  // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
+  const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
+  const [invOps,setInvOps]=useState(readInvOps);
+  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
+  // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
+  // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
+  // guardar, la cola se re-lee y solo se le aplica el resultado de syncDue
+  // (mergeSyncResults) — una op encolada durante el await no se pierde.
+  const invSyncRef=useRef({inFlight:null,again:false});
+  const runInventorySync=useCallback(()=>{
+    const st=invSyncRef.current;
+    if(st.inFlight){st.again=true;return st.inFlight;}
+    if(!window.SetasDB?.guardarConsumoInventario) return Promise.resolve();
+    st.inFlight=(async()=>{
+      try{
+        const synced=await SetasInventoryConsumptionApi.syncDue({queue:readInvOps(),now:Date.now(),persist:rec=>window.SetasDB.guardarConsumoInventario(rec)});
+        saveInvOps(SetasInventoryConsumptionApi.mergeSyncResults(readInvOps(),synced));
+      }finally{
+        st.inFlight=null;
+        if(st.again){st.again=false;runInventorySync();}
+      }
+    })();
+    return st.inFlight;
+  },[]);
+  const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
+    const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
+    const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
+    if(!added) return false;   // this lote was already discounted: never apply twice
+    // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
+    // distintos lanzados muy seguido) deben componerse sobre el prev más
+    // reciente, no sobre el invLotes/invMovimientos capturado por closure
+    // en el render que originó cada llamada. Los movimientos se derivan
+    // solo de op.allocations — no dependen de los lotes — así que se
+    // calculan una vez fuera del updater y se reutilizan en ambos lados.
+    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
+    setInvLotes(prev => {
+      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
+      try { localStorage.setItem('sdp_lotes', JSON.stringify(r.lotes)); } catch(e) {}
+      return r.lotes;
+    });
+    setInvMovimientos(prev => {
+      const upd = [...prev, ...movimientos];
+      try { localStorage.setItem('sdp_movimientos', JSON.stringify(upd)); } catch(e) {}
+      return upd;
+    });
+    saveInvOps(queue);
+    runInventorySync();
+    return true;
+  };
+  useEffect(()=>{runInventorySync();const on=()=>runInventorySync();window.addEventListener('online',on);window.addEventListener('setas-db-ready',on);return()=>{window.removeEventListener('online',on);window.removeEventListener('setas-db-ready',on);};},[runInventorySync]);
 
   const agregarProveedor=()=>{
     const n=newProv.nombre.trim();if(!n||!newProv.municipio.trim()) return;
@@ -5767,12 +7922,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const exportR=()=>{
     if(!recipe.length) return;
-    const t=calcTreatment(an, sKey, SPP);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
+    const t=calcTreatment(an, sKey, effectiveSPP);const batch=preparedBatch;
     let txt=`SETAS DE LA PEÑA — FICHA DE RECETA\nValle de Tenjo · ${new Date().toLocaleDateString('es-CO')}\n${'─'.repeat(44)}\nESPECIE: ${sp.name} (${sp.scientific})\n\nINGREDIENTES:\n`;
     recipe.forEach(r=>{const g=INGS.find(i=>i.id===r.id);if(g) txt+=`  ${g.name.padEnd(32)}${r.p}%\n`;});
     if(an) txt+=`\nANÁLISIS:\n  C:N ${an.cn.toFixed(1)}:1  ·  N ${an.avgN.toFixed(2)}%  ·  EB ${an.eb.toFixed(0)}%  ·  $${Math.round(an.cost)}/kg\n`;
     if(t) txt+=`\nTRATAMIENTO: ${t.name}\n  ${t.temp}  ·  ${t.time}  ·  Spawn ${t.spawn}%\n  ${t.prep}\n`;
-    if(batch){txt+=`\nBATCH (${numBags}×${kgBag} kg):\n`;batch.items.forEach(i=>{txt+=`  ${i.name.padEnd(32)}${i.unit.padStart(9)}  $${Math.round(i.cost).toLocaleString()}\n`;});txt+=`  Spawn ${batch.spawn.toFixed(2)} kg  ·  TOTAL $${Math.round(batch.cost).toLocaleString()} COP\n`;}
+    if(batch){txt+=`\nBATCH (${numBags}×${kgBag} kg):\n`;batch.items.forEach(i=>{txt+=`  ${i.name.padEnd(32)}${i.unit.padStart(9)}  $${Math.round(i.cost).toLocaleString()}\n`;});txt+=`  Spawn ${batch.spawn.toFixed(2)} kg · Agua ${batch.agua.toFixed(3)} L · ${preparation.revision}  ·  TOTAL $${Math.round(batch.cost).toLocaleString()} COP\n`;}
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download=`receta_${sp.name.replace(/\s+/g,'_')}.txt`;a.click();
   };
 
@@ -5786,6 +7941,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           <div>
             <div className="panel">
+              {SetasInventoryConsumptionApi.failuresForBanner(invOps).length>0&&(
+                <div role="alert" className="inv-section" style={{borderColor:'var(--status-error)'}}>
+                  <strong>Consumos de bodega sin guardar en el servidor</strong>
+                  <ul>{SetasInventoryConsumptionApi.failuresForBanner(invOps).map(o=>(<li key={o.opId}>{o.codigo||o.loteId} · {o.attempts} intentos · {o.lastError}</li>))}</ul>
+                  <button className="btn" style={{minHeight:44}} onClick={()=>{saveInvOps(readInvOps().map(o=>o.status==='failed'?{...o,nextAttemptAt:0}:o));runInventorySync();}}>Reintentar ahora</button>
+                </div>
+              )}
               {/* STATS ROW — editorial */}
               <div className="inv-stat-row">
                 <div className="inv-stat">
@@ -5844,12 +8006,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                   {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                                 </span>
                               ))}
                             </div>
+                            {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
                         <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
@@ -5883,12 +8046,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                   {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                                 </span>
                               ))}
                             </div>
+                            {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
                         <div className="inv-section">
@@ -6275,7 +8439,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <input id="provider-city" name="providerCity" autoComplete="address-level2" className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
                     </div>
                   </div>
-                  <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                  <div className="inv-modal-actions">
                     <button className="inv-btn inv-btn-sec" onClick={()=>setShowProvModal(false)}>Cancelar</button>
                     <button className="inv-btn inv-btn-pri" onClick={agregarProveedor}>Guardar proveedor</button>
                   </div>
@@ -6285,52 +8449,455 @@ body{margin:0;padding:20px 24px;background:#fff;}
   );
 
   const workflow=typeof window!=='undefined'?window.SetasOSWorkflow:null;
-  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded'};
-  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado'};
-  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)'};
-  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
+  // El estado del lote se resuelve con la MISMA regla que aplica el servidor
+  // (functions/accept-field-event.js) y la ficha. Aquí hubo una tabla local sin
+  // `activo`, y cada llamador improvisaba su respaldo: 'incubation' en un sitio,
+  // 'planned' en otro, undefined en un tercero — mientras el servidor decía
+  // 'inoculated' para todo lote recién creado. La tabla compartida ya cubre
+  // `cuarentena`, así que el triaje de bioseguridad no pierde nada.
+  const loteLifecycleState=(lote)=>{
+    if(!lote) return 'inoculated';
+    if(lote.lifecycleState) return lote.lifecycleState;
+    const bs=typeof window!=='undefined'?window.SetasBatchSheet:null;
+    return bs&&bs.normalizeLifecycleState?bs.normalizeLifecycleState(lote.estado,'inoculated'):'inoculated';
+  };
+  const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
+  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
+  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote',discard:'Descartar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
-  const runBatchAction=(action,lote)=>{
-    if(action==='harvest'){
-      const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
-      setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
-      setShowBitCosecha(true);return;
+  const openContaminationTriage=(loteId)=>{
+    const l=bitLotes.find(x=>x.id===loteId)||bitLotes[0];
+    if(!l) return;
+    setTriageLoteId(l.id);
+    setTriagePathogenKey('trichoderma');
+    setTriageAffectedBags(1);
+    setTriageLocation(l.sala||l.ubicacion||'Sala 1');
+    setTriageDecision('isolate_bags');
+    setTriageNotes('');
+    setShowTriageModal(true);
+  };
+  const openBatchSheetModal=(loteOrId)=>{const l=typeof loteOrId==='string'?bitLotes.find(x=>x.id===loteOrId):loteOrId;if(l){setBatchSheetModalLote(l);setShowBatchSheetModal(true);}};
+  if(typeof window!=='undefined'){window.openBatchSheetModal=openBatchSheetModal;}
+
+  // ── Ficha operativa canónica del lote ─────────────────────────────────────
+  // batch-sheet.js reúne código, especie, etapa, sala, bolsas, receta, semilla,
+  // inventario, eventos, cosechas, costos, anomalías, bloqueos y evidencia en un
+  // solo objeto, y deriva de ahí las acciones válidas ahora. La UI no vuelve a
+  // decidir qué acción cabe: pregunta a la ficha.
+  const batchSheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
+  // El rol de autorización lo resuelve getFieldOperatorRole() desde
+  // usuarios/{uid}.rol de la sesión, que es contra lo que autoriza el servidor.
+  // props.isAdmin viene del selector de operario del encabezado y no coincide.
+  const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
+  useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
+  const operatorRole=fieldOperatorRole;
+  const buildSheetFor=(lote)=>{
+    if(!batchSheetApi||!lote) return null;
+    const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
+    try{
+      return batchSheetApi.buildBatchSheet({
+        lote,
+        bolsas:bitBolsas,
+        cosechas:bitCosechas,
+        events:lote.lifecycleEvents||[],
+        room,
+        role:operatorRole,
+      });
+    }catch(e){ return null; }
+  };
+
+  // Complete observations are saved locally first, then both server writes
+  // are acknowledged. Harvest/contamination open their structured capture;
+  // cancelling those forms must never create a placeholder event.
+  const reportarEventoCultivo = async (tipo, selectedLote, bag, nota = '', eventOverride = null) => {
+    const lote=qrLotesRef.current.find(l=>l.id===selectedLote?.id);
+    const qrEvents=window.SetasFieldQrEvents;
+    if(!batchSheetApi||!lote||!qrEvents?.isAllowed(buildSheetFor(lote),tipo)){
+      setNoticeDlg({title:'Acción no disponible',msg:'La acción no está permitida para este lote y tu rol en su estado actual.'});
+      return;
     }
-    if(action==='advance_stage'){
-      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
-      const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
-      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{estado:next,lifecycleState:to,lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+    if (tipo === 'riego' || tipo === 'observacion') {
+      // Suppress duplicate clicks while the same capture is being handed off.
+      const captureKey=eventOverride?.id||`${lote.id}:${tipo}`;
+      if(qrSavingRef.current.has(captureKey)) return;
+      qrSavingRef.current.add(captureKey);
+      const uid=window.SetasFirebase?.auth?.currentUser?.uid||lote.operador||'operario_local';
+      let evento=eventOverride;
+      let savedLocally=false;
+      const updateStatus=patch=>setQrEventoStatuses(previous=>{
+        const record={...previous.find(item=>item.eventId===evento.id),...patch,eventId:evento.id,event:evento,tipo,loteId:lote.id,bag,nota};
+        return [...previous.filter(item=>item.eventId!==evento.id),record];
+      });
+      try{
+        if(!evento) evento=batchSheetApi.buildCultivoEvento({batchId:lote.id,bagId:bag?.id||null,tipo,operatorId:uid,nota});
+        const previousLog=lote.lifecycleEvents||[];
+        // A retry reuses both the remote event ID and the existing local entry.
+        const nextLog=previousLog.some(entry=>entry.id===evento.id)?previousLog:batchSheetApi.appendBatchEvent(previousLog,{
+          id:evento.id,batchId:lote.id,action:tipo==='riego'?'riego':'note',operatorId:evento.operatorId,at:evento.at,
+          payload:{nota:evento.nota||'Riego registrado por QR'},
+        });
+        const updated=qrLotesRef.current.map(item=>item.id===lote.id?{...item,lifecycleEvents:nextLog}:item);
+        // Confirm durable local storage before saying saved; do not depend on
+        // updateBitLote, whose legacy setter catches quota errors internally.
+        localStorage.setItem('sdp_bit_lotes',JSON.stringify(updated));
+        qrLotesRef.current=updated;
+        setBitLotes(updated);
+        savedLocally=true;
+        updateStatus({status:'pending',savedLocally:true,error:null});
+        const result=await qrEvents.persistQuickEvent({tipo,lote,bag,nota,sheet:buildSheetFor(lote),batchSheetApi,eventDb:window.SetasEventosCultivoDB,awaitPersistence:false,event:evento});
+        const syncLog=window.SetasBitacoraDB?.actualizarLote
+          ? Promise.resolve().then(()=>window.SetasBitacoraDB.actualizarLote(lote.id,{lifecycleEvents:nextLog}))
+          : Promise.reject(new Error('Respaldo de Bitácora no disponible.'));
+        // Firestore setDoc resolves after server acknowledgement, not merely
+        // local enqueue. Both event and batch-log writes must be acknowledged.
+        Promise.all([result.syncPromise,syncLog]).then(()=>updateStatus({status:'synchronized',savedLocally:true,error:null}))
+          .catch(err=>updateStatus({status:'error',savedLocally:true,error:err.message||'No se pudo sincronizar.'}));
+        setQrEventoObsAbierta(false);
+        setQrEventoObsNota('');
+      }catch(err){
+        if(evento) updateStatus({status:'error',savedLocally,error:err.message||'No se pudo guardar el evento.'});
+        else setNoticeDlg({title:'No se pudo guardar',msg:err.message});
+      }finally{
+        qrSavingRef.current.delete(captureKey);
       }
       return;
     }
-    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
-    if(action==='inspection'){goBitTab('bit_bolsas',true);return;}
-    if(action==='contamination'){
+
+    if (tipo === 'contaminacion') {
       setDiagLoteId(lote.id);
-      const b=bitBolsas.find(x=>x.loteId===lote.id&&x.estado!=='descartada');
-      setDiagBolsaId(b?.id||'');
+      const b = bag || bitBolsas.find(x => x.loteId === lote.id && x.estado !== 'descartada');
+      setDiagBolsaId(b ? b.id : '');
       setDiagImageBase64('');
       setDiagResult(null);
       setDiagError('');
       setDiagNotes('');
+      setShowQrSheet(false);
+      setShowFieldActionModal(false);
       setShowDiagModal(true);
+      return;
+    }
+
+    if (tipo === 'cosecha_parcial') {
+      setBitActiveLoteId(lote.id);
+      openHarvestCapture({
+        loteId: lote.id,
+        bolsaId: bag ? bag.id : '',
+        codigo: bag ? bag.codigo : '',
+        flush: 1,
+        fecha: new Date().toISOString().split('T')[0],
+        pesoFresco: '',
+        calidad: '',
+        observaciones: '',
+      });
+      setShowQrSheet(false);
+      setShowFieldActionModal(false);
+      setShowBitCosecha(true);
+    }
+  };
+
+  const renderQrCaptures=(currentLote,scannedBag,currentSheet)=>{
+    if(!currentLote) return null;
+    const qrAllowedActions=new Set((currentSheet?.actions||[]).filter(action=>!action.blockedBy).map(action=>action.action));
+    return <section aria-label="Registrar en este lote" style={{marginBottom:16}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                        Reportar evento
+                      </div>
+                      {qrEventoStatuses.filter(item=>item.loteId===currentLote.id).map(item=>(
+                        <div key={item.eventId} data-testid="qr-evento-status" data-sync-status={item.status} role="status" style={{fontSize:16,lineHeight:1.5,padding:10,border:'1px solid var(--border-soft)',overflowWrap:'anywhere'}}>
+                          <strong>{item.tipo==='riego'?'Riego':'Observación'}</strong> · {item.nota}
+                          <div>{item.status==='pending'?'Guardado en este equipo · sincronización pendiente':item.status==='synchronized'?'Sincronizado con el servidor':`${item.savedLocally?'Guardado en este equipo. ': 'No se guardó en este equipo. '}${item.error}`}</div>
+                          {item.status==='error'&&<button type="button" className="inv-btn inv-btn-sec" style={{minHeight:48,fontSize:16}} onClick={()=>reportarEventoCultivo(item.tipo,currentLote,item.bag,item.nota,item.event)}>Reintentar</button>}
+                        </div>
+                      ))}
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}} data-testid="qr-reportar-evento">
+                        {qrAllowedActions.has('inspection') && (<button
+                          type="button"
+                          data-action="evento-observacion"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>setQrEventoObsAbierta(v=>!v)}
+                        >
+                          📝 Observación
+                        </button>)}
+                        {qrAllowedActions.has('riego') && (<button
+                          type="button"
+                          data-action="evento-riego"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('riego',currentLote,scannedBag)}
+                        >
+                          💧 Riego
+                        </button>)}
+                        {qrAllowedActions.has('contamination') && (<button
+                          type="button"
+                          data-action="evento-contaminacion"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('contaminacion',currentLote,scannedBag)}
+                        >
+                          ⚠️ Contaminación
+                        </button>)}
+                        {qrAllowedActions.has('harvest') && (<button
+                          type="button"
+                          data-action="evento-cosecha_parcial"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('cosecha_parcial',currentLote,scannedBag)}
+                        >
+                          🧺 Cosecha parcial
+                        </button>)}
+                      </div>
+                      {qrEventoObsAbierta&&(
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                          <textarea
+                            data-testid="qr-evento-observacion-nota"
+                            className="inv-input"
+                            rows={2}
+                            placeholder="Nota de campo (obligatoria)"
+                            value={qrEventoObsNota}
+                            onChange={e=>setQrEventoObsNota(e.target.value)}
+                            style={{resize:'vertical',fontSize:16}}
+                          />
+                          <button
+                            type="button"
+                            className="inv-btn inv-btn-pri"
+                            style={{minHeight:48}}
+                            disabled={!qrEventoObsNota.trim()}
+                            onClick={()=>reportarEventoCultivo('observacion',currentLote,scannedBag,qrEventoObsNota)}
+                          >
+                            Guardar observación
+                          </button>
+                        </div>
+                      )}
+
+    </section>;
+  };
+
+  // Registra la acción elegida en la ficha: valida contra el estado, encadena el
+  // evento inmutable y persiste la transición cuando la acción la produce.
+  /**
+   * Encola una transición para que la acepte el servidor. Es la única vía hacia
+   * `lifecycleState`: el cliente ya no lo escribe. Si el lote tiene otra
+   * transición pendiente se avisa en vez de encolar una segunda, que es la
+   * misma reserva que impide dos avances simultáneos del mismo lote.
+   */
+  const enqueueFieldTransition=async(lote,from,to)=>{
+    const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
+    const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
+      ? window.SetasFirebase.auth.currentUser.uid : null;
+    if(!SHEET||!uid) return;
+    try{
+      const db=await getFieldDb();
+      const res=await SHEET.confirmTransition({
+        db,batch:lote,from,to,accountId:uid,operatorId:uid,
+        operatorRole:await getFieldOperatorRole(),
+        expectedBatchRevision:Number.isInteger(lote.revision)?lote.revision:0,
+        confirmed:true,
+      });
+      await runFieldSync(db,uid,res.event.id,()=>{});
+    }catch(err){
+      setNoticeDlg({title:'No se pudo registrar la transición',msg:err.message});
+    }
+  };
+
+  const commitSheetAction=(sheet,lote,action,payload={})=>{
+    if(!batchSheetApi||!sheet) return false;
+    try{
+      const result=batchSheetApi.applyAction({
+        sheet,action,operatorId:lote.operador||'operador-local',
+        payload,log:lote.lifecycleEvents||[],role:operatorRole,
+      });
+      // El estado canónico lo escribe acceptFieldEvent, no el cliente: las reglas
+      // protegen lifecycleState y revision precisamente para que dos operarios
+      // sin señal no puedan avanzar el mismo lote sin que ninguna escritura vea
+      // a la otra. Aquí sólo se persiste la bitácora local y se encola la
+      // transición; el estado cambia cuando el servidor la acepta.
+      updateBitLote(lote.id,{lifecycleEvents:result.log});
+      if(result.transitioned){
+        enqueueFieldTransition(lote,sheet.state,result.state);
+      }
+      return true;
+    }catch(err){
+      setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
+      return false;
+    }
+  };
+  const runBatchAction=(action,lote,sheet=null)=>{
+    // Toda acción de campo opera sobre un lote concreto: fijarlo primero evita
+    // que la captura aterrice en el lote que quedó abierto de la ronda anterior.
+    if(lote&&lote.id!==bitActiveLoteId) setBitActiveLoteId(lote.id);
+    if(action==='harvest'){
+      const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
+      openHarvestCapture({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});
+      setShowBitCosecha(true);return;
+    }
+    if(action==='advance_stage'){
+      // La ficha decide el destino a partir de la máquina de estados; el avance
+      // sólo ocurre si la transición es válida y no hay un bloqueo declarado.
+      const activeSheet=sheet||buildSheetFor(lote);
+      if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
+      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
+      const from=loteLifecycleState(lote);const to=loteLifecycleState({estado:next});
+      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
+        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,to);
+      }
+      return;
+    }
+    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    if(action==='discard'){
+      const from=loteLifecycleState(lote);
+      if(workflow&&workflow.canTransition(from,'discarded')){
+        const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
+        // El estado canónico lo escribe acceptFieldEvent; aquí sólo la bitácora.
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,'discarded');
+      }
+      return;
+    }
+    if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
+    // Inspección, colonización y evidencia fotográfica se capturan sobre la
+    // bolsa, que es donde viven el %, la fecha y la foto.
+    if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
+    if(action==='contamination'){
+      openContaminationTriage(lote.id);
       return;
     }
     setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
   };
+  // ── Piezas de telemetría en vivo, compartidas por el cockpit ───────────────
+  // Se definen una vez y solo se montan en el Tablero de Control. TodayV2 is a
+  // dormant implementation, so mounting the strip there would invite a second
+  // operational criterion if it is ever restored.
+  // Estado del puente en vivo: transporte activo, frescura y recordatorio de
+  // que el CO₂ que se está mostrando ya viene compensado por altitud.
+  const LiveTelemetryStatusBar=()=>(
+      <div className="live-telemetry-status" data-testid="live-telemetry-status">
+        <span className={`live-telemetry-dot live-telemetry-dot--${liveTelemetry.status.connectivity}`} aria-hidden="true"></span>
+        <span className="live-telemetry-status__label">
+          Telemetría · {LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity]||'—'}
+        </span>
+        {liveTelemetry.status.activeSource && (
+          <span className="live-telemetry-status__source">vía {liveTelemetry.status.activeSource}</span>
+        )}
+        <span className="live-telemetry-status__alt" title="Los sensores NDIR subestiman el CO₂ ~26 % a esta altitud; el puente corrige cada lectura antes de evaluarla.">
+          CO₂ compensado · {liveTelemetry.status.altitudeM||2600} msnm
+        </span>
+        <button className="os-action live-telemetry-status__cfg" type="button" onClick={()=>setShowIoTHub(true)}>
+          Configurar
+        </button>
+      </div>
+  );
+
+  // Alertas de umbral accionables AHORA (ya filtradas por dwell e histéresis).
+  // Van antes de la cola de trabajo: una cámara fuera de banda gana a
+  // cualquier tarea planificada del turno.
+  const LiveAlertsSection=()=>(
+    <React.Fragment>
+        {liveTelemetry.alerts.length>0 && (
+          <section className="os-live-alerts" data-testid="hoy-live-alerts">
+            <div className="os-section-head">
+              <h2>Alertas de cámara en vivo</h2>
+              <span>{liveTelemetry.alerts.length}</span>
+            </div>
+            {liveTelemetry.alerts.slice(0,6).map(a=>(
+              <div key={a.key} className={`os-live-alert os-live-alert--${a.severity}`} data-severity={a.severity}>
+                <span className="os-live-alert__dot" aria-hidden="true"></span>
+                <div className="os-live-alert__body">
+                  <div className="os-live-alert__title">
+                    {(ROOMS_CONFIG[a.roomId]||{}).name||a.roomId} · {a.metricLabel}
+                  </div>
+                  <div className="os-live-alert__meta">{a.msg}</div>
+                </div>
+                <div className="os-live-alert__side">
+                  <span className="os-live-alert__age">{liveAgeLabel(a.ageMs)}</span>
+                  <button className="os-action" type="button"
+                    onClick={()=>{ setSelectedClimateRoom(a.roomId); goTab('clima'); }}>
+                    {a.action}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {liveTelemetry.alerts.length>6 && (
+              <div className="os-live-alerts__more">+{liveTelemetry.alerts.length-6} alerta{liveTelemetry.alerts.length-6===1?'':'s'} más en Cámaras</div>
+            )}
+          </section>
+        )}
+    </React.Fragment>
+  );
+
+  // Micro-tarjetas de telemetría ambiental por sala. A missing value remains
+  // visibly missing; a reference reading must never impersonate a sensor.
+  const LiveClimateStrip=()=>(
+      <div className="today-climate-strip" data-testid="today-climate-strip">
+        {Object.values(ROOMS_CONFIG).map(r => {
+          const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
+          const live = liveTelemetry.roomLive(r.id);
+          const sample = (live && live.sample) || {};
+          const isLive = (metric) => Number.isFinite(sample[metric]);
+          const isFresh = (metric) => isLive(metric) && live && live.freshMetrics && live.freshMetrics[metric] === true;
+          const t = isLive('temperature_c') ? sample.temperature_c : null;
+          const rh = isLive('rh_pct') ? sample.rh_pct : null;
+          const co2 = isLive('co2_ppm') ? sample.co2_ppm : null;
+          const anyLive = isLive('temperature_c') || isLive('rh_pct') || isLive('co2_ppm');
+          const completeLive = isLive('temperature_c') && isLive('rh_pct') && isLive('co2_ppm');
+          const completeFresh = isFresh('temperature_c') && isFresh('rh_pct') && isFresh('co2_ppm');
+          const vpd = climateMath && t != null && rh != null ? climateMath.calcVPD(t, rh) : null;
+          const roomAlerts = liveTelemetry.roomAlerts(r.id);
+          // An actual threshold alert always wins. Completeness and freshness
+          // only decide whether an otherwise healthy room can say "En rango".
+          const { severity, badge, statusClass } = liveClimatePresentation({
+            hasAnyLive: anyLive, completeFresh, alerts: roomAlerts,
+          });
+          const formatMetric = (value, unit, decimals=1) => value == null ? `— ${unit}` : `${Number(value).toFixed(decimals)} ${unit}`;
+
+          return (
+            <button
+              type="button"
+              key={r.id}
+              className={`today-climate-card ${severity === 'critical' ? 'os-alert-row--critical' : ''} ${anyLive ? 'today-climate-card--live' : 'today-climate-card--missing'}`}
+              onClick={() => { setSelectedClimateRoom(r.id); goTab('clima'); }}
+              aria-label={`${r.name}: ${badge}. ${anyLive ? 'Abrir telemetría de la cámara' : 'Sin telemetría conectada; abrir configuración de cámara'}`}
+              title={anyLive ? 'Ver telemetría y curvas en vivo' : 'Sin telemetría conectada'}
+            >
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,color:'var(--ink-0)'}}>
+                  {r.name}
+                </span>
+                <span className={`fos-status ${statusClass}`}>
+                  <span className="fos-status__dot" aria-hidden="true"></span>
+                  {badge}
+                </span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',fontFamily:'var(--font-num)',fontSize:14,color:'var(--ink-0)',marginTop:4}}>
+                <span>{formatMetric(t, '°C')}</span>
+                <span>{formatMetric(rh, '%')}</span>
+                <span>{formatMetric(co2, 'ppm', 0)}</span>
+                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd!=null?`${vpd} kPa`:'— kPa'}</span>
+              </div>
+              {/* La procedencia del número es parte del número: un valor de demo
+                  presentado como medición vale menos que no mostrar nada. */}
+              <div className="today-climate-card__prov">
+                {anyLive
+                  ? `${completeFresh ? liveAgeLabel(live.ageMs) : 'lectura parcial o vencida'} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
+                  : 'sin telemetría conectada · sin lectura'}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+  );
+
   const TodayV2=()=>{
     const now=Date.now();
     const source=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado)).map((lote,index)=>{
       const stats=calcLoteStats(lote.id);
-      const contaminated=stats&&stats.contPct>0;
+      const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
+      const contaminated=(stats&&stats.contPct>0)||isQuarantine;
       const inoculated=Date.parse(lote.fechaInoculacion||'');
       const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
-      return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
+      return {id:lote.id,lote,severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,blocked:(contaminated&&stats.contPct<20)||isQuarantine,
         dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
-        title:contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
-        why:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
+        title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
+        why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[loteLifecycleState(lote)]||lote.estado} · día ${age}`};
     });
     const queue=workflow?workflow.buildTodayQueue(source,now):source;
     const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
@@ -6341,56 +8908,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setQrSelectedLoteId(bitActiveLoteId||firstActive?.id||bitLotes[0]?.id||'');
         setShowQrSheet(true);
       }}>Escanear lote o registrar evento</button>
-
-      {/* Micro-tarjetas de Telemetría Ambiental en Vivo */}
-      <div className="today-climate-strip" data-testid="today-climate-strip">
-        {Object.values(ROOMS_CONFIG).map(r => {
-          const isMartha = r.id === 'martha_01';
-          const t = isMartha ? 17.2 : 18.4;
-          const rh = isMartha ? 91.5 : 88.0;
-          const co2 = isMartha ? 680 : 750;
-          const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
-          const vpd = climateMath ? climateMath.calcVPD(t, rh) : 0.21;
-          const health = climateMath ? climateMath.evalClimateHealth({
-            tC: t,
-            rhPct: rh,
-            co2Ppm: co2,
-            targets: isMartha ? { temperature_c: { min: 14, max: 20 }, rh_pct: { min: 85, max: 95 }, co2_ppm: { max: 900 } } : { temperature_c: { min: 16, max: 22 }, rh_pct: { min: 80, max: 92 }, co2_ppm: { max: 1000 } }
-          }) : { severity: 'optimal' };
-
-          return (
-            <div
-              key={r.id}
-              className={`today-climate-card ${health.severity === 'critical' ? 'os-alert-row--critical' : ''}`}
-              onClick={() => { setSelectedClimateRoom(r.id); goTab('clima'); }}
-              title="Ver telemetría y curvas en vivo"
-            >
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <span style={{fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,color:'var(--ink-0)'}}>
-                  🌱 {r.name}
-                </span>
-                <span style={{
-                  padding:'2px 6px',
-                  borderRadius:2,
-                  fontSize:10,
-                  fontWeight:700,
-                  fontFamily:'var(--font-mono)',
-                  background: health.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-                  color: health.severity === 'critical' ? 'var(--accent-terracotta)' : 'var(--moss-800)'
-                }}>
-                  {health.severity === 'critical' ? '⚠ ALERTA' : '● EN RANGO'}
-                </span>
-              </div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',fontFamily:'var(--font-num)',fontSize:14,color:'var(--ink-0)',marginTop:4}}>
-                <span>🌡 {t}°C</span>
-                <span>💧 {rh}%</span>
-                <span>💨 {co2} ppm</span>
-                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd} kPa</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
       {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
       {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
@@ -6406,22 +8923,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
     </section>;
   };
   const BatchDetailV2=({lote})=>{
-    const stats=calcLoteStats(lote.id);const state=legacyLifecycle[lote.estado]||'planned';
+    const stats=calcLoteStats(lote.id);
+    const sheet=buildSheetFor(lote);
+    const state=sheet?sheet.state:loteLifecycleState(lote);
     const isAdmin=props.isAdmin===true||props.isAdmin==='true';
-    const actions=workflow?workflow.validActions(state,isAdmin?'direccion':'operario'):[];
+    // Las acciones salen de la ficha (estado + permisos + bloqueos). Sin la ficha
+    // se cae a la máquina de estados desnuda, nunca a un menú genérico.
+    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,operatorRole).map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
-    const events=[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
-    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail">
+    const events=sheet
+      ?sheet.timeline.map((e,i)=>({id:e.eventId||e.bagId||e.cosechaId||`${e.type}-${i}`,title:e.title,meta:[e.at,e.meta].filter(Boolean).join(' · '),kind:e.provenance}))
+      :[...cosechas.map(c=>({id:c.id,title:`Cosecha · flush ${c.flush}`,meta:`${c.fecha} · ${c.pesoFresco} g`,kind:'measured'})),...bolsas.filter(b=>b.col100).map(b=>({id:b.id,title:`Colonización completa · ${b.codigo}`,meta:b.col100,kind:'manual'}))];
+    return <article className="os-batch-detail-v2" data-testid="ux-v2-batch-detail" data-batch-state={state} data-batch-completeness={sheet?sheet.completenessPct:null}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="chevron-right" size={13} color="var(--accent-olive,#5B6B44)" /> 📋 Hoja de Acción (QR)</button>
           <button className="os-action" type="button" onClick={()=>setPublicTraceModalLoteId(lote.id)} style={{display:'flex',alignItems:'center',gap:6}} title="Ver ficha pública de trazabilidad botánica"><AppIcon name="globe" size={13} color="var(--moss-700)" /> Ver Ficha Pública QR</button>
           <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> 🏷 Imprimir Etiquetas Térmicas</button>
         </div>
       </div>
-      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{lote.codigo}</div><div className="os-batch-header__species">{lote.especie}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{lifecycleLabel[state]||state}</span></div>
-        <div className="os-batch-header__meta"><span>{lote.numBolsas} bolsas</span><span>Inoculación {lote.fechaInoculacion}</span><span>{lote.recipeRef?.name||'Receta sin vincular'}</span></div>
-        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{actionLabel[actions[0]]||'Sin acciones pendientes'}</span></div></header>
+      <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{sheet?sheet.code:lote.codigo}</div><div className="os-batch-header__species">{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{sheet?sheet.stateLabel:(lifecycleLabel[state]||state)}</span></div>
+        <div className="os-batch-header__meta">
+          {sheet&&sheet.daysInStage!=null&&<span>Día {sheet.daysInStage} en {sheet.stateLabel.toLowerCase()}</span>}
+          <span>{sheet?`Sala ${sheet.room?sheet.room.name:'sin asignar'}`:(lote.sala||'Sala sin asignar')}</span>
+          <span>{sheet?`${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas`:`${lote.numBolsas} bolsas`}</span>
+          <span>Inoculación {lote.fechaInoculacion}</span>
+          <span>{sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular')}</span>
+          <span>{sheet&&sheet.spawnLot&&sheet.spawnLot.id?`Semilla ${sheet.spawnLot.id}`:'Semilla sin vincular'}</span>
+          {sheet&&sheet.consumedInventory.length>0&&<span>{sheet.consumedInventory.length} lote(s) de insumo</span>}
+          {sheet&&<span title="Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos">Trazabilidad {sheet.completenessPct}%</span>}
+        </div>
+        <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{(sheet&&sheet.nextAction&&sheet.nextAction.label)||actionLabel[actions[0]&&actions[0].action]||'Sin acciones pendientes'}</span></div></header>
+      {sheet&&(sheet.blocks.length>0||sheet.anomalies.length>0)&&(
+        <section className="os-detail-panel" data-testid="batch-blocks" style={{marginBottom:12}}>
+          <h2>Bloqueos y anomalías</h2>
+          {sheet.anomalies.map((a,i)=>(
+            <div className="os-event-row" key={`anom-${i}`}>
+              <span className="os-task-marker" aria-hidden="true"></span>
+              <div><div className="os-event-row__title">{a.severity==='critical'?'Crítico':'Atención'} · {a.detail}</div><div className="os-event-row__meta">{a.kind}</div></div>
+            </div>
+          ))}
+          {sheet.blocks.map(b=>(
+            <div className="os-event-row" key={b.code}>
+              <span className="os-task-marker" aria-hidden="true"></span>
+              <div><div className="os-event-row__title">Bloqueo · {b.detail}</div><div className="os-event-row__meta">{b.code}</div></div>
+            </div>
+          ))}
+        </section>
+      )}
       <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
       {stats&&(
         <section className="os-finance-panel" data-testid="batch-financial-closure">
@@ -6462,7 +9012,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
           {stats.flushes&&stats.flushes.length>0&&(
             <div style={{marginTop:12}}>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte por Oleada (Flushes)</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
                   <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
@@ -6481,13 +9031,119 @@ body{margin:0;padding:20px 24px;background:#fff;}
           )}
         </section>
       )}
+      {(() => {
+        const validHarvests = cosechas.filter(c => c && c.fecha);
+        const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+        const maxFlush = cosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
+        const ebVal = stats?.ebEstimada || lote.eb || lote.ebEstimada || (lote.recipeRef && lote.recipeRef.eb) || stats?.be;
+        const contamVal = stats ? (stats.contPct / 100) : (lote.contamRate ?? 0);
+        const flushesForecast = sheet?.flushForecast || (
+          typeof calculateRemainingFlushes === 'function'
+            ? calculateRemainingFlushes(lote, {
+                currentFlush: maxFlush,
+                lastFlushDate: lastHarvest?.fecha || null,
+                eb: ebVal,
+                contamRate: contamVal,
+              })
+            : (typeof calculateLotYieldAndFlushes === 'function'
+                ? calculateLotYieldAndFlushes(lote, {
+                    currentFlush: maxFlush,
+                    lastFlushDate: lastHarvest?.fecha || null,
+                    eb: ebVal,
+                    contamRate: contamVal,
+                  })
+                : null)
+        );
+        if (!flushesForecast) return null;
+        return (
+          <section className="os-finance-panel" data-testid="batch-harvest-forecast" style={{marginBottom:12}}>
+            <div className="os-finance-header">
+              <div>
+                <span className="os-finance-title">🍄 Pronóstico Dinámico de Cosechas & Oleadas</span>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
+                  Modelo cinético Arrhenius / Q10 · Especie: <b>{flushesForecast.speciesName}</b> · T° base: {flushesForecast.ambientTemp}°C (Factor térmico: {flushesForecast.thermalFactor.toFixed(2)}×)
+                </div>
+              </div>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:'var(--moss-200,#DCE1D1)',color:'var(--moss-700,#404D2E)'}}>
+                {flushesForecast.remainingFlushes.length} oleadas restantes · {flushesForecast.remainingExpectedKg.toFixed(2)} kg pendientes
+              </span>
+            </div>
+
+            <div className="os-finance-grid" style={{marginBottom:12}}>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Rendimiento Proyectado</span>
+                <span className="econ-metric-value">{flushesForecast.totalKg.toFixed(2)} kg</span>
+                <span className="econ-metric-sub">{flushesForecast.expectedKgPerBag.toFixed(3)} kg/bolsa · EB {flushesForecast.eb}%</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Pendiente por Cosechar</span>
+                <span className="econ-metric-value">{flushesForecast.remainingExpectedKg.toFixed(2)} kg</span>
+                <span className="econ-metric-sub">{flushesForecast.remainingFlushes.length} de {flushesForecast.flushes.length} oleadas</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Cinética Térmica</span>
+                <span className="econ-metric-value">{flushesForecast.thermalFactor.toFixed(2)}×</span>
+                <span className="econ-metric-sub">{flushesForecast.coldWarning ? '❄ Retraso por frío Tenjo' : flushesForecast.heatWarning ? '🔥 Estrés térmico' : 'Régimen óptimo'}</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Próxima Cosecha Recomendada</span>
+                <span className="econ-metric-value" style={{fontSize:14}}>
+                  {flushesForecast.remainingFlushes[0] ? flushesForecast.remainingFlushes[0].date : 'Ciclo cerrado'}
+                </span>
+                <span className="econ-metric-sub">
+                  {flushesForecast.remainingFlushes[0] ? `${flushesForecast.remainingFlushes[0].kg.toFixed(2)} kg en Flush ${flushesForecast.remainingFlushes[0].flush}` : 'Sin oleadas pendientes'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+              <table className="prod-tbl" style={{marginBottom:0,minWidth:480}}>
+                <thead>
+                  <tr>
+                    <th style={{textAlign:'left'}}>Oleada</th>
+                    <th style={{textAlign:'center'}}>Estado</th>
+                    <th style={{textAlign:'right'}}>Proyección (kg)</th>
+                    <th style={{textAlign:'right'}}>Aporte (%)</th>
+                    <th style={{textAlign:'right'}}>Fecha Estimada</th>
+                    <th style={{textAlign:'right'}}>Días Inoc.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flushesForecast.flushes.map((f) => (
+                    <tr key={f.flush} style={{background: f.isHarvested ? 'var(--paper-50)' : 'transparent', opacity: f.isHarvested ? 0.65 : 1}}>
+                      <td style={{fontFamily:'var(--font-mono)',fontWeight:700}}>Flush {f.flush} · <span style={{fontWeight:400,fontSize:'var(--text-xs)'}}>{f.label}</span></td>
+                      <td style={{textAlign:'center'}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',borderRadius:2,background: f.isHarvested ? 'var(--moss-100)' : 'var(--ochre-100)',color: f.isHarvested ? 'var(--moss-700)' : 'var(--ochre-700)',fontWeight:700}}>
+                          {f.isHarvested ? '✓ Cosechado' : '⏳ Proyectado'}
+                        </span>
+                      </td>
+                      <td className="num" style={{fontWeight:700}}>{f.kg.toFixed(2)} kg</td>
+                      <td className="num">{f.pctTotal.toFixed(1)}%</td>
+                      <td style={{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight: f.isHarvested ? 400 : 700, color: f.isHarvested ? 'var(--ink-400)' : 'var(--moss-700)'}}>
+                        {f.date}
+                      </td>
+                      <td className="num">{f.adjustedDays}d</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })()}
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
           <div className="os-valid-actions">
-            {actions.filter(a=>actionLabel[a]).map(action=><button key={action} className="os-action" type="button" onClick={()=>runBatchAction(action,lote)}>{actionLabel[action]}</button>)}
+            {actions.map(a=>(
+              <button key={a.action} className="os-action" type="button"
+                data-action={a.action}
+                disabled={Boolean(a.blockedBy)}
+                title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
+                onClick={()=>runBatchAction(a.action,lote,sheet)}>{a.label}</button>
+            ))}
             <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
-              🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+              🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
           <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
@@ -6495,6 +9151,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
     </article>;
   };
+  const BatchSheetModal = ({ isOpen, onClose, lote }) => {
+    if (!isOpen || !lote) return null;
+    return (
+      <AccessibleModal
+        onClose={onClose}
+        label={`Ficha Canónica del Lote ${lote.codigo || lote.id}`}
+        dialogStyle={{ width: 'min(900px, 95vw)', maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}>✕</button>
+        </div>
+        <BatchDetailV2 lote={lote} />
+      </AccessibleModal>
+    );
+  };
+  if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
     let cameras=[];
@@ -6506,36 +9178,47 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Obtener lotes activos alojados en esta sala
     const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
+    const activeSpeciesInRoom = Array.from(new Set(
+      lotesEnSala.map(l => l.especie || l.speciesKey || l.sKey).filter(Boolean)
+    ));
+    const coCultRoomOpt = activeSpeciesInRoom.length > 1
+      ? (typeof engineOptimizeChamberSetpoints === 'function'
+          ? engineOptimizeChamberSetpoints(activeSpeciesInRoom)
+          : (typeof SetasCoCultivation !== 'undefined' && typeof SetasCoCultivation.optimizeChamberSetpoints === 'function'
+              ? SetasCoCultivation.optimizeChamberSetpoints(activeSpeciesInRoom)
+              : null))
+      : null;
 
-    // Targets por defecto según sala
-    const defaultTargets = selectedClimateRoom === 'martha_01'
-      ? {
-          temperature_c: { min: 14.0, max: 20.0, target: 17.0 },
-          rh_pct: { min: 85.0, max: 95.0, target: 90.0 },
-          co2_ppm: { min: 400, max: 900, target: 600 }
-        }
-      : selectedClimateRoom === 'incubacion_01' ? {
-          temperature_c: { min: 20.0, max: 24.0, target: 22.0 },
-          rh_pct: { min: 65.0, max: 80.0, target: 72.0 },
-          co2_ppm: { min: 400, max: 1500, target: 800 }
-        } : {
-          temperature_c: { min: 16.0, max: 22.0, target: 18.5 },
-          rh_pct: { min: 80.0, max: 92.0, target: 86.0 },
-          co2_ppm: { min: 450, max: 1000, target: 700 }
-        };
+    // Targets por sala desde la fuente única (ROOM_TARGET_BANDS): las mismas
+    // bandas que evalúa el motor de umbrales del puente en vivo, para que el
+    // dashboard y el cockpit de Hoy nunca discrepen sobre qué es "en rango".
+    const defaultTargets = ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
 
-    // Datos de telemetría actuales (con soporte para inyección de telemetría en vivo vía Hub IoT / Webhooks)
-    const baseMetrics = selectedClimateRoom === 'martha_01'
-      ? { temp: 17.2, rh: 91.5, co2: 680, subTemp: 17.8, timestamp: 'hace 45s' }
-      : selectedClimateRoom === 'martha_02'
-      ? { temp: 18.4, rh: 88.0, co2: 750, subTemp: 18.9, timestamp: 'hace 1m' }
-      : { temp: 23.4, rh: 72.0, co2: 2400, subTemp: 24.8, timestamp: 'hace 35s' };
+    // Datos de telemetría actuales.
+    const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
+    const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'referencia de modelo · sin lectura de sonda' };
     const physicalMetrics=selectedCamera?{
-      temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'actualizado ahora'
+      temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'monitor de cámara'
     }:{};
     const injected = injectedClimateReadings[selectedClimateRoom];
-    // Prioridad: webhook real > monitor físico compartido > fallback de demo.
-    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}) };
+
+    // Telemetría real del puente (WebSocket / MQTT / Firestore), ya compensada
+    // por altitud. Se arma métrica por métrica porque una sala puede tener sonda
+    // de T°/HR en línea y todavía no la de CO₂.
+    const roomLive = liveTelemetry.roomLive(selectedClimateRoom);
+    const liveSample = (roomLive && roomLive.sample) || {};
+    const liveMetrics = {};
+    if (Number.isFinite(liveSample.temperature_c)) liveMetrics.temp = liveSample.temperature_c;
+    if (Number.isFinite(liveSample.rh_pct)) liveMetrics.rh = liveSample.rh_pct;
+    if (Number.isFinite(liveSample.co2_ppm)) liveMetrics.co2 = liveSample.co2_ppm;
+    if (Number.isFinite(liveSample.substrate_temperature_c)) liveMetrics.subTemp = liveSample.substrate_temperature_c;
+    const hasLiveMetrics = Object.keys(liveMetrics).length > 0;
+    if (hasLiveMetrics) liveMetrics.timestamp = `${liveAgeLabel(roomLive.ageMs)} · ${(liveSample.sources||[]).join(' + ')||'en vivo'}`;
+
+    // Prioridad: telemetría en vivo > webhook manual > monitor de cámara > demo.
+    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}), ...liveMetrics };
+    const liveRoomAlerts = liveTelemetry.roomAlerts(selectedClimateRoom);
+    const co2Correction = liveSample.co2_correction || null;
 
     const CULINARY_PROFILES = {
       firme: {
@@ -6920,9 +9603,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const values=!injected&&Array.isArray(selectedCamera?.[key])?selectedCamera[key].slice(-take):[];
       return values.length>1?values:fallback;
     };
-    const tempSeries=cameraSeries('tempSeries',generatedTempSeries);
-    const rhSeries=cameraSeries('humSeries',generatedRhSeries);
-    const co2Series=cameraSeries('co2Series',generatedCo2Series);
+    // Serie real del buffer circular del puente. Solo sustituye a la curva del
+    // shell (que es una senoide sembrada con el id de cámara) cuando hay al
+    // menos dos puntos medidos: con uno solo no hay curva que dibujar, y una
+    // línea plana falsa se lee como una cámara estable que nadie midió.
+    const liveSeriesFor=(metric,fallback)=>{
+      const values=(roomLive&&roomLive.series&&roomLive.series[metric])||[];
+      return values.length>1?values.slice(-take):fallback;
+    };
+    const tempSeries=liveSeriesFor('temperature_c',cameraSeries('tempSeries',generatedTempSeries));
+    const rhSeries=liveSeriesFor('rh_pct',cameraSeries('humSeries',generatedRhSeries));
+    const co2Series=liveSeriesFor('co2_ppm',cameraSeries('co2Series',generatedCo2Series));
+    const seriesAreLive=((roomLive&&roomLive.series&&roomLive.series.temperature_c)||[]).length>1;
 
     const tempMin = Math.min(...tempSeries);
     const tempMax = Math.max(...tempSeries);
@@ -6939,7 +9631,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <div className="climate-dashboard" data-testid="climate-dashboard">
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
-            <div><span className="climate-eyebrow">Planta de Tenjo · en vivo</span><h2 id="climate-overview-title">Módulos ambientales</h2></div>
+            <div>
+              <span className="climate-eyebrow">
+                Planta de Tenjo · {LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity]||'—'}
+                {liveTelemetry.status.activeSource?` · ${liveTelemetry.status.activeSource}`:''}
+              </span>
+              <h2 id="climate-overview-title">Módulos ambientales</h2>
+            </div>
             <div className="climate-overview-actions">
             <button
               type="button"
@@ -6950,22 +9648,44 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <AppIcon name="temp" size={13} />
               <span>Hub IoT & Firmware</span>
             </button>
-              <span className="climate-live-label"><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
+              <span className="climate-live-label" data-live={hasLiveMetrics?'true':'false'}><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
             </div>
           </div>
           {cameras.length>0?<div className="climate-module-grid">
             {cameras.map(c=>{
               const roomId=CAMERA_TO_ROOM[c.id]||selectedClimateRoom;
+              const cardLive = liveTelemetry.roomLive(roomId);
+              const cardSample = (cardLive && cardLive.sample) || {};
+              const cardHasLive = ['temperature_c','rh_pct','co2_ppm'].some(metric => Number.isFinite(cardSample[metric]));
               return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
                 <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
                 <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
                 <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
+                {!cardHasLive&&<span className="climate-module-reference">Referencia de modelo · sin lectura de sonda</span>}
                 <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
                 {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}
               </button>;
             })}
           </div>:<div className="climate-empty">Sin cámaras configuradas para telemetría.</div>}
         </section>
+
+        {/* Umbrales en vivo de la sala seleccionada. Son las mismas alertas que
+            aparecen en Hoy — filtradas por dwell e histéresis, no el semáforo
+            instantáneo — para que operario y cockpit vean exactamente lo mismo. */}
+        {liveRoomAlerts.length>0 && (
+          <section className="climate-live-alerts" data-testid="climate-live-alerts" aria-label="Alertas activas de la sala">
+            {liveRoomAlerts.map(a=>(
+              <div key={a.key} className={`os-live-alert os-live-alert--${a.severity}`} data-severity={a.severity}>
+                <span className="os-live-alert__dot" aria-hidden="true"></span>
+                <div className="os-live-alert__body">
+                  <div className="os-live-alert__title">{a.metricLabel} · {a.action}</div>
+                  <div className="os-live-alert__meta">{a.msg}</div>
+                </div>
+                <span className="os-live-alert__age">{liveAgeLabel(a.ageMs)}</span>
+              </div>
+            ))}
+          </section>
+        )}
 
         {/* Ficha del Ciclo y Sala */}
         <div className="climate-cycle-banner">
@@ -7034,8 +9754,108 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         </div>
 
-        {/* Alertas Activas */}
-        {climateHealth.alerts.length > 0 && (
+        {/* Asesor de Co-Cultivo Multiespecie en la Sala */}
+        {coCultRoomOpt && (
+          <section className="climate-live-alerts" data-testid="fruiting-cocultivation-advisor" aria-label="Asesor de Co-Cultivo Multiespecie">
+            <div
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 'var(--radius-sm, 3px)',
+                background: 'var(--paper-0, #F7F4EC)',
+                border: `1.5px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-700, #A83232)'}`,
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive, #5B6B44)' }}>
+                    🌿 Asesor de Co-Cultivo Multiespecie · Sala Compartida
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
+                    {activeSpeciesInRoom.join(' + ')} ({lotesEnSala.length} lotes activos en {room.name})
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      padding: '4px 10px',
+                      borderRadius: 2,
+                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-100, #FDF0DE)' : 'var(--coral-100, #FDE8E8)',
+                      color: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-700, #8A4B09)' : 'var(--coral-700, #A83232)',
+                      border: `1px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--moss-600, #617346)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-500, #E05252)'}`,
+                    }}
+                  >
+                    Compatibilidad Grupal: {coCultRoomOpt.groupScore}% · {coCultRoomOpt.verdict}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoCultSelectedSpecies(activeSpeciesInRoom);
+                      setShowCoCultivationModal(true);
+                    }}
+                    className="inv-btn inv-btn-sec"
+                    style={{ minHeight: 44, padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
+                  >
+                    Ver Matriz Completa →
+                  </button>
+                </div>
+              </div>
+
+              {/* Setpoints Minimax Pareto */}
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 6 }}>
+                🎯 Setpoints Pareto Minimax Recomendados para Co-Existencia:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 10 }}>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>T° Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.tempC}°C</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>HR Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.rhPct}%</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>CO₂ Límite</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.co2Ppm} ppm</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>VPD Óptimo</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.vpdKpa} kPa</div>
+                </div>
+              </div>
+
+              {/* Cuellos de Botella Liebig */}
+              {(coCultRoomOpt.bottlenecks.length > 0 || coCultRoomOpt.penalties.length > 0) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                    ⚠ Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):
+                  </div>
+                  {coCultRoomOpt.bottlenecks.map((b, idx) => (
+                    <div key={`bn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--coral-300)' }}>
+                      • {b}
+                    </div>
+                  ))}
+                  {coCultRoomOpt.penalties.map((p, idx) => (
+                    <div key={`pen-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ochre-700)', background: 'var(--ochre-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--ochre-300)' }}>
+                      • {p}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Alertas Activas (diagnóstico instantáneo).
+            Cuando el motor de umbrales en vivo ya tiene alertas para esta sala,
+            esta lista se oculta: dice lo mismo pero sin dwell ni histéresis, así
+            que con telemetría real mostraría dos veces el mismo problema — y la
+            copia sin filtrar parpadearía mientras la filtrada se mantiene. */}
+        {liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && (
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             {climateHealth.alerts.map((al, idx) => (
               <div key={idx} style={{
@@ -7090,11 +9910,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {/* 3. CO2 NDIR con compensación barométrica a 745 hPa (Tenjo) */}
           {(() => {
-            const ndirCorr = climateMath && typeof climateMath.calcBarometricCO2Correction === 'function'
-              ? climateMath.calcBarometricCO2Correction(currentMetrics.co2, 745.0, currentMetrics.temp)
-              : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36) };
+            // `currentMetrics.co2` YA viene compensado cuando la lectura entró por
+            // el puente en vivo — allí la corrección se aplica en el ingreso, antes
+            // de buffers y umbrales. Volver a llamar a calcBarometricCO2Correction
+            // aquí multiplicaría el factor 1.36 dos veces (700 ppm crudos se
+            // mostrarían como 1.276 ppm) y dispararía alertas de CO₂ inexistentes.
+            // Con dato en vivo se muestra la traza que trae la propia lectura; sin
+            // él se sigue corrigiendo aquí, que es lo único que había antes.
+            const ndirCorr = co2Correction
+              ? { correctedPpm: co2Correction.correctedPpm, baroFactor: co2Correction.baroFactor, deltaPpm: co2Correction.deltaPpm, rawPpm: co2Correction.rawPpm, live: true }
+              : climateMath && typeof climateMath.calcBarometricCO2Correction === 'function'
+                ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745.0, currentMetrics.temp), { live: false })
+                : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
             return (
-              <div className="climate-kpi-card">
+              <div className="climate-kpi-card" data-testid="climate-co2-card" data-co2-live={ndirCorr.live?'true':'false'}>
                 <div className="climate-kpi-header">
                   <span>Dióxido de Carbono (NDIR)</span>
                   <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
@@ -7102,10 +9931,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="climate-kpi-value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span>{ndirCorr.correctedPpm}</span>
                   <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
-                  <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({currentMetrics.co2} raw)</small>
+                  <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
                 <div className="climate-kpi-sub">
-                  <span>Beer-Lambert 745 hPa: <strong>{ndirCorr.baroFactor}x</strong> (+{ndirCorr.deltaPpm} ppm) · Max: {defaultTargets.co2_ppm.max} ppm</span>
+                  <span>Beer-Lambert {(co2Correction&&co2Correction.pressureHpa)||liveTelemetry.config.pressureHpa||745} hPa: <strong>{ndirCorr.baroFactor}x</strong> (+{ndirCorr.deltaPpm} ppm) · Max: {defaultTargets.co2_ppm.max} ppm</span>
                 </div>
               </div>
             );
@@ -7366,8 +10195,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
                 📈 Series Temporales de Telemetría Ambiental
               </h3>
-              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
-                Lecturas recibidas del ESP32 comparadas con las bandas óptimas del RoomCycle activo
+              <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}} data-testid="climate-series-provenance" data-series-live={seriesAreLive?'true':'false'}>
+                {seriesAreLive
+                  ? `Serie medida · ${((roomLive&&roomLive.series&&roomLive.series.temperature_c)||[]).length} muestras del buffer en vivo, comparadas con las bandas del RoomCycle activo`
+                  : 'Sin serie medida todavía · curva de referencia comparada con las bandas del RoomCycle activo'}
               </div>
             </div>
 
@@ -7543,7 +10374,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const BitacoraSection=()=>(
 <div>
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
-              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8}}>
+              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8,flexWrap:'wrap'}}>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
                 {bitActiveLoteId&&(
@@ -7556,6 +10387,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     🖨 Etiquetas
                   </button>
                 )}
+                <button
+                  className="inv-btn inv-btn-sec inv-btn-sm"
+                  onClick={()=>sincronizarFichasPublicas()}
+                  title="Sincronizar fichas públicas de trazabilidad con Firestore"
+                  style={{display:'flex',alignItems:'center',gap:4}}
+                >
+                  🌐 Sincronizar Fichas
+                </button>
+                <button
+                  className="inv-btn inv-btn-sec inv-btn-sm"
+                  onClick={()=>openThermalForCrate('CAN-01')}
+                  title="Imprimir etiquetas de canastilla grado alimentario (CAN-XX)"
+                  style={{display:'flex',alignItems:'center',gap:4}}
+                >
+                  🏷 Canastilla
+                </button>
+                {publicSyncStatus?.running&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginLeft:6,alignSelf:'center'}}>⏳ Sincronizando...</span>}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
                 {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center'}} title={bitSyncErr}>⚠ sin sincronizar</span>}
               </div>
@@ -7568,11 +10416,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:6}}>
                     <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>⊞ Cuadrícula</button>
                     <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>≡ Tabla</button>
-                    <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
                   </div>
                 </div>
                 {bitLotes.length>0&&(()=>{const allStats=bitLotes.map(lt=>({lt,s:calcLoteStats(lt.id)}));const wd=allStats.filter(x=>x.s&&x.s.totalFresco>0);const avgBE=wd.length?wd.reduce((s,x)=>s+(x.s.be||0),0)/wd.length:null;const ws=allStats.filter(x=>x.s);const avgCont=ws.length?ws.reduce((s,x)=>s+(x.s.contPct||0),0)/ws.length:null;const totalKg=allStats.reduce((s,x)=>s+(x.s?.totalFresco||0),0);return(<div className="inv-stat-row" style={{marginBottom:16}}><div className="inv-stat"><div className="inv-stat-val">{bitLotes.length}</div><div className="inv-stat-lbl">Lotes</div></div><div className="inv-stat"><div className="inv-stat-val">{avgBE!=null?avgBE.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE media</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:avgCont!=null&&avgCont>15?'var(--coral-700)':'inherit'}}>{avgCont!=null?avgCont.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">Contam. media</div></div><div className="inv-stat"><div className="inv-stat-val">{totalKg.toFixed(2)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>);})()} 
-                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
+                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
                 {bitLotes.length>0&&bitDashView==='grid'&&(
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
                     {bitLotes.map(lote=>{
@@ -7587,6 +10435,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
                               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              {SetasInventoryConsumptionApi.isPendingForLote(invOps,lote.id)&&<span className="chip" title="El consumo de bodega de este lote aún no se guardó en el servidor" style={{marginLeft:6}}>Pendiente de sincronizar inventario</span>}
                               <div style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:"var(--text-md)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
@@ -7633,7 +10482,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const bolsas=bitBolsas.filter(b=>b.loteId===bitActiveLoteId);
               const stats=calcLoteStats(bitActiveLoteId);
-              const EB={sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
+              const EB={'':{c:'var(--ink-500)',l:'Sin evaluar'},sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
               return(
                 <div className="panel" data-testid="active-lote" data-lote-id={lote.id}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>
@@ -7719,12 +10568,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <tbody>{bolsas.map(bolsa=>{
                         const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
                         const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
-                        const est=EB[bolsa.estado]||EB.sana;
+                        const est=EB[bolsa.estado]||EB[''];
                         return(
                           <tr key={bolsa.id}>
                             <td data-label="Código" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",whiteSpace:'nowrap'}}>{bolsa.codigo}</td>
                             <td data-label="Estado">
-                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
+                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado??''} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value||null})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
                                 {Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
                               </select>
                             </td>
@@ -7744,7 +10593,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <td data-label="Cosechas">
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
                                 <span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span>
-                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button>
+                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{openHarvestCapture({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+</button>
                               </div>
                             </td>
                             <td data-label="Etiqueta" style={{textAlign:'center'}}>
@@ -7776,7 +10625,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="panel">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Cosechas — {lote.codigo}</div>
-                    <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');setBitCosechaForm({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
+                    <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');openHarvestCapture({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
                   </div>
                   {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
                   {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
@@ -8029,6 +10878,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
                 </div>
 
+                {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
+                    cabecera del Tablero de Control y por encima de la cola de
+                    trabajo, porque una sala fuera de banda es lo primero que hay
+                    que atender del turno — y porque este es el cockpit que el
+                    operario ve de verdad al entrar (TodayV2 no se monta). */}
+                <div className="home-live-telemetry" style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                  <LiveTelemetryStatusBar/>
+                  <LiveAlertsSection/>
+                  <LiveClimateStrip/>
+                </div>
+
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
                   <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border-hairline)'}}>
                   <div style={{border:'1px solid var(--accent-blue-grey)',borderRadius:0,padding:'10px 14px',background:'var(--paper-1)'}}>
@@ -8091,7 +10951,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
                         else props.onStartSession&&props.onStartSession();
                       },jornada:true},
-                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
@@ -8293,7 +11153,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                       No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
@@ -8481,6 +11341,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               })}
             </div>
 
+            <div className="ed-div" aria-hidden="true"><span className="ed-div__m">Recetario</span></div>
+
             {/* ---- RECETARIO: recetas guardadas de la especie seleccionada ---- */}
             <section className="recetario-sect" id="recetario-panel" aria-labelledby="recetario-title">
               <div className="recetario-hdr">
@@ -8499,8 +11361,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {saved.length > 0 && (() => {
-                const costs = saved.map(e => {
+              {/* Resumen de la selección activa. Las métricas vienen de #218, que las
+                  movió aquí desde el panel "Finanzas & Rendimiento" de la home; al
+                  fusionar Catálogo y Recetario pasan a seguir el filtro de especie,
+                  porque el costo/kg varía demasiado entre especies para que un
+                  promedio global signifique algo (orellana ~$640 vs shiitake ~$1.730).
+                  Con "Todas" seleccionado siguen siendo las cifras de cartera de #218.
+                  El tile de ciclo se sustituyó por EB promedio: `sch` depende de
+                  `schKey`, el selector de la pestaña Cronograma, y no de estas
+                  recetas — mostraba un dato ajeno a la especie en pantalla. */}
+              {shown.length > 0 && (() => {
+                const costs = shown.map(e => {
                   const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
                   const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
                   const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
@@ -8513,33 +11384,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }).filter(c => c > 0);
                 const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
                 const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
-                const avgCycleDays = sch?.totDays || 45;
-
+                const ebs = shown.map(e => parseFloat(e.eb)).filter(v => v > 0);
+                const avgEb = ebs.length > 0 ? Math.round(ebs.reduce((a,b)=>a+b, 0) / ebs.length) : null;
+                const tiles = [
+                  {lbl:'Fórmulas Guardadas', val:shown.length, unit:shown.length===1?'receta':'recetas'},
+                  {lbl:'Costo Promedio / kg', val:'$'+avgCostKg.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'Bolsa Estándar (1.5 kg)', val:'$'+avgBagCost.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'EB Promedio', val:avgEb!=null?avgEb+'%':'—', unit:avgEb==null?'sin dato':(ebs.length===shown.length?'eficiencia biológica':`sobre ${ebs.length} de ${shown.length}`)},
+                ];
                 return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
-                      </div>
+                  <div className="recetario-kpis">
+                    <div className="recetario-kpis-lbl">Promedios · {focusSpp?focusSpp.name:'Todas las recetas'}</div>
+                    <div className="recetario-kpis-grid">
+                      {tiles.map(t => (
+                        <div key={t.lbl}>
+                          <div className="recetario-kpi-lbl">{t.lbl}</div>
+                          <div className="recetario-kpi-val">{t.val} <span>{t.unit}</span></div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
@@ -8559,15 +11421,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="sdp-ficha recetario-ficha">
                   <div className="sdp-ficha__hd" style={{background:'var(--paper-0)',padding:'12px 16px',borderBottom:'1px solid var(--border-hairline)'}}>
                     <div className="sdp-species">
-                      <div className="sdp-species__common" style={{fontFamily:'var(--font-editorial)',fontWeight:700,fontSize:'22px'}}>{focusSpp.name}</div>
+                      <div className="sdp-species__common">{focusSpp.name}</div>
                       <div className="sdp-species__latin" style={{fontFamily:'var(--font-editorial)',fontStyle:'italic'}}>{focusSpp.scientific}</div>
                     </div>
                     <div className="sdp-plateline">{SPP_CODE[focusKey]} · Tenjo · 2.600 m</div>
                   </div>
-                  <div style={{display:'flex',gap:16,padding:'12px 16px',alignItems:'center',flexWrap:'wrap'}}>
+                  <div style={{display:'flex',gap:16,padding:'12px 16px',alignItems:'flex-start',flexWrap:'wrap'}}>
                     {IMG[focusKey]&&<div className="sdp-fig__frame recetario-ficha-img" style={{width:100,height:75}}><img src={IMG[focusKey]} alt={focusSpp.name} width="100" height="75" loading="lazy" decoding="async"/></div>}
                     <div className="recetario-ficha-body" style={{flex:1,minWidth:200}}>
-                      <p className="ed-prose recetario-ficha-note" style={{margin:0}}>{focusSpp.notes.split('.')[0]+'.'}</p>
+                      <p className="ed-lede ed-drop">{focusSpp.notes}</p>
                     </div>
                   </div>
                   <div className="sdp-ficha__ft recetario-ficha-params">
@@ -8666,6 +11528,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
                               </div>
                             </div>
+                            <div style={{padding:'12px 16px',fontSize:'var(--text-sm)',lineHeight:1.5}} data-trial-outcome>
+                              <div>{finiteEB(e.ebReal)!=null?`EB observada: ${finiteEB(e.ebReal)}%. `:''}{describeHistory(assessHistory([e]))}</div>
+                              <button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginTop:8}} onClick={()=>setEbRealFor(e.id)}>Registrar resultado final</button>
+                            </div>
                             <div className="dash-card-foot" style={{display:'flex',gap:6}}>
                               <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
@@ -8691,6 +11557,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* LEFT: Texto + franja de parámetros + CTA */}
                 <div className="spp-info-left">
                   <div className="spp-info-top" style={{background:'color-mix(in oklab,var(--moss-100) 40%,var(--paper-50))'}}>
+                    <div className="ed-folio" style={{marginBottom:10}}>
+                      <span className="ed-folio__t">Ficha de especie</span>
+                      <span className="ed-folio__n">{SPP_CODE[sKey]} · Tenjo</span>
+                    </div>
                     <div className="spp-info-sci">{sp.scientific}</div>
                     <h2 className="spp-info-name">{sp.name}</h2>
                     <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:12,paddingBottom:12,borderBottom:'1px solid color-mix(in oklab,var(--moss-400) 20%,transparent)'}}>
@@ -8800,8 +11670,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
-                <span aria-hidden="true">⚡</span>
-                <span>Generador de Recetas</span>
+                <span aria-hidden="true">🧠</span>
+                <span>Perito & Generador de Recetas</span>
               </button>
             </nav>
             <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
@@ -8915,7 +11785,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               onClick={focusActiveRecipe}
               aria-label={`Revisar receta activa: ${recipe.length} ingrediente${recipe.length===1?'':'s'}`}>
               <span>Ruta de producción</span>
-              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Receta lista para preparar'}</strong>
+              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Composición lista · revisar Perito'}</strong>
               <em>{recipe.length} ingrediente{recipe.length===1?'':'s'} · Revisar receta · Autoguardado</em>
             </button>
             <button
@@ -8934,72 +11804,148 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada en Mesa de Mezcla</div>}
 
-          {/* Flujo principal: cada decisión aparece una sola vez y alimenta tanto
-              el editor manual como el Perito y el Generador automático. */}
-          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label={recipe.length>0?'Configuración activa de receta':'Flujo de nueva formulación'}>
-            {recipe.length===0?(
-              <>
-                <div className="form-flow-head">
-                  <div>
-                    <span className="form-flow-eyebrow">Nueva formulación</span>
-                    <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
-                  </div>
-                  <span className="form-flow-progress" aria-live="polite">Preparado para comenzar</span>
-                </div>
-                <ol className="form-flow-grid">
-                  <li className="form-step is-ready">
-                    <span className="form-step-num">01</span>
-                    <span className="form-step-label">Especie</span>
-                    <div className="form-step-species-state">
-                      <strong>{hasPickedSpecies?sp.name:'Pendiente'}</strong>
-                      <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
-                    </div>
-                    <span className="form-step-help">Define los rangos C:N, pH y EB.</span>
-                  </li>
-                  <li className="form-step is-ready">
-                    <span className="form-step-num">02</span>
-                    <span className="form-step-label">Origen</span>
-                    <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
-                      <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Solo bodega</button>
-                      <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Paleta completa</button>
-                    </div>
-                    <span className="form-step-help">{globalMode==='produccion'?'Usa únicamente el stock disponible.':'Permite explorar todo el catálogo.'}</span>
-                  </li>
-                  <li className={`form-step${hasPickedSpecies?' is-ready':''}`}>
-                    <span className="form-step-num">03</span>
-                    <span className="form-step-label">Ingredientes</span>
-                    <div className="form-step-actions">
-                      <button type="button" onClick={focusIngredientCatalog}>Elegir manualmente</button>
-                      <button type="button" onClick={()=>openBuilderSubTab('generador')}>Usar generador</button>
-                    </div>
-                    <span className="form-step-help">Agrega insumos o calcula una base.</span>
-                  </li>
-                  <li className="form-step">
-                    <span className="form-step-num">04</span>
-                    <span className="form-step-label">Validar y guardar</span>
-                    <button type="button" className="form-step-primary" disabled onClick={()=>document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'})}>Agrega ingredientes</button>
-                    <span className="form-step-help">Revisa balance, riesgo, costo y tratamiento.</span>
-                  </li>
-                </ol>
-              </>
-            ):(
-              <div className="form-flow-complete">
-                <div>
-                  <span className="form-flow-eyebrow">Configuración activa</span>
-                  <strong>{hasPickedSpecies?`${sp.name} · ${globalMode==='produccion'?'Bodega':'Paleta completa'}`:'Falta definir la especie'}</strong>
-                </div>
-                <span className="form-flow-progress" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'} · Perito {Math.round(opt.score)}/100</span>
-                <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>Editar especie y origen</button>
+          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
+          {recipe.length>0&&(
+            <section className="form-summary-strip" aria-label="Resumen de receta activa">
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Especie</span>
+                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
+                <span className="os-provenance-line">Manual</span>
               </div>
-            )}
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Objetivo</span>
+                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
+                <span className="os-provenance-line">Modo activo</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Peso total</span>
+                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">C:N</span>
+                <span className="form-summary-v">{an?.cn!=null?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line">{[SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">BE estimada</span>
+                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="os-provenance-line">Hipótesis</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Costo/kg</span>
+                <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="os-provenance-line">COP / kg seco</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Revisión</span>
+                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
+                  Perito {Math.round(opt?.score||0)}/100
+                </span>
+                <span className="os-provenance-line">Perito · Requiere revisión</span>
+              </div>
+            </section>
+          )}
+
+          {/* 5.2 Recorrido en 5 pasos visibles con estados explícitos */}
+          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label="Recorrido de formulación en 5 pasos">
+            <div className="form-flow-head">
+              <div>
+                <span className="form-flow-eyebrow">Recorrido metodológico</span>
+                <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
+                  01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
+                </div>
+              </div>
+              <span className="form-flow-progress" aria-live="polite">
+                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
+              </span>
+            </div>
+            <ol className="form-flow-grid form-flow-grid--5">
+              {/* Paso 01: Especie */}
+              <li className={`form-step ${hasPickedSpecies?'is-ready':''}`}>
+                <span className="form-step-num">01</span>
+                <span className="form-step-label">Especie</span>
+                <div className="form-step-species-state">
+                  <strong>{hasPickedSpecies?(sp?.name||'Pendiente'):'Pendiente'}</strong>
+                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
+                </div>
+                <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
+                  {hasPickedSpecies?'Completado':'Activo'}
+                </span>
+                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
+              </li>
+
+              {/* Paso 02: Objetivo */}
+              <li className="form-step is-ready">
+                <span className="form-step-num">02</span>
+                <span className="form-step-label">Objetivo</span>
+                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+                </div>
+                <span className="form-step-state-badge is-completado">Completado</span>
+                <span className="form-step-help">{globalMode==='produccion'?'Stock físico de Bodega Tenjo.':'Paleta exploratoria de investigación.'}</span>
+              </li>
+
+              {/* Paso 03: Ingredientes */}
+              <li className={`form-step ${recipe.length>0?'is-ready':''}`}>
+                <span className="form-step-num">03</span>
+                <span className="form-step-label">Ingredientes</span>
+                <div className="form-step-actions">
+                  <button type="button" onClick={focusIngredientCatalog}>Manual</button>
+                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Generador</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
+                  {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
+                </span>
+                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
+              </li>
+
+              {/* Paso 04: Balance */}
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
+                <span className="form-step-num">04</span>
+                <span className="form-step-label">Balance</span>
+                <div className="form-step-species-state">
+                  <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
+                  <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
+                </span>
+                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
+              </li>
+
+              {/* Paso 05: Revisión */}
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
+                <span className="form-step-num">05</span>
+                <span className="form-step-label">Revisión</span>
+                <button
+                  type="button"
+                  className="form-step-primary"
+                  disabled={recipe.length===0}
+                  onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                  Dictamen Perito
+                </button>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(opt?.score||0)>=70?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt?.score||0)}/100`}
+                </span>
+                <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
+              </li>
+            </ol>
           </section>
 
           <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
             <div className="form-species-identity">
               <span className="form-species-kicker">Especie activa</span>
               <div>
-                <strong id="form-species-context-title">{hasPickedSpecies?sp.name:'Selecciona una especie'}</strong>
-                <em>{hasPickedSpecies?sp.scientific:'La evaluación se adapta a sus objetivos biológicos.'}</em>
+                <strong id="form-species-context-title">{hasPickedSpecies?(sp?.name||'Especie activa'):'Selecciona una especie'}</strong>
+                <em>{hasPickedSpecies?(sp?.scientific||'Sin clasificar'):'La evaluación se adapta a sus objetivos biológicos.'}</em>
               </div>
             </div>
             <label className="form-species-picker" htmlFor="form-species-context-select">
@@ -9017,12 +11963,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
             <div className="form-species-targets" aria-label="Objetivos de la especie activa">
-              <span><small>C:N objetivo</small><b>{hasPickedSpecies?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
-              <span><small>N objetivo</small><b>{hasPickedSpecies?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
-              <span><small>EB meta</small><b>{hasPickedSpecies?`${sp.eb_optimal}%`:'—'}</b></span>
+              <span><small>C:N objetivo</small><b>{hasPickedSpecies&&sp?.cn_optimal?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+              <span><small>N objetivo</small><b>{hasPickedSpecies&&sp?.n_optimal?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+              <span><small>EB meta</small><b>{hasPickedSpecies&&sp?.eb_optimal!=null?`${sp.eb_optimal}%`:'—'}</b></span>
               <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
             </div>
           </section>
+
 
           {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
               Decisión de diseño:
@@ -9051,17 +11998,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="live-dash-tray" id="bl-receta">
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
-                    <div className="rec-empty-sub">Selecciona ingredientes a la izquierda para comenzar a formular.</div>
-                    <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                      <button onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Abrir Generador</button>
-                    </div>
+                    <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
+                    <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
                   </div>
                 </div>
               </div>
             ) : (()=>{
-              const sm2=PERITO_STATUS[opt.status]||PERITO_STATUS.sin_receta;
+              const sm2=PERITO_STATUS[opt?.status]||PERITO_STATUS.sin_receta;
               const limiter=peritoMainLimiter(opt,an);
               const ebVal=an?blendEBWithHistory(an,histStats):0;
               const ebOpt=sp?.eb_optimal||100;
@@ -9069,7 +12012,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const ebOk=ebVal>=ebOpt;
               const ebMid=ebVal>=ebBase;
               const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
-              const totOk=an?Math.abs(an.tot-100)<=0.5:false;
+              const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=MASS_BALANCE_TOL:false;
               const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
 
               return(
@@ -9093,10 +12036,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}
                         className="live-dash-pill"
                         style={{background:sm2.bg||'var(--paper-100)',borderColor:`${sm2.badge}40`,cursor:'pointer'}}
-                        aria-label={`Score Perito: ${Math.round(opt.score)} de 100, ${sm2.label}. Ver análisis completo`}
-                        title={`Score Perito: ${Math.round(opt.score)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
+                        aria-label={`Score Perito: ${Math.round(opt?.score||0)} de 100, ${sm2.label}. Ver análisis completo`}
+                        title={`Score Perito: ${Math.round(opt?.score||0)}/100 · ${sm2.label}\nClick para ver análisis completo`}>
                         <IconTarget size={11} color={sm2.badge} />
-                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt.score)}</span>
+                        <span style={{color:sm2.badge,fontWeight:800}}>{Math.round(opt?.score||0)}</span>
                       </button>
 
                       {/* EB */}
@@ -9109,9 +12052,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div
                         className="live-dash-pill"
                         style={{background:totOk?'rgba(77,98,53,.08)':'rgba(168,67,42,.08)',borderColor:`${totColor}40`}}
-                        title={`Balance de masa: ${an?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
+                        title={`Balance de masa: ${an?.tot!=null?an.tot.toFixed(1):'0'}% (ideal 100%)`}>
                         <span style={{color:totColor,display:'inline-flex',alignItems:'center',gap:3}}>
-                          {an?an.tot.toFixed(0):'0'}%
+                          {an?.tot!=null?an.tot.toFixed(0):'0'}%
                           {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
                         </span>
                       </div>
@@ -9120,9 +12063,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {/* Región viva para lectores de pantalla: anuncia cambios de estado
                         que hoy solo se comunican por color (score/EB/balance de masa). */}
                     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-                      {`Score Perito ${Math.round(opt.score)} de 100, ${sm2.label}. `}
+                      {`Score Perito ${Math.round(opt?.score||0)} de 100, ${sm2.label}. `}
                       {`Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk?', meta alcanzada':(ebMid?', por debajo de la meta':', por debajo de la línea base')}. `}
-                      {`Balance de masa ${an?an.tot.toFixed(0):'0'} por ciento${totOk?', correcto':', requiere ajuste al 100 por ciento'}.`}
+                      {`Balance de masa ${an?.tot!=null?an.tot.toFixed(0):'0'} por ciento${totOk?', correcto':', requiere ajuste al 100 por ciento'}.`}
                     </div>
 
                     {/* Acciones compactas */}
@@ -9220,7 +12163,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                       {/* Acciones de balance y edición de la receta (antes en el header de #bl-receta) */}
                       <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                        {an&&Math.abs(an.tot-100)>0.5&&(
+                        {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
                           <div style={{display:'flex',gap:2,alignItems:'center'}}>
                             <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}>⚡ Auto-balancear 100%</button>
                             <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
@@ -9246,7 +12189,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             if((it.icon==='↑C:N'||it.icon==='↓N')&&isCarbBase) return true;
                             return false;
                           };
-                          const rowFlag=recipe.length>0?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
+                          const rowFlag=(recipe.length>0&&opt?.items)?(opt.items.find(it=>it.priority==='critical'&&roleMatch(it))||opt.items.find(it=>it.priority==='warning'&&roleMatch(it))):null;
                           return(
                           <div key={r.id} className={`rec-row${isLocked?' rec-locked':''}${!balanced&&!isLocked?' is-adjustable':''}`} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 10px',borderBottom:'1px solid var(--paper-300)',flexWrap:'wrap'}}>
                             <button type="button" className={`lock-btn mix-lock-btn${isLocked?' on':''}`} onClick={()=>toggleLock(r.id)} aria-label={isLocked?`Desbloquear porcentaje de ${g?.name||''}`:`Fijar porcentaje de ${g?.name||''}`} title={isLocked?'Desbloquear (incluir en auto-ajuste)':'Fijar este % (excluir del auto-ajuste)'} style={{flexShrink:0}}>
@@ -9270,7 +12213,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         );})}
                       </div>
-                      {an&&<div className={`tbar ${an.tot>=99&&an.tot<=101?'ok':an.tot<95||an.tot>105?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
+                      {an&&<div className={`tbar ${isMassBalanced(an)?'ok':(an.tot<EB_PENALTY_BALANCE_BAND.min||an.tot>EB_PENALTY_BALANCE_BAND.max)?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
                       {normMode&&recipe.length>0&&(
                         <div className="norm-bar">
                           <span>⇌</span>
@@ -9587,7 +12530,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
                   )}
@@ -9640,13 +12583,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         ].map((m,i)=>(
                           <div key={m.l} style={{flex:1,padding:'7px 8px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
                             <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
+                            <div style={{fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',fontWeight:700,fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
                           </div>
                         ))}
                       </div>
                       {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
                         </div>}
                       {histStats&&histStats.n>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
@@ -9664,12 +12607,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
                         {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
@@ -9763,9 +12706,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:moistureInTargetRange(hObj,an?.targets?.moisture)?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
                     <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
@@ -9806,9 +12749,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.cost/bd.wet).toLocaleString()}</div>
                         </div>
                       </div>
-                      {vegPrice>0&&an&&an.eb>0&&(()=>{
+                      {bd.freshPriceKg>0&&an&&an.eb>0&&(()=>{
                         const yieldKg=bd.dry*(an.eb/100);
-                        const revenue=yieldKg*vegPrice;
+                        const revenue=yieldKg*bd.freshPriceKg;
                         const margin=revenue-bd.totalCost;
                         const marginPct=revenue>0?((margin/revenue)*100).toFixed(1):0;
                         const positive=margin>=0;
@@ -9827,7 +12770,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               ))}
                             </div>
-                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${vegPrice.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
+                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${bd.freshPriceKg.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
                           </div>
                         );
                       })()}
@@ -9857,7 +12800,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
                   if(!recipe.length){setNoticeDlg({msg:'No hay receta.'});return;}
-                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt.score}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
+                  const p={version:'1.0',exportedAt:new Date().toISOString(),especie:{key:sKey,nombre:an?.sp?.name},receta:recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return{id:r.id,nombre:g?.name,porcentaje:r.p};}),analisis:an?{cn:an.cn,n:an.avgN,eb:an.eb,costo:an.cost,score:opt?.score||0}:null,tratamiento:tr?{metodo:tr.name,temp:tr.temp,tiempo:tr.time}:null};
                   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`receta_${sKey}_${new Date().toISOString().slice(0,10)}.json`;a.click();
                 }}><span aria-hidden="true">↓</span> JSON</button>
                 <button className="btn" onClick={()=>{
@@ -9990,7 +12933,411 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='generador'&&(
           <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
-{/* ── GENERADOR DE RECETAS ── */}
+            {/* ── WORKBENCH PERITO & OPTIMIZADOR BAR ── */}
+            <div className="workbench-top-bar" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,margin:'12px 0 16px',flexWrap:'wrap',paddingBottom:12,borderBottom:'1.5px solid var(--border-soft)'}}>
+              <div>
+                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Intelligence & Optimization Suite</div>
+                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Workbench Perito & Generador de Recetas</h1>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <button type="button" className="btn sm" onClick={()=>openBuilderSubTab('formular')}>← Volver a Mesa de Mezcla</button>
+              </div>
+            </div>
+
+            <div className="seg-row perito-workbench-modes" style={{marginBottom:18,display:'flex',gap:6,background:'var(--paper-200)',padding:4,borderRadius:'var(--r-sm)',flexWrap:'wrap'}}>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='all'?' on':''}`}
+                onClick={()=>setWorkbenchMode('all')}>
+                🌐 Vista Integral
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='perito'?' on':''}`}
+                onClick={()=>setWorkbenchMode('perito')}>
+                🔍 Perito Diagnóstico Vivo
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='optimizador'?' on':''}`}
+                onClick={()=>setWorkbenchMode('optimizador')}>
+                ⚡ Optimizador Generativo
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='morphing'?' on':''}`}
+                onClick={()=>setWorkbenchMode('morphing')}>
+                ⚖️ Comparador & Morphing {morphTargetRecipe?'(1 activo)':''}
+              </button>
+            </div>
+
+            {/* ── SECCIÓN 1: PERITO DIAGNÓSTICO VIVO (STANDALONE) ── */}
+            {['all','perito'].includes(workbenchMode)&&(()=>{
+              const hasPer=recipe.length>0;
+              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+              const criticals=items.filter(s=>s.priority==='critical');
+              const warnings=items.filter(s=>s.priority==='warning');
+              const tips=items.filter(s=>s.priority==='tip');
+              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+              const restrictiveFactor=engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null);
+              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+              const cur=sp?Math.min(an?.cn||0,max):0;
+              const cnOk=sp&&an&&an.cn>=oMin&&an.cn<=oMax;
+              const reqPsi=engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03);
+              const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+
+              return (
+                <section className="panel perito-standalone-panel" style={{background:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,marginBottom:16,paddingBottom:14,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap'}}>
+                    <div style={{display:'flex',gap:14,alignItems:'center'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:68,height:68,borderRadius:'50%',background:sm.badge,flexShrink:0,boxShadow:'0 4px 10px rgba(0,0,0,.1)'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.8)',letterSpacing:'var(--tracking-button)',marginTop:2}}>PERITO</span>
+                      </div>
+                      <div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,fontWeight:800}}>Dictamen Pericial Dinámico · Receta Activa</div>
+                        <h2 style={{fontFamily:'var(--font-display)',fontSize:"var(--text-xl)",fontWeight:700,color:sm.txt,margin:'2px 0 4px'}}>{sm.veredicto}</h2>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)'}}>
+                          {sm.accion} · Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                      {recipeHistory.length>0&&<button type="button" onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>Deshacer ({recipeHistory.length})</button>}
+                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer'}}>🤖 Consultar IA</button>
+                    </div>
+                  </div>
+
+                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
+                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                        <span style={{fontSize:16}}>{restrictiveFactor.severity==='critical'?'🚨':restrictiveFactor.severity==='warning'?'⚖️':'🌿'}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                          Factor Restrictivo Estimado: {restrictiveFactor.label}
+                        </span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
+                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
+                      </div>
+                      {restrictiveFactor.counterfactualOpportunity&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
+                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
+                        </div>
+                      )}
+                      {restrictiveFactor.actionRequired&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                          ➜ Acción correctiva: {restrictiveFactor.actionRequired}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
+                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
+                        🏔️ Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
+                      </div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                        All American 1941X: {reqPsi.toFixed(2)} psig
+                      </span>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
+                      <div>
+                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                      </div>
+                      <div>
+                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
+                      </div>
+                      <div>
+                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumen Métricas */}
+                  {an&&(
+                    <div className="mgrid" style={{marginBottom:14}}>
+                      {[
+                        {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
+                        {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                        {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                        {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                      ].map(m=>(
+                        <div key={m.l} className="mc">
+                          <div className="mlbl">{m.l}</div>
+                          <div className="mval">{m.v}</div>
+                          <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Gauges */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginBottom:16}}>
+                    <EBDial an={an} sp={sp}/>
+                    {sp&&an?.cn>0&&(
+                      <div className="gauge-wrap" style={{marginTop:0}}>
+                        <div className="gauge-hdr">
+                          <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                          <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                        </div>
+                        <div className="gauge-tr">
+                          <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                          <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                        </div>
+                        <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                        <NitrogenChart recipe={recipe}/>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sugerencias Dinámicas con Simulación Delta */}
+                  <div className="perito-suggestions-deck" style={{marginTop:12}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,paddingBottom:6,borderBottom:'1px solid var(--border-soft)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                        Sugerencias Inteligentes con Simulación Delta ({items.length})
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                        Simulación de impacto en vivo sin mutar mesa
+                      </div>
+                    </div>
+
+                    {criticals.length===0&&warnings.length===0&&tips.length===0&&(
+                      <div style={{padding:'12px 16px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#2F4A24'}}>
+                        ✓ Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
+                      </div>
+                    )}
+
+                    {criticals.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)',marginBottom:6}}>
+                          Críticos ({criticals.length})
+                        </div>
+                        {criticals.map((item,i)=>(
+                          <PeritoItem
+                            key={i}
+                            item={item}
+                            onApply={applyOptStep}
+                            baseScore={opt.score}
+                            recipe={recipe}
+                            lockedIds={lockedIds}
+                            ingredients={optimizerINGS}
+                            speciesKey={sKey}
+                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {warnings.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)',marginBottom:6}}>
+                          Mejoras y Balance ({warnings.length})
+                        </div>
+                        {warnings.map((item,i)=>(
+                          <PeritoItem
+                            key={i}
+                            item={item}
+                            onApply={applyOptStep}
+                            baseScore={opt.score}
+                            recipe={recipe}
+                            lockedIds={lockedIds}
+                            ingredients={optimizerINGS}
+                            speciesKey={sKey}
+                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {tips.length>0&&(
+                      <details style={{marginBottom:10}}>
+                        <summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'6px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}>
+                          <span>Opcionales &amp; Ajustes Finos ({tips.length})</span>
+                          <span style={{fontSize:"var(--text-xs)"}}>▾</span>
+                        </summary>
+                        <div style={{marginTop:6}}>
+                          {tips.map((item,i)=>(
+                            <PeritoItem
+                              key={i}
+                              item={item}
+                              onApply={applyOptStep}
+                              baseScore={opt.score}
+                              recipe={recipe}
+                              lockedIds={lockedIds}
+                              ingredients={optimizerINGS}
+                              speciesKey={sKey}
+                              onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                            />
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
+
+            {/* ── SECCIÓN 2: COMPARADOR & MORPHING DE RECETAS ── */}
+            {['all','morphing'].includes(workbenchMode)&&(()=>{
+              const activeCandidate = morphTargetRecipe || (optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe) || [];
+              const hasCandidate = activeCandidate && activeCandidate.length > 0;
+              const hasBase = recipe && recipe.length > 0;
+              const morphedRec = (hasBase && hasCandidate && engineMorphRecipes)
+                ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds)
+                : (recipe || []);
+              const anMorph = (hasBase && hasCandidate)
+                ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP)
+                : an;
+              const scoreMorphObj = (hasBase && hasCandidate && anMorph)
+                ? scoreAn(anMorph, { recipe: morphedRec })
+                : opt;
+              const scoreMorph = Math.round(scoreMorphObj?.score || 0);
+
+              const trajectoryAnalysis = (hasBase && hasCandidate && engineAnalyzeMorphTrajectory)
+                ? engineAnalyzeMorphTrajectory({
+                    recipeA: recipe,
+                    recipeB: activeCandidate,
+                    lockedIds,
+                    species: sp,
+                    analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+                    requestedAlpha: morphAlpha,
+                  })
+                : null;
+              const isMorphFeasible = trajectoryAnalysis ? trajectoryAnalysis.isFeasibleAtRequestedAlpha : true;
+
+              return (
+                <section className="panel perito-morph-panel" style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap',gap:12}}>
+                    <div>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
+                        Interpolación Convexa Lineal R(α) = (1-α)R₀ + αR₁
+                      </div>
+                      <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
+                        ⚖️ Comparador & Morphing de Recetas
+                      </h2>
+                    </div>
+                    {hasCandidate&&hasBase&&(
+                      <button
+                        type="button"
+                        className="btn pri"
+                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 14px',opacity:isMorphFeasible?1:0.6}}
+                        title={!isMorphFeasible?'La receta actual en este punto de transición no cumple los criterios agronómicos':''}
+                        onClick={()=>{
+                          setRecipe(morphedRec);
+                          openBuilderSubTab('formular');
+                          setNoticeDlg({msg:isMorphFeasible?'Receta morfeada aplicada exitosamente en la Mesa de Mezcla':'Receta aplicada (Atención: se encuentra fuera de rango óptimo)'});
+                        }}>
+                        🥣 Aplicar en Mesa de Mezcla {!isMorphFeasible?'⚠️':''}
+                      </button>
+                    )}
+                  </div>
+
+                  {(!hasBase || !hasCandidate)?(
+                    <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
+                      {!hasBase
+                        ? 'Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
+                        : 'Calcula escenarios en el Optimizador o selecciona una sugerencia del Perito para activar el Morphing.'}
+                    </div>
+                  ):(
+                    <div>
+                      {!isMorphFeasible&&trajectoryAnalysis&&(
+                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
+                          <b>⚠️ Estado agronómicamente no permitido en α = {morphAlpha.toFixed(2)}:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                          {trajectoryAnalysis.feasibleInterval&&(
+                            <div style={{marginTop:4,color:'var(--ink-800)'}}>
+                              ➜ Intervalo seguro para esta especie: <b>α ∈ [{trajectoryAnalysis.feasibleInterval[0].toFixed(2)}, {trajectoryAnalysis.feasibleInterval[1].toFixed(2)}]</b>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{margin:'14px 0 20px',background:'var(--paper-100)',padding:16,borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
+                          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                            Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
+                          </span>
+                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'#C53030'}}>
+                            α = {morphAlpha.toFixed(2)} {!isMorphFeasible?'(Inválido)':''}
+                          </span>
+                          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                            Candidato Objetivo ({(morphAlpha * 100).toFixed(0)}%)
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={morphAlpha}
+                          onChange={(e)=>setMorphAlpha(parseFloat(e.target.value)||0)}
+                          aria-label="Factor de interpolación convexa de recetas"
+                          style={{width:'100%',accentColor:'var(--moss-600)',cursor:'pointer'}}
+                        />
+                      </div>
+
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))',gap:10,marginBottom:18}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Score Morfeado</div>
+                          <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--ink-900)'}}>{scoreMorph}/100</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>EB Morfeada</div>
+                          <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--moss-700)'}}>{anMorph?.eb?.toFixed(0)||'—'}%</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N Morfeado</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{anMorph?.cn?.toFixed(1)||'—'}:1</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Costo / kg Seco</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>${Math.round(anMorph?.cost||0).toLocaleString('es-CO')}</div>
+                        </div>
+                      </div>
+
+                      <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}>
+                          <thead>
+                            <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
+                              <th style={{padding:'8px 12px'}}>Insumo</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Receta Activa</th>
+                              <th style={{padding:'8px 12px',textAlign:'right',background:'rgba(77,98,53,.08)'}}>% Morfeado</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Candidato</th>
+                              <th style={{padding:'8px 12px',textAlign:'center'}}>Candado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {morphedRec.map((mItem,mIdx)=>{
+                              const ingDef=INGS.find(g=>g.id===mItem.id);
+                              const pA=recipe.find(r=>r.id===mItem.id)?.p||0;
+                              const pB=activeCandidate.find(r=>r.id===mItem.id)?.p||0;
+                              const isLocked=lockedIds.includes(mItem.id);
+                              return (
+                                <tr key={mIdx} style={{borderBottom:'1px solid var(--border-soft)'}}>
+                                  <td style={{padding:'8px 12px',fontWeight:700}}>{ingDef?.name||mItem.id}</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pA.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',fontWeight:800,color:'var(--moss-800)',background:'rgba(77,98,53,.05)'}}>{mItem.p.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pB.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'center'}}>{isLocked?'🔒':'—'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              );
+            })()}
+
+            {/* ── SECCIÓN 3: GENERADOR DE RECETAS (OPTIMIZADOR) ── */}
+            {['all','optimizador'].includes(workbenchMode)&&(
             <section id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" aria-busy={optRunning} style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Automejora · Generador de recetas</h2>
@@ -10044,9 +13391,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 disabled={optRunning}
                                 onClick={()=>{
                                   setOptRunning(true);setOptResults(null);setGeneratorStatus('Calculando escenarios…');
+                                  const reqId=++peritoRequestIdRef.current;
                                   setTimeout(()=>{
+                                    if(reqId!==peritoRequestIdRef.current) return;
                                     let noStock=false;let _diag=null;
                                     const byProfile={};
+                                    // Objetivos resueltos para la especie objetivo del generador (C1).
+                                    const optTargetSPP=SetasSpeciesTargetsApi.applyToSpp(SPP,optTarget,lockedIds.length?recipe:[],optimizerINGS);
                                     Object.keys(OPT_PROFILES).forEach(pk=>{
                                       try{
                                         const out=runHybridRecipeSearch({
@@ -10059,12 +13410,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           profileKey:pk,
                                           stockMap,
                                           lockedIds,
+                                          spp:optTargetSPP,
                                         });
                                         noStock=noStock||!!out.noStock;
                                         byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
                                           hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
                                         );
-                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);
+                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk,optTargetSPP);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
                                         // Evidencia de producción tal como la adjuntó production-learning-bridge.js
@@ -10079,6 +13431,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         if(pk===optProfile)_diag={stockCount:0,diag};
                                       }
                                     });
+                                    if(reqId!==peritoRequestIdRef.current) return;
                                     // Sin fallback — cada perfil muestra solo lo que le corresponde
                                     setOptResults({...byProfile,noStock,_diag});
                                     setOptRunning(false);
@@ -10127,7 +13480,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-50,#F0F4EB)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300,#B8C9A0)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
                                       {evi.hasEvidence
                                         ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
-                                        :`Sin evidencia de producción registrada aún para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                        :`Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                      {evi.exclusions&&<div>{evi.exclusions}. Observaciones disponibles como contexto.</div>}
                                     </div>
                                   );
                                 })()}
@@ -10144,16 +13498,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
-                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
+                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}>⚖️ Hibridar / Morph</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
                                         {(()=>{
-                                          const tOpt=calcTreatment(r.an, optTarget, SPP);
+                                          const tOpt=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                           const eCost=tOpt?.energy?.cop_per_kg_seco||0;
                                           const totalCost=Math.round(r.an.cost)+eCost;
                                           return[
@@ -10188,7 +13543,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         )}
                                       </div>
                                       {r.an.cost>0&&(()=>{
-                                        const tOpt2=calcTreatment(r.an, optTarget, SPP);
+                                        const tOpt2=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         const eCost2=tOpt2?.energy?.cop_per_kg_seco||0;
                                         const bags=[
                                           {nom:'Bolsa 20×50',kgH:1.8},
@@ -10213,12 +13568,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         );
                                       })()}
                                       {(()=>{
-                                        const t=calcTreatment(r.an, optTarget, SPP);
+                                        const t=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
                                           ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
-                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention)',lbl:'Pasteurización 65–75°C núcleo'}
+                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention-text)',lbl:'Pasteurización 65–75°C núcleo'}
                                           :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
@@ -10264,7 +13619,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </button>
                             )}
@@ -10431,7 +13786,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             )}
                 </div>
               </>)}
-            </section>
+            </section>)}
           </div>
         )}
 
@@ -10792,16 +14147,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div>
                     <label htmlFor="prod-bags" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}># Bolsas</label>
-                    <input id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>{const v=e.target.value;setProdBags(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodBags===''||isNaN(prodBags))setProdBags(1);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>setProdBags(e.target.value)} rules={{required:true,min:1,integer:true}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-kg" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>kg / bolsa</label>
-                    <input id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>{const v=e.target.value;setProdKg(v===''?'':(parseFloat(v)||''));}} onBlur={()=>{if(prodKg===''||isNaN(prodKg))setProdKg(1.5);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>setProdKg(e.target.value)} rules={{required:true,min:0.1}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.hObj=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                       <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
@@ -10819,7 +14174,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
                   </div>
                 </div>
@@ -10827,35 +14182,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
               )}
             </div>
 
+            {recipe.length>0&&<section aria-label="Humedad de preparación" style={{margin:'16px 0',padding:16,border:'1px solid var(--border-soft)'}}>
+              <p>Una preparación compartida con Formulador. Ingresa humedad medida para este lote; vacío conserva la estimación del catálogo.</p>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,240px),1fr))',gap:12}}>
+                {recipe.map(r=>{const g=effectiveINGS.find(g=>g.id===r.id);return <label key={r.id} htmlFor={`ingredient-moisture-${r.id}`}>
+                  {g?.name||r.id} · catálogo: {g?.moisture??'sin dato'}%
+                  <CaptureInput id={`ingredient-moisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
+                </label>;})}
+              </div>
+              {!prepValid&&<p role="alert">{preparationResult.error}</p>}
+            </section>}
+
             {/* LA HOJA IMPRIMIBLE — bloqueada si la receta no cierra en 100% (balance de masa) */}
-            {recipe.length>0&&an&&balanced&&(()=>{
-              // Override de humedad por insumo: usa el valor real medido del lote del día
-              const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-              const ptr=calcTreatment(an, sKey, SPP);
-              const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
+            {recipe.length>0&&an&&balanced&&prepValid&&(()=>{
+              const ptr=tr;
+              const pb=preparedBatch;
               const psch=calcSchedule(sKey,prodDate,an?.eb);
-              const spn=an?.dynSpawn||ptr?.spawn||8;
-              if(!pb) return null;
-              // ── Redondeo a resolución real de báscula + recálculo del C:N efectivo ──
-              const resG=prodScaleG||0.1;
-              const roundG=x=>Math.round(x/resG)*resG;
-              const rows=recipe.map(r=>{
-                const g=prodIngs.find(x=>x.id===r.id);
-                const it=g?pb.items.find(x=>x.name===g.name):null;
-                const krTeo=it?it.kr:0;
-                const grR=roundG(krTeo*1000);                 // gramos redondeados a báscula
-                const m=g?Math.min(0.92,Math.max(0,(g.moisture||0)/100)):0;
-                const masaSecaR=(grR/1000)*(1-m);             // masa seca real tras redondeo
-                return{g,r,krTeo,grR,m,masaSecaR};
-              });
-              const dryR=rows.reduce((s,x)=>s+x.masaSecaR,0);
-              const kgComR=rows.reduce((s,x)=>s+x.grR/1000,0);
+              const spn=preparation.spawn.pct;
+              if(!pb)return null;
+              const resG=preparation.weighing.resolutionG;
+              const rows=prodRows;
+              const dryR=preparation.totals.dryKg;
+              const kgComR=preparation.totals.asReceivedKg;
               const recipeR=rows.filter(x=>x.g).map(x=>({id:x.g.id,p:dryR>0?(x.masaSecaR/dryR*100):0}));
               const anR=analyze(recipeR,sKey,effectiveINGS)||an;
-              const hFr=Math.min(0.85,Math.max(0.40,(prodH||67)/100));
-              const aguaTotR=dryR*(hFr/(1-hFr));
-              const aguaInhR=rows.reduce((s,x)=>s+(x.grR/1000)*x.m,0);
-              const aguaR=Math.max(0,aguaTotR-aguaInhR);
+              const aguaInhR=preparation.totals.intrinsicWaterKg;
+              const aguaTotR=aguaInhR+preparation.totals.waterToAddKg;
+              const aguaR=preparation.totals.waterToAddKg;
               const cnDrift=Math.abs(anR.cn-an.cn);
               const trSteps={
                 autoclave:`Esterilizar en autoclave a ${ptr?.temp||'121°C/18.5–19 PSI'} durante ${ptr?.time||'90–120 min'}. Purgar aire al inicio. A 2.600 msnm, 15 PSI no alcanza 121°C real — usar 18.5–19 PSI manométricos o sensor de núcleo.`,
@@ -10899,7 +14252,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-700)',whiteSpace:'nowrap'}}>{doneChecks}/{totalChecks} pasos</span>
                   </div>
                 </div>
-              <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
+              <div className="panel prod-sheet" data-preparation-revision={preparation.revision} style={{padding:'26px 28px'}}>
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
                   <div>
@@ -10909,7 +14262,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                     <div>Fecha lote: <b style={{color:'var(--ink-900)'}}>{prodDate}</b></div>
-                    <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo</div>
+                    <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo objetivo</div>
+                    <div data-preparation-revision={preparation.revision}>Preparación v1 · {preparation.revision}</div>
+                    <div>Receta en base seca · pesos de insumos tal como se reciben · báscula {resG} g · Bodega redondea a 1 g.</div>
+                    <div>Spawn: {preparation.spawn.pct}% del sustrato húmedo objetivo, adicional al sustrato.</div>
+                    <div>Mezcla calculada tras redondeo: {preparation.totals.preparedWetKg.toFixed(4)} kg · agua a añadir {aguaR.toFixed(4)} L. Cantidades planificadas, no mediciones de ejecución.</div>
                     <div>{(()=>{const bt=BAG_TYPES.find(b=>b.id===prodBagType);return bt?<span>{bt.icon} {bt.name.split('·')[0].trim()} · {bt.dim}</span>:null;})()}</div>
                     <div style={{fontWeight:700,color:'var(--ink-900)'}}>{'N.\u00ba '+(prodLoteNum||'___________')}</div>
                   </div>
@@ -10920,7 +14277,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ['C:N',an.cn.toFixed(1)+':1','relaci\u00f3n'],
                     ['Nitr\u00f3geno',an.avgN.toFixed(2)+'%','total'],
                     ['Ef. biol\u00f3gica',(an.ebLow??an.eb.toFixed(0))+'\u2013'+(an.ebHigh??an.eb.toFixed(0))+'%','estimada'],
-                    ['Score',opt.score+'/100','perito'],
+                    ['Score',(opt?.score!=null?opt.score:'0')+'/100','perito'],
                     ['Costo/kg','$'+Math.round(an.cost).toLocaleString('es-CO'),'estimado'],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{background:'var(--paper-50)',padding:'10px 6px',textAlign:'center'}}>
@@ -10987,21 +14344,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca tras redondeo: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> · objetivo seco: {preparation.target.dryKg.toFixed(3)} kg. Gramos redondeados a la báscula ({resG} g). Edita la humedad del insumo del día en los controles de preparación. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
                 <div className="ps-tbl-wrap">
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
-                    {rows.map((x,i)=>{const id=x.r.id;const baseM=x.g?x.g.moisture:0;const ov=prodMoist[id]!=null;return(
+                    {rows.map((x,i)=>{const id=x.r.id;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
                       <tr key={i}>
-                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · ajustado</span>:null}</td>
+                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · medido</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
                         <td style={{textAlign:'center'}}>
-                          <input name={`ingredientMoisture-${id}`} aria-label={`Humedad real de ${x.g?x.g.name:id}, porcentaje`} type="number" min="0" max="92" step="1" value={prodMoist[id]!=null?prodMoist[id]:baseM}
-                            onChange={e=>{const v=e.target.value;setProdMoist(prev=>{const n={...prev};if(v==='')delete n[id];else n[id]=Math.min(92,Math.max(0,parseFloat(v)||0));return n;});}}
-                            style={{width:44,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
+                          {preparation.items[i].moisture.pct}% · {ov?'medido':'estimación catálogo'}
                         </td>
-                        <td className="num">{Math.round(x.grR).toLocaleString()}</td>
+                        <td className="num">{x.grR.toLocaleString('es-CO',{maximumFractionDigits:3})}</td>
                         <td className="num">{x.grR>=500?(x.grR/1000).toFixed(2):'—'}</td>
                         <td className="num" style={{color:'var(--ink-500)'}}>{x.masaSecaR.toFixed(2)}</td>
                         <td style={{textAlign:'center'}}><input name={`ingredientDone-${id}`} type="checkbox" aria-label={`${x.g?x.g.name:id} pesado`} checked={!!checkedSteps['ing_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['ing_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer'}}/></td>
@@ -11019,8 +14374,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="ps-3col" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:18}}>
                   {[
                     ['Agua neta a inyectar',`${aguaR.toFixed(2)} L`,`req. ${aguaTotR.toFixed(1)} L − ${aguaInhR.toFixed(1)} L ya en insumos`],
-                    [`Spawn (${spn}%)`,`${pb.spawn.toFixed(2)} kg`,'micelio en grano · 8% del húmedo'],
-                    ['Sustrato húmedo final',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
+                    [`Spawn (${spn}%)`,`${pb.spawn.toFixed(2)} kg`,`micelio en grano · ${spn}% del húmedo objetivo`],
+                    ['Sustrato húmedo objetivo',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{border:'1px solid var(--paper-300)',padding:'10px 12px',background:'var(--paper-50)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
@@ -11113,86 +14468,159 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
-          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:520,maxWidth:'calc(100vw - 32px)'}}>
+          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
               <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
+              <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
-              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
-                <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
-                <tbody>
-                  {loteBatchConfirm.preview.map(row=>(
-                    <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="inv-modal-table-wrap">
+                <table style={{width:'100%',minWidth:340,borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:0}}>
+                  <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px',whiteSpace:'nowrap'}}>{h}</th>))}</tr></thead>
+                  <tbody>
+                    {loteBatchConfirm.preview.map(row=>(
+                      <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end',paddingTop:4}}>
-                <button onClick={()=>setLoteBatchConfirm(null)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={confirmarEjecucion} className="inv-btn inv-btn-pri">Confirmar y descontar</button>
+              <div className="inv-modal-actions">
+                <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
+                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
               </div>
           </AccessibleModal>
         )}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
-          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
-              <div className="inv-modal-title">Nueva prueba experimental</div>
+          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:'min(560px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <style>{`[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Nueva prueba experimental</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña.</p><p>Plan de preparación: {prodBags} bolsas × {prodKg} kg · {prodH}% humedad. No confirma medidas.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" aria-invalid={!!captureErrors["bit-codigo"]} aria-describedby={captureErrors["bit-codigo"]?"bit-codigo-error":undefined} onBlur={()=>validateCaptureField("bit-codigo")} name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/>{captureErrorNode("bit-codigo")}</div>
+                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" aria-invalid={!!captureErrors["bit-especie"]} aria-describedby={captureErrors["bit-especie"]?"bit-especie-error":undefined} onBlur={()=>validateCaptureField("bit-especie")} name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/>{captureErrorNode("bit-especie")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
+                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" aria-invalid={!!captureErrors["bit-operador"]} aria-describedby={captureErrors["bit-operador"]?"bit-operador-error":undefined} onBlur={()=>validateCaptureField("bit-operador")} name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/>{captureErrorNode("bit-operador")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" aria-invalid={!!captureErrors["bit-fecha-mezcla"]} aria-describedby={captureErrors["bit-fecha-mezcla"]?"bit-fecha-mezcla-error":undefined} onBlur={()=>validateCaptureField("bit-fecha-mezcla")} name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/>{captureErrorNode("bit-fecha-mezcla")}</div>
+                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" aria-invalid={!!captureErrors["bit-fecha-inoculacion"]} aria-describedby={captureErrors["bit-fecha-inoculacion"]?"bit-fecha-inoculacion-error":undefined} onBlur={()=>validateCaptureField("bit-fecha-inoculacion")} name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/>{captureErrorNode("bit-fecha-inoculacion")}</div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa</label><input id="bit-wet-kg" name="wetKgPerBag" type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-spawn">% spawn</label><input id="bit-spawn" name="spawnPercent" type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-moisture">Humedad %</label><input id="bit-moisture" name="moisturePercent" type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" aria-invalid={!!captureErrors["bit-bags"]} aria-describedby={captureErrors["bit-bags"]?"bit-bags-error":undefined} onBlur={()=>validateCaptureField("bit-bags")} name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas??''} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:e.target.value}))}/>{captureErrorNode("bit-bags")}</div>
+                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa medidos · opcional</label><input id="bit-wet-kg" aria-invalid={!!captureErrors["bit-wet-kg"]} aria-describedby={captureErrors["bit-wet-kg"]?"bit-wet-kg-error":undefined} onBlur={()=>validateCaptureField("bit-wet-kg")} name="wetKgPerBag" type="number" className="inv-input" min={0} step={0.1} value={bitNuevoForm.pesoHumedo??''} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:e.target.value}))}/>{captureErrorNode("bit-wet-kg")}</div>
+                <div><label className="inv-label" htmlFor="bit-spawn">% spawn confirmado · opcional</label><input id="bit-spawn" aria-invalid={!!captureErrors["bit-spawn"]} aria-describedby={captureErrors["bit-spawn"]?"bit-spawn-error":undefined} onBlur={()=>validateCaptureField("bit-spawn")} name="spawnPercent" type="number" className="inv-input" min={0} max={100} value={bitNuevoForm.spawnPct??''} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:e.target.value}))}/>{captureErrorNode("bit-spawn")}</div>
+                <div><label className="inv-label" htmlFor="bit-moisture">Humedad medida % · opcional</label><input id="bit-moisture" aria-invalid={!!captureErrors["bit-moisture"]} aria-describedby={captureErrors["bit-moisture"]?"bit-moisture-error":undefined} onBlur={()=>validateCaptureField("bit-moisture")} name="moisturePercent" type="number" className="inv-input" min={0} max={100} value={bitNuevoForm.humedad??''} onChange={e=>setBitNuevoForm(p=>({...p,humedad:e.target.value}))}/>{captureErrorNode("bit-moisture")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco (kg)</label><input id="bit-dry-weight" name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="Calculado automáticamente…" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" aria-invalid={!!captureErrors["bit-treatment"]} aria-describedby={captureErrors["bit-treatment"]?"bit-treatment-error":undefined} onBlur={()=>validateCaptureField("bit-treatment")} name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select>{captureErrorNode("bit-treatment")}</div>
+                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco medido total (kg) · opcional</label><input id="bit-dry-weight" aria-invalid={!!captureErrors["bit-dry-weight"]} aria-describedby={captureErrors["bit-dry-weight"]?"bit-dry-weight-error":undefined} onBlur={()=>validateCaptureField("bit-dry-weight")} name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco??''} min={0} placeholder="Sin medición" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:e.target.value}))}/>{captureErrorNode("bit-dry-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
+              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" aria-invalid={!!captureErrors["bit-objective"]} aria-describedby={captureErrors["bit-objective"]?"bit-objective-error":undefined} onBlur={()=>validateCaptureField("bit-objective")} name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/>{captureErrorNode("bit-objective")}</div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="bit-notes">Notas</label><textarea id="bit-notes" name="testNotes" autoComplete="off" className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+              <div className="inv-modal-actions">
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!validateCapture('trial'))return;const newId=crearBitLote(SetasBitacora.normalizeTrialCapture(bitNuevoForm));if(!newId)return;setBitNuevoForm({});setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
           </AccessibleModal>
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:440}}>
-              <div className="inv-modal-title">Registrar cosecha</div>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <style>{`[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Registrar cosecha</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición. Borrador conservado en esta pestaña.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
-                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" aria-invalid={!!captureErrors["harvest-bag"]} aria-describedby={captureErrors["harvest-bag"]?"harvest-bag-error":undefined} onBlur={()=>validateCaptureField("harvest-bag")} name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select>{captureErrorNode("harvest-bag")}</div>
+                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" aria-invalid={!!captureErrors["harvest-flush"]} aria-describedby={captureErrors["harvest-flush"]?"harvest-flush-error":undefined} onBlur={()=>validateCaptureField("harvest-flush")} name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush??''} onChange={e=>setBitCosechaForm(p=>({...p,flush:e.target.value}))}/>{captureErrorNode("harvest-flush")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" aria-invalid={!!captureErrors["harvest-date"]} aria-describedby={captureErrors["harvest-date"]?"harvest-date-error":undefined} onBlur={()=>validateCaptureField("harvest-date")} name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/>{captureErrorNode("harvest-date")}</div>
+                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
-              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
-              <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" aria-invalid={!!captureErrors["harvest-observations"]} aria-describedby={captureErrors["harvest-observations"]?"harvest-observations-error":undefined} onBlur={()=>validateCaptureField("harvest-observations")} name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/>{captureErrorNode("harvest-observations")}</div>
+
+              {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
+              {(() => {
+                const harvestLote = bitLotes.find(l => l.id === (bitCosechaForm.loteId || bitActiveLoteId));
+                const harvestSpecies = harvestLote ? (harvestLote.especie || harvestLote.speciesKey) : 'p_ostreatus_gris';
+                const postHarvestShelfLife = typeof enginePredictShelfLife === 'function'
+                  ? enginePredictShelfLife(harvestSpecies, 4.0, 90.0)
+                  : (typeof SetasPostHarvest !== 'undefined' && typeof SetasPostHarvest.predictShelfLife === 'function'
+                      ? SetasPostHarvest.predictShelfLife(harvestSpecies, 4.0, 90.0)
+                      : null);
+                const postHarvestCondensation = typeof engineAssessCondensationRiskOnUnpack === 'function'
+                  ? engineAssessCondensationRiskOnUnpack(4.0, 18.0, 75.0)
+                  : (typeof SetasPostHarvest !== 'undefined' && typeof SetasPostHarvest.assessCondensationRiskOnUnpack === 'function'
+                      ? SetasPostHarvest.assessCondensationRiskOnUnpack(4.0, 18.0, 75.0)
+                      : null);
+
+                if (!postHarvestShelfLife && !postHarvestCondensation) return null;
+
+                return (
+                  <div
+                    data-testid="harvest-postharvest-advisor"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm, 3px)',
+                      background: 'var(--paper-1, #EFEBE0)',
+                      border: '1px solid var(--border-hairline, #8C7F5B)',
+                      marginBottom: 14,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', letterSpacing: '0.05em' }}>
+                        ❄️ Poscosecha & Cadena de Frío ({postHarvestShelfLife?.speciesName || harvestSpecies})
+                      </span>
+                      {postHarvestShelfLife && (
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--moss-700)' }}>
+                          Vida útil: ~{postHarvestShelfLife.marketableShelfLifeDays || postHarvestShelfLife.marketableDays} días a 4°C
+                        </span>
+                      )}
+                    </div>
+
+                    {postHarvestShelfLife && (
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)', marginBottom: 6, lineHeight: 1.35 }}>
+                        <b>Factor limitante:</b> {postHarvestShelfLife.limitingFactor.replace(/_/g, ' ')} · Transpiración: {postHarvestShelfLife.transpiration.weightLossPctPerDay}%/día · VPD: {postHarvestShelfLife.transpiration.storageVpdKpa} kPa.
+                      </div>
+                    )}
+
+                    {postHarvestCondensation && (
+                      <div
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 2,
+                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100, #FDE8E8)' : 'var(--moss-100, #EAEFD9)',
+                          border: `1px solid ${postHarvestCondensation.condensationRisk ? 'var(--coral-500, #E05252)' : 'var(--moss-600, #617346)'}`,
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 11,
+                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700, #9B1C1C)' : 'var(--moss-800, #2E3A1F)',
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                          <span>{postHarvestCondensation.badge}</span>
+                          <span>{postHarvestCondensation.verdict}</span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'inherit', lineHeight: 1.3 }}>
+                          {postHarvestCondensation.recommendation} (Pto. Rocío: {postHarvestCondensation.ambientDewPoint}°C · ΔT: {postHarvestCondensation.deltaT}°C)
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+              <div className="inv-modal-actions">
                 <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button
                   type="button"
                   onClick={()=>{
-                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
-                    const cData = {...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId};
-                    addBitCosecha(cData);
+                    if(!validateCapture('harvest'))return;
+                    const cData = SetasBitacora.normalizeHarvestCapture(bitCosechaForm);
+                    if(!addBitCosecha(cData))return;clearHarvestCapture();
                     setShowBitCosecha(false);
                     openThermalForCosecha(cData.loteId, cData);
                   }}
@@ -11204,8 +14632,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button
                   type="button"
                   onClick={()=>{
-                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
-                    addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});
+                    if(!validateCapture('harvest'))return;
+                    if(!addBitCosecha(SetasBitacora.normalizeHarvestCapture(bitCosechaForm)))return;clearHarvestCapture();
                     setShowBitCosecha(false);
                   }}
                   className="inv-btn inv-btn-pri"
@@ -11215,61 +14643,505 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
           </AccessibleModal>
         )}
+        {/* HOJA DE ACCIÓN DE CAMPO (MODAL DE TRANSICIÓN OFFLINE QR) */}
+        {showFieldActionModal && (()=>{
+          const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
+          const currentLote = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
+          const isAdmin = props.isAdmin === true || props.isAdmin === 'true';
+          const operatorRole = props.operatorRole || fieldOperatorRole;
+          const operatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operario_local';
+          const accountId = props.accountId || (typeof window !== 'undefined' && window.__setasAccountId) || (typeof window !== 'undefined' && window.firebaseAuth?.currentUser?.uid) || 'setas_default_account';
+
+          return (
+            <FieldActionModal
+              onClose={() => setShowFieldActionModal(false)}
+              lote={currentLote}
+              captureContent={renderQrCaptures(currentLote,bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id)||null,buildSheetFor(currentLote))}
+              db={fieldDb}
+              operatorRole={operatorRole}
+              operatorId={operatorId}
+              accountId={accountId}
+              onTransitionConfirmed={(batchId, nextState) => {
+                setBitLotes(prev => prev.map(l => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+              }}
+            />
+          );
+        })()}
+
         {/* MODAL / ACTION SHEET QR DE CAMPO (MODO RONDA DE CAMPO) */}
         {showQrSheet&&(()=>{
           const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const currentLote=bitLotes.find(l=>l.id===(qrSelectedLoteId||bitActiveLoteId))||activeBatches[0]||bitLotes[0];
+          // Escanear → resolver lote → mostrar estado → elegir acción válida.
+          // La ficha resuelve qué cabe ahora; la ronda ya no muestra el mismo
+          // menú fijo para un lote en enfriamiento que para uno en fructificación.
+          const currentSheet=currentLote?buildSheetFor(currentLote):null;
+          const scannedBag=qrScannedBagId?bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
-              onClose={()=>{stopCameraScanner();setShowQrSheet(false);}}
+              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
-                    <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
+                    <AppIcon name="camera" size={14} color="var(--ink-0)" /> {qrScanMode === 'harvest' ? 'Báscula Cosecha · Pesaje Rápido' : qrScanMode === 'sweep' ? 'Barrido Sala · Auditoría Masiva' : 'Ronda de Campo · Registro Rápido'}
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');setHarvestActiveCrate(null);setSweepQueue([]);setSweepRiskModalOpen(false);setSweepStatusBanner('');}}>✕</button>
                 </div>
 
-                {/* ESCÁNER DE CÁMARA EN VIVO */}
-                {isCameraActive ? (
-                  <div className="qr-scanner-viewport">
-                    <video
-                      ref={videoRef}
-                      className="qr-scanner-video"
-                      autoPlay
-                      playsInline
-                      muted
-                    />
-                    <div className="qr-scanner-reticle">
-                      <div className="qr-scanner-laser" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={stopCameraScanner}
-                      style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
-                    >
-                      ⏹ Detener Cámara
-                    </button>
-                  </div>
-                ) : (
+                {/* SELECTOR DE MODO DE ESCANEO */}
+                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2, #E5DFC8)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
                   <button
                     type="button"
-                    onClick={startCameraScanner}
-                    style={{ minHeight: 42, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    📷 Iniciar Escaneo con Cámara Móvil
+                    🔍 Ronda Lote
                   </button>
-                )}
+                  <button
+                    type="button"
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'harvest' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                  >
+                    ⚖️ Báscula Cosecha
+                  </button>
+                  <button
+                    type="button"
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'sweep' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                  >
+                    ⚡ Barrido Sala
+                  </button>
+                </div>
 
-                {cameraError && (
-                  <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                    ⚠️ {cameraError}
+                {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}
+                {qrScanMode === 'harvest' && harvestActiveCrate ? (
+                  <div style={{ padding: '12px 14px', background: 'var(--paper-0, #F7F4EC)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 'var(--radius-md, 3px)', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Canastilla</span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-olive, #5B6B44)' }}>
+                          {harvestActiveCrate.crateCode}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Lote Destino</span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {currentLote ? currentLote.codigo : 'Sin lote'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* TARA CARD */}
+                    <div style={{ padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, marginBottom: 10, fontSize: 11 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ink-1)' }}>
+                          Tara: {harvestTareInput ? `${harvestTareInput} g` : 'Sin verificar'}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                          Fuente: {harvestTareSource === 'field_measured' ? 'Balanza campo' : harvestTareSource === 'catalog_default' ? 'Catálogo' : harvestTareSource === 'manual' ? 'Manual' : 'Sin verificar'}
+                        </span>
+                      </div>
+                      {(!harvestTareInput || harvestTareSource === 'unverified') && (
+                        <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span style={{ fontSize: 10, color: 'var(--warning-text, #8C6B2E)', flex: 1 }}>
+                            ⚠️ Ingresa la tara (g) para calcular peso neto honesto:
+                          </span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="Tara g"
+                            value={harvestTareInput}
+                            onChange={(e) => {
+                              setHarvestTareInput(e.target.value);
+                              setHarvestTareSource(e.target.value ? 'manual' : 'unverified');
+                            }}
+                            style={{ width: 80, padding: '4px 6px', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PESO BRUTO INPUT */}
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, marginBottom: 4, color: 'var(--ink-0)' }}>
+                        Peso Bruto Total (g):
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        autoFocus
+                        placeholder="Ej: 1450"
+                        value={harvestGrossInput}
+                        onChange={(e) => { setHarvestGrossInput(e.target.value); setHarvestError(''); }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveHarvestCrate();
+                          }
+                        }}
+                        style={{ width: '100%', minHeight: 48, fontSize: 24, fontWeight: 700, textAlign: 'center', fontFamily: 'var(--font-mono)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 2 }}
+                      />
+                      {/* QUICK PRESETS */}
+                      <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                        {[100, 250, 500, 1000].map(inc => (
+                          <button
+                            key={inc}
+                            type="button"
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ flex: 1, padding: '4px 2px', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                            onClick={() => {
+                              const cur = parseFloat(harvestGrossInput) || 0;
+                              setHarvestGrossInput(String(cur + inc));
+                            }}
+                          >
+                            +{inc >= 1000 ? `${inc / 1000}kg` : `${inc}g`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CÁLCULO NETO EN VIVO */}
+                    {(() => {
+                      const gross = parseFloat(harvestGrossInput);
+                      const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+                      if (!gross || isNaN(gross)) return null;
+                      if (tare !== null && !isNaN(tare)) {
+                        if (tare > gross) {
+                          return (
+                            <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
+                              ❌ Tara ({tare}g) excede el peso bruto ({gross}g).
+                            </div>
+                          );
+                        }
+                        const net = gross - tare;
+                        return (
+                          <div style={{ padding: '8px 10px', background: '#DCFCE7', color: '#15803D', borderLeft: '3px solid #16A34A', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>✓ Peso Neto: {net} g</span>
+                            <span>({(net / 1000).toFixed(3)} kg)</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div style={{ padding: '6px 8px', background: 'var(--paper-2, #E5DFC8)', color: 'var(--ink-1)', borderLeft: '3px solid var(--accent-terracotta)', fontSize: 11, marginBottom: 10 }}>
+                          Bruto: {gross} g · Neto: No calculado (bloqueado por falta de tara verificada)
+                        </div>
+                      );
+                    })()}
+
+                    {/* FLUSH & CALIDAD */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {[1, 2, 3].map(f => (
+                            <button
+                              key={f}
+                              type="button"
+                              className={`inv-btn inv-btn-sm ${harvestFlush === f ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              onClick={() => setHarvestFlush(f)}
+                            >
+                              F{f}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Calidad:</label>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {[
+                            { val: 1, lbl: '1ra' },
+                            { val: 2, lbl: '2da' },
+                            { val: 3, lbl: 'Merma' }
+                          ].map(q => (
+                            <button
+                              key={q.val}
+                              type="button"
+                              className={`inv-btn inv-btn-sm ${harvestCalidad === q.val ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              onClick={() => setHarvestCalidad(q.val)}
+                            >
+                              {q.lbl}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {harvestError && (
+                      <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', fontSize: 11, marginBottom: 10 }}>
+                        {harvestError}
+                      </div>
+                    )}
+
+                    {/* ACCIONES DE PESADA */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        disabled={!harvestGrossInput || (harvestTareInput && parseFloat(harvestTareInput) > parseFloat(harvestGrossInput))}
+                        onClick={handleSaveHarvestCrate}
+                        className="inv-btn inv-btn-pri"
+                        style={{ flex: 1, minHeight: 40, fontSize: 12, fontWeight: 700 }}
+                      >
+                        Guardar Canastilla (Enter)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHarvestActiveCrate(null);
+                          isDecodingPausedRef.current = false;
+                        }}
+                        className="inv-btn inv-btn-sec"
+                        style={{ minHeight: 40, fontSize: 12 }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* ESCÁNER DE CÁMARA EN VIVO */}
+                    {isCameraActive ? (
+                      <div className="qr-scanner-viewport">
+                        <video
+                          ref={videoRef}
+                          className="qr-scanner-video"
+                          autoPlay
+                          playsInline
+                          muted
+                        />
+                        <div className="qr-scanner-reticle">
+                          <div className="qr-scanner-laser" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={stopCameraScanner}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                        >
+                          ⏹ Detener Cámara
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={startCameraScanner}
+                        style={{ minHeight: 42, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                      >
+                        📷 Iniciar Escaneo con Cámara Móvil
+                      </button>
+                    )}
+
+                    {cameraError && (
+                      <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        ⚠️ {cameraError}
+                      </div>
+                    )}
+
+                    <form
+                      data-testid="scan-manual-code"
+                      onSubmit={(e)=>{e.preventDefault();const code=manualScanCode.trim();if(!code)return;handleScannedValue(code);setManualScanCode('');}}
+                      style={{display:'flex',gap:6,marginBottom:12}}
+                    >
+                      <input
+                        type="text"
+                        value={manualScanCode}
+                        onChange={(e)=>setManualScanCode(e.target.value)}
+                        placeholder={qrScanMode === 'harvest' ? 'Código de canastilla (p. ej. CAN-01)' : qrScanMode === 'sweep' ? 'Código de bolsa (p. ej. OST-01-B12)' : 'Código impreso en la etiqueta'}
+                        aria-label="Código impreso en la etiqueta"
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!manualScanCode.trim()}
+                        className="inv-btn inv-btn-sec"
+                        style={{minHeight:42,padding:'8px 14px',fontSize:12,fontWeight:700}}
+                      >
+                        Abrir
+                      </button>
+                    </form>
+
+                    {scanMiss && (
+                      <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        {scanMiss} Elige el lote manualmente o vuelve a escanear.
+                      </div>
+                    )}
+
+                    {/* MODO BÁSCULA: RESUMEN DE SESIÓN Y SELECCIÓN DE LOTE */}
+                    {qrScanMode === 'harvest' && (
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ padding: '8px 10px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, fontSize: 11, fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span>📦 Sesión de Pesaje: <b>{harvestSessionStats.count}</b> canastillas</span>
+                          <span><b>{(harvestSessionStats.totalNetGrams / 1000).toFixed(2)} kg</b> netos</span>
+                        </div>
+                        {activeBatches.length > 0 && (
+                          <div style={{ fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                            <label style={{ display: 'block', fontWeight: 600, color: 'var(--ink-1)', marginBottom: 2 }}>Lote activo a cosechar:</label>
+                            <select
+                              className="inv-input"
+                              style={{ fontSize: 11, minHeight: 34 }}
+                              value={currentLote?.id}
+                              onChange={e=>setQrSelectedLoteId(e.target.value)}
+                            >
+                              {activeBatches.map(l=>(
+                                <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.estado})</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* MODO BARRIDO: COLA DE BOLSAS Y ACCIONES MASIVAS */}
+                    {qrScanMode === 'sweep' && (
+                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-0)' }}>
+                            ⚡ Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
+                          </strong>
+                          {sweepQueue.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSweepQueue([])}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent-terracotta)', fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                            >
+                              Limpiar cola
+                            </button>
+                          )}
+                        </div>
+
+                        {sweepQueue.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 72, overflowY: 'auto', marginBottom: 8, padding: 2 }}>
+                            {sweepQueue.map(item => (
+                              <span
+                                key={item.bagId}
+                                style={{
+                                  padding: '2px 6px',
+                                  background: item.estado === 'contaminada' ? '#FEE2E2' : 'var(--paper-1)',
+                                  color: item.estado === 'contaminada' ? '#991B1B' : 'var(--ink-0)',
+                                  border: '1px solid var(--border-hairline)',
+                                  borderRadius: 2,
+                                  fontSize: 10,
+                                  fontFamily: 'var(--font-mono)',
+                                }}
+                              >
+                                {item.codigo} ({item.colonizacion}%)
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 8, fontFamily: 'var(--font-sans)' }}>
+                            Pasa la cámara sobre las bolsas. Sonará un pitido y se agregarán a la hilera automáticamente.
+                          </div>
+                        )}
+
+                        {/* ACCIONES MASIVAS DE BARRIDO */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(100)}
+                            className="inv-btn inv-btn-pri inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11, fontWeight: 700 }}
+                          >
+                            ✓ 100% Sano
+                          </button>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(75)}
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11 }}
+                          >
+                            75%
+                          </button>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(50)}
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11 }}
+                          >
+                            50%
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={sweepQueue.length === 0}
+                          onClick={() => setSweepRiskModalOpen(true)}
+                          className="inv-btn inv-btn-sec inv-btn-sm"
+                          style={{ width: '100%', padding: '5px 4px', fontSize: 11, color: 'var(--accent-terracotta)' }}
+                        >
+                          ⚠️ Registrar Observación de Riesgo ({sweepQueue.length})
+                        </button>
+
+                        {sweepStatusBanner && (
+                          <div style={{ marginTop: 8, padding: '6px 8px', background: 'var(--paper-1)', borderLeft: '3px solid var(--accent-olive)', fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                            {sweepStatusBanner}
+                          </div>
+                        )}
+
+                        {/* SUB-PANEL OBSERVACIÓN DE RIESGO */}
+                        {sweepRiskModalOpen && (
+                          <div style={{ marginTop: 10, padding: 10, background: 'var(--paper-1)', border: '1px solid var(--accent-terracotta)', borderRadius: 2 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 6, color: 'var(--accent-terracotta)' }}>
+                              Observación de Riesgo ({sweepQueue.length} bolsas)
+                            </div>
+                            <select
+                              className="inv-input"
+                              style={{ fontSize: 11, minHeight: 32, marginBottom: 6 }}
+                              value={sweepRiskType}
+                              onChange={(e) => setSweepRiskType(e.target.value)}
+                            >
+                              <option value="micelio_debil">Micelio débil o lento</option>
+                              <option value="humedad_baja">Sustrato seco / Humedad baja</option>
+                              <option value="humedad_excesiva">Condensación / Humedad excesiva</option>
+                              <option value="posible_contaminacion">Sospecha de contaminación</option>
+                              <option value="fuga_filtro">Fuga o daño en filtro</option>
+                              <option value="deformidad_primordio">Deformidad en primordios</option>
+                              <option value="general">Otro riesgo</option>
+                            </select>
+                            <input
+                              type="text"
+                              className="inv-input"
+                              placeholder="Detalle u observación..."
+                              style={{ fontSize: 11, minHeight: 32, marginBottom: 8 }}
+                              value={sweepRiskNota}
+                              onChange={(e) => setSweepRiskNota(e.target.value)}
+                            />
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-pri inv-btn-sm"
+                                style={{ flex: 1 }}
+                                onClick={() => handleApplySweepRisk(sweepRiskType, sweepRiskNota)}
+                              >
+                                Registrar Riesgo
+                              </button>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-sec inv-btn-sm"
+                                onClick={() => setSweepRiskModalOpen(false)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {currentLote?(
+                {/* MODO RONDA: CARRUSEL Y ACCIONES CONTEXTUALES DE LOTE */}
+                {qrScanMode === 'round' && currentLote ? (
                   <>
                     {/* NAVEGACIÓN SECUENCIAL DE LOTES (CARRUSEL DE SALA) */}
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,gap:8}}>
@@ -11312,8 +15184,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
                       </div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',marginTop:4}}>
-                        Estado: {currentLote.estado} · {currentLote.numBolsas||0} bolsas
+                        {currentSheet
+                          ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
+                          :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
+                      {(scannedBag||qrScannedBagId)&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
+                          Etiqueta leída: bolsa {scannedBag ? scannedBag.codigo : qrScannedBagId}
+                        </div>
+                      )}
+                      {currentSheet&&currentSheet.blocks.length>0&&(
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:10,color:'var(--accent-terracotta,#A85C32)',marginTop:4}}>
+                          {currentSheet.blocks.map(b=>b.detail).join(' · ')}
+                        </div>
+                      )}
                       {activeBatches.length>1&&(
                         <select
                           className="inv-input"
@@ -11329,8 +15213,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       )}
                     </div>
 
-                    {/* SELECTOR DE AVANCE DE COLONIZACIÓN (ESCALA FINA 10% A 100%) */}
-                    <div style={{marginBottom:12}}>
+                    {/* SELECTOR DE AVANCE DE COLONIZACIÓN (ESCALA FINA 10% A 100%)
+                        Sólo cuando el estado del lote admite registrar colonización:
+                        en enfriamiento o en descanso este control no significa nada. */}
+                    <div style={{marginBottom:12,display:(!currentSheet||currentSheet.actions.some(a=>a.action==='colonization'))?'block':'none'}}>
                       <ColonizationScaleSelector
                         value={(()=>{
                           const b=bitBolsas.filter(x=>x.loteId===currentLote.id);
@@ -11375,27 +15261,42 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       />
                     </div>
 
-                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                      <button
-                        type="button"
-                        style={{minHeight:46,cursor:'pointer',background:'var(--accent-olive,#5B6B44)',color:'var(--paper-0,#F7F4EC)',border:'1px solid var(--accent-olive,#5B6B44)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
-                        onClick={()=>{
-                          setBitActiveLoteId(currentLote.id);
-                          setBitCosechaForm({
-                            loteId:currentLote.id,
-                            bolsaId:'',
-                            flush:1,
-                            fecha:new Date().toISOString().split('T')[0],
-                            pesoFresco:'',
-                            calidad:3,
-                            observaciones:''
-                          });
-                          setShowQrSheet(false);
-                          setShowBitCosecha(true);
-                        }}
-                      >
-                        <AppIcon name="harvest" size={15} color="var(--paper-0)" /> Registrar Cosecha (g)
-                      </button>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}} data-testid="qr-contextual-actions">
+                      {currentSheet&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                          Acciones válidas en {currentSheet.stateLabel.toLowerCase()}
+                        </div>
+                      )}
+                      {(currentSheet ? currentSheet.actions.filter(a=>!['inspection','riego','contamination','harvest'].includes(a.action)) : []).map((a,i)=>(
+                        <button
+                          key={a.action}
+                          type="button"
+                          data-action={a.action}
+                          disabled={Boolean(a.blockedBy)}
+                          title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
+                          style={{minHeight:48,cursor:a.blockedBy?'not-allowed':'pointer',opacity:a.blockedBy?0.5:1,
+                            background:a.action==='contamination'?'var(--accent-terracotta-dim,#EFE0D3)':(i===0?'var(--accent-olive,#5B6B44)':'var(--paper-0,#F7F4EC)'),
+                            color:a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--paper-0,#F7F4EC)':'var(--ink-0)'),
+                            border:`1px solid ${a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--accent-olive,#5B6B44)':'var(--border-hairline,#8C7F5B)')}`,
+                            borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:i===0?700:600,
+                            display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                          onClick={()=>{
+                            setShowQrSheet(false);
+                            runBatchAction(a.action,currentLote,currentSheet);
+                          }}
+                        >
+                          {a.action==='harvest'&&<AppIcon name="harvest" size={15} color="var(--paper-0)" />}
+                          {a.action==='contamination'&&<AppIcon name="alert" size={14} color="var(--accent-terracotta)" />}
+                          {a.label}
+                        </button>
+                      ))}
+
+                      {/* REPORTAR EVENTO — se atribuye al operador con sesión activa;
+                          no requiere ni habilita nada en la ficha pública (trace.html). */}
+                      {renderQrCaptures(currentLote,scannedBag,currentSheet)}
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                        Siempre disponible
+                      </div>
                       <button
                         type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
@@ -11410,15 +15311,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
-                          setDiagLoteId(currentLote.id);
-                          const b=bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
-                          setDiagBolsaId(b?.id||'');
-                          setDiagImageBase64('');
-                          setDiagResult(null);
-                          setDiagError('');
-                          setDiagNotes('');
                           setShowQrSheet(false);
-                          setShowDiagModal(true);
+                          openContaminationTriage(currentLote.id);
                         }}
                       >
                         <AppIcon name="alert" size={14} color="var(--accent-terracotta)" /> Reportar Contaminación / Merma
@@ -11434,7 +15328,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           setShowThermalModal(true);
                         }}
                       >
-                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
                       </button>
                       <button
                         type="button"
@@ -11448,11 +15342,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     </div>
                   </>
-                ):(
+                ) : (qrScanMode === 'round' ? (
                   <div style={{textAlign:'center',padding:'16px 0',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)'}}>
                     No hay lotes activos registrados para escanear.
                   </div>
-                )}
+                ) : null)}
             </AccessibleModal>
           );
         })()}
@@ -11462,7 +15356,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalBags = Math.max(1, lote.numBolsas || 12);
           const items = [];
 
-          if (thermalScope === 'cosecha' && thermalCosechaItem) {
+          if (thermalScope === 'crate') {
+            const crateCode = thermalCosechaItem?.crateCode || 'CAN-01';
+            items.push({
+              id: crateCode,
+              bagCode: 'CANASTILLA REUTILIZABLE',
+              species: 'Tara 420g · Grado Alimentario',
+              date: new Date().toISOString().split('T')[0],
+              recipe: 'Báscula continua · Cosecha y pesaje',
+              bagsText: `Tara fija 420 g · ${crateCode}`,
+              qrUrl: `${PUBLIC_TRACE_BASE_URL}?crate=${encodeURIComponent(crateCode)}`
+            });
+          } else if (thermalScope === 'cosecha' && thermalCosechaItem) {
             const c = thermalCosechaItem;
             items.push({
               id: `CAN-${lote.codigo}-F${c.flush || 1}`,
@@ -11496,7 +15401,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
                 recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
-                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
+                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
               });
             }
           }
@@ -11510,14 +15415,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${
-                        thermalSize === '40x30' ? '40mm 30mm' :
-                        thermalSize === '50x30' ? '50mm 30mm' :
-                        thermalSize === '60x40' ? '60mm 40mm' :
-                        thermalSize === 'gourmet-wood' ? '180mm 60mm' :
-                        thermalSize === 'kraft-tray' ? '80mm 120mm' :
-                        thermalSize === 'apothecary-50' ? '85mm 42mm' : 'auto'
-                      };
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -11578,35 +15476,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('60x40')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        60 × 40 mm
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('gourmet-wood')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'gourmet-wood' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Faja Madera (180×60)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('kraft-tray')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'kraft-tray' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Bandeja Kraft (80×120)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('apothecary-50')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'apothecary-50' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Apotecario (50 ml)
-                      </button>
 
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
+                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
                     </div>
                   </div>
 
@@ -11626,6 +15499,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <option value="lote">Solo etiqueta maestra de lote</option>
                       <option value="custom">Rango personalizado</option>
                       <option value="cosecha">Etiqueta de Canastilla / Cosecha</option>
+                      <option value="crate">Canastilla Reutilizable (CAN-XX)</option>
                     </select>
                   </div>
                 </div>
@@ -11646,7 +15520,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -11657,17 +15531,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
                           <div className="thermal-aside">
                             <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                            <div className="thermal-code">{item.id}</div>
                           </div>
                           <div className="thermal-body">
                             <div className="thermal-species">{item.species}</div>
+                            <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
                               {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>{item.date}</div>
-                              <div>{item.recipe}</div>
-                            </div>
-                            <div className="thermal-footer">
-                              <span>Setas de la Peña</span>
                             </div>
                           </div>
                         </div>
@@ -11680,6 +15550,44 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid var(--border-hairline, #8C7F5B)', paddingTop: 12 }}>
                   <button type="button" onClick={() => setShowThermalModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 44, padding: '8px 14px' }}>
                     Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      // El Phomemo M110 es Bluetooth propietario (no AirPrint), así que
+                      // window.print() nunca lo detecta desde Safari/iOS — WebKit tampoco
+                      // expone Web Bluetooth. Este botón manda la etiqueta ya renderizada
+                      // directo al share sheet del sistema, para abrirla en PrintMaster
+                      // (la app de Phomemo) sin depender de una captura de pantalla manual.
+                      try {
+                        // Si IBM Plex Sans/Mono todavía no terminó de cargar, el canvas
+                        // dibuja en la fuente de sistema sin avisar — esperar aquí evita
+                        // compartir una etiqueta con la tipografía equivocada.
+                        if (document.fonts && document.fonts.ready) {
+                          try { await document.fonts.ready; } catch (e) {}
+                        }
+                        const canvas = buildThermalShareCanvas(items, thermalSize);
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        if (!blob) throw new Error('No se pudo generar la imagen de la etiqueta');
+                        const file = new File([blob], `etiquetas-${lote.codigo || 'lote'}.png`, { type: 'image/png' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                          await navigator.share({ files: [file], title: 'Etiquetas Setas OS', text: `Etiquetas de ${lote.codigo || ''} — ábrelas en PrintMaster para imprimir en el Phomemo M110.` });
+                        } else {
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url; a.download = file.name; a.click();
+                          setTimeout(() => URL.revokeObjectURL(url), 4000);
+                          setNoticeDlg({ title: 'Imagen descargada', msg: 'Este navegador no soporta compartir archivos directamente — la imagen se descargó. Ábrela desde Archivos/Fotos y compártela con PrintMaster.' });
+                        }
+                      } catch (e) {
+                        if (e && e.name === 'AbortError') return; // el operador cerró el share sheet
+                        setNoticeDlg({ title: 'No se pudo compartir la etiqueta', msg: e && e.message ? e.message : 'Intenta de nuevo o usa Imprimir.' });
+                      }
+                    }}
+                    className="inv-btn inv-btn-sec"
+                    style={{ minHeight: 44, padding: '8px 14px' }}
+                  >
+                    📤 Compartir
                   </button>
                   <button
                     onClick={() => {
@@ -11700,17 +15608,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
                         <div className="thermal-aside">
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-code">{item.id}</div>
                         </div>
                         <div className="thermal-body">
                           <div className="thermal-species">{item.species}</div>
+                          <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
                             {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                             <div>{item.date}</div>
-                            <div>{item.recipe}</div>
-                          </div>
-                          <div className="thermal-footer">
-                            <span>Setas de la Peña</span>
                           </div>
                         </div>
                       </div>
@@ -11723,19 +15627,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {showProdLaunchModal && prodLaunchForm && (() => {
           const f = prodLaunchForm;
-          const allInsumosOk = f.insumos.every(i => i.ok);
+          const allInsumosOk = f.insumos.length > 0 && f.insumos.every(i => i.ok);
           const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
 
           return (
             <AccessibleModal
               id="prod-launch-modal"
-              isOpen={showProdLaunchModal}
               onClose={() => setShowProdLaunchModal(false)}
-              title="🚀 Lanzador de Producción de Lote"
-              ariaLabel="Lanzador de Producción de Lote"
-              maxWidth="680px"
+              label="Lanzador de producción de lote"
+              dialogStyle={{width:680,maxWidth:'calc(100vw - 32px)'}}
             >
               <div className="prod-launch-modal" data-testid="prod-launch-modal">
+                <h2 className="inv-modal-title">🚀 Lanzador de Producción de Lote</h2>
                 {/* Resumen Superior */}
                 <div className="prod-launch-summary">
                   <div className="prod-launch-stat">
@@ -11756,6 +15659,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
+                <p>{f.plan.preparation.revision} · agua {f.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {f.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
                 {/* Desglose de Insumos y Descuento en Bodega */}
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
@@ -11767,8 +15671,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </span>
                   </div>
 
-                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
-                    <table className="prod-launch-table">
+                  {f.plan?.shortfalls?.length > 0 && (
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                      ⚠ Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
+                    </div>
+                  )}
+
+                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+                    <table className="prod-launch-table" style={{minWidth:360}}>
                       <thead>
                         <tr>
                           <th>Insumo</th>
@@ -11781,9 +15691,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {f.insumos.map((ins, i) => (
                           <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
                             <td style={{fontWeight:600}}>{ins.name}</td>
-                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} kg</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} {ins.unit || 'kg'}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
-                              {ins.stockActual.toFixed(1)} kg
+                              {ins.stockActual.toFixed(1)} {ins.unit || 'kg'}
                             </td>
                             <td style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color: ins.ok ? 'var(--moss-700)' : 'var(--coral-500)'}}>
                               {ins.ok ? '✓ OK' : '⚠ Escaso'}
@@ -11820,6 +15730,88 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     ))}
                   </div>
+                  {(() => {
+                    const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
+                    const targetRoomBatches = bitLotes.filter(l => (l.sala === f.sala || l.ubicacion === f.sala || (!l.sala && f.sala === 'martha_01')) && !['completado','descartado'].includes(l.estado));
+                    const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map(l => l.especie || l.speciesKey).filter(Boolean)));
+                    const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
+                    const coCultAssignOpt = assignedSpeciesList.length > 1
+                      ? (typeof engineOptimizeChamberSetpoints === 'function'
+                          ? engineOptimizeChamberSetpoints(assignedSpeciesList)
+                          : (typeof SetasCoCultivation !== 'undefined' && typeof SetasCoCultivation.optimizeChamberSetpoints === 'function'
+                              ? SetasCoCultivation.optimizeChamberSetpoints(assignedSpeciesList)
+                              : null))
+                      : null;
+
+                    if (!coCultAssignOpt) return null;
+
+                    return (
+                      <div
+                        data-testid="room-assignment-cocultivation-advisor"
+                        style={{
+                          marginTop: 10,
+                          padding: '12px 14px',
+                          borderRadius: 'var(--radius-sm, 3px)',
+                          background: 'var(--paper-0, #F7F4EC)',
+                          border: `1.5px solid ${coCultAssignOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : 'var(--ochre-500, #C97A2C)'}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                            🌿 Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 2,
+                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : 'var(--ochre-100, #FDF0DE)',
+                              color: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : 'var(--ochre-700, #8A4B09)',
+                            }}
+                          >
+                            Compatibilidad: {coCultAssignOpt.groupScore}% · {coCultAssignOpt.verdict}
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-1)', marginBottom: 8, lineHeight: 1.35 }}>
+                          La sala <b>{targetRoom.name}</b> ya cuenta con lotes de <b>{targetRoomSpecies.join(', ')}</b>. Para asegurar la coexistencia fisiológica, se calculan los siguientes setpoints Minimax de compromiso:
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 6, marginBottom: 8 }}>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>T° Pareto</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.tempC}°C</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>HR Pareto</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.rhPct}%</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>CO₂ Límite</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.co2Ppm} ppm</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>VPD Óptimo</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.vpdKpa} kPa</strong>
+                          </div>
+                        </div>
+                        {(coCultAssignOpt.bottlenecks.length > 0 || coCultAssignOpt.penalties.length > 0) && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {coCultAssignOpt.bottlenecks.map((b, idx) => (
+                              <div key={`abn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 6px', borderRadius: 2 }}>
+                                ⚠ Alerta Liebig: {b}
+                              </div>
+                            ))}
+                            {coCultAssignOpt.penalties.map((p, idx) => (
+                              <div key={`apen-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ochre-700)', background: 'var(--ochre-100)', padding: '4px 6px', borderRadius: 2 }}>
+                                • {p}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Opciones Adicionales */}
@@ -11836,7 +15828,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* Botones de Cierre */}
-                <div style={{display:'flex',justifyContent:'flex-end',gap:8,borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
+                <div className="inv-modal-actions" style={{borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
                   <button
                     type="button"
                     onClick={() => setShowProdLaunchModal(false)}
@@ -11848,10 +15840,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button
                     type="button"
                     onClick={ejecutarLanzamientoProduccion}
+                    disabled={launching}
                     className="btn-launch-prod"
                     style={{minHeight:44,padding:'8px 20px'}}
                   >
-                    🚀 Confirmar y Lanzar Producción
+                    {launching ? 'Lanzando…' : '🚀 Confirmar y Lanzar Producción'}
                   </button>
                 </div>
               </div>
@@ -12342,7 +16335,7 @@ interval:
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 16 }}>
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temp. Vapor Saturado</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
                     {cycle.steamTemp}°C
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>P. abs: {((autoclaveGaugePsi * 6.895) + 74.5).toFixed(1)} kPa</div>
@@ -12350,7 +16343,7 @@ interval:
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temp. Pico Núcleo</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: 'var(--ink-0)' }}>
                     {cycle.peakCoreTemp}°C
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Cold spot tras inercia Ball</div>
@@ -12358,7 +16351,7 @@ interval:
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Reducción G. stearo.</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: cycle.logReductionStearothermophilus >= 6 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
                     {cycle.logReductionStearothermophilus} D
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Meta esterilidad: ≥ 6D (D₁₂₁=1.8 min)</div>
@@ -12366,7 +16359,7 @@ interval:
 
                 <div className="climate-kpi-card" style={{ padding: 10 }}>
                   <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Reducción B. subtilis</div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 18, fontWeight: 700, color: cycle.logReductionSubtilis >= 12 ? 'var(--moss-800)' : 'var(--accent-rust)' }}>
                     {cycle.logReductionSubtilis} D
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Previene sour rot bacteriano</div>
@@ -12506,7 +16499,7 @@ interval:
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Temperatura Óptima</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.tempC}°C
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.temperatura || 100}%</div>
@@ -12514,7 +16507,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Humedad Relativa</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.rhPct}%
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.humedad || 100}%</div>
@@ -12522,7 +16515,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>CO₂ Máximo (Ppm)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.co2Ppm}
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.co2 || 100}%</div>
@@ -12530,7 +16523,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Iluminación (Lux)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {opt.setpoints.lux} lx
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Satisfacción: {opt.satisfaction?.luz || 100}%</div>
@@ -12718,7 +16711,7 @@ interval:
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--moss-100)', borderColor: 'var(--moss-600)' }}>
                         <div style={{ fontSize: 11, color: 'var(--moss-800)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Cuarto Frío (4°C)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--moss-800)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--moss-800)' }}>
                           {slResult.scenariosComparison.cuartoFrio_4C} días
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--moss-800)' }}>Baseline de cadena ideal</div>
@@ -12726,7 +16719,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
                         <div style={{ fontSize: 11, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)' }}>Nevera (10°C)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--ink-0)' }}>
                           {slResult.scenariosComparison.neveraDomestica_10C} días
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>Refrigeración doméstica</div>
@@ -12734,7 +16727,7 @@ interval:
 
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--accent-terracotta-dim)', borderColor: 'var(--accent-terracotta)' }}>
                         <div style={{ fontSize: 11, color: 'var(--accent-rust)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Ambiente Sabana (18°C)</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--accent-rust)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontSize: 20, fontWeight: 700, color: 'var(--accent-rust)' }}>
                           {slResult.scenariosComparison.ambienteSabana_18C} días
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--accent-rust)' }}>Pérdida: -{slResult.scenariosComparison.lossRatioAmbienteVsFrio}% vida</div>
@@ -12778,6 +16771,380 @@ interval:
             </AccessibleModal>
           );
         })()}
+
+        {showTriageModal && (() => {
+          const currentLote = bitLotes.find(l => l.id === triageLoteId) || bitLotes[0];
+          const cw = typeof window !== 'undefined' ? window.SetasContaminationWorkflow : null;
+          const pathogens = cw?.PATHOGENS_CATALOG || {
+            trichoderma: { id: 'trichoderma', commonName: 'Moho Verde', scientific: 'Trichoderma spp.', dangerLevel: 'critical', biosecurityProtocol: ['Apagar ventilación forzada FAE inmediatamente.', 'Pulverizar alcohol al 70% o solución clorada suavemente.', 'Embolsar herméticamente antes de mover.'] },
+            neurospora: { id: 'neurospora', commonName: 'Moho Naranja del Pan', scientific: 'Neurospora sitophila', dangerLevel: 'critical', biosecurityProtocol: ['Aislamiento inmediato. No abrir ni apretar la bolsa.', 'Esterilizar o incinerar el material descartado.'] },
+            cobweb: { id: 'cobweb', commonName: 'Moho Telaraña', scientific: 'Dactylium dendroides', dangerLevel: 'high', biosecurityProtocol: ['Cubrir con sal marina fina (salting) antes de retirar.', 'Reducir HR a 82-84% y ventilar suavemente.'] },
+            bacillus: { id: 'bacillus', commonName: 'Grano Húmedo / Bacteriosis', scientific: 'Bacillus subtilis', dangerLevel: 'medium', biosecurityProtocol: ['Descartar bolsas afectadas.', 'Revisar F₀ de esterilización y remojo previo de 12 horas.'] },
+            mycogone: { id: 'mycogone', commonName: 'Burbuja Húmeda', scientific: 'Mycogone perniciosa', dangerLevel: 'high', biosecurityProtocol: ['Cubrir con alcohol al 70% o yodo al 1%.', 'Retirar en bolsa sellada.'] }
+          };
+
+          const selectedPathogen = pathogens[triagePathogenKey] || pathogens.trichoderma;
+          const totalBags = currentLote ? (Number(currentLote.numBolsas) || 12) : 12;
+          const lossCalc = cw
+            ? cw.calculateContaminationLoss({ batch: currentLote, affectedBags: triageAffectedBags, totalBags })
+            : {
+                totalBags,
+                affectedBags: triageAffectedBags,
+                healthyBags: Math.max(0, totalBags - triageAffectedBags),
+                lossPct: Math.round((triageAffectedBags / totalBags) * 100),
+                lossCostCop: triageAffectedBags * (currentLote?.costoBolsa || (currentLote?.costoIngKg ? Math.round(currentLote.costoIngKg * (currentLote.pesoHumedo || 2)) : 3500)),
+                suggestedAction: triageAffectedBags / totalBags >= 0.5 ? 'discard' : triageAffectedBags / totalBags >= 0.2 ? 'quarantine' : 'isolate_bags',
+                severity: triageAffectedBags / totalBags >= 0.2 ? 'critical' : 'warning'
+              };
+
+          const handleConfirmTriage = () => {
+            if (!currentLote) return;
+            const currentLifecycle = loteLifecycleState(currentLote);
+            const targetState = cw
+              ? cw.determineTargetLifecycleState(currentLifecycle, triageDecision, lossCalc.lossPct)
+              : (triageDecision === 'discard' || lossCalc.lossPct >= 50 ? 'discarded' : triageDecision === 'quarantine' || lossCalc.lossPct >= 20 ? 'quarantine' : currentLifecycle);
+
+            const contamEvent = cw
+              ? cw.buildContaminationEvent({
+                  batchId: currentLote.id,
+                  pathogenKey: triagePathogenKey,
+                  affectedBags: triageAffectedBags,
+                  totalBags,
+                  location: triageLocation || currentLote.sala || 'Sala 1',
+                  decision: triageDecision,
+                  operatorId: currentLote.operador || 'operador-local',
+                  notes: triageNotes,
+                  lossCostCop: lossCalc.lossCostCop
+                })
+              : {
+                  type: 'contamination_incident',
+                  batchId: currentLote.id,
+                  pathogenId: triagePathogenKey,
+                  pathogenName: selectedPathogen.commonName,
+                  affectedBags: triageAffectedBags,
+                  totalBags,
+                  lossPct: lossCalc.lossPct,
+                  lossCostCop: lossCalc.lossCostCop,
+                  location: triageLocation,
+                  decision: triageDecision,
+                  operatorId: currentLote.operador || 'operador-local',
+                  at: new Date().toISOString()
+                };
+
+            let transitionEvt = null;
+            if (targetState !== currentLifecycle && workflow && workflow.canTransition(currentLifecycle, targetState)) {
+              transitionEvt = workflow.transitionEvent({
+                batchId: currentLote.id,
+                from: currentLifecycle,
+                to: targetState,
+                operatorId: currentLote.operador || 'operador-local',
+                reason: `Contaminación por ${selectedPathogen.commonName} (${lossCalc.lossPct}% afectación, decisión: ${triageDecision})`
+              });
+            }
+
+            const loteBags = bitBolsas.filter(b => b.loteId === currentLote.id && b.estado !== 'descartada');
+            const bagsToMark = loteBags.slice(0, triageAffectedBags);
+            bagsToMark.forEach(b => {
+              updateBitBolsa(b.id, {
+                estado: triageDecision === 'discard' ? 'descartada' : 'contaminada',
+                obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
+              });
+            });
+
+            const nextEstado = targetState === 'quarantine' ? 'cuarentena' : targetState === 'discarded' ? 'descartado' : currentLote.estado;
+            const updatedEvents = [
+              ...(currentLote.lifecycleEvents || []),
+              contamEvent,
+              ...(transitionEvt ? [transitionEvt] : [])
+            ];
+
+            // `lifecycleState` es del servidor: las reglas lo deniegan al cliente
+            // y updateBitLote sincroniza después de pintar, así que un rechazo
+            // dejaba el lote en cuarentena en el teléfono y activo en el servidor.
+            updateBitLote(currentLote.id, {
+              estado: nextEstado,
+              numBolsas: lossCalc.healthyBags,
+              lifecycleEvents: updatedEvents
+            });
+            if (targetState && targetState !== currentLifecycle) {
+              enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+            }
+
+            setShowTriageModal(false);
+            setNoticeDlg({
+              title: '🛡️ Bioseguridad Aplicada',
+              msg: `Lote ${currentLote.codigo}: ${triageAffectedBags} bolsas retiradas. Merma: ${lossCalc.lossPct}%. Pérdida estimada: $${lossCalc.lossCostCop.toLocaleString('es-CO')} COP. Nuevo estado: ${targetState.toUpperCase()}.`
+            });
+          };
+
+          return (
+            <AccessibleModal
+              label="Triaje de Bioseguridad y Contaminación"
+              onClose={() => setShowTriageModal(false)}
+            >
+              <div className="biosecurity-triage-modal" data-testid="biosecurity-triage-modal" onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Gestión Fitosanitaria · Tenjo 2.587 msnm
+                    </div>
+                    <h2 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-0)' }}>
+                      🛡️ Triaje de Bioseguridad & Cuarentena
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--ink-2)' }}
+                    onClick={() => setShowTriageModal(false)}
+                    aria-label="Cerrar triaje de bioseguridad"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                      Lote Afectado
+                    </label>
+                    <select
+                      style={{ width: '100%', padding: '7px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={currentLote?.id || ''}
+                      onChange={e => {
+                        setTriageLoteId(e.target.value);
+                        setTriageAffectedBags(1);
+                      }}
+                    >
+                      {bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado)).map(l => (
+                        <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.numBolsas} bolsas)</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                      Ubicación / Sala
+                    </label>
+                    <input
+                      type="text"
+                      style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={triageLocation}
+                      onChange={e => setTriageLocation(e.target.value)}
+                      placeholder="Ej: Estantería B · Nivel 2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Patógeno Sospechoso / Diagnóstico
+                  </label>
+                  <div className="triage-pathogen-grid">
+                    {Object.values(pathogens).map(p => {
+                      const isSelected = triagePathogenKey === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className={`triage-pathogen-card ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => setTriagePathogenKey(p.id)}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
+                              {p.commonName}
+                            </span>
+                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : '#FEF3C7', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : '#B45309' }}>
+                              {p.dangerLevel === 'critical' ? 'Crítico' : p.dangerLevel === 'high' ? 'Alto' : 'Medio'}
+                            </span>
+                          </div>
+                          <div style={{ fontStyle: 'italic', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)' }}>
+                            {p.scientific}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: '10px 14px' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
+                      Bolsas con Síntomas Visibles
+                    </div>
+                    <div style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>
+                      Total de bolsas en el lote: {totalBags}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      style={{ minWidth: 32, minHeight: 32, padding: 0 }}
+                      onClick={() => setTriageAffectedBags(prev => Math.max(1, prev - 1))}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalBags}
+                      style={{ width: 44, textAlign: 'center', padding: '5px 2px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={triageAffectedBags}
+                      onChange={e => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) setTriageAffectedBags(Math.max(1, Math.min(totalBags, val)));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      style={{ minWidth: 32, minHeight: 32, padding: 0 }}
+                      onClick={() => setTriageAffectedBags(prev => Math.min(totalBags, prev + 1))}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="triage-impact-grid">
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Merma Lote</span>
+                    <span className="triage-impact-val" style={{ color: lossCalc.lossPct >= 20 ? 'var(--accent-terracotta)' : 'inherit' }}>
+                      {lossCalc.lossPct}%
+                    </span>
+                  </div>
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Pérdida ($ COP)</span>
+                    <span className="triage-impact-val" style={{ color: 'var(--accent-terracotta)' }}>
+                      ${lossCalc.lossCostCop.toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Bolsas Sanas</span>
+                    <span className="triage-impact-val" style={{ color: 'var(--moss-800)' }}>
+                      {lossCalc.healthyBags} / {totalBags}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Decisión Operativa & Destino del Lote
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label className={`triage-decision-option ${triageDecision === 'isolate_bags' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="isolate_bags"
+                        checked={triageDecision === 'isolate_bags'}
+                        onChange={() => setTriageDecision('isolate_bags')}
+                      />
+                      <span>
+                        <strong>Extracción Quirúrgica:</strong> Descartar las {triageAffectedBags} bolsas y mantener el resto del lote en {currentLote?.estado || 'producción'}.
+                      </span>
+                    </label>
+                    <label className={`triage-decision-option ${triageDecision === 'quarantine' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="quarantine"
+                        checked={triageDecision === 'quarantine'}
+                        onChange={() => setTriageDecision('quarantine')}
+                      />
+                      <span>
+                        <strong>Traslado a Cuarentena:</strong> Mover el lote completo a Sala de Cuarentena (cambio formal a <code>quarantine</code>).
+                      </span>
+                    </label>
+                    <label className={`triage-decision-option ${triageDecision === 'discard' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="discard"
+                        checked={triageDecision === 'discard'}
+                        onChange={() => setTriageDecision('discard')}
+                      />
+                      <span>
+                        <strong>Descarte Total:</strong> Pérdida irreparable del lote (cambio formal a <code>discarded</code>).
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="triage-protocol-banner">
+                  <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    🚨 Protocolo Inmediato de Bioseguridad: {selectedPathogen.commonName}
+                  </div>
+                  <ul className="triage-protocol-list">
+                    {selectedPathogen.biosecurityProtocol.map((step, idx) => (
+                      <li key={idx}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                    Observaciones de Campo
+                  </label>
+                  <input
+                    type="text"
+                    style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                    value={triageNotes}
+                    onChange={e => setTriageNotes(e.target.value)}
+                    placeholder="Detalles sobre olor, avance de la mancha o causa probable..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <button
+                    type="button"
+                    className="inv-btn inv-btn-sec"
+                    style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}
+                    onClick={() => {
+                      if (currentLote) {
+                        setDiagLoteId(currentLote.id);
+                        const b = bitBolsas.find(x => x.loteId === currentLote.id && x.estado !== 'descartada');
+                        setDiagBolsaId(b?.id || '');
+                        setDiagImageBase64('');
+                        setDiagResult(null);
+                        setDiagError('');
+                        setDiagNotes('');
+                        setShowTriageModal(false);
+                        setShowDiagModal(true);
+                      }
+                    }}
+                  >
+                    📷 Diagnosticar con Cámara IA Gemini
+                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      onClick={() => setShowTriageModal(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-pri"
+                      style={{ background: 'var(--accent-terracotta, #B24C27)', borderColor: 'var(--accent-terracotta, #B24C27)' }}
+                      onClick={handleConfirmTriage}
+                    >
+                      🛡️ Confirmar & Aplicar Bioseguridad
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {showBatchSheetModal && batchSheetModalLote && (
+          <BatchSheetModal
+            isOpen={showBatchSheetModal}
+            onClose={() => { setShowBatchSheetModal(false); setBatchSheetModalLote(null); }}
+            lote={batchSheetModalLote}
+          />
+        )}
 
         {showDiagModal && (() => {
           const currentLote = bitLotes.find(l => l.id === diagLoteId) || bitLotes[0];
@@ -12852,7 +17219,7 @@ interval:
             });
 
             if (workflow && currentLote) {
-              const fromState = legacyLifecycle[currentLote.estado] || 'incubation';
+              const fromState = loteLifecycleState(currentLote);
               const contBags = bolsasDelLote.filter(b => b.id !== currentBolsa.id && b.estado === 'contaminada').length + (nuevoEstado === 'contaminada' ? 1 : 0);
               const contPct = bolsasDelLote.length ? Math.round((contBags / bolsasDelLote.length) * 100) : 0;
               
@@ -12863,11 +17230,16 @@ interval:
                   to: 'discarded',
                   reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
                 });
+                // El descarte se encola como cualquier otra transición. Escribir
+                // lifecycleState aquí lo rechazaban las reglas, y como
+                // updateBitLote guarda primero en local y sincroniza después, el
+                // fallo aterrizaba en un aviso lateral: el lote se veía
+                // descartado en el teléfono y seguía activo en el servidor, donde
+                // otro operario lo encontraba disponible.
                 updateBitLote(currentLote.id, {
-                  estado: 'descartado',
-                  lifecycleState: 'discarded',
                   lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
                 });
+                enqueueFieldTransition(currentLote, fromState, 'discarded');
               }
             }
 
@@ -13227,6 +17599,7 @@ interval:
             loteCode={publicTraceModalLoteId}
             lotes={bitLotes}
             cosechas={bitCosechas}
+            bolsas={bitBolsas}
             onClose={() => setPublicTraceModalLoteId(null)}
           />
         )}
@@ -13236,6 +17609,7 @@ interval:
           <IoTHubModal
             isOpen={showIoTHub}
             onClose={() => setShowIoTHub(false)}
+            liveTelemetry={liveTelemetry}
             selectedRoomId={selectedClimateRoom}
             onInjectReading={(r) => {
               setInjectedClimateReadings(prev => ({

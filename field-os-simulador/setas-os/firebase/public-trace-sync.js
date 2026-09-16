@@ -33,30 +33,92 @@ const sanearCosecha = (cosecha) => ({
   pesoFresco: Number.isFinite(Number(cosecha.pesoFresco))
     ? Math.max(0, Math.min(10000000, Number(cosecha.pesoFresco)))
     : 0,
-  calidad: Number.isFinite(Number(cosecha.calidad))
-    ? Math.max(0, Math.min(5, Math.floor(Number(cosecha.calidad))))
-    : null,
+  ...(cosecha.calidad != null && cosecha.calidad !== '' && Number.isFinite(Number(cosecha.calidad))
+    ? {calidad: Math.max(0, Math.min(5, Math.floor(Number(cosecha.calidad))))}
+    : {}),
   flush: Number.isFinite(Number(cosecha.flush))
     ? Math.max(1, Math.floor(Number(cosecha.flush)))
     : 1,
 });
 
-export async function publicarLote(lote) {
-  if (!lote?.codigo) return;
-  return setDoc(
-    doc(db, "public_lotes", lote.codigo),
-    { ...sanearLote(lote), syncedAt: serverTimestamp() },
-    { merge: true },
-  );
+export async function publicarLote(lote, { cosechas = [], bolsas = [] } = {}) {
+  if (!lote?.codigo) {
+    return { ok: false, codigo: null, reason: 'missing_code' };
+  }
+
+  const dtoBuilder = (typeof window !== 'undefined' && window.SetasPublicTraceDTO)
+    ? window.SetasPublicTraceDTO
+    : null;
+
+  const publicDoc = dtoBuilder
+    ? dtoBuilder.buildPublicTraceDocument(lote, cosechas, bolsas)
+    : { ...sanearLote(lote), schemaVersion: 2 };
+
+  try {
+    await setDoc(
+      doc(db, "public_lotes", lote.codigo),
+      { ...publicDoc, syncedAt: serverTimestamp() },
+      { merge: true },
+    );
+
+    // Si además vienen cosechas, sincronizar subcolección para retrocompatibilidad
+    if (Array.isArray(cosechas) && cosechas.length > 0) {
+      for (const cosecha of cosechas) {
+        if (cosecha && cosecha.id) {
+          await setDoc(
+            doc(db, "public_lotes", lote.codigo, "cosechas", String(cosecha.id)),
+            { ...sanearCosecha(cosecha), syncedAt: serverTimestamp() },
+            { merge: true },
+          );
+        }
+      }
+    }
+
+    if (typeof lote === 'object' && lote !== null) {
+      lote.publicTrace = {
+        status: 'synced',
+        lastAttemptAt: new Date().toISOString(),
+        lastPublishedAt: new Date().toISOString(),
+        lastError: null,
+        publicSchemaVersion: 2
+      };
+    }
+
+    return { ok: true, codigo: lote.codigo };
+  } catch (err) {
+    console.warn("Error al publicar ficha pública del lote:", err);
+    if (typeof lote === 'object' && lote !== null) {
+      lote.publicTrace = {
+        status: 'failed',
+        lastAttemptAt: new Date().toISOString(),
+        lastPublishedAt: lote.publicTrace?.lastPublishedAt || null,
+        lastError: err?.code || err?.message || 'sync_failed',
+        publicSchemaVersion: 2
+      };
+    }
+    return {
+      ok: false,
+      codigo: lote.codigo,
+      reason: err?.code || err?.message || 'sync_failed'
+    };
+  }
 }
 
 export async function publicarCosecha(loteCodigo, cosecha) {
-  if (!loteCodigo || !cosecha?.id) return;
-  return setDoc(
-    doc(db, "public_lotes", loteCodigo, "cosechas", String(cosecha.id)),
-    { ...sanearCosecha(cosecha), syncedAt: serverTimestamp() },
-    { merge: true },
-  );
+  if (!loteCodigo || !cosecha?.id) {
+    return { ok: false, reason: 'missing_params' };
+  }
+  try {
+    await setDoc(
+      doc(db, "public_lotes", loteCodigo, "cosechas", String(cosecha.id)),
+      { ...sanearCosecha(cosecha), syncedAt: serverTimestamp() },
+      { merge: true },
+    );
+    return { ok: true, cosechaId: cosecha.id };
+  } catch (err) {
+    console.warn("No se publicó la cosecha en la ficha pública:", err);
+    return { ok: false, reason: err?.code || err?.message || 'sync_failed' };
+  }
 }
 
 // simulador.html es un <script type="text/babel"> clásico (no un módulo

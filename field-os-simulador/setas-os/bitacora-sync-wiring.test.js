@@ -75,7 +75,7 @@ test('addBitCosecha respalda la cosecha nueva en Firestore con el mismo id local
   const start = jsx.indexOf('const addBitCosecha=');
   const end = jsx.indexOf('const deleteBitCosecha=');
   const body = jsx.slice(start, end);
-  assert.match(body, /const e=\{\.\.\.cosecha,id:'COS_'\+Date\.now\(\)\}/, 'el fixture del cuerpo cambió — revisar antes de continuar');
+  assert.match(body, /const e=\{\.\.\.cosecha,id:cosecha\.id\|\|\('COS_'\+Date\.now\(\)/, 'el fixture del cuerpo cambió — revisar antes de continuar');
   assert.match(body, /SetasBitacoraDB\.guardarCosecha\(e\)/);
 });
 

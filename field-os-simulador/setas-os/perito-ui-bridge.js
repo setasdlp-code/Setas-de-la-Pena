@@ -1,116 +1,26 @@
 'use strict';
-// Bridge de presentación del Perito. No recalcula reglas agronómicas: enriquece
-// SetasScoring con cantidades persistidas de Bodega y EB real del Recetario,
-// y traduce las salidas del modelo a una presentación con incertidumbre visible.
+// Presentation consumes one explicit React snapshot; no domain inputs are
+// reconstructed from DOM text, generated source or asynchronous storage reads.
 (function () {
   if (globalThis.__setasPeritoUiBridgeLoaded) return;
   globalThis.__setasPeritoUiBridgeLoaded = true;
-
-  const SPECIES_KEY_BY_NAME = {
-    'Orellana Gris': 'p_ostreatus_gris',
-    'Orellana Blanca': 'p_ostreatus_blanco',
-    'Orellana Rosa': 'p_djamor_rosa',
-    'Seta de Cardo': 'p_eryngii',
-    'Shiitake': 'shiitake',
-    'Melena de León': 'lions_mane',
-    'Reishi': 'reishi',
-    'Enoki': 'enoki',
-    'Nameko': 'nameko',
-  };
   const CONFIDENCE_ES = { low: 'BAJA', medium: 'MEDIA', high: 'ALTA' };
-  const VIABILITY_ES = { approved: 'APROBADA', review: 'REVISAR', hold: 'NO EJECUTAR' };
-  let moistureById = null;
+  const VIABILITY_ES = { approved: 'SIN BLOQUEO DEL MODELO', review: 'REVISAR', hold: 'REQUIERE CORRECCIÓN' };
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   let lastEvent = null;
-
-  const readJson = (key, fallback) => {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (_) { return fallback; }
-  };
-  const n = value => Number.isFinite(Number(value)) ? Number(value) : null;
-
-  // Lotes reales de Bitácora con cosechas registradas — evidencia auto-derivada,
-  // sin que el operador tenga que teclear un EB real a mano por prueba.
-  const bitacoraTrialRows = sKey => {
+  let pendingFrame = null;
+  const historyCalibrationFor = input => {
+    const sKey = input.species?.key;
     const calib = globalThis.SetasHistoricalCalibration;
-    if (!calib?.bitacoraAsTrialRows) return [];
-    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
-  };
-
-  const historyCalibrationFor = (sKey, recipe) => {
-    if (!sKey) return null;
     const engine = globalThis.SetasPeritoScenarios;
-    const calib = globalThis.SetasHistoricalCalibration;
-    if (!engine?.recipeDistance || !calib?.weightedCalibration) return null;
-    const trialRows = readJson('setas_v6', [])
-      .filter(r => r && r.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
-    const rows = [...bitacoraTrialRows(sKey), ...trialRows];
-    return calib.weightedCalibration(recipe, rows, engine.recipeDistance);
+    if (!sKey || !calib?.weightedCalibration || !engine?.recipeDistance) return null;
+    // Source stores: setas_v6, sdp_bit_lotes, sdp_bit_cosechas. Their current
+    // React values are supplied together, so history belongs to this snapshot.
+    const data = input.historicalEvidence || {};
+    const trialRows = (data.trials || []).filter(r => r && r.sKey === sKey);
+    const rows = [...(calib.bitacoraAsTrialRows ? calib.bitacoraAsTrialRows(sKey, data.lotes || [], data.harvests || [], {includeIncomplete:true}) : []), ...trialRows];
+    return {calibration:calib.weightedCalibration(input.recipe, rows, engine.recipeDistance), eligibility:calib.assessHistory(rows)};
   };
-
-  const stockKgById = () => {
-    const lots = readJson('sdp_lotes', []);
-    const map = {};
-    lots.forEach(l => {
-      if (!l || !l.activo || n(l.cantidadKgDisponible) == null || Number(l.cantidadKgDisponible) <= 0) return;
-      map[l.ingredienteId] = (map[l.ingredienteId] || 0) + Number(l.cantidadKgDisponible);
-    });
-    return map;
-  };
-
-  const parseMoistureCatalog = async () => {
-    if (moistureById) return moistureById;
-    const out = {};
-    try {
-      const response = await fetch('./simulador-app.js', { cache: 'force-cache' });
-      if (!response.ok) throw new Error('catalog fetch failed');
-      const text = await response.text();
-      const start = text.indexOf('const INGS = [');
-      const end = text.indexOf('const CATS =', start);
-      const block = start >= 0 && end > start ? text.slice(start, end) : text;
-      const re = /id:\s*['"]([^'"]+)['"][\s\S]{0,650}?moisture:\s*([0-9.]+)/g;
-      let match;
-      while ((match = re.exec(block))) out[match[1]] = Number(match[2]);
-    } catch (_) {}
-    moistureById = out;
-    return out;
-  };
-
-  const findBatchWetKg = () => {
-    const roots = [
-      document.querySelector('.builder-cols')?.previousElementSibling,
-      document.getElementById('bl-perito')?.parentElement,
-      document.querySelector('.builder-cols')?.parentElement,
-    ].filter(Boolean);
-    for (const root of roots) {
-      const text = root.textContent || '';
-      const m = text.match(/([0-9]+(?:[.,][0-9]+)?)\s*[×x]\s*([0-9]+(?:[.,][0-9]+)?)\s*kg\s*=\s*([0-9]+(?:[.,][0-9]+)?)\s*kg/i);
-      if (m) return Number(m[3].replace(',', '.'));
-    }
-    return null;
-  };
-
-  const maxWetBatchKg = (recipe, stockMap, moistures, targetMoisturePct) => {
-    const finalDryFraction = 1 - Math.max(0, Math.min(92, Number(targetMoisturePct) || 65)) / 100;
-    let max = Infinity;
-    for (const r of recipe || []) {
-      const pct = Math.max(0, Number(r.p) || 0) / 100;
-      if (!pct) continue;
-      const ingredientDryFraction = 1 - Math.max(0, Math.min(92, Number(moistures[r.id]) || 0)) / 100;
-      const wetIngredientPerKgFinal = finalDryFraction * pct / Math.max(0.08, ingredientDryFraction);
-      const available = Math.max(0, Number(stockMap[r.id]) || 0);
-      if (wetIngredientPerKgFinal > 0) max = Math.min(max, available / wetIngredientPerKgFinal);
-    }
-    return Number.isFinite(max) ? Math.max(0, max) : null;
-  };
-
-  const decisionRisk = (model, an) => {
-    if (an.trichoderma || model.dimensions?.safety?.status === 'hold') return 'ALTO';
-    const score = model.dimensions?.safety?.score ?? 0;
-    return score >= 80 ? 'BAJO' : score >= 60 ? 'MEDIO' : 'ALTO';
-  };
-
   const softenLegacyText = root => {
     if (!root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -147,98 +57,92 @@
     });
   };
 
-  const renderModel = (model, an, meta) => {
+  const renderModel = detail => {
     const root = document.getElementById('bl-perito');
     if (!root) return false;
+    if (!detail?.an || !detail?.recipe?.length) {
+      document.getElementById('perito-model-v2')?.remove();
+      globalThis.__setasPeritoAssessment = null;
+      return true;
+    }
+    if (!globalThis.SetasScoring || !globalThis.SetasPeritoReadiness) return false;
+    const historyReport = historyCalibrationFor(detail);
+    const history = historyReport?.calibration || null;
+    const sev = globalThis.SetasScoring.assessSeverity(detail.an);
+    // Unknown quantities stay unavailable in the readiness assessment. Only
+    // pass the quantitative context to scoring when all its inputs are known.
+    const preflight = globalThis.SetasPeritoReadiness.assessReadiness(detail, null, history);
+    const ctx = {
+      recipe: detail.recipe, treatment: detail.treatment, historyCalibration: history,
+      criticals: sev.criticals, warnings: sev.warnings, severity: sev.severity,
+      __bridgeRecompute: true,
+      ...(preflight.stock ? {
+        stockKgById: detail.inventory.stockKgById,
+        ingredientMoistureById: detail.ingredientMoistureById,
+        batchWetKg: detail.batch.wetKg,
+        targetMoisturePct: detail.batch.targetMoisturePct,
+      } : {}),
+    };
+    const model = globalThis.SetasScoring.scoreRecipe(detail.an, ctx);
+    const assessment = globalThis.SetasPeritoReadiness.assessReadiness(detail, model, history);
+    const eb = model.uncertainty?.eb || {};
+    const ph = model.uncertainty?.ph || {};
+    const labels = {ready:'Verificado',blocked:'Corregir',unknown:'Por verificar'};
+    const title = {ready:'Comprobaciones completas',blocked:'Hay bloqueos por resolver',verify:'Faltan verificaciones'}[assessment.status];
     let box = document.getElementById('perito-model-v2');
     if (!box) {
       box = document.createElement('section');
       box.id = 'perito-model-v2';
-      box.style.cssText = 'margin:0 0 14px;padding:12px 14px;border:1px solid rgba(26,20,16,.14);border-left:4px solid var(--accent-olive);border-radius:6px;background:var(--paper-100);font-family:var(--font-body);';
       root.insertBefore(box, root.firstChild);
     }
-    const dim = model.dimensions || {};
-    const eb = model.uncertainty?.eb || {};
-    const ph = model.uncertainty?.ph || {};
-    const viability = VIABILITY_ES[dim.safety?.status] || 'REVISAR';
-    const confidence = CONFIDENCE_ES[model.confidence] || 'BAJA';
-    const risk = decisionRisk(model, an);
-    const stock = model.stockDetail || {};
-    const maxBatch = meta.maxWetBatchKg;
-    const currentBatch = meta.batchWetKg;
-    const stockText = stock.mode === 'quantity'
-      ? `${stock.score}% cobertura${currentBatch ? ` del lote de ${currentBatch.toFixed(1)} kg` : ''}${maxBatch != null ? ` · máx. ≈${maxBatch.toFixed(1)} kg húmedos` : ''}`
-      : maxBatch != null
-      ? `máx. ≈${maxBatch.toFixed(1)} kg húmedos según Bodega`
-      : `${stock.score ?? 100}% · ${stock.mode === 'presence' ? 'presencia, sin masa de lote' : 'sin restricción cuantitativa'}`;
-    const hist = meta.history;
-    const ebBase = hist
-      ? `${hist.n} prueba${hist.n === 1 ? '' : 's'} del Recetario · similitud ${Math.round(hist.similarity * 100)}%`
-      : 'sin pruebas comparables con EB real · base teórica';
-
-    box.innerHTML = `
-      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500);margin-bottom:8px">Perito · decisión con incertidumbre</div>
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px">
-        <div><div style="font-size:10px;color:var(--ink-500);text-transform:uppercase">Viabilidad</div><strong>${viability}</strong></div>
-        <div><div style="font-size:10px;color:var(--ink-500);text-transform:uppercase">Ajuste especie</div><strong>${dim.agronomy?.score ?? '—'}/100</strong></div>
-        <div><div style="font-size:10px;color:var(--ink-500);text-transform:uppercase">Economía</div><strong>${dim.economy?.score ?? '—'}/100</strong></div>
-        <div><div style="font-size:10px;color:var(--ink-500);text-transform:uppercase">Confianza</div><strong>${confidence}</strong></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;font-family:var(--font-mono);font-size:11px;line-height:1.45">
-        <div><b>EB estimada</b><br>${eb.low ?? '—'}–${eb.high ?? '—'}% · confianza ${CONFIDENCE_ES[eb.confidence] || 'BAJA'}<br><span style="color:var(--ink-500)">${ebBase}</span></div>
-        <div><b>pH</b><br>${ph.trend || 'tendencia no disponible'}<br><span style="color:var(--ink-500)">medir mezcla hidratada; no es una medición calculada</span></div>
-        <div><b>Riesgo</b><br>${risk} · inferido, no observado<br><span style="color:var(--ink-500)">${model.uncertainty?.risk?.note || ''}</span></div>
-        <div><b>Bodega</b><br>${stockText}<br><span style="color:var(--ink-500)">${stock.limiting?.length ? `${stock.limiting.length} ingrediente(s) limitante(s)` : 'sin faltantes para el lote evaluado'}</span></div>
-      </div>
-      <div style="margin-top:9px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">Índice global ${model.score}/100 = heurística comparativa. Bodega: <code>sdp_lotes</code> · Recetario: <code>setas_v6</code>.</div>`;
-
+    box.dataset.recipeRevision = String(detail.inputRevision);
+    box.dataset.readiness = assessment.status;
+    box.style.cssText = 'margin:0 0 16px;padding:16px;border:1px solid var(--border-soft);border-radius:var(--r-sm);background:var(--paper-100);font-family:var(--font-body);font-size:16px;line-height:1.5;overflow-wrap:anywhere';
+    const rowHtml = assessment.checks.map(check => `<li data-readiness-check="${check.id}" data-status="${check.status}" style="padding:10px 0;border-bottom:1px solid var(--border-soft)">
+      <strong>${escapeHtml(check.label)} · ${labels[check.status]}</strong><div>${escapeHtml(check.detail)}</div>
+      ${check.status !== 'ready' ? `<button type="button" class="inv-btn inv-btn-sec" data-perito-action="${check.action}" style="min-height:48px;padding:8px 12px;margin-top:6px;font:inherit;cursor:pointer">${escapeHtml(check.actionLabel)}</button>` : ''}</li>`).join('');
+    const shortages = assessment.stock?.limiting || [];
+    const unresolved = assessment.checks.filter(check => check.status !== 'ready');
+    const next = unresolved.find(check => check.status === 'blocked') || unresolved[0];
+    const expanded = new Set([...box.querySelectorAll('details[open][data-perito-detail]')].map(el => el.dataset.peritoDetail));
+    box.innerHTML = `<h3 style="margin:0">Preparación para producir · ${title}</h3>
+      <p style="margin:6px 0">${escapeHtml(detail.species?.name || detail.species?.key)} · revisión ${escapeHtml(detail.inputRevision)} · datos del Formulador actual.</p>
+      <p>Evaluación: <strong>${VIABILITY_ES[model.dimensions?.safety?.status] || 'REVISAR'}</strong>. La aprobación humana se verifica por separado.</p>
+      ${next ? `<div style="margin:12px 0"><strong>Siguiente paso · ${escapeHtml(next.label)}</strong><div>${escapeHtml(next.detail)}</div><button type="button" class="inv-btn inv-btn-sec" data-perito-action="${next.action}" style="min-height:48px;font:inherit;margin-top:8px">${escapeHtml(next.actionLabel)}</button></div>` : ''}
+      <details data-perito-detail="checks" ${expanded.has('checks') ? 'open' : ''}><summary style="cursor:pointer;min-height:48px">Ver ${assessment.checks.length} comprobaciones · ${unresolved.length} por resolver</summary><ul style="list-style:none;margin:0;padding:0">${rowHtml}</ul></details>
+      ${shortages.length ? `<div style="margin-top:12px"><strong>Faltantes estimados según Bodega</strong><ul>${shortages.map(row=>`<li>${escapeHtml(row.name)}: requiere ${row.requiredWetKg.toFixed(2)} kg · registrado ${row.availableWetKg.toFixed(2)} kg · faltan ${row.missingWetKg.toFixed(2)} kg (peso del ingrediente con su humedad declarada).</li>`).join('')}</ul></div>` : ''}
+      <details data-perito-detail="estimates" ${expanded.has('estimates') ? 'open' : ''} style="margin-top:12px"><summary style="cursor:pointer;min-height:48px">Estimaciones y evidencia del modelo</summary>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <div><b>EB estimada</b><br>${escapeHtml(eb.low ?? '—')}–${escapeHtml(eb.high ?? '—')}% · confianza ${CONFIDENCE_ES[eb.confidence] || 'BAJA'}<br>${history ? `${history.n} registro(s) · similitud ${Math.round(history.similarity*100)}% · ${history.matched ? 'seleccionados por receta' : 'extrapolación'}` : 'sin pruebas comparables con EB real · base teórica'}</div>
+          <div><b>pH</b><br>${escapeHtml(ph.trend || 'tendencia no disponible')}<br>medir mezcla hidratada; no es una medición calculada</div>
+          <div><b>Riesgo</b><br>inferido, no observado<br>${escapeHtml(model.uncertainty?.risk?.note || '')}</div>
+        </div>
+        <p data-history-eligibility>${escapeHtml(globalThis.SetasHistoricalCalibration?.describeHistory(historyReport?.eligibility))}. Las observaciones excluidas se conservan como contexto.</p>
+        <p>Índice global ${escapeHtml(model.score)}/100: heurística comparativa. Cantidades de Bodega activa; humedad del catálogo efectivo. No son mediciones nuevas.</p>
+      </details>`;
+    box.querySelectorAll('[data-perito-action]').forEach(button => button.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('setas-perito-navigate', {detail:{action:button.dataset.peritoAction}}));
+    }));
     replaceLegacyMetric(root, 'EB esperada', `${eb.low ?? '—'}–${eb.high ?? '—'}%`, `Conf. ${CONFIDENCE_ES[eb.confidence] || 'BAJA'}`);
     replaceLegacyMetric(root, 'pH estimado', ph.trend || 'tendencia', 'Medir');
-    replaceLegacyMetric(root, 'EB estimada', `${eb.low ?? '—'}–${eb.high ?? '—'}%`, '');
-    replaceLegacyMetric(root, 'Calificación', `${model.score}/100`, '');
     softenLegacyText(root);
+    globalThis.__setasPeritoAssessment = {inputRevision:detail.inputRevision,assessment,model,historyEligibility:historyReport?.eligibility};
     return true;
   };
-
-  const recompute = async detail => {
-    if (!detail?.an || !detail?.recipe?.length || !globalThis.SetasScoring) return;
-    const moistures = await parseMoistureCatalog();
-    const an = detail.an;
-    const recipe = detail.recipe;
-    const sKey = SPECIES_KEY_BY_NAME[an.sp?.name] || null;
-    const history = historyCalibrationFor(sKey, recipe);
-    const stockMap = stockKgById();
-    const batchWetKg = findBatchWetKg();
-    const targetMoisturePct = an.sp?.moisture?.ideal ?? 65;
-    const sev = globalThis.SetasScoring.assessSeverity(an);
-    const ctx = {
-      treatment: detail.treatment || null,
-      recipe,
-      stockIds: new Set(Object.keys(stockMap).filter(id => stockMap[id] > 0)),
-      stockKgById: stockMap,
-      ingredientMoistureById: moistures,
-      batchWetKg,
-      targetMoisturePct,
-      historyCalibration: history,
-      criticals: sev.criticals,
-      warnings: sev.warnings,
-      severity: sev.severity,
-      __bridgeRecompute: true,
-    };
-    const model = globalThis.SetasScoring.scoreRecipe(an, ctx);
-    const maxBatch = maxWetBatchKg(recipe, stockMap, moistures, targetMoisturePct);
-    const render = () => renderModel(model, an, { history, batchWetKg, maxWetBatchKg: maxBatch });
-    if (!render()) requestAnimationFrame(render);
-    setTimeout(render, 120);
+  // Coalesce pending frames and always read the latest snapshot inside the
+  // callback: an older recipe can never repaint after apply/undo or navigation.
+  const scheduleRender = () => {
+    if (pendingFrame !== null) return;
+    pendingFrame = requestAnimationFrame(() => { pendingFrame = null; renderModel(lastEvent); });
   };
-
-  window.addEventListener('setas-perito-model', event => {
+  window.addEventListener('setas-perito-input', event => {
     lastEvent = event.detail;
-    recompute(lastEvent);
+    scheduleRender();
   });
-
   const observer = new MutationObserver(() => {
-    if (lastEvent && !document.getElementById('perito-model-v2')) recompute(lastEvent);
+    if (lastEvent?.recipe?.length && !document.getElementById('perito-model-v2')) scheduleRender();
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, {childList:true,subtree:true});
+  lastEvent = globalThis.__setasPeritoInput || null;
+  if (lastEvent) scheduleRender();
 })();

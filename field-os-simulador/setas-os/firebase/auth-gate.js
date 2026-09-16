@@ -35,21 +35,54 @@ const DC_RUNTIME_SCRIPTS = [
   "../bridge-protocol.js",
   "../navigation-state.js",
   "../setas-os-workflow.js",
+  "../contamination-workflow.js",
   "../climate-sparkline.js",
   "../support.js",
 ];
 const PROTECTED_APP_SCRIPTS = [
+  "../trace-identity.js",
+  "../public-trace-dto.js",
   "../recipe-recommender.js",
   "../scoring.js",
   "../bitacora-model.js",
+  // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada
+  // llamada, no al cargar, así que puede ir aquí sin atarse al orden de listas.
+  "../batch-sheet.js",
+  "../sweep-journal.js",
   "../climate-math.js",
+  // El puente de telemetría en vivo depende del contrato y del adaptador ESP32
+  // en ese orden: cada uno lee el global que publica el anterior.
+  "../telemetry-contract.js",
+  "../esp32-telemetry-adapter.js",
+  "../anomaly-thresholds.js",
+  "../live-telemetry-bridge.js",
   "../flush-forecast-engine.js",
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
   "../post-harvest-engine.js",
+  "../perito-workbench-core.js",
   "../historical-calibration.js",
+  "../species-targets.js",
+  "../recipe-version.js",
+  "../launch-plan.js",
+  "../inventory-consumption.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Cuaderno de campo offline. setas-os-workflow.js llega después, en
+  // DC_RUNTIME_SCRIPTS, así que field-events-model.js resuelve ese global de
+  // forma perezosa en cada llamada en vez de capturarlo al cargarse.
+  "../field-event-contracts.js",
+  "../field-event-queue.js",
+  "../field-events-model.js",
+  "../field-event-reconcile.js",
+  "../field-event-sync.js",
+  "../field-event-account.js",
+  "../field-qr-resolve.js",
+  "../field-action-sheet.js",
+  "../field-qr-events.js",
+  "../field-event-callable-transport.js",
+  // field-event-mock-transport.js NO se carga aquí a propósito: es un servidor
+  // de aceptación falso. Sólo __harness.html lo incluye, con su propia etiqueta.
 ];
 let dataRuntimePromise = null;
 let protectedAppScriptsPromise = null;
@@ -131,6 +164,7 @@ function loadDataRuntime() {
         import("./db.js"),
         import("./bitacora-sync.js"),
         import("./public-trace-sync.js"),
+        import("./eventos-cultivo-sync.js"),
       ]);
       // Estos motores UMD dependen entre sí y el bundle React los resuelve
       // como globals. Se ejecutan en orden solo tras Auth, antes del bundle.

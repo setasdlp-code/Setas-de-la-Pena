@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setas de la Peña · Swiss Botanical — Alimentos Cultivados con Criterio</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/editorial.css">
+  <style>
+    /* Estilos específicos de la Home comercial */
+    .sb-hero {
+      padding-top: var(--sb-space-12);
+      padding-bottom: var(--sb-space-16);
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: var(--sb-space-12);
+      align-items: center;
+      border-bottom: 1px solid var(--sb-line-hairline);
+    }
+    .sb-hero__title {
+      font-size: clamp(38px, 5vw, 64px);
+      line-height: 1.05;
+      margin-bottom: var(--sb-space-5);
+    }
+    .sb-hero__p {
+      font-size: var(--sb-text-lg);
+      line-height: var(--sb-leading-snug);
+      color: var(--sb-ink-1);
+      margin-bottom: var(--sb-space-8);
+      max-width: 38ch;
+    }
+    .sb-hero__visual {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-strong);
+      padding: var(--sb-space-8);
+      position: relative;
+      text-align: center;
+    }
+    .sb-hero__img {
+      max-width: 85%;
+      height: auto;
+      transition: transform var(--sb-duration-editorial) var(--sb-ease-editorial);
+    }
+    .sb-hero__visual:hover .sb-hero__img {
+      transform: scale(1.03);
+    }
+    .sb-species-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr 1fr;
+      gap: var(--sb-space-6);
+      margin-top: var(--sb-space-8);
+    }
+    .sb-species-card {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-hairline);
+      padding: var(--sb-space-6);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color var(--sb-duration-normal) var(--sb-ease-editorial), background-color var(--sb-duration-normal) var(--sb-ease-editorial);
+      text-decoration: none;
+      color: inherit;
+    }
+    .sb-species-card:hover {
+      border-color: var(--sb-accent-shiitake);
+      background-color: var(--sb-paper-0);
+    }
+    .sb-species-card--hero {
+      border-color: var(--sb-accent-shiitake);
+      background-color: var(--sb-accent-shiitake-tint);
+    }
+    .sb-species-card__img-wrap {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--sb-space-4);
+    }
+    .sb-species-card__img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+    .sb-filters-row {
+      display: flex;
+      gap: var(--sb-space-3);
+      flex-wrap: wrap;
+      margin-bottom: var(--sb-space-8);
+    }
+    .sb-filter-btn {
+      padding: var(--sb-space-2) var(--sb-space-4);
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-hairline);
+      border-radius: var(--sb-radius-xs);
+      font-size: var(--sb-text-xs);
+      font-weight: 500;
+      color: var(--sb-ink-1);
+      cursor: pointer;
+      transition: background-color var(--sb-duration-fast) ease, color var(--sb-duration-fast) ease;
+    }
+    .sb-filter-btn:hover, .sb-filter-btn--active {
+      background-color: var(--sb-ink-0);
+      color: var(--sb-ink-inverse);
+      border-color: var(--sb-ink-0);
+    }
+    @media (max-width: 960px) {
+      .sb-hero {
+        grid-template-columns: 1fr;
+        padding-top: var(--sb-space-8);
+      }
+      .sb-species-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .sb-species-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<a class="sb-skip-link" href="#contenido">Saltar al contenido</a>
+<header class="sb-header"><div class="sb-container sb-header__inner">
+<a href="home.html" class="sb-brand-mark">Setas de la Peña<span class="sb-brand-mark__sub">Tenjo · Colombia</span></a>
+<nav class="sb-nav" aria-label="Principal"><a href="home.html" class="sb-nav__link sb-nav__link--active" aria-current="page">Colección</a><a href="product.html" class="sb-nav__link">Shiitake</a><a href="editorial.html" class="sb-nav__link">Cuaderno</a><a href="traceability.html" class="sb-nav__link">Origen</a></nav>
+</div></header>
+<div class="sb-container"><p class="sb-demo-note">Muestra de diseño · Datos comerciales y de lote por confirmar. No recibe pedidos.</p></div><main class="sb-container" id="contenido"><section class="sb-hero"><div><span class="sb-badge sb-badge--shiitake">Swiss Botanical · La colección</span><h1 class="sb-hero__title">Descubre el potencial<br>culinario y funcional<br>de las setas.</h1><p class="sb-hero__p">Descubre las setas desde su forma hasta su origen. Una colección para explorar, preguntar y elegir con más información.</p><div class="sb-actions"><a href="product.html" class="sb-btn sb-btn--accent sb-btn--lg">Conoce el shiitake</a><a href="#catalogo" class="sb-btn sb-btn--secondary">Explorar especies</a></div><a href="traceability.html" class="sb-traceability-capsule"><span><span class="sb-traceability-capsule__tag">Detrás de cada producto</span><span class="sb-traceability-capsule__lot">Una historia con origen</span><span class="sb-traceability-capsule__meta">Conoce la información que acompañará cada lote.</span></span><span>Explorar →</span></a></div>
+<figure class="sb-hero__visual"><div class="sb-mono">Figura 01 · Lentinula edodes</div><img src="../assets/img/species/shiitake.png" alt="Ilustración de shiitake" class="sb-hero__img"><figcaption><strong>Shiitake</strong><p>Una primera mirada a la colección.</p></figcaption></figure></section>
+<section id="catalogo"><span class="sb-editorial-eyebrow">Cuatro formas de descubrir</span><h2>Encuentra tu próxima pregunta.</h2><p>Explora las especies de esta muestra. La ficha de shiitake permite probar la selección de formato; las demás presentan la colección visual.</p><div class="sb-filters-row" role="group" aria-label="Filtrar colección"><button type="button" class="sb-filter-btn sb-filter-btn--active" data-filter="todos" aria-pressed="true" aria-controls="especies">Todas</button><button type="button" class="sb-filter-btn" data-filter="shiitake" aria-pressed="false" aria-controls="especies">Shiitake</button><button type="button" class="sb-filter-btn" data-filter="orellana" aria-pressed="false" aria-controls="especies">Orellana perla</button><button type="button" class="sb-filter-btn" data-filter="melena" aria-pressed="false" aria-controls="especies">Melena de león</button><button type="button" class="sb-filter-btn" data-filter="rosa" aria-pressed="false" aria-controls="especies">Orellana rosa</button></div><p id="resultados" class="sb-mono" role="status" aria-live="polite">4 especies en la colección.</p><div class="sb-species-grid" id="especies"><article class="sb-species-card sb-species-card--hero" data-species="shiitake"><span class="sb-badge sb-badge--shiitake">Colección · 01</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/shiitake.png" alt="Ilustración de shiitake" class="sb-species-card__img" loading="lazy"></div><h3>Shiitake</h3><p class="sb-scientific">Lentinula edodes</p><a href="product.html" class="sb-btn sb-btn--primary">Explorar ficha →</a></article><article class="sb-species-card" data-species="orellana"><span class="sb-badge sb-badge--orellana">Colección · 02</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/orellana-blanca.png" alt="Ilustración de orellana perla" class="sb-species-card__img" loading="lazy"></div><h3>Orellana perla</h3><p class="sb-scientific">Pleurotus ostreatus</p><p>Ficha en preparación.</p></article><article class="sb-species-card" data-species="melena"><span class="sb-badge sb-badge--melena">Colección · 03</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/lions-mane.png" alt="Ilustración de melena de león" class="sb-species-card__img" loading="lazy"></div><h3>Melena de león</h3><p class="sb-scientific">Hericium erinaceus</p><p>Ficha en preparación.</p></article><article class="sb-species-card" data-species="rosa"><span class="sb-badge sb-badge--rosa">Colección · 04</span><div class="sb-species-card__img-wrap"><img src="../assets/img/species/orellana-rosa.png" alt="Ilustración de orellana rosa" class="sb-species-card__img" loading="lazy"></div><h3>Orellana rosa</h3><p class="sb-scientific">Pleurotus djamor</p><p>Ficha en preparación.</p></article></div></section>
+<section class="sb-editorial-teaser"><div><span class="sb-editorial-eyebrow">El cuaderno · 01</span><h2>El placer de mirar de cerca.</h2><p>Una forma, una textura, una pregunta. Nuestro cuaderno propone conectar la curiosidad botánica con las decisiones de tu cocina.</p><a href="editorial.html" class="sb-btn sb-btn--primary">Abrir el cuaderno →</a></div><img src="../assets/img/species/shiitake.png" alt="" loading="lazy"></section></main>
+<script>var filters=document.querySelectorAll('[data-filter]');filters.forEach(function(button){button.addEventListener('click',function(){var selected=button.dataset.filter;filters.forEach(function(item){var active=item===button;item.setAttribute('aria-pressed',String(active));item.classList.toggle('sb-filter-btn--active',active);});var count=0;document.querySelectorAll('[data-species]').forEach(function(card){card.hidden=selected!=='todos'&&card.dataset.species!==selected;if(!card.hidden)count++;});document.querySelector('#resultados').textContent=count===1?'1 especie en la selección.':count+' especies en la colección.';});});</script><footer class="sb-footer"><div class="sb-container sb-footer__grid"><div><span class="sb-brand-mark">Setas de la Peña</span><p>Botánica, origen y cocina.</p></div><a href="home.html">Explorar la colección</a><a href="editorial.html">Leer el cuaderno</a><a href="traceability.html">Conocer el registro de origen</a></div></footer></body></html>

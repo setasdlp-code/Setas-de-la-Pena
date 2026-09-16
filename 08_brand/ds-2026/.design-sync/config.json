@@ -6,10 +6,10 @@
   "cardsDir": "claude-design/cards",
   "notes": "Card-based system: pure CSS + HTML, no React components, so no _ds_bundle.js. Layout mirrors field-os-identity, which the app already consumes for this brand. Rebuild with `node claude-design/build.mjs`, verify with `node claude-design/render-cards.mjs`.",
   "lastSync": {
-    "date": "2026-09-04",
-    "files": 63,
-    "cards": 21,
-    "path": "incremental (fresh empty project)"
+    "date": "2026-09-09",
+    "files": 74,
+    "cards": 23,
+    "path": "atomic (pinned, non-empty project)"
   },
   "url": "https://claude.ai/design/p/b53651ed-f007-438c-8784-7ae97466211e"
 }

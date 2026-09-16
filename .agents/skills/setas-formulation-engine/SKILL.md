@@ -71,7 +71,7 @@ Apply these guardrails:
 - Make ranking deterministic, including documented tie-breakers.
 - Keep units and wet/dry basis explicit at boundaries.
 - Avoid changing several weights or thresholds in one patch unless a fixture isolates each effect.
-- Retain adapter fallbacks and compatibility paths required by existing tests.
+- SetasFormulatorAPI requires the native adapter registered by simulador-app.jsx; without it, applyRecipe returns { ok:false, code:'no_native_adapter' }.
 
 For the detailed review checklist, read [references/recommendation-contract.md](references/recommendation-contract.md).
 

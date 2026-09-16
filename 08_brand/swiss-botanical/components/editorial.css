@@ -1,0 +1,175 @@
+/* ═══════════════════════════════════════════════════════════════
+   Swiss Botanical · Capa Editorial & Publicaciones
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ---- Folio Editorial Superior ---- */
+.sb-editorial-folio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--sb-line-heavy);
+  padding-bottom: var(--sb-space-3);
+  margin-bottom: var(--sb-space-8);
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  color: var(--sb-ink-2);
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+}
+
+/* ---- Encabezado de Artículo / Lámina ---- */
+.sb-editorial-header {
+  margin-bottom: var(--sb-space-12);
+}
+
+.sb-editorial-eyebrow {
+  display: inline-block;
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+  color: var(--sb-accent-shiitake);
+  margin-bottom: var(--sb-space-3);
+}
+
+.sb-editorial-title {
+  font-family: var(--sb-font-serif);
+  font-size: var(--sb-text-display);
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--sb-ink-0);
+  margin-bottom: var(--sb-space-6);
+  letter-spacing: var(--sb-tracking-tight);
+}
+
+.sb-editorial-lead {
+  font-family: var(--sb-font-serif);
+  font-size: var(--sb-text-xl);
+  font-weight: 300;
+  line-height: var(--sb-leading-snug);
+  color: var(--sb-ink-1);
+  max-width: 42ch;
+  margin-bottom: var(--sb-space-8);
+}
+
+/* ---- Lámina con Grabado Botánico & Cartela ---- */
+.sb-plate-frame {
+  border: 1px solid var(--sb-line-strong);
+  background-color: var(--sb-paper-1);
+  padding: var(--sb-space-6);
+  margin-bottom: var(--sb-space-8);
+  position: relative;
+}
+
+.sb-plate-image-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sb-paper-0);
+  border: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-8);
+  overflow: hidden;
+}
+
+.sb-plate-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: contrast(105%);
+}
+
+.sb-plate-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: var(--sb-space-4);
+  padding-top: var(--sb-space-3);
+  border-top: 1px solid var(--sb-line-hairline);
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  color: var(--sb-ink-2);
+}
+
+/* ---- Cuerpo de Lectura Continua & Marginalia ---- */
+.sb-editorial-body {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--sb-space-12);
+  margin-bottom: var(--sb-space-16);
+}
+
+@media (max-width: 900px) {
+  .sb-editorial-body {
+    grid-template-columns: 1fr;
+    gap: var(--sb-space-8);
+  }
+}
+
+.sb-prose p {
+  font-size: 1.0625rem; /* 17px */
+  line-height: 1.65;
+  color: var(--sb-ink-1);
+  margin-bottom: var(--sb-space-6);
+}
+
+.sb-prose p.sb-dropcap::first-letter {
+  font-family: var(--sb-font-serif);
+  font-size: 4.2rem;
+  float: left;
+  line-height: 0.85;
+  margin-right: var(--sb-space-3);
+  margin-top: 4px;
+  color: var(--sb-accent-shiitake-deep);
+}
+
+/* Notas al Margen (Marginalia Suiza) */
+.sb-marginalia {
+  border-left: 1px solid var(--sb-line-hairline);
+  padding-left: var(--sb-space-6);
+  font-size: var(--sb-text-sm);
+}
+
+.sb-marginalia-item {
+  margin-bottom: var(--sb-space-6);
+}
+
+.sb-marginalia-label {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+  color: var(--sb-accent-shiitake);
+  margin-bottom: var(--sb-space-1);
+}
+
+.sb-marginalia-text {
+  font-size: var(--sb-text-xs);
+  color: var(--sb-ink-2);
+  line-height: 1.45;
+}
+
+/* Cita Editorial */
+.sb-pullquote {
+  border-top: 2px solid var(--sb-accent-shiitake);
+  border-bottom: 1px solid var(--sb-line-hairline);
+  padding: var(--sb-space-6) 0;
+  margin: var(--sb-space-8) 0;
+}
+
+.sb-pullquote__text {
+  font-family: var(--sb-font-serif);
+  font-size: var(--sb-text-xl);
+  font-style: italic;
+  line-height: var(--sb-leading-snug);
+  color: var(--sb-ink-0);
+  margin-bottom: var(--sb-space-3);
+}
+
+.sb-pullquote__author {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-xs);
+  color: var(--sb-ink-2);
+  text-transform: uppercase;
+  letter-spacing: var(--sb-tracking-caps);
+}

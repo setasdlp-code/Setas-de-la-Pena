@@ -52,12 +52,22 @@
   // treatment ranking from preferTreatment under the guise of legacy parity.
 
   const normalizeRecipe = (recipe = []) => {
-    const clean = recipe
-      .map(r => ({ id: r.id, p: Math.max(0, Number(r.p ?? r.pct) || 0) }))
-      .filter(r => r.id && r.p > 0);
+    const clean = (Array.isArray(recipe) ? recipe : [])
+      .map(r => ({ id: r?.id, p: Math.max(0, Number(r?.p ?? r?.pct) || 0) }))
+      .filter(r => r.id && Number.isFinite(r.p) && r.p > 0);
     const total = clean.reduce((s, r) => s + r.p, 0);
-    if (!total) return [];
-    return clean.map(r => ({ ...r, p: round2(r.p / total * 100) }));
+    if (!total || !Number.isFinite(total)) return [];
+    const rounded = clean.map(r => ({ ...r, p: round2(r.p / total * 100) }));
+    const roundedTotal = rounded.reduce((s, r) => s + r.p, 0);
+    const diff = round2(100 - roundedTotal);
+    if (Math.abs(diff) >= 0.01 && rounded.length > 0) {
+      let maxIdx = 0;
+      for (let i = 1; i < rounded.length; i++) {
+        if (rounded[i].p > rounded[maxIdx].p) maxIdx = i;
+      }
+      rounded[maxIdx].p = round2(rounded[maxIdx].p + diff);
+    }
+    return rounded;
   };
 
   const recipeMap = (recipe = []) => Object.fromEntries(
@@ -85,36 +95,168 @@
   };
 
   const noveltyScore = (recipe, history = []) => {
-    if (!history.length) return 100;
-    const nearest = Math.min(...history.map(h => recipeDistance(recipe, h.recipe || h)));
+    if (!Array.isArray(history) || !history.length) return 100;
+    const distances = history
+      .map(h => {
+        const target = (h && typeof h === 'object' && 'recipe' in h) ? h.recipe : h;
+        if (!Array.isArray(target) || !target.length) return null;
+        return recipeDistance(recipe, target);
+      })
+      .filter(d => Number.isFinite(d));
+    if (!distances.length) return 100;
+    const nearest = Math.min(...distances);
     return Math.round(clamp(nearest * 160, 0, 100));
   };
+
+  const EPS = 1e-6;
+  const round3 = (v) => Math.round(v * 1000) / 1000;
+  const lotTime = (l) => new Date(l?.fechaIngreso || l?.fechaCompra || 0).getTime() || 0;
+  const cantidadDisponible = (l) => Number(l?.cantidadKgDisponible) || 0;
 
   const precioPonderado = (ingredienteId, lotes = []) => {
     const active = (lotes || []).filter(l =>
       l &&
-      l.activo &&
+      l.activo !== false &&
       l.ingredienteId === ingredienteId &&
-      Number(l.cantidadKgDisponible || 0) > 0
+      cantidadDisponible(l) > EPS
     );
-    const totalKg = active.reduce((s, l) => s + Number(l.cantidadKgDisponible || 0), 0);
+    const totalKg = active.reduce((s, l) => s + cantidadDisponible(l), 0);
     if (!totalKg) return null;
     return active.reduce(
-      (s, l) => s + Number(l.precioPorKgCOP || 0) * Number(l.cantidadKgDisponible || 0),
+      (s, l) => s + Number(l.precioPorKgCOP || 0) * cantidadDisponible(l),
       0
     ) / totalKg;
   };
 
-  const realCostFor = (recipe, ingredients = [], invLotes = []) => {
-    let known = false;
-    const total = recipe.reduce((sum, r) => {
-      const pp = precioPonderado(r.id, invLotes);
-      const g = ingredients.find(i => i.id === r.id);
-      if (pp != null) known = true;
-      const price = pp != null ? pp : Number(g?.cost || 0);
-      return sum + price * (Number(r.p) || 0) / 100;
-    }, 0);
-    return { cost: Math.round(total), realCostKnown: known };
+  /**
+   * Asignación FIFO estricta de inventario por ingrediente (lote más antiguo primero).
+   * @param {Array} inventoryLots Lotes de inventario disponibles
+   * @param {string} ingredientId ID del insumo
+   * @param {number} neededKg Cantidad húmeda tal cual requerida (kg)
+   * @returns {Object} { allocations: [{ lotId, quantity, unitPriceCOP, costCOP }], missingKg, physicalCostCOP }
+   */
+  const allocateFifo = (inventoryLots = [], ingredientId, neededKg = 0) => {
+    const lots = (inventoryLots || [])
+      .filter(l => l && l.activo !== false && l.ingredienteId === ingredientId && cantidadDisponible(l) > EPS)
+      .sort((a, b) => lotTime(a) - lotTime(b));
+
+    const allocations = [];
+    let remaining = Math.max(0, Number(neededKg) || 0);
+    let physicalCostCOP = 0;
+
+    for (const l of lots) {
+      if (remaining <= EPS) break;
+      const avail = cantidadDisponible(l);
+      const take = Math.min(avail, remaining);
+      const unitPrice = Number(l.precioPorKgCOP || 0);
+      const cost = take * unitPrice;
+      allocations.push({
+        lotId: l.id,
+        quantity: round3(take),
+        unitPriceCOP: unitPrice,
+        costCOP: round2(cost),
+      });
+      physicalCostCOP += cost;
+      remaining -= take;
+    }
+    const missingKg = remaining > EPS ? round3(remaining) : 0;
+    return { allocations, missingKg, physicalCostCOP: round2(physicalCostCOP) };
+  };
+
+  /**
+   * Costeo de receta con trazabilidad estricta de procedencia (FIFO y catálogo).
+   * @param {Array} recipe Receta (% base seca)
+   * @param {Array} ingredients Catálogo de ingredientes
+   * @param {Array} invLotes Lotes de bodega
+   * @param {Object} [options] { batchDryKg: 1 }
+   * @returns {Object} { cost, physicalCost, procurementEstimate, costProvenance, stockCoveragePct, realCostKnown, realCost, details }
+   */
+  const calculateFifoRecipeCost = (recipe = [], ingredients = [], invLotes = [], options = {}) => {
+    const batchDryKg = Number(options.batchDryKg) || 1.0;
+    const normalized = normalizeRecipe(recipe);
+    const ingById = new Map((ingredients || []).map(g => [g.id, g]));
+
+    let totalPhysicalCost = 0;
+    let totalProcurementEstimate = 0;
+    let totalNeededWetKg = 0;
+    let totalAllocatedWetKg = 0;
+    const details = [];
+
+    for (const r of normalized) {
+      const g = ingById.get(r.id);
+      const moisture = Math.min(0.92, Math.max(0, (Number(g?.moisture) || 0) / 100));
+      // Base seca del insumo en el lote
+      const itemDryKg = (Number(r.p) / 100) * batchDryKg;
+      // Masa tal cual se recibe corregida por humedad
+      const itemWetKg = itemDryKg / (1 - moisture);
+      totalNeededWetKg += itemWetKg;
+
+      const catalogPricePerKg = Number(g?.cost || 0);
+
+      if (Array.isArray(invLotes) && invLotes.length > 0) {
+        const { allocations, missingKg, physicalCostCOP } = allocateFifo(invLotes, r.id, itemWetKg);
+        const allocatedKg = Math.max(0, itemWetKg - missingKg);
+        totalAllocatedWetKg += allocatedKg;
+        totalPhysicalCost += physicalCostCOP;
+
+        const procurementCostCOP = round2(missingKg * catalogPricePerKg);
+        totalProcurementEstimate += procurementCostCOP;
+
+        details.push({
+          id: r.id,
+          neededWetKg: round3(itemWetKg),
+          allocatedWetKg: round3(allocatedKg),
+          missingKg,
+          physicalCostCOP,
+          procurementCostCOP,
+          allocations,
+        });
+      } else {
+        const procurementCostCOP = round2(itemWetKg * catalogPricePerKg);
+        totalProcurementEstimate += procurementCostCOP;
+        details.push({
+          id: r.id,
+          neededWetKg: round3(itemWetKg),
+          allocatedWetKg: 0,
+          missingKg: round3(itemWetKg),
+          physicalCostCOP: 0,
+          procurementCostCOP,
+          allocations: [],
+        });
+      }
+    }
+
+    const physicalCostPerDryKg = totalPhysicalCost / batchDryKg;
+    const procurementPerDryKg = totalProcurementEstimate / batchDryKg;
+    const totalCostPerDryKg = physicalCostPerDryKg + procurementPerDryKg;
+
+    const stockCoveragePct = totalNeededWetKg > 0
+      ? round2((totalAllocatedWetKg / totalNeededWetKg) * 100)
+      : 0;
+
+    let costProvenance = 'catalog';
+    if (stockCoveragePct >= 99.99) {
+      costProvenance = 'physical';
+    } else if (stockCoveragePct > 0.01) {
+      costProvenance = 'mixed';
+    }
+
+    const isPhysical = costProvenance === 'physical';
+
+    return {
+      cost: Math.round(totalCostPerDryKg),
+      physicalCost: round2(physicalCostPerDryKg),
+      procurementEstimate: round2(procurementPerDryKg),
+      costProvenance,
+      stockCoveragePct,
+      realCostKnown: isPhysical,
+      realCost: isPhysical ? Math.round(totalCostPerDryKg) : null,
+      details,
+    };
+  };
+
+  const realCostFor = (recipe, ingredients = [], invLotes = [], options = {}) => {
+    return calculateFifoRecipeCost(recipe, ingredients, invLotes, options);
   };
 
   const resolveProfile = ({
@@ -248,7 +390,7 @@
                 if (Math.abs(denom) < 0.001) return;
                 const ps = remaining * (b.c - T * b.n) / denom;
                 const pb = remaining - ps;
-                if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
+                if (!Number.isFinite(ps) || !Number.isFinite(pb) || ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
 
                 const rec = [
                   { id: base.id, p: round1(pb) },
@@ -327,7 +469,7 @@
                 if (Math.abs(denom) < 0.001) return;
                 const ps = remaining * (cBlend - T * nBlend) / denom;
                 const pb = remaining - ps;
-                if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
+                if (!Number.isFinite(ps) || !Number.isFinite(pb) || ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
 
                 const rec = [
                   { id: b1.id, p: round1(pb * f1) },
@@ -409,7 +551,7 @@
                 if (Math.abs(denom) < 0.001) return;
                 const psTotal = remaining * (db.c - T * db.n) / denom;
                 const pb = remaining - psTotal;
-                if (psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
+                if (!Number.isFinite(psTotal) || !Number.isFinite(pb) || psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
 
                 const rec = [
                   { id: base.id, p: round1(pb) },
@@ -594,7 +736,7 @@
       completions.forEach(r => mergedMap.set(r.id, (mergedMap.get(r.id) || 0) + r.p));
       const merged = [...mergedMap.entries()].map(([id, p]) => ({ id, p: round2(p) }));
       const tot = merged.reduce((s, r) => s + r.p, 0);
-      if (Math.abs(tot - 100) > 0.5) return;
+      if (!Number.isFinite(tot) || Math.abs(tot - 100) > 0.5) return;
       const norm = normalizeRecipe(merged);
       const key = canonicalRecipeKey(norm);
       if (tried.has(key)) return;
@@ -631,7 +773,7 @@
               const ps = (anchorC - T * anchorN + P_free * (b.c - T * b.n)) / denom;
               const pb = P_free - ps;
 
-              if (ps < 0 || pb < 0) return;
+              if (!Number.isFinite(ps) || !Number.isFinite(pb) || ps < 0 || pb < 0) return;
               if (anchorSuppP + ps > suppMaxFor(supp)) return;
 
               const comp = [];
@@ -1066,7 +1208,7 @@
     const map = recipeMap(recipe);
     const ingredientById = new Map((ingredients || []).map(g => [g?.id, g]));
     const total = Object.values(map).reduce((sum, p) => sum + Number(p || 0), 0);
-    if (total <= 0 || Math.abs(total - 100) > 0.05) failures.push('mass_balance');
+    if (!Number.isFinite(total) || total <= 0 || Math.abs(total - 100) > 0.05) failures.push('mass_balance');
 
     if (useStock && Object.keys(map).some(id => !stock.has(id))) failures.push('stock');
 
@@ -1140,9 +1282,18 @@
       };
     }
 
-    if (useStock && invLotes.length) {
-      const real = realCostFor(normalized, ingredients, invLotes);
-      analysis = { ...analysis, cost: real.cost, realCostKnown: real.realCostKnown };
+    if (useStock && invLotes && invLotes.length) {
+      const real = realCostFor(normalized, ingredients, invLotes, { batchDryKg: context.batchDryKg });
+      analysis = {
+        ...analysis,
+        cost: real.cost,
+        physicalCost: real.physicalCost,
+        procurementEstimate: real.procurementEstimate,
+        costProvenance: real.costProvenance,
+        stockCoveragePct: real.stockCoveragePct,
+        realCostKnown: real.realCostKnown,
+        realCost: real.realCost,
+      };
     }
     if (profile.spawnOverride != null) analysis = { ...analysis, dynSpawn: profile.spawnOverride };
 
@@ -1714,6 +1865,8 @@
     recipeDistance,
     noveltyScore,
     precioPonderado,
+    allocateFifo,
+    calculateFifoRecipeCost,
     realCostFor,
     resolveProfile,
     generateStructuralSeeds,

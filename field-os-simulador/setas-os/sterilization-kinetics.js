@@ -124,22 +124,26 @@
    * @returns {object} Simulación detallada con perfil temporal y F0 total
    */
   const simulateCorePenetration = (params = {}) => {
-    const holdTimeMin = Math.max(10, parseInt(params.holdTimeMin || 90, 10));
-    const gaugePressurePsi = Math.max(0, parseFloat(params.gaugePressurePsi ?? 19.04));
-    const bagKg = Math.max(0.5, Math.min(5.0, parseFloat(params.bagKg || 2.0)));
-    const moisturePct = Math.max(40, Math.min(80, parseFloat(params.moisturePct || 65)));
-    const ambientPressureKpa = parseFloat(params.ambientPressureKpa || TENJO_NOMINAL_ATM_KPA);
-    const initialTempC = parseFloat(params.initialTempC || 18.0);
-    const comeUpTimeMin = Math.max(10, parseInt(params.comeUpTimeMin || 25, 10));
+    const p = params || {};
+    const holdTimeMin = Math.max(10, parseInt(p.holdTimeMin || 90, 10));
+    const gaugePressurePsi = Math.max(0, parseFloat(p.gaugePressurePsi ?? 19.04));
+    const bagKg = Math.max(0.5, Math.min(5.0, parseFloat(p.bagKg || 2.0)));
+    const moisturePct = Math.max(40, Math.min(80, parseFloat(p.moisturePct || 65)));
+    const ambientPressureKpa = parseFloat(p.ambientPressureKpa || TENJO_NOMINAL_ATM_KPA);
+    const initialTempC = parseFloat(p.initialTempC || 18.0);
+    const comeUpTimeMin = Math.max(10, parseInt(p.comeUpTimeMin || 25, 10));
+    const containerType = p.containerType || 'bag';
     const coolDownTimeMin = 45; // tiempo de enfriamiento natural dentro del autoclave
 
     const steamTemp = calcSteamSatTemp(gaugePressurePsi, ambientPressureKpa);
 
-    // Parámetros de penetración térmica según masa y humedad
+    // Parámetros de penetración térmica según masa, humedad y tipo de contenedor
     // Mayor humedad facilita transferencia por condensación intersticial; mayor masa incrementa el radio r
+    // Frascos de vidrio (jar) o botellas rígidas (bottle) presentan mayor conductividad térmica que bolsas dobles
     const moistureCorrection = 1.0 - ((moisturePct - 60) * 0.005);
-    const fh = Math.round((32 + (bagKg * 18.5)) * moistureCorrection);
-    const jh = 1.55;
+    const conductMult = containerType === 'jar' ? 0.78 : containerType === 'bottle' ? 0.90 : 1.0;
+    const fh = Math.round((32 + (bagKg * 18.5)) * moistureCorrection * conductMult);
+    const jh = containerType === 'jar' ? 1.35 : 1.55;
 
     let f0Accumulated = 0;
     let peakCoreTemp = initialTempC;
@@ -200,6 +204,7 @@
       bagKg,
       moisturePct,
       ambientPressureKpa,
+      containerType,
       steamTemp: Math.round(steamTemp * 10) / 10,
       peakCoreTemp: Math.round(peakCoreTemp * 10) / 10,
       f0Total: Math.round(f0Accumulated * 10) / 10,
@@ -210,13 +215,84 @@
   };
 
   /**
+   * Resuelve el tiempo óptimo de sostenimiento (minutos de meseta) requerido para alcanzar
+   * un valor F0 objetivo mediante búsqueda binaria acotada sobre simulateCorePenetration.
+   *
+   * @param {object} params
+   * @param {number} [params.targetF0=12.0] Valor F0 de letalidad acumulada deseado
+   * @param {number} [params.gaugePressurePsi=19.04] Presión manométrica (psig)
+   * @param {number} [params.bagKg=2.0] Masa húmeda de la bolsa en kg
+   * @param {number} [params.moisturePct=65] Humedad del sustrato (%)
+   * @param {string} [params.containerType='bag'] 'bag' | 'jar' | 'bottle'
+   * @param {number} [params.ambientPressureKpa=74.50] Presión barométrica local
+   * @returns {object} Tiempo recomendado en minutos, F0 simulado resultante y margen de seguridad
+   */
+  const calcOptimalHoldTime = (params = {}) => {
+    const p = params || {};
+    const targetF0 = Math.max(1.0, parseFloat(p.targetF0 || TARGET_F0_MIN));
+    const high = 240;
+    const maxSim = simulateCorePenetration({ ...p, holdTimeMin: high });
+
+    if (maxSim.f0Total < targetF0) {
+      const minReqPsi = calcRequiredGaugePressurePsi(T_REF_STERILIZATION, p.ambientPressureKpa || TENJO_NOMINAL_ATM_KPA);
+      return {
+        targetF0,
+        exactHoldMin: null,
+        recommendedHoldMin: null,
+        simulatedF0: maxSim.f0Total,
+        safetyMarginF0: Math.round((maxSim.f0Total - targetF0) * 10) / 10,
+        gaugePressurePsi: maxSim.gaugePressurePsi,
+        steamTemp: maxSim.steamTemp,
+        peakCoreTemp: maxSim.peakCoreTemp,
+        isSterile: false,
+        isAchievable: false,
+        warning: `El F0 objetivo (${targetF0}) es inalcanzable a ${maxSim.gaugePressurePsi} psi (temperatura de vapor ${maxSim.steamTemp}°C) en un ciclo de hasta 240 min. A 2.600 msnm se requiere un mínimo de ${minReqPsi} psi para alcanzar 121.1°C y lograr esterilidad comercial en tiempos industriales.`,
+      };
+    }
+
+    let low = 15;
+    let highLimit = high;
+    let bestHoldMin = high;
+
+    for (let iter = 0; iter < 12; iter++) {
+      const mid = Math.round((low + highLimit) / 2);
+      const sim = simulateCorePenetration({ ...p, holdTimeMin: mid });
+      if (sim.f0Total >= targetF0) {
+        bestHoldMin = mid;
+        highLimit = mid - 1;
+      } else {
+        low = mid + 1;
+      }
+    }
+
+    // Margen de seguridad operativa (+5 min para amortiguar heterogeneidad de carga en el autoclave)
+    const recommendedHoldMin = Math.min(240, bestHoldMin + 5);
+    const validatedSim = simulateCorePenetration({ ...p, holdTimeMin: recommendedHoldMin });
+
+    return {
+      targetF0,
+      exactHoldMin: bestHoldMin,
+      recommendedHoldMin,
+      simulatedF0: validatedSim.f0Total,
+      safetyMarginF0: Math.round((validatedSim.f0Total - targetF0) * 10) / 10,
+      gaugePressurePsi: validatedSim.gaugePressurePsi,
+      steamTemp: validatedSim.steamTemp,
+      peakCoreTemp: validatedSim.peakCoreTemp,
+      isSterile: validatedSim.isSterile,
+      isAchievable: true,
+      warning: null,
+    };
+  };
+
+  /**
    * Dictamen microbiológico y agronómico de un ciclo de autoclave.
    *
    * @param {object} params Parámetros de ciclo de autoclave
    * @returns {object} Dictamen de inocuidad y recomendaciones operativas
    */
   const validateAutoclaveCycle = (params = {}) => {
-    const sim = simulateCorePenetration(params);
+    const p = params || {};
+    const sim = simulateCorePenetration(p);
     const f0 = sim.f0Total;
     const required19Psi = calcRequiredGaugePressurePsi(T_REF_STERILIZATION, sim.ambientPressureKpa);
 
@@ -227,12 +303,16 @@
     let badge = '🔴';
     let riskLevel = 'alto';
     let recommendations = [];
+    const isOverprocessed = f0 >= 35.0;
 
     if (f0 >= 15.0) {
       verdict = 'ESTERILIZACIÓN COMPLETA (MARGEN ROBUSTO)';
       badge = '🟢';
       riskLevel = 'seguro';
       recommendations.push('Ciclo óptimo para sustrato altamente suplementado (>20% salvado/soya). Inocuidad garantizada.');
+      if (isOverprocessed) {
+        recommendations.push('Alerta nutricional: F0 acumulado elevado (>35 min). Posible caramelización de azúcares y formación de complejos de Maillard. Evaluar reducir meseta en 10-15 min en próximos ciclos.');
+      }
     } else if (f0 >= TARGET_F0_MIN) {
       verdict = 'ESTERILIZACIÓN COMERCIAL ADECUADA';
       badge = '🟢';
@@ -259,6 +339,7 @@
       verdict,
       badge,
       riskLevel,
+      isOverprocessed,
       requiredGaugePressurePsi: required19Psi,
       logReductionStearothermophilus: logReductStearo,
       logReductionSubtilis: logReductSubtilis,
@@ -279,6 +360,7 @@
     calcThermalLethalityRate,
     calcTimeCompFactorAt15Psi,
     simulateCorePenetration,
+    calcOptimalHoldTime,
     validateAutoclaveCycle,
   };
 

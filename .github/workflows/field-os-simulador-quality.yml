@@ -38,7 +38,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      # No npm install needed: the test suite is pure Node built-ins.
+      # El cuaderno de campo persiste en IndexedDB, que Node no trae, así que las
+      # pruebas de esa capa necesitan fake-indexeddb. La suite dejó de ser sólo
+      # built-ins; sin instalar dependencias los siete archivos que la ejercitan
+      # fallan por módulo ausente, no por una regresión real.
+      - name: Install dependencies
+        run: npm ci
       # simulador-app.jsx DOES have a build step (node build.js -> esbuild), but
       # CI never runs it — build.test.js verifies the committed bundle's
       # source-hash matches the source, so a stale bundle fails here instead.

@@ -13,6 +13,21 @@
 <link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="ds-2026/tokens/fonts.css">
 <script src="./error-buffer.js"></script>
+<!-- Service worker: permite abrir la aplicación sin señal, que es la situación
+     en la que el cuaderno de campo tiene que funcionar. Se registra después de
+     `load` para no competir por ancho de banda con el arranque, y un fallo al
+     registrar no rompe nada: la aplicación sigue funcionando online. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (err) {
+        // Sin service worker la aplicación funciona igual con señal; sólo se
+        // pierde el arranque en frío sin conexión.
+        if (window.console) console.warn('[SetasOS] service worker no registrado:', err && err.message);
+      });
+    });
+  }
+</script>
 <style>
   /*
    * Firebase resolves after the .dc runtime parses this document. Keep
@@ -27,7 +42,7 @@
   html[data-setas-auth-state="unauthenticated"] x-dc { display:none !important; }
 </style>
 </head>
-<body data-mode="control">
+<body data-mode="field">
   <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper,#FAF5E9);contain:strict;">
     <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel,#F3EEE2);border:1px solid var(--ink,#222222);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
       <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper,#FAF5E9);border:1px solid var(--rule,#888888);">
@@ -69,6 +84,7 @@
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/base.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/components.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/editorial.css">
+<link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="ds-2026/components/instrument.css">
 <link data-auth-managed="true" data-auth-rel="stylesheet" data-auth-href="sim.css">
 <script type="module" src="firebase/auth-gate.js"></script>
 <!-- auth-gate.js inicia Firebase Auth. Tras una sesión válida inicializa
@@ -127,7 +143,7 @@
      Buttons that already declare their own inline `transition` keep that untouched
      (inline always wins per-property); they still get the instant scale on press. */
   button:not(:disabled) { transition: transform .12s cubic-bezier(.32,.72,.36,1), background-color .15s ease, color .15s ease, border-color .15s ease; }
-  button:not(:disabled):active { transform: scale(.97); }
+  button:not(:disabled):active { transform: translateY(1px) scale(.99); }
   a { color: var(--accent-terracotta); transition: color .15s ease; }
   a:hover { color: color-mix(in oklab, var(--accent-terracotta) 78%, black); }
   .fos-scroll { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
@@ -178,7 +194,9 @@
   .rail-flyout-item.on::before { content:''; position:absolute; left:-8px; top:8px; bottom:8px; width:3px; background:var(--accent-terracotta); }
   .workspace-subnav { position:sticky; top:0; z-index:var(--z-sticky-subnav); display:flex; align-items:center; gap:4px; min-height:45px; padding:0 26px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; background:color-mix(in oklab, var(--paper-1) 94%, transparent); border-bottom:1px solid var(--border-soft); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
   .workspace-subnav::-webkit-scrollbar { display:none; }
-  .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; }
+  .workspace-tab { flex:none; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; background:none; color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; transition:color .15s ease, border-color .15s ease, transform .12s cubic-bezier(.32,.72,.36,1); }
+  .workspace-tab:hover { color:var(--ink-1); }
+  .workspace-tab:active { transform:translateY(1px); }
   .workspace-tab.on { color:var(--ink-0); border-bottom-color:var(--accent-terracotta); }
   .workspace-tab.secondary { color:var(--accent-blue-grey-dark); }
   .workspace-more-sep { flex:none; width:1px; height:22px; margin:0 3px; background:var(--border-strong); }
@@ -186,15 +204,17 @@
      subnav para que no se desplace fuera de alcance cuando la fila de pestañas
      scrollea. Era la única función pensada para este contexto y no tenía
      ningún control en pantalla. */
-  .gloves-toggle { flex:none; position:sticky; left:0; z-index:1; display:inline-flex; align-items:center; gap:6px; min-height:44px; min-width:44px; padding:8px 10px; border:0; border-right:1px solid var(--border-soft); background:var(--paper-1); color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; touch-action:manipulation; transition:color .15s, background-color .15s; }
+  .gloves-toggle { flex:none; position:sticky; left:0; z-index:1; display:inline-flex; align-items:center; gap:6px; min-height:44px; min-width:44px; padding:8px 10px; border:0; border-right:1px solid var(--border-soft); background:var(--paper-1); color:var(--text-metadata); cursor:pointer; font:var(--t-label); white-space:nowrap; touch-action:manipulation; transition:color .15s, background-color .15s, transform .12s cubic-bezier(.32,.72,.36,1); }
   .gloves-toggle:hover { color:var(--ink-1); background:var(--paper-2); }
+  .gloves-toggle:active { transform:translateY(1px) scale(.99); }
   .gloves-toggle.on:hover { background:var(--accent-olive); color:var(--paper-0); }
   .gloves-toggle svg { width:20px; height:20px; flex-shrink:0; }
   .gloves-toggle.on { background:var(--accent-olive); color:var(--paper-0); }
   .gloves-toggle:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
   .workspace-more-panel { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:4px; padding:8px 26px 10px; background:var(--paper-1); border-bottom:1px solid var(--border-soft); }
-  .workspace-more-item { min-height:48px; padding:10px 12px; text-align:left; border:1px solid var(--border-soft); border-radius:var(--radius-sm); background:var(--paper-0); color:var(--ink-1); cursor:pointer; font:var(--t-label); touch-action:manipulation; transition:color .15s, background-color .15s, border-color .15s; overflow-wrap:break-word; }
+  .workspace-more-item { min-height:48px; padding:10px 12px; text-align:left; border:1px solid var(--border-soft); border-radius:var(--radius-sm); background:var(--paper-0); color:var(--ink-1); cursor:pointer; font:var(--t-label); touch-action:manipulation; transition:color .15s, background-color .15s, border-color .15s, transform .12s cubic-bezier(.32,.72,.36,1); overflow-wrap:break-word; }
   .workspace-more-item:hover { background:var(--paper-2); color:var(--ink-0); border-color:var(--border-strong); }
+  .workspace-more-item:active { transform:translateY(1px) scale(.99); }
   .workspace-more-item.on { border-color:var(--accent-terracotta); color:var(--ink-0); }
   .workspace-more-item:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
   @media (max-width:859px){
@@ -236,6 +256,14 @@
     .rail-btn span { font-size:var(--size-label, 11px); letter-spacing:0.15em; }
     .app-main { margin-left:0; padding-bottom:62px; }
     .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
+    /* Auth gate owns the sign-out control. Reserve a real row for it while
+       authenticated so the fixed control never covers workspace tabs. */
+    html[data-setas-auth-state="authenticated"] .workspace-subnav {
+      box-sizing:border-box;
+      min-height:calc(env(safe-area-inset-top) + 96px);
+      padding:calc(env(safe-area-inset-top) + 52px) 10px 0;
+      align-items:flex-end;
+    }
     .workspace-tab { min-height:44px; padding:8px 10px; }
     /* En móvil el interruptor de guantes es solo icono: conserva 48px de área
        táctil sin robar ancho a las pestañas en 390px. */
@@ -247,6 +275,11 @@
        alternativa en móvil desde que el picker de operador (que llevaba
        "Cerrar sesión" en su menú) se reemplazó por el selector de rol —
        queda visible en todos los tamaños. */
+    html[data-setas-auth-state="authenticated"] #setas-auth-signout {
+      top:calc(env(safe-area-inset-top) + 8px) !important;
+      right:8px !important;
+      max-width:calc(100vw - 112px);
+    }
     /* Lotes activos (Hoy): 2 columnas fijas no dejaban espacio para el texto
        (nombre, contenedores, etapa/receta) junto a la miniatura de 101px —
        el texto se salía de la tarjeta. A 1 columna cabe todo sin envolver mal. */
@@ -483,7 +516,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-1 · Nuevo contenedor</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Registrar un contenedor</h1>
           </div>
 
           <div style="font:var(--t-label);color:var(--ink-0);margin:22px 0 10px;">Especie</div>
@@ -539,7 +572,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-3 · Observación</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">¿Qué ves?</h1>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
             <div style="font:var(--t-label);color:var(--ink-0);">Contenedores <span style="font-weight:400;color:var(--text-metadata);">· selecciona uno o varios</span></div>
@@ -596,48 +629,13 @@
       </div>
       </sc-if>
 
-      <!-- HARVEST -->
+      <!-- Harvest uses canonical Bitácora records; legacy demonstration containers never become observations. -->
       <sc-if value="{{ isHarvest }}" hint-placeholder-val="{{ false }}">
-      <div style="animation:fos-screen .35s cubic-bezier(.32,.72,.36,1);padding:20px 26px 30px;">
-        <div class="col">
-          <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
-          <div style="margin-top:8px;">
-            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-4 · Cosecha</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Registrar cosecha</h1>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
-            <div style="font:var(--t-label);color:var(--ink-0);">Contenedor</div>
-            <button onClick="{{ openScanHarvest }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:2px 0;font:var(--t-caption);font-family:var(--font-mono);font-weight:600;letter-spacing:.05em;color:var(--accent-terracotta);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M3 12h18"></path></svg>Escanear</button>
-          </div>
-          <div class="fos-scroll" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
-            <sc-for list="{{ activeContainers }}" as="c" hint-placeholder-count="4">
-              <button onClick="{{ c.pickH }}" style="{{ c.pickStyleH }}">
-                <span style="font:var(--t-label);font-family:var(--font-mono);">{{ c.id }}</span>
-                <span style="font:var(--t-caption);opacity:var(--opacity-secondary);">{{ c.species }}</span>
-              </button>
-            </sc-for>
-          </div>
-          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Peso fresco</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-md);padding:10px 12px;max-width:340px;">
-            <button onClick="{{ weightDown }}" aria-label="Disminuir peso en 10 gramos" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">–</button>
-            <div style="text-align:center;"><span style="font-family:var(--font-mono);font-weight:600;font-size:38px;letter-spacing:-.02em;color:var(--ink-0);">{{ weight }}</span><span style="font:var(--t-label);color:var(--text-metadata);margin-left:4px;">g</span></div>
-            <button onClick="{{ weightUp }}" aria-label="Aumentar peso en 10 gramos" style="cursor:pointer;width:52px;height:52px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--paper-1);font-size:26px;color:var(--ink-0);">+</button>
-          </div>
-          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Cierre del contenedor</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <sc-for list="{{ closeOptions }}" as="o" hint-placeholder-count="2">
-              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></button>
-            </sc-for>
-          </div>
-          <div style="font:var(--t-label);color:var(--ink-0);margin:24px 0 10px;">Destino de la cosecha</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <sc-for list="{{ destOptions }}" as="o" hint-placeholder-count="4">
-              <button onClick="{{ o.select }}" style="{{ o.style }}"><span style="display:flex;flex-direction:column;gap:2px;text-align:left;"><span style="font:var(--t-label);">{{ o.label }}</span><span style="font:var(--t-caption);color:var(--text-metadata);">{{ o.desc }}</span></span></button>
-            </sc-for>
-          </div>
-          <button onClick="{{ confirmHarvest }}" disabled="{{ harvestDisabled }}" style="{{ harvestBtnStyle }};margin-top:20px;">{{ harvestBtnLabel }}</button>
+        <div class="col" style="padding:24px;">
+          <h1>Registrar cosecha</h1>
+          <p>Selecciona un lote y una bolsa en Bitácora para registrar el peso medido en gramos. Los contenedores de demostración no son registros operativos.</p>
+          <button onClick="{{ confirmHarvest }}" style="min-height:44px;padding:12px 20px;font-size:16px;">Abrir Bitácora de cosechas</button>
         </div>
-      </div>
       </sc-if>
 
       <!-- QUICK EVENT -->
@@ -647,7 +645,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Sesión</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">{{ quickRef }}</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">{{ quickTitle }}</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">{{ quickHint }}</p>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 0 10px;">
@@ -705,7 +703,7 @@
           <sc-if value="{{ historyList }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-7 · Historia</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 16px;">Contenedores</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 16px;">Contenedores</h1>
             <div style="display:flex;flex-direction:column;gap:10px;">
               <sc-for list="{{ allContainers }}" as="c" hint-placeholder-count="5">
                 <button onClick="{{ c.open }}" style="cursor:pointer;text-align:left;border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;display:flex;align-items:center;gap:14px;">
@@ -811,7 +809,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Volver</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
-            <h1 style="font-family:var(--font-sans);font-weight:800;font-size:32px;letter-spacing:-.01em;color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">Vista derivada de lo que registraste. La sesión no se guarda — los eventos sí.</p>
           </div>
           <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:20px;">
@@ -874,7 +872,7 @@
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;">
           <div style="min-width:0;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Planta de Tenjo · en vivo</div>
-            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Módulos<br>Incubación y Fructificación</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:42px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1;">Módulos<br>Incubación y Fructificación</h1>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font:var(--t-caption);color:var(--text-metadata);">Ocupación de planta</span>
@@ -1064,7 +1062,7 @@
       <!-- Auth carga simulador-app.js de forma dinámica después de Firebase
            data-ready. El runtime .dc vigila window.SimuladorApp sin un `from`
            estático para no descargar/evaluar el bundle en el login. -->
-      <x-import component-from-global-scope="SimuladorApp" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-activity-go="{{ onActivityGo }}" on-go-sesion="{{ onGoSesion }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
+      <x-import component-from-global-scope="SimuladorApp" tab="{{ simTab }}" tab-nonce="{{ simTabNonce }}" scan-nonce="{{ scanNonce }}" bit-subtab="{{ bitSubtab }}" bit-subtab-nonce="{{ bitSubtabNonce }}" preselect-species="{{ simPreselect }}" preselect-nonce="{{ simPreselectNonce }}" on-tab-change="{{ onSimTabChange }}" on-bit-subtab-change="{{ onBitSubtabChange }}" on-stock-alert-change="{{ onStockAlertChange }}" on-saved-change="{{ onSimSaved }}" on-scan-lot="{{ openScanHome }}" historical-yields="{{ historicalYieldsJson }}" is-admin="{{ isAdminOperator }}" has-active-session="{{ hasActiveSession }}" session-label="{{ primaryActionLabel }}" session-sub="{{ primaryActionSub }}" on-continue-session="{{ openSession }}" on-start-session="{{ startCult }}" has-handoff="{{ hasHandoff }}" handoff-text="{{ handoffText }}" on-clear-handoff="{{ clearHandoff }}" hoy-preview-eventos="{{ hoyPreviewEventos }}" hoy-preview-be="{{ hoyPreviewBE }}" hoy-preview-horas="{{ hoyPreviewHoras }}" hoy-preview-anomalias="{{ hoyPreviewAnomalias }}" hoy-preview-anomalias-color="{{ hoyPreviewAnomaliasColor }}" hoy-preview-salidas="{{ hoyPreviewSalidas }}" on-go-rev-eventos="{{ goRevEventos }}" on-go-rev-rendimiento="{{ goRevRendimiento }}" on-go-rev-trabajo="{{ goRevTrabajo }}" on-go-rev-super="{{ goRevSuper }}" on-go-rev-salidas="{{ goRevSalidas }}" on-go-registro="{{ goRegistro }}" tasks-hoy-json="{{ tasksHoyJson }}" tasks-open-count="{{ tasksOpenCount }}" on-task-go="{{ onTaskGo }}" on-task-toggle="{{ onTaskToggle }}" recent-activity-json="{{ recentActivityJson }}" on-activity-go="{{ onActivityGo }}" on-go-sesion="{{ onGoSesion }}" hoy-camaras-json="{{ hoyCamarasJson }}" on-open-camara="{{ onOpenCamara }}" hint-size="100%,100vh"></x-import>
     </div>
 
     <!-- =================== BANCO CLIMÁTICO (solo después de autenticar) =================== -->
@@ -1081,7 +1079,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · solo lectura</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:40px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:42px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
 
         <div class="fos-scroll" style="display:flex;gap:22px;overflow-x:auto;border-bottom:1px solid var(--border-soft);margin:20px 0 4px;mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);-webkit-mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);">
@@ -1297,7 +1295,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Demanda → Capacidad → Lotes</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Plan de producción</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Plan de producción</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Demanda, capacidad de cámaras y órdenes de cultivo en una misma secuencia.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
           <button onClick="{{ goSimProduccion }}" style="cursor:pointer;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 14px;font:var(--t-label);color:var(--ink-0);display:flex;align-items:center;gap:8px;">Ficha de producción <span style="color:var(--accent-terracotta);">→</span></button>
@@ -1407,7 +1405,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Lote de origen → Movimiento → Costo</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Inventario</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Inventario</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Disponibilidad de sustratos e insumos por lote, proveedor y costo.</p>
         <div style="margin-top:18px;">
           <button onClick="{{ goSimInventario }}" style="cursor:pointer;background:var(--paper-0);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 14px;font:var(--t-label);color:var(--ink-0);display:flex;align-items:center;gap:8px;">Bodega del simulador (ingredientes) <span style="color:var(--accent-terracotta);">→</span></button>
@@ -1463,7 +1461,7 @@
         </div>
 
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Sustrato + mano de obra + energía</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Costes y margen</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Costes y margen</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Costo real por kilo de cada lote, contra el precio del canal al que se despachó.</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));border:1px solid var(--border-soft);margin-top:24px;">
@@ -1531,7 +1529,7 @@
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
           <div style="min-width:0;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Del contenedor al cliente</div>
-            <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Calidad y trazabilidad</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Calidad y trazabilidad</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Cada lote vincula receta, contenedores, eventos y cosecha en una sola cadena.</p>
           </div>
           <button onClick="{{ exportQualityReport }}" style="cursor:pointer;flex:none;display:flex;align-items:center;gap:8px;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-md);padding:10px 16px;font:var(--t-button);">
@@ -1694,7 +1692,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Hipótesis → Evidencia → Decisión → SOP</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Aprender</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Aprender</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Los ensayos comparten la memoria operativa y quedan separados de la línea base de producción.</p>
 
         <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,0.9fr);gap:20px;margin-top:24px;align-items:start;">
@@ -1774,7 +1772,7 @@
         <div style="border:1px solid var(--border-strong);background:var(--paper-0);padding:20px;margin-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
           <div>
             <div style="font:var(--t-eyebrow);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-olive);font-weight:700;">Documentación y Protocolos</div>
-            <div style="font-family:var(--font-sans);font-weight:800;font-size:18px;color:var(--ink-0);margin-top:2px;">Guía Operativa Canónica (SOP-SYS-001)</div>
+            <div style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:19px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin-top:2px;">Guía Operativa Canónica (SOP-SYS-001)</div>
             <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:4px;">Manual de precisión, balance C:N, telemetría IoT, etiquetas FOS-03 y rutinas de 60 días.</div>
           </div>
           <a href="guia-setas-os.html" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--ink-0);color:var(--paper-0);padding:10px 18px;border-radius:var(--radius-sm);font:var(--t-label);font-weight:600;">
@@ -1797,7 +1795,7 @@
         </div>
         
         <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Pedidos → Cosecha → Entrega</div>
-        <h1 style="font-family:var(--font-sans);font-weight:900;font-size:36px;letter-spacing:-.02em;color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Comercial</h1>
+        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:38px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1.05;">Comercial</h1>
         <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:12px 0 0;max-width:520px;">Salidas de cosecha vinculadas con destino, cliente y lote de producción.</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--border-soft);margin-top:24px;">
@@ -1867,9 +1865,9 @@
   <div onClick="{{ closePublic }}" role="dialog" aria-modal="true" aria-label="Página pública del lote" style="position:fixed;inset:0;z-index:var(--z-info-modal);background:color-mix(in oklab,var(--ink-0) 44%, transparent);animation:fos-fade .18s ease;display:flex;align-items:center;justify-content:center;padding:24px;">
     <div onClick="{{ stop }}" style="background:var(--paper-0);border-radius:20px;max-width:400px;width:100%;overflow:hidden;animation:fos-screen .24s cubic-bezier(.32,.72,.36,1);">
       <div style="background:var(--ink-0);color:var(--paper-0);padding:22px 24px;">
-        <div style="font-family:var(--font-sans);font-style:italic;font-weight:800;font-size:15px;">Setas de la Peña</div>
-        <div style="font-family:var(--font-sans);font-weight:900;font-size:28px;letter-spacing:-.01em;margin-top:8px;">{{ pubSpecies }}</div>
-        <div style="font-family:var(--font-sans);font-style:italic;font-size:14px;opacity:var(--opacity-secondary);">{{ pubSci }}</div>
+        <div style="font-family:var(--font-editorial);font-style:italic;font-weight:var(--weight-medium);font-size:15px;">Setas de la Peña</div>
+        <div style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:29px;letter-spacing:var(--tracking-display);margin-top:8px;">{{ pubSpecies }}</div>
+        <div style="font-family:var(--font-editorial);font-style:italic;font-size:15px;opacity:var(--opacity-secondary);">{{ pubSci }}</div>
       </div>
       <div style="padding:22px 24px;display:flex;gap:18px;align-items:flex-start;">
         <img ref="{{ pubQrRef }}" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="QR del lote" width="92" height="92" style="width:92px;height:92px;flex:none;border:1px solid var(--border-soft);">
@@ -1972,7 +1970,7 @@
   <div onClick="{{ closeCorrection }}" role="dialog" aria-modal="true" aria-label="Registrar una enmienda" style="position:fixed;inset:0;z-index:var(--z-sheet-secondary);background:color-mix(in oklab,var(--ink-0) 40%, transparent);animation:fos-fade .2s ease;display:flex;align-items:flex-end;justify-content:center;">
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:22px 24px 34px;width:100%;max-width:560px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
       <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Corregir evento</div>
-      <h3 style="font-family:var(--font-sans);font-weight:800;font-size:22px;color:var(--ink-0);margin:4px 0 6px;">Registrar una enmienda</h3>
+      <h3 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:23px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 6px;">Registrar una enmienda</h3>
       <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 16px;">El evento original no se borra. Tu corrección se añade a la cadena, fechada y atribuida.</p>
       <textarea aria-label="Motivo de la enmienda" onInput="{{ setCorrNote }}" value="{{ corrNote }}" rows="3" placeholder="Qué cambia y por qué…" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
       <div style="display:flex;gap:10px;margin-top:16px;">
@@ -1990,7 +1988,7 @@
       <div style="display:flex;justify-content:space-between;align-items:baseline;">
         <div>
           <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Sincronización</div>
-          <h3 style="font-family:var(--font-sans);font-weight:800;font-size:22px;color:var(--ink-0);margin:4px 0 6px;">Cola de eventos</h3>
+          <h3 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:23px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 6px;">Cola de eventos</h3>
         </div>
         <span style="width:8px;height:8px;border-radius:50%;background:{{ syncPillColor }};"></span>
       </div>
@@ -2254,6 +2252,7 @@ class Component extends DCLogic {
     simRecipes: [],
     simTab: 'home',
     simTabNonce: 0,
+    scanNonce: 0,
     simPreselect: '',
     simPreselectNonce: 0,
     simFlyoutOpen: false,
@@ -2703,11 +2702,19 @@ class Component extends DCLogic {
             try {
               const codes = await detector.detect(this._scanVideoEl);
               if(codes.length){
-                clearInterval(this._detectLoop);
                 const act=this.state.containers.filter(c=>c.status==='activo');
                 const raw = codes[0].rawValue;
-                const found = act.find(c=>c.id===raw) || act[Math.floor(Math.random()*act.length)];
-                if(found) this.applyScanResult(found.id);
+                // Sólo una coincidencia real. Antes, una etiqueta que no
+                // correspondía a ningún contenedor caía en uno al azar: el
+                // evento quedaba registrado contra el contenedor equivocado y
+                // nadie podía notarlo.
+                const found = act.find(c=>c.id===raw) || act.find(c=>String(raw).includes(c.id));
+                if(found){
+                  clearInterval(this._detectLoop);
+                  this.applyScanResult(found.id);
+                } else {
+                  this.setState({ scanStatusText:'Etiqueta «'+String(raw).slice(0,28)+'» sin contenedor activo. Sigue apuntando o elígelo a mano.' });
+                }
               }
             } catch(e){}
           }, 350);
@@ -2718,11 +2725,19 @@ class Component extends DCLogic {
         /* fall back to simulated match below */
       }
     }
+    // Sin cámara o sin decodificador no se adivina: inventar un contenedor
+    // convierte un escaneo fallido en un registro falso.
     this._scanT = setTimeout(()=>{
-      const act=this.state.containers.filter(c=>c.status==='activo');
-      const found=act[Math.floor(Math.random()*act.length)];
-      if(found) this.setState({ scanFound:found.id });
+      this.setState({ scanStatusText:'Este navegador no puede leer el QR. Elige el contenedor a mano.' });
     }, 1500);
+  }
+  // Escanear una etiqueta abre la captura rápida del shell React, no el
+  // escáner de esta pantalla: aquélla resuelve el QR contra los lotes de la
+  // bitácora (batch-sheet.resolveScan), mientras que openScan() sólo conoce los
+  // contenedores de demostración de este módulo.
+  openFieldScan(){
+    this.goSimTab('bitacora');
+    this.setState(s=>({ scanNonce: s.scanNonce + 1 }));
   }
   applyScanResult(id){
     this.setState({ scanFound:id });
@@ -2876,7 +2891,7 @@ class Component extends DCLogic {
     }));
     if(this.state.online) this.drainSync();
   }
-  go(screen){ this.setState({ screen, capture:false }); }
+  go(screen){ if(screen==='harvest'){this.confirmHarvest();return;} this.setState({ screen, capture:false }); }
 
   todayShort(){ const d=new Date(); const m=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']; return d.getDate()+' '+m[d.getMonth()]; }
   nextLote(spKey){ const d=new Date(); const mm=String(d.getMonth()+1).padStart(2,'0'); const n=String(Math.max(1,this.state.seq-414)).padStart(3,'0'); return d.getFullYear()+'-'+mm+'-'+spCode(spKey)+'-'+n; }
@@ -2932,18 +2947,7 @@ class Component extends DCLogic {
     oContainers.forEach(id=>this.push({ type:'observacion', container:id, note }));
     this.go('home'); this.toastWithUndo('Observación registrada en '+oContainers.length+' contenedor'+(oContainers.length>1?'es':'')+(obsPhoto?' con foto':'')+'.', _snap);
   }
-  confirmHarvest(){
-    const { hContainer, weight, hClose, hDest, operator } = this.state;
-    if(!hContainer) return;
-    const _snap = { ledger:[...this.state.ledger], containers:[...this.state.containers], salidas:[...this.state.salidas], seq:this.state.seq };
-    const closed = hClose==='cosechado';
-    const cont = this.state.containers.find(c=>c.id===hContainer) || {};
-    const note = weight+' g fresco · '+destLabel(hDest)+'. '+(closed?'Contenedor cerrado.':'Contenedor sigue activo (más flushes).');
-    const salida = { fecha:this.todayShort(), lote:cont.batch||'—', container:hContainer, spp:cont.key, pesoG:weight, dest:hDest, grade:'A' };
-    this.setState(s=>({ containers:s.containers.map(c=>c.id===hContainer?{...c, status:closed?'cosechado':c.status, stage:closed?'ciclo cerrado':c.stage, tl:[...c.tl,{type:'cosecha', date:this.todayShort()+' · '+this.now(), note, by:operator}]}:c), salidas:[salida, ...s.salidas], hContainer:null, weight:240, hClose:'cosechado', hDest:'restaurante' }));
-    this.push({ type:'cosecha', container:hContainer, note:weight+' g fresco · '+destLabel(hDest)+'.' });
-    this.go('home'); this.toastWithUndo(weight+' g cosechados de '+hContainer+' → '+destLabel(hDest)+'.', _snap);
-  }
+  confirmHarvest(){ this.goBitTab('bit_dash'); this.toast('Selecciona un lote y registra su cosecha en Bitácora.'); }
   confirmQuick(){
     const { quickType, qContainers, qNote, qCause, qPhoto } = this.state;
     if(!qContainers.length) return;
@@ -3416,12 +3420,13 @@ class Component extends DCLogic {
       obsPhotoRef:(el)=>{ if(el) el.src = s.obsPhoto || TRANSPARENT_PX; },
       hasQuickPhoto:!!s.qPhoto, quickPhoto:s.qPhoto||TRANSPARENT_PX, setQuickPhoto:(e)=>this.setQuickPhoto(e), clearQuickPhoto:()=>this.clearQuickPhoto(),
       quickPhotoRef:(el)=>{ if(el) el.src = s.qPhoto || TRANSPARENT_PX; },
+      scanNonce:s.scanNonce,
       scanning:s.scanning, scanSearching:s.scanning&&!s.scanFound, hasScanFound:!!s.scanFound, scanFoundId:s.scanFound||'',
       camActive:s.camActive, scanStatusText:s.scanStatusText||'Buscando etiqueta…',
       scanVideoRef:(el)=>{ this._scanVideoEl = el; if(el && this._camStream && !el.srcObject) el.srcObject = this._camStream; },
       scanFoundSpecies: s.scanFound ? spName((s.containers.find(c=>c.id===s.scanFound)||{}).key) : '',
       scanTargetLabel: ({obs:'observación', harvest:'cosecha', quick:'evento', home:'ficha'})[s.scanTarget]||'',
-      openScanObs:()=>this.openScan('obs'), openScanHarvest:()=>this.openScan('harvest'), openScanQuick:()=>this.openScan('quick'), openScanHome:()=>this.openScan('home'),
+      openScanObs:()=>this.openScan('obs'), openScanHarvest:()=>this.openScan('harvest'), openScanQuick:()=>this.openScan('quick'), openScanHome:()=>this.openFieldScan(),
       closeScan:()=>this.closeScan(), applyScan:()=>this.applyScan(),
       correctionOpen:s.correcting!=null, corrNote:s.corrNote, setCorrNote:(e)=>this.setState({corrNote:e.target.value}),
       confirmCorrection:()=>this.confirmCorrection(), closeCorrection:()=>this.closeCorrection(),

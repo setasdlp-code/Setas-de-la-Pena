@@ -130,3 +130,59 @@ test('calcDynamicFAE calcula caudales CFM y ciclo de trabajo de extractores seg�
   assert.ok(heavyFae.dutyCyclePct >= 95);
   assert.ok(heavyFae.schedule.recommendation.includes('continuo') || heavyFae.schedule.recommendation.includes('100%'));
 });
+
+test('climate-math calcula psicrometría avanzada: humedad absoluta, bulbo húmedo, entalpía y demanda de humidificación', () => {
+  const {
+    calcAbsoluteHumidity,
+    calcWetBulbTemp,
+    calcAirEnthalpy,
+    calcHumidificationDemand,
+    calcDynamicFAE,
+  } = require('./climate-math.js');
+
+  // 1. Humedad Absoluta: a 20°C y 50% HR AH ≈ 8.65 g/m³; a 20°C y 100% HR AH ≈ 17.3 g/m³
+  const ah50 = calcAbsoluteHumidity(20.0, 50.0);
+  assert.ok(ah50 >= 8.5 && ah50 <= 8.8, `AH 20°C 50% HR esperada ~8.65 g/m³, obtenida ${ah50}`);
+  const ah100 = calcAbsoluteHumidity(20.0, 100.0);
+  assert.ok(ah100 >= 17.1 && ah100 <= 17.5);
+
+  // 2. Temperatura de bulbo húmedo: a 20°C y 50% HR Tw ≈ 13.7°C
+  const tw = calcWetBulbTemp(20.0, 50.0);
+  assert.ok(tw >= 13.4 && tw <= 14.0, `Tw esperada ~13.7°C, obtenida ${tw}`);
+
+  // 3. Entalpía del aire húmedo: a 18°C y 85% HR en Tenjo (745 hPa)
+  const enth = calcAirEnthalpy(18.0, 85.0);
+  assert.ok(enth > 40 && enth < 65, `Entalpía esperada en rango, obtenida ${enth}`);
+
+  // 4. Demanda de Humidificación bajo extracción FAE:
+  // Carpa a 18°C / 90% HR ventilada con aire exterior frío/seco de Tenjo (12°C / 60% HR) a 30 m3/h
+  const humDemand = calcHumidificationDemand({
+    faeM3h: 30.0,
+    indoorTempC: 18.0,
+    indoorRhPct: 90.0,
+    outdoorTempC: 12.0,
+    outdoorRhPct: 60.0
+  });
+
+  assert.ok(humDemand.moistureDeficitGm3 > 5.0, `Déficit de humedad debe ser > 5 g/m³, obtenido ${humDemand.moistureDeficitGm3}`);
+  assert.ok(humDemand.waterLossLitersPerHour > 0.15, 'Debe requerir reposición activa de agua');
+  assert.ok(humDemand.recommendedHumidifierCapLPerH >= humDemand.waterLossLitersPerHour);
+  assert.ok(humDemand.recommendation.includes('humidificador debe nebulizar'));
+
+  // 5. Normalización de alias taxonómicos en calcDynamicFAE (p_ostreatus_gris -> orellana_gris = 1400)
+  const faeAlias = calcDynamicFAE(10.0, 'p_ostreatus_gris');
+  assert.equal(faeAlias.respirationRateMgKgH, 1400, 'Debe normalizar p_ostreatus_gris a tasa de Orellana Gris (1400, NO default 1000)');
+
+  const faeLionsMane = calcDynamicFAE(10.0, 'lions_mane');
+  assert.equal(faeLionsMane.respirationRateMgKgH, 750, 'Debe normalizar lions_mane a tasa de Melena de León (750)');
+
+  // 6. Demanda con ventilación apagada (faeM3h = 0) no fuerza 25 m3/h
+  const humZero = calcHumidificationDemand({ faeM3h: 0.0 });
+  assert.equal(humZero.faeM3h, 0.0);
+  assert.equal(humZero.waterLossLitersPerHour, 0.0);
+  assert.equal(humZero.recommendedHumidifierCapLPerH, 0.0);
+
+  // 7. Demanda especificada por volumen de carpa y renovaciones por hora (ACH)
+  const humAch = calcHumidificationDemand({ roomVolumeM3: 15.0, airChangesPerHour: 4.0 });
+  assert.equal(humAch.faeM3h, 60.0);
+});

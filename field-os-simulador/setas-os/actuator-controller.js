@@ -28,6 +28,23 @@
   };
 
   /**
+   * Calcula el punto de rocío a partir de temperatura y humedad relativa (Magnus-Tetens).
+   * @param {number} tC Temperatura en °C
+   * @param {number} rhPct Humedad relativa en %
+   * @returns {number|null}
+   */
+  const calcDewPoint = (tC, rhPct) => {
+    const t = Number(tC);
+    const rh = Number(rhPct);
+    if (!Number.isFinite(t) || !Number.isFinite(rh) || rh <= 0 || rh > 100) return null;
+    const a = 17.27;
+    const b = 237.3;
+    const gamma = (a * t) / (b + t) + Math.log(rh / 100);
+    const dp = (b * gamma) / (a - gamma);
+    return Math.round(dp * 10) / 10;
+  };
+
+  /**
    * Evalúa el estado deseado de los actuadores a partir de métricas y objetivos.
    *
    * @param {object} params
@@ -37,20 +54,35 @@
    * @param {number} [params.now] Timestamp actual en ms
    * @returns {object} Decisiones de actuación y eventos generados
    */
-  const evaluateActuators = ({
-    metrics = {},
-    targets = {},
-    currentState = {},
-    now = Date.now()
-  } = {}) => {
+  const evaluateActuators = (options) => {
+    const opts = options || {};
+    const metrics = opts.metrics || {};
+    const targets = opts.targets || {};
+    const currentState = opts.currentState || {};
+    const now = opts.now != null && Number.isFinite(Number(opts.now)) ? Number(opts.now) : Date.now();
     const temp = Number(metrics.temp);
     const rh = Number(metrics.rh);
     const co2 = Number(metrics.co2);
     const vpd = Number(metrics.vpd);
-    const dewPoint = Number(metrics.dewPoint);
+    let dewPoint = Number(metrics.dewPoint);
 
-    const rhTargets = targets.rh_pct || { min: 85, max: 95, target: 90 };
-    const co2Targets = targets.co2_ppm || { min: 400, max: 900, target: 600 };
+    // Si dewPoint no fue enviado pero temp y rh son válidos, derivarlo psicrométricamente
+    if (!Number.isFinite(dewPoint) && Number.isFinite(temp) && Number.isFinite(rh) && rh > 0) {
+      const safeRh = Math.min(100, Math.max(0.1, rh));
+      const derived = calcDewPoint(temp, safeRh);
+      if (derived != null) dewPoint = derived;
+    }
+
+    const rhTargets = {
+      min: targets.rh_pct?.min ?? 85,
+      max: targets.rh_pct?.max ?? 95,
+      target: targets.rh_pct?.target ?? 90
+    };
+    const co2Targets = {
+      min: targets.co2_ppm?.min ?? 400,
+      max: targets.co2_ppm?.max ?? 900,
+      target: targets.co2_ppm?.target ?? 600
+    };
 
     const prevHum = currentState.humidifier || { state: 'OFF', lastChangeMs: 0, lastOffMs: 0 };
     const prevFae = currentState.fae || { state: 'OFF', pulseStartMs: 0, lastPulseEndMs: 0 };
@@ -64,7 +96,7 @@
     let humReason = prevHum.reason || 'Nominal';
 
     const humTimeSinceChange = now - (prevHum.lastChangeMs || 0);
-    const humTimeSinceOff = now - (prevHum.lastOffMs || 0);
+    const humTimeSinceOff = now - (prevHum.lastOffMs ?? 0);
 
     // Verificación de riesgo de condensación
     const hasDewPoint = Number.isFinite(temp) && Number.isFinite(dewPoint);
@@ -113,7 +145,7 @@
       state: nextHumState,
       reason: humReason,
       lastChangeMs: nextHumState !== prevHum.state ? now : prevHum.lastChangeMs,
-      lastOffMs: nextHumState === 'OFF' && prevHum.state === 'ON' ? now : (prevHum.lastOffMs || now)
+      lastOffMs: nextHumState === 'OFF' && prevHum.state === 'ON' ? now : (prevHum.lastOffMs ?? 0)
     };
 
     // ─────────────────────────────────────────────────────────────
@@ -123,7 +155,7 @@
     let faeReason = prevFae.reason || 'Nominal';
 
     const faePulseElapsed = now - (prevFae.pulseStartMs || 0);
-    const faeTimeSinceLastPulse = now - (prevFae.lastPulseEndMs || 0);
+    const faeTimeSinceLastPulse = now - (prevFae.lastPulseEndMs ?? 0);
 
     if (prevFae.state === 'ON') {
       // En pulso de extracción -> verificar si debe terminar
@@ -167,8 +199,8 @@
     const nextFae = {
       state: nextFaeState,
       reason: faeReason,
-      pulseStartMs: nextFaeState === 'ON' && prevFae.state === 'OFF' ? now : (prevFae.pulseStartMs || 0),
-      lastPulseEndMs: nextFaeState === 'OFF' && prevFae.state === 'ON' ? now : (prevFae.lastPulseEndMs || now)
+      pulseStartMs: nextFaeState === 'ON' && prevFae.state === 'OFF' ? now : (nextFaeState === 'ON' ? (prevFae.pulseStartMs || now) : 0),
+      lastPulseEndMs: nextFaeState === 'OFF' && prevFae.state === 'ON' ? now : (prevFae.lastPulseEndMs ?? 0)
     };
 
     return {
@@ -184,6 +216,7 @@
 
   const api = {
     CONSTANTS,
+    calcDewPoint,
     evaluateActuators
   };
 
