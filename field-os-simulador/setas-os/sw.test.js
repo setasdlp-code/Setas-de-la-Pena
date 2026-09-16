@@ -103,3 +103,12 @@ test('precachea vendor/jsQR.js para disponibilidad offline sin capturar Firestor
   assert.ok(fs.existsSync(path.join(HERE, 'vendor', 'jsQR.js')),
     'el archivo físico vendor/jsQR.js debe existir en el repositorio');
 });
+
+test('precachea logo de Setas de la Peña para disponibilidad offline de la marca', () => {
+  assert.match(SW_SRC, /BOOT = \[[\s\S]*?'\.\/_standalone_imgs\/logo-sdlp\.png'[\s\S]*?\]/,
+    'logo-sdlp.png debe estar en BOOT para que el logo no quede offline');
+  assert.ok(fs.existsSync(path.join(HERE, '_standalone_imgs', 'logo-sdlp.png')),
+    'el archivo físico _standalone_imgs/logo-sdlp.png debe existir en el repositorio');
+  assert.match(SHELL, /<meta name="ext-resource-dependency" content="_standalone_imgs\/logo-sdlp\.png"/,
+    'el shell debe declarar la dependencia del logo para el runtime offline');
+});
