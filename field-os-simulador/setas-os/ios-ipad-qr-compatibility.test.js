@@ -117,6 +117,11 @@ test('etiquetas térmicas DS-2026 maximizan tamaño de QR a 23.5mm y 26mm con je
     /\.sim-root \.thermal-species\s*\{/,
     'sim.css debe definir .thermal-species con serif Gaya Patched'
   );
+  assert.match(
+    SIM_APP_JSX,
+    /function wrapCanvasText\(ctx,\s*text,\s*maxW\)\s*\{/,
+    'drawThermalLabelToCanvas debe contar con wrapCanvasText para evitar deformación horizontal en exportación'
+  );
 });
 
 test('trace.html extrae parámetros de canastillas (?crate= y ?canastilla=) y preserva el código CAN-', () => {
