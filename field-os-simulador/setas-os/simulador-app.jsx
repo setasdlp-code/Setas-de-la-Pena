@@ -4679,14 +4679,43 @@ const THERMAL_PX_PER_MM = 12;
 // que ve el operador en la vista previa, sin importar THERMAL_PX_PER_MM.
 const CSS_PX_PER_MM = 96 / 25.4;
 const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
+const FONT_EDITORIAL = "'Gaya Patched','Iowan Old Style',Georgia,serif";
 const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
-// Mismos valores que .thermal-card-40x30/50x30 en sim.css (incluye el
-// título +20% acordado) — si el diseño de la etiqueta cambia ahí, hay que
-// actualizar esto también para que "Compartir" no se desalinee otra vez.
+// Mismos valores que .thermal-card-40x30/50x30 en sim.css (DS-2026 QR Maximizado) —
+// si el diseño de la etiqueta cambia ahí, hay que actualizar esto también para que
+// "Compartir" no se desalinee.
 const THERMAL_LABEL_SPECS = {
-  '40x30': { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 20, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
-  '50x30': { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 },
+  '40x30': {
+    wMm: 40,
+    hMm: 30,
+    padXMm: 1.5,
+    padYMm: 1.5,
+    gapPx: 5,
+    qrMm: 23.5,
+    eyebrowPx: 5.5,
+    speciesPx: 11.0,
+    badgePx: 6.5,
+    codePx: 7.0,
+    codeMarginTopPx: 1,
+    metaPx: 6.0,
+    metaMarginTopPx: 1.5
+  },
+  '50x30': {
+    wMm: 50,
+    hMm: 30,
+    padXMm: 1.5,
+    padYMm: 1.5,
+    gapPx: 6,
+    qrMm: 26.0,
+    eyebrowPx: 6.5,
+    speciesPx: 13.5,
+    badgePx: 7.5,
+    codePx: 8.0,
+    codeMarginTopPx: 1.5,
+    metaPx: 6.5,
+    metaMarginTopPx: 2.0
+  },
 };
 
 // Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
@@ -4715,15 +4744,14 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
   ctx.setLineDash([]);
 
-  // .thermal-aside: columna centrada — el QR se centra verticalmente en el
-  // alto disponible entre el padding vertical con quiet zone de 2 módulos.
+  // .thermal-aside: QR maximizado centrado verticalmente
   const qrX = padX;
   const qrY = (h - qrSize) / 2;
   const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
   if (qrMini && typeof qrMini.matrix === 'function') {
     const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
     const n = m.length;
-    const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos) idéntica a generateQrSvgDataUrl
+    const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos)
     const dim = n + q * 2;
     const cell = qrSize / dim;
     ctx.fillStyle = '#fff';
@@ -4738,33 +4766,84 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
     }
   }
 
-  // .thermal-body: columna centrada verticalmente, texto alineado a la
-  // izquierda — se arma cada línea primero para poder centrar el bloque
-  // completo como hace justify-content:center en flexbox.
-  const textX = qrX + qrSize + gap;
-  const textW = w - textX - padX;
-  const lines = [];
-  lines.push({ text: (item.species || '').toUpperCase(), font: `900 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_SANS}`, lineHeight: cssPxToCanvas(spec.speciesPx) * 1.1, marginTop: 0 });
-  lines.push({ text: item.id || '', font: `900 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`, lineHeight: cssPxToCanvas(spec.codePx) * 1.15, marginTop: cssPxToCanvas(spec.codeMarginTopPx) });
-  const metaFont = `700 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
-  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.25;
-  let metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
-  if (item.bagCode && item.bagCode !== 'LOTE MAESTRO') {
-    lines.push({ text: item.bagCode, font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
-    metaMarginTop = 0;
-  }
-  lines.push({ text: item.date || '', font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
+  // Filete vertical separador suizo (DS-2026 divider)
+  const divX = Math.round(qrX + qrSize + gap / 2);
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(divX, padY, 1, h - padY * 2);
 
-  const blockHeight = lines.reduce((sum, l) => sum + l.marginTop + l.lineHeight, 0);
-  let textY = (h - blockHeight) / 2;
-  ctx.fillStyle = '#000';
+  // .thermal-body: columna tipográfica estructurada con DS-2026
+  const textX = divX + Math.round(gap / 2);
+  const textW = w - textX - padX;
+
+  const eyebrow = (item.eyebrow || 'SETAS DE LA PEÑA · TENJO').toUpperCase();
+  const species = (item.species || 'Seta Cultivada').trim();
+  const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
+  const code = (item.id || '').trim();
+  const date = (item.date || '').trim();
+
+  // Medidas tipográficas
+  const eyebrowFont = `700 ${cssPxToCanvas(spec.eyebrowPx || 6)}px ${FONT_MONO}`;
+  const eyebrowLineHeight = cssPxToCanvas(spec.eyebrowPx || 6) * 1.1;
+
+  const speciesFont = `700 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_EDITORIAL}`;
+  const speciesLineHeight = cssPxToCanvas(spec.speciesPx) * 1.05;
+
+  const badgeFont = `800 ${cssPxToCanvas(spec.badgePx || 7)}px ${FONT_MONO}`;
+  const badgeH = badge ? cssPxToCanvas(spec.badgePx || 7) * 1.35 : 0;
+  const badgeMarginTop = badge ? cssPxToCanvas(1.5) : 0;
+
+  const codeFont = `800 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`;
+  const codeLineHeight = cssPxToCanvas(spec.codePx) * 1.12;
+  const codeMarginTop = cssPxToCanvas(spec.codeMarginTopPx);
+
+  const metaFont = `600 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
+  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.15;
+  const metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
+
+  const totalHeight = eyebrowLineHeight + speciesLineHeight + badgeMarginTop + badgeH + codeMarginTop + codeLineHeight + metaMarginTop + metaLineHeight;
+  let curY = Math.max(padY, (h - totalHeight) / 2);
+
   ctx.textBaseline = 'top';
-  lines.forEach((l) => {
-    textY += l.marginTop;
-    ctx.font = l.font;
-    ctx.fillText(l.text, textX, textY, textW);
-    textY += l.lineHeight;
-  });
+
+  // 1. Eyebrow
+  ctx.fillStyle = '#000000';
+  ctx.font = eyebrowFont;
+  try { ctx.letterSpacing = '0.12em'; } catch (_) {}
+  ctx.fillText(eyebrow, textX, curY, textW);
+  try { ctx.letterSpacing = '0px'; } catch (_) {}
+  curY += eyebrowLineHeight + cssPxToCanvas(1);
+
+  // 2. Species (Gaya Patched)
+  ctx.font = speciesFont;
+  ctx.fillText(species, textX, curY, textW);
+  curY += speciesLineHeight;
+
+  // 3. Badge (Inverted black block)
+  if (badge) {
+    curY += badgeMarginTop;
+    ctx.font = badgeFont;
+    const badgeTextWidth = ctx.measureText(badge).width;
+    const bPadX = cssPxToCanvas(3);
+    const bW = Math.min(textW, badgeTextWidth + bPadX * 2);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(textX, curY, bW, badgeH);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(badge, textX + bPadX, curY + cssPxToCanvas(1), bW - bPadX * 2);
+    curY += badgeH;
+  }
+
+  // 4. Code
+  curY += codeMarginTop;
+  ctx.fillStyle = '#000000';
+  ctx.font = codeFont;
+  ctx.fillText(code, textX, curY, textW);
+  curY += codeLineHeight;
+
+  // 5. Meta / Date
+  curY += metaMarginTop;
+  ctx.font = metaFont;
+  ctx.fillText(date, textX, curY, textW);
+
   ctx.restore();
 }
 function buildThermalShareCanvas(items, sizeKey) {
@@ -15360,8 +15439,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const crateCode = thermalCosechaItem?.crateCode || 'CAN-01';
             items.push({
               id: crateCode,
+              badge: 'TARA 420 G',
+              eyebrow: 'SETAS DE LA PEÑA',
               bagCode: 'CANASTILLA REUTILIZABLE',
-              species: 'Tara 420g · Grado Alimentario',
+              species: 'Canastilla Grado Alimentario',
               date: new Date().toISOString().split('T')[0],
               recipe: 'Báscula continua · Cosecha y pesaje',
               bagsText: `Tara fija 420 g · ${crateCode}`,
@@ -15371,6 +15452,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const c = thermalCosechaItem;
             items.push({
               id: `CAN-${lote.codigo}-F${c.flush || 1}`,
+              badge: `FLUSH #${c.flush || 1}`,
+              eyebrow: 'COSECHA · TENJO',
               bagCode: `CANASTILLA · FLUSH #${c.flush || 1}`,
               species: lote.especie || 'Seta Fresca',
               date: c.fecha || new Date().toISOString().split('T')[0],
@@ -15381,6 +15464,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           } else if (thermalScope === 'lote') {
             items.push({
               id: lote.codigo,
+              badge: 'LOTE MAESTRO',
+              eyebrow: 'SETAS DE LA PEÑA · TENJO',
               bagCode: 'LOTE MAESTRO',
               species: lote.especie || 'Sustrato colonizado',
               date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
@@ -15396,6 +15481,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const bagId = `${lote.codigo}-B${bagNum}`;
               items.push({
                 id: bagId,
+                badge: `BOLSA #${bagNum} DE ${totalBags}`,
+                eyebrow: 'SDP · TENJO',
                 bagCode: `BOLSA #${bagNum} de ${totalBags}`,
                 species: lote.especie || 'Sustrato colonizado',
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
@@ -15532,11 +15619,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="thermal-aside">
                             <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
                           </div>
+                          <div className="thermal-divider" />
                           <div className="thermal-body">
+                            <div className="thermal-eyebrow">{item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
                             <div className="thermal-species">{item.species}</div>
+                            {item.badge && <div className="thermal-badge">{item.badge}</div>}
                             <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
-                              {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>{item.date}</div>
                             </div>
                           </div>
@@ -15609,11 +15698,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div className="thermal-aside">
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
                         </div>
+                        <div className="thermal-divider" />
                         <div className="thermal-body">
+                          <div className="thermal-eyebrow">{item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
                           <div className="thermal-species">{item.species}</div>
+                          {item.badge && <div className="thermal-badge">{item.badge}</div>}
                           <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
-                            {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                             <div>{item.date}</div>
                           </div>
                         </div>

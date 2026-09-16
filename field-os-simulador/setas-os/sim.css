@@ -4033,8 +4033,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .thermal-card-40x30 {
   width: 40mm;
   min-height: 30mm;
-  padding: 1.5mm 2mm;
-  gap: 6px;
+  padding: 1.5mm 1.5mm;
+  gap: 5px;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
@@ -4042,7 +4042,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .thermal-card-50x30 {
   width: 50mm;
   min-height: 30mm;
-  padding: 2mm 2.5mm;
+  padding: 1.5mm 2mm;
+  gap: 6px;
 }
 
 .sim-root .thermal-card-60x40 {
@@ -4085,13 +4086,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .thermal-card-40x30 .thermal-qr-img {
-  width: 20mm;
-  height: 20mm;
+  width: 23.5mm;
+  height: 23.5mm;
 }
 
 .sim-root .thermal-card-50x30 .thermal-qr-img {
-  width: 22mm;
-  height: 22mm;
+  width: 26mm;
+  height: 26mm;
 }
 
 .sim-root .thermal-card-60x40 .thermal-qr-img {
@@ -4132,68 +4133,103 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   line-height: 1.15;
 }
 
+.sim-root .thermal-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #000000;
+  opacity: 0.2;
+  flex-shrink: 0;
+}
+
+.sim-root .thermal-eyebrow {
+  font-family: var(--font-mono, monospace);
+  font-size: 5.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #000000 !important;
+  line-height: 1;
+  margin-bottom: 1.5px;
+}
+
+.sim-root .thermal-card-50x30 .thermal-eyebrow {
+  font-size: 6.5px;
+  letter-spacing: 0.15em;
+  margin-bottom: 2px;
+}
+
 .sim-root .thermal-species {
-  font-family: var(--font-sans, sans-serif);
-  font-weight: 900;
-  color: #000000;
+  font-family: var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Iowan Old Style', Georgia, serif)) !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
 }
 
 .sim-root .thermal-card-40x30 .thermal-species {
-  font-size: 12px; /* 10px + 20% */
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-  color: #000000 !important;
-  line-height: 1.1;
+  font-size: 11px;
 }
 
 .sim-root .thermal-card-50x30 .thermal-species {
-  font-size: 14.4px; /* 12px + 20% */
+  font-size: 13.5px;
+}
+
+/* Insignia / Chip de alto contraste para lectura rápida en cuarto de cultivo */
+.sim-root .thermal-badge {
+  display: inline-block;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  font-size: 6.5px;
+  letter-spacing: 0.04em;
+  padding: 1px 3px;
+  border-radius: 1px;
+  margin: 1.5px 0;
+  align-self: flex-start;
+  line-height: 1.1;
   text-transform: uppercase;
+}
+
+.sim-root .thermal-card-50x30 .thermal-badge {
+  font-size: 7.5px;
+  padding: 1.5px 4px;
+  margin: 2px 0;
+}
+
+.sim-root .thermal-code {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  color: #000000 !important;
+  text-align: left;
+  word-break: break-all;
   line-height: 1.1;
 }
 
-/* El código de lote/bolsa (SDP-...) es el segundo elemento más importante
-   de la etiqueta después del QR — identifica físicamente la bolsa cuando
-   el escáner falla. Va bajo la especie, no bajo el QR (deja al QR usar
-   todo su alto disponible sin competir por espacio con texto). */
-.sim-root .thermal-code {
-  font-family: var(--font-mono, monospace);
-  font-weight: 900;
-  color: #000000 !important;
-  text-align: left;
-  word-break: break-word;
-}
-
 .sim-root .thermal-card-40x30 .thermal-code {
-  font-size: 8px;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
+  font-size: 7px;
+  letter-spacing: -0.02em;
   margin-top: 1px;
 }
 
 .sim-root .thermal-card-50x30 .thermal-code {
-  font-size: 9px;
-  line-height: 1.15;
-  margin-top: 1.5px;
+  font-size: 8px;
+  letter-spacing: -0.01em;
+  margin-top: 1px;
 }
 
 .sim-root .thermal-meta {
   font-family: var(--font-mono, monospace);
-  color: #000000;
-  margin-top: 3px;
-}
-
-.sim-root .thermal-card-40x30 .thermal-meta {
-  font-size: 6.5px;
-  font-weight: 800;
   color: #000000 !important;
-  line-height: 1.25;
+  margin-top: 1.5px;
+  font-size: 6px;
+  font-weight: 600;
+  line-height: 1.15;
 }
 
 .sim-root .thermal-card-50x30 .thermal-meta {
-  font-size: 7.5px;
-  font-weight: 700;
+  font-size: 6.5px;
+  margin-top: 2px;
 }
 
 .sim-root .thermal-print-roll,
@@ -4241,44 +4277,87 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .thermal-card-print.thermal-card-40x30 {
     width: 40mm !important;
     height: 30mm !important;
-    padding: 1.5mm 2mm !important;
+    padding: 1.5mm 1.5mm !important;
     page-break-inside: avoid !important;
-    gap: 6px !important;
+    gap: 5px !important;
+  }
+  .thermal-card-print.thermal-card-40x30 .thermal-qr-img {
+    width: 23.5mm !important;
+    height: 23.5mm !important;
+  }
+  .thermal-card-print.thermal-card-40x30 .thermal-eyebrow {
+    font-size: 5.5px !important;
+    letter-spacing: 0.14em !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-species {
-    font-size: 12px !important; /* 10px + 20% */
-    font-weight: 900 !important;
-    text-transform: uppercase !important;
-    line-height: 1.1 !important;
+    font-family: var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Iowan Old Style', Georgia, serif)) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1.05 !important;
     color: #000000 !important;
   }
+  .thermal-card-print.thermal-card-40x30 .thermal-badge {
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-size: 6.5px !important;
+    font-weight: 800 !important;
+    padding: 1px 3px !important;
+  }
   .thermal-card-print.thermal-card-40x30 .thermal-code {
-    font-size: 8px !important;
-    font-weight: 900 !important;
-    line-height: 1.15 !important;
-    letter-spacing: -0.01em !important;
+    font-size: 7px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.02em !important;
     color: #000000 !important;
     text-align: left !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-meta {
-    font-size: 6.5px !important;
-    font-weight: 800 !important;
-    line-height: 1.25 !important;
+    font-size: 6px !important;
+    font-weight: 600 !important;
+    line-height: 1.15 !important;
     color: #000000 !important;
   }
   .thermal-card-print.thermal-card-50x30 {
     width: 50mm !important;
     height: 30mm !important;
-    padding: 2mm 2.5mm !important;
+    padding: 1.5mm 2mm !important;
     page-break-inside: avoid !important;
+    gap: 6px !important;
+  }
+  .thermal-card-print.thermal-card-50x30 .thermal-qr-img {
+    width: 26mm !important;
+    height: 26mm !important;
+  }
+  .thermal-card-print.thermal-card-50x30 .thermal-eyebrow {
+    font-size: 6.5px !important;
+    letter-spacing: 0.15em !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-species {
-    font-size: 14.4px !important; /* 12px + 20% */
-    text-transform: uppercase !important;
+    font-family: var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Iowan Old Style', Georgia, serif)) !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.05 !important;
+  }
+  .thermal-card-print.thermal-card-50x30 .thermal-badge {
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-size: 7.5px !important;
+    font-weight: 800 !important;
+    padding: 1.5px 4px !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-code {
-    font-size: 9px !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
     text-align: left !important;
+  }
+  .thermal-card-print.thermal-card-50x30 .thermal-meta {
+    font-size: 6.5px !important;
+    font-weight: 600 !important;
+  }
+  .thermal-card-print .thermal-divider {
+    background: #000000 !important;
+    opacity: 1 !important;
+    width: 0.5pt !important;
   }
 
   .thermal-card-print.thermal-card-60x40 {
