@@ -182,7 +182,11 @@ function syncAuthGatedResources(authenticated) {
   const scope = document.querySelector("#dc-root") || document;
   scope.querySelectorAll("[data-auth-src]").forEach((node) => {
     if (authenticated) {
-      if (!node.getAttribute("src")) node.setAttribute("src", node.dataset.authSrc);
+      if (!node.getAttribute("src")) {
+        const rawSrc = node.dataset.authSrc;
+        const resolved = (typeof window !== "undefined" && typeof window.resolveImg === "function") ? window.resolveImg(rawSrc) : rawSrc;
+        node.setAttribute("src", resolved);
+      }
     } else {
       node.removeAttribute("src");
     }
