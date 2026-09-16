@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 633b7e344c804bc071e593a415589e606ab7a4cb06e5dce4c649f31347a7f737
+// source-hash: 9479a60bca1d0c32b957b3ea9580c04c7e72381128b5e0cbe9d61d9fa81a0a1f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3225,11 +3225,40 @@ const generateQrSvgDataUrl = (text) => {
 const THERMAL_PX_PER_MM = 12;
 const CSS_PX_PER_MM = 96 / 25.4;
 const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
+const FONT_EDITORIAL = "'Gaya Patched','Iowan Old Style',Georgia,serif";
 const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
 const THERMAL_LABEL_SPECS = {
-  "40x30": { wMm: 40, hMm: 30, padXMm: 2, padYMm: 1.5, gapPx: 6, qrMm: 20, speciesPx: 12, codePx: 8, codeMarginTopPx: 1, metaPx: 6.5, metaMarginTopPx: 3 },
-  "50x30": { wMm: 50, hMm: 30, padXMm: 2.5, padYMm: 2, gapPx: 8, qrMm: 22, speciesPx: 14.4, codePx: 9, codeMarginTopPx: 1.5, metaPx: 7.5, metaMarginTopPx: 3 }
+  "40x30": {
+    wMm: 40,
+    hMm: 30,
+    padXMm: 1.5,
+    padYMm: 1.5,
+    gapPx: 5,
+    qrMm: 23.5,
+    eyebrowPx: 5.5,
+    speciesPx: 11,
+    badgePx: 6.5,
+    codePx: 7,
+    codeMarginTopPx: 1,
+    metaPx: 6,
+    metaMarginTopPx: 1.5
+  },
+  "50x30": {
+    wMm: 50,
+    hMm: 30,
+    padXMm: 1.5,
+    padYMm: 1.5,
+    gapPx: 6,
+    qrMm: 26,
+    eyebrowPx: 6.5,
+    speciesPx: 13.5,
+    badgePx: 7.5,
+    codePx: 8,
+    codeMarginTopPx: 1.5,
+    metaPx: 6.5,
+    metaMarginTopPx: 2
+  }
 };
 function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS["40x30"];
@@ -3268,29 +3297,67 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
       }
     }
   }
-  const textX = qrX + qrSize + gap;
+  const divX = Math.round(qrX + qrSize + gap / 2);
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(divX, padY, 1, h - padY * 2);
+  const textX = divX + Math.round(gap / 2);
   const textW = w - textX - padX;
-  const lines = [];
-  lines.push({ text: (item.species || "").toUpperCase(), font: `900 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_SANS}`, lineHeight: cssPxToCanvas(spec.speciesPx) * 1.1, marginTop: 0 });
-  lines.push({ text: item.id || "", font: `900 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`, lineHeight: cssPxToCanvas(spec.codePx) * 1.15, marginTop: cssPxToCanvas(spec.codeMarginTopPx) });
-  const metaFont = `700 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
-  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.25;
-  let metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
-  if (item.bagCode && item.bagCode !== "LOTE MAESTRO") {
-    lines.push({ text: item.bagCode, font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
-    metaMarginTop = 0;
-  }
-  lines.push({ text: item.date || "", font: metaFont, lineHeight: metaLineHeight, marginTop: metaMarginTop });
-  const blockHeight = lines.reduce((sum, l) => sum + l.marginTop + l.lineHeight, 0);
-  let textY = (h - blockHeight) / 2;
-  ctx.fillStyle = "#000";
+  const eyebrow = (item.eyebrow || "SETAS DE LA PEÑA · TENJO").toUpperCase();
+  const species = (item.species || "Seta Cultivada").trim();
+  const badge = (item.badge || item.bagCode || "").toUpperCase().trim();
+  const code = (item.id || "").trim();
+  const date = (item.date || "").trim();
+  const eyebrowFont = `700 ${cssPxToCanvas(spec.eyebrowPx || 6)}px ${FONT_MONO}`;
+  const eyebrowLineHeight = cssPxToCanvas(spec.eyebrowPx || 6) * 1.1;
+  const speciesFont = `700 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_EDITORIAL}`;
+  const speciesLineHeight = cssPxToCanvas(spec.speciesPx) * 1.05;
+  const badgeFont = `800 ${cssPxToCanvas(spec.badgePx || 7)}px ${FONT_MONO}`;
+  const badgeH = badge ? cssPxToCanvas(spec.badgePx || 7) * 1.35 : 0;
+  const badgeMarginTop = badge ? cssPxToCanvas(1.5) : 0;
+  const codeFont = `800 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`;
+  const codeLineHeight = cssPxToCanvas(spec.codePx) * 1.12;
+  const codeMarginTop = cssPxToCanvas(spec.codeMarginTopPx);
+  const metaFont = `600 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
+  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.15;
+  const metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
+  const totalHeight = eyebrowLineHeight + speciesLineHeight + badgeMarginTop + badgeH + codeMarginTop + codeLineHeight + metaMarginTop + metaLineHeight;
+  let curY = Math.max(padY, (h - totalHeight) / 2);
   ctx.textBaseline = "top";
-  lines.forEach((l) => {
-    textY += l.marginTop;
-    ctx.font = l.font;
-    ctx.fillText(l.text, textX, textY, textW);
-    textY += l.lineHeight;
-  });
+  ctx.fillStyle = "#000000";
+  ctx.font = eyebrowFont;
+  try {
+    ctx.letterSpacing = "0.12em";
+  } catch (_) {
+  }
+  ctx.fillText(eyebrow, textX, curY, textW);
+  try {
+    ctx.letterSpacing = "0px";
+  } catch (_) {
+  }
+  curY += eyebrowLineHeight + cssPxToCanvas(1);
+  ctx.font = speciesFont;
+  ctx.fillText(species, textX, curY, textW);
+  curY += speciesLineHeight;
+  if (badge) {
+    curY += badgeMarginTop;
+    ctx.font = badgeFont;
+    const badgeTextWidth = ctx.measureText(badge).width;
+    const bPadX = cssPxToCanvas(3);
+    const bW = Math.min(textW, badgeTextWidth + bPadX * 2);
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(textX, curY, bW, badgeH);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(badge, textX + bPadX, curY + cssPxToCanvas(1), bW - bPadX * 2);
+    curY += badgeH;
+  }
+  curY += codeMarginTop;
+  ctx.fillStyle = "#000000";
+  ctx.font = codeFont;
+  ctx.fillText(code, textX, curY, textW);
+  curY += codeLineHeight;
+  curY += metaMarginTop;
+  ctx.font = metaFont;
+  ctx.fillText(date, textX, curY, textW);
   ctx.restore();
 }
 function buildThermalShareCanvas(items, sizeKey) {
@@ -10161,8 +10228,10 @@ Click para ver análisis completo`
       const crateCode = thermalCosechaItem?.crateCode || "CAN-01";
       items.push({
         id: crateCode,
+        badge: "TARA 420 G",
+        eyebrow: "SETAS DE LA PEÑA",
         bagCode: "CANASTILLA REUTILIZABLE",
-        species: "Tara 420g · Grado Alimentario",
+        species: "Canastilla Grado Alimentario",
         date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
         recipe: "Báscula continua · Cosecha y pesaje",
         bagsText: `Tara fija 420 g · ${crateCode}`,
@@ -10172,6 +10241,8 @@ Click para ver análisis completo`
       const c = thermalCosechaItem;
       items.push({
         id: `CAN-${lote.codigo}-F${c.flush || 1}`,
+        badge: `FLUSH #${c.flush || 1}`,
+        eyebrow: "COSECHA · TENJO",
         bagCode: `CANASTILLA · FLUSH #${c.flush || 1}`,
         species: lote.especie || "Seta Fresca",
         date: c.fecha || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
@@ -10182,6 +10253,8 @@ Click para ver análisis completo`
     } else if (thermalScope === "lote") {
       items.push({
         id: lote.codigo,
+        badge: "LOTE MAESTRO",
+        eyebrow: "SETAS DE LA PEÑA · TENJO",
         bagCode: "LOTE MAESTRO",
         species: lote.especie || "Sustrato colonizado",
         date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
@@ -10197,6 +10270,8 @@ Click para ver análisis completo`
         const bagId = `${lote.codigo}-B${bagNum}`;
         items.push({
           id: bagId,
+          badge: `BOLSA #${bagNum} DE ${totalBags}`,
+          eyebrow: "SDP · TENJO",
           bagCode: `BOLSA #${bagNum} de ${totalBags}`,
           species: lote.especie || "Sustrato colonizado",
           date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
@@ -10279,7 +10354,7 @@ Click para ver análisis completo`
       thermalScope === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, background: "var(--paper-0, #F7F4EC)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-start", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Desde bolsa:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-start", name: "thermal-bag-start", type: "number", min: 1, max: totalBags, value: thermalBagStart, onChange: (e) => setThermalBagStart(parseInt(e.target.value) || 1), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } }), /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-end", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Hasta:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-end", name: "thermal-bag-end", type: "number", min: thermalBagStart, max: totalBags, value: thermalBagEnd, onChange: (e) => setThermalBagEnd(parseInt(e.target.value) || totalBags), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } })),
       /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : "50×30 mm")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date))));
+        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date))));
       }))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, borderTop: "1px solid var(--border-hairline, #8C7F5B)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowThermalModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cancelar"), /* @__PURE__ */ React.createElement(
         "button",
@@ -10337,7 +10412,7 @@ Click para ver análisis completo`
       )),
       /* @__PURE__ */ React.createElement("div", { className: "thermal-print-roll" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, item.bagCode && item.bagCode !== "LOTE MAESTRO" && /* @__PURE__ */ React.createElement("div", null, item.bagCode), /* @__PURE__ */ React.createElement("div", null, item.date))));
+        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date))));
       }))
     );
   })(), showProdLaunchModal && prodLaunchForm && (() => {

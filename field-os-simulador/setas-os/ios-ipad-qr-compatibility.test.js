@@ -81,16 +81,41 @@ test('el detector de cámara cuenta con fallback dinámico a jsQR ante errores c
   );
 });
 
-test('etiquetas térmicas 40x30 aumentan tamaño de QR a 20mm para distancia focal cómoda en iPhone Pro', () => {
+test('etiquetas térmicas DS-2026 maximizan tamaño de QR a 23.5mm y 26mm con jerarquía visual de alto contraste', () => {
   assert.match(
     SIM_APP_JSX,
-    /'40x30':\s*\{[^}]*?qrMm:\s*20/,
-    'THERMAL_LABEL_SPECS para 40x30 debe especificar qrMm: 20'
+    /'40x30':\s*\{[^}]*?qrMm:\s*23\.5/,
+    'THERMAL_LABEL_SPECS para 40x30 debe especificar qrMm: 23.5'
+  );
+  assert.match(
+    SIM_APP_JSX,
+    /'50x30':\s*\{[^}]*?qrMm:\s*26/,
+    'THERMAL_LABEL_SPECS para 50x30 debe especificar qrMm: 26'
   );
   assert.match(
     SIM_CSS,
-    /\.sim-root \.thermal-card-40x30 \.thermal-qr-img\s*\{[^}]*?width:\s*20mm;[^}]*?height:\s*20mm;/s,
-    'sim.css debe dimensionar .thermal-card-40x30 .thermal-qr-img a 20mm x 20mm'
+    /\.sim-root \.thermal-card-40x30 \.thermal-qr-img\s*\{[^}]*?width:\s*23\.5mm;[^}]*?height:\s*23\.5mm;/s,
+    'sim.css debe dimensionar .thermal-card-40x30 .thermal-qr-img a 23.5mm x 23.5mm'
+  );
+  assert.match(
+    SIM_CSS,
+    /\.sim-root \.thermal-card-50x30 \.thermal-qr-img\s*\{[^}]*?width:\s*26mm;[^}]*?height:\s*26mm;/s,
+    'sim.css debe dimensionar .thermal-card-50x30 .thermal-qr-img a 26mm x 26mm'
+  );
+  assert.match(
+    SIM_CSS,
+    /\.sim-root \.thermal-divider\s*\{/,
+    'sim.css debe definir el separador suizo .thermal-divider'
+  );
+  assert.match(
+    SIM_CSS,
+    /\.sim-root \.thermal-badge\s*\{/,
+    'sim.css debe definir el badge invertido .thermal-badge'
+  );
+  assert.match(
+    SIM_CSS,
+    /\.sim-root \.thermal-species\s*\{/,
+    'sim.css debe definir .thermal-species con serif Gaya Patched'
   );
 });
 
