@@ -2274,7 +2274,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
         <button
           type="button"
           className="inv-btn inv-btn-sec inv-btn-sm"
-          style={{flex:1,minWidth:90,fontSize:10.5,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
+          style={{flex:1,minWidth:90,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
           onClick={()=>onQuickAction('primordios')}
           title="Detectados primordios visibles (inicio de fructificación)"
         >
@@ -2283,7 +2283,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
         <button
           type="button"
           className="inv-btn inv-btn-sec inv-btn-sm"
-          style={{flex:1,minWidth:90,fontSize:10.5,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
+          style={{flex:1,minWidth:90,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
           onClick={()=>onQuickAction('riego')}
           title="Verificación de humedad y niebla"
         >
@@ -2292,7 +2292,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
         <button
           type="button"
           className="inv-btn inv-btn-sec inv-btn-sm"
-          style={{flex:1,minWidth:90,fontSize:10.5,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
+          style={{flex:1,minWidth:90,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
           onClick={()=>onQuickAction('ventilacion')}
           title="Extracción y recambio de aire"
         >
@@ -9081,7 +9081,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
                         Receta activa
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'1px 5px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em'}}>
                         evaluación en vivo
                       </span>
                     </div>

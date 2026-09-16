@@ -140,9 +140,9 @@
   --t-h4:         var(--weight-black)  var(--text-md)/var(--leading-snug) var(--font-sans);
   --t-lede:       var(--weight-regular) var(--text-lg)/var(--leading-relaxed) var(--font-sans);
   --t-body:       var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);
-  --t-body-sm:    var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);
-  --t-caption:    var(--weight-regular) var(--text-xs)/var(--leading-snug) var(--font-sans);
-  --t-eyebrow:    var(--weight-bold) var(--text-2xs)/1.0 var(--font-mono);
+  --t-body-sm:    var(--weight-regular) var(--size-small, 14px)/var(--leading-normal) var(--font-sans);
+  --t-caption:    var(--weight-regular) var(--size-data, 13px)/var(--leading-snug) var(--font-sans);
+  --t-eyebrow:    var(--weight-bold) var(--size-label, 11px)/1.0 var(--font-mono);
   --t-label:      var(--weight-bold) var(--text-base)/1.2 var(--font-sans);
   --t-button:     var(--weight-bold) var(--text-sm)/1.0 var(--font-sans);
   --t-quote:      italic var(--weight-light) var(--text-xl)/var(--leading-snug) var(--font-sans);

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6aa7b46960bda285aeb90f7350976deb0adc87ba7fdcbe02bc2f685bb489f26b
+// source-hash: 7649e938eb9edb3641e0d6744af0f1c4eb914c6aebf294e20f46119ac80960d5
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1673,7 +1673,7 @@ const ColonizationScaleSelector = ({ value = 0, onChange, onQuickAction }) => {
     {
       type: "button",
       className: "inv-btn inv-btn-sec inv-btn-sm",
-      style: { flex: 1, minWidth: 90, fontSize: 10.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+      style: { flex: 1, minWidth: 90, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
       onClick: () => onQuickAction("primordios"),
       title: "Detectados primordios visibles (inicio de fructificación)"
     },
@@ -1684,7 +1684,7 @@ const ColonizationScaleSelector = ({ value = 0, onChange, onQuickAction }) => {
     {
       type: "button",
       className: "inv-btn inv-btn-sec inv-btn-sm",
-      style: { flex: 1, minWidth: 90, fontSize: 10.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+      style: { flex: 1, minWidth: 90, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
       onClick: () => onQuickAction("riego"),
       title: "Verificación de humedad y niebla"
     },
@@ -1695,7 +1695,7 @@ const ColonizationScaleSelector = ({ value = 0, onChange, onQuickAction }) => {
     {
       type: "button",
       className: "inv-btn inv-btn-sec inv-btn-sm",
-      style: { flex: 1, minWidth: 90, fontSize: 10.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
+      style: { flex: 1, minWidth: 90, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 },
       onClick: () => onQuickAction("ventilacion"),
       title: "Extracción y recambio de aire"
     },
@@ -6319,7 +6319,7 @@ BATCH (${numBags}×${kgBag} kg):
     const ebColor = ebOk ? "var(--moss-700,#2E3B2F)" : ebMid ? "#976E1A" : "#A8432A";
     const totOk = an ? Math.abs(an.tot - 100) <= 0.5 : false;
     const totColor = totOk ? "var(--moss-700,#2E3B2F)" : "#A8432A";
-    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Ingredientes y evaluación de la receta activa" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "9px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "evaluación en vivo")), /* @__PURE__ */ React.createElement("div", { className: "live-dash-metrics" }, /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Ingredientes y evaluación de la receta activa" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 5px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" } }, "evaluación en vivo")), /* @__PURE__ */ React.createElement("div", { className: "live-dash-metrics" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }),
