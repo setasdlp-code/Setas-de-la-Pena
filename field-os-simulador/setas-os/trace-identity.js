@@ -207,16 +207,23 @@
       } else if (genericVal) {
         candidate = genericVal;
       } else if (pathPart) {
-        // Sin query params reconocidos, intentar extraer de ruta (/c/<codigo>, /trace/<codigo>)
+        // Si la entrada contiene caracteres inválidos peligrosos (<>"'` etc.), no los descartemos como URL vacía
+        if (INVALID_CHARS_REGEX.test(pathPart)) {
+          return emptyResult(raw, 'unknown', false, 'invalid-characters');
+        }
+        // Sin query params reconocidos, extraer de ruta sólo si tiene prefijo explícito de trazabilidad
+        // (/trace/<codigo>, /c/<codigo>, /lote/<codigo>, /batch/<codigo>)
+        // Evita interpretar segmentos raíz como el nombre del repo (ej: /Setas-de-la-Pena/) como lote.
         const segments = pathPart.split('/').filter(Boolean);
-        if (segments.length > 0) {
-          const lastSeg = safeDecode(segments[segments.length - 1]);
-          if (lastSeg && !lastSeg.endsWith('.html') && !lastSeg.endsWith('.dc')) {
-            candidate = lastSeg;
-          } else if (segments.length > 1) {
-            const prevSeg = safeDecode(segments[segments.length - 2]);
-            if (prevSeg && !prevSeg.endsWith('.html') && !prevSeg.endsWith('.dc')) {
-              candidate = prevSeg;
+        const TRACE_PREFIXES = new Set(['trace', 'c', 'lote', 'batch', 'qr']);
+        candidate = '';
+        for (let i = 0; i < segments.length - 1; i++) {
+          const seg = safeDecode(segments[i]).toLowerCase();
+          if (TRACE_PREFIXES.has(seg)) {
+            const nextSeg = safeDecode(segments[i + 1]);
+            if (nextSeg && !nextSeg.endsWith('.html') && !nextSeg.endsWith('.dc')) {
+              candidate = nextSeg;
+              break;
             }
           }
         }

@@ -257,3 +257,17 @@ test('Fase 1: Round-Trip Simétrico (identidad -> buildTraceUrl -> resolveTraceI
     assert.equal(roundTripOS.kind, c.expectedKind);
   }
 });
+
+test('Rutas base de GitHub Pages y shell no se confunden con códigos de lote', () => {
+  const rootUrl = 'https://setasdlp-code.github.io/Setas-de-la-Pena/';
+  assert.equal(resolveTraceIdentity(rootUrl).valid, false);
+
+  const homeUrl = 'https://setasdlp-code.github.io/Setas-de-la-Pena/?view=home';
+  assert.equal(resolveTraceIdentity(homeUrl).valid, false);
+
+  const shellUrl = 'https://setasdlp-code.github.io/Setas-de-la-Pena/Setas%20OS%20v5.dc.html';
+  assert.equal(resolveTraceIdentity(shellUrl).valid, false);
+
+  const shellHomeUrl = 'https://setasdlp-code.github.io/Setas-de-la-Pena/Setas%20OS%20v5.dc.html?view=home';
+  assert.equal(resolveTraceIdentity(shellHomeUrl).valid, false);
+});
