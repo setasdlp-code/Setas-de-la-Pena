@@ -4162,16 +4162,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-family: var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Iowan Old Style', Georgia, serif)) !important;
   font-weight: 700 !important;
   color: #000000 !important;
-  line-height: 1.05;
+  line-height: 1.08;
   letter-spacing: -0.01em;
+  word-break: normal;
 }
 
 .sim-root .thermal-card-40x30 .thermal-species {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .sim-root .thermal-card-50x30 .thermal-species {
-  font-size: 13.5px;
+  font-size: 12.5px;
 }
 
 /* Insignia / Chip de alto contraste para lectura rápida en cuarto de cultivo */
@@ -4181,18 +4182,20 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   color: #ffffff !important;
   font-family: var(--font-mono, monospace);
   font-weight: 800;
-  font-size: 6.5px;
-  letter-spacing: 0.04em;
+  font-size: 6px;
+  letter-spacing: 0.02em;
   padding: 1px 3px;
   border-radius: 1px;
   margin: 1.5px 0;
   align-self: flex-start;
-  line-height: 1.1;
+  line-height: 1.15;
   text-transform: uppercase;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .sim-root .thermal-card-50x30 .thermal-badge {
-  font-size: 7.5px;
+  font-size: 7px;
   padding: 1.5px 4px;
   margin: 2px 0;
 }
@@ -4203,17 +4206,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   color: #000000 !important;
   text-align: left;
   word-break: break-all;
-  line-height: 1.1;
+  line-height: 1.12;
 }
 
 .sim-root .thermal-card-40x30 .thermal-code {
-  font-size: 7px;
+  font-size: 6.5px;
   letter-spacing: -0.02em;
   margin-top: 1px;
 }
 
 .sim-root .thermal-card-50x30 .thermal-code {
-  font-size: 8px;
+  font-size: 7.5px;
   letter-spacing: -0.01em;
   margin-top: 1px;
 }
@@ -4222,13 +4225,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-family: var(--font-mono, monospace);
   color: #000000 !important;
   margin-top: 1.5px;
-  font-size: 6px;
+  font-size: 5.5px;
   font-weight: 600;
   line-height: 1.15;
 }
 
 .sim-root .thermal-card-50x30 .thermal-meta {
-  font-size: 6.5px;
+  font-size: 6px;
   margin-top: 2px;
 }
 
@@ -4238,35 +4241,33 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 @media print {
-  .thermal-print-roll, .thermal-print-roll * {
-    visibility: visible !important;
+  body * {
+    visibility: hidden;
+  }
+  .thermal-print-roll,
+  .thermal-print-roll * {
+    visibility: visible;
   }
   .thermal-print-roll {
     display: block !important;
     position: absolute !important;
-    top: 0 !important;
     left: 0 !important;
+    top: 0 !important;
     width: 100% !important;
-    background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
-    z-index: 9999999 !important;
+    background: #ffffff !important;
   }
-
   .thermal-card-print {
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: none !important;
+    margin: 0 0 2mm 0 !important;
     display: flex !important;
     align-items: center !important;
-    break-inside: avoid !important;
-    page-break-after: always !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: none !important;
-    box-sizing: border-box !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    filter: contrast(400%) grayscale(100%) !important;
-    -webkit-font-smoothing: antialiased !important;
-    text-rendering: geometricPrecision !important;
   }
   .thermal-card-print * {
     color: #000000 !important;
@@ -4286,33 +4287,34 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     height: 23.5mm !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-eyebrow {
-    font-size: 5.5px !important;
-    letter-spacing: 0.14em !important;
+    font-size: 5px !important;
+    letter-spacing: 0.12em !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-species {
     font-family: var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Iowan Old Style', Georgia, serif)) !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
-    line-height: 1.05 !important;
+    line-height: 1.08 !important;
     color: #000000 !important;
+    word-break: normal !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-badge {
     background: #000000 !important;
     color: #ffffff !important;
-    font-size: 6.5px !important;
+    font-size: 6px !important;
     font-weight: 800 !important;
     padding: 1px 3px !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-code {
-    font-size: 7px !important;
+    font-size: 6.5px !important;
     font-weight: 800 !important;
-    line-height: 1.1 !important;
+    line-height: 1.12 !important;
     letter-spacing: -0.02em !important;
     color: #000000 !important;
     text-align: left !important;
   }
   .thermal-card-print.thermal-card-40x30 .thermal-meta {
-    font-size: 6px !important;
+    font-size: 5.5px !important;
     font-weight: 600 !important;
     line-height: 1.15 !important;
     color: #000000 !important;
@@ -4329,29 +4331,31 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     height: 26mm !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-eyebrow {
-    font-size: 6.5px !important;
-    letter-spacing: 0.15em !important;
+    font-size: 5.5px !important;
+    letter-spacing: 0.12em !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-species {
     font-family: var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Iowan Old Style', Georgia, serif)) !important;
-    font-size: 13.5px !important;
+    font-size: 12.5px !important;
     font-weight: 700 !important;
-    line-height: 1.05 !important;
+    line-height: 1.08 !important;
+    word-break: normal !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-badge {
     background: #000000 !important;
     color: #ffffff !important;
-    font-size: 7.5px !important;
+    font-size: 7px !important;
     font-weight: 800 !important;
     padding: 1.5px 4px !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-code {
-    font-size: 8px !important;
+    font-size: 7.5px !important;
     font-weight: 800 !important;
     text-align: left !important;
+    line-height: 1.12 !important;
   }
   .thermal-card-print.thermal-card-50x30 .thermal-meta {
-    font-size: 6.5px !important;
+    font-size: 6px !important;
     font-weight: 600 !important;
   }
   .thermal-card-print .thermal-divider {

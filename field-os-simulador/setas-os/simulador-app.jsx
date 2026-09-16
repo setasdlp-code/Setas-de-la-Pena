@@ -4725,6 +4725,59 @@ const THERMAL_LABEL_SPECS = {
 // diseño que ya pinta la vista previa/impresión (.thermal-card-* en
 // sim.css: QR a la izquierda, especie/código/fecha a la derecha) directo a
 // un PNG que el share sheet del sistema puede mandar a PrintMaster.
+// Divide texto en líneas para Canvas asegurando que ninguna exceda maxW y
+// sin deformar ni aplastar horizontalmente los caracteres (evita fillText con maxWidth).
+function wrapCanvasText(ctx, text, maxW) {
+  if (!text) return [];
+  const words = text.split(/\s+/);
+  const lines = [];
+  let currentLine = '';
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const testLine = currentLine ? currentLine + ' ' + word : word;
+    if (ctx.measureText(testLine).width <= maxW) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      // Si una sola palabra/token excede maxW (como un código largo: SDP-260904-SHI-R01)
+      if (ctx.measureText(word).width > maxW) {
+        if (word.includes('-')) {
+          const parts = word.split('-');
+          let subLine = '';
+          for (let p = 0; p < parts.length; p++) {
+            const piece = (p < parts.length - 1) ? parts[p] + '-' : parts[p];
+            const testSub = subLine ? subLine + piece : piece;
+            if (ctx.measureText(testSub).width <= maxW) {
+              subLine = testSub;
+            } else {
+              if (subLine) lines.push(subLine);
+              subLine = piece;
+            }
+          }
+          if (subLine) lines.push(subLine);
+          currentLine = '';
+        } else {
+          let chunk = '';
+          for (const ch of word) {
+            if (ctx.measureText(chunk + ch).width <= maxW) {
+              chunk += ch;
+            } else {
+              if (chunk) lines.push(chunk);
+              chunk = ch;
+            }
+          }
+          currentLine = chunk;
+        }
+      } else {
+        currentLine = word;
+      }
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
 function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
   const w = spec.wMm * THERMAL_PX_PER_MM;
@@ -4781,68 +4834,112 @@ function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   const code = (item.id || '').trim();
   const date = (item.date || '').trim();
 
-  // Medidas tipográficas
-  const eyebrowFont = `700 ${cssPxToCanvas(spec.eyebrowPx || 6)}px ${FONT_MONO}`;
-  const eyebrowLineHeight = cssPxToCanvas(spec.eyebrowPx || 6) * 1.1;
+  // 1. Medidas Eyebrow
+  let eyebrowFontPx = Math.round(cssPxToCanvas(spec.eyebrowPx || 5.0));
+  ctx.font = `700 ${eyebrowFontPx}px ${FONT_MONO}`;
+  const eyebrowLines = wrapCanvasText(ctx, eyebrow, textW);
+  const eyebrowLineHeight = Math.round(eyebrowFontPx * 1.15);
+  const eyebrowBlockH = eyebrowLines.length * eyebrowLineHeight;
+  const eyebrowMarginB = cssPxToCanvas(1.5);
 
-  const speciesFont = `700 ${cssPxToCanvas(spec.speciesPx)}px ${FONT_EDITORIAL}`;
-  const speciesLineHeight = cssPxToCanvas(spec.speciesPx) * 1.05;
+  // 2. Medidas Species (Gaya Patched / Serif)
+  let speciesFontPx = Math.round(cssPxToCanvas(spec.speciesPx || 9.5));
+  ctx.font = `700 ${speciesFontPx}px ${FONT_EDITORIAL}`;
+  const sWords = species.split(/\s+/);
+  let maxSW = Math.max(...sWords.map(word => ctx.measureText(word).width));
+  while (maxSW > textW && speciesFontPx > 14) {
+    speciesFontPx -= 1;
+    ctx.font = `700 ${speciesFontPx}px ${FONT_EDITORIAL}`;
+    maxSW = Math.max(...sWords.map(word => ctx.measureText(word).width));
+  }
+  const speciesLines = wrapCanvasText(ctx, species, textW);
+  const speciesLineHeight = Math.round(speciesFontPx * 1.08);
+  const speciesBlockH = speciesLines.length * speciesLineHeight;
+  const speciesMarginB = cssPxToCanvas(2.0);
 
-  const badgeFont = `800 ${cssPxToCanvas(spec.badgePx || 7)}px ${FONT_MONO}`;
-  const badgeH = badge ? cssPxToCanvas(spec.badgePx || 7) * 1.35 : 0;
-  const badgeMarginTop = badge ? cssPxToCanvas(1.5) : 0;
+  // 3. Medidas Badge (Inverted black block)
+  let badgeFontPx = Math.round(cssPxToCanvas(spec.badgePx || 6.0));
+  const bPadX = cssPxToCanvas(3);
+  ctx.font = `800 ${badgeFontPx}px ${FONT_MONO}`;
+  let bTextW = ctx.measureText(badge).width;
+  if (badge && bTextW + bPadX * 2 > textW) {
+    const scale = (textW - bPadX * 2) / bTextW;
+    badgeFontPx = Math.max(10, Math.floor(badgeFontPx * scale));
+    ctx.font = `800 ${badgeFontPx}px ${FONT_MONO}`;
+    bTextW = ctx.measureText(badge).width;
+  }
+  const badgeW = badge ? Math.min(textW, bTextW + bPadX * 2) : 0;
+  const badgeH = badge ? Math.round(badgeFontPx * 1.35) : 0;
+  const badgeMarginT = badge ? cssPxToCanvas(1.5) : 0;
+  const badgeMarginB = badge ? cssPxToCanvas(2.0) : 0;
 
-  const codeFont = `800 ${cssPxToCanvas(spec.codePx)}px ${FONT_MONO}`;
-  const codeLineHeight = cssPxToCanvas(spec.codePx) * 1.12;
-  const codeMarginTop = cssPxToCanvas(spec.codeMarginTopPx);
+  // 4. Medidas Code
+  let codeFontPx = Math.round(cssPxToCanvas(spec.codePx || 6.5));
+  ctx.font = `800 ${codeFontPx}px ${FONT_MONO}`;
+  const codeLines = wrapCanvasText(ctx, code, textW);
+  const codeLineHeight = Math.round(codeFontPx * 1.12);
+  const codeBlockH = codeLines.length * codeLineHeight;
+  const codeMarginB = cssPxToCanvas(1.5);
 
-  const metaFont = `600 ${cssPxToCanvas(spec.metaPx)}px ${FONT_MONO}`;
-  const metaLineHeight = cssPxToCanvas(spec.metaPx) * 1.15;
-  const metaMarginTop = cssPxToCanvas(spec.metaMarginTopPx);
+  // 5. Medidas Meta / Date
+  const metaFontPx = Math.round(cssPxToCanvas(spec.metaPx || 5.5));
+  const metaLineHeight = Math.round(metaFontPx * 1.15);
+  const metaBlockH = date ? metaLineHeight : 0;
 
-  const totalHeight = eyebrowLineHeight + speciesLineHeight + badgeMarginTop + badgeH + codeMarginTop + codeLineHeight + metaMarginTop + metaLineHeight;
-  let curY = Math.max(padY, (h - totalHeight) / 2);
+  // Altura total y centrado vertical armónico
+  const totalHeight = eyebrowBlockH + eyebrowMarginB +
+                      speciesBlockH + speciesMarginB +
+                      badgeMarginT + badgeH + badgeMarginB +
+                      codeBlockH + codeMarginB +
+                      metaBlockH;
 
+  let curY = Math.max(padY, Math.round((h - totalHeight) / 2));
   ctx.textBaseline = 'top';
 
-  // 1. Eyebrow
+  // Render 1: Eyebrow
   ctx.fillStyle = '#000000';
-  ctx.font = eyebrowFont;
-  try { ctx.letterSpacing = '0.12em'; } catch (_) {}
-  ctx.fillText(eyebrow, textX, curY, textW);
-  try { ctx.letterSpacing = '0px'; } catch (_) {}
-  curY += eyebrowLineHeight + cssPxToCanvas(1);
+  ctx.font = `700 ${eyebrowFontPx}px ${FONT_MONO}`;
+  eyebrowLines.forEach(line => {
+    ctx.fillText(line, textX, curY);
+    curY += eyebrowLineHeight;
+  });
+  curY += eyebrowMarginB;
 
-  // 2. Species (Gaya Patched)
-  ctx.font = speciesFont;
-  ctx.fillText(species, textX, curY, textW);
-  curY += speciesLineHeight;
+  // Render 2: Species
+  ctx.fillStyle = '#000000';
+  ctx.font = `700 ${speciesFontPx}px ${FONT_EDITORIAL}`;
+  speciesLines.forEach(line => {
+    ctx.fillText(line, textX, curY);
+    curY += speciesLineHeight;
+  });
+  curY += speciesMarginB;
 
-  // 3. Badge (Inverted black block)
+  // Render 3: Badge
   if (badge) {
-    curY += badgeMarginTop;
-    ctx.font = badgeFont;
-    const badgeTextWidth = ctx.measureText(badge).width;
-    const bPadX = cssPxToCanvas(3);
-    const bW = Math.min(textW, badgeTextWidth + bPadX * 2);
+    curY += badgeMarginT;
     ctx.fillStyle = '#000000';
-    ctx.fillRect(textX, curY, bW, badgeH);
+    ctx.fillRect(textX, curY, badgeW, badgeH);
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(badge, textX + bPadX, curY + cssPxToCanvas(1), bW - bPadX * 2);
-    curY += badgeH;
+    ctx.font = `800 ${badgeFontPx}px ${FONT_MONO}`;
+    ctx.fillText(badge, textX + bPadX, curY + Math.round((badgeH - badgeFontPx) / 2));
+    curY += badgeH + badgeMarginB;
   }
 
-  // 4. Code
-  curY += codeMarginTop;
+  // Render 4: Code
   ctx.fillStyle = '#000000';
-  ctx.font = codeFont;
-  ctx.fillText(code, textX, curY, textW);
-  curY += codeLineHeight;
+  ctx.font = `800 ${codeFontPx}px ${FONT_MONO}`;
+  codeLines.forEach(line => {
+    ctx.fillText(line, textX, curY);
+    curY += codeLineHeight;
+  });
+  curY += codeMarginB;
 
-  // 5. Meta / Date
-  curY += metaMarginTop;
-  ctx.font = metaFont;
-  ctx.fillText(date, textX, curY, textW);
+  // Render 5: Meta / Date
+  if (date) {
+    ctx.fillStyle = '#000000';
+    ctx.font = `600 ${metaFontPx}px ${FONT_MONO}`;
+    ctx.fillText(date, textX, curY);
+  }
 
   ctx.restore();
 }
