@@ -217,13 +217,12 @@ function syncAuthGatedResources(authenticated) {
   const scope = document.querySelector("#dc-root") || document;
   scope.querySelectorAll("[data-auth-src]").forEach((node) => {
     if (authenticated) {
-      const authSrc = (node.dataset.authSrc === "_standalone_imgs/logo-sdlp.png" && window.__resources && window.__resources.imgLogoSdlp)
-        ? window.__resources.imgLogoSdlp
-        : node.dataset.authSrc;
-      if (!node.getAttribute("src") || (window.__resources && window.__resources.imgLogoSdlp && node.dataset.authSrc === "_standalone_imgs/logo-sdlp.png" && node.getAttribute("src") !== window.__resources.imgLogoSdlp)) {
-        node.setAttribute("src", authSrc);
-      } else if (!node.getAttribute("src")) {
-        node.setAttribute("src", node.dataset.authSrc);
+      const rawSrc = node.dataset.authSrc;
+      const resolved = (typeof window !== "undefined" && typeof window.resolveImg === "function")
+        ? window.resolveImg(rawSrc)
+        : ((rawSrc === "_standalone_imgs/logo-sdlp.png" && typeof window !== "undefined" && window.__resources && window.__resources.imgLogoSdlp) ? window.__resources.imgLogoSdlp : rawSrc);
+      if (!node.getAttribute("src") || node.getAttribute("src") !== resolved) {
+        node.setAttribute("src", resolved);
       }
     } else {
       node.removeAttribute("src");

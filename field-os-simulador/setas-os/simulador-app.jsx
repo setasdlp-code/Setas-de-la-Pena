@@ -802,6 +802,17 @@ const IMG={
   nameko:(window.__resources&&window.__resources.img_nameko)||'_standalone_imgs/nameko.png',
 };
 
+const resolveLogo = (path = '_standalone_imgs/logo-sdlp.png') => {
+  if (typeof window !== 'undefined' && typeof window.resolveImg === 'function') {
+    return window.resolveImg(path);
+  }
+  if (typeof window !== 'undefined' && window.__resources) {
+    if (window.__resources.imgLogoSdlp) return window.__resources.imgLogoSdlp;
+    if (window.__resources.img_logo_sdlp) return window.__resources.img_logo_sdlp;
+  }
+  return path;
+};
+
 const SPP_DIFFICULTY={p_ostreatus_gris:'Baja',p_ostreatus_blanco:'Baja',p_djamor_rosa:'Media',p_eryngii:'Alta',shiitake:'Alta',lions_mane:'Media',reishi:'Muy alta',enoki:'Alta',nameko:'Media'};
 const SPP_DETAILS={
   p_ostreatus_gris:{hechos:[
@@ -2481,7 +2492,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
       <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'22px 22px 18px',position:'relative'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
           <div style={{display:'flex',gap:14,alignItems:'center'}}>
-            <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
+            <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
             <div>
               <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
                 <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
@@ -10894,13 +10905,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     <div>
       <div className="topbar">
         <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:10}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="54" height="28" style={{width:54,height:'auto',maxHeight:28,objectFit:'contain'}} />
+          <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="54" height="28" style={{width:54,height:'auto',maxHeight:28,objectFit:'contain'}} />
           <span style={{fontSize:15,fontWeight:700}}>Setas de la Peña</span>
         </button>
       </div>
       <nav className="fos-rail">
         <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 4px 8px'}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="80" height="42" style={{width:80,height:'auto',maxHeight:48,objectFit:'contain',display:'block'}} />
+          <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="80" height="42" style={{width:80,height:'auto',maxHeight:48,objectFit:'contain',display:'block'}} />
         </span>
         {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
           <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>goTab(g.tabs[0])}>{g.icon}<span>{g.label}</span></button>
@@ -16054,7 +16065,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive, #5B6B44)', paddingBottom: 12, marginBottom: 16 }}>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                  <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="60" height="32" style={{ width: 60, height: 'auto', maxHeight: 34, objectFit: 'contain' }} />
+                  <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{ width: 60, height: 'auto', maxHeight: 34, objectFit: 'contain' }} />
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
                       Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
