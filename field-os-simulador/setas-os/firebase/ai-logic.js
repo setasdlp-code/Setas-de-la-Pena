@@ -82,6 +82,55 @@ Reglas agronómicas de Setas de la Peña:
 `;
 
 /**
+ * Limpia y analiza una cadena para extraer un objeto JSON válido, tolerando
+ * trailing commas y envoltorios markdown.
+ * @param {string} text
+ * @returns {object|null}
+ */
+function tryParseJsonWithCleaning(text) {
+  if (!text || typeof text !== 'string') return null;
+  const trimmed = text.trim();
+  try {
+    const direct = JSON.parse(trimmed);
+    if (direct && typeof direct === 'object') return direct;
+  } catch (_) {}
+
+  // 1. Priorizar bloques de código markdown ```json ... ``` no ambivalentes
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch) {
+    const fenceContent = codeBlockMatch[1].trim();
+    try {
+      const parsedFence = JSON.parse(fenceContent);
+      if (parsedFence && typeof parsedFence === 'object') return parsedFence;
+    } catch (_) {}
+    try {
+      const sanitizedFence = fenceContent.replace(/,\s*([\}\]])/g, '$1');
+      const parsedFence = JSON.parse(sanitizedFence);
+      if (parsedFence && typeof parsedFence === 'object') return parsedFence;
+    } catch (_) {}
+  }
+
+  // 2. Extraer candidato con llaves
+  const match = trimmed.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+
+  const candidate = match[0];
+  try {
+    const parsed = JSON.parse(candidate);
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch (_) {}
+
+  // Tolerancia a trailing commas generadas por LLMs: ", }" o ", ]"
+  try {
+    const sanitized = candidate.replace(/,\s*([\}\]])/g, '$1');
+    const parsed = JSON.parse(sanitized);
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch (_) {}
+
+  return null;
+}
+
+/**
  * Normaliza y limpia una respuesta de texto para extraer el JSON válido.
  * @param {string} text 
  * @returns {object}
@@ -91,17 +140,14 @@ export function extractValidInvoiceJson(text) {
     throw new Error('Respuesta vacía o inválida del modelo AI.');
   }
 
-  const trimmed = text.trim();
-  try {
-    const direct = JSON.parse(trimmed);
-    if (direct && typeof direct === 'object') return direct;
-  } catch (_) {}
+  const parsed = tryParseJsonWithCleaning(text);
+  if (parsed && typeof parsed === 'object') return parsed;
 
+  const trimmed = text.trim();
   const match = trimmed.match(/\{[\s\S]*\}/);
   if (match) {
     try {
-      const parsed = JSON.parse(match[0]);
-      if (parsed && typeof parsed === 'object') return parsed;
+      return JSON.parse(match[0]);
     } catch (e) {
       throw new Error(`Error al decodificar JSON de la respuesta: ${e.message}`);
     }
@@ -120,23 +166,46 @@ export function extractValidDiagnosisJson(text) {
     throw new Error('Respuesta vacía o inválida del modelo AI.');
   }
 
-  const trimmed = text.trim();
-  try {
-    const direct = JSON.parse(trimmed);
-    if (direct && typeof direct === 'object') return direct;
-  } catch (_) {}
+  const parsed = tryParseJsonWithCleaning(text);
+  if (parsed && typeof parsed === 'object') return parsed;
 
+  const trimmed = text.trim();
   const match = trimmed.match(/\{[\s\S]*\}/);
   if (match) {
     try {
-      const parsed = JSON.parse(match[0]);
-      if (parsed && typeof parsed === 'object') return parsed;
+      return JSON.parse(match[0]);
     } catch (e) {
       throw new Error(`Error al decodificar JSON del diagnóstico: ${e.message}`);
     }
   }
 
   throw new Error('No se encontró una estructura JSON válida en la respuesta del diagnóstico.');
+}
+
+/**
+ * Normaliza y limpia una respuesta de texto para extraer el JSON de recomendación agronómica de formulación.
+ * @param {string} text
+ * @returns {object}
+ */
+export function extractValidFormulationJson(text) {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Respuesta vacía o inválida del modelo AI.');
+  }
+
+  const parsed = tryParseJsonWithCleaning(text);
+  if (parsed && typeof parsed === 'object') return parsed;
+
+  const trimmed = text.trim();
+  const match = trimmed.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch (e) {
+      throw new Error(`Error al decodificar JSON de formulación: ${e.message}`);
+    }
+  }
+
+  throw new Error('No se encontró una estructura JSON válida en la respuesta de formulación.');
 }
 
 /**

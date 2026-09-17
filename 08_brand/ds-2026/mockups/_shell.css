@@ -1,5 +1,12 @@
 /* Mockup stage only — never part of the shipped system. */
 body { background: var(--surface-panel); padding: 40px; }
+body[data-content-status="illustrative"]::before {
+  content: "PROTOTIPO · DATOS ILUSTRATIVOS · NO USAR PARA PRODUCCIÓN O COMPRA";
+  display: block; width: max-content; max-width: 100%; margin: 0 auto var(--space-2);
+  border: var(--rule-hairline); padding: var(--space-1) var(--space-2);
+  background: var(--surface-page); color: var(--text-secondary);
+  font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
+}
 .stage { display: flex; gap: 40px; align-items: flex-start; justify-content: center; }
 .stage--col { flex-direction: column; align-items: center; }
 .spec { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;

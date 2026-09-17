@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de origen · Muestra — Setas de la Peña</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/editorial.css">
+  <style>
+    .sb-trace-timeline {
+      border-left: 2px solid var(--sb-line-strong);
+      padding-left: var(--sb-space-6);
+      margin-top: var(--sb-space-6);
+      margin-bottom: var(--sb-space-8);
+      position: relative;
+    }
+    .sb-trace-event {
+      margin-bottom: var(--sb-space-6);
+      position: relative;
+    }
+    .sb-trace-event::before {
+      content: '';
+      position: absolute;
+      left: calc(-1 * var(--sb-space-6) - 5px);
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--sb-ink-0);
+      border: 2px solid var(--sb-paper-0);
+    }
+    .sb-trace-event--active::before {
+      background-color: var(--sb-status-active);
+    }
+    .sb-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--sb-space-4);
+      margin-bottom: var(--sb-space-8);
+    }
+    .sb-metric-card {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-hairline);
+      padding: var(--sb-space-4);
+      border-radius: var(--sb-radius-xs);
+    }
+    @media (max-width: 800px) {
+      .sb-metric-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<a class="sb-skip-link" href="#contenido">Saltar al contenido</a>
+<header class="sb-header"><div class="sb-container sb-header__inner">
+<a href="home.html" class="sb-brand-mark">Setas de la Peña<span class="sb-brand-mark__sub">Tenjo · Colombia</span></a>
+<nav class="sb-nav" aria-label="Principal"><a href="home.html" class="sb-nav__link">Colección</a><a href="product.html" class="sb-nav__link">Shiitake</a><a href="editorial.html" class="sb-nav__link">Cuaderno</a><a href="traceability.html" class="sb-nav__link sb-nav__link--active" aria-current="page">Origen</a></nav>
+</div></header>
+<div class="sb-container"><p class="sb-demo-note">Muestra de diseño · Datos comerciales y de lote por confirmar. No recibe pedidos.</p></div><main class="sb-container" id="contenido"><header><span class="sb-badge">Registro de ejemplo</span><h1>Conoce el origen.</h1><p>La historia de cada lote comienza con datos que se pueden consultar. Esta muestra presenta la estructura del registro; todavía no contiene evidencias de una cosecha.</p></header>
+<section class="sb-metric-grid" aria-label="Resumen de origen"><div class="sb-metric-card"><h2>Especie</h2><p>Shiitake</p><span class="sb-badge sb-status--verified">Nombre verificado</span></div><div class="sb-metric-card"><h2>Lote</h2><p>Por asignar</p></div><div class="sb-metric-card"><h2>Cosecha</h2><p>Por confirmar</p></div><div class="sb-metric-card"><h2>Procedencia</h2><p>Por confirmar</p></div></section>
+<section><h2>Qué podrás consultar</h2><table class="sb-specs-table"><caption>Campos del registro · Sin lote operativo conectado</caption><tbody><tr><th scope="row">Identificador</th><td>Por asignar</td></tr><tr><th scope="row">Especie</th><td>Shiitake · Lentinula edodes (ejemplo)</td></tr><tr><th scope="row">Fecha de cosecha</th><td>Pendiente de registro</td></tr><tr><th scope="row">Lugar de cultivo</th><td>Pendiente de registro</td></tr><tr><th scope="row">Formato y peso</th><td>Pendiente de registro</td></tr><tr><th scope="row">Conservación</th><td>Pendiente de instrucciones verificadas</td></tr><tr><th scope="row">Evidencia de origen</th><td>Sin documento asociado</td></tr><tr><th scope="row">Última actualización</th><td>Sin registro</td></tr></tbody></table></section>
+<section><h2>Cómo leer tu registro</h2><div class="sb-trace-timeline"><div class="sb-trace-event"><h3>1. Identificar</h3><p>El código permitirá relacionar el producto con su registro.</p></div><div class="sb-trace-event"><h3>2. Consultar</h3><p>La fecha y la procedencia se mostrarán cuando estén registradas.</p></div><div class="sb-trace-event"><h3>3. Revisar la evidencia</h3><p>Los documentos asociados permitirán comprobar los datos publicados. Un campo pendiente no equivale a una certificación.</p></div></div></section><a href="product.html" class="sb-btn sb-btn--primary">Volver al shiitake →</a></main><footer class="sb-footer"><div class="sb-container sb-footer__grid"><div><span class="sb-brand-mark">Setas de la Peña</span><p>Botánica, origen y cocina.</p></div><a href="home.html">Explorar la colección</a><a href="editorial.html">Leer el cuaderno</a><a href="traceability.html">Conocer el registro de origen</a></div></footer></body></html>

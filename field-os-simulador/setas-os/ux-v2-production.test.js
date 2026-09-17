@@ -44,8 +44,13 @@ test('Hoy quick actions only cover destinations with no equivalent CTA in Espaci
   assert.doesNotMatch(source, /label:'Formular Receta'/);
   assert.doesNotMatch(source, /label:'Lotes',sub:'Crear y gestionar lotes'/);
   assert.doesNotMatch(source, /label:'Módulos de cultivo'/);
-  assert.match(source, /onClick:\(\)=>props\.onScanLot&&props\.onScanLot\(\)/);
+  // La tarjeta abre la hoja de captura del propio shell React: es la que
+  // resuelve la etiqueta contra los lotes de la bitácora. El escáner del .dc
+  // trabajaba sobre contenedores de demostración.
+  assert.match(source, /onClick:\(\)=>openFieldScanSheet\(\)/);
   assert.match(shell, /on-scan-lot="\{\{ openScanHome \}\}"/);
+  assert.match(shell, /scan-nonce="\{\{ scanNonce \}\}"/);
+  assert.match(source, /\},\[props\.scanNonce\]\)/);
 });
 
 test('Hoy keeps species selection out of the operational header', () => {
@@ -105,12 +110,28 @@ test('workspace state is deep-linkable through the view query parameter', () => 
   assert.match(shell, /window\.removeEventListener\('popstate', this\._onPopState\)/);
 });
 
-test('mobile field QR action sheet provides fast one-touch actions and batch selection', () => {
+test('mobile field QR action sheet derives its actions from the batch sheet, not a fixed menu', () => {
   assert.match(source, /showQrSheet/);
   assert.match(source, /<AccessibleModal[\s\S]*?label="Captura rápida de campo"/);
-  assert.match(source, /Registrar Cosecha \(g\)/);
+  // El escaneo resuelve el lote y la ficha decide qué acciones caben ahora.
+  assert.match(source, /window\.SetasBatchSheet/);
+  assert.match(source, /resolveScan\(raw,\s*\{\s*lotes:\s*bitLotes,\s*bolsas:\s*bitBolsas\s*\}\)/);
+  assert.match(source, /data-testid="qr-contextual-actions"/);
+  assert.match(source, /Acciones válidas en \{currentSheet\.stateLabel/);
+  assert.match(source, /currentSheet\.actions/);
+  // La captura de clima queda fuera del ciclo de vida del lote: siempre disponible.
   assert.match(source, /Registrar Clima \/ Sala/);
-  assert.match(source, /Reportar Contaminación \/ Merma/);
+  // Un QR que no resuelve explica por qué en vez de abrir un menú genérico.
+  assert.match(source, /data-testid="scan-unresolved"/);
+});
+
+test('batch detail renders the canonical batch sheet with links, blocks and contextual actions', () => {
+  assert.match(source, /buildSheetFor/);
+  assert.match(source, /data-testid="batch-blocks"/);
+  assert.match(source, /Trazabilidad \{sheet\.completenessPct\}%/);
+  assert.match(source, /Semilla sin vincular/);
+  assert.match(source, /data-batch-completeness/);
+  assert.match(source, /commitSheetAction/);
 });
 
 test('perito bridge renders structured co-formulation cards with DS tokens and 44px targets', () => {
@@ -121,17 +142,15 @@ test('perito bridge renders structured co-formulation cards with DS tokens and 4
   assert.match(styles, /\.sim-root \.coform-card/);
 });
 
-test('thermal label generator supports 40x30mm, 50x30mm and 60x40mm formats with print pagination', () => {
+test('thermal label generator supports 40x30mm and 50x30mm formats (only sizes the Phomemo M110 can print) with print pagination', () => {
   assert.match(source, /showThermalModal/);
   assert.match(source, /40 × 30 mm/);
   assert.match(source, /50 × 30 mm/);
-  assert.match(source, /60 × 40 mm/);
   assert.match(source, /generateQrSvgDataUrl/);
   assert.match(source, /<AccessibleModal[\s\S]*?label="Generador de etiquetas térmicas"/);
   assert.match(styles, /\.sim-root \.thermal-preview-container/);
   assert.match(styles, /\.sim-root \.thermal-card-40x30/);
   assert.match(styles, /\.sim-root \.thermal-card-50x30/);
-  assert.match(styles, /\.sim-root \.thermal-card-60x40/);
   assert.match(styles, /\.thermal-card-print/);
   assert.match(shell, /\.thermal-print-roll/);
 });
@@ -146,7 +165,7 @@ test('thermal print buttons are embedded across Hoy, Bitacora bags, Field QR and
   assert.match(source, /Imprimir etiqueta de la bolsa/);
 
   // 3. Field QR Action Sheet
-  assert.match(source, /🏷 Imprimir Etiquetas Térmicas \(50×30 \/ 60×40\)/);
+  assert.match(source, /🏷 Imprimir Etiquetas Térmicas \(50×30 \/ 40×30\)/);
 
   // 6. Harvest modal & table
   assert.match(source, /openThermalForCosecha/);
@@ -194,6 +213,42 @@ test('mobile field action sheet integrates live camera QR scanner with viewport 
   assert.match(styles, /\.sim-root \.qr-scanner-video/);
   assert.match(styles, /\.sim-root \.qr-scanner-reticle/);
   assert.match(styles, /\.sim-root \.qr-scanner-laser/);
+});
+
+test('todo setState usado en el shell React está declarado — un setter huérfano es un ReferenceError en producción', () => {
+  // `cameraError` se leía en el render de la captura rápida sin existir: abrir
+  // la hoja del QR reventaba el modal entero y no se escaneaba nada. El mismo
+  // fallo estaba en el diagnóstico de contaminación (`diagError`, `diagNotes`)
+  // y al imprimir etiquetas tras lanzar producción (`setThermalLoteId`).
+  // Los tests de esta suite son de fuente: comprueban que el identificador
+  // aparece, no que exista. Esta es la comprobación que faltaba.
+  const GLOBALES = new Set(['setInterval', 'setTimeout', 'setImmediate']);
+  const usados = new Set();
+  const uso = /(^|[^.\w$])(set[A-Z][A-Za-z0-9_]*)\s*\(/g;
+  for (let m; (m = uso.exec(source)); ) usados.add(m[2]);
+
+  const declarados = new Set();
+  const porDesestructuracion = /\[\s*[A-Za-z0-9_$]+\s*,\s*(set[A-Z][A-Za-z0-9_]*)\s*\]/g;
+  for (let m; (m = porDesestructuracion.exec(source)); ) declarados.add(m[1]);
+  const porNombre = /(?:const|let|var|function)\s+(set[A-Z][A-Za-z0-9_]*)\b/g;
+  for (let m; (m = porNombre.exec(source)); ) declarados.add(m[1]);
+
+  const huerfanos = [...usados].filter(n => !declarados.has(n) && !GLOBALES.has(n));
+  assert.deepEqual(huerfanos, [], `setters sin declarar: ${huerfanos.join(', ')}`);
+});
+
+test('la captura rápida resuelve la etiqueta impresa y no depende sólo de la cámara', () => {
+  // El QR de la etiqueta lleva el código en la query, no en la ruta.
+  assert.match(source, /qrUrl: `\$\{PUBLIC_TRACE_BASE_URL\}\?codigo=/);
+  const sheet = fs.readFileSync(path.join(root, 'batch-sheet.js'), 'utf8');
+  assert.match(sheet, /readScanCodeParam\(query\)/, 'resolveScan debe leer el código de la query de la URL');
+  assert.match(sheet, /const SCAN_CODE_PARAMS = \[[^\]]*'codigo'/);
+  // Sin decodificador (Safari, Firefox) la hoja lo dice y ofrece el código a mano.
+  assert.match(source, /BarcodeDetector\.getSupportedFormats\(\)/);
+  assert.match(source, /data-testid="scan-manual-code"/);
+  assert.match(source, /const \[cameraError,setCameraError\]=useState\(''\)/);
+  // La cámara se apaga aunque la hoja se cierre sin pasar por el botón.
+  assert.match(source, /cameraStreamRef/);
 });
 
 test('climate dashboard generates and exports customizable ESPHome firmware YAML for microcontrollers', () => {

@@ -33,9 +33,9 @@
   /* WARNING is 2.39:1 on paper — it cannot carry text and cannot carry
      meaning as a thin rule. It stays the caution pigment (solid fills and
      bars, with INK on top: 6.12:1). --warning-text is the same hue (39°)
-     and saturation darkened to 36.5% lightness, for the rare case where
-     ochre itself must be the text colour: 4.53:1 on paper. */
-  --warning-text: #8C6B2E;
+     and saturation darkened for AA on paper and warning tint, for the rare case where
+     ochre itself must be the text colour: AA on paper *and* on its tint. */
+  --warning-text: #826326;
 
   /* ---- Semantic aliases — prefer these in component CSS ---- */
   --surface-page:     var(--paper);
@@ -62,7 +62,7 @@
   --focus-ring: var(--moss);
 
   /* ─────────────────────────────────────────────────────────────
-     2 · TYPE — three families, nine roles.
+     2 · TYPE — three families, twelve roles.
      DISPLAY 01 (64px Gaya Black) → MICRO (9px Mono).
      ───────────────────────────────────────────────────────────── */
   --weight-thin:100; --weight-light:300; --weight-regular:400;
@@ -79,7 +79,9 @@
   --size-small:      14px;
   --size-data:       13px;
   --size-label:      11px;
-  --size-micro:       9px;
+  --size-micro-screen: 11px;
+  --size-micro-print:   9px;
+  --size-micro: var(--size-micro-screen);
 
   --leading-solid:  0.98;
   --leading-tight:  1.10;
@@ -160,6 +162,21 @@
 }
 
 /* ── Mode scopes: set on any container to switch density ── */
-[data-mode="archive"] { --gutter: var(--gutter-archive); --page-margin: var(--margin-archive); }
+[data-mode="archive"] {
+  --gutter: var(--gutter-archive); --page-margin: var(--margin-archive);
+
+  /* Customer-surface accent — additive, not a ninth pigment. Same hue
+     family as --rust (terracotta, ~38° vs ~35°), lighter and less
+     saturated. Archive-only: fichas, packaging. Fill / underline /
+     thin-rule ONLY — 4.38:1 on paper clears the 3:1 non-text floor but
+     misses 4.5:1 for text, so it is banned as body text by the same
+     logic that constrains --warning. See scripts/contrast-audit.py. */
+  --accent-warm: oklch(57% 0.15 38);
+}
 [data-mode="field"]   { --gutter: var(--gutter-field);   --page-margin: var(--margin-field); }
 [data-mode="control"] { --gutter: var(--gutter-control); --page-margin: var(--margin-control); }
+[data-mode="culinary-market"] { --gutter: var(--gutter-archive); --page-margin: var(--margin-field); }
+
+@media print {
+  :root { --size-micro: var(--size-micro-print); }
+}

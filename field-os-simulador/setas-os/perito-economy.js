@@ -75,9 +75,10 @@
     const high = Math.max(low, Number(ebHigh) || low);
     const freshKgLow = low > 0 ? batchDryKg * low / 100 : null;
     const freshKgHigh = high > 0 ? batchDryKg * high / 100 : null;
-    const costPerFreshKgBest = freshKgHigh && substrateCostCOP > 0 ? substrateCostCOP / freshKgHigh : null;
-    const costPerFreshKgWorst = freshKgLow && substrateCostCOP > 0 ? substrateCostCOP / freshKgLow : null;
     const priceCoveragePct = batchDryKg > 0 ? Math.min(100, pricedDryKg / batchDryKg * 100) : 0;
+    const hasPricedSubstrate = priceCoveragePct > 0 && substrateCostCOP != null;
+    const costPerFreshKgBest = freshKgHigh && hasPricedSubstrate ? substrateCostCOP / freshKgHigh : null;
+    const costPerFreshKgWorst = freshKgLow && hasPricedSubstrate ? substrateCostCOP / freshKgLow : null;
 
     return {
       batchWetKg: finalWetKg,

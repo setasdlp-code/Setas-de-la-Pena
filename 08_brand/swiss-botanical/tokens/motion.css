@@ -1,0 +1,31 @@
+/* ═══════════════════════════════════════════════════════════════
+   Swiss Botanical · Motion Tokens
+   Cinemática editorial pausada: 400-500ms
+   Transiciones orgánicas para visor botánico y micro-interacciones.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Tiempos */
+  --sb-duration-fast: 150ms;
+  --sb-duration-normal: 300ms;
+  --sb-duration-editorial: 450ms;
+  --sb-duration-slow: 600ms;
+
+  /* Curvas de aceleración suiza */
+  --sb-ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --sb-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --sb-ease-pressed: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Micro-desplazamiento de prensa */
+  --sb-press-shift: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sb-duration-fast: 0.01ms;
+    --sb-duration-normal: 0.01ms;
+    --sb-duration-editorial: 0.01ms;
+    --sb-duration-slow: 0.01ms;
+    --sb-press-shift: none;
+  }
+}

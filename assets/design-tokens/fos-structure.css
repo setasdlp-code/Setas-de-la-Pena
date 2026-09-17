@@ -1,0 +1,52 @@
+/* Structure: rules, radii, focus — no shadows, no glass, no floating panels. */
+:root {
+  --radius-none: 0px;
+  --radius-sm: 2px;   /* tags, inputs only */
+  --radius-md: 3px;   /* rare — small controls */
+
+  --rule-hairline: 1px solid var(--border-hairline);
+  --rule-strong: 1px solid var(--border-strong);
+  --rule-heavy: 2px solid var(--border-heavy);
+
+  --focus-outline: 2px solid var(--focus-ring);
+
+  --shadow-none: none;
+
+  /* FOS-01/02 — field artefact geometry */
+  --field-cell-min-height: 48px;  /* handwriting target in printed fichas */
+  --field-print-margin: 10mm;     /* physical label inset, all substrates */
+
+  /* FOS-08 (audited 2026) — interactive touch targets, for any on-screen
+     control (buttons, checkboxes, taps) used in field capture UI.
+     44px is the WCAG/mobile-platform minimum; field conditions (gloves,
+     outdoor light, one-handed use) make undersizing worse than in an
+     office app — never go below this for a tappable element. */
+  --tap-target-min: 44px;
+  --tap-target-gap-min: 8px; /* minimum gap between adjacent tap targets */
+
+  /* FOS-03 — pictogram construction */
+  --pictogram-grid: 48; /* @kind other */
+  --pictogram-safe: 36; /* @kind other */
+  --pictogram-stroke: 3;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-prose);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* FOS-04.5 — links are always underlined: the only signal that survives photocopy and low light. */
+a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--link-hover); }
+
+/* FOS-04.4 — tabular figures forced in every numeric column and every mono run. */
+table, td, th, .mono, [data-numeric] { font-variant-numeric: tabular-nums; }
+
+::selection { background: var(--accent-olive-dim); }

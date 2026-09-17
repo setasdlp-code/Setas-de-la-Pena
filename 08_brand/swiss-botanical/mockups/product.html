@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shiitake · Lentinula edodes — Setas de la Peña</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/editorial.css">
+  <style>
+    .sb-product-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: var(--sb-space-12);
+      padding-top: var(--sb-space-10);
+      padding-bottom: var(--sb-space-16);
+    }
+    .sb-viewer {
+      background-color: var(--sb-paper-1);
+      border: 1px solid var(--sb-line-strong);
+      padding: var(--sb-space-8);
+      position: sticky;
+      top: 90px;
+    }
+    .sb-viewer__main {
+      background-color: var(--sb-paper-0);
+      border: 1px solid var(--sb-line-hairline);
+      padding: var(--sb-space-8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 380px;
+      margin-bottom: var(--sb-space-4);
+    }
+    .sb-viewer__img {
+      max-height: 90%;
+      max-width: 90%;
+      object-fit: contain;
+    }
+    .sb-gram-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sb-space-2);
+      margin-top: var(--sb-space-2);
+      margin-bottom: var(--sb-space-6);
+    }
+    .sb-gram-card {
+      border: 1px solid var(--sb-line-strong);
+      background-color: var(--sb-paper-0);
+      padding: var(--sb-space-3);
+      text-align: center;
+      cursor: pointer;
+      border-radius: var(--sb-radius-xs);
+      transition: all var(--sb-duration-fast) ease;
+    }
+    .sb-gram-card--active, .sb-gram-card:hover {
+      border-color: var(--sb-accent-shiitake);
+      background-color: var(--sb-accent-shiitake-tint);
+    }
+    .sb-recipe-box {
+      background-color: var(--sb-paper-2);
+      border-left: 3px solid var(--sb-accent-shiitake);
+      padding: var(--sb-space-5);
+      margin-top: var(--sb-space-6);
+      margin-bottom: var(--sb-space-8);
+    }
+    @media (max-width: 900px) {
+      .sb-product-layout {
+        grid-template-columns: 1fr;
+        gap: var(--sb-space-8);
+      }
+      .sb-viewer {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+<a class="sb-skip-link" href="#contenido">Saltar al contenido</a>
+<header class="sb-header"><div class="sb-container sb-header__inner">
+<a href="home.html" class="sb-brand-mark">Setas de la Peña<span class="sb-brand-mark__sub">Tenjo · Colombia</span></a>
+<nav class="sb-nav" aria-label="Principal"><a href="home.html" class="sb-nav__link">Colección</a><a href="product.html" class="sb-nav__link sb-nav__link--active" aria-current="page">Shiitake</a><a href="editorial.html" class="sb-nav__link">Cuaderno</a><a href="traceability.html" class="sb-nav__link">Origen</a></nav>
+</div></header>
+<div class="sb-container"><p class="sb-demo-note">Muestra de diseño · Datos comerciales y de lote por confirmar. No recibe pedidos.</p></div><main class="sb-container" id="contenido">
+<p class="sb-mono"><a href="home.html#catalogo">Colección</a> / Shiitake</p>
+<div class="sb-product-layout"><div class="sb-viewer"><div class="sb-viewer__main"><img src="../assets/img/species/shiitake.png" alt="Ilustración de shiitake" class="sb-viewer__img"></div><p class="sb-mono">Ilustración de referencia · No representa un lote.</p>
+<a href="traceability.html" class="sb-traceability-capsule"><span><span class="sb-traceability-capsule__tag">Origen</span><span class="sb-traceability-capsule__lot">La historia de cada lote</span><span class="sb-traceability-capsule__meta">Qué datos acompañarán tu producto</span></span><span>Ver registro →</span></a></div>
+<div class="sb-product-info"><span class="sb-badge sb-badge--shiitake">La colección · 01</span><h1>Shiitake</h1><p class="sb-scientific">Lentinula edodes</p><p>Una especie para mirar de cerca. Explora su ficha, compara formatos y conoce la información que acompañará cada entrega.</p>
+<form id="formatos"><fieldset><legend>Explora un formato</legend><p>Formatos de ejemplo para comparar la presentación.</p><div class="sb-gram-selector">
+<label class="sb-gram-card"><input type="radio" name="formato" value="250 g" checked> <strong>250 g</strong><span>Formato pequeño</span></label>
+<label class="sb-gram-card"><input type="radio" name="formato" value="500 g"> <strong>500 g</strong><span>Formato mediano</span></label>
+<label class="sb-gram-card"><input type="radio" name="formato" value="1,5 kg"> <strong>1,5 kg</strong><span>Formato grande</span></label></div></fieldset>
+<button type="submit" class="sb-btn sb-btn--accent sb-btn--lg">Ver mi selección</button><p id="seleccion" role="status" aria-live="polite"></p></form>
+<hr class="sb-rule"><h2>Antes de elegir</h2><div class="sb-status-list" aria-label="Estado de la información"><p><span class="sb-badge sb-status--pending">Disponibilidad · Por confirmar</span></p><p><span class="sb-badge sb-status--pending">Precio · Por confirmar</span></p><p><span class="sb-badge sb-status--development">Perfil culinario · En desarrollo</span></p></div><dl><dt>Disponibilidad</dt><dd>Por confirmar con la cosecha.</dd><dt>Precio</dt><dd>Por confirmar según formato.</dd><dt>Perfil culinario</dt><dd>Ficha de degustación pendiente de validación.</dd></dl>
+<section class="sb-recipe-box"><h2>En tu cocina</h2><p>La guía de preparación y conservación se publicará con instrucciones verificadas para el producto. Consulta la etiqueta y la información del productor antes de usarlo.</p><a href="editorial.html">Explorar el cuaderno →</a></section>
+
+</div></div></main>
+<script>document.querySelector('#formatos').addEventListener('submit',function(event){event.preventDefault();var value=new FormData(this).get('formato');document.querySelector('#seleccion').textContent='Tu selección: Shiitake · '+value+'. Ejemplo de presentación; precio y disponibilidad por confirmar. No se ha enviado un pedido.';});</script><footer class="sb-footer"><div class="sb-container sb-footer__grid"><div><span class="sb-brand-mark">Setas de la Peña</span><p>Botánica, origen y cocina.</p></div><a href="home.html">Explorar la colección</a><a href="editorial.html">Leer el cuaderno</a><a href="traceability.html">Conocer el registro de origen</a></div></footer></body></html>

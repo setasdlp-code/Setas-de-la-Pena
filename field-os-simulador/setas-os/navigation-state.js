@@ -67,11 +67,25 @@
     return view;
   }
 
+  function resolveOperationalTarget(locationLike) {
+    const ti = (typeof module !== 'undefined' && module.exports)
+      ? require('./trace-identity.js')
+      : (typeof globalThis !== 'undefined' ? globalThis.SetasTraceIdentity : null);
+
+    if (!ti || typeof ti.resolveTraceIdentity !== 'function') {
+      return null;
+    }
+
+    const identity = ti.resolveTraceIdentity(locationLike);
+    return identity && identity.valid ? identity : null;
+  }
+
   return Object.freeze({
     VIEWS,
     VIEW_ALIASES,
     normalizeView,
     readLocation,
+    resolveOperationalTarget,
     navigate,
   });
 });
