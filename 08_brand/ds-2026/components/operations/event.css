@@ -1,0 +1,40 @@
+/* DS-2026 · Operations: Event Timeline & Transition log */
+.sdp-timeline {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 2px solid var(--border-hairline);
+  padding-left: var(--space-2);
+}
+
+.sdp-event {
+  position: relative;
+  display: grid;
+  gap: var(--space-half);
+}
+
+.sdp-event::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-2) - 5px);
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  background: var(--surface-page);
+  border: 2px solid var(--text-primary);
+  border-radius: 50%;
+}
+
+.sdp-event__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.sdp-event__type { color: var(--text-primary); font-weight: var(--weight-bold); }
+.sdp-event__time { color: var(--text-metadata); }
+.sdp-event__desc { font: var(--t-small); color: var(--text-secondary); }

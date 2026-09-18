@@ -1,0 +1,26 @@
+/* ═══════════════════════════════════════════════════════════════
+   Setas de la Peña · DS-2026 · Criterio Edition
+   Operations Public Entrypoint (FIELD & CONTROL profiles)
+   ═══════════════════════════════════════════════════════════════ */
+@import "tokens/tokens.css";
+
+/* Core */
+@import "components/core/foundations.css";
+@import "components/core/layout.css";
+@import "components/core/typography.css";
+
+/* Shared */
+@import "components/shared/metadata.css";
+@import "components/shared/species.css";
+@import "components/shared/figure.css";
+@import "components/shared/status.css";
+@import "components/shared/action.css";
+@import "components/shared/forms.css";
+
+/* Operations */
+@import "components/operations/lot.css";
+@import "components/operations/event.css";
+@import "components/operations/task.css";
+@import "components/operations/room.css";
+@import "components/operations/inventory.css";
+@import "components/operations/telemetry.css";

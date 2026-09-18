@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "ds-2026-distribution-manifest",
+  "version": "2026.1.0-criterio",
+  "description": "Manifiesto canónico de distribución de DS-2026 hacia Setas OS y otros consumidores",
+  "files": [
+    "README.md",
+    "MIGRATION.md",
+    "PROFILES.md",
+    "index.css",
+    "operations.css",
+    "market.css"
+  ],
+  "tokens": [
+    "tokens/tokens.css",
+    "tokens/fonts.css",
+    "tokens/primitives.json",
+    "tokens/semantic.json",
+    "tokens/domain.json",
+    "tokens/colors.json",
+    "tokens/typography.json",
+    "tokens/spacing.json"
+  ],
+  "components": [
+    "components/base.css",
+    "components/components.css",
+    "components/editorial.css",
+    "components/instrument.css",
+    "components/core/foundations.css",
+    "components/core/layout.css",
+    "components/core/typography.css",
+    "components/shared/metadata.css",
+    "components/shared/species.css",
+    "components/shared/figure.css",
+    "components/shared/status.css",
+    "components/shared/action.css",
+    "components/shared/forms.css",
+    "components/operations/lot.css",
+    "components/operations/event.css",
+    "components/operations/task.css",
+    "components/operations/room.css",
+    "components/operations/inventory.css",
+    "components/operations/telemetry.css",
+    "components/market/packaging.css",
+    "components/market/traceability.css",
+    "components/market/archive.css"
+  ],
+  "assets": {
+    "fonts": [
+      "assets/fonts/GayaPatched-Thin.otf",
+      "assets/fonts/GayaPatched-ThinItalic.otf",
+      "assets/fonts/GayaPatched-Light.otf",
+      "assets/fonts/GayaPatched-LightItalic.otf",
+      "assets/fonts/GayaPatched-Regular.otf",
+      "assets/fonts/GayaPatched-Italic.otf",
+      "assets/fonts/GayaPatched-Medium.otf",
+      "assets/fonts/GayaPatched-MediumItalic.otf",
+      "assets/fonts/GayaPatched-Bold.otf",
+      "assets/fonts/GayaPatched-BoldItalic.otf",
+      "assets/fonts/GayaPatched-Black.otf",
+      "assets/fonts/GayaPatched-BlackItalic.otf",
+      "assets/fonts/IBMPlexMono-Regular.ttf",
+      "assets/fonts/IBMPlexMono-Medium.ttf",
+      "assets/fonts/IBMPlexMono-SemiBold.ttf",
+      "assets/fonts/IBMPlexSans-Light.ttf",
+      "assets/fonts/IBMPlexSans-Regular.ttf",
+      "assets/fonts/IBMPlexSans-Medium.ttf",
+      "assets/fonts/IBMPlexSans-SemiBold.ttf",
+      "assets/fonts/IBMPlexSans-Bold.ttf"
+    ],
+    "species_images": [
+      "assets/img/species/shiitake.png",
+      "assets/img/species/lions-mane.png",
+      "assets/img/species/reishi.png"
+    ]
+  }
+}
