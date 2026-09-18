@@ -1,0 +1,37 @@
+/* DS-2026 · Core: Interaction (Focus, touch targets, reduced motion) */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Touch Safety Floors */
+.touch-target,
+[data-mode="field"] button,
+[data-mode="field"] input,
+[data-mode="field"] select,
+[data-mode="field"] textarea {
+  min-height: 44px;
+}
+
+[data-mode="field"] .sdp-btn--field {
+  min-height: 48px;
+}
+
+/* Disabled Contract */
+:disabled,
+[aria-disabled="true"],
+.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
