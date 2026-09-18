@@ -4,7 +4,46 @@ El **Design System canónico** unificado de Setas de la Peña: un solo núcleo d
 
 - **Autoridad canónica:** `08_brand/ds-2026/` es la única fuente de verdad del sistema de diseño.
 - **Distribución:** `field-os-simulador/setas-os/ds-2026/` es un artefacto de consumo empaquetado y sincronizado automáticamente mediante `scripts/sync-consumers.mjs`.
+- **Gobernanza:** `distribution-manifest.json` rige exactamente qué se sincroniza y qué se comprueba en los tests.
 - **Migración y compatibilidad:** Consulte [`MIGRATION.md`](MIGRATION.md) para el mapeo v1 → Criterio y la política de fachadas de compatibilidad sin roturas.
+
+## Arquitectura de 4 Capas
+
+```text
+DS-2026 · Criterio
+│
+├── CORE
+│   typography
+│   color
+│   spacing
+│   grid
+│   interaction
+│
+├── SHARED
+│   status
+│   metadata
+│   provenance
+│   actions
+│   forms
+│
+├── OPERATIONS
+│   lot
+│   room
+│   task
+│   event
+│   inventory
+│   telemetry
+│   scan/capture
+│   sync
+│
+└── SETAS OS
+    Hoy
+    Lotes
+    Salas
+    Inventario
+    Recetas
+    Conocimiento
+```
 
 ## Arquitectura de Entrypoints
 

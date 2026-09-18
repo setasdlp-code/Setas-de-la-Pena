@@ -1,0 +1,53 @@
+/* DS-2026 · Shared: Actions (Buttons and interactive touch targets) */
+.sdp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-3);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--border-heavy);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  user-select: none;
+}
+.sdp-btn:hover { background: var(--surface-panel); }
+.sdp-btn:active { transform: translateY(1px); }
+
+.sdp-btn--primary {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--text-inverse);
+}
+.sdp-btn--primary:hover { background: var(--moss-900); }
+
+.sdp-btn--secondary {
+  background: var(--surface-panel);
+  border-color: var(--border-heavy);
+  color: var(--text-primary);
+}
+.sdp-btn--secondary:hover { background: var(--surface-recessed); }
+
+.sdp-btn--accent {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--text-inverse);
+}
+.sdp-btn--accent:hover { background: var(--coral-700); }
+
+.sdp-btn--field {
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  font-size: 13px;
+}
+
+.sdp-btn:disabled, .sdp-btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}

@@ -4,23 +4,29 @@
    ═══════════════════════════════════════════════════════════════ */
 @import "tokens/tokens.css";
 
-/* Core */
+/* 1 · CORE */
 @import "components/core/foundations.css";
-@import "components/core/layout.css";
 @import "components/core/typography.css";
+@import "components/core/color.css";
+@import "components/core/spacing.css";
+@import "components/core/grid.css";
+@import "components/core/interaction.css";
 
-/* Shared */
-@import "components/shared/metadata.css";
-@import "components/shared/species.css";
-@import "components/shared/figure.css";
+/* 2 · SHARED */
 @import "components/shared/status.css";
-@import "components/shared/action.css";
+@import "components/shared/metadata.css";
+@import "components/shared/provenance.css";
+@import "components/shared/actions.css";
 @import "components/shared/forms.css";
+@import "components/shared/figure.css";
+@import "components/shared/species.css";
 
-/* Operations */
+/* 3 · OPERATIONS */
 @import "components/operations/lot.css";
-@import "components/operations/event.css";
-@import "components/operations/task.css";
 @import "components/operations/room.css";
+@import "components/operations/task.css";
+@import "components/operations/event.css";
 @import "components/operations/inventory.css";
 @import "components/operations/telemetry.css";
+@import "components/operations/capture.css";
+@import "components/operations/sync.css";
