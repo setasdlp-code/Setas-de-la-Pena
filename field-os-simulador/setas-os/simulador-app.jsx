@@ -9081,7 +9081,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const contaminated=(stats&&stats.contPct>0)||isQuarantine;
       const inoculated=Date.parse(lote.fechaInoculacion||'');
       const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
-      return {id:lote.id,lote,severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,blocked:(contaminated&&stats.contPct<20)||isQuarantine,
+      return {id:lote.id,lote,severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,blocked:(contaminated&&!!stats&&stats.contPct<20)||isQuarantine,
         dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
         title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
         why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[loteLifecycleState(lote)]||lote.estado} · día ${age}`};
@@ -17001,7 +17001,20 @@ interval:
             const currentLifecycle = loteLifecycleState(currentLote);
             const targetState = cw
               ? cw.determineTargetLifecycleState(currentLifecycle, triageDecision, lossCalc.lossPct)
-              : (triageDecision === 'discard' || lossCalc.lossPct >= 50 ? 'discarded' : triageDecision === 'quarantine' || lossCalc.lossPct >= 20 ? 'quarantine' : currentLifecycle);
+              : (triageDecision === 'discard' ? 'discarded' : triageDecision === 'quarantine' ? 'quarantine' : currentLifecycle);
+
+            // Si la máquina de estados no permite el salto (p. ej. incubación →
+            // descartado), no se escribe nada: marcar el lote en el teléfono y
+            // encolar una transición que el servidor rechaza deja el lote
+            // descartado aquí y activo allá.
+            const changesState = targetState !== currentLifecycle;
+            if (changesState && !(workflow && workflow.canTransition(currentLifecycle, targetState))) {
+              setNoticeDlg({
+                title: 'Transición no permitida',
+                msg: `Un lote en ${lifecycleLabel[currentLifecycle] || currentLifecycle} no puede pasar directamente a ${lifecycleLabel[targetState] || targetState}. ${targetState === 'discarded' ? 'Trasládalo primero a cuarentena y descártalo desde allí.' : 'Revisa el estado del lote.'}`
+              });
+              return;
+            }
 
             const contamEvent = cw
               ? cw.buildContaminationEvent({
@@ -17031,7 +17044,7 @@ interval:
                 };
 
             let transitionEvt = null;
-            if (targetState !== currentLifecycle && workflow && workflow.canTransition(currentLifecycle, targetState)) {
+            if (changesState) {
               transitionEvt = workflow.transitionEvent({
                 batchId: currentLote.id,
                 from: currentLifecycle,
@@ -17041,7 +17054,9 @@ interval:
               });
             }
 
-            const loteBags = bitBolsas.filter(b => b.loteId === currentLote.id && b.estado !== 'descartada');
+            // Sólo bolsas aún sanas: las ya contaminadas de un reporte anterior no
+            // cuentan como nuevas, o un segundo reporte re-marcaría las mismas.
+            const loteBags = bitBolsas.filter(b => b.loteId === currentLote.id && b.estado !== 'descartada' && b.estado !== 'contaminada');
             const bagsToMark = loteBags.slice(0, triageAffectedBags);
             bagsToMark.forEach(b => {
               updateBitBolsa(b.id, {
@@ -17065,7 +17080,7 @@ interval:
               numBolsas: lossCalc.healthyBags,
               lifecycleEvents: updatedEvents
             });
-            if (targetState && targetState !== currentLifecycle) {
+            if (changesState) {
               enqueueFieldTransition(currentLote, currentLifecycle, targetState);
             }
 
@@ -17422,11 +17437,19 @@ interval:
               const contBags = bolsasDelLote.filter(b => b.id !== currentBolsa.id && b.estado === 'contaminada').length + (nuevoEstado === 'contaminada' ? 1 : 0);
               const contPct = bolsasDelLote.length ? Math.round((contBags / bolsasDelLote.length) * 100) : 0;
               
-              if (contPct >= 50 && fromState !== 'discarded') {
+              // Sólo cuarentena puede ir a descartado; desde las demás etapas la
+              // contaminación masiva lleva a cuarentena. Sin esta elección,
+              // transitionEvent lanzaba y el modal quedaba abierto.
+              const massTarget = contPct < 50 ? null
+                : workflow.canTransition(fromState, 'discarded') ? 'discarded'
+                : workflow.canTransition(fromState, 'quarantine') ? 'quarantine'
+                : null;
+              if (massTarget) {
                 const evt = workflow.transitionEvent({
                   batchId: currentLote.id,
                   from: fromState,
-                  to: 'discarded',
+                  to: massTarget,
+                  operatorId: currentLote.operador || 'operador-local',
                   reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
                 });
                 // El descarte se encola como cualquier otra transición. Escribir
@@ -17438,7 +17461,7 @@ interval:
                 updateBitLote(currentLote.id, {
                   lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
                 });
-                enqueueFieldTransition(currentLote, fromState, 'discarded');
+                enqueueFieldTransition(currentLote, fromState, massTarget);
               }
             }
 

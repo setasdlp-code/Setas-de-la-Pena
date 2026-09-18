@@ -92,7 +92,12 @@ test('determineTargetLifecycleState mapea decisiones operativas a la máquina de
   assert.equal(contamination.determineTargetLifecycleState('incubation', 'isolate_bags', 30), 'incubation'); // forzado mantener
   assert.equal(contamination.determineTargetLifecycleState('incubation', 'quarantine', 25), 'quarantine');
   assert.equal(contamination.determineTargetLifecycleState('incubation', 'discard', 20), 'discarded');
-  assert.equal(contamination.determineTargetLifecycleState('incubation', 'quarantine', 55), 'discarded'); // >50% es descarte
+  // La decisión explícita manda aunque la merma sugiera otra cosa.
+  assert.equal(contamination.determineTargetLifecycleState('incubation', 'quarantine', 55), 'quarantine');
+  assert.equal(contamination.determineTargetLifecycleState('incubation', 'isolate_bags', 60), 'incubation');
+  // Sin decisión, el % de merma decide.
+  assert.equal(contamination.determineTargetLifecycleState('incubation', undefined, 55), 'discarded');
+  assert.equal(contamination.determineTargetLifecycleState('incubation', undefined, 25), 'quarantine');
 
   // Lote en fructificación
   assert.equal(contamination.determineTargetLifecycleState('fruiting', 'quarantine', 20), 'quarantine');
