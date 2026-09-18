@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>05 · Lote Operativo de Campo · Setas de la Peña (DS-2026)</title>
+  <link rel="stylesheet" href="../../operations.css">
+  <link rel="stylesheet" href="../_shell.css">
+  <style>
+    .batch-container { max-width: 860px; width: 100%; background: var(--surface-page); border: 1px solid var(--border-heavy); padding: 32px; }
+    .batch-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--border-heavy); padding-bottom: 16px; margin-bottom: 20px; }
+    .batch-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .batch-meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    .batch-meta-table td { padding: 8px 4px; border-bottom: 1px solid var(--border-hairline); }
+    .action-row { display: flex; gap: 12px; margin-top: 16px; }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <div class="stage stage--col">
+    <div class="spec">05 · LOTE OPERATIVO EN CAMPO (FIELD MODE) · CONTRATO OPERACIONAL EXIGENTE</div>
+
+    <div class="batch-container">
+      <header class="batch-header">
+        <div>
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+            <span class="sdp-badge sdp-badge--ok">FRUCTIFICACIÓN · OLA 1</span>
+            <span class="sdp-provenance">● MEASURED · TELEMETRÍA SALA 02</span>
+          </div>
+          <h1 style="margin: 0; font: var(--t-heading-01); color: var(--text-primary);">LOTE-2026-0817-SHI</h1>
+          <div class="t-small" style="color: var(--text-secondary); margin-top: 2px;">
+            <i>Lentinula edodes</i> · Shiitake Cepa Donko
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div class="t-data" style="font-size: 22px; font-weight: bold;">DÍA 14</div>
+          <div class="t-micro">EDAD EN ESTADO ACTUAL</div>
+        </div>
+      </header>
+
+      <div class="batch-grid">
+        <div>
+          <table class="batch-meta-table">
+            <tr>
+              <td class="t-label">Ubicación Actual</td>
+              <td class="t-data">SALA 02 · ESTANTERÍA B · NIVEL 3</td>
+            </tr>
+            <tr>
+              <td class="t-label">Bolsas Activas / Iniciales</td>
+              <td class="t-data">118 / 120 <span class="t-small">(Merma: 1.6% · 2 bajas)</span></td>
+            </tr>
+            <tr>
+              <td class="t-label">Receta de Sustrato</td>
+              <td class="t-data">RECETA-ROBLE-V4 <span class="t-micro">[VERSIONADA]</span></td>
+            </tr>
+            <tr>
+              <td class="t-label">Lote de Inóculo (Spawn)</td>
+              <td class="t-data">SPAWN-2026-0720-M2</td>
+            </tr>
+            <tr>
+              <td class="t-label">Siguiente Acción Programada</td>
+              <td class="t-data" style="color: var(--brand-accent-text); font-weight: bold;">
+                COSECHA OLA 1 · ESTIMADA 18 AGO (MAÑANA 07:00)
+              </td>
+            </tr>
+            <tr>
+              <td class="t-label">Excepciones / Alertas</td>
+              <td class="t-data">
+                <span class="sdp-badge sdp-badge--warn">PICO CO₂ LEVE (1.100 PPM) RESUELTO</span>
+              </td>
+            </tr>
+          </table>
+
+          <div style="border-top: 1px solid var(--border-hairline); padding-top: 16px;">
+            <div class="t-label" style="margin-bottom: 8px;">Acciones Operativas Válidas</div>
+            <div class="action-row">
+              <button class="sdp-btn sdp-btn--primary sdp-btn--field">REGISTRAR COSECHA</button>
+              <button class="sdp-btn sdp-btn--field">REGISTRAR MERMA / BAJA</button>
+              <button class="sdp-btn sdp-btn--field">MOVER A CUARENTENA</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-left: 1px solid var(--border-hairline); padding-left: 20px;">
+          <div class="t-label" style="margin-bottom: 12px;">Timeline de Transiciones</div>
+          <ul class="sdp-timeline">
+            <li class="sdp-event">
+              <div class="sdp-event__header">
+                <span class="sdp-event__type">INDUCCIÓN FRUCTIFICACIÓN</span>
+                <span class="sdp-event__time">04 AGO</span>
+              </div>
+              <div class="sdp-event__desc">Apertura de bolsas y choque térmico 14°C en Sala 02.</div>
+            </li>
+            <li class="sdp-event">
+              <div class="sdp-event__header">
+                <span class="sdp-event__type">INCUBACIÓN COMPLETADA</span>
+                <span class="sdp-event__time">03 AGO</span>
+              </div>
+              <div class="sdp-event__desc">Colonización 100% alcanzada en 21 días. Sin contaminaciones.</div>
+            </li>
+            <li class="sdp-event">
+              <div class="sdp-event__header">
+                <span class="sdp-event__type">INOCULACIÓN & SIEMBRA</span>
+                <span class="sdp-event__time">13 JUL</span>
+              </div>
+              <div class="sdp-event__desc">120 bolsas inoculadas en flujo laminar. Operador: SP.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

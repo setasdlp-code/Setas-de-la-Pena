@@ -1,0 +1,22 @@
+/* DS-2026 · Operations: Telemetry tiles & gauges (CONTROL mode) */
+.sdp-tele { border: var(--rule-frame); background: var(--surface-page); padding: var(--space-2); display: grid; gap: var(--space-1); }
+.sdp-tele__k { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-tele__v { font: var(--t-data); font-size: 28px; font-weight: var(--weight-semibold); line-height: 1; color: var(--text-primary); }
+.sdp-tele__u { font-size: var(--size-label); font-weight: var(--weight-regular); color: var(--text-metadata); margin-left: 2px; }
+.sdp-tele__meter { height: 4px; background: var(--surface-recessed); }
+.sdp-tele__meter span { display: block; height: 100%; background: var(--status-ok); }
+.sdp-tele--warn  .sdp-tele__meter span { background: var(--status-warn); }
+.sdp-tele--error .sdp-tele__meter span { background: var(--status-error); }
+
+/* Provenance badge */
+.sdp-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  font: var(--t-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+  border: 1px solid var(--border-hairline);
+  padding: 1px 4px;
+}

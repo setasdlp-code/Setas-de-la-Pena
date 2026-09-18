@@ -1,0 +1,7 @@
+/* DS-2026 · Shared Species component (species-agnostic) */
+.sdp-species { display: grid; gap: var(--space-half); }
+.sdp-species__common { font: var(--t-species); letter-spacing: var(--tracking-tight); color: var(--text-primary); }
+.sdp-species__latin  { font: var(--t-latin); color: var(--text-secondary); }
+.sdp-species__code   { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-species--compact .sdp-species__common { font: var(--t-heading-02); }
+.sdp-species--compact .sdp-species__latin  { font-size: var(--size-small); }

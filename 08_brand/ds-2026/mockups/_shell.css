@@ -11,6 +11,22 @@ body[data-content-status="illustrative"]::before {
 .stage--col { flex-direction: column; align-items: center; }
 .spec { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
         color: var(--text-metadata); margin-bottom: 8px; }
+
+/* Illustrative Data Status Banner */
+body[data-content-status="illustrative"]::before {
+  content: "PROTOTIPO · DATOS ILUSTRATIVOS";
+  display: block;
+  font: var(--t-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+  background: var(--surface-recessed);
+  border: 1px dashed var(--border-hairline);
+  padding: 6px 12px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
 /* Print-substrate grain — packaging, labels and plates only. */
 .grain { position: relative; }
 .grain::after {

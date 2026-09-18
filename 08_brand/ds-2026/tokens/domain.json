@@ -1,0 +1,75 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "system": "Setas de la Peña · DS-2026",
+  "edition": "Criterio Edition",
+  "description": "Setas OS domain tokens. Structural semantics for field cultivation, data provenance, synchronization and lot lifecycle.",
+  "domain": {
+    "provenance": {
+      "measured": {
+        "symbol": "●",
+        "label": "MEASURED",
+        "description": "Direct sensor or instrument measurement (e.g. SCD30 CO2 sensor, physical scale)."
+      },
+      "calculated": {
+        "symbol": "◆",
+        "label": "CALCULATED",
+        "description": "Derived mathematically from measured inputs (e.g. biological efficiency, dry matter)."
+      },
+      "estimated": {
+        "symbol": "◇",
+        "label": "ESTIMATED",
+        "description": "Interpolated or estimated parameter (e.g. projected flush yield date)."
+      },
+      "target": {
+        "symbol": "◎",
+        "label": "TARGET",
+        "description": "Set-point or recipe target (e.g. optimal 18.5°C room setpoint)."
+      },
+      "manual": {
+        "symbol": "△",
+        "label": "MANUAL",
+        "description": "Manually entered operator measurement or field observation."
+      },
+      "simulated": {
+        "symbol": "⬡",
+        "label": "SIMULATED",
+        "description": "Model-simulated or perito projection."
+      },
+      "pending": {
+        "symbol": "◌",
+        "label": "PENDING",
+        "description": "Measurement awaiting sensor response or operator verification."
+      }
+    },
+    "sync": {
+      "synced": {
+        "symbol": "✓",
+        "label": "SINCRONIZADO",
+        "state": "normal"
+      },
+      "pending": {
+        "symbol": "◌",
+        "label": "PENDIENTE DE SINCRONIZACIÓN",
+        "state": "working"
+      },
+      "error": {
+        "symbol": "✕",
+        "label": "ERROR DE SINCRONIZACIÓN",
+        "state": "error"
+      },
+      "offline": {
+        "symbol": "⚡",
+        "label": "SIN CONEXIÓN · GUARDADO LOCALMENTE",
+        "state": "offline"
+      }
+    },
+    "status": {
+      "quarantine": {
+        "symbol": "⚠",
+        "label": "CUARENTENA",
+        "badgeBorder": "dashed 1px var(--status-warn)",
+        "description": "Batch isolated due to contamination risk or out-of-spec telemetry."
+      }
+    }
+  }
+}
