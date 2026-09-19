@@ -235,7 +235,7 @@
         "value": "{color.primitive.moss-700}"
       },
       "actionSecondary": {
-        "value": "{color.primitive.paper-200}"
+        "value": "{color.primitive.paper-50}"
       },
       "actionFocusRing": {
         "value": "{color.primitive.moss-700}"
@@ -251,6 +251,15 @@
       },
       "actionDangerText": {
         "value": "{color.primitive.paper-50}"
+      },
+      "actionPrimaryHover": {
+        "value": "{color.primitive.moss-900}"
+      },
+      "actionSecondaryHover": {
+        "value": "{color.primitive.paper-200}"
+      },
+      "actionAccentHover": {
+        "value": "{color.primitive.coral-700}"
       }
     }
   }
