@@ -31,6 +31,11 @@
         "gutter": "12px",
         "pageMargin": "16px",
         "use": "Dense telemetry. Dashboards, metric tables, room monitors. Monospace tabular data."
+      },
+      "culinary": {
+        "gutter": "24px",
+        "pageMargin": "32px",
+        "use": "Culinary market and packaging previews. Editorial breathing room with web-safe commercial density."
       }
     },
     "measureProse": "68ch"
