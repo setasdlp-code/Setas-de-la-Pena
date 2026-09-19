@@ -2,7 +2,7 @@
 /**
  * scripts/visual-contract.mjs
  *
- * Visual contract gate enforcing 10 anti-slop, accessibility,
+ * Visual contract gate enforcing anti-slop, accessibility,
  * and operational integrity rules across DS-2026.
  */
 
@@ -74,7 +74,7 @@ check('FIELD controls bind to canonical >=44px touch tokens', () => {
   const required = [
     [actions, /\.sdp-btn\s*\{[\s\S]*?min-height:\s*var\(--tap-target-min\)/, '.sdp-btn'],
     [forms, /\.sdp-input[^\{]*\{[\s\S]*?min-height:\s*var\(--tap-target-min\)/, '.sdp-input/.sdp-select'],
-    [interaction, /\[data-mode="field"\][\s\S]*?min-height:\s*44px/, '[data-mode="field"]'],
+    [interaction, /\[data-mode="field"\][\s\S]*?min-height:\s*var\(--tap-target-min(?:,\s*44px)?\)[\s\S]*?min-width:\s*var\(--tap-target-min(?:,\s*44px)?\)/, '[data-mode="field"] 44×44 contract'],
     [task, /\.sdp-task\s*\{[\s\S]*?min-height:\s*var\(--field-cell-min-height\)/, '.sdp-task']
   ];
   const missing = required.filter(([source, re]) => !re.test(source)).map(([, , name]) => name);
@@ -362,4 +362,4 @@ console.log(`\nResults: ${passedChecks}/${totalChecks} gates passed (${failedChe
 if (failedChecks > 0) {
   process.exit(1);
 }
-console.log('🎉 All 10 visual and structural contract gates passed successfully.\n');
+console.log(`🎉 All ${totalChecks} visual and structural contract gates passed successfully.\n`);

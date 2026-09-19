@@ -215,20 +215,44 @@ Use native radio inputs for a mutually exclusive choice such as Hogar / Chef.
 The checked and keyboard-focus states remain visible without JavaScript. The
 legend names the decision represented by the group.
 
-## 15 · Operational state and provenance
+## 15 · Operational reading — `.sdp-reading`
+
+A reading is the canonical expression of an operational number:
+
+```
+.sdp-reading--{ok|warn|error|stale}
+├── .sdp-reading__label       parameter / sensor key
+├── .sdp-reading__value       numeric value in Ink (legacy alias: __val)
+│   └── .sdp-reading__unit    ppm / °C / % / kg
+├── .sdp-reading__target      target or expected band
+└── .sdp-reading__meta        provenance + source + reading age
+```
+
+**Invariant.** State may recolour the left marker, target relation and status word,
+but never the numeric value. A bad reading must remain at least as legible as a
+normal one. `--stale` uses a dashed neutral marker; it means the evidence is old,
+not that the measured value itself was bad.
+
+## 16 · Operational state and provenance
 
 `.sdp-state` answers **what is happening**: active, attention, blocked, failed
 or unavailable. `.sdp-provenance` answers **how we know**: measured, calculated,
 estimated, target, manual, simulated or pending. They may appear together and
 must never be collapsed into a single badge.
 
-## 16 · View state — `.sdp-view-state`
+New markup uses the attribute API, for example
+`<span class="sdp-provenance" data-provenance="measured">MEASURED · SCD30 · 3 MIN</span>`.
+The glyph is generated from the domain token (`--provenance-measured-symbol`);
+visible wording remains application-localized. Legacy `.sdp-provenance--*`
+modifiers are compatibility aliases for marker styling only.
+
+## 17 · View state — `.sdp-view-state`
 
 Loading, empty and error states explain the situation and the next valid action.
 Dynamic messages use `role="status"` or `aria-live="polite"`; errors that need
 immediate attention use `role="alert"`.
 
-## 17 · Thermal print specification — `.sdp-thermal` / `[data-print="thermal"]`
+## 18 · Thermal print specification — `.sdp-thermal` / `[data-print="thermal"]`
 
 The field label output: 203 DPI (8 dots/mm) 1-bit monochrome thermal printing (Phomemo M110).
 

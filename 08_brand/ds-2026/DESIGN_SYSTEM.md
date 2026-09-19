@@ -341,10 +341,11 @@ photocopy.
 | 5 | **Alert banner** | `.sdp-alert` | 4px pigment rule, uppercase label, message, optional pictogram | 4–12 | any |
 | 6 | **Navigation bar** | `.sdp-nav` | Sans breadcrumb + mono meta | 12 | any |
 | 7 | **Telemetry tile** | `.sdp-tele` | Mono key, large value + unit, meter | 3 | Control |
-| 8 | **Signage** | `.sdp-sign` | Soil header w/ room name, 3-up stats, footer lot line | 12 | Field (print) |
-| 9 | **Packaging front** | `.sdp-pack--front` | Brand, plate, species, latin, net weight | — | Archive |
-| 10 | **Packaging back** | `.sdp-pack--back` | Species block, ingredients, preparation, storage, traceability + QR | — | Archive |
-| 11 | **SOP document** | `.sdp-sop` | Header w/ species, conditions table, numbered step boxes, stop banner | 12 | Field |
+| 8 | **Operational reading** | `.sdp-reading` | Label, Ink value + unit, target relation, provenance + age | 2–4 | Field / Control |
+| 9 | **Signage** | `.sdp-sign` | Soil header w/ room name, 3-up stats, footer lot line | 12 | Field (print) |
+| 10 | **Packaging front** | `.sdp-pack--front` | Brand, plate, species, latin, net weight | — | Culinary / Archive |
+| 11 | **Packaging back** | `.sdp-pack--back` | Species block, ingredients, preparation, storage, traceability + QR | — | Culinary / Archive |
+| 12 | **SOP document** | `.sdp-sop` | Header w/ species, conditions table, numbered step boxes, stop banner | 12 | Field |
 
 ### 5.2 Anatomy and states
 
@@ -387,6 +388,12 @@ label, message in `INK`. Optional 20px pictogram inherits the label colour.
 **Telemetry tile.** Mono key → 28px semibold value with small unit → 4px meter.
 *States:* `--warn`, `--error` recolour the meter fill only; the number stays
 `INK` so the reading is never harder to read than when it was fine.
+
+**Operational reading.** `__label` → `__value` + `__unit` → `__target` →
+`__meta`. States `--ok`, `--warn`, `--error`, `--stale` affect the
+marker and target/status relation only. The numeric value always stays
+`--text-primary`. Provenance uses `data-provenance="measured|calculated|estimated|target|manual|simulated|pending"`;
+the symbol is emitted from domain tokens while visible labels remain localized.
 
 **Signage.** `SOIL` header band with `PAPER` text (9.74:1) → 3 stat cells →
 footer lot line. Printed at A2; the room name is `display-02` in Gaya.
