@@ -1,0 +1,33 @@
+/* DS-2026 · Shared Figure / Imagery components: frame + image + caption */
+.sdp-fig { margin: 0; display: grid; gap: var(--space-1); }
+.sdp-fig__frame {
+  border: var(--rule-frame);
+  background: var(--surface-recessed);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.sdp-fig__frame img { width: 100%; height: 100%; object-fit: cover; }
+.sdp-fig__cap { font: var(--t-small); color: var(--text-secondary); }
+.sdp-fig__cap b { font-weight: var(--weight-medium); font-style: italic; font-family: var(--font-editorial); }
+.sdp-fig__ref { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+
+/* B.1 Botanical plate — full specimen, portrait, hairline specimen frame */
+.sdp-fig--plate       .sdp-fig__frame { aspect-ratio: 4 / 5; padding: var(--space-3); background: var(--surface-page); }
+.sdp-fig--plate       .sdp-fig__frame img { object-fit: contain; }
+.sdp-fig--plate.sdp-fig--bleed .sdp-fig__frame { padding: 0; background: none; }
+
+/* B.2 Specimen photo — detail, square */
+.sdp-fig--specimen    .sdp-fig__frame { aspect-ratio: 1 / 1; }
+
+/* B.3 Cultivation photo — context, 3:2 landscape */
+.sdp-fig--cultivation .sdp-fig__frame { aspect-ratio: 3 / 2; }
+
+/* B.4 Ingredient photo — small cropped square, used inline in recipes */
+.sdp-fig--ingredient  .sdp-fig__frame { aspect-ratio: 1 / 1; width: 64px; }
+.sdp-fig--ingredient  .sdp-fig__cap   { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; }
+
+/* B.5 Diagram — technical drawing, 16:9, ink on paper, never photographic */
+.sdp-fig--diagram     .sdp-fig__frame { aspect-ratio: 16 / 9; background: var(--surface-page); padding: var(--space-2); }
+
+/* Specimen frame: the hairline double-rule reserved for plates */
+.frame-specimen { border: var(--rule-frame); outline: 1px solid var(--rule); outline-offset: 3px; }

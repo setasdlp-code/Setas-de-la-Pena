@@ -1,0 +1,30 @@
+/* DS-2026 · Operations: Lote Component (FIELD mode) */
+.sdp-lote { border: var(--rule-frame); background: var(--surface-page); display: grid; }
+.sdp-lote__media { aspect-ratio: 3 / 2; background: var(--surface-recessed); border-bottom: var(--rule-frame); overflow: hidden; }
+.sdp-lote__media img { width: 100%; height: 100%; object-fit: cover; }
+.sdp-lote__media--plate {
+  aspect-ratio: auto; height: 148px; background: var(--surface-page);
+  display: flex; align-items: center; justify-content: center; padding: var(--space-1);
+}
+.sdp-lote__media--plate img { width: auto; height: 100%; object-fit: contain; }
+.sdp-lote__body { padding: var(--space-2); display: grid; gap: var(--space-1); }
+.sdp-lote__id { font: var(--t-data); font-size: var(--size-body); letter-spacing: 0.04em; color: var(--text-primary); }
+
+/* Status bar */
+.sdp-lote__status { display: flex; align-items: center; gap: var(--space-1); }
+.sdp-lote__bar { height: 4px; flex: 1; background: var(--surface-recessed); }
+.sdp-lote__bar span { display: block; height: 100%; background: var(--status-ok); }
+.sdp-lote__state { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.sdp-lote--ok    .sdp-lote__state { color: var(--status-ok); }
+.sdp-lote--ok    .sdp-lote__bar span { background: var(--status-ok); }
+.sdp-lote--warn  .sdp-lote__state { color: var(--status-warn-text); }
+.sdp-lote--warn  .sdp-lote__bar span { background: var(--status-warn); }
+.sdp-lote--error .sdp-lote__state { color: var(--status-error); }
+.sdp-lote--error .sdp-lote__bar span { background: var(--status-error); }
+
+.sdp-lote__meta {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1);
+  border-top: var(--rule-hairline); padding-top: var(--space-1); margin-top: var(--space-half);
+}
+.sdp-lote__mk { display: block; font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-lote__mv { font: var(--t-data); color: var(--text-primary); }

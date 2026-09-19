@@ -1,0 +1,30 @@
+/* DS-2026 · Core Foundations: reset, links, focus, rules */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: var(--t-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+table, td, th, .t-data, .t-label, .t-micro, [data-numeric] { font-variant-numeric: tabular-nums; }
+
+a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:hover { color: var(--moss); }
+
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+img { max-width: 100%; display: block; }
+
+.chem { font-family: var(--font-sans); font-size: 0.94em; letter-spacing: 0; }
+
+.rule { border: 0; border-top: var(--rule-hairline); margin: var(--space-3) 0; }
+.rule--heavy { border: 0; border-top: var(--rule-heavy); margin: var(--space-3) 0; }

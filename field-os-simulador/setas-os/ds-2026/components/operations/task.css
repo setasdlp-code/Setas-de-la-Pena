@@ -1,0 +1,19 @@
+/* DS-2026 · Operations: SOP & Task Checklist */
+.sdp-sop { background: var(--surface-page); display: grid; gap: var(--space-3); }
+.sdp-sop__hd { border-bottom: var(--rule-heavy); padding-bottom: var(--space-2); display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3); }
+.sdp-sop__step { border: var(--rule-frame); padding: var(--space-2); display: grid; grid-template-columns: 40px 1fr; gap: var(--space-2); }
+.sdp-sop__n { font: var(--t-data); font-size: var(--size-heading-02); color: var(--text-metadata); line-height: 1; }
+.sdp-sop__st { font: var(--t-heading-03); margin-bottom: var(--space-half); }
+.sdp-sop__sb { font: var(--t-small); color: var(--text-primary); }
+
+.sdp-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2);
+  border: var(--rule-hairline);
+  background: var(--surface-page);
+  min-height: var(--field-cell-min-height);
+}
+.sdp-task--overdue { border-left: 4px solid var(--status-error); }
+.sdp-task--now     { border-left: 4px solid var(--status-ok); }

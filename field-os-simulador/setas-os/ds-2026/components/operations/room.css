@@ -1,0 +1,11 @@
+/* DS-2026 · Operations: Signage & Room Environment */
+.sdp-sign { border: 3px solid var(--ink); background: var(--surface-page); display: grid; }
+.sdp-sign__hd { background: var(--soil); color: var(--text-inverse); padding: var(--space-3); display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
+.sdp-sign__room { font: var(--t-display-02); letter-spacing: var(--tracking-display); }
+.sdp-sign__fn { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+.sdp-sign__stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+.sdp-sign__stat { padding: var(--space-3); border-right: var(--rule-frame); }
+.sdp-sign__stat:last-child { border-right: 0; }
+.sdp-sign__sk { display: block; font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); margin-bottom: var(--space-half); }
+.sdp-sign__sv { font: var(--t-data); font-size: 36px; font-weight: var(--weight-semibold); line-height: 1; }
+.sdp-sign__ft { border-top: var(--rule-frame); padding: var(--space-2) var(--space-3); }

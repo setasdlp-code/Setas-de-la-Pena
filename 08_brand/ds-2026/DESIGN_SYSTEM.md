@@ -1,18 +1,59 @@
 # Setas de la Peña · DS-2026
 
-A design system for a mushroom farm in Tenjo, Cundinamarca. `DS-2026 Core`
-governs the shared visual language, interaction and content provenance. `FOS
-Operations` applies it to field and control surfaces; `Swiss Botanical Market`
-applies it to archive and culinary-market surfaces. See [`PROFILES.md`](PROFILES.md).
+A design system for a mushroom farm at 2.600 m in Tenjo, Cundinamarca — one
+system covering the field (lot records, substrate recipes, room signage, SOPs)
+and the shelf (packaging, fichas, market cards).
 
-**Governing idea:** every mark helps a person understand, decide or act. Colour
-is classification or state. Imagery declares whether it is documentary,
-illustrative, reconstructed or referential. Type distinguishes prose, action,
-metadata and machine output.
+**Governing idea:** every mark on the page is either evidence or navigation.
+Colour is classification or state. Imagery is documentation. Type carries the
+difference between what a person reads, what a person acts on, and what a
+machine emitted. Nothing is decoration.
 
-> `08_brand/field-os-identity/` remains a historical identity source. New Setas
-> OS surfaces consume the packaged copy of DS-2026; legacy FOS tokens require an
-> explicit adapter and must not silently override the core. See §10.
+> **Relationship to FOS.** This is a **standalone** system. The repo also
+> contains `08_brand/field-os-identity/` (the Field Operating System), which is
+> a different, independently audited system with its own palette and rules.
+> DS-2026 does not import from it, alias it, or replace it — the two are kept
+> apart deliberately. See [§10](#10-relationship-to-fos) before mixing them.
+
+---
+
+## 0 · Canonical Architecture (4-Tier Stack)
+
+```text
+DS-2026 · Criterio
+│
+├── CORE
+│   typography
+│   color
+│   spacing
+│   grid
+│   interaction
+│
+├── SHARED
+│   status
+│   metadata
+│   provenance
+│   actions
+│   forms
+│
+├── OPERATIONS
+│   lot
+│   room
+│   task
+│   event
+│   inventory
+│   telemetry
+│   scan/capture
+│   sync
+│
+└── SETAS OS
+    Hoy
+    Lotes
+    Salas
+    Inventario
+    Recetas
+    Conocimiento
+```
 
 ---
 
@@ -34,14 +75,12 @@ with no signal must render the system identically to a desktop.
 Gaya Patched ships the full family: Thin (100), Light (300), Regular (400),
 Medium (500), Bold (700), Black (900), each with a matching italic.
 
-**Mono metadata labels are uppercase and tracked ≥ 0.15em.** Measurements,
-telemetry and table numbers use sentence case where needed and neutral tracking
-so figures remain compact and comparable.
+**Mono is always uppercase and always tracked ≥ 0.15em.** Untracked uppercase
+mono is unreadable at 9–11px; the tracking is not a stylistic preference.
 
 ### 1.2 Type scale
 
-`DISPLAY 01` (64px Gaya Black) down to `MICRO` (11px screen / 9px print Mono).
-Twelve roles.
+`DISPLAY 01` (64px Gaya Black) down to `MICRO` (11px screen / 9px print). Standardized roles.
 
 | Role | Size | Family | Weight | Leading | Tracking | Case | Use |
 |---|---|---|---|---|---|---|---|
@@ -50,108 +89,100 @@ Twelve roles.
 | `heading-01` | 32px | Gaya Patched | 500 Medium | 1.10 | −0.01em | — | Document title, dashboard masthead. |
 | `heading-02` | 24px | Gaya Patched | 500 Medium | 1.10 | −0.01em | — | Card and panel titles. |
 | `heading-03` | 19px | IBM Plex Sans | 600 SemiBold | 1.30 | 0 | — | Sub-headings in prose and SOP steps. |
-| `species` | 28px | Gaya Patched | 700 Bold | 1.10 | −0.01em | — | Common name — *Reishi*, *Melena de león*. |
-| `latin` | 18px | Gaya Patched | 400 *Italic* | 1.30 | 0 | — | Binomial — *Ganoderma lucidum*. Always italic, always sentence case. |
+| `species` | 28px | Gaya Patched | 700 Bold | 1.10 | −0.01em | — | Common name — *Shiitake*, *Melena de león*. |
+| `latin` | 18px | Gaya Patched | 400 *Italic* | 1.30 | 0 | — | Binomial — *Lentinula edodes*. Always italic, always sentence case. |
 | `body` | 16px | IBM Plex Sans | 400 Regular | 1.55 | 0 | — | Prose floor. Never lower, screen or print. |
 | `small` | 14px | IBM Plex Sans | 400 Regular | 1.55 | 0 | — | Captions, secondary UI, dense card copy. |
 | `data` | 13px | IBM Plex Mono | 400 Regular | 1.40 | 0 | — | Table numbers, telemetry, measurements. Tabular figures. |
 | `label` | 11px | IBM Plex Mono | 500 Medium | 1.10 | **0.15em** | UPPER | Field keys, table headers, taxon codes, lot lines. |
-| `micro` | 11px screen / 9px print | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Plate refs, folio marks, fine print. Never operative content. |
+| `micro-screen` | 11px | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Screen metadata floor, badges, timestamps, tags. |
+| `micro-print` | 9px | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Physical print only: plate refs, folio marks, packaging labels. |
 
 **Normative minimums**
 
 - Prose never below **16px**, screen or print.
 - Below **13px** there is no operative content — metadata only.
-- Printed lot code: **x-height ≥ 3mm**.
+- Screen metadata floor is strictly **11px** (`--font-micro-screen`).
+- Printed physical lot code: **x-height ≥ 3mm** (using `--font-micro-print` 9px).
 
 ### 1.3 Colour
 
-Eight pigment roles. Each is a job.
+Mineral pigment roles and functional semantic mappings.
 
-| Token | Hex | Role |
+| Primitive Token | Hex | Role |
 |---|---|---|
-| `PAPER` | `#FAF5E9` | Warm ivory. Every page ground, every printed substrate. |
-| `INK` | `#222222` | Charcoal. Primary text, heavy rules, pictogram stroke. |
-| `INK_MUTED` | `#555555` | Warm gray. Secondary text, captions, metadata values. |
-| `RULE` | `#888888` | Mineral gray. Hairlines, specimen frames, table borders. |
-| `SOIL` | `#4A3C31` | Dark earth. Infill blocks, inverted panels, signage ground. |
-| `MOSS` | `#4E6B3F` | Restrained forest green. OK / active / in-spec. |
-| `RUST` | `#8E2C14` | Oxidised red-brown. **Error and contamination only.** |
-| `WARNING` | `#C49A4C` | Muted ochre. Caution. **Non-text use only** — see 1.4. |
+| `PAPER` (`paper-100`) | `#F6F4EC` | Warm ivory paper ground. Natural cellulose foundation. |
+| `PAPER_50` | `#FCFBF6` | Ultra-light paper ground for high-contrast cards. |
+| `PAPER_200` | `#EDE8DB` | Darker warm paper for recessed wells and table alternating rows. |
+| `INK` (`ink-900`) | `#1A1410` | Deep carbon black. Primary text, heavy rules. |
+| `INK_700` | `#3A2F26` | Dark bistre. Secondary text, structural labels. |
+| `INK_MUTED` (`ink-500`) | `#6B5B4A` | Muted umber. Captions, metadata keys, tertiary notes. |
+| `RULE` | `#BFA98B` | Mineral rule hairline (`sand-500` / sand tint). |
+| `MOSS` (`moss-900`) | `#1E2A16` | Deep pine/forest green. In-spec status, successful batch events. |
+| `MOSS_700` | `#2E3B2F` | Forest floor green. Intermediate vegetative status. |
+| `CORAL_500` | `#B8614D` | Terracotta / Coral. Non-text brand accent, focus rings, timeline markers. |
+| `CORAL_700` | `#8A3E2D` | Deep cinnabar / dark coral. **AA Compliant brand accent text** on paper (6.79:1). |
+| `RUST` | `#8A3E2D` | Deep mineral rust. Error, contamination, and critical alert text. |
+| `WARNING` | `#C49A4C` | Muted ochre. Caution and quarantine. **Non-text use only** (2.36:1). |
+| `WARNING_TEXT` | `#866629` | Darkened ochre. **AA Compliant caution text** on paper (4.83:1). |
+| `SLATE_500` | `#4E6A7A` | Blue slate. Secondary telemetry, humidity & moisture metrics. |
+| `BARK_700` | `#594631` | Dark oak bark. Structural wood substrate tags and dark framing. |
 
-Derived surfaces — mixed from the eight above, introducing no new pigment:
+Derived surfaces & semantic roles:
 
-| Token | Hex | Derivation |
+| Semantic Token | Value / Hex | Derivation / Purpose |
 |---|---|---|
-| `PAPER_PANEL` | `#F3EEE2` | paper + 4 % soil — panels, table stripe |
-| `PAPER_RECESSED` | `#EAE4D8` | paper + 9 % soil — wells, image placeholders |
-| `MOSS_TINT` | `#E5E4D5` | 12 % moss on paper — OK banner ground |
-| `RUST_TINT` | `#EDDDCF` | 12 % rust on paper — error banner ground |
-| `WARNING_TINT` | `#F4EAD6` | 12 % warning on paper — caution banner ground |
-| `SOIL_TINT` | `#E5DFD3` | 12 % soil on paper — neutral infill |
-| `WARNING_TEXT` | `#826326` | accessible ochre text on paper and warning tint |
+| `--surface-page` | `#F6F4EC` | Primary page foundation |
+| `--surface-panel` | `#FCFBF6` | Elevated cards, table headers, panels |
+| `--surface-recessed` | `#EDE8DB` | Wells, input backgrounds, alternating table rows |
+| `--text-primary` | `#1A1410` | High contrast body and titles (16.56:1 AA) |
+| `--text-secondary` | `#3A2F26` | Section headers and structural UI (11.41:1 AA) |
+| `--text-tertiary` | `#6B5B4A` | Captions and metadata keys (5.92:1 AA) |
+| `--brand-accent` | `#B8614D` | Fills, badges, rule highlights (non-text, 3.93:1) |
+| `--brand-accent-text` | `#8A3E2D` | Accessible brand text on paper (6.79:1 AA) |
+| `--status-ok` | `#1E2A16` | Operational success, in-spec (10.70:1 AA) |
+| `--status-warn` | `#866629` | Caution, pending sync, quarantine (4.83:1 AA) |
+| `--status-err` | `#8A3E2D` | Critical alarm, batch loss (6.79:1 AA) |
 
-**One identity accent per composition.** Moss, ochre and rust may coexist when
-they communicate genuine semantic states. Repetition without state or hierarchy
-is decoration and is not allowed.
+**Coral Taxonomy:**
+- `--brand-accent` (`coral-500` #B8614D): Strictly for non-text fills, active indicators, and graphical rules. Never used for text on paper.
+- `--brand-accent-text` (`coral-700` #8A3E2D): Strictly for text on paper requiring the terracotta brand signature, clearing WCAG AA at 6.79:1.
 
-**`--accent-warm` — the archive accent (additive).** `oklch(57% 0.15 38)`,
-scoped to `[data-mode="archive"]` only — it does not exist in FIELD or
-CONTROL, and it is not a ninth pigment role. Same hue family as `RUST`
-(~38° vs. ~35°), lighter and less saturated: a terracotta, not a new
-colour story. **Fill, underline or thin-rule only** — 4.38:1 on paper
-clears the 3:1 non-text floor but misses 4.5:1 for text, so it is banned
-as body text by the same logic that constrains `WARNING` (§1.4). Its one
-sanctioned use is the masthead rule beneath a cover-scale species name
-(§5B) — a surface using it takes no other accent alongside it.
+### 1.4 Contrast audit — WCAG AA compliance (27/27)
 
-### 1.4 Contrast audit — the ochre constraint
-
-`WARNING #C49A4C` measures **2.39:1** on `PAPER`. That fails WCAG AA for text
-(4.5:1) *and* the non-text floor (3:1). The value is kept as specified, and its
-**usage is constrained instead**:
-
-- ✅ ochre as a **solid fill or bar**, with `INK` on top → 6.12:1
-- ✅ ochre as the **4px leading rule** of a caution banner, text in `INK` on `WARNING_TINT` → 13.32:1
-- ❌ ochre as **text** on paper or on its own tint
-- ❌ ochre as a **lone hairline or meter** carrying meaning with no ink alongside
-
-Where ochre itself must be the text colour, use `WARNING_TEXT #826326` —
-darkened until it clears AA on paper and on the warning tint.
-
-`scripts/contrast-audit.py` asserts all of this and **exits non-zero if any
-expectation breaks**, including the bans (a forbidden pair that starts passing
-means the palette moved and the ban is stale). Run it in CI.
+`scripts/contrast-audit.py` enforces normative color contracts. Any regression exits non-zero:
 
 | Foreground | Background | Purpose | Needs | Ratio | Rule |
 |---|---|---|---|---|---|
-| `INK` | `PAPER` | Body, headings, species names | 4.5:1 | 14.62:1 | Sanctioned |
-| `INK` | `PAPER_PANEL` | Text on panels | 4.5:1 | 13.74:1 | Sanctioned |
-| `INK` | `PAPER_RECESSED` | Text in recessed wells | 4.5:1 | 12.57:1 | Sanctioned |
-| `INK_MUTED` | `PAPER` | Captions, metadata values | 4.5:1 | 6.85:1 | Sanctioned |
-| `INK_MUTED` | `PAPER_PANEL` | Metadata on panels | 4.5:1 | 6.44:1 | Sanctioned |
-| `MOSS` | `PAPER` | OK status text | 4.5:1 | 5.52:1 | Sanctioned |
-| `MOSS` | `MOSS_TINT` | OK text on OK banner | 4.5:1 | 4.68:1 | Sanctioned |
-| `RUST` | `PAPER` | Error status text | 4.5:1 | 7.66:1 | Sanctioned |
-| `RUST` | `RUST_TINT` | Error text on error banner | 4.5:1 | 6.29:1 | Sanctioned |
-| `SOIL` | `PAPER` | Infill label text | 4.5:1 | 9.74:1 | Sanctioned |
-| `PAPER` | `SOIL` | Inverse text on soil block (signage) | 4.5:1 | 9.74:1 | Sanctioned |
-| `PAPER` | `MOSS` | Text on solid moss fill | 4.5:1 | 5.52:1 | Sanctioned |
-| `PAPER` | `RUST` | Text on solid rust fill | 4.5:1 | 7.66:1 | Sanctioned |
-| `INK` | `WARNING` | Text on solid ochre fill | 4.5:1 | 6.12:1 | Sanctioned |
-| `WARNING_TEXT` | `PAPER` | Caution text (sanctioned ochre) | 4.5:1 | 5.13:1 | Sanctioned |
-| `WARNING_TEXT` | `WARNING_TINT` | Caution label on caution banner | 4.5:1 | 4.67:1 | Sanctioned |
-| `INK` | `WARNING_TINT` | Caution banner text (sanctioned) | 4.5:1 | 13.32:1 | Sanctioned |
-| `RULE` | `PAPER` | Hairlines, specimen frames (non-text) | 3.0:1 | 3.26:1 | Sanctioned |
-| `MOSS` | `PAPER` | Meter fill (non-text) | 3.0:1 | 5.52:1 | Sanctioned |
-| `ACCENT_WARM` | `PAPER` | Archive accent — fill/underline/hairline (non-text) | 3.0:1 | 4.38:1 | Sanctioned |
-| `WARNING` | `PAPER` | Ochre as TEXT — use WARNING_TEXT | 4.5:1 | 2.39:1 | **Banned** |
-| `WARNING` | `WARNING_TINT` | Ochre text on its own tint — use INK | 4.5:1 | 2.18:1 | **Banned** |
-| `PAPER` | `WARNING` | Paper on ochre fill — use INK | 4.5:1 | 2.39:1 | **Banned** |
-| `WARNING` | `PAPER` | Ochre hairline/meter alone — needs INK | 3.0:1 | 2.39:1 | **Banned** |
-| `ACCENT_WARM` | `PAPER` | Archive accent as TEXT — never; fails AA | 4.5:1 | 4.38:1 | **Banned** |
+| `INK` | `PAPER` | Body, headings, species names | 4.5:1 | 16.56:1 | Sanctioned |
+| `INK` | `PAPER_PANEL` | Text on panels | 4.5:1 | 17.60:1 | Sanctioned |
+| `INK` | `PAPER_RECESSED` | Text in recessed wells | 4.5:1 | 14.91:1 | Sanctioned |
+| `INK_MUTED` | `PAPER` | Captions, metadata values | 4.5:1 | 5.92:1 | Sanctioned |
+| `INK_MUTED` | `PAPER_PANEL` | Metadata on panels | 4.5:1 | 6.29:1 | Sanctioned |
+| `MOSS` | `PAPER` | OK status text | 4.5:1 | 10.70:1 | Sanctioned |
+| `MOSS` | `MOSS_TINT` | OK text on OK banner | 4.5:1 | 10.09:1 | Sanctioned |
+| `CORAL_700` | `PAPER` | Brand accent text / error status text (AA) | 4.5:1 | 6.79:1 | Sanctioned |
+| `RUST` | `PAPER` | Error status text | 4.5:1 | 6.79:1 | Sanctioned |
+| `RUST` | `RUST_TINT` | Error text on error banner | 4.5:1 | 6.49:1 | Sanctioned |
+| `SOIL` | `PAPER` | Infill label text | 4.5:1 | 8.13:1 | Sanctioned |
+| `PAPER` | `SOIL` | Inverse text on soil block (signage) | 4.5:1 | 8.13:1 | Sanctioned |
+| `PAPER` | `MOSS` | Text on solid moss fill | 4.5:1 | 10.70:1 | Sanctioned |
+| `PAPER` | `RUST` | Text on solid rust fill | 4.5:1 | 6.79:1 | Sanctioned |
+| `INK` | `WARNING` | Text on solid ochre fill | 4.5:1 | 7.01:1 | Sanctioned |
+| `WARNING_TEXT` | `PAPER` | Caution text (sanctioned ochre) | 4.5:1 | 4.83:1 | Sanctioned |
+| `INK` | `WARNING_TINT` | Caution banner text (sanctioned) | 4.5:1 | 16.32:1 | Sanctioned |
+| `RULE` | `PAPER` | Hairlines, specimen frames (non-text) | 3.0:1 | 3.22:1 | Sanctioned |
+| `MOSS` | `PAPER` | Meter fill (non-text) | 3.0:1 | 10.70:1 | Sanctioned |
+| `CORAL_500` | `PAPER` | Terracotta brand accent fill / rule (non-text) | 3.0:1 | 3.93:1 | Sanctioned |
+| `ACCENT_WARM` | `PAPER` | Archive accent fill / rule (non-text) | 3.0:1 | 3.93:1 | Sanctioned |
+| `WARNING` | `PAPER` | Ochre as TEXT — use WARNING_TEXT | 4.5:1 | 2.36:1 | **Banned** |
+| `WARNING` | `WARNING_TINT` | Ochre text on its own tint — use INK | 4.5:1 | 2.33:1 | **Banned** |
+| `PAPER` | `WARNING` | Paper on ochre fill — use INK | 4.5:1 | 2.36:1 | **Banned** |
+| `WARNING` | `PAPER` | Ochre hairline/meter alone — needs INK | 3.0:1 | 2.36:1 | **Banned** |
+| `CORAL_500` | `PAPER` | Coral 500 as body TEXT — fails AA (3.93:1) | 4.5:1 | 3.93:1 | **Banned** |
+| `ACCENT_WARM` | `PAPER` | Archive accent as TEXT — never; fails AA | 4.5:1 | 3.93:1 | **Banned** |
 
-25/25 expectations hold
+27/27 expectations hold
 
 ---
 
@@ -169,22 +200,19 @@ An **8px** baseline. Every gap, pad and offset is a multiple.
 | `--space-3` | 24px | | `--space-8` | 80px |
 | `--space-4` | 32px | | `--space-9` | 96px |
 
-`--space-half` (4px) is the shared sub-8 token. Layout gaps and padding use the
-scale above; documented optical corrections inside glyphs, rules or compact
-controls may use another value and do not become reusable spacing tokens.
+`--space-half` (4px) is the **single** sub-8 exception, for optical alignment
+against a 1px hairline. There is no 2px, no 6px, no 10px.
 
-### 2.2 The 12-column macro-grid and its four modes
+### 2.2 The 12-column grid and its three modes
 
-Page compositions align to twelve columns. Component internals and print pieces
-may use local grids. **Density is a mode, not a new grid.** Set `data-mode` on
-any container and the gutter and page margin follow.
+Twelve columns everywhere. **Density is a mode, not a new grid.** Set
+`data-mode` on any container and the gutter and page margin follow.
 
 | Mode | Gutter | Page margin | Used by |
 |---|---|---|---|
 | `archive` | **32px** | 64px | Editorial and print — fichas, packaging, posters, the folio system. Air is the point. |
 | `field` | **24px** | 32px | Reports, labels, lot records, SOPs. **The default.** |
 | `control` | **12px** | 16px | Dense telemetry — dashboards, metric tables, room monitors. |
-| `culinary-market` | **32px** | 32px | Product choice — profile, use, format, availability and next action. |
 
 ```html
 <div data-mode="control">
@@ -203,13 +231,11 @@ page. Prose is capped at `--measure-prose: 68ch` regardless of column span.
 
 ## 3 · Imagery
 
-> **Biological imagery declares its evidentiary role; it never implies one.**
+> **Biological imagery is evidence, not decoration.**
 
-Every figure is **frame + image + caption + provenance role**. A specimen
-photograph with no caption is an unlabelled sample; it does not ship. Captions
-set the latin binomial in Gaya italic and the plate reference in mono micro.
-Allowed roles are `documentary`, `illustrative`, `reconstruction` and
-`reference`; their contract is defined in `PROFILES.md`.
+Every figure is **frame + image + caption**. A specimen photograph with no
+caption is an unlabelled sample; it does not ship. Captions set the latin
+binomial in Gaya italic and the plate reference in mono micro.
 
 | Class | Ratio | Frame | Caption | Use |
 |---|---|---|---|---|
@@ -234,10 +260,10 @@ tracking. New archive captions should be marked up with `.ed-cartouche`
 directly (§5B); the `.sdp-fig__ref` override exists as a safety net for
 plain component markup that hasn't been converted.
 
-**The species plates.** `assets/img/species/` holds nine illustrative plates.
-Their filenames and common names are navigation aids, not a canonical inventory
-of species grown by the farm. Scientific names must be confirmed against the
-Knowledge Base before a plate is published as product or production evidence.
+**The species plates.** `assets/img/species/` holds nine specimen plates — one
+per species the farm grows: *Hericium erinaceus* (melena de león), *Ganoderma
+lucidum* (reishi), *Lentinula edodes* (shiitake), *Pleurotus ostreatus* in rosa,
+blanca and grey, *P. eryngii* (cardo), *Flammulina* (enoki), *Pholiota* (nameko).
 
 They share one composition — **whole fruiting body on its substrate, a
 cross-section, an underside, and spores** — which is exactly the evidence a
@@ -287,7 +313,7 @@ Altitude uses the Spanish thousands separator (`2.600`) and a capital `M`.
 
 | Line | Format | Example |
 |---|---|---|
-| **Lot / date** | `LOTE nnn · STRAIN · DD MMM YYYY` | `LOTE DEMO · GAN-XX · FECHA POR VALIDAR` |
+| **Lot / date** | `LOTE nnn · STRAIN · DD MMM YYYY` | `LOTE 026 · HER-01 · 17 AGO 2026` |
 | **Environment** | `SALA nn · HR nn% · CO₂ nnn PPM` | `SALA 02 · HR 91% · CO₂ 742 PPM` |
 | **Phase** | `PHASE · D day/total` | `INCUBACIÓN · D 12/19` |
 
@@ -425,7 +451,7 @@ Light is normative here, and the lede differs by **size, not weight**.
 
 `--t-display-cover` (`--size-display-cover: 88px`, Gaya Black, same leading
 as `display-01`) is one step above `display-01` (64px) — defined in
-`editorial.css`, not in the twelve-role scale in `tokens.css`, because it is
+`editorial.css`, not in the nine-role scale in `tokens.css`, because it is
 never for running layout. Its only two uses are cover marks: the species
 name in a `.sdp-ficha__hd` and a `.sdp-pack--front`, each set with the
 `--accent-warm` rule beneath it as a single masthead device.
@@ -510,7 +536,7 @@ every brand face and **fails the build** if one silently falls back.
 
 | # | File | Surface | Type calls |
 |---|---|---|---|
-| 1 | `01-packaging.png` | **Packaging front + back**, Reishi, 420 × 620 each | Front: `font-family:"Gaya Patched"; font-weight:700; font-size:36px` (Reishi) over `font-family:"Gaya Patched"; font-style:italic; font-weight:400; font-size:18px` (*Ganoderma lucidum*). Brand + net weight in Mono 11px/0.15em upper. Back adds the traceability line `LOTE DEMO · GAN-XX · FECHA POR VALIDAR` and a QR. |
+| 1 | `01-packaging.png` | **Packaging front + back**, Reishi, 420 × 620 each | Front: `font-family:"Gaya Patched"; font-weight:700; font-size:36px` (Reishi) over `font-family:"Gaya Patched"; font-style:italic; font-weight:400; font-size:18px` (*Ganoderma lucidum*). Brand + net weight in Mono 11px/0.15em upper. Back adds the traceability line `LOTE 026 · HER-01 · 17 AGO 2026` and a QR. |
 | 2 | `02-ficha.png` | **Ficha botánica**, Reishi, 760px Archive | `species` 28px Gaya Bold, `latin` 18px Gaya Italic, plate in `frame-specimen` 4:5, prose 16px Plex Sans, footer cells presentación / preparación / precio. |
 | 3 | `03-lote-card.png` | **Lote cards** (`--ok`, `--warn`) + all three **alert banners** | Card title 22px Gaya Bold, lot ID Mono 16px, state word Mono 11px/0.15em. Hericium plate on the `--plate` media variant. |
 | 4 | `04-receta.png` | **Receta de sustrato**, melena de león, 640px Field | Heading 24px Gaya Medium, ingredient names 16px Sans, percentages Mono 16px, proportion rules in `SOIL`, steps numbered `01…05` in Mono. Ingredient thumbnail 64px 1:1. |
@@ -531,32 +557,42 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
 08_brand/ds-2026/
 ├── DESIGN_SYSTEM.md              ← this document
 ├── COMPONENTS.md                 ← per-component spec sheets
-├── SOURCES.md                    ← references, verified
+├── SOURCES.md                    ← references and font checksums, verified
+├── MIGRATION.md                  ← mapping v1 → Criterio and legacy facades
 ├── README.md                     ← how to use / how to rebuild
+├── index.css                     ← canonical universal entrypoint
+├── operations.css                ← canonical operations entrypoint (Field OS)
+├── market.css                    ← canonical market/archive entrypoint
 ├── tokens/
-│   ├── tokens.css                ← the single source of truth
+│   ├── primitives.json           ← raw mineral pigments & scales
+│   ├── semantic.json             ← surfaces, text, borders, actions
+│   ├── domain.json               ← provenance, sync state, quarantine
+│   ├── typography.json           ← font stacks, sizes (11px micro floor)
+│   ├── spacing.json              ← 8px grid, 4px half-step
+│   ├── colors.json               ← combined & legacy color aliases
 │   ├── fonts.css                 ← @font-face, all vendored
-│   ├── colors.json               ← colour tokens, primitive + derived + semantic
-│   ├── typography.json           ← families, weights, 12-role scale, minimums
-│   └── spacing.json              ← scale, 12-col grid, three modes, structure
+│   └── tokens.css                ← compiled single source of truth
 ├── components/
-│   ├── base.css                  ← reset, type classes, grid, rules, .chem
-│   ├── components.css            ← all eleven components
-│   └── editorial.css             ← archive-only editorial devices
+│   ├── base.css / components.css ← legacy compatibility facades
+│   ├── editorial.css / instrument.css ← legacy compatibility facades
+│   ├── core/                     ← foundations.css, layout.css, typography.css
+│   ├── shared/                   ← metadata, species, figure, status, action, forms
+│   ├── operations/               ← lot, event, task, room, inventory, telemetry
+│   └── market/                   ← packaging, traceability, archive
 ├── assets/
 │   ├── fonts/                    ← Gaya ×12, IBM Plex Sans ×5, IBM Plex Mono ×3
 │   ├── icons/                    ← 12 SVG pictograms, 48-grid, 1.5px stroke
-│   ├── img/                      ← reishi engraving (jpg + alpha cutout)
-│   │   └── species/              ← nine specimen plates, alpha cut
+│   ├── img/                      ← botanical engravings & specimen plates
 │   └── textures/                 ← paper-grain.png, paper-fibre.png (tileable RGBA)
 ├── mockups/
-│   ├── *.html                    ← ten mockups on the real tokens
-│   ├── manifest.json             ← render sizes
-│   └── out/*.png                 ← eight rendered images
+│   ├── market/                   ← 01-packaging, 02-botanical-plate, 03-traceability, 04-brand-board
+│   └── operations/               ← 05-operational-batch, 06-telemetry-room, 07-mobile-workflow, 08-inventory-table
 └── scripts/
+    ├── build-tokens.mjs          ← JSON sources → tokens.css compiler
     ├── validate.py               ← structural gate: tokens, fonts, assets, parity
-    ├── contrast-audit.py         ← WCAG gate; exits non-zero on violation
-    ├── render.mjs                ← mockups → PNG, with font-load verification
+    ├── contrast-audit.py         ← WCAG gate; exits non-zero on violation (27/27)
+    ├── visual-contract.mjs       ← anti-slop visual gate (10 checks)
+    ├── sync-consumers.mjs        ← deterministic sync to Setas OS package
     ├── gen-textures.py           ← tileable paper textures, no image library
     └── make-cutout.mjs           ← studio ground → transparent PNG (edge flood fill)
 ```
@@ -581,7 +617,7 @@ python3 scripts/validate.py             # structural gate — exit 0 required
 python3 scripts/contrast-audit.py       # WCAG gate — exit 0 required
 python3 scripts/gen-textures.py         # regenerate paper textures (~1s)
 node     scripts/make-cutout.mjs <out> <files…>   # re-cut a specimen's ground
-node     scripts/render.mjs             # all ten mockups → mockups/out/
+node     scripts/render.mjs             # all eight mockups → mockups/out/
 node     scripts/render.mjs 05          # just one
 ```
 
@@ -593,18 +629,32 @@ Plex Sans and Plex Mono all resolved before it writes a PNG.
 
 ## 10 · Relationship to FOS
 
-DS-2026 is the active core for new work. Its canonical files live here and the
-Setas OS build packages an exact copy under `field-os-simulador/setas-os/ds-2026/`.
-The sync test must pass whenever tokens or components change.
+`08_brand/field-os-identity/` (FOS) is a **separate, independently audited**
+system in this same repo. DS-2026 was built standalone at the client's
+direction and does **not** import, alias or supersede it.
 
-`08_brand/field-os-identity/` records the earlier FOS identity and remains useful
-for historical decisions and migration. A production surface may keep legacy
-variables through an explicit adapter, but new components use DS-2026 semantic
-aliases. Import order must be deliberate: legacy tokens first, DS-2026 core
-second, application overrides last. A copied component block is generated or
-tested for parity rather than maintained as another source of truth.
+Where they differ materially:
 
-The profiles do not fork the visual system. `FOS Operations` selects field and
-control density; `Swiss Botanical Market` selects archive and culinary-market
-composition. Both obey the provenance and interaction contracts in
-[`PROFILES.md`](PROFILES.md).
+| | DS-2026 | FOS |
+|---|---|---|
+| Paper | `#FAF5E9` | `#F7F4EC` |
+| Ink | `#222222` | `#1E1D19` |
+| Rule | `#888888` (3.26:1) | `#988C6C` (3.03:1) |
+| Green | `MOSS #4E6B3F` | `--accent-olive #5B6B44` |
+| Error | `RUST #8E2C14` | `--accent-rust #8C3223` |
+| Caution | `WARNING #C49A4C` + `WARNING_TEXT` | routed through terracotta `#A85C32` |
+| Earth | `SOIL #4A3C31` | `--accent-mushroom #7A6A52` |
+| Editorial face | Gaya Patched | Gaya |
+| Body face | IBM Plex Sans | *(`--font-sans` is set to Gaya — see below)* |
+| Baseline | 8px | 4px |
+| Radius | 0 / 2px | 0 / 2 / 3px |
+
+**Do not mix the two stylesheets on one surface.** Both define `--paper-*`,
+`--ink-*` and `--space-*`; loading both means the later import silently wins and
+you get a page that is neither system.
+
+> **Finding, unrelated to this work.** `field-os-identity/tokens/fonts.css` sets
+> `--font-sans: 'Gaya'` and `--font-display: 'IBM Plex Sans Display'` — the two
+> roles appear inverted relative to how every other FOS document describes them
+> (Gaya is the identity/display face). This was not changed, since FOS was out
+> of scope here, but it is worth a look.

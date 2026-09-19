@@ -1,0 +1,42 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "system": "Setas de la Peña · DS-2026",
+  "edition": "Criterio Edition",
+  "description": "Semantic roles. Maps primitives to UI roles and interactive states.",
+  "semantic": {
+    "surface": {
+      "page":      { "value": "{color.primitive.paper-100}" },
+      "panel":     { "value": "{color.primitive.paper-50}" },
+      "recessed":  { "value": "{color.primitive.paper-200}" },
+      "inverse":   { "value": "{color.primitive.bark-700}" }
+    },
+    "text": {
+      "primary":   { "value": "{color.primitive.ink-900}" },
+      "secondary": { "value": "{color.primitive.ink-700}" },
+      "metadata":  { "value": "{color.primitive.ink-500}" },
+      "inverse":   { "value": "{color.primitive.paper-50}" }
+    },
+    "border": {
+      "hairline":  { "value": "{color.primitive.ink-500}", "description": "1px hairline border, specimen frames, subtle table rules." },
+      "strong":    { "value": "{color.primitive.ink-900}", "description": "Heavy 2px borders, outer layout frames." }
+    },
+    "brand": {
+      "primary":     { "value": "{color.primitive.moss-700}", "description": "Primary wordmark, official seals, core brand identity." },
+      "accent":      { "value": "{color.primitive.coral-500}", "description": "Terracotta visual accent for fills, bars, badges and rules. Non-text." },
+      "accent-text": { "value": "{color.primitive.coral-700}", "description": "AA-compliant dark terracotta text (>4.5:1 on paper)." },
+      "secondary":   { "value": "{color.primitive.slate-500}", "description": "Cool slate accent for mountain and ambient data." }
+    },
+    "status": {
+      "ok":          { "value": "{color.primitive.moss-700}" },
+      "warning":     { "value": "{color.primitive.warning}", "usage": "Solid fills and bars only with dark text on top. Never small text on paper." },
+      "warning-text":{ "value": "{color.primitive.warning-text}" },
+      "error":       { "value": "{color.primitive.coral-700}" },
+      "info":        { "value": "{color.primitive.slate-500}" }
+    },
+    "action": {
+      "primary":     { "value": "{color.primitive.moss-700}" },
+      "secondary":   { "value": "{color.primitive.paper-200}" },
+      "focus-ring":  { "value": "{color.primitive.moss-700}" }
+    }
+  }
+}

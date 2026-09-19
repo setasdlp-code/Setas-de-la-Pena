@@ -1,0 +1,26 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "system": "Setas de la Peña · DS-2026",
+  "edition": "Criterio Edition",
+  "description": "Pigment primitives. Values are absolute mineral pigments and paper grounds.",
+  "color": {
+    "primitive": {
+      "paper-100":  { "value": "#F6F4EC", "type": "color", "role": "Warm archival paper ground. Canonical page background." },
+      "paper-50":   { "value": "#FCFBF6", "type": "color", "role": "Lightest cream. Elevated surfaces, cards, inset highlights." },
+      "paper-200":  { "value": "#EDE8DB", "type": "color", "role": "Darker cream. Sunken wells, image placeholders, table hover." },
+      "ink-900":    { "value": "#1A1410", "type": "color", "role": "Charcoal ink. Primary text, heavy rules, pictogram strokes." },
+      "ink-700":    { "value": "#3A2F26", "type": "color", "role": "Deep oak tone. Strong secondary text, metadata labels." },
+      "ink-500":    { "value": "#6B5B4A", "type": "color", "role": "Warm mineral gray. Secondary text, captions, hairlines." },
+      "moss-900":   { "value": "#1E2A16", "type": "color", "role": "Deepest forest green. Display headings on light paper." },
+      "moss-700":   { "value": "#2E3B2F", "type": "color", "role": "Primary brand moss. Wordmark, OK status, active operations." },
+      "moss-500":   { "value": "#6D7C5A", "type": "color", "role": "Restrained moss. Secondary ground tone, soft borders." },
+      "coral-500":  { "value": "#B8614D", "type": "color", "role": "Terracotta accent. Rules, fills, badges, non-text graphic accents (3.93:1 on paper)." },
+      "coral-700":  { "value": "#8A3E2D", "type": "color", "role": "Dark terracotta. Error status and AA-compliant text on paper (>4.5:1)." },
+      "slate-500":  { "value": "#4E6A7A", "type": "color", "role": "Cool mountain stone. Technical neutral, ambient indicators." },
+      "sand-500":   { "value": "#BFA98B", "type": "color", "role": "Warm neutral mushroom body tone. Surface fills, cards." },
+      "bark-700":   { "value": "#594631", "type": "color", "role": "Deep oak substrate brown. Infill blocks, inverted signage." },
+      "warning":    { "value": "#C49A4C", "type": "color", "role": "Muted ochre caution pigment. Non-text use only (2.39:1 on paper)." },
+      "warning-text": { "value": "#866629", "type": "color", "role": "Darkened ochre. Only sanctioned ochre text color (4.83:1 on paper)." }
+    }
+  }
+}

@@ -14,40 +14,57 @@ function read(base, rel) {
   return fs.readFileSync(path.join(base, rel), 'utf8');
 }
 
-test('packaged DS-2026 tokens stay in sync with canonical 08_brand/ds-2026', () => {
-  const tokenFiles = ['tokens/tokens.css', 'tokens/fonts.css', 'tokens/colors.json', 'tokens/typography.json', 'tokens/spacing.json'];
-  for (const f of tokenFiles) {
-    assert.equal(read(PACKAGED_DS, f), read(CANON_DS, f), `Drift detected in ${f}`);
+function loadManifest() {
+  const canonManifestPath = path.join(CANON_DS, 'distribution-manifest.json');
+  assert.ok(fs.existsSync(canonManifestPath), 'Canonical distribution-manifest.json must exist');
+  return JSON.parse(fs.readFileSync(canonManifestPath, 'utf8'));
+}
+
+test('distribution-manifest.json is synchronized and valid', () => {
+  const manifest = loadManifest();
+  assert.equal(manifest.name, 'ds-2026-distribution-manifest');
+  assert.ok(manifest.version.includes('criterio'));
+  assert.equal(
+    read(PACKAGED_DS, 'distribution-manifest.json'),
+    read(CANON_DS, 'distribution-manifest.json'),
+    'Drift detected in distribution-manifest.json'
+  );
+});
+
+test('packaged DS-2026 tokens stay in sync with canonical 08_brand/ds-2026 according to manifest', () => {
+  const manifest = loadManifest();
+  assert.ok(manifest.tokens && manifest.tokens.length >= 8, 'Manifest must declare full layered token suite');
+  for (const f of manifest.tokens) {
+    assert.equal(read(PACKAGED_DS, f), read(CANON_DS, f), `Drift detected in token file ${f}`);
   }
 });
 
-test('packaged DS-2026 components stay in sync with canonical 08_brand/ds-2026', () => {
-  const compFiles = ['components/base.css', 'components/components.css', 'components/editorial.css', 'components/instrument.css'];
-  for (const f of compFiles) {
-    assert.equal(read(PACKAGED_DS, f), read(CANON_DS, f), `Drift detected in ${f}`);
+test('packaged DS-2026 components stay in sync with canonical 08_brand/ds-2026 according to manifest', () => {
+  const manifest = loadManifest();
+  assert.ok(manifest.components && manifest.components.length >= 20, 'Manifest must declare all modular component layers and facades');
+  for (const f of manifest.components) {
+    assert.equal(read(PACKAGED_DS, f), read(CANON_DS, f), `Drift detected in component file ${f}`);
   }
 });
 
-test('packaged DS-2026 font and icon assets exist and are non-empty', () => {
-  const sampleFonts = [
-    'assets/fonts/GayaPatched-Medium.otf',
-    'assets/fonts/GayaPatched-Bold.otf',
-    'assets/fonts/IBMPlexSans-Regular.ttf',
-    'assets/fonts/IBMPlexMono-Regular.ttf'
-  ];
-  for (const fontPath of sampleFonts) {
+test('packaged DS-2026 public entrypoints and governance stay in sync with canonical 08_brand/ds-2026', () => {
+  const manifest = loadManifest();
+  for (const f of manifest.files) {
+    assert.equal(read(PACKAGED_DS, f), read(CANON_DS, f), `Drift detected in root file ${f}`);
+  }
+});
+
+test('packaged DS-2026 font and icon assets exist and are non-empty according to manifest', () => {
+  const manifest = loadManifest();
+  for (const fontPath of manifest.assets.fonts) {
     const fullPath = path.join(PACKAGED_DS, fontPath);
-    assert.ok(fs.existsSync(fullPath), `Font missing: ${fontPath}`);
+    assert.ok(fs.existsSync(fullPath), `Font missing from package: ${fontPath}`);
     assert.ok(fs.statSync(fullPath).size > 1000, `Font empty or corrupted: ${fontPath}`);
   }
-  const sampleSpecies = [
-    'assets/img/species/reishi.png',
-    'assets/img/species/lions-mane.png',
-    'assets/img/species/shiitake.png'
-  ];
-  for (const imgPath of sampleSpecies) {
+  for (const imgPath of manifest.assets.species_images) {
     const fullPath = path.join(PACKAGED_DS, imgPath);
-    assert.ok(fs.existsSync(fullPath), `Species img missing: ${imgPath}`);
+    assert.ok(fs.existsSync(fullPath), `Species img missing from package: ${imgPath}`);
+    assert.ok(fs.statSync(fullPath).size > 1000, `Species img empty: ${imgPath}`);
   }
 });
 
