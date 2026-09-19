@@ -166,6 +166,8 @@
   }
   .app-rail { position:fixed; z-index:var(--z-rail); background:var(--paper-0); display:flex; transition:transform .28s cubic-bezier(.32,.72,.36,1); }
   .rail-peek { display:none; }
+  .app-rail-mobile { display:none; }
+  .mobile-more-flyout { display:none; }
   .rail-btn { display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none; cursor:pointer; color:var(--ink-2); position:relative; padding:9px 4px; transition:color .15s, background-color .15s; border-radius:var(--radius-sm); }
   .rail-btn:hover { color:var(--ink-1); }
   .rail-btn.on { color:var(--ink-0); }
@@ -243,14 +245,36 @@
     .app-shell.sim-collapsed .app-rail:hover { transform:none; box-shadow:none; }
   }
   @media (max-width:859px){
-    .app-rail { left:0; right:0; bottom:0; top:auto; flex-direction:row; border-top:1px solid var(--border-strong); padding:4px 6px calc(6px + env(safe-area-inset-bottom)); gap:2px; overflow:visible; }
-    .rail-mark { display:none; }
-    .rail-btn { flex:1 1 25%; min-width:0; padding:6px 4px; gap:2px; min-height:48px; }
-    .rail-item { flex:0 0 auto; }
-    .rail-item .rail-btn { width:auto; }
-    .rail-btn.on { background:var(--paper-2); }
-    .rail-btn span { font-size:var(--size-label, 11px); letter-spacing:0.15em; }
-    .app-main { margin-left:0; padding-bottom:62px; }
+    /* El rail de escritorio (Formular/Producción/Bitácora/Control) queda oculto
+       en mobile: la IA Criterio mobile (Hoy/Lotes/Scan/Salas/Más) vive en
+       .app-rail-mobile, más abajo en este mismo media query. */
+    .app-rail { display:none; }
+    .app-main { margin-left:0; padding-bottom:calc(62px + env(safe-area-inset-bottom)); }
+    .app-rail-mobile {
+      display:flex; position:fixed; left:0; right:0; bottom:0; z-index:var(--z-rail);
+      background:var(--paper-0); border-top:1px solid var(--border-strong);
+      padding:4px 2px calc(6px + env(safe-area-inset-bottom)); gap:0;
+    }
+    .rail-mobile-btn {
+      flex:1 1 0; min-width:0; min-height:48px; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:3px; background:none; border:none;
+      cursor:pointer; color:var(--ink-2); padding:6px 2px; touch-action:manipulation;
+    }
+    .rail-mobile-btn svg { width:21px; height:21px; flex-shrink:0; }
+    .rail-mobile-btn span { font-family:var(--font-mono); font-size:var(--size-label, 11px); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; }
+    .rail-mobile-btn:hover { color:var(--ink-1); }
+    .rail-mobile-btn.on { color:var(--ink-0); background:var(--paper-2); }
+    .rail-mobile-btn:focus-visible { outline:2px solid var(--focus-ring); outline-offset:-2px; }
+    /* Escanear es la acción central persistente (arquitectura §3 "captura
+       global"): más grande que las demás, pero sin tapar contenido ni
+       desplazar el layout — solo se eleva 12px sobre la línea del rail. */
+    .rail-mobile-btn--scan {
+      flex:0 0 60px; min-height:60px; margin-top:-14px;
+      background:var(--ink-0); color:var(--paper-0); border:2px solid var(--paper-0);
+    }
+    .rail-mobile-btn--scan svg { width:24px; height:24px; }
+    .rail-mobile-btn--scan:hover, .rail-mobile-btn--scan:active { background:var(--accent-olive); }
+    .mobile-more-flyout { display:flex; }
     .workspace-subnav { top:0; min-height:44px; padding:0 10px; }
     /* Auth gate owns the sign-out control. Reserve a real row for it while
        authenticated so the fixed control never covers workspace tabs. */
@@ -357,6 +381,42 @@
       <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadgeLabel }}">{{ climaBadge }}</span></sc-if>
     </button>
   </nav>
+
+  <!-- ===================== MOBILE PRIMARY NAV (Criterio) =====================
+       Hoy · Lotes · Scan · Salas · Más — IA objetivo de
+       SETAS_OS_UX_ARCHITECTURE_V2.md §2. Solo visible <=859px (ver CSS); el
+       rail de escritorio de arriba queda intacto. Cada botón es un adaptador
+       hacia rutas que ya existen (goSimTab/goBitTab/openFieldScan) — no
+       agrega valores nuevos a module/simTab/bitSubtab. -->
+  <nav class="app-rail-mobile" aria-label="Navegación principal">
+    <button class="rail-mobile-btn {{ navMobileHoyCls }}" data-dest="hoy" onClick="{{ goMobileHoy }}" aria-current="{{ curMobileHoy }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+      <span>Hoy</span>
+    </button>
+    <button class="rail-mobile-btn {{ navMobileLotesCls }}" data-dest="lotes" onClick="{{ goMobileLotes }}" aria-current="{{ curMobileLotes }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"></path></svg>
+      <span>Lotes</span>
+    </button>
+    <button class="rail-mobile-btn rail-mobile-btn--scan" data-dest="scan" onClick="{{ goMobileScan }}" aria-label="Escanear código QR">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 8V5a1 1 0 0 1 1-1h3"></path><path d="M4 16v3a1 1 0 0 0 1 1h3"></path><path d="M20 8V5a1 1 0 0 0-1-1h-3"></path><path d="M20 16v3a1 1 0 0 1-1 1h-3"></path><line x1="4" y1="12" x2="20" y2="12"></line></svg>
+      <span>Escanear</span>
+    </button>
+    <button class="rail-mobile-btn {{ navMobileSalasCls }}" data-dest="salas" onClick="{{ goMobileSalas }}" aria-current="{{ curMobileSalas }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18v-5M10 18V6M16 18v-9M22 18V3"></path><path d="M2 21h20"></path></svg>
+      <span>Salas</span>
+    </button>
+    <button class="rail-mobile-btn {{ navMobileMasCls }}" data-dest="mas" onClick="{{ toggleMobileMore }}" aria-expanded="{{ mobileMoreOpen }}" aria-haspopup="true" aria-controls="mobile-more-panel" aria-current="{{ curMobileMas }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+      <span>Más</span>
+    </button>
+  </nav>
+  <sc-if value="{{ mobileMoreOpen }}" hint-placeholder-val="{{ false }}">
+    <div class="rail-flyout mobile-more-flyout" id="mobile-more-panel" role="group" aria-label="Más secciones">
+      <sc-for list="{{ mobileMoreItems }}" as="t" hint-placeholder-count="6">
+        <button class="rail-flyout-item {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
 
   <main id="setas-main" class="app-main fos-scroll" tabindex="-1" style="height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;">
     <h1 class="sr-only">Setas OS</h1>
@@ -2257,6 +2317,7 @@ class Component extends DCLogic {
     bitSubtabNonce: 0,
     stockAlertCount: 0,
     workspaceMoreOpen: false,
+    mobileMoreOpen: false,
     role: 'operator',
     operator: 'Germán', operatorKey: 'inigo', sessionLoading: false, pendingSessionType: null,
     reviewTab: 'eventos',
@@ -2822,7 +2883,7 @@ class Component extends DCLogic {
       if(navigation) navigation.navigate(window,next);
       else {const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.pushState(null,'',url);}
     }catch(e){}
-    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, simTab:next, simTabNonce:s.simTabNonce+1 }));
+    this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, mobileMoreOpen:false, simTab:next, simTabNonce:s.simTabNonce+1 }));
   }
   goBitTab(bitSubtab){
     const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
@@ -2832,7 +2893,60 @@ class Component extends DCLogic {
       if(navigation) navigation.navigate(window,'bitacora');
       else {const url=new URL(window.location.href);url.searchParams.set('view','bitacora');window.history.pushState(null,'',url);}
     }catch(e){}
-    this.setState(s=>({ module:'sim', capture:false, workspaceMoreOpen:false, simTab:'bitacora', simTabNonce:s.simTabNonce+1, bitSubtab:next, bitSubtabNonce:s.bitSubtabNonce+1 }));
+    this.setState(s=>({ module:'sim', capture:false, workspaceMoreOpen:false, mobileMoreOpen:false, simTab:'bitacora', simTabNonce:s.simTabNonce+1, bitSubtab:next, bitSubtabNonce:s.bitSubtabNonce+1 }));
+  }
+  // ===================== MOBILE NAV CRITERIO =====================
+  // IA objetivo (SETAS_OS_UX_ARCHITECTURE_V2.md §2): Hoy · Lotes · Scan · Salas · Más.
+  // No agrega valores nuevos a module/simTab/bitSubtab — solo adapta el rail
+  // primario en mobile a rutas que ya existen (home/bitacora/clima) más un
+  // panel "Más" que reagrupa los destinos secundarios (Formular, Producción,
+  // Bodega, Planificar, Bitácora, Métricas, Conocimiento, Costos, Calidad,
+  // Comercial) que dejaron de tener botón propio en el rail primario.
+  mobileNavData(s){
+    const mobileDest = (s.module==='sim'&&s.simTab==='home') ? 'hoy'
+      : (s.module==='sim'&&s.simTab==='bitacora') ? 'lotes'
+      : (s.module==='sim'&&s.simTab==='clima') ? 'salas'
+      : 'mas';
+    const moreDefs = [
+      ['catalogo','Catálogo & Recetario',()=>this.goSimTab('catalogo')],
+      ['formular','Formular receta',()=>this.goSimTab('formular')],
+      ['produccion','Preparar mezcla',()=>this.goSimTab('produccion')],
+      ['bodega','Bodega',()=>this.goSimTab('inventario')],
+      ['plan','Planificar',()=>this.setState({module:'plan',capture:false,mobileMoreOpen:false})],
+      ['sesion','Registrar evento',()=>this.setState({module:'sesion',screen:'home',capture:true,mobileMoreOpen:false})],
+      ['revision','Métricas',()=>this.setState({module:'revision',capture:false,mobileMoreOpen:false})],
+      ['aprender','Conocimiento',()=>this.setState({module:'aprender',capture:false,mobileMoreOpen:false})],
+      ['costes','Costos',()=>this.setState({module:'costes',capture:false,mobileMoreOpen:false})],
+      ['calidad','Calidad',()=>this.setState({module:'calidad',capture:false,mobileMoreOpen:false})],
+      ['comercial','Comercial',()=>this.setState({module:'comercial',capture:false,mobileMoreOpen:false})],
+    ];
+    const mobileMoreItems = moreDefs
+      .filter(([key])=>!ROLE_GATE[key]||ROLE_GATE[key].includes(s.role))
+      .map(([key,label,go])=>{
+        const current = key==='plan' ? s.module==='plan'
+          : key==='sesion' ? s.module==='sesion'
+          : key==='catalogo' ? (s.module==='sim'&&s.simTab==='catalogo')
+          : key==='formular' ? (s.module==='sim'&&s.simTab==='formular')
+          : key==='produccion' ? (s.module==='sim'&&s.simTab==='produccion')
+          : key==='bodega' ? (s.module==='sim'&&s.simTab==='inventario')
+          : s.module===key;
+        return { key, label, go, current:current?'page':undefined, cls:current?'on':'' };
+      });
+    return {
+      mobileDest,
+      navMobileHoyCls: mobileDest==='hoy'?'on':'', curMobileHoy: mobileDest==='hoy'?'page':undefined,
+      navMobileLotesCls: mobileDest==='lotes'?'on':'', curMobileLotes: mobileDest==='lotes'?'page':undefined,
+      navMobileSalasCls: mobileDest==='salas'?'on':'', curMobileSalas: mobileDest==='salas'?'page':undefined,
+      navMobileMasCls: mobileDest==='mas'?'on':'', curMobileMas: mobileDest==='mas'?'page':undefined,
+      goMobileHoy: ()=>{ this.setState({mobileMoreOpen:false}); this.goSimTab('home'); },
+      goMobileLotes: ()=>{ this.setState({mobileMoreOpen:false}); this.goBitTab('bit_dash'); },
+      goMobileScan: ()=>{ this.setState({mobileMoreOpen:false}); this.openFieldScan(); },
+      goMobileSalas: ()=>{ this.setState({mobileMoreOpen:false}); this.goSimTab('clima'); },
+      toggleMobileMore: ()=>this.setState(st=>({mobileMoreOpen:!st.mobileMoreOpen})),
+      mobileMoreOpen: s.mobileMoreOpen,
+      mobileMoreCls: s.mobileMoreOpen?'on':'',
+      mobileMoreItems,
+    };
   }
   handleWorkspaceKeys(e){
     if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
@@ -3244,6 +3358,7 @@ class Component extends DCLogic {
       workspaceMoreCls:s.workspaceMoreOpen?'on':'',
       toggleWorkspaceMore:()=>this.setState(st=>({workspaceMoreOpen:!st.workspaceMoreOpen})),
       onWorkspaceKeyDown:e=>this.handleWorkspaceKeys(e),
+      ...this.mobileNavData(s),
       navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
       curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,

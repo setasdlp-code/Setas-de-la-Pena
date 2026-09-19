@@ -44,7 +44,9 @@ test('context tabs are keyboard accessible and mobile targets stay usable', () =
   assert.match(shell, /role="tablist"/);
   assert.match(shell, /role="tab" aria-selected="\{\{ t\.on \}\}" tabindex="\{\{ t\.tabIndex \}\}"/);
   for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) assert.match(shell, new RegExp(key));
-  assert.match(shell, /\.rail-btn \{ flex:1 1 25%; min-width:0;[^}]*min-height:48px;/);
+  // El rail mobile Criterio (Hoy/Lotes/Scan/Salas/Más) reemplazó al rail de
+  // escritorio replegado en bottom-bar; conserva el mismo piso táctil de 48px.
+  assert.match(shell, /\.rail-mobile-btn \{[^}]*min-height:48px;/);
   assert.match(shell, /@media \(prefers-reduced-motion: reduce\)/);
 });
 

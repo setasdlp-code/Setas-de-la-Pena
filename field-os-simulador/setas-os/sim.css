@@ -2849,6 +2849,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .os-batch-header__next-value { font-family: var(--font-sans); font-weight: 600; color: var(--ink-900); }
 /* os-action/os-scan-target ya definen :focus-visible en setas-os-components.css pero no :hover/transition — el botón se sentía inerte hasta el click. */
+/* Batch Detail mobile canónico (DS-2026 Criterio) — una sola columna,
+   sin grids comprimidos. Vive dentro de un modal o de bit_ficha, ambos ya
+   scrolleables; solo necesita respiración vertical entre secciones. */
+.sim-root .os-batch-detail-mobile { max-width:560px; margin:0 auto; padding-bottom:24px; }
 .os-action,.os-icon-action,.os-scan-target{transition:background-color var(--duration-standard) ease,border-color var(--duration-standard) ease}
 .os-scan-target:hover{background:var(--surface-recessed);border-color:var(--ink-0)}
 
@@ -4678,6 +4682,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .climate-module-readings > span:last-child { border-right:0; }
 .sim-root .climate-module-readings small { display:block;color:var(--ink-500);font:var(--text-micro)/1.2 var(--font-mono);text-transform:uppercase; }
 .sim-root .climate-module-readings strong { display:block;margin-top:3px;font:700 var(--text-md)/1 var(--font-mono);font-variant-numeric:tabular-nums; }
+.sim-root .climate-module-batches { display:block;margin-top:10px;color:var(--ink-700);font:600 var(--text-sm)/1.3 var(--font-mono); }
 .sim-root .climate-occupancy { display:grid;grid-template-columns:1fr auto;align-items:center;gap:9px;margin-top:12px; }
 .sim-root .climate-occupancy > span { height:5px;overflow:hidden;background:var(--paper-300); }
 .sim-root .climate-occupancy i { display:block;height:100%; }
