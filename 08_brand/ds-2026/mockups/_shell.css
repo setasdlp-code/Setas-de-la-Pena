@@ -9,7 +9,7 @@ body[data-content-status="illustrative"]::before {
 }
 .stage { display: flex; gap: 40px; align-items: flex-start; justify-content: center; }
 .stage--col { flex-direction: column; align-items: center; }
-.spec { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
+.spec { font: var(--t-micro); letter-spacing: var(--tracking-micro);
         color: var(--text-metadata); margin-bottom: 8px; }
 
 /* Illustrative Data Status Banner */

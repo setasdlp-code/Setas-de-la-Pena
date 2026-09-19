@@ -1,10 +1,10 @@
-# Setas de la Peña · Especificaciones Técnicas de Packaging (DS-2026 · Criterio)
+# Setas de la Peña · Especificaciones técnicas de packaging (DS-2026 · Criterio)
 
 Este documento establece las especificaciones físicas, cromáticas, tipográficas y regulatorias para la producción y manufactura de empaques, etiquetas y fajillas de **Setas de la Peña**, optimizados para alta gastronomía (Horeca) y retail premium.
 
 ---
 
-## 1. Filosofía y Principios Físicos
+## 1. Filosofía y principios físicos
 
 1. **Honestidad de Materiales**: Sustratos no blanqueados, reciclables y compostables. El color base del sustrato es el tono de papel canónico del sistema (`Paper 100` / `Sand 500`).
 2. **Impresión a Dos Tintas (Doble Golpe)**: Se prescinde de cuatricromía comercial (CMYK) estándar para reducir impacto ambiental y lograr saturación profunda:
@@ -15,34 +15,34 @@ Este documento establece las especificaciones físicas, cromáticas, tipográfic
 
 ---
 
-## 2. Formatos y Líneas de Producto
+## 2. Formatos y líneas de producto
 
-### Formato A: Caja Rígida Kraft Premium (250 g)
+### Formato A: caja rígida kraft premium (250 g)
 - **Uso**: Restaurantes gastronómicos, tiendas especializadas y venta directa al consumidor para setas gourmet enteras seleccionadas.
 - **Especies**: Shiitake (*Lentinula edodes* Cepa Donko), Melena de León (*Hericium erinaceus* Cepa Pom-Pom).
 - **Dimensiones Exteriores**: 160 mm (ancho) × 120 mm (profundo) × 65 mm (alto).
 - **Sustrato**: Microcorrugado kraft liner sin blanquear 280 g/m² con interior con barrera antigrasa vegetal transpirable.
 - **Ventilación**: 6 micro-perforaciones láser de 2 mm en caras laterales para control de transpiración y humedad relativa (HR residual 85-90%).
 
-### Formato B: Caja Master Gastronómica / Chef (500 g - 1 kg)
+### Formato B: caja master gastronómica / chef (500 g - 1 kg)
 - **Uso**: Canal Horeca profesional, despachos de cocina central.
 - **Dimensiones Exteriores**: 220 mm × 160 mm × 80 mm (500 g) / 280 mm × 200 mm × 100 mm (1 kg).
 - **Sustrato**: Cartón corrugado kraft micro-canal 350 g/m².
 - **Cierre**: Faja perimetral de seguridad con precinto numerado destructible.
 
-### Formato C: Fajilla Verjurada para Bandeja Compostable (150 g - 200 g)
+### Formato C: fajilla verjurada para bandeja compostable (150 g - 200 g)
 - **Uso**: Bandeja de pulpa de caña termoformada con flowpack microperforado.
 - **Dimensiones Fajilla**: 380 mm × 70 mm.
 - **Sustrato**: Papel Verjurado Avena Fedrigoni o equivalente 120 g/m² con fibras de algodón y textura táctil estriada.
 
-### Formato D: Etiqueta Térmica de Campo y Trazabilidad (Lote / Despacho)
+### Formato D: etiqueta térmica de campo y trazabilidad (lote / despacho)
 - **Dimensiones**: 102 mm × 51 mm (Zebra 4" × 2" estándar).
 - **Sustrato**: Papel térmico directo Top-Coated (resistente a humedad y condensación de cámara frigorífica 4°C).
 - **Impresión**: Transferencia térmica directa 203 / 300 DPI, negro monocromo.
 
 ---
 
-## 3. Especificación Cromática de Impresión
+## 3. Especificación cromática de impresión
 
 | Tinta / Acabado | Referencia Pantone | CMYK Estimado | Hex Canónico | Función |
 |---|---|---|---|---|
@@ -53,7 +53,7 @@ Este documento establece las especificaciones físicas, cromáticas, tipográfic
 
 ---
 
-## 4. Tipografía y Micro-impresión Legal
+## 4. Tipografía y micro-impresión legal
 
 | Elemento | Familia Tipográfica | Peso / Estilo | Tamaño Impresión | Tracking |
 |---|---|---|---|---|
@@ -65,13 +65,13 @@ Este documento establece las especificaciones físicas, cromáticas, tipográfic
 | **Micro-impresión Legal**| IBM Plex Mono | Regular | 6.5 pt / 9px (`t-micro-print`) | +0.02em |
 | **Procedencia Geográfica**| Gaya Patched / Plex Mono | Regular | 7.5 pt (2.6 mm) | +0.10em |
 
-### Requisitos Normativos de Legibilidad (Colombia / Invima / Mercados de Exportación)
+### Requisitos normativos de legibilidad (Colombia / Invima / mercados de exportación)
 1. La altura de la x (*x-height*) de los datos obligatorios (peso neto, fecha de cosecha, lote, registro sanitario) debe ser **estrictamente ≥ 3.0 mm**.
 2. En micro-impresión de instrucciones de conservación física (`CONSERVAR EN REFRIGERACIÓN ENTRE 2°C Y 4°C`), se utiliza el token tipográfico canónico `var(--font-micro-print, 9px)`. *(Nota de gobernanza: el piso de 9px está reservado exclusivamente a soportes impresos físicos; en interfaces digitales el piso estricto es 11px / 0.6875rem)*.
 
 ---
 
-## 5. Código QR de Trazabilidad Dinámica
+## 5. Código QR de trazabilidad dinámica
 
 - **Dimensiones Mínimas**: 18 mm × 18 mm.
 - **Zona de Silencio (Quiet Zone)**: Mínimo 4 mm libres de texto o grafismos por cada lado.
@@ -82,7 +82,7 @@ Este documento establece las especificaciones físicas, cromáticas, tipográfic
 
 ---
 
-## 6. Grabados Botánicos Xilográficos
+## 6. Grabados botánicos xilográficos
 
 Las ilustraciones impresas deben utilizar los originales vectoriales o tramados de grabado a alta resolución (1200 DPI a tamaño real de impresión):
 - **Shiitake**: Sombrero craquelado con láminas abiertas y tallo fibroso (`assets/img/species/shiitake.png`).
@@ -91,7 +91,7 @@ Las ilustraciones impresas deben utilizar los originales vectoriales o tramados 
 
 ---
 
-## 7. Aprobación y Control de Calidad
+## 7. Aprobación y control de calidad
 
 Cualquier variación en el sustrato, cambio de tinta o rediseño de troquel requiere:
 1. Impresión de prueba de galera física a escala 1:1.
