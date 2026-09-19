@@ -12,8 +12,8 @@
 [data-mode="field"] input,
 [data-mode="field"] select,
 [data-mode="field"] textarea {
-  min-height: var(--tap-target-min, 44px);
-  min-width: var(--tap-target-min, 44px);
+  min-height: var(--tap-target-min, 44px) !important;
+  min-width: var(--tap-target-min, 44px) !important;
   box-sizing: border-box;
 }
 
@@ -27,7 +27,7 @@
 }
 
 [data-mode="field"] .sdp-btn--field {
-  min-height: var(--field-cell-min-height, 48px);
+  min-height: var(--field-cell-min-height, 48px) !important;
 }
 
 /* Disabled Contract */
