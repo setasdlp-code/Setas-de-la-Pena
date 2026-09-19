@@ -1,23 +1,50 @@
-/* DS-2026 · Shared: Operational Reading (metric val, target, meta with provenance/age) */
+/* DS-2026 · Shared: Operational Reading
+   Anatomy: label → value + unit → target → provenance/age metadata.
+   Invariant: the numeric value always remains Ink; state is expressed around it.
+*/
 .sdp-reading {
+  --reading-state: var(--border-hairline);
   display: flex;
   flex-direction: column;
   gap: var(--space-half);
+  padding-left: var(--space-1);
+  border-left: 3px solid var(--reading-state);
 }
 
+.sdp-reading__label {
+  font-family: var(--font-mono);
+  font-size: var(--size-micro-screen, 11px);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+}
+
+.sdp-reading__value,
 .sdp-reading__val {
   font-family: var(--font-mono);
   font-size: var(--size-body);
   font-weight: var(--weight-bold);
   color: var(--text-primary);
   line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
 }
 
-.sdp-reading__target {
+.sdp-reading__unit {
+  font-family: var(--font-mono);
+  font-size: var(--size-small);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+  margin-left: var(--space-half);
+}
+
+.sdp-reading__target,
+.sdp-reading__status {
   font-family: var(--font-mono);
   font-size: var(--size-micro);
-  color: var(--text-secondary);
+  color: var(--reading-state, var(--text-secondary));
   letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
 }
 
 .sdp-reading__meta {
@@ -26,6 +53,27 @@
   color: var(--text-metadata);
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-half);
   letter-spacing: var(--tracking-micro);
+}
+
+.sdp-reading--ok    { --reading-state: var(--status-ok); }
+.sdp-reading--warn  { --reading-state: var(--status-warn-marker); }
+.sdp-reading--error { --reading-state: var(--status-error); }
+.sdp-reading--stale {
+  --reading-state: var(--text-metadata);
+  border-left-style: dashed;
+}
+
+/* State must never recolor the measured/calculated number. */
+.sdp-reading--ok .sdp-reading__value,
+.sdp-reading--ok .sdp-reading__val,
+.sdp-reading--warn .sdp-reading__value,
+.sdp-reading--warn .sdp-reading__val,
+.sdp-reading--error .sdp-reading__value,
+.sdp-reading--error .sdp-reading__val,
+.sdp-reading--stale .sdp-reading__value,
+.sdp-reading--stale .sdp-reading__val {
+  color: var(--text-primary);
 }
