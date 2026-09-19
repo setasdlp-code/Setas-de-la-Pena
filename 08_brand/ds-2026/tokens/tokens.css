@@ -71,12 +71,15 @@
   --status-warn-marker: var(--warning-text);
   --status-error-bg: var(--coral-tint);
   --action-primary: var(--moss-700);
-  --action-secondary: var(--paper-200);
+  --action-secondary: var(--paper-50);
   --focus-ring: var(--moss-700);
   --action-accent: var(--coral-700);
   --action-accent-text: var(--paper-50);
   --action-danger: var(--coral-700);
   --action-danger-text: var(--paper-50);
+  --action-primary-hover: var(--moss-900);
+  --action-secondary-hover: var(--paper-200);
+  --action-accent-hover: var(--coral-700);
 
   /* 3 · TYPE SCALE & ROLES */
   --weight-thin: 100;
