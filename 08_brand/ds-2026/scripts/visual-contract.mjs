@@ -2,7 +2,7 @@
 /**
  * scripts/visual-contract.mjs
  *
- * Visual contract gate enforcing 10 anti-slop, accessibility,
+ * Visual contract gate enforcing anti-slop, accessibility,
  * and operational integrity rules across DS-2026.
  */
 
@@ -362,4 +362,4 @@ console.log(`\nResults: ${passedChecks}/${totalChecks} gates passed (${failedChe
 if (failedChecks > 0) {
   process.exit(1);
 }
-console.log('🎉 All 10 visual and structural contract gates passed successfully.\n');
+console.log(`🎉 All ${totalChecks} visual and structural contract gates passed successfully.\n`);
