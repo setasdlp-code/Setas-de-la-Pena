@@ -162,7 +162,7 @@ test('simulador-app.jsx y simulador-app.js integran el modal de triaje y estados
       'el jsx debe resolver el estado con la regla compartida');
   }
   assert.match(jsx, /quarantine:\s*'Cuarentena'/);
-  assert.match(jsx, /🛡️ Triaje de Bioseguridad & Cuarentena/);
+  assert.match(jsx, /<AppIcon name="trace"[^>]*\/>\s*Triaje de Bioseguridad & Cuarentena/);
   assert.match(jsx, /showTriageModal/);
 
   // Bundle compilado sincronizado

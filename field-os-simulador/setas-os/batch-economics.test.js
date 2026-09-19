@@ -39,7 +39,7 @@ test('sim.css incluye estilos para el card de resumen economico y metricas de ma
 });
 
 test('Hoja de produccion renderiza el widget de analisis economico y margen por bolsa', () => {
-  assert.match(source, /💰 Análisis Económico & Rentabilidad por Bolsa/);
+  assert.match(source, /<AppIcon name="scale"[^>]*\/>\s*Análisis Económico & Rentabilidad por Bolsa/);
   assert.match(source, /Costo por Bolsa/);
   assert.match(source, /Cosecha Estimada/);
   assert.match(source, /Costo \/ kg Fresco/);
