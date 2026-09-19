@@ -37,9 +37,13 @@
         "value": "{color.primitive.ink-500}",
         "description": "1px hairline border, specimen frames, subtle table rules."
       },
-      "strong": {
+      "heavy": {
         "value": "{color.primitive.ink-900}",
         "description": "Heavy 2px borders, outer layout frames."
+      },
+      "strong": {
+        "value": "{color.primitive.ink-900}",
+        "description": "Alias for heavy border."
       }
     },
     "brand": {

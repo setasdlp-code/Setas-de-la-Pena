@@ -186,6 +186,9 @@
       "borderHairline": {
         "value": "{color.primitive.ink-500}"
       },
+      "borderHeavy": {
+        "value": "{color.primitive.ink-900}"
+      },
       "borderStrong": {
         "value": "{color.primitive.ink-900}"
       },

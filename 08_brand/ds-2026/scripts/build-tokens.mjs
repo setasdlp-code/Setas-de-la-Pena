@@ -11,7 +11,7 @@ const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const ROOT=path.resolve(__dirname,'..'), T=path.join(ROOT,'tokens');
 const read=n=>JSON.parse(fs.readFileSync(path.join(T,n),'utf8'));
 const primitives=read('primitives.json'), semantic=read('semantic.json'), domain=read('domain.json'), typography=read('typography.json'), spacing=read('spacing.json');
-const cssRef=value=>{ const m=String(value).match(/^\\{color\\.(primitive|derived)\\.([^}]+)\\}$/); if(!m) throw new Error('Unsupported semantic reference: '+value); return 'var(--'+m[2]+')'; };
+const cssRef=value=>{ const m=String(value).match(/^\{color\.(primitive|derived)\.([^}]+)\}$/); if(!m) throw new Error('Unsupported semantic reference: '+value); return 'var(--'+m[2]+')'; };
 const semName=(g,k)=>g==='status'&&k.startsWith('warning')?'status-warn'+k.slice('warning'.length):g==='action'&&k==='focus-ring'?'focus-ring':g+'-'+k;
 const weightNameByValue=Object.fromEntries(Object.entries(typography.weights).map(([k,v])=>[String(v),k]));
 const leadingTokenForRole={'display-01':'solid','display-02':'tight','heading-01':'tight','heading-02':'tight','heading-03':'snug','species':'tight','latin':'snug','body':'normal','small':'normal','data':'data','label':'tight','micro':'tight','lot-code-print':'tight'};

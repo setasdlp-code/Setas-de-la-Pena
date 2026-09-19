@@ -301,11 +301,11 @@ check('border semantic tokens are color-only and rule tokens carry geometry', ()
   for (const name of ['border-hairline', 'border-heavy']) {
     const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
     if (!m) throw new Error('Missing --' + name);
-    if (/\\b(?:solid|dashed|dotted|px)\\b/.test(m[1])) throw new Error('--' + name + ' must resolve to color only, got: ' + m[1]);
+    if (/\b(?:solid|dashed|dotted|px)\b/.test(m[1])) throw new Error('--' + name + ' must resolve to color only, got: ' + m[1]);
   }
   for (const name of ['rule-hairline', 'rule-heavy', 'rule-frame']) {
     const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
-    if (!m || !/\\b(?:solid|dashed|dotted)\\b/.test(m[1])) throw new Error('--' + name + ' must carry border geometry');
+    if (!m || !/\b(?:solid|dashed|dotted)\b/.test(m[1])) throw new Error('--' + name + ' must carry border geometry');
   }
 });
 
