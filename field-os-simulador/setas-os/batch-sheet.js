@@ -59,6 +59,27 @@
     activo: 'incubation',
   });
 
+  /**
+   * Estados canónicos de bolsa. `aislada` es nuevo: separa "bajo observación
+   * por posible contaminación" (aislada) de "confirmada contaminada"
+   * (contaminada), porque la decisión operativa y su seguimiento son distintos.
+   */
+  const BAG_STATES = Object.freeze({
+    sana: 'sana',
+    dudosa: 'dudosa',
+    aislada: 'aislada',
+    contaminada: 'contaminada',
+    descartada: 'descartada',
+  });
+
+  const BAG_STATE_LABELS = Object.freeze({
+    sana: 'Sana',
+    dudosa: 'Dudosa',
+    aislada: 'Aislada',
+    contaminada: 'Contaminada',
+    descartada: 'Descartada',
+  });
+
   const STATE_LABELS = Object.freeze({
     planned: 'Planificado',
     mix_prepared: 'Mezcla preparada',
@@ -316,9 +337,12 @@
       : (lote.stageSince || null);
     const stageSince = lastTransitionAt || lote.fechaInoculacion || lote.fechaMezcla || null;
 
+    // `aislada` no cuenta como activa: está en observación, no en producción normal,
+    // pero tampoco es una baja confirmada como `contaminada`/`descartada`.
     const bagsActive = loteBolsas.length
-      ? loteBolsas.filter(b => b.estado !== 'descartada' && b.estado !== 'contaminada').length
+      ? loteBolsas.filter(b => !['descartada', 'contaminada', 'aislada'].includes(b.estado)).length
       : (parseInt(lote.numBolsas, 10) || 0);
+    const bagsIsolated = loteBolsas.filter(b => b.estado === 'aislada').length;
 
     const recipeRef = recipe || lote.recipeRef || lote.recetaSnapshot || null;
     const recipeId = (recipeRef && (recipeRef.id || recipeRef.recipeId)) || lote.recetaId || null;
@@ -356,6 +380,9 @@
     if (stats && stats.varianzaEB != null && stats.varianzaEB <= -15) {
       anomalies.push({ kind: 'yield', severity: 'warning', detail: `EB real ${stats.be.toFixed(0)}% vs ${stats.ebEstimada}% estimada de la receta` });
     }
+    if (bagsIsolated > 0) {
+      anomalies.push({ kind: 'isolation', severity: 'warning', detail: `${bagsIsolated} bolsa(s) aislada(s) en observación` });
+    }
 
     // Bloqueos: lo que impide avanzar. Se muestran para explicar por qué falta
     // una acción, no para ofrecer una transición inválida.
@@ -389,6 +416,7 @@
       ageDays: daysBetween(lote.fechaInoculacion || lote.fechaMezcla, nowMs),
       room: room ? { id: room.id, name: room.name || room.id } : (roomId ? { id: roomId, name: roomId } : null),
       bagsActive,
+      bagsIsolated,
       bagsTotal: loteBolsas.length || (parseInt(lote.numBolsas, 10) || 0),
       recipe: recipeId || recipeRef ? {
         id: recipeId,
@@ -601,6 +629,169 @@
   };
 
   /**
+   * Declara TODAS las consecuencias digitales de una acción física, sin
+   * aplicarlas ni tocar nada externo: evento, cambios de bolsa, contadores del
+   * lote, transición propuesta e intenciones de seguimiento. Una herramienta de
+   * operación de verdad no deja que el operario reconstruya el día a mano
+   * encadenando cinco llamadas — esta función es ese "todo de una vez".
+   *
+   * `followUps` son INTENCIONES, no tareas: quien convierte esto en un objeto
+   * `Task` es task-engine.js (vía `tasksFromFollowUps`), nunca este módulo — el
+   * acoplamiento va en una sola dirección y aquí no se importa task-engine.js.
+   *
+   * @param {object} sheet Ficha construida por buildBatchSheet
+   * @param {string} action Acción del catálogo (ver ACTION_CATALOG)
+   * @param {object} [payload] Datos capturados en campo para la acción
+   * @param {object} [options] { role, operatorId, at, bolsas } — `bolsas` son
+   *   las bolsas del lote (mismo shape que en buildBatchSheet), necesarias para
+   *   recalcular contadores tras una decisión de contaminación
+   * @returns {object} Consecuencias congeladas, listas para `applyConsequences`
+   */
+  const actionConsequences = (sheet, action, payload = {}, options = {}) => {
+    const workflow = workflowRef();
+    const role = options.role || 'operario';
+    const available = contextualActions(sheet, { role });
+    const match = available.find(a => a.action === action);
+    if (!match) throw new Error(`Acción "${action}" no es válida para un lote en estado "${sheet.state}"`);
+    if (match.blockedBy) throw new Error(`Acción "${action}" bloqueada por: ${match.blockedBy}`);
+
+    const operatorId = options.operatorId || null;
+    const at = options.at || null;
+    const event = { batchId: sheet.batchId, action, operatorId, at, payload };
+    const bags = options.bolsas || [];
+
+    let bagUpdates = [];
+    let batchPatch = {};
+    let transition = null;
+    let followUps = [];
+
+    // Recalcula activas/aisladas simulando las actualizaciones sobre `bags`,
+    // sin mutar nada: el mismo criterio que usa buildBatchSheet para bagsActive.
+    const recalcCounts = updates => {
+      const updated = bags.map(b => {
+        const u = updates.find(x => x.bagId === b.id);
+        return u ? Object.assign({}, b, u.fields) : b;
+      });
+      return {
+        bagsActive: updated.filter(b => !['descartada', 'contaminada', 'aislada'].includes(b.estado)).length,
+        bagsIsolated: updated.filter(b => b.estado === 'aislada').length,
+      };
+    };
+
+    // Primer destino de la máquina de estados que sea un estado terminal
+    // (closed/discarded/failed): no todo estado tiene 'discarded' disponible
+    // como vecino directo (p.ej. incubation sólo llega a 'failed').
+    const firstValidTerminalTransition = () => {
+      if (!workflow) return null;
+      const targets = workflow.DEFAULT_TRANSITIONS[sheet.state] || [];
+      return targets.find(t => workflow.isTerminalState(t)) || null;
+    };
+
+    const firstValidAdvanceTransition = () => {
+      if (!workflow) return null;
+      const target = (workflow.DEFAULT_TRANSITIONS[sheet.state] || [])[0] || null;
+      return target && workflow.canTransition(sheet.state, target) ? target : null;
+    };
+
+    if (action === 'contamination') {
+      const decision = payload.decision;
+      const bagIds = payload.bagIds || [];
+      const DECISION_REASONS = {
+        aislar: 'se decidió aislar las bolsas afectadas',
+        descartar_bolsa: 'se decidió descartar las bolsas afectadas',
+        descartar_lote: 'se decidió descartar el lote completo',
+        observar: 'se decidió observar en dudosa',
+      };
+      if (decision === 'aislar') {
+        bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.aislada } }));
+      } else if (decision === 'descartar_bolsa') {
+        bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.contaminada } }));
+      } else if (decision === 'descartar_lote') {
+        bagUpdates = bags
+          .filter(b => b.estado !== BAG_STATES.descartada)
+          .map(b => ({ bagId: b.id, fields: { estado: BAG_STATES.descartada } }));
+        transition = firstValidTerminalTransition();
+      } else if (decision === 'observar') {
+        bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.dudosa } }));
+      }
+      batchPatch = recalcCounts(bagUpdates);
+      followUps = [{
+        type: 'reinspection',
+        offsetDays: 3,
+        priority: 'high',
+        reason: `Reinspección tras contaminación: ${DECISION_REASONS[decision] || `decisión "${decision}"`}`,
+        generatedBy: 'contamination',
+      }];
+    } else if (action === 'colonization') {
+      const pct = Number(payload.porcentaje);
+      if (pct >= 100) {
+        transition = firstValidAdvanceTransition();
+      } else {
+        followUps = [{
+          type: 'colonization_check', offsetDays: 7, priority: 'normal',
+          reason: 'Seguimiento de colonización a 7 días', generatedBy: 'colonization',
+        }];
+      }
+    } else if (action === 'harvest') {
+      followUps = [{
+        type: 'harvest', offsetDays: 7, priority: 'normal',
+        reason: 'Siguiente flush estimado a 7 días', generatedBy: 'harvest',
+      }];
+    } else if (action === 'move') {
+      batchPatch = { sala: payload.salaDestinoId };
+    } else if (action === 'advance_stage') {
+      transition = firstValidAdvanceTransition();
+    }
+    // inspection, photo, note, report_problem, discard, etc.: sólo el evento.
+
+    const completes = payload.taskIds ? [...payload.taskIds] : (payload.taskId ? [payload.taskId] : []);
+
+    return Object.freeze({ event, bagUpdates, batchPatch, transition, followUps, completes });
+  };
+
+  /**
+   * Aplica las consecuencias declaradas por `actionConsequences`: encadena el
+   * evento con `appendBatchEvent` y, si hay transición, la valida y encadena
+   * como `batch_state_transition` — el mismo criterio que `applyAction`. Sigue
+   * siendo puro: no persiste nada, sólo devuelve lo que la UI debe guardar.
+   *
+   * @param {object} sheet Ficha construida por buildBatchSheet
+   * @param {object} consequences Objeto devuelto por actionConsequences
+   * @param {object} [options] { log } Historial existente
+   * @returns {{log:Array<object>, state:string, bagUpdates:Array, batchPatch:object, followUps:Array}}
+   */
+  const applyConsequences = (sheet, consequences, { log = [] } = {}) => {
+    const workflow = workflowRef();
+    let nextLog = appendBatchEvent(log, consequences.event);
+    let state = sheet.state;
+
+    if (consequences.transition) {
+      if (!workflow || !workflow.canTransition(sheet.state, consequences.transition)) {
+        throw new Error(`Transición inválida de "${sheet.state}" a "${consequences.transition}"`);
+      }
+      const transition = workflow.transitionEvent({
+        batchId: sheet.batchId, from: sheet.state, to: consequences.transition,
+        operatorId: consequences.event.operatorId, at: consequences.event.at || undefined,
+        reason: (consequences.event.payload && consequences.event.payload.motivo) || null,
+      });
+      state = consequences.transition;
+      nextLog = appendBatchEvent(nextLog, {
+        batchId: sheet.batchId, action: 'advance_stage', type: 'batch_state_transition',
+        operatorId: consequences.event.operatorId, at: transition.at,
+        payload: { from: transition.from, to: transition.to, reason: transition.reason },
+      });
+    }
+
+    return {
+      log: nextLog,
+      state,
+      bagUpdates: consequences.bagUpdates,
+      batchPatch: consequences.batchPatch,
+      followUps: consequences.followUps,
+    };
+  };
+
+  /**
    * Indicadores de éxito del modelo de ficha, calculados sobre las fichas ya
    * construidas. Lo que no se puede derivar de una ficha (intentos de transición
    * inválida, operaciones iniciadas por QR) se inyecta como contadores del runtime.
@@ -641,6 +832,8 @@
   const api = {
     LEGACY_STATE_ALIASES,
     STATE_LABELS,
+    BAG_STATES,
+    BAG_STATE_LABELS,
     ACTION_CATALOG,
     ACTION_PRIORITY,
     MAX_CONTEXTUAL_ACTIONS,
@@ -653,6 +846,8 @@
     verifyEventChain,
     contaminationEvent,
     applyAction,
+    actionConsequences,
+    applyConsequences,
     batchScoreboard,
   };
 

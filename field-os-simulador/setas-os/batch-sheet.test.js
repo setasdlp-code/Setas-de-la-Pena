@@ -255,3 +255,99 @@ test('el marcador de indicadores resume la salud de trazabilidad de la operació
   assert.ok(board.avgTraceabilityCompletenessPct > 0);
   assert.equal(sheetApi.batchScoreboard([]).batches, 0);
 });
+
+test('aislar una bolsa la mueve a "aislada", ajusta contadores y propone reinspección a D+3', () => {
+  const s = build();
+  const consequences = sheetApi.actionConsequences(s, 'contamination',
+    { foto: 'data:x', extension: '1_bolsa', ubicacion: 'base', decision: 'aislar', bagIds: ['B1'] },
+    { operatorId: 'op-1', bolsas: bolsas.filter(b => b.loteId === 'LOTE_1') });
+
+  assert.equal(consequences.bagUpdates.length, 1);
+  assert.equal(consequences.bagUpdates[0].bagId, 'B1');
+  assert.equal(consequences.bagUpdates[0].fields.estado, 'aislada');
+  // 6 bolsas: B3 ya contaminada, B1 pasa a aislada → activas 4, aisladas 1.
+  assert.equal(consequences.batchPatch.bagsActive, 4);
+  assert.equal(consequences.batchPatch.bagsIsolated, 1);
+  assert.equal(consequences.followUps.length, 1);
+  assert.equal(consequences.followUps[0].type, 'reinspection');
+  assert.equal(consequences.followUps[0].offsetDays, 3);
+  assert.equal(consequences.followUps[0].priority, 'high');
+  assert.match(consequences.followUps[0].reason, /aislar/);
+  assert.equal(consequences.transition, null);
+  assert.ok(Object.isFrozen(consequences));
+
+  const result = sheetApi.applyConsequences(s, consequences, {});
+  assert.equal(result.log.length, 1);
+  assert.equal(result.log[0].action, 'contamination');
+  assert.equal(result.state, 'incubation'); // aislar no transiciona el lote
+});
+
+test('descartar el lote completo mueve todas las bolsas activas y propone una transición terminal válida', () => {
+  const s = build();
+  const loteBolsas = bolsas.filter(b => b.loteId === 'LOTE_1');
+  const consequences = sheetApi.actionConsequences(s, 'contamination',
+    { foto: 'data:x', extension: 'general', ubicacion: 'toda la bolsa', decision: 'descartar_lote', bagIds: [] },
+    { operatorId: 'op-1', bolsas: loteBolsas });
+
+  // Las 5 bolsas no descartadas aún (B3 ya estaba contaminada, también se mueve).
+  assert.equal(consequences.bagUpdates.length, 6);
+  assert.ok(consequences.bagUpdates.every(u => u.fields.estado === 'descartada'));
+  assert.equal(consequences.batchPatch.bagsActive, 0);
+  // incubation sólo llega a un terminal vía 'failed' (no tiene 'discarded' directo).
+  assert.equal(consequences.transition, 'failed');
+  assert.ok(workflow.isTerminalState(consequences.transition));
+
+  const result = sheetApi.applyConsequences(s, consequences, {});
+  assert.equal(result.state, 'failed');
+  assert.equal(result.log.length, 2);
+  assert.equal(result.log[1].type, 'batch_state_transition');
+  assert.equal(sheetApi.verifyEventChain(result.log).valid, true);
+});
+
+test('colonización al 100% no deja seguimiento y propone avanzar etapa; por debajo deja D+7', () => {
+  const s = build();
+  const full = sheetApi.actionConsequences(s, 'colonization', { porcentaje: 100 }, { operatorId: 'op-1' });
+  assert.deepEqual(full.followUps, []);
+  assert.equal(full.transition, 'maturation'); // primera transición válida desde incubation
+
+  const partial = sheetApi.actionConsequences(s, 'colonization', { porcentaje: 60 }, { operatorId: 'op-1' });
+  assert.equal(partial.transition, null);
+  assert.equal(partial.followUps.length, 1);
+  assert.equal(partial.followUps[0].type, 'colonization_check');
+  assert.equal(partial.followUps[0].offsetDays, 7);
+});
+
+test('actionConsequences rechaza una acción inválida para el estado y una acción bloqueada nombrando el bloqueo', () => {
+  const s = build();
+  assert.throws(
+    () => sheetApi.actionConsequences(s, 'harvest', { pesoFresco: 100, flush: 1 }, { operatorId: 'op-1' }),
+    /no es válida para un lote en estado "incubation"/
+  );
+
+  const contaminated = build({
+    bolsas: bolsas.map(b => (b.loteId === 'LOTE_1' ? Object.assign({}, b, { estado: 'contaminada' }) : b)),
+  });
+  assert.throws(
+    () => sheetApi.actionConsequences(contaminated, 'advance_stage', {}, { operatorId: 'op-1' }),
+    /bloqueada por: contamination_threshold/
+  );
+});
+
+test('applyConsequences deja el log encadenado y verificable', () => {
+  const s = build();
+  const consequences = sheetApi.actionConsequences(s, 'move', { salaDestinoId: 'incubacion_02' }, { operatorId: 'op-1' });
+  assert.equal(consequences.batchPatch.sala, 'incubacion_02');
+  const result = sheetApi.applyConsequences(s, consequences, { log: [] });
+  assert.equal(sheetApi.verifyEventChain(result.log).valid, true);
+  assert.equal(result.log[0].action, 'move');
+});
+
+test('la ficha expone bagsIsolated y la anomalía de aislamiento', () => {
+  const withIsolated = build({
+    bolsas: bolsas.map(b => (b.id === 'B1' ? Object.assign({}, b, { estado: 'aislada' }) : b)),
+  });
+  assert.equal(withIsolated.bagsIsolated, 1);
+  assert.equal(withIsolated.bagsActive, 4); // B1 aislada y B3 contaminada no cuentan
+  assert.ok(withIsolated.anomalies.some(a => a.kind === 'isolation' && a.severity === 'warning'));
+  assert.equal(build().bagsIsolated, 0);
+});
