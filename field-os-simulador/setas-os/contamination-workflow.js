@@ -149,12 +149,14 @@
    * Determina el estado de ciclo de vida destino según la decisión y el porcentaje de pérdida.
    */
   function determineTargetLifecycleState(currentState, decision, lossPct = 0) {
-    if (decision === 'discard' || lossPct >= 50) {
-      return 'discarded';
-    }
-    if (decision === 'quarantine' || (lossPct >= 20 && decision !== 'isolate_bags')) {
-      return 'quarantine';
-    }
+    // La decisión explícita del operario manda: el % de merma sólo alimenta la
+    // sugerencia (suggestedAction). Antes ≥50% forzaba el descarte aunque el
+    // operario hubiera elegido extracción quirúrgica o cuarentena.
+    if (decision === 'discard') return 'discarded';
+    if (decision === 'quarantine') return 'quarantine';
+    if (decision === 'isolate_bags') return currentState;
+    if (lossPct >= 50) return 'discarded';
+    if (lossPct >= 20) return 'quarantine';
     return currentState;
   }
 
