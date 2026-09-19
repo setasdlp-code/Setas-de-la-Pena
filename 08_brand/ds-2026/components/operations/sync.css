@@ -34,7 +34,7 @@
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
   background: var(--surface-panel);
-  border: 1px dashed var(--status-warn);
+  border: 1px dashed var(--status-warn-marker);
   font-size: 13px;
   color: var(--text-primary);
 }
