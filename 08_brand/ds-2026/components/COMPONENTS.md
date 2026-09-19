@@ -1,10 +1,9 @@
-# Component spec sheets · DS-2026
+# Component spec sheets · DS-2026 · Criterio Edition
 
-Sixteen component families. Each sheet gives **anatomy** (the parts, in DOM order),
+Canonical component families. Each sheet gives **anatomy** (the parts, in DOM order),
 **states**, **grid span and mode**, and the **rules** that are not negotiable.
 
-Import order is always: `tokens/tokens.css` → `components/base.css` →
-`components/components.css`.
+Prefer one public bundle: `operations.css` for Setas OS, `market.css` for commercial/editorial surfaces, or `index.css` when both families are required. Do not stack public bundles.
 
 ---
 
@@ -60,8 +59,7 @@ The field object: one production lot at a glance.
 
 **Span** 3–4 · **Mode** `field`, also used in `control` asides.
 
-**States** · `--ok` moss · `--warn` ochre bar + `WARNING_TEXT` word ·
-`--error` rust. The modifier drives bar fill **and** word colour together.
+**States** · `--ok` moss · `--warn` dark ochre marker (`--status-warn-marker`) + `--status-warn-text` · `--error` Coral 700. Raw Ochre 500 never carries a thin status rule.
 
 **Rules.** The status bar is a 4px rule — never a pill, badge, or rounded chip.
 Line-art specimens use `--plate` (fixed height, `contain`, paper ground); photos
@@ -116,8 +114,7 @@ appears on field print at that size.
 **Span** 4–12 · **Mode** any · **States** `--ok`, `--warn`, `--error`.
 
 **Rules.** There is no "info" state — informational text is body text. In
-`--warn` the label uses `WARNING_TEXT #826326`, never raw ochre (2.39:1). The
-message always sits in `INK` on the tint. The 4px rule carries the pigment.
+`--warn` the label uses `WARNING_TEXT #826326`, never raw ochre (2.39:1). The message always sits in `INK` on the tint. Warning rules use `--status-warn-marker`, not low-contrast Ochre 500.
 
 ---
 
@@ -173,7 +170,7 @@ and a centered `.sdp-pack__duo-badge` ("SELECCIÓN CULINARIA") above the co-pack
 matter how long the copy runs. Sections are hairline-topped `__sect` blocks:
 ingredients, preparación, conservación, trazabilidad + QR.
 
-**Mode** `archive` · **States** none.
+**Mode** `culinary` (or `archive` for specimen/editorial presentations) · **States** none.
 
 **Rules.** The front carries **no operational codes**. No room name, no operator
 name, ever reaches a customer surface — traceability goes through the QR. Grain
@@ -201,7 +198,7 @@ SOP. Every SOP carries a revision number and a stop condition.
 
 ## 12 · Button — `.sdp-btn`
 
-Variants: base, `--primary` and `--subtle`. Native `button` and `a` elements
+Variants: base, `--primary`, `--secondary`, `--accent`, `--danger` and `--field`. Coral 500 is decorative; text-bearing terracotta actions use the accessible `action.accent` role (Coral 700). Native `button` and `a` elements
 share the same 44px minimum target. Supported states are hover, active,
 focus-visible, disabled and `aria-busy="true"`. A busy button keeps its label so
 the action does not become ambiguous.
