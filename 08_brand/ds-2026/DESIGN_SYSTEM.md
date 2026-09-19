@@ -17,6 +17,46 @@ machine emitted. Nothing is decoration.
 
 ---
 
+## 0 · Canonical Architecture (4-Tier Stack)
+
+```text
+DS-2026 · Criterio
+│
+├── CORE
+│   typography
+│   color
+│   spacing
+│   grid
+│   interaction
+│
+├── SHARED
+│   status
+│   metadata
+│   provenance
+│   actions
+│   forms
+│
+├── OPERATIONS
+│   lot
+│   room
+│   task
+│   event
+│   inventory
+│   telemetry
+│   scan/capture
+│   sync
+│
+└── SETAS OS
+    Hoy
+    Lotes
+    Salas
+    Inventario
+    Recetas
+    Conocimiento
+```
+
+---
+
 ## 1 · Foundations
 
 ### 1.1 Typefaces

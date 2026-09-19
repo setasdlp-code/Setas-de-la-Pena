@@ -65,11 +65,22 @@ check('0 screen text < 11px (micro floor enforcement)', () => {
 
 // Gate 2: Touch targets >= 44px in FIELD components
 check('0 field touch targets < 44px (touch safety floor)', () => {
-  const actionFile = path.join(DS_ROOT, 'components', 'shared', 'action.css');
-  const formsFile = path.join(DS_ROOT, 'components', 'shared', 'forms.css');
-  const content = fs.readFileSync(actionFile, 'utf8') + '\n' + fs.readFileSync(formsFile, 'utf8');
-
-  if (!content.includes('min-height: 48px') && !content.includes('min-height: 44px')) {
+  const cssDir = path.join(DS_ROOT, 'components');
+  let foundFieldMin = false;
+  function search(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) search(full);
+      else if (entry.name.endsWith('.css')) {
+        const content = fs.readFileSync(full, 'utf8');
+        if (content.includes('min-height: 48px') || content.includes('min-height: 44px')) {
+          foundFieldMin = true;
+        }
+      }
+    }
+  }
+  search(cssDir);
+  if (!foundFieldMin) {
     throw new Error('Field buttons and inputs must declare min-height >= 44px');
   }
 });
