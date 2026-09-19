@@ -8,13 +8,18 @@
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/motion.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/styles.css">
 <link rel="stylesheet" href="_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/tokens/setas-os-components.css">
-<link rel="stylesheet" href="ds-2026/tokens/tokens.css">
-<link rel="stylesheet" href="ds-2026/components/base.css">
-<link rel="stylesheet" href="ds-2026/components/components.css">
-<link rel="stylesheet" href="ds-2026/components/editorial.css">
-<link rel="stylesheet" href="ds-2026/components/instrument.css">
+<link rel="stylesheet" href="ds-2026/operations.css">
 <link rel="stylesheet" href="fieldos-tokens.css"><link rel="stylesheet" href="sim.css">
-<style>html,body{margin:0;background:var(--paper-1,#efebe0);}</style></head><body data-mode="control">
+<style>html,body{margin:0;background:var(--paper-1,#efebe0);}</style>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (err) {
+      if (window.console) console.warn('[Harness] service worker no registrado:', err && err.message);
+    });
+  });
+}
+</script></head><body>
 <div id="root" class="sim-root"></div>
 <script>window.__setasAuthState=true;</script>
 <script>
