@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 941916c046faec512ddc4336a4e63eac9037b2fe7268bdf79124bb9ea913efab
+// source-hash: 696d971ab1c63a793b563f27bc6952cb3b995eb5f150053e8dfd5435838e0d70
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2972,6 +2972,8 @@ function SimuladorShell(props) {
   const [saveSyncErr, setSaveSyncErr] = useState("");
   const [loteSyncErr, setLoteSyncErr] = useState("");
   const [bitSyncErr, setBitSyncErr] = React.useState("");
+  const [showDayClose, setShowDayClose] = useState(false);
+  const [dayCloseNote, setDayCloseNote] = useState(null);
   const [cmpRecipe, setCmpRecipe] = useState([]);
   const [cmpKey, setCmpKey] = useState("p_ostreatus_gris");
   const [tab, setTab] = useState(() => {
@@ -3399,6 +3401,7 @@ function SimuladorShell(props) {
   const [bitLotes, setBitLotes] = useState([]);
   const [bitBolsas, setBitBolsas] = useState([]);
   const [bitCosechas, setBitCosechas] = useState([]);
+  const [bitTasks, setBitTasks] = useState([]);
   const [bitTab, setBitTab] = useState("bit_dash");
   const [bitActiveLoteId, setBitActiveLoteId] = useState(null);
   const applyBitTab = (raw, hasActiveLote = !!bitActiveLoteId) => {
@@ -3651,9 +3654,11 @@ function SimuladorShell(props) {
       const bl = localStorage.getItem("sdp_bit_lotes");
       const bb = localStorage.getItem("sdp_bit_bolsas");
       const bc = localStorage.getItem("sdp_bit_cosechas");
+      const bt = localStorage.getItem("sdp_bit_tasks");
       if (bl) setBitLotes(JSON.parse(bl));
       if (bb) setBitBolsas(JSON.parse(bb));
       if (bc) setBitCosechas(JSON.parse(bc));
+      if (bt) setBitTasks(JSON.parse(bt));
     } catch (e) {
       setNoticeDlg({ title: "No se pudo cargar la Bitácora", msg: "Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes." });
     }
@@ -4551,6 +4556,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
       console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
     }
   };
+  const mergeIntoTasks = (nuevasTareas = []) => {
+    if (!nuevasTareas.length) return;
+    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    if (!taskEngine) return;
+    setBitTasks((prev) => {
+      const upd = taskEngine.mergeTasks(prev, nuevasTareas);
+      try {
+        localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+  };
+  const completeBitTasks = (taskIds = [], eventId) => {
+    if (!taskIds.length || !eventId) return;
+    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    if (!taskEngine) return;
+    setBitTasks((prev) => {
+      let upd = prev;
+      taskIds.forEach((taskId) => {
+        if (upd.some((t) => t.id === taskId && t.status === "pending")) {
+          upd = taskEngine.completeTask(upd, taskId, eventId);
+        }
+      });
+      try {
+        localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+  };
   const addBitCosecha = (cosecha) => {
     const e = { ...cosecha, id: "COS_" + Date.now() };
     setBitCosechas((prev) => {
@@ -5233,22 +5271,44 @@ BATCH (${numBags}×${kgBag} kg):
   };
   const commitSheetAction = (sheet, lote, action, payload = {}) => {
     if (!batchSheetApi || !sheet) return false;
+    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
     try {
-      const result = batchSheetApi.applyAction({
-        sheet,
-        action,
+      const bolsasDelLote = bitBolsas.filter((b) => b.loteId === lote.id);
+      const consequences = batchSheetApi.actionConsequences(sheet, action, payload, {
+        role: operatorRole,
         operatorId: lote.operador || "operador-local",
-        payload,
-        log: lote.lifecycleEvents || [],
-        role: operatorRole
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        bolsas: bolsasDelLote
       });
-      const patch = { lifecycleEvents: result.log };
-      if (result.transitioned) {
-        patch.lifecycleState = result.state;
-        const legacyByState = Object.entries(legacyLifecycle).find(([, v]) => v === result.state);
+      const applied = batchSheetApi.applyConsequences(sheet, consequences, { log: lote.lifecycleEvents || [] });
+      const patch = { lifecycleEvents: applied.log, ...applied.batchPatch || {} };
+      if (consequences.transition) {
+        patch.lifecycleState = applied.state;
+        const legacyByState = Object.entries(legacyLifecycle).find(([, v]) => v === applied.state);
         if (legacyByState) patch.estado = legacyByState[0];
       }
       updateBitLote(lote.id, patch);
+      (applied.bagUpdates || []).forEach((u) => updateBitBolsa(u.bagId, u.fields));
+      if (consequences.transition && taskEngine) {
+        const sopTasks = taskEngine.tasksFromTransition({
+          batchId: lote.id,
+          toState: consequences.transition,
+          at: (/* @__PURE__ */ new Date()).toISOString()
+        });
+        mergeIntoTasks(sopTasks);
+      }
+      if ((applied.followUps || []).length && taskEngine) {
+        const followUpTasks = taskEngine.tasksFromFollowUps(applied.followUps, {
+          objectId: lote.id,
+          objectType: "batch",
+          at: (/* @__PURE__ */ new Date()).toISOString()
+        });
+        mergeIntoTasks(followUpTasks);
+      }
+      if ((consequences.completes || []).length) {
+        const eventId = (applied.log[applied.log.length - 1] || {}).id || consequences.event.id;
+        completeBitTasks(consequences.completes, eventId);
+      }
       return true;
     } catch (err) {
       setNoticeDlg({ title: "Acción no válida ahora", msg: err.message });
@@ -5346,32 +5406,82 @@ BATCH (${numBags}×${kgBag} kg):
   }));
   const TodayV2 = () => {
     const now = Date.now();
-    const source = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado)).map((lote, index) => {
-      const stats = calcLoteStats(lote.id);
-      const contaminated = stats && stats.contPct > 0;
-      const inoculated = Date.parse(lote.fechaInoculacion || "");
-      const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((now - inoculated) / 864e5)) : 0;
-      return {
-        id: lote.id,
-        lote,
-        severity: stats && stats.contPct >= 20 ? "critical" : void 0,
-        blocked: contaminated && stats.contPct < 20,
-        dueAt: !contaminated && age >= 14 ? new Date(now - (index + 1) * 36e5).toISOString() : new Date(now + (index + 1) * 36e5).toISOString(),
-        title: contaminated ? "Revisar contaminación" : lote.estado === "fructificacion" ? "Registrar cosecha" : "Inspeccionar colonización",
-        why: `${lote.especie || "Lote"} · ${lifecycleLabel[legacyLifecycle[lote.estado]] || lote.estado} · día ${age}`
+    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    React.useEffect(() => {
+      if (bitTasks.length > 0) return;
+      if (!activeLotes.length) return;
+      if (!taskEngine) return;
+      const seeded = activeLotes.flatMap((lote) => {
+        const toState = lote.lifecycleState || legacyLifecycle[lote.estado] || lote.estado;
+        try {
+          return taskEngine.tasksFromTransition({ batchId: lote.id, toState, at: lote.createdAt || new Date(now).toISOString(), nowMs: now });
+        } catch (e) {
+          return [];
+        }
+      });
+      if (seeded.length) mergeIntoTasks(seeded);
+    }, [bitTasks.length, activeLotes.length]);
+    const index = { batches: {}, rooms: ROOMS_CONFIG };
+    activeLotes.forEach((lote) => {
+      index.batches[lote.id] = {
+        code: lote.codigo,
+        species: lote.especie,
+        stateLabel: lifecycleLabel[legacyLifecycle[lote.estado]] || lote.estado,
+        room: lote.sala || lote.ubicacion || null
       };
     });
-    const queue = workflow ? workflow.buildTodayQueue(source, now) : source;
-    const groups = [["critical", "Crítico"], ["overdue", "Vencido"], ["now", "Ahora"], ["blocked", "Bloqueos"], ["later", "Después"], ["context", "Contexto"]];
+    const queue = taskEngine ? taskEngine.buildTodayFromTasks(bitTasks, index, now) : [];
+    const stats = taskEngine ? taskEngine.taskStats(bitTasks, now) : null;
+    const groups = [["critical", "Crítico"], ["overdue", "Vencido"], ["now", "Ahora"], ["blocked", "Bloqueada"], ["later", "Después"], ["context", "Sin fecha"]];
     return /* @__PURE__ */ React.createElement("section", { className: "os-today-v2", "data-testid": "ux-v2-today" }, /* @__PURE__ */ React.createElement("div", { className: "os-page-kicker" }, "Operación · turno actual"), /* @__PURE__ */ React.createElement("h1", { className: "os-page-title" }, "Hoy"), /* @__PURE__ */ React.createElement("button", { className: "os-scan-target", type: "button", onClick: () => {
       const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
       setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
       setShowQrSheet(true);
     } }, "Escanear lote o registrar evento"), /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveAlertsSection, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null), queue.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado."), groups.map(([bucket, label]) => {
-      const rows = queue.filter((item) => item.bucket === bucket);
-      if (!rows.length) return null;
-      return /* @__PURE__ */ React.createElement("section", { className: "os-today-group", key: bucket }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, label), /* @__PURE__ */ React.createElement("span", null, rows.length)), rows.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, className: "os-task-row " + (bucket === "critical" ? "os-alert-row--critical" : "") }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-task-row__title" }, item.title), /* @__PURE__ */ React.createElement("div", { className: "os-task-row__meta" }, item.lote.codigo, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openBatchDetail(item.id) }, "Abrir lote"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(item.id) }, "🖨")))));
-    }));
+      const bucketRows = queue.filter((r) => r.bucket === bucket);
+      if (!bucketRows.length) return null;
+      return /* @__PURE__ */ React.createElement("section", { className: "os-today-group", key: bucket }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, label), /* @__PURE__ */ React.createElement("span", null, bucketRows.length)), bucketRows.map((row) => /* @__PURE__ */ React.createElement("div", { key: row.taskId, "data-testid": "today-task-row", className: "os-task-row " + (bucket === "critical" ? "os-alert-row--critical" : "") }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-task-row__title" }, row.what), /* @__PURE__ */ React.createElement("div", { className: "os-task-row__meta" }, row.where, " · ", row.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, row.objectType === "batch" ? /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openBatchDetail(row.objectId) }, row.action) : /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", disabled: true }, row.action), row.objectType === "batch" && /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(row.objectId) }, "🖨")))));
+    }), stats && /* @__PURE__ */ React.createElement("div", { className: "os-today-stats", "data-testid": "today-task-stats" }, stats.done, " completadas · ", stats.pending, " pendientes", stats.overdue ? ` (${stats.overdue} vencidas)` : ""), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", "data-testid": "open-day-close", onClick: () => {
+      setDayCloseNote(null);
+      setShowDayClose(true);
+    } }, "Cerrar jornada"), showDayClose && (() => {
+      const dayCloseApi = typeof window !== "undefined" ? window.SetasDayClose : null;
+      if (!dayCloseApi) return null;
+      const shiftStartMs = new Date(new Date(now).toDateString()).getTime();
+      const allEvents = bitLotes.flatMap((l) => l.lifecycleEvents || []);
+      const sheets = activeLotes.map((l) => buildSheetFor(l)).filter(Boolean);
+      const pendingSyncCount = bitSyncErr ? 1 : 0;
+      const report = dayCloseApi.buildDayCloseReport({
+        events: allEvents,
+        tasks: bitTasks,
+        sheets,
+        pendingSyncCount,
+        shiftStartMs,
+        nowMs: now,
+        operatorId: null
+      });
+      return /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => {
+        setShowDayClose(false);
+        setDayCloseNote(null);
+      }, label: "Cerrar jornada", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "os-page-kicker" }, "Cierre de jornada"), /* @__PURE__ */ React.createElement("h2", null, "Reporte del turno"), /* @__PURE__ */ React.createElement("div", { "data-testid": "day-close-report", style: { display: "flex", flexDirection: "column", gap: 4, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("div", null, "Eventos registrados: ", report.eventsLogged), /* @__PURE__ */ React.createElement("div", null, "Tareas completadas: ", report.tasksCompleted), /* @__PURE__ */ React.createElement("div", null, "Tareas pendientes: ", report.tasksPending, " (", report.tasksOverdue, " vencidas)"), /* @__PURE__ */ React.createElement("div", null, "Incidentes abiertos: ", report.openIncidents.length), /* @__PURE__ */ React.createElement("div", null, "Trabajo de mañana: ", report.tomorrow.length, " tipo(s)"), /* @__PURE__ */ React.createElement("div", null, "Cambios sin sincronizar: ", report.pendingSync)), !report.readyToClose && /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "day-close-blockers", style: { marginTop: 10, color: "var(--status-error, #c53030)" } }, /* @__PURE__ */ React.createElement("strong", null, "No se puede cerrar todavía:"), /* @__PURE__ */ React.createElement("ul", null, report.blockers.map((b, i) => /* @__PURE__ */ React.createElement("li", { key: i }, b)))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "os-action", style: { marginTop: 14 }, disabled: !report.readyToClose, onClick: () => {
+        try {
+          const closed = dayCloseApi.closeDay(report, { operatorId: null, at: now });
+          setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
+        } catch (err) {
+          setNoticeDlg({ title: "No se pudo cerrar el turno", msg: err.message });
+        }
+      } }, "Confirmar cierre"), dayCloseNote && /* @__PURE__ */ React.createElement(
+        "textarea",
+        {
+          readOnly: true,
+          value: dayCloseNote,
+          "data-testid": "day-close-handoff-note",
+          onClick: (e) => e.target.select(),
+          style: { width: "100%", minHeight: 220, marginTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" }
+        }
+      ));
+    })());
   };
   const BatchDetailV2 = ({ lote }) => {
     const stats = calcLoteStats(lote.id);
@@ -6091,7 +6201,8 @@ BATCH (${numBags}×${kgBag} kg):
     if (!lote) return null;
     const bolsas = bitBolsas.filter((b) => b.loteId === bitActiveLoteId);
     const stats = calcLoteStats(bitActiveLoteId);
-    const EB = { sana: { c: "var(--moss-700)", l: "Sana" }, contaminada: { c: "var(--coral-700)", l: "Contaminada" }, dudosa: { c: "var(--ochre-500)", l: "Dudosa" }, descartada: { c: "var(--ink-400)", l: "Descartada" } };
+    const bagStateLabels = batchSheetApi && batchSheetApi.BAG_STATE_LABELS || {};
+    const EB = { sana: { c: "var(--moss-700)", l: "Sana" }, contaminada: { c: "var(--coral-700)", l: "Contaminada" }, dudosa: { c: "var(--ochre-500)", l: "Dudosa" }, aislada: { c: "var(--slate-500)", l: bagStateLabels.aislada || "Aislada" }, descartada: { c: "var(--ink-400)", l: "Descartada" } };
     return /* @__PURE__ */ React.createElement("div", { className: "panel", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, lote.codigo), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: 17, color: "var(--ink-900)" } }, lote.especie), lote.especieCientifico && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, lote.especieCientifico)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
       "button",
       {

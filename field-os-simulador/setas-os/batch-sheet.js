@@ -720,7 +720,9 @@
         offsetDays: 3,
         priority: 'high',
         reason: `Reinspección tras contaminación: ${DECISION_REASONS[decision] || `decisión "${decision}"`}`,
-        generatedBy: 'contamination',
+        // 'incident' es el vocabulario de task-engine.js para seguimiento nacido
+        // de un incidente de campo; `ref` traza al lote que originó la contaminación.
+        generatedBy: { source: 'incident', ref: sheet.batchId },
       }];
     } else if (action === 'colonization') {
       const pct = Number(payload.porcentaje);
@@ -729,20 +731,30 @@
       } else {
         followUps = [{
           type: 'colonization_check', offsetDays: 7, priority: 'normal',
-          reason: 'Seguimiento de colonización a 7 días', generatedBy: 'colonization',
+          reason: 'Seguimiento de colonización a 7 días',
+          generatedBy: { source: 'operator', ref: sheet.batchId },
         }];
       }
     } else if (action === 'harvest') {
       followUps = [{
         type: 'harvest', offsetDays: 7, priority: 'normal',
-        reason: 'Siguiente flush estimado a 7 días', generatedBy: 'harvest',
+        reason: 'Siguiente flush estimado a 7 días',
+        generatedBy: { source: 'operator', ref: sheet.batchId },
       }];
     } else if (action === 'move') {
       batchPatch = { sala: payload.salaDestinoId };
     } else if (action === 'advance_stage') {
       transition = firstValidAdvanceTransition();
+    } else if (ACTION_CATALOG[action] && ACTION_CATALOG[action].transitionsTo) {
+      // Comportamiento por defecto: cualquier acción del catálogo que declare
+      // `transitionsTo` (prepare_mix, start_thermal_treatment,
+      // complete_thermal_treatment, inoculate, discard, …) propone esa
+      // transición. No se revalida aquí la máquina de estados: applyConsequences
+      // ya la valida contra workflow.canTransition, el mismo criterio que usa
+      // applyAction — no se duplica esa lógica.
+      transition = ACTION_CATALOG[action].transitionsTo;
     }
-    // inspection, photo, note, report_problem, discard, etc.: sólo el evento.
+    // inspection, photo, note, report_problem, etc.: sólo el evento.
 
     const completes = payload.taskIds ? [...payload.taskIds] : (payload.taskId ? [payload.taskId] : []);
 

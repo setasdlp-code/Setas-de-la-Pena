@@ -45,6 +45,8 @@ const PROTECTED_APP_SCRIPTS = [
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada
   // llamada, no al cargar, así que puede ir aquí sin atarse al orden de listas.
   "../batch-sheet.js",
+  "../task-engine.js",
+  "../day-close.js",
   "../climate-math.js",
   // El puente de telemetría en vivo depende del contrato y del adaptador ESP32
   // en ese orden: cada uno lee el global que publica el anterior.

@@ -24,10 +24,49 @@ test('production shell stages the canonical workflow behind Auth before the Reac
   assert.match(authGate, /await import\("\.\.\/simulador-app\.js"\)/, 'Auth carga el shell React al terminar el runtime protegido');
 });
 
-test('production Hoy is ordered by the shared workflow contract', () => {
+test('production Hoy is driven by the task engine, not derived ad hoc from lotes', () => {
   assert.match(source, /data-testid="ux-v2-today"/);
-  assert.match(source, /workflow\.buildTodayQueue\(source,now\)/);
-  assert.match(source, /openBatchDetail\(item\.id\)/);
+  assert.match(source, /taskEngine\.buildTodayFromTasks\(bitTasks,index,now\)/);
+  assert.match(source, /openBatchDetail\(row\.objectId\)/);
+  // Las cuatro respuestas de la tarea (qué, dónde, por qué, qué acción) se
+  // renderizan tal cual las entrega buildTodayFromTasks, sin texto inventado.
+  assert.match(source, /\{row\.what\}/);
+  assert.match(source, /\{row\.where\} · \{row\.why\}/);
+  assert.match(source, /os-action" type="button" onClick=\{\(\)=>openBatchDetail\(row\.objectId\)\}>\{row\.action\}/);
+  // Siembra única para quien ya tiene lotes pero todavía no tiene tareas.
+  assert.match(source, /taskEngine\.tasksFromTransition\(\{batchId:lote\.id,toState,at:lote\.createdAt/);
+  assert.match(source, /mergeIntoTasks\(seeded\)/);
+  // Resumen de taskStats al pie.
+  assert.match(source, /taskEngine\.taskStats\(bitTasks,now\)/);
+  assert.match(source, /data-testid="today-task-stats"/);
+});
+
+test('batch action commit runs the full consequence cascade', () => {
+  assert.match(source, /batchSheetApi\.actionConsequences\(sheet,action,payload,\{/);
+  assert.match(source, /batchSheetApi\.applyConsequences\(sheet,consequences,\{log:lote\.lifecycleEvents\|\|\[\]\}\)/);
+  assert.match(source, /applied\.bagUpdates\|\|\[\]\)\.forEach\(u=>updateBitBolsa\(u\.bagId,u\.fields\)\)/);
+  assert.match(source, /taskEngine\.tasksFromTransition\(\{\s*batchId:lote\.id,toState:consequences\.transition/);
+  assert.match(source, /taskEngine\.tasksFromFollowUps\(applied\.followUps/);
+  assert.match(source, /completeBitTasks\(consequences\.completes,eventId\)/);
+});
+
+test('day close is a modal built from buildDayCloseReport and buildHandoffNote', () => {
+  assert.match(source, /data-testid="open-day-close"/);
+  assert.match(source, /dayCloseApi\.buildDayCloseReport\(\{/);
+  assert.match(source, /data-testid="day-close-report"/);
+  assert.match(source, /data-testid="day-close-blockers"/);
+  assert.match(source, /dayCloseApi\.closeDay\(report,/);
+  assert.match(source, /dayCloseApi\.buildHandoffNote\(closed\.report\)/);
+  assert.match(source, /data-testid="day-close-handoff-note"/);
+});
+
+test('bag state selector includes the aislada state from BAG_STATE_LABELS', () => {
+  assert.match(source, /bagStateLabels\.aislada\|\|'Aislada'/);
+  assert.match(source, /aislada:\{c:'var\(--slate-500\)',l:bagStateLabels\.aislada/);
+});
+
+test('task-engine and day-close ship behind the auth gate alongside batch-sheet', () => {
+  assert.match(authGate, /"\.\.\/batch-sheet\.js",[\s\S]*"\.\.\/task-engine\.js",[\s\S]*"\.\.\/day-close\.js"/);
 });
 
 test('production Hoy uses the operational cockpit without a duplicate UX v2 section above it', () => {

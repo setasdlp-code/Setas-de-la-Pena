@@ -4276,6 +4276,8 @@ function SimuladorShell(props){
   const [saveSyncErr,setSaveSyncErr]=useState('');
   const [loteSyncErr,setLoteSyncErr]=useState('');
   const [bitSyncErr,setBitSyncErr]=React.useState('');
+  const [showDayClose,setShowDayClose]=useState(false);
+  const [dayCloseNote,setDayCloseNote]=useState(null);
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{
@@ -4704,6 +4706,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [bitLotes,setBitLotes]=useState([]);
   const [bitBolsas,setBitBolsas]=useState([]);
   const [bitCosechas,setBitCosechas]=useState([]);
+  // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
+  // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
+  const [bitTasks,setBitTasks]=useState([]);
   const [bitTab,setBitTab]=useState('bit_dash');
   const [bitActiveLoteId,setBitActiveLoteId]=useState(null);
   const applyBitTab=(raw,hasActiveLote=!!bitActiveLoteId)=>{
@@ -4935,8 +4940,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
     try{
-      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');
-      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
+      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
+      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
     }catch(e){
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
     }
@@ -5754,6 +5759,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
         catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
       })();
     }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+  };
+  // Fusiona tareas nuevas con las existentes vía SetasTaskEngine.mergeTasks (la
+  // idempotencia la da el motor por id determinista: no se reimplementa aquí)
+  // y persiste con el mismo patrón try/catch + bitQuotaWarn que bitLotes/bitBolsas.
+  const mergeIntoTasks=(nuevasTareas=[])=>{
+    if(!nuevasTareas.length) return;
+    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    if(!taskEngine) return;
+    setBitTasks(prev=>{
+      const upd=taskEngine.mergeTasks(prev,nuevasTareas);
+      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      return upd;
+    });
+  };
+  // Cierra tareas (consequences.completes) vía SetasTaskEngine.completeTask,
+  // vinculándolas al evento que las cumplió, y persiste igual que mergeIntoTasks.
+  const completeBitTasks=(taskIds=[],eventId)=>{
+    if(!taskIds.length||!eventId) return;
+    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    if(!taskEngine) return;
+    setBitTasks(prev=>{
+      let upd=prev;
+      taskIds.forEach(taskId=>{
+        if(upd.some(t=>t.id===taskId&&t.status==='pending')){
+          upd=taskEngine.completeTask(upd,taskId,eventId);
+        }
+      });
+      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      return upd;
+    });
   };
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:'COS_'+Date.now()};
@@ -6638,22 +6673,56 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
     }catch(e){ return null; }
   };
-  // Registra la acción elegida en la ficha: valida contra el estado, encadena el
-  // evento inmutable y persiste la transición cuando la acción la produce.
+  // Registra la acción elegida en la ficha vía la cascada real: declara TODAS
+  // las consecuencias con actionConsequences (evento, cambios de bolsa,
+  // parche del lote, transición y follow-ups) y las aplica de una sola vez con
+  // applyConsequences, en vez de encadenar llamadas sueltas a mano.
   const commitSheetAction=(sheet,lote,action,payload={})=>{
     if(!batchSheetApi||!sheet) return false;
+    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
     try{
-      const result=batchSheetApi.applyAction({
-        sheet,action,operatorId:lote.operador||'operador-local',
-        payload,log:lote.lifecycleEvents||[],role:operatorRole,
+      const bolsasDelLote=bitBolsas.filter(b=>b.loteId===lote.id);
+      const consequences=batchSheetApi.actionConsequences(sheet,action,payload,{
+        role:operatorRole,operatorId:lote.operador||'operador-local',
+        at:new Date().toISOString(),bolsas:bolsasDelLote,
       });
-      const patch={lifecycleEvents:result.log};
-      if(result.transitioned){
-        patch.lifecycleState=result.state;
-        const legacyByState=Object.entries(legacyLifecycle).find(([,v])=>v===result.state);
+      const applied=batchSheetApi.applyConsequences(sheet,consequences,{log:lote.lifecycleEvents||[]});
+
+      // 1. Persistir el log de eventos y el parche del lote (batchPatch), y si
+      // hubo transición, el estado/lifecycleState como ya se hacía.
+      const patch={lifecycleEvents:applied.log,...(applied.batchPatch||{})};
+      if(consequences.transition){
+        patch.lifecycleState=applied.state;
+        const legacyByState=Object.entries(legacyLifecycle).find(([,v])=>v===applied.state);
         if(legacyByState) patch.estado=legacyByState[0];
       }
       updateBitLote(lote.id,patch);
+
+      // 2. Aplicar bagUpdates: aquí es donde una bolsa pasa a 'aislada', etc.
+      (applied.bagUpdates||[]).forEach(u=>updateBitBolsa(u.bagId,u.fields));
+
+      // 3. Si hubo transición, generar las tareas SOP del nuevo estado.
+      if(consequences.transition&&taskEngine){
+        const sopTasks=taskEngine.tasksFromTransition({
+          batchId:lote.id,toState:consequences.transition,at:new Date().toISOString(),
+        });
+        mergeIntoTasks(sopTasks);
+      }
+
+      // 4. Convertir followUps en tareas reales.
+      if((applied.followUps||[]).length&&taskEngine){
+        const followUpTasks=taskEngine.tasksFromFollowUps(applied.followUps,{
+          objectId:lote.id,objectType:'batch',at:new Date().toISOString(),
+        });
+        mergeIntoTasks(followUpTasks);
+      }
+
+      // 5. Cerrar las tareas que la acción cumple.
+      if((consequences.completes||[]).length){
+        const eventId=(applied.log[applied.log.length-1]||{}).id||consequences.event.id;
+        completeBitTasks(consequences.completes,eventId);
+      }
+
       return true;
     }catch(err){
       setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
@@ -6823,18 +6892,42 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const TodayV2=()=>{
     const now=Date.now();
-    const source=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado)).map((lote,index)=>{
-      const stats=calcLoteStats(lote.id);
-      const contaminated=stats&&stats.contPct>0;
-      const inoculated=Date.parse(lote.fechaInoculacion||'');
-      const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
-      return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
-        dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
-        title:contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
-        why:`${lote.especie||'Lote'} · ${lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado} · día ${age}`};
+    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    const activeLotes=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+
+    // Siembra única de tareas: Hoy ahora sale de bitTasks (buildTodayFromTasks),
+    // pero todo usuario actual tiene lotes sin ninguna tarea persistida todavía.
+    // Si bitTasks está vacío y hay lotes activos, se derivan tareas SOP del
+    // estado vigente de cada uno con tasksFromTransition y se persisten una
+    // sola vez vía mergeIntoTasks — después de eso el motor manda.
+    React.useEffect(()=>{
+      if(bitTasks.length>0) return;
+      if(!activeLotes.length) return;
+      if(!taskEngine) return;
+      const seeded=activeLotes.flatMap(lote=>{
+        const toState=lote.lifecycleState||legacyLifecycle[lote.estado]||lote.estado;
+        try{
+          return taskEngine.tasksFromTransition({batchId:lote.id,toState,at:lote.createdAt||new Date(now).toISOString(),nowMs:now});
+        }catch(e){ return []; }
+      });
+      if(seeded.length) mergeIntoTasks(seeded);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[bitTasks.length,activeLotes.length]);
+
+    const index={batches:{},rooms:ROOMS_CONFIG};
+    activeLotes.forEach(lote=>{
+      index.batches[lote.id]={
+        code:lote.codigo,
+        species:lote.especie,
+        stateLabel:lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado,
+        room:lote.sala||lote.ubicacion||null,
+      };
     });
-    const queue=workflow?workflow.buildTodayQueue(source,now):source;
-    const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
+
+    const queue=taskEngine?taskEngine.buildTodayFromTasks(bitTasks,index,now):[];
+    const stats=taskEngine?taskEngine.taskStats(bitTasks,now):null;
+    const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueada'],['later','Después'],['context','Sin fecha']];
+
     return <section className="os-today-v2" data-testid="ux-v2-today">
       <div className="os-page-kicker">Operación · turno actual</div><h1 className="os-page-title">Hoy</h1>
       <button className="os-scan-target" type="button" onClick={()=>{
@@ -6848,16 +6941,70 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <LiveClimateStrip/>
 
       {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
-      {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
-        <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
-        {rows.map(item=><div key={item.id} className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
-          <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
+      {groups.map(([bucket,label])=>{const bucketRows=queue.filter(r=>r.bucket===bucket);if(!bucketRows.length)return null;return <section className="os-today-group" key={bucket}>
+        <div className="os-section-head"><h2>{label}</h2><span>{bucketRows.length}</span></div>
+        {bucketRows.map(row=><div key={row.taskId} data-testid="today-task-row" className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
+          <span className="os-task-marker" aria-hidden="true"></span>
+          <div>
+            {/* what/where/why son las cuatro respuestas que ya trae la tarea de
+                buildTodayFromTasks — no se inventan textos nuevos aquí. */}
+            <div className="os-task-row__title">{row.what}</div>
+            <div className="os-task-row__meta">{row.where} · {row.why}</div>
+          </div>
           <div style={{display:'flex',gap:6,alignItems:'center'}}>
-            <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
-            <button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>🖨</button>
+            {row.objectType==='batch'
+              ?<button className="os-action" type="button" onClick={()=>openBatchDetail(row.objectId)}>{row.action}</button>
+              :<button className="os-action" type="button" disabled>{row.action}</button>}
+            {row.objectType==='batch'&&<button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(row.objectId)}>🖨</button>}
           </div>
         </div>)}
       </section>;})}
+
+      {stats&&<div className="os-today-stats" data-testid="today-task-stats">
+        {stats.done} completadas · {stats.pending} pendientes{stats.overdue?` (${stats.overdue} vencidas)`:''}
+      </div>}
+
+      <button className="os-action" type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}>Cerrar jornada</button>
+
+      {showDayClose&&(()=>{
+        const dayCloseApi=typeof window!=='undefined'?window.SetasDayClose:null;
+        if(!dayCloseApi) return null;
+        const shiftStartMs=new Date(new Date(now).toDateString()).getTime();
+        const allEvents=bitLotes.flatMap(l=>l.lifecycleEvents||[]);
+        const sheets=activeLotes.map(l=>buildSheetFor(l)).filter(Boolean);
+        // bitSyncErr hoy es un mensaje (string) o '', no un contador real de
+        // cambios sin sincronizar — se traduce a 1/0 como aproximación explícita,
+        // tal como pide la tarea cuando solo hay una señal booleana disponible.
+        const pendingSyncCount=bitSyncErr?1:0;
+        const report=dayCloseApi.buildDayCloseReport({
+          events:allEvents,tasks:bitTasks,sheets,pendingSyncCount,
+          shiftStartMs,nowMs:now,operatorId:null,
+        });
+        return <AccessibleModal onClose={()=>{setShowDayClose(false);setDayCloseNote(null);}} label="Cerrar jornada" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+          <div className="os-page-kicker">Cierre de jornada</div>
+          <h2>Reporte del turno</h2>
+          <div data-testid="day-close-report" style={{display:'flex',flexDirection:'column',gap:4,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>
+            <div>Eventos registrados: {report.eventsLogged}</div>
+            <div>Tareas completadas: {report.tasksCompleted}</div>
+            <div>Tareas pendientes: {report.tasksPending} ({report.tasksOverdue} vencidas)</div>
+            <div>Incidentes abiertos: {report.openIncidents.length}</div>
+            <div>Trabajo de mañana: {report.tomorrow.length} tipo(s)</div>
+            <div>Cambios sin sincronizar: {report.pendingSync}</div>
+          </div>
+          {!report.readyToClose&&<div role="alert" data-testid="day-close-blockers" style={{marginTop:10,color:'var(--status-error, #c53030)'}}>
+            <strong>No se puede cerrar todavía:</strong>
+            <ul>{report.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul>
+          </div>}
+          <button type="button" className="os-action" style={{marginTop:14}} disabled={!report.readyToClose} onClick={()=>{
+            try{
+              const closed=dayCloseApi.closeDay(report,{operatorId:null,at:now});
+              setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
+            }catch(err){setNoticeDlg({title:'No se pudo cerrar el turno',msg:err.message});}
+          }}>Confirmar cierre</button>
+          {dayCloseNote&&<textarea readOnly value={dayCloseNote} data-testid="day-close-handoff-note"
+            onClick={e=>e.target.select()} style={{width:'100%',minHeight:220,marginTop:12,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}/>}
+        </AccessibleModal>;
+      })()}
     </section>;
   };
   const BatchDetailV2=({lote})=>{
@@ -8175,7 +8322,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const bolsas=bitBolsas.filter(b=>b.loteId===bitActiveLoteId);
               const stats=calcLoteStats(bitActiveLoteId);
-              const EB={sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
+              // 'aislada' viene de BAG_STATE_LABELS (batch-sheet.js): separa "bajo
+              // observación" de "confirmada contaminada". Usa --slate-500 (azul-gris
+              // neutro, ya en la paleta de tokens) para no confundirse con el rojo
+              // de contaminación ni con el ámbar de dudosa.
+              const bagStateLabels=(batchSheetApi&&batchSheetApi.BAG_STATE_LABELS)||{};
+              const EB={sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},aislada:{c:'var(--slate-500)',l:bagStateLabels.aislada||'Aislada'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
               return(
                 <div className="panel" data-testid="active-lote" data-lote-id={lote.id}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>

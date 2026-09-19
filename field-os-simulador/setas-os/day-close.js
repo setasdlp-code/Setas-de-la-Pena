@@ -77,7 +77,9 @@
       eventsByType[type] = (eventsByType[type] || 0) + 1;
     });
 
-    const tasksCompleted = tasks.filter(t => t && t.status === 'completed').length;
+    // 'done' es el vocabulario canónico de task-engine.js (TASK_STATUSES): no se
+    // inventa aquí un estado 'completed' que task-engine nunca produce.
+    const tasksCompleted = tasks.filter(t => t && t.status === 'done').length;
     const pendingTasks = tasks.filter(t => t && t.status === 'pending');
     const tasksPending = pendingTasks.length;
     const tasksOverdue = pendingTasks.filter(t => {
