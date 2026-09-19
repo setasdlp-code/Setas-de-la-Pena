@@ -75,8 +75,7 @@ with no signal must render the system identically to a desktop.
 Gaya Patched ships the full family: Thin (100), Light (300), Regular (400),
 Medium (500), Bold (700), Black (900), each with a matching italic.
 
-**Mono is always uppercase and always tracked ≥ 0.15em.** Untracked uppercase
-mono is unreadable at 9–11px; the tracking is not a stylistic preference.
+**Mono metadata and labels are uppercase and tracked ≥ 0.15em. Numeric measurements and tabular data remain untracked.** Tracking expresses metadata grammar; it is never applied blindly to figures.
 
 ### 1.2 Type scale
 
@@ -96,14 +95,16 @@ mono is unreadable at 9–11px; the tracking is not a stylistic preference.
 | `data` | 13px | IBM Plex Mono | 400 Regular | 1.40 | 0 | — | Table numbers, telemetry, measurements. Tabular figures. |
 | `label` | 11px | IBM Plex Mono | 500 Medium | 1.10 | **0.15em** | UPPER | Field keys, table headers, taxon codes, lot lines. |
 | `micro-screen` | 11px | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Screen metadata floor, badges, timestamps, tags. |
-| `micro-print` | 9px | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Physical print only: plate refs, folio marks, packaging labels. |
+| `micro-print` | 9px | IBM Plex Mono | 400 Regular | 1.10 | **0.18em** | UPPER | Physical fine print only: plate refs, folio marks, secondary legal copy. Never a lot code. |
+| `lot-code-print` | 6mm | IBM Plex Mono | 600 SemiBold | 1.10 | **0.08em** | UPPER | Physical lot/date code role; final output must verify x-height ≥ 3mm. |
 
 **Normative minimums**
 
 - Prose never below **16px**, screen or print.
 - Below **13px** there is no operative content — metadata only.
-- Screen metadata floor is strictly **11px** (`--font-micro-screen`).
-- Printed physical lot code: **x-height ≥ 3mm** (using `--font-micro-print` 9px).
+- Screen metadata floor is strictly **11px** (`--size-micro-screen`).
+- `--size-micro-print: 9px` is fine print only.
+- Printed physical lot/date code uses `--size-lot-code-print: 6mm` and must verify **x-height ≥ 3mm** in the final physical output.
 
 ### 1.3 Colour
 
@@ -364,8 +365,7 @@ bottom.
 **Lote card** — the field object.
 `__media` (3:2 photo, or `--plate` variant at fixed 148px for line art) →
 `__body` (species compact, `__id`, `__status`, `__meta`).
-*States:* `--ok` (moss), `--warn` (ochre bar + `WARNING_TEXT` word),
-`--error` (rust). The state drives the bar fill **and** the status word.
+*States:* `--ok` (moss), `--warn` (dark ochre `--status-warn-marker` bar + `--status-warn-text` word), `--error` (Coral 700). The state drives the marker and status word without using low-contrast Ochre 500 as a thin rule.
 The bar is a 4px rule, never a pill or badge.
 
 **Receta card.** `__hd` → ingredient rows (`64px key | name | %`) each followed
