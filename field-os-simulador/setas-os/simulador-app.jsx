@@ -6890,30 +6890,34 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
   );
 
-  const TodayV2=()=>{
-    const now=Date.now();
-    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
-    const activeLotes=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+  // ── Cola de trabajo del turno, derivada del motor de tareas ───────────────
+  // Vive aquí y no dentro del cockpit porque el cockpit se pinta desde una IIFE
+  // dentro del render: un hook ahí violaría las reglas de React. Lo que el
+  // operario ve al entrar es el cockpit, así que la cola tiene que llegarle a él.
+  const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
 
-    // Siembra única de tareas: Hoy ahora sale de bitTasks (buildTodayFromTasks),
-    // pero todo usuario actual tiene lotes sin ninguna tarea persistida todavía.
-    // Si bitTasks está vacío y hay lotes activos, se derivan tareas SOP del
-    // estado vigente de cada uno con tasksFromTransition y se persisten una
-    // sola vez vía mergeIntoTasks — después de eso el motor manda.
-    React.useEffect(()=>{
-      if(bitTasks.length>0) return;
-      if(!activeLotes.length) return;
-      if(!taskEngine) return;
-      const seeded=activeLotes.flatMap(lote=>{
-        const toState=lote.lifecycleState||legacyLifecycle[lote.estado]||lote.estado;
-        try{
-          return taskEngine.tasksFromTransition({batchId:lote.id,toState,at:lote.createdAt||new Date(now).toISOString(),nowMs:now});
-        }catch(e){ return []; }
-      });
-      if(seeded.length) mergeIntoTasks(seeded);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[bitTasks.length,activeLotes.length]);
+  // Siembra única: la cola sale de bitTasks, pero todo usuario actual tiene
+  // lotes sin ninguna tarea persistida todavía. Si bitTasks está vacío y hay
+  // lotes activos, se derivan tareas SOP del estado vigente de cada uno y se
+  // persisten una sola vez — después de eso manda el motor.
+  React.useEffect(()=>{
+    if(bitTasks.length>0) return;
+    if(!taskEngine) return;
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    if(!activos.length) return;
+    const ahora=Date.now();
+    const seeded=activos.flatMap(lote=>{
+      const toState=lote.lifecycleState||legacyLifecycle[lote.estado]||lote.estado;
+      try{
+        return taskEngine.tasksFromTransition({batchId:lote.id,toState,at:lote.createdAt||new Date(ahora).toISOString(),nowMs:ahora});
+      }catch(e){ return []; }
+    });
+    if(seeded.length) mergeIntoTasks(seeded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[bitTasks.length,bitLotes.length]);
 
+  /** Índice de objetos para que la cola resuelva código de lote y sala, no ids crudos. */
+  const buildTaskIndex=(activeLotes)=>{
     const index={batches:{},rooms:ROOMS_CONFIG};
     activeLotes.forEach(lote=>{
       index.batches[lote.id]={
@@ -6923,90 +6927,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
         room:lote.sala||lote.ubicacion||null,
       };
     });
-
-    const queue=taskEngine?taskEngine.buildTodayFromTasks(bitTasks,index,now):[];
-    const stats=taskEngine?taskEngine.taskStats(bitTasks,now):null;
-    const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueada'],['later','Después'],['context','Sin fecha']];
-
-    return <section className="os-today-v2" data-testid="ux-v2-today">
-      <div className="os-page-kicker">Operación · turno actual</div><h1 className="os-page-title">Hoy</h1>
-      <button className="os-scan-target" type="button" onClick={()=>{
-        const firstActive=bitLotes.find(l=>!['completado','descartado'].includes(l.estado));
-        setQrSelectedLoteId(bitActiveLoteId||firstActive?.id||bitLotes[0]?.id||'');
-        setShowQrSheet(true);
-      }}>Escanear lote o registrar evento</button>
-
-      <LiveTelemetryStatusBar/>
-      <LiveAlertsSection/>
-      <LiveClimateStrip/>
-
-      {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
-      {groups.map(([bucket,label])=>{const bucketRows=queue.filter(r=>r.bucket===bucket);if(!bucketRows.length)return null;return <section className="os-today-group" key={bucket}>
-        <div className="os-section-head"><h2>{label}</h2><span>{bucketRows.length}</span></div>
-        {bucketRows.map(row=><div key={row.taskId} data-testid="today-task-row" className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
-          <span className="os-task-marker" aria-hidden="true"></span>
-          <div>
-            {/* what/where/why son las cuatro respuestas que ya trae la tarea de
-                buildTodayFromTasks — no se inventan textos nuevos aquí. */}
-            <div className="os-task-row__title">{row.what}</div>
-            <div className="os-task-row__meta">{row.where} · {row.why}</div>
-          </div>
-          <div style={{display:'flex',gap:6,alignItems:'center'}}>
-            {row.objectType==='batch'
-              ?<button className="os-action" type="button" onClick={()=>openBatchDetail(row.objectId)}>{row.action}</button>
-              :<button className="os-action" type="button" disabled>{row.action}</button>}
-            {row.objectType==='batch'&&<button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(row.objectId)}>🖨</button>}
-          </div>
-        </div>)}
-      </section>;})}
-
-      {stats&&<div className="os-today-stats" data-testid="today-task-stats">
-        {stats.done} completadas · {stats.pending} pendientes{stats.overdue?` (${stats.overdue} vencidas)`:''}
-      </div>}
-
-      <button className="os-action" type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}>Cerrar jornada</button>
-
-      {showDayClose&&(()=>{
-        const dayCloseApi=typeof window!=='undefined'?window.SetasDayClose:null;
-        if(!dayCloseApi) return null;
-        const shiftStartMs=new Date(new Date(now).toDateString()).getTime();
-        const allEvents=bitLotes.flatMap(l=>l.lifecycleEvents||[]);
-        const sheets=activeLotes.map(l=>buildSheetFor(l)).filter(Boolean);
-        // bitSyncErr hoy es un mensaje (string) o '', no un contador real de
-        // cambios sin sincronizar — se traduce a 1/0 como aproximación explícita,
-        // tal como pide la tarea cuando solo hay una señal booleana disponible.
-        const pendingSyncCount=bitSyncErr?1:0;
-        const report=dayCloseApi.buildDayCloseReport({
-          events:allEvents,tasks:bitTasks,sheets,pendingSyncCount,
-          shiftStartMs,nowMs:now,operatorId:null,
-        });
-        return <AccessibleModal onClose={()=>{setShowDayClose(false);setDayCloseNote(null);}} label="Cerrar jornada" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
-          <div className="os-page-kicker">Cierre de jornada</div>
-          <h2>Reporte del turno</h2>
-          <div data-testid="day-close-report" style={{display:'flex',flexDirection:'column',gap:4,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>
-            <div>Eventos registrados: {report.eventsLogged}</div>
-            <div>Tareas completadas: {report.tasksCompleted}</div>
-            <div>Tareas pendientes: {report.tasksPending} ({report.tasksOverdue} vencidas)</div>
-            <div>Incidentes abiertos: {report.openIncidents.length}</div>
-            <div>Trabajo de mañana: {report.tomorrow.length} tipo(s)</div>
-            <div>Cambios sin sincronizar: {report.pendingSync}</div>
-          </div>
-          {!report.readyToClose&&<div role="alert" data-testid="day-close-blockers" style={{marginTop:10,color:'var(--status-error, #c53030)'}}>
-            <strong>No se puede cerrar todavía:</strong>
-            <ul>{report.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul>
-          </div>}
-          <button type="button" className="os-action" style={{marginTop:14}} disabled={!report.readyToClose} onClick={()=>{
-            try{
-              const closed=dayCloseApi.closeDay(report,{operatorId:null,at:now});
-              setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
-            }catch(err){setNoticeDlg({title:'No se pudo cerrar el turno',msg:err.message});}
-          }}>Confirmar cierre</button>
-          {dayCloseNote&&<textarea readOnly value={dayCloseNote} data-testid="day-close-handoff-note"
-            onClick={e=>e.target.select()} style={{width:'100%',minHeight:220,marginTop:12,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}/>}
-        </AccessibleModal>;
-      })()}
-    </section>;
+    return index;
   };
+
+  // Cerrar una tarea desde la casilla del cockpit. El contrato del motor es que
+  // una tarea sólo se cierra con el evento que la cumple, nunca "a mano": por eso
+  // la casilla registra antes un evento manual explícito en el lote y cierra la
+  // tarea con el id de ESE evento. Así la bitácora conserva quién cerró qué.
+  const closeTaskFromCheckbox=(row)=>{
+    const lote=bitLotes.find(l=>l.id===row.objectId);
+    if(!lote||!batchSheetApi||!taskEngine) return;
+    try{
+      const log=batchSheetApi.appendBatchEvent(lote.lifecycleEvents||[],{
+        batchId:lote.id,
+        action:'note',
+        operatorId:lote.operador||'operador-local',
+        payload:{nota:`Tarea cerrada manualmente desde Hoy: ${row.what}`,taskId:row.taskId},
+      });
+      const evento=log[log.length-1];
+      updateBitLote(lote.id,{lifecycleEvents:log});
+      completeBitTasks([row.taskId],evento.id);
+    }catch(err){
+      setNoticeDlg({title:'No se pudo cerrar la tarea',msg:err.message});
+    }
+  };
+
   const BatchDetailV2=({lote})=>{
     const stats=calcLoteStats(lote.id);
     const sheet=buildSheetFor(lote);
@@ -8632,15 +8577,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
           const activeLotes = bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const operationalNow = Date.now();
-          const operationalSource = activeLotes.map((lote,index)=>{
-            const stats=calcLoteStats(lote.id);
-            const contaminated=stats&&stats.contPct>0;
-            const inoculated=Date.parse(lote.fechaInoculacion||'');
-            const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):0;
-            return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
-              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString()};
-          });
-          const operationalQueue=workflow?workflow.buildTodayQueue(operationalSource,operationalNow):operationalSource;
+          // La cola sale del motor de tareas: cada fila es una Tarea real con su
+          // propio vencimiento. Antes se derivaba al vuelo de los lotes con
+          // fechas fabricadas a partir del índice del array, así que los
+          // contadores de "por resolver" y "pendientes" que veía el operario
+          // salían de plazos inventados.
+          const operationalQueue = taskEngine
+            ? taskEngine.buildTodayFromTasks(bitTasks,buildTaskIndex(activeLotes),operationalNow)
+            : [];
           const criticalTaskCount=operationalQueue.filter(item=>item.bucket==='critical').length;
           const overdueTaskCount=operationalQueue.filter(item=>item.bucket==='overdue').length;
           const blockedTaskCount=operationalQueue.filter(item=>item.bucket==='blocked').length;
@@ -8656,9 +8600,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
           let camaras=[];
           try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
-          // Tareas de hoy y Actividad reciente
+          // Tareas de hoy y Actividad reciente.
+          // La lista visible se mapea desde la cola del motor a la forma que este
+          // markup ya espera, sin rediseñarlo. Si el motor no está cargado o aún
+          // no hay tareas, se conserva la fuente del shell para no dejar la
+          // pantalla vacía por un fallo de carga.
           let tasksHoy=[], recentActivity=[];
-          try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+          const motorRows=operationalQueue.map(row=>({
+            key:row.taskId,
+            title:row.what,
+            id:row.where,
+            why:row.why,
+            action:row.action,
+            prio:row.priority==='critical'||row.priority==='high'?'alta':(row.priority==='normal'?'media':'baja'),
+            done:false,
+            objectId:row.objectId,
+            objectType:row.objectType,
+            fromEngine:true,
+          }));
+          if(motorRows.length){ tasksHoy=motorRows; }
+          else { try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; } }
           try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
           const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
@@ -8855,13 +8816,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:8}}>
                         {tasksHoy.slice(0,5).map(t=>(
                           <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
-                            <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
+                            <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label="Marcar tarea"
                               style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
                               <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
                             </button>
-                            <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                            <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
+                              {/* qué / dónde / por qué ahora / qué hago: las cuatro
+                                  respuestas vienen de la tarea, no se inventan aquí. */}
                               <span style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
                               <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
                             </button>
                             <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
@@ -8873,6 +8837,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         )}
                       </div>
                     )}
+                    {/* Cierre de jornada: cierra el turno y entrega contexto al
+                        relevo, para que lo ocurrido no se reconstruya después
+                        desde memoria o WhatsApp. */}
+                    <div style={{marginTop:12,display:'flex',justifyContent:'flex-end'}}>
+                      <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
+                        style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                        Cerrar jornada
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -12023,6 +11996,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
           </AccessibleModal>
         )}
+        {/* MODAL DE CIERRE DE JORNADA — vive en el árbol principal, junto a los
+            demás modales, para que se renderice desde cualquier pantalla. */}
+        {showDayClose&&(()=>{
+          const dayCloseApi=typeof window!=='undefined'?window.SetasDayClose:null;
+          if(!dayCloseApi) return null;
+          const now=Date.now();
+          const activeLotes=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+          const shiftStartMs=new Date(new Date(now).toDateString()).getTime();
+          const allEvents=bitLotes.flatMap(l=>l.lifecycleEvents||[]);
+          const sheets=activeLotes.map(l=>buildSheetFor(l)).filter(Boolean);
+          // bitSyncErr hoy es un mensaje (string) o '', no un contador real de
+          // cambios sin sincronizar: se traduce a 1/0 como aproximación explícita.
+          // Hasta que exista una cola de sincronización de verdad, el cierre
+          // puede decir que hay trabajo sin subir, pero no cuánto.
+          const pendingSyncCount=bitSyncErr?1:0;
+          const report=dayCloseApi.buildDayCloseReport({
+            events:allEvents,tasks:bitTasks,sheets,pendingSyncCount,
+            shiftStartMs,nowMs:now,operatorId:null,
+          });
+          return <AccessibleModal onClose={()=>{setShowDayClose(false);setDayCloseNote(null);}} label="Cerrar jornada" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-2)'}}>Cierre de jornada</div>
+            <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',margin:'2px 0 12px'}}>Reporte del turno</h2>
+            <div data-testid="day-close-report" style={{display:'flex',flexDirection:'column',gap:4,fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>
+              <div>Eventos registrados: {report.eventsLogged}</div>
+              <div>Tareas completadas: {report.tasksCompleted}</div>
+              <div>Tareas pendientes: {report.tasksPending} ({report.tasksOverdue} vencidas)</div>
+              <div>Incidentes abiertos: {report.openIncidents.length}</div>
+              <div>Trabajo de mañana: {report.tomorrow.length} tipo(s)</div>
+              <div>Cambios sin sincronizar: {report.pendingSync}</div>
+            </div>
+            {report.openIncidents.length>0&&<ul style={{marginTop:10,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)'}}>
+              {report.openIncidents.map((inc,i)=><li key={i}>{inc.label} · {inc.detail}</li>)}
+            </ul>}
+            {!report.readyToClose&&<div role="alert" data-testid="day-close-blockers" style={{marginTop:10,color:'var(--coral-700)'}}>
+              <strong>No se puede cerrar todavía:</strong>
+              <ul>{report.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul>
+            </div>}
+            <button type="button" style={{marginTop:14,cursor:report.readyToClose?'pointer':'not-allowed',opacity:report.readyToClose?1:0.5,minHeight:44,padding:'0 18px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}
+              disabled={!report.readyToClose} onClick={()=>{
+                try{
+                  const closed=dayCloseApi.closeDay(report,{operatorId:null,at:now});
+                  setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
+                }catch(err){setNoticeDlg({title:'No se pudo cerrar el turno',msg:err.message});}
+              }}>Confirmar cierre</button>
+            {dayCloseNote&&<textarea readOnly value={dayCloseNote} data-testid="day-close-handoff-note"
+              onClick={e=>e.target.select()} style={{width:'100%',minHeight:220,marginTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}/>}
+          </AccessibleModal>;
+        })()}
+
         {/* MODAL / ACTION SHEET QR DE CAMPO (MODO RONDA DE CAMPO) */}
         {showQrSheet&&(()=>{
           const activeBatches=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));

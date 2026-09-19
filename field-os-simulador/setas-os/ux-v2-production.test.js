@@ -24,21 +24,50 @@ test('production shell stages the canonical workflow behind Auth before the Reac
   assert.match(authGate, /await import\("\.\.\/simulador-app\.js"\)/, 'Auth carga el shell React al terminar el runtime protegido');
 });
 
-test('production Hoy is driven by the task engine, not derived ad hoc from lotes', () => {
-  assert.match(source, /data-testid="ux-v2-today"/);
-  assert.match(source, /taskEngine\.buildTodayFromTasks\(bitTasks,index,now\)/);
-  assert.match(source, /openBatchDetail\(row\.objectId\)/);
-  // Las cuatro respuestas de la tarea (qué, dónde, por qué, qué acción) se
-  // renderizan tal cual las entrega buildTodayFromTasks, sin texto inventado.
-  assert.match(source, /\{row\.what\}/);
-  assert.match(source, /\{row\.where\} · \{row\.why\}/);
-  assert.match(source, /os-action" type="button" onClick=\{\(\)=>openBatchDetail\(row\.objectId\)\}>\{row\.action\}/);
+test('la cola de trabajo vive en el cockpit que el operario ve, no en un componente huérfano', () => {
+  // Este test existe por un fallo real: la cola de trabajo se escribió entera
+  // dentro de un componente `TodayV2` que nunca se montaba, y toda la suite
+  // seguía en verde porque estas aserciones leen el .jsx como TEXTO. Que un
+  // nombre aparezca en el archivo no prueba que el usuario lo vea.
+  assert.doesNotMatch(source, /const TodayV2=/, 'TodayV2 era una pantalla que nadie veía: no debe volver');
+  assert.doesNotMatch(source, /<TodayV2\s*\/>/);
+
+  // El cockpit sí se monta: es el bloque que devuelve <div className="home-cockpit">.
+  const cockpitStart = source.indexOf('<div className="home-cockpit">');
+  assert.ok(cockpitStart > -1, 'el cockpit de inicio debe existir en el árbol renderizado');
+  const cockpit = source.slice(cockpitStart, cockpitStart + 40000);
+
+  // La cola del cockpit sale del motor de tareas, no de plazos fabricados.
+  assert.match(source, /taskEngine\.buildTodayFromTasks\(bitTasks,buildTaskIndex\(activeLotes\),operationalNow\)/);
+  assert.doesNotMatch(source, /dueAt:!contaminated&&age>=14\?new Date\(operationalNow-\(index\+1\)\*3600000\)/,
+    'los vencimientos no pueden derivarse del índice del array: eran plazos inventados');
+
+  // Las cuatro respuestas de la tarea llegan al markup del cockpit.
+  assert.match(source, /key:row\.taskId/);
+  assert.match(source, /title:row\.what/);
+  assert.match(source, /id:row\.where/);
+  assert.match(source, /why:row\.why/);
+  assert.match(source, /action:row\.action/);
+  assert.match(cockpit, /data-testid="cockpit-task-row"/);
+  assert.match(cockpit, /\{t\.action\} →/);
+
+  // Fallback: si el motor no está cargado, la pantalla no se queda vacía.
+  assert.match(source, /else \{ try\{ tasksHoy=JSON\.parse\(props\.tasksHoyJson\|\|'\[\]'\)/);
+
   // Siembra única para quien ya tiene lotes pero todavía no tiene tareas.
   assert.match(source, /taskEngine\.tasksFromTransition\(\{batchId:lote\.id,toState,at:lote\.createdAt/);
   assert.match(source, /mergeIntoTasks\(seeded\)/);
-  // Resumen de taskStats al pie.
-  assert.match(source, /taskEngine\.taskStats\(bitTasks,now\)/);
-  assert.match(source, /data-testid="today-task-stats"/);
+});
+
+test('marcar una tarea en el cockpit registra el evento que la cierra', () => {
+  // El contrato del motor es que una tarea sólo se cierra con el evento que la
+  // cumple. La casilla no puede saltárselo: registra un evento manual y cierra
+  // la tarea con el id de ese evento, para que la bitácora sepa quién cerró qué.
+  assert.match(source, /const closeTaskFromCheckbox=\(row\)=>\{/);
+  assert.match(source, /batchSheetApi\.appendBatchEvent\(lote\.lifecycleEvents\|\|\[\],\{/);
+  assert.match(source, /Tarea cerrada manualmente desde Hoy/);
+  assert.match(source, /completeBitTasks\(\[row\.taskId\],evento\.id\)/);
+  assert.match(source, /t\.fromEngine\?closeTaskFromCheckbox\(t\)/);
 });
 
 test('batch action commit runs the full consequence cascade', () => {

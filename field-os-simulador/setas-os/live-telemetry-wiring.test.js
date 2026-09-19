@@ -60,10 +60,15 @@ test('el cockpit de Hoy consume telemetría real, no constantes escritas a mano'
 
   // Las constantes que había incrustadas en el strip ya no pueden estar ahí:
   // eran mediciones inventadas presentadas como lecturas de sonda.
-  const stripStart = jsx.indexOf('data-testid="today-climate-strip"');
-  const stripEnd = jsx.indexOf('queue.length===0', stripStart);
+  // El corte se ancla al propio componente del strip (su declaración y el `);`
+  // que lo cierra) en vez de a un marcador de la pantalla que venga después:
+  // el ancla anterior vivía en un componente que se eliminó al mover la cola de
+  // trabajo al cockpit, y este test se rompió por un cambio que no le incumbía.
+  const stripStart = jsx.indexOf('const LiveClimateStrip');
+  const stripEnd = jsx.indexOf('\n  );', stripStart);
   const strip = jsx.slice(stripStart, stripEnd);
   assert.ok(stripStart > -1 && stripEnd > stripStart);
+  assert.match(strip, /data-testid="today-climate-strip"/);
   assert.doesNotMatch(strip, /const t = isMartha \? 17\.2 : 18\.4/);
   assert.doesNotMatch(strip, /const rh = isMartha \? 91\.5 : 88\.0/);
   assert.doesNotMatch(strip, /const co2 = isMartha \? 680 : 750/);

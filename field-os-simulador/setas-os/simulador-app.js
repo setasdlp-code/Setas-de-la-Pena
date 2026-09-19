@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 696d971ab1c63a793b563f27bc6952cb3b995eb5f150053e8dfd5435838e0d70
+// source-hash: 0b072ec83742187493ceff029ec04d5d3b396fd3b1df9c926e718368bc5eb0c6
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4558,10 +4558,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const mergeIntoTasks = (nuevasTareas = []) => {
     if (!nuevasTareas.length) return;
-    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
-    if (!taskEngine) return;
+    const taskEngine2 = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    if (!taskEngine2) return;
     setBitTasks((prev) => {
-      const upd = taskEngine.mergeTasks(prev, nuevasTareas);
+      const upd = taskEngine2.mergeTasks(prev, nuevasTareas);
       try {
         localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
       } catch (e) {
@@ -4572,13 +4572,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const completeBitTasks = (taskIds = [], eventId) => {
     if (!taskIds.length || !eventId) return;
-    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
-    if (!taskEngine) return;
+    const taskEngine2 = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    if (!taskEngine2) return;
     setBitTasks((prev) => {
       let upd = prev;
       taskIds.forEach((taskId) => {
         if (upd.some((t) => t.id === taskId && t.status === "pending")) {
-          upd = taskEngine.completeTask(upd, taskId, eventId);
+          upd = taskEngine2.completeTask(upd, taskId, eventId);
         }
       });
       try {
@@ -5271,7 +5271,7 @@ BATCH (${numBags}×${kgBag} kg):
   };
   const commitSheetAction = (sheet, lote, action, payload = {}) => {
     if (!batchSheetApi || !sheet) return false;
-    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    const taskEngine2 = typeof window !== "undefined" ? window.SetasTaskEngine : null;
     try {
       const bolsasDelLote = bitBolsas.filter((b) => b.loteId === lote.id);
       const consequences = batchSheetApi.actionConsequences(sheet, action, payload, {
@@ -5289,16 +5289,16 @@ BATCH (${numBags}×${kgBag} kg):
       }
       updateBitLote(lote.id, patch);
       (applied.bagUpdates || []).forEach((u) => updateBitBolsa(u.bagId, u.fields));
-      if (consequences.transition && taskEngine) {
-        const sopTasks = taskEngine.tasksFromTransition({
+      if (consequences.transition && taskEngine2) {
+        const sopTasks = taskEngine2.tasksFromTransition({
           batchId: lote.id,
           toState: consequences.transition,
           at: (/* @__PURE__ */ new Date()).toISOString()
         });
         mergeIntoTasks(sopTasks);
       }
-      if ((applied.followUps || []).length && taskEngine) {
-        const followUpTasks = taskEngine.tasksFromFollowUps(applied.followUps, {
+      if ((applied.followUps || []).length && taskEngine2) {
+        const followUpTasks = taskEngine2.tasksFromFollowUps(applied.followUps, {
           objectId: lote.id,
           objectType: "batch",
           at: (/* @__PURE__ */ new Date()).toISOString()
@@ -5404,24 +5404,24 @@ BATCH (${numBags}×${kgBag} kg):
       /* @__PURE__ */ React.createElement("div", { className: "today-climate-card__prov" }, anyLive ? `${liveAgeLabel(live.ageMs)} · ${(sample.sources || []).join(" + ") || "en vivo"}` : "sin telemetría · valores de referencia")
     );
   }));
-  const TodayV2 = () => {
-    const now = Date.now();
-    const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
-    const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
-    React.useEffect(() => {
-      if (bitTasks.length > 0) return;
-      if (!activeLotes.length) return;
-      if (!taskEngine) return;
-      const seeded = activeLotes.flatMap((lote) => {
-        const toState = lote.lifecycleState || legacyLifecycle[lote.estado] || lote.estado;
-        try {
-          return taskEngine.tasksFromTransition({ batchId: lote.id, toState, at: lote.createdAt || new Date(now).toISOString(), nowMs: now });
-        } catch (e) {
-          return [];
-        }
-      });
-      if (seeded.length) mergeIntoTasks(seeded);
-    }, [bitTasks.length, activeLotes.length]);
+  const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+  React.useEffect(() => {
+    if (bitTasks.length > 0) return;
+    if (!taskEngine) return;
+    const activos = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    if (!activos.length) return;
+    const ahora = Date.now();
+    const seeded = activos.flatMap((lote) => {
+      const toState = lote.lifecycleState || legacyLifecycle[lote.estado] || lote.estado;
+      try {
+        return taskEngine.tasksFromTransition({ batchId: lote.id, toState, at: lote.createdAt || new Date(ahora).toISOString(), nowMs: ahora });
+      } catch (e) {
+        return [];
+      }
+    });
+    if (seeded.length) mergeIntoTasks(seeded);
+  }, [bitTasks.length, bitLotes.length]);
+  const buildTaskIndex = (activeLotes) => {
     const index = { batches: {}, rooms: ROOMS_CONFIG };
     activeLotes.forEach((lote) => {
       index.batches[lote.id] = {
@@ -5431,57 +5431,24 @@ BATCH (${numBags}×${kgBag} kg):
         room: lote.sala || lote.ubicacion || null
       };
     });
-    const queue = taskEngine ? taskEngine.buildTodayFromTasks(bitTasks, index, now) : [];
-    const stats = taskEngine ? taskEngine.taskStats(bitTasks, now) : null;
-    const groups = [["critical", "Crítico"], ["overdue", "Vencido"], ["now", "Ahora"], ["blocked", "Bloqueada"], ["later", "Después"], ["context", "Sin fecha"]];
-    return /* @__PURE__ */ React.createElement("section", { className: "os-today-v2", "data-testid": "ux-v2-today" }, /* @__PURE__ */ React.createElement("div", { className: "os-page-kicker" }, "Operación · turno actual"), /* @__PURE__ */ React.createElement("h1", { className: "os-page-title" }, "Hoy"), /* @__PURE__ */ React.createElement("button", { className: "os-scan-target", type: "button", onClick: () => {
-      const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
-      setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
-      setShowQrSheet(true);
-    } }, "Escanear lote o registrar evento"), /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveAlertsSection, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null), queue.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado."), groups.map(([bucket, label]) => {
-      const bucketRows = queue.filter((r) => r.bucket === bucket);
-      if (!bucketRows.length) return null;
-      return /* @__PURE__ */ React.createElement("section", { className: "os-today-group", key: bucket }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, label), /* @__PURE__ */ React.createElement("span", null, bucketRows.length)), bucketRows.map((row) => /* @__PURE__ */ React.createElement("div", { key: row.taskId, "data-testid": "today-task-row", className: "os-task-row " + (bucket === "critical" ? "os-alert-row--critical" : "") }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-task-row__title" }, row.what), /* @__PURE__ */ React.createElement("div", { className: "os-task-row__meta" }, row.where, " · ", row.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, row.objectType === "batch" ? /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openBatchDetail(row.objectId) }, row.action) : /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", disabled: true }, row.action), row.objectType === "batch" && /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(row.objectId) }, "🖨")))));
-    }), stats && /* @__PURE__ */ React.createElement("div", { className: "os-today-stats", "data-testid": "today-task-stats" }, stats.done, " completadas · ", stats.pending, " pendientes", stats.overdue ? ` (${stats.overdue} vencidas)` : ""), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", "data-testid": "open-day-close", onClick: () => {
-      setDayCloseNote(null);
-      setShowDayClose(true);
-    } }, "Cerrar jornada"), showDayClose && (() => {
-      const dayCloseApi = typeof window !== "undefined" ? window.SetasDayClose : null;
-      if (!dayCloseApi) return null;
-      const shiftStartMs = new Date(new Date(now).toDateString()).getTime();
-      const allEvents = bitLotes.flatMap((l) => l.lifecycleEvents || []);
-      const sheets = activeLotes.map((l) => buildSheetFor(l)).filter(Boolean);
-      const pendingSyncCount = bitSyncErr ? 1 : 0;
-      const report = dayCloseApi.buildDayCloseReport({
-        events: allEvents,
-        tasks: bitTasks,
-        sheets,
-        pendingSyncCount,
-        shiftStartMs,
-        nowMs: now,
-        operatorId: null
+    return index;
+  };
+  const closeTaskFromCheckbox = (row) => {
+    const lote = bitLotes.find((l) => l.id === row.objectId);
+    if (!lote || !batchSheetApi || !taskEngine) return;
+    try {
+      const log = batchSheetApi.appendBatchEvent(lote.lifecycleEvents || [], {
+        batchId: lote.id,
+        action: "note",
+        operatorId: lote.operador || "operador-local",
+        payload: { nota: `Tarea cerrada manualmente desde Hoy: ${row.what}`, taskId: row.taskId }
       });
-      return /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => {
-        setShowDayClose(false);
-        setDayCloseNote(null);
-      }, label: "Cerrar jornada", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "os-page-kicker" }, "Cierre de jornada"), /* @__PURE__ */ React.createElement("h2", null, "Reporte del turno"), /* @__PURE__ */ React.createElement("div", { "data-testid": "day-close-report", style: { display: "flex", flexDirection: "column", gap: 4, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("div", null, "Eventos registrados: ", report.eventsLogged), /* @__PURE__ */ React.createElement("div", null, "Tareas completadas: ", report.tasksCompleted), /* @__PURE__ */ React.createElement("div", null, "Tareas pendientes: ", report.tasksPending, " (", report.tasksOverdue, " vencidas)"), /* @__PURE__ */ React.createElement("div", null, "Incidentes abiertos: ", report.openIncidents.length), /* @__PURE__ */ React.createElement("div", null, "Trabajo de mañana: ", report.tomorrow.length, " tipo(s)"), /* @__PURE__ */ React.createElement("div", null, "Cambios sin sincronizar: ", report.pendingSync)), !report.readyToClose && /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "day-close-blockers", style: { marginTop: 10, color: "var(--status-error, #c53030)" } }, /* @__PURE__ */ React.createElement("strong", null, "No se puede cerrar todavía:"), /* @__PURE__ */ React.createElement("ul", null, report.blockers.map((b, i) => /* @__PURE__ */ React.createElement("li", { key: i }, b)))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "os-action", style: { marginTop: 14 }, disabled: !report.readyToClose, onClick: () => {
-        try {
-          const closed = dayCloseApi.closeDay(report, { operatorId: null, at: now });
-          setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
-        } catch (err) {
-          setNoticeDlg({ title: "No se pudo cerrar el turno", msg: err.message });
-        }
-      } }, "Confirmar cierre"), dayCloseNote && /* @__PURE__ */ React.createElement(
-        "textarea",
-        {
-          readOnly: true,
-          value: dayCloseNote,
-          "data-testid": "day-close-handoff-note",
-          onClick: (e) => e.target.select(),
-          style: { width: "100%", minHeight: 220, marginTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" }
-        }
-      ));
-    })());
+      const evento = log[log.length - 1];
+      updateBitLote(lote.id, { lifecycleEvents: log });
+      completeBitTasks([row.taskId], evento.id);
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo cerrar la tarea", msg: err.message });
+    }
   };
   const BatchDetailV2 = ({ lote }) => {
     const stats = calcLoteStats(lote.id);
@@ -6355,20 +6322,7 @@ BATCH (${numBags}×${kgBag} kg):
     const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
     const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const operationalNow = Date.now();
-    const operationalSource = activeLotes.map((lote, index) => {
-      const stats = calcLoteStats(lote.id);
-      const contaminated = stats && stats.contPct > 0;
-      const inoculated = Date.parse(lote.fechaInoculacion || "");
-      const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((operationalNow - inoculated) / 864e5)) : 0;
-      return {
-        id: lote.id,
-        lote,
-        severity: stats && stats.contPct >= 20 ? "critical" : void 0,
-        blocked: contaminated && stats.contPct < 20,
-        dueAt: !contaminated && age >= 14 ? new Date(operationalNow - (index + 1) * 36e5).toISOString() : new Date(operationalNow + (index + 1) * 36e5).toISOString()
-      };
-    });
-    const operationalQueue = workflow ? workflow.buildTodayQueue(operationalSource, operationalNow) : operationalSource;
+    const operationalQueue = taskEngine ? taskEngine.buildTodayFromTasks(bitTasks, buildTaskIndex(activeLotes), operationalNow) : [];
     const criticalTaskCount = operationalQueue.filter((item) => item.bucket === "critical").length;
     const overdueTaskCount = operationalQueue.filter((item) => item.bucket === "overdue").length;
     const blockedTaskCount = operationalQueue.filter((item) => item.bucket === "blocked").length;
@@ -6382,10 +6336,26 @@ BATCH (${numBags}×${kgBag} kg):
       camaras = [];
     }
     let tasksHoy = [], recentActivity = [];
-    try {
-      tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
-    } catch (e) {
-      tasksHoy = [];
+    const motorRows = operationalQueue.map((row) => ({
+      key: row.taskId,
+      title: row.what,
+      id: row.where,
+      why: row.why,
+      action: row.action,
+      prio: row.priority === "critical" || row.priority === "high" ? "alta" : row.priority === "normal" ? "media" : "baja",
+      done: false,
+      objectId: row.objectId,
+      objectType: row.objectType,
+      fromEngine: true
+    }));
+    if (motorRows.length) {
+      tasksHoy = motorRows;
+    } else {
+      try {
+        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
+      } catch (e) {
+        tasksHoy = [];
+      }
     }
     try {
       recentActivity = JSON.parse(props.recentActivityJson || "[]");
@@ -6457,13 +6427,25 @@ BATCH (${numBags}×${kgBag} kg):
     }))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: 0, padding: "18px 20px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "none" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-2)" } }, "SECCIÓN A · TRABAJO DEL DÍA"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", letterSpacing: "-0.01em", color: "var(--ink-0)", marginTop: 2, marginBottom: 0 } }, "Tareas de Hoy")), tasksHoy.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, props.tasksOpenCount, " pendientes")), tasksHoy.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "20px", color: "var(--ink-2)", fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", border: "1px dashed var(--line-0)", borderRadius: 0 } }, "Sin tareas pendientes por ahora.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, tasksHoy.slice(0, 5).map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, style: { display: "flex", alignItems: "center", gap: 2, padding: "4px 12px 4px 4px", border: "1px solid var(--line-0)", borderRadius: 0, opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => props.onTaskToggle && props.onTaskToggle(t.key),
+        onClick: () => t.fromEngine ? closeTaskFromCheckbox(t) : props.onTaskToggle && props.onTaskToggle(t.key),
         "aria-pressed": t.done,
         "aria-label": "Marcar tarea",
         style: { cursor: "pointer", flexShrink: 0, width: 36, height: 36, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
       },
       /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 0, border: `1.5px solid ${t.done ? "var(--accent-olive)" : "var(--line-0)"}`, background: t.done ? "var(--accent-olive)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)", fontSize: 11 } }, t.done ? "✓" : "")
-    ), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-0)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why)), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 0 } }, t.prio))), tasksHoy.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", paddingTop: 2 } }, "+", tasksHoy.length - 5, " tarea", tasksHoy.length - 5 === 1 ? "" : "s", " más"))))), /* @__PURE__ */ React.createElement("div", { style: {
+    ), /* @__PURE__ */ React.createElement("button", { "data-testid": "cockpit-task-row", onClick: () => t.fromEngine && t.objectType === "batch" ? openBatchDetail(t.objectId) : props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-0)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why), t.action && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--accent-terracotta)" } }, t.action, " →")), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 0 } }, t.prio))), tasksHoy.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", paddingTop: 2 } }, "+", tasksHoy.length - 5, " tarea", tasksHoy.length - 5 === 1 ? "" : "s", " más")), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "open-day-close",
+        onClick: () => {
+          setDayCloseNote(null);
+          setShowDayClose(true);
+        },
+        style: { cursor: "pointer", minHeight: 40, padding: "0 16px", background: "var(--paper-0)", color: "var(--ink-0)", border: "1px solid var(--line-0)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" }
+      },
+      "Cerrar jornada"
+    ))))), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: 0,
@@ -7688,7 +7670,54 @@ Click para ver análisis completo`
       className: "inv-btn inv-btn-pri"
     },
     "Guardar cosecha"
-  ))), showQrSheet && (() => {
+  ))), showDayClose && (() => {
+    const dayCloseApi = typeof window !== "undefined" ? window.SetasDayClose : null;
+    if (!dayCloseApi) return null;
+    const now = Date.now();
+    const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    const shiftStartMs = new Date(new Date(now).toDateString()).getTime();
+    const allEvents = bitLotes.flatMap((l) => l.lifecycleEvents || []);
+    const sheets = activeLotes.map((l) => buildSheetFor(l)).filter(Boolean);
+    const pendingSyncCount = bitSyncErr ? 1 : 0;
+    const report = dayCloseApi.buildDayCloseReport({
+      events: allEvents,
+      tasks: bitTasks,
+      sheets,
+      pendingSyncCount,
+      shiftStartMs,
+      nowMs: now,
+      operatorId: null
+    });
+    return /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => {
+      setShowDayClose(false);
+      setDayCloseNote(null);
+    }, label: "Cerrar jornada", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-2)" } }, "Cierre de jornada"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", margin: "2px 0 12px" } }, "Reporte del turno"), /* @__PURE__ */ React.createElement("div", { "data-testid": "day-close-report", style: { display: "flex", flexDirection: "column", gap: 4, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("div", null, "Eventos registrados: ", report.eventsLogged), /* @__PURE__ */ React.createElement("div", null, "Tareas completadas: ", report.tasksCompleted), /* @__PURE__ */ React.createElement("div", null, "Tareas pendientes: ", report.tasksPending, " (", report.tasksOverdue, " vencidas)"), /* @__PURE__ */ React.createElement("div", null, "Incidentes abiertos: ", report.openIncidents.length), /* @__PURE__ */ React.createElement("div", null, "Trabajo de mañana: ", report.tomorrow.length, " tipo(s)"), /* @__PURE__ */ React.createElement("div", null, "Cambios sin sincronizar: ", report.pendingSync)), report.openIncidents.length > 0 && /* @__PURE__ */ React.createElement("ul", { style: { marginTop: 10, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)" } }, report.openIncidents.map((inc, i) => /* @__PURE__ */ React.createElement("li", { key: i }, inc.label, " · ", inc.detail))), !report.readyToClose && /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "day-close-blockers", style: { marginTop: 10, color: "var(--coral-700)" } }, /* @__PURE__ */ React.createElement("strong", null, "No se puede cerrar todavía:"), /* @__PURE__ */ React.createElement("ul", null, report.blockers.map((b, i) => /* @__PURE__ */ React.createElement("li", { key: i }, b)))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        style: { marginTop: 14, cursor: report.readyToClose ? "pointer" : "not-allowed", opacity: report.readyToClose ? 1 : 0.5, minHeight: 44, padding: "0 18px", background: "var(--accent-olive)", color: "var(--paper-0)", border: "none", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" },
+        disabled: !report.readyToClose,
+        onClick: () => {
+          try {
+            const closed = dayCloseApi.closeDay(report, { operatorId: null, at: now });
+            setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
+          } catch (err) {
+            setNoticeDlg({ title: "No se pudo cerrar el turno", msg: err.message });
+          }
+        }
+      },
+      "Confirmar cierre"
+    ), dayCloseNote && /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        readOnly: true,
+        value: dayCloseNote,
+        "data-testid": "day-close-handoff-note",
+        onClick: (e) => e.target.select(),
+        style: { width: "100%", minHeight: 220, marginTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" }
+      }
+    ));
+  })(), showQrSheet && (() => {
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
     const currentSheet = currentLote ? buildSheetFor(currentLote) : null;
