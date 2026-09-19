@@ -10917,7 +10917,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if (t === 'clima') return 'control';
     if (t === 'perito' || (t === 'formular' && typeof workbenchMode !== 'undefined' && workbenchMode === 'perito')) return 'control';
     if (t === 'catalogo') return 'archive';
-    if (t === 'market') return 'culinary-market';
+    if (t === 'market') return 'culinary';
     return 'field';
   };
 
@@ -11192,10 +11192,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
                           </div>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <button className="sdp-action sdp-action--field" type="button" onClick={()=>openBatchDetail(item.id)}>
+                            <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>openBatchDetail(item.id)}>
                               Abrir lote →
                             </button>
-                            <button className="sdp-action sdp-action--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
                               🏷
                             </button>
                           </div>
@@ -11287,10 +11287,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
                           </div>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <button className="sdp-action sdp-action--field sdp-action--primary" type="button" onClick={()=>openBatchDetail(item.id)}>
+                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>openBatchDetail(item.id)}>
                               Ejecutar transición →
                             </button>
-                            <button className="sdp-action sdp-action--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
                               🏷
                             </button>
                           </div>
@@ -11357,7 +11357,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
                           </div>
-                          <button className="sdp-action sdp-action--field" type="button" onClick={()=>openBatchDetail(item.id)}>
+                          <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>openBatchDetail(item.id)}>
                             Ver lote →
                           </button>
                         </div>

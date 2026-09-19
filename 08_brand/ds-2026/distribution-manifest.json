@@ -39,6 +39,7 @@
     "components/shared/provenance.css",
     "components/shared/action.css",
     "components/shared/actions.css",
+    "components/shared/reading.css",
     "components/shared/forms.css",
     "components/shared/figure.css",
     "components/shared/species.css",
