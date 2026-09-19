@@ -74,7 +74,7 @@ check('FIELD controls bind to canonical >=44px touch tokens', () => {
   const required = [
     [actions, /\.sdp-btn\s*\{[\s\S]*?min-height:\s*var\(--tap-target-min\)/, '.sdp-btn'],
     [forms, /\.sdp-input[^\{]*\{[\s\S]*?min-height:\s*var\(--tap-target-min\)/, '.sdp-input/.sdp-select'],
-    [interaction, /\[data-mode="field"\][\s\S]*?min-height:\s*44px/, '[data-mode="field"]'],
+    [interaction, /\[data-mode="field"\][\s\S]*?min-height:\s*var\(--tap-target-min(?:,\s*44px)?\)[\s\S]*?min-width:\s*var\(--tap-target-min(?:,\s*44px)?\)/, '[data-mode="field"] 44×44 contract'],
     [task, /\.sdp-task\s*\{[\s\S]*?min-height:\s*var\(--field-cell-min-height\)/, '.sdp-task']
   ];
   const missing = required.filter(([source, re]) => !re.test(source)).map(([, , name]) => name);
