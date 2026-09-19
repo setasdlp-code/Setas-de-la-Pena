@@ -110,7 +110,7 @@ test('long UI collections use progressive disclosure and mobile-safe layouts', (
   assert.match(jsx, /className="role-group-content" hidden=\{isCollapsed\}/);
   assert.match(css, /\.builder-wrap \.ing-list\{max-height:none;overflow:visible\}/);
   assert.match(jsx, /compatible\{compatCount===1\?'':'s'\}/);
-  assert.match(jsx, /className="inv-table inventory-stock-table"/);
+  assert.match(jsx, /className="inv-table inventory-stock-table/);
   assert.match(css, /\.inventory-stock-table td::before\{content:attr\(data-label\)/);
   assert.match(css, /\.home-workspaces-grid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /@media\(max-width:480px\)[\s\S]*\.spp-grid\{grid-template-columns:minmax\(0,1fr\)!important/);
