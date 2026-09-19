@@ -20,25 +20,25 @@
 .sdp-btn:active { transform: translateY(1px); }
 
 .sdp-btn--primary {
-  background: var(--brand-primary);
-  border-color: var(--brand-primary);
+  background: var(--action-primary);
+  border-color: var(--action-primary);
   color: var(--text-inverse);
 }
-.sdp-btn--primary:hover { background: var(--moss-900); }
+.sdp-btn--primary:hover { background: var(--action-primary-hover); }
 
 .sdp-btn--secondary {
-  background: var(--surface-panel);
+  background: var(--action-secondary);
   border-color: var(--border-heavy);
   color: var(--text-primary);
 }
-.sdp-btn--secondary:hover { background: var(--surface-recessed); }
+.sdp-btn--secondary:hover { background: var(--action-secondary-hover); }
 
 .sdp-btn--accent {
-  background: var(--brand-accent);
-  border-color: var(--brand-accent);
-  color: var(--text-inverse);
+  background: var(--action-accent);
+  border-color: var(--action-accent);
+  color: var(--action-accent-text);
 }
-.sdp-btn--accent:hover { background: var(--coral-700); }
+.sdp-btn--accent:hover { background: var(--action-accent-hover); text-decoration: underline; }
 
 .sdp-btn--field {
   min-height: 48px;
@@ -51,3 +51,11 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+
+.sdp-btn--danger {
+  background: var(--action-danger);
+  border-color: var(--action-danger);
+  color: var(--action-danger-text);
+}
+.sdp-btn--danger:hover { text-decoration: underline; }

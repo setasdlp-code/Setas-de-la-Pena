@@ -14,7 +14,7 @@
 .sdp-alert--ok    { border-left-color: var(--status-ok);    background: var(--status-ok-bg); }
 .sdp-alert--ok    .sdp-alert__label, .sdp-alert--ok .sdp-alert__icon { color: var(--status-ok); }
 
-.sdp-alert--warn  { border-left-color: var(--status-warn);  background: var(--status-warn-bg); }
+.sdp-alert--warn  { border-left-color: var(--status-warn-marker);  background: var(--status-warn-bg); }
 .sdp-alert--warn  .sdp-alert__label, .sdp-alert--warn .sdp-alert__icon { color: var(--status-warn-text); }
 
 .sdp-alert--error { border-left-color: var(--status-error); background: var(--status-error-bg); }
@@ -34,7 +34,7 @@
 .sdp-badge--ok    { color: var(--status-ok); background: var(--status-ok-bg); }
 .sdp-badge--warn  { color: var(--status-warn-text); background: var(--status-warn-bg); }
 .sdp-badge--error { color: var(--status-error); background: var(--status-error-bg); }
-.sdp-badge--quarantine { border-style: dashed; color: var(--status-warn-text); background: var(--status-warn-bg); }
+.sdp-badge--quarantine { border-style: var(--status-quarantine-border-style); color: var(--status-warn-text); background: var(--status-warn-bg); }
 
 /* Sync Indicator */
 .sdp-sync {

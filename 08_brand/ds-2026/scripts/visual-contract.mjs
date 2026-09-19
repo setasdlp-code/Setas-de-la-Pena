@@ -7,6 +7,7 @@
  */
 
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -63,26 +64,21 @@ check('0 screen text < 11px (micro floor enforcement)', () => {
   }
 });
 
-// Gate 2: Touch targets >= 44px in FIELD components
-check('0 field touch targets < 44px (touch safety floor)', () => {
-  const cssDir = path.join(DS_ROOT, 'components');
-  let foundFieldMin = false;
-  function search(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) search(full);
-      else if (entry.name.endsWith('.css')) {
-        const content = fs.readFileSync(full, 'utf8');
-        if (content.includes('min-height: 48px') || content.includes('min-height: 44px')) {
-          foundFieldMin = true;
-        }
-      }
-    }
-  }
-  search(cssDir);
-  if (!foundFieldMin) {
-    throw new Error('Field buttons and inputs must declare min-height >= 44px');
-  }
+// Gate 2: Canonical FIELD interaction primitives must bind to the touch contract.
+check('FIELD controls bind to canonical >=44px touch tokens', () => {
+  const actions = fs.readFileSync(path.join(DS_ROOT, 'components/shared/actions.css'), 'utf8');
+  const forms = fs.readFileSync(path.join(DS_ROOT, 'components/shared/forms.css'), 'utf8');
+  const interaction = fs.readFileSync(path.join(DS_ROOT, 'components/core/interaction.css'), 'utf8');
+  const task = fs.readFileSync(path.join(DS_ROOT, 'components/operations/task.css'), 'utf8');
+
+  const required = [
+    [actions, /\.sdp-btn\s*\{[\s\S]*?min-height:\s*var\(--tap-target-min\)/, '.sdp-btn'],
+    [forms, /\.sdp-input[^\{]*\{[\s\S]*?min-height:\s*var\(--tap-target-min\)/, '.sdp-input/.sdp-select'],
+    [interaction, /\[data-mode="field"\][\s\S]*?min-height:\s*44px/, '[data-mode="field"]'],
+    [task, /\.sdp-task\s*\{[\s\S]*?min-height:\s*var\(--field-cell-min-height\)/, '.sdp-task']
+  ];
+  const missing = required.filter(([source, re]) => !re.test(source)).map(([, , name]) => name);
+  if (missing.length) throw new Error('Touch contract missing from: ' + missing.join(', '));
 });
 
 // Gate 3: 0 diffuse box-shadows in components
@@ -286,6 +282,78 @@ check('Valid JSON syntax in all token files', () => {
       JSON.parse(raw);
     } catch (e) {
       throw new Error(`JSON syntax error in ${f}: ${e.message}`);
+    }
+  }
+});
+
+
+// Gate 11: Generated artifacts are current.
+check('generated token artifacts match canonical JSON sources', () => {
+  const proc = spawnSync(process.execPath, ['scripts/build-tokens.mjs', '--check'], {
+    cwd: DS_ROOT, encoding: 'utf8'
+  });
+  if (proc.status !== 0) throw new Error((proc.stderr || proc.stdout || 'token compiler drift').trim());
+});
+
+// Gate 12: Border semantic tokens are colors; rule tokens carry width/style.
+check('border semantic tokens are color-only and rule tokens carry geometry', () => {
+  const css = fs.readFileSync(path.join(DS_ROOT, 'tokens/tokens.css'), 'utf8');
+  for (const name of ['border-hairline', 'border-heavy']) {
+    const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
+    if (!m) throw new Error('Missing --' + name);
+    if (/\b(?:solid|dashed|dotted|px)\b/.test(m[1])) throw new Error('--' + name + ' must resolve to color only, got: ' + m[1]);
+  }
+  for (const name of ['rule-hairline', 'rule-heavy', 'rule-frame']) {
+    const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
+    if (!m || !/\b(?:solid|dashed|dotted)\b/.test(m[1])) throw new Error('--' + name + ' must carry border geometry');
+  }
+});
+
+// Gate 13: Raw warning pigment may not carry component semantics directly.
+check('components never use low-contrast --status-warn directly', () => {
+  const violations = [];
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.css')) {
+        fs.readFileSync(full, 'utf8').split('\n').forEach((line, i) => {
+          if (line.includes('var(--status-warn)')) violations.push(path.relative(DS_ROOT, full) + ':' + (i + 1));
+        });
+      }
+    }
+  }
+  walk(path.join(DS_ROOT, 'components'));
+  if (violations.length) throw new Error('Use --status-warn-marker/bg/text instead: ' + violations.join(', '));
+});
+
+// Gate 14: A canonical root .sdp-* selector has one owning module.
+check('canonical root selectors have a single module owner', () => {
+  const owners = new Map();
+  const roots = ['core', 'shared', 'operations', 'market'];
+  for (const root of roots) {
+    const dir = path.join(DS_ROOT, 'components', root);
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.css')) continue;
+      const file = path.join(dir, entry.name);
+      const css = fs.readFileSync(file, 'utf8');
+      for (const m of css.matchAll(/(?:^|\n)\s*(\.sdp-[A-Za-z0-9_-]+)\s*\{/g)) {
+        const selector = m[1];
+        if (!owners.has(selector)) owners.set(selector, new Set());
+        owners.get(selector).add(path.relative(DS_ROOT, file));
+      }
+    }
+  }
+  const dupes = [...owners.entries()].filter(([, files]) => files.size > 1);
+  if (dupes.length) throw new Error(dupes.map(([s, files]) => s + ' -> ' + [...files].join(', ')).join(' | '));
+});
+
+// Gate 15: Public bundles are alternatives, never nested bundles.
+check('public bundle contract is non-nested', () => {
+  for (const file of ['index.css', 'operations.css', 'market.css']) {
+    const css = fs.readFileSync(path.join(DS_ROOT, file), 'utf8');
+    if (/[@]import\s+["'](?:index|operations|market)\.css["']/.test(css)) {
+      throw new Error(file + ' must not import another public bundle');
     }
   }
 });

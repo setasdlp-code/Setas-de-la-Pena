@@ -15,8 +15,8 @@
 
 .sdp-provenance--measured   { border-left: 3px solid var(--status-ok); }
 .sdp-provenance--calculated { border-left: 3px solid var(--text-secondary); }
-.sdp-provenance--estimated  { border-left: 3px solid var(--status-warn); }
+.sdp-provenance--estimated  { border-left: 3px solid var(--status-warn-marker); }
 .sdp-provenance--target     { border-left: 3px solid var(--brand-accent); }
 .sdp-provenance--manual     { border-left: 3px solid var(--text-primary); }
 .sdp-provenance--simulated  { border-left: 3px dashed var(--text-secondary); }
-.sdp-provenance--pending    { border-left: 3px dotted var(--status-warn); opacity: 0.85; }
+.sdp-provenance--pending    { border-left: 3px dotted var(--status-warn-marker); opacity: 0.85; }

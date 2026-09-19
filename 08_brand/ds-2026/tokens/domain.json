@@ -8,67 +8,80 @@
       "measured": {
         "symbol": "●",
         "label": "MEASURED",
-        "description": "Direct sensor or instrument measurement (e.g. SCD30 CO2 sensor, physical scale)."
+        "description": "Direct sensor or instrument measurement (e.g. SCD30 CO2 sensor, physical scale).",
+        "labelKey": "provenance.measured"
       },
       "calculated": {
         "symbol": "◆",
         "label": "CALCULATED",
-        "description": "Derived mathematically from measured inputs (e.g. biological efficiency, dry matter)."
+        "description": "Derived mathematically from measured inputs (e.g. biological efficiency, dry matter).",
+        "labelKey": "provenance.calculated"
       },
       "estimated": {
         "symbol": "◇",
         "label": "ESTIMATED",
-        "description": "Interpolated or estimated parameter (e.g. projected flush yield date)."
+        "description": "Interpolated or estimated parameter (e.g. projected flush yield date).",
+        "labelKey": "provenance.estimated"
       },
       "target": {
         "symbol": "◎",
         "label": "TARGET",
-        "description": "Set-point or recipe target (e.g. optimal 18.5°C room setpoint)."
+        "description": "Set-point or recipe target (e.g. optimal 18.5°C room setpoint).",
+        "labelKey": "provenance.target"
       },
       "manual": {
         "symbol": "△",
         "label": "MANUAL",
-        "description": "Manually entered operator measurement or field observation."
+        "description": "Manually entered operator measurement or field observation.",
+        "labelKey": "provenance.manual"
       },
       "simulated": {
         "symbol": "⬡",
         "label": "SIMULATED",
-        "description": "Model-simulated or perito projection."
+        "description": "Model-simulated or perito projection.",
+        "labelKey": "provenance.simulated"
       },
       "pending": {
         "symbol": "◌",
         "label": "PENDING",
-        "description": "Measurement awaiting sensor response or operator verification."
+        "description": "Measurement awaiting sensor response or operator verification.",
+        "labelKey": "provenance.pending"
       }
     },
     "sync": {
       "synced": {
         "symbol": "✓",
         "label": "SINCRONIZADO",
-        "state": "normal"
+        "state": "normal",
+        "labelKey": "sync.synced"
       },
       "pending": {
         "symbol": "◌",
         "label": "PENDIENTE DE SINCRONIZACIÓN",
-        "state": "working"
+        "state": "working",
+        "labelKey": "sync.pending"
       },
       "error": {
         "symbol": "✕",
         "label": "ERROR DE SINCRONIZACIÓN",
-        "state": "error"
+        "state": "error",
+        "labelKey": "sync.error"
       },
       "offline": {
         "symbol": "⚡",
         "label": "SIN CONEXIÓN · GUARDADO LOCALMENTE",
-        "state": "offline"
+        "state": "offline",
+        "labelKey": "sync.offline"
       }
     },
     "status": {
       "quarantine": {
         "symbol": "⚠",
         "label": "CUARENTENA",
-        "badgeBorder": "dashed 1px var(--status-warn)",
-        "description": "Batch isolated due to contamination risk or out-of-spec telemetry."
+        "description": "Batch isolated due to contamination risk or out-of-spec telemetry.",
+        "severity": "warning",
+        "treatment": "dashed",
+        "labelKey": "status.quarantine"
       }
     }
   }
