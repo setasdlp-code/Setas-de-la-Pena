@@ -159,17 +159,17 @@ test('thermal print buttons are embedded across Hoy, Bitacora bags, Field QR and
   // 1. Hoy & BatchDetail
   assert.match(source, /openThermalForLote/);
   assert.match(source, /Imprimir etiquetas térmicas del lote/);
-  assert.match(source, /🏷 Imprimir Etiquetas Térmicas/);
+  assert.match(source, /<AppIcon name="print"[^>]*\/>\s*Imprimir Etiquetas Térmicas/);
 
   // 2. Bitacora individual bags
   assert.match(source, /Imprimir etiqueta de la bolsa/);
 
   // 3. Field QR Action Sheet
-  assert.match(source, /🏷 Imprimir Etiquetas Térmicas \(50×30 \/ 40×30\)/);
+  assert.match(source, /<AppIcon name="print"[^>]*\/>\s*Imprimir Etiquetas Térmicas \(50×30 \/ 40×30\)/);
 
   // 6. Harvest modal & table
   assert.match(source, /openThermalForCosecha/);
-  assert.match(source, /Guardar y 🖨 Canastilla/);
+  assert.match(source, /Guardar y <AppIcon name="print"[^>]*\/> Canastilla/);
   assert.match(source, /Imprimir etiqueta de canastilla/);
 });
 
@@ -190,7 +190,7 @@ test('restaurant tasting dossier modal provides organoleptic notes and chef pair
   assert.match(source, /Notas de Cata & Organolépticas/);
   assert.match(source, /Técnicas Sugeridas por el Chef/);
   assert.match(source, /Armonía & Maridajes Recomendados/);
-  assert.match(source, /🍷 Ficha de Cata/);
+  assert.match(source, /<AppIcon name="wine"[^>]*\/>\s*Ficha de Cata/);
   assert.match(styles, /\.sim-root \.tasting-dossier-sheet/);
   assert.match(styles, /\.sim-root \.tasting-radar-bar/);
   assert.match(styles, /\.sim-root \.pairing-tag/);
@@ -253,7 +253,7 @@ test('la captura rápida resuelve la etiqueta impresa y no depende sólo de la c
 
 test('climate dashboard generates and exports customizable ESPHome firmware YAML for microcontrollers', () => {
   assert.match(source, /showEsp32ConfigModal/);
-  assert.match(source, /⚡ Exportar ESPHome YAML/);
+  assert.match(source, /<AppIcon name="bolt"[^>]*\/>\s*Exportar ESPHome YAML/);
   assert.match(source, /altitude_compensation: 2600m/);
   assert.match(source, /relay_ch1_humidifier/);
   assert.match(source, /relay_ch2_fae/);

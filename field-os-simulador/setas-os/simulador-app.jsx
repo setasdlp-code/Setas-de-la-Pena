@@ -88,7 +88,7 @@ function BioCheck() {
   return (
     <div className="bio-check" style={{padding: '24px', maxWidth: 800, margin: '0 auto'}}>
       <h2 style={{fontFamily: 'var(--font-serif, serif)', fontSize: '1.5rem', marginBottom: 8, color: 'var(--ink-900)'}}>Checklist Digital de Bioseguridad</h2>
-      {allChecked && <div className="badge" style={{display:'inline-block', padding:'4px 10px', background:'var(--moss-100, #e8f0e4)', color:'var(--moss-800, #2e5a36)', borderRadius:4, fontWeight:700, marginBottom:16}}>✅ Bio‑Check OK</div>}
+      {allChecked && <div className="badge" style={{display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'var(--moss-100, #e8f0e4)', color:'var(--moss-800, #2e5a36)', borderRadius:4, fontWeight:700, marginBottom:16}}><AppIcon name="check" size={13} color="var(--moss-800, #2e5a36)" /> Bio‑Check OK</div>}
       <ul style={{listStyle:'none', padding:0}}>
         {items.map(item => (
           <li key={item.id} style={{marginBottom: '1rem', background:'var(--paper-50, #fff)', border:'1px solid var(--border-soft, #e2e4dd)', padding:'14px', borderRadius:6}}>
@@ -643,7 +643,7 @@ function LabExtraction() {
 
             {factors[speciesKey]?.methods[methodKey]?.notes && (
               <div style={{ fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 }}>
-                ℹ {factors[speciesKey].methods[methodKey].notes}
+                <AppIcon name="info" size={12} style={{marginRight:4}} /> {factors[speciesKey].methods[methodKey].notes}
               </div>
             )}
           </div>
@@ -706,21 +706,21 @@ function LabExtraction() {
                           title="Generar QR de Trazabilidad"
                           style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
-                          📱 QR
+                          <AppIcon name="qr" size={12} style={{marginRight:4}} /> QR
                         </button>
                         <button
                           onClick={() => exportBatchPdfStub(b)}
                           title="Exportar Certificado"
                           style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
-                          📄 Cert
+                          <AppIcon name="file" size={12} style={{marginRight:4}} /> Cert
                         </button>
                         <button
                           onClick={() => handleDeleteBatch(b.id)}
                           title="Eliminar registro"
                           style={{ padding: "4px 8px", background: "transparent", border: "1px solid #e57373", color: "#c62828", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
-                          ✕
+                          <AppIcon name="close" size={12} />
                         </button>
                       </div>
                     </td>
@@ -1055,7 +1055,7 @@ const INGS=[
   {id:'bagazo_caña',name:'Bagazo de caña fresco',cat:'base',cn:60,n:.7,c:42,moisture:55,cra:4,ph:5.5,dig:7,role:'base_carbono',tags:['Base','Local','Fresco 50–60% H₂O'],cost:1200,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','shiitake'],notes:'Compatibilidad con shiitake verificada en literatura: bagazo+salvado de trigo+aserrín en mezcla optimizada (Frontiers in Microbiology 2024, PMC11151849).'},
   {id:'aserrin_roble',name:'Aserrín de roble',cat:'base',cn:500,n:.1,c:50,moisture:12,cra:3,ph:4.5,dig:2,role:'base_carbono',tags:['Base','Madera dura'],cost:2500,cs:['shiitake','lions_mane','reishi','nameko']},
   {id:'aserrin_caucho',name:'Aserrín de caucho (Hevea brasiliensis)',cat:'base',cn:65,n:.75,c:49,moisture:12,cra:3,ph:5.8,dig:5,role:'base_carbono',tags:['Base','Madera','No disponible en Tenjo — requiere transporte desde zonas cálidas (Meta/Caquetá)'],cost:9000,cs:['lions_mane'],notes:'C:N=65.48 verificado en Nature Sci Rep 2023 (doi:10.1038/s41598-023-40601-y) — rinde mejor que aserrín de bambú (C:N=33.44) para Hericium erinaceus. %N y %C estimados a partir del C:N reportado (no medidos directamente en la fuente). El caucho no se cultiva en la Sabana de Bogotá (2600msnm, clima frío) — este insumo requeriría transporte desde plantaciones en clima cálido colombiano; costo estimado incluye ese transporte, sin cotización real de proveedor.'},
-  {id:'aserrin_eucalipto',name:'Aserrín de eucalipto',cat:'base',cn:350,n:.15,c:50,moisture:12,cra:3,ph:5.0,dig:3,role:'base_carbono',tags:['Base','Madera','⚠Aceites: rinde menos que madera dura'],cost:2000,cs:['p_ostreatus_gris','shiitake']},
+  {id:'aserrin_eucalipto',name:'Aserrín de eucalipto',cat:'base',cn:350,n:.15,c:50,moisture:12,cra:3,ph:5.0,dig:3,role:'base_carbono',tags:['Base','Madera','Aceites: rinde menos que madera dura'],cost:2000,cs:['p_ostreatus_gris','shiitake']},
   {id:'aserrin_pino',name:'Aserrín de pino fresco (requiere pretratamiento)',cat:'base',cn:600,n:.08,c:50,moisture:12,cra:2.5,ph:4.5,dig:1,role:'base_carbono',tags:['NO usar fresco','Terpenos inhibitorios','Exige lavado/compostaje 3–4 m'],cost:1500,cs:[],notes:'Terpenos y resinas abortan el micelio de Pleurotus/Hericium de inmediato. PROHIBIDO en fresco: requiere compostaje térmico prolongado (3–4 meses) o lavado químico parametrizado antes de cualquier uso. Para producción real usar la variante compostada.'},
   {id:'aserrin_pino_compostado',name:'Aserrín pino compostado (3–4 m)',cat:'base',cn:200,n:.2,c:40,moisture:15,cra:3,ph:5.5,dig:4,role:'base_carbono',tags:['Base','Gratis'],cost:2200,cs:['p_ostreatus_gris','shiitake','lions_mane']},
   {id:'aserrin_alamo',name:'Aserrín de álamo/sauce (Sabana)',cat:'base',cn:200,n:.20,c:45,moisture:12,cra:3.5,ph:5.5,dig:4,role:'base_carbono',tags:['Base','Madera','Sabana','Fácil conseguir'],cost:1800,cs:['p_ostreatus_gris','p_ostreatus_blanco','lions_mane','shiitake','reishi','nameko','enoki']},
@@ -1174,15 +1174,15 @@ const PRESETS={
   'orellana_rosa_calida':{name:'Orellana Rosa — Cálida Caña+Arroz (C:N≈39)',s:'p_djamor_rosa',i:[{id:'bagazo_caña',p:50},{id:'paja_arroz',p:20},{id:'borra_cafe',p:10},{id:'salvado_trigo',p:12},{id:'carbonato_calcio',p:5},{id:'yeso',p:3}]},
   /* ── Presets Sabana de Bogotá 2026 — ingredientes locales validados ── */
   // Alfalfa: paja_trigo×68 + pulpa_alfalfa(c33,n3.0)×17 + afrecho×8 → C:N≈35 ✓ | EB referenciado 166%
-  'alfalfa_eb166':{name:'★ Pulpa de Alfalfa — Máximo EB (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'paja_trigo',p:68},{id:'pulpa_alfalfa',p:17},{id:'afrecho_cerveceria',p:8},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'alfalfa_eb166':{name:'Pulpa de Alfalfa — Máximo EB (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'paja_trigo',p:68},{id:'pulpa_alfalfa',p:17},{id:'afrecho_cerveceria',p:8},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   // Uchuva: cascara_uchuva(c35,n1.2)×50 + paja_trigo×28 + borra×5 + salvado×10 → C:N≈33 ✓ (validado Colombia)
-  'uchuva_local':{name:'★ Uchuva Cundinamarca — Validado CO (C:N≈33)',s:'p_ostreatus_gris',i:[{id:'cascara_uchuva',p:50},{id:'paja_trigo',p:28},{id:'borra_cafe',p:5},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'uchuva_local':{name:'Uchuva Cundinamarca — Validado CO (C:N≈33)',s:'p_ostreatus_gris',i:[{id:'cascara_uchuva',p:50},{id:'paja_trigo',p:28},{id:'borra_cafe',p:5},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   // Floricultura: tallo_floricultura(c42,n0.9)×50 + paja_arroz×25 + afrecho×15 + borra×5 → C:N≈33 ✓ (exploración)
-  'floricultura_exploracion':{name:'★ Tallo de Floricultura — Exploración (C:N≈33)',s:'p_ostreatus_blanco',i:[{id:'tallo_floricultura',p:50},{id:'paja_arroz',p:25},{id:'afrecho_cerveceria',p:15},{id:'borra_cafe',p:5},{id:'carbonato_calcio',p:3},{id:'yeso',p:2}]},
+  'floricultura_exploracion':{name:'Tallo de Floricultura — Exploración (C:N≈33)',s:'p_ostreatus_blanco',i:[{id:'tallo_floricultura',p:50},{id:'paja_arroz',p:25},{id:'afrecho_cerveceria',p:15},{id:'borra_cafe',p:5},{id:'carbonato_calcio',p:3},{id:'yeso',p:2}]},
   // Tuza de maíz: tusa_maiz(c45,n0.7)×60 + salvado(c45,n2.8)×25 + borra(c47,n2.0)×8 → C:N≈35.2 ✓
-  'tuza_maiz_sabana':{name:'★ Tuza de Maíz — Estándar Sabana (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'tusa_maiz',p:60},{id:'salvado_trigo',p:25},{id:'borra_cafe',p:8},{id:'carbonato_calcio',p:4},{id:'yeso',p:3}]},
+  'tuza_maiz_sabana':{name:'Tuza de Maíz — Estándar Sabana (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'tusa_maiz',p:60},{id:'salvado_trigo',p:25},{id:'borra_cafe',p:8},{id:'carbonato_calcio',p:4},{id:'yeso',p:3}]},
   // Circular: chips_poda×35 + raices_hidrop×15 + roble×25 + cascarilla_soya×8 + salvado×10 → C:N≈39 ✓
-  'circular_hidroponico':{name:'★ Circular Hidropónico — Economía Circular (C:N≈39)',s:'lions_mane',i:[{id:'chips_poda_urbana',p:35},{id:'raices_hidroponicas',p:15},{id:'aserrin_roble',p:25},{id:'cascarilla_soya',p:8},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'circular_hidroponico':{name:'Circular Hidropónico — Economía Circular (C:N≈39)',s:'lions_mane',i:[{id:'chips_poda_urbana',p:35},{id:'raices_hidroponicas',p:15},{id:'aserrin_roble',p:25},{id:'cascarilla_soya',p:8},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   /* ── Bodega Tenjo 2026 — formuladas con inventario propio (sin afrecho de cervecería) ── */
   'bodega_gris':{name:'⬡ Bodega — Orellana Gris (C:N≈33, solo inventario)',s:'p_ostreatus_gris',i:[{id:'bagazo_caña',p:50},{id:'salvado_trigo',p:20},{id:'borra_cafe',p:13},{id:'cascarilla_arroz',p:11},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
   'bodega_rosa':{name:'⬡ Bodega — Orellana Rosa (C:N≈42, solo inventario)',s:'p_djamor_rosa',i:[{id:'bagazo_caña',p:60},{id:'cascarilla_arroz',p:10},{id:'borra_cafe',p:9},{id:'cascara_cafe',p:8},{id:'salvado_trigo',p:7},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
@@ -1355,7 +1355,7 @@ const isMassBalanced=a=>!!a&&Math.abs(a.tot-100)<=MASS_BALANCE_TOL;
 const massBalanceMsg=a=>{
   if(!a) return'';
   const d=a.tot-100;
-  if(Math.abs(d)<=MASS_BALANCE_TOL) return`Balance de masa: ${a.tot.toFixed(1)}% = 100% ✓`;
+  if(Math.abs(d)<=MASS_BALANCE_TOL) return`Balance de masa: ${a.tot.toFixed(1)}% = 100% (OK)`;
   return d<0?`Balance de masa: ${a.tot.toFixed(1)}% − 100% = ${d.toFixed(1)} pp · faltan ${Math.abs(d).toFixed(1)}%`
             :`Balance de masa: ${a.tot.toFixed(1)}% − 100% = +${d.toFixed(1)} pp · sobran ${d.toFixed(1)}%`;
 };
@@ -1363,16 +1363,16 @@ const massBalanceMsg=a=>{
 const diagnose=(a,sKey)=>{
   if(!a) return{main:'Selecciona ingredientes para comenzar.',sugs:[]};
   const{tot,cn,avgN,suppP,baseP,addP,cafeP,airP,densaP,incompat,eb,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct}=a;const s=[];
-  if(tot<95) s.push({t:'error',i:'⚠',tx:`Total ${tot.toFixed(1)}% — necesitas ${(100-tot).toFixed(1)}% más.`});
-  else if(tot>105) s.push({t:'error',i:'⚠',tx:`Total ${tot.toFixed(1)}% — reduce ${(tot-100).toFixed(1)}%.`});
+  if(tot<95) s.push({t:'error',i:'!',tx:`Total ${tot.toFixed(1)}% — necesitas ${(100-tot).toFixed(1)}% más.`});
+  else if(tot>105) s.push({t:'error',i:'!',tx:`Total ${tot.toFixed(1)}% — reduce ${(tot-100).toFixed(1)}%.`});
   if(sp){
     if(cn<sp.cn_optimal.min) s.push({t:'warning',i:'↓',tx:`C:N bajo (${cn.toFixed(1)}:1). Agrega base carbono. Objetivo ${sp.cn_optimal.min}–${sp.cn_optimal.max}:1.`});
     else if(cn>sp.cn_optimal.max) s.push({t:'warning',i:'↑',tx:`C:N alto (${cn.toFixed(1)}:1). Agrega salvado o café.`});
-    else s.push({t:'success',i:'✓',tx:`C:N óptimo (${cn.toFixed(1)}:1) para ${sp.name}.`});
-    if(trichoderma) s.push({t:'error',i:'⚠',tx:`COLAPSO TRICHODERMA: N=${avgN.toFixed(2)}% supera umbral crítico sin autoclave. EB cae ~85%. Opciones: reducir N, usar autoclave 121°C×90min, spawn ${dynSpawn}%+.`});
+    else s.push({t:'success',i:'',tx:`C:N óptimo (${cn.toFixed(1)}:1) para ${sp.name}.`});
+    if(trichoderma) s.push({t:'error',i:'!',tx:`COLAPSO TRICHODERMA: N=${avgN.toFixed(2)}% supera umbral crítico sin autoclave. EB cae ~85%. Opciones: reducir N, usar autoclave 121°C×90min, spawn ${dynSpawn}%+.`});
     else if(avgN<sp.n_optimal.min) s.push({t:'warning',i:'↓',tx:`Nitrógeno bajo (${avgN.toFixed(2)}%). Aumenta salvado o borra de café.`});
     else if(avgN>sp.n_optimal.max) s.push({t:'warning',i:'↑',tx:`Nitrógeno elevado (${avgN.toFixed(2)}%). Riesgo moderado. Spawn ajustado: ${dynSpawn}%.`});
-    else s.push({t:'success',i:'✓',tx:`Nitrógeno óptimo (${avgN.toFixed(2)}%). Spawn dinámico: ${dynSpawn}%.`});
+    else s.push({t:'success',i:'',tx:`Nitrógeno óptimo (${avgN.toFixed(2)}%). Spawn dinámico: ${dynSpawn}%.`});
     if(suppP>sp.supplementation_max) s.push({t:'error',i:'!',tx:`Suplementación ${suppP.toFixed(0)}% excede ${sp.supplementation_max}%. REQUIERE AUTOCLAVE 121°C×90min. Spawn: ${dynSpawn}%.`});
     // pH
     if(sp.ph_optimal){
@@ -1384,8 +1384,8 @@ const diagnose=(a,sKey)=>{
   if(baseP<50) s.push({t:'warning',i:'↓',tx:`Base carbono baja (${baseP.toFixed(0)}%). Mínimo 50%.`});
   if(addP<2) s.push({t:'warning',i:'!',tx:`Sin minerales. Agrega 2–4% carbonato/yeso.`});
   if(cafeP>30) s.push({t:'error',i:'!',tx:`Borra café ${cafeP.toFixed(0)}% — compactación. Máx 30%.`});
-  if(eucPct>20) s.push({t:'warning',i:'⚠',tx:`Aserín de eucalipto ${eucPct.toFixed(0)}% — aceites esenciales (cineol, terpineol) reducen colonización 20–35%. Máximo recomendado: 20%.`});
-  if(pescPct>3) s.push({t:'error',i:'⚠',tx:`Harina de pescado ${pescPct.toFixed(0)}% supera el 3% — riesgo elevado de ácaros y Sciaridae por olor. Reducir a ≤3% o eliminar.`});
+  if(eucPct>20) s.push({t:'warning',i:'!',tx:`Aserín de eucalipto ${eucPct.toFixed(0)}% — aceites esenciales (cineol, terpineol) reducen colonización 20–35%. Máximo recomendado: 20%.`});
+  if(pescPct>3) s.push({t:'error',i:'!',tx:`Harina de pescado ${pescPct.toFixed(0)}% supera el 3% — riesgo elevado de ácaros y Sciaridae por olor. Reducir a ≤3% o eliminar.`});
   else if(cafeP>0) s.push({t:'success',i:'',tx:`Café en proporción saludable (${cafeP.toFixed(0)}%).`});
   if(densaP>60&&airP<10) s.push({t:'error',i:'',tx:`Riesgo anaerobiosis: ${densaP.toFixed(0)}% material denso + solo ${airP.toFixed(0)}% aireador. Agrega 10–15% cascarilla de arroz o tamo.`});
   else if(densaP>40&&airP<8) s.push({t:'warning',i:'',tx:`Estructura densa (${densaP.toFixed(0)}% fino, ${airP.toFixed(0)}% aireador). Agrega 8–10% cascarilla.`});
@@ -1406,7 +1406,7 @@ const diagnose=(a,sKey)=>{
     if(m.phF<1) pen.push(`pH −${Math.round((1-m.phF)*100)}%`);
     if(m.aerF<1) pen.push(`aireación −${Math.round((1-m.aerF)*100)}%`);
     if(m.digF<1) pen.push(`digestibilidad −${Math.round((1-m.digF)*100)}%`);
-    if(pen.length) s.push({t:'warning',i:'⚙',tx:`EB ajustada por: ${pen.join(', ')}. Corrige estos factores para acercarte al EB máximo de la especie.`});
+    if(pen.length) s.push({t:'warning',i:'-',tx:`EB ajustada por: ${pen.join(', ')}. Corrige estos factores para acercarte al EB máximo de la especie.`});
   }
   let main='';
   if(s.filter(x=>x.t==='error').length) main='Problemas críticos. Revisar antes de continuar.';
@@ -1641,8 +1641,8 @@ const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico activo.
   const COLD_SENSITIVE={p_djamor_rosa:'28–30°C'};
   const coldWarn=COLD_SENSITIVE[sKey]
-    ? ` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
-    : (thermal.coldWarning ? ` ⚠️ ${thermal.coldWarning}` : '');
+    ? ` Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
+    : (thermal.coldWarning ? ` ${thermal.coldWarning}` : '');
 
   // Matriz biológica diferencial de oleadas por especie
   const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(sKey))
@@ -1771,16 +1771,16 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   
   if(fullscreen) return(
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:'var(--z-overlay)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
-      <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}>✕</button>
+      <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}><AppIcon name="close" size={12} /></button>
       <RadarSVG size={600}/>
-      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
+      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en Cerrar</div>
     </div>
   );
   
   return(
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--fos-space-5) 0 var(--fos-space-4)',background:'var(--paper-200)',marginBottom:14}}>
       <RadarSVG size={260}/>
-      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
+      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}><AppIcon name="target" size={12} style={{marginRight:4}} /> Pantalla completa</button>
     </div>
   );
 };
@@ -2072,7 +2072,7 @@ const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
   if(!first) return null;
-  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','⚠':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Sin mineral estabilizador de pH','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
+  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','!':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Sin mineral estabilizador de pH','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
   return MAP[first.icon]||first.label;
 };
 const peritoCorreccionMinima=(opt)=>{
@@ -2135,7 +2135,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       <div className="pi-head">
         <span className="pi-label">{item.label}</span>
         {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#8C4020',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}>🛒 no en bodega — a comprar</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
@@ -2172,7 +2172,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
       {item.apply&&<PeritoChangePreview changes={changes}/>}
-      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>⚠ {item.sideEffect}</div>}
+      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600,#B5451F)" /> {item.sideEffect}</span></div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
@@ -2190,7 +2190,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           title="Hibridar interactivamente la receta activa con esta sugerencia"
           onClick={()=>onMorph(deltaSim.resultingRecipe)}
           style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>
-          ⚖️ Morph
+          <AppIcon name="scale" size={13} style={{marginRight:4}} /> Morph
         </button>
       )}
     </div>
@@ -2372,6 +2372,201 @@ const AppIcon=({name,size=14,className='',style={},color='currentColor'})=>{
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       );
+    case 'bolt':
+    case 'zap':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case 'scale':
+    case 'balance':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <line x1="12" y1="2" x2="12" y2="20"/>
+          <path d="M5 7l7-3 7 3M5 7L2 14h6L5 7zM19 7l-3 7h6l-3-7zM8 21h8"/>
+        </svg>
+      );
+    case 'mushroom':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M12 3a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9z"/>
+          <path d="M9 12v6a3 3 0 0 0 6 0v-6"/>
+        </svg>
+      );
+    case 'flame':
+    case 'fire':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M12 2c.75 3.75 4.5 6 4.5 10.5a7.5 7.5 0 0 1-15 0c0-4.5 3.75-6.75 4.5-10.5 1.5 3 3 4.5 6 0z"/>
+        </svg>
+      );
+    case 'snowflake':
+    case 'cold':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="m4.93 4.93 14.14 14.14M19.07 4.93 4.93 19.07"/>
+        </svg>
+      );
+    case 'box':
+    case 'package':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M3 6.75L12 2.25l9 4.5v10.5l-9 4.5-9-4.5V6.75z"/>
+          <path d="M3 6.75L12 11.25l9-4.5M12 11.25v10.5"/>
+        </svg>
+      );
+    case 'target':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="12" y1="2" x2="12" y2="5"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="5" y2="12"/>
+          <line x1="19" y1="12" x2="22" y2="12"/>
+        </svg>
+      );
+    case 'clipboard':
+    case 'task':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M15 2H9a1 1 0 0 0-1 1v2h8V3a1 1 0 0 0-1-1z"/>
+          <path d="M7 5H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <line x1="8" y1="11" x2="16" y2="11"/>
+          <line x1="8" y1="16" x2="14" y2="16"/>
+        </svg>
+      );
+    case 'edit':
+    case 'pencil':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 18.5 3 19.5l1-4L16.5 3.5z"/>
+        </svg>
+      );
+    case 'cart':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="9" cy="20" r="1.5"/>
+          <circle cx="18" cy="20" r="1.5"/>
+          <path d="M2 3h3.5l2.2 10.5h11.8l2-7.5H6"/>
+        </svg>
+      );
+    case 'lock':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <rect x="4" y="10" width="16" height="12" rx="2"/>
+          <path d="M7 10V6a5 5 0 0 1 10 0v4"/>
+        </svg>
+      );
+    case 'rotate':
+    case 'refresh':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M2.5 3.5v5h5"/>
+          <path d="M3.5 14a8.5 8.5 0 1 0 1.7-8.5L2.5 8.5"/>
+        </svg>
+      );
+    case 'star':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill={color === 'none' ? 'none' : 'currentColor'} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      );
+    case 'chart':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+        </svg>
+      );
+    case 'info':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      );
+    case 'file':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      );
+    case 'radio':
+    case 'antenna':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M4.93 19.07a10 10 0 0 1 0-14.14"/>
+          <path d="M7.76 16.24a6 6 0 0 1 0-8.48"/>
+          <circle cx="12" cy="12" r="2"/>
+          <path d="M16.24 7.76a6 6 0 0 1 0 8.48"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      );
+    case 'flask':
+    case 'lab':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/>
+          <path d="M8.5 2h7"/>
+          <path d="M7 16h10"/>
+        </svg>
+      );
+    case 'plug':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M12 22v-5"/>
+          <path d="M9 8V2"/>
+          <path d="M15 8V2"/>
+          <path d="M18 8v5a6 6 0 0 1-12 0V8z"/>
+        </svg>
+      );
+    case 'gear':
+    case 'settings':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      );
+    case 'wrench':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      );
+    case 'wine':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M8 22h8"/>
+          <path d="M12 15v7"/>
+          <path d="M12 15a7 7 0 0 0 7-7V3H5v5a7 7 0 0 0 7 7Z"/>
+        </svg>
+      );
+    case 'bowl':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M4 11h16a8 8 0 0 1-16 0z"/>
+          <line x1="8" y1="19" x2="16" y2="19"/>
+        </svg>
+      );
+    case 'search':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      );
     default:
       return null;
   }
@@ -2505,7 +2700,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               </div>
             </div>
           </div>
-          <button type="button" className="modal-icon-close" style={{color:'var(--paper-200)',background:'rgba(255,255,255,.08)',borderRadius:'50%',width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer'}} onClick={onClose} aria-label="Cerrar ficha">✕</button>
+          <button type="button" className="modal-icon-close" style={{color:'var(--paper-200)',background:'rgba(255,255,255,.08)',borderRadius:'50%',width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer'}} onClick={onClose} aria-label="Cerrar ficha"><AppIcon name="close" size={12} /></button>
         </div>
       </div>
 
@@ -2524,7 +2719,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               background: syncResult?.status === 'synced' ? 'var(--moss-100,#E8F0E0)' : syncResult?.status === 'failed' ? 'var(--coral-100,#FDE8E8)' : 'var(--paper-200,#E5E0D3)',
               color: syncResult?.status === 'synced' ? 'var(--moss-800,#3B5A24)' : syncResult?.status === 'failed' ? 'var(--coral-800,#9B1C1C)' : 'var(--ink-600)'
             }}>
-              {syncResult?.status === 'synced' ? '✓ Publicado' : syncResult?.status === 'failed' ? '⚠ Error al publicar' : 'Pendiente de Sincronización'}
+              {syncResult?.status === 'synced' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Publicado</span> : syncResult?.status === 'failed' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} /> Error al publicar</span> : 'Pendiente de Sincronización'}
             </span>
             {syncResult?.lastPublishedAt && (
               <span style={{fontSize: 10, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)'}}>
@@ -2641,7 +2836,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
         {/* ACCIONES DEL MODAL */}
         <div style={{display:'flex',gap:8,justifyContent:'space-between',alignItems:'center',marginTop:4}}>
           <span style={{fontSize:11,color:copied?'var(--moss-700)':'var(--ink-500)',fontWeight:copied?700:400}}>
-            {copied?'✓ Enlace QR copiado al portapapeles':'Enlace público para clientes y auditorías'}
+            {copied?<span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Enlace QR copiado al portapapeles</span>:'Enlace público para clientes y auditorías'}
           </span>
           <div style={{display:'flex',gap:8}}>
             <button
@@ -3020,26 +3215,26 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
           </div>
         </div>
-        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}>✕</button>
+        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
       </div>
 
       {/* Navigation Pills */}
       <div style={{ padding: '16px 24px 0', background: 'var(--paper-50)' }}>
         <div className="iot-hub-pills">
           <button type="button" className={`iot-hub-pill ${tab === 'nodos' ? 'on' : ''}`} onClick={() => setTab('nodos')}>
-            📡 Nodos en Finca ({nodes.length})
+            <AppIcon name="radio" size={12} style={{marginRight:6}} /> Nodos en Finca ({nodes.length})
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'firmware' ? 'on' : ''}`} onClick={() => setTab('firmware')}>
-            ⚡ Generador de Firmware
+            <AppIcon name="bolt" size={12} style={{marginRight:6}} /> Generador de Firmware
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'webhook' ? 'on' : ''}`} onClick={() => setTab('webhook')}>
-            🧪 Consola Webhook / Test
+            <AppIcon name="flask" size={12} style={{marginRight:6}} /> Consola Webhook / Test
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'conexion' ? 'on' : ''}`} onClick={() => setTab('conexion')}>
-            🔌 Conexión en Vivo
+            <AppIcon name="plug" size={12} style={{marginRight:6}} /> Conexión en Vivo
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'reglas' ? 'on' : ''}`} onClick={() => setTab('reglas')}>
-            ⚙ Reglas de Automatización
+            <AppIcon name="gear" size={12} style={{marginRight:6}} /> Reglas de Automatización
           </button>
         </div>
       </div>
@@ -3188,13 +3383,13 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'esphome' ? 'on' : ''}`} onClick={() => setFwFormat('esphome')}>
-                  📄 ESPHome (YAML)
+                  <AppIcon name="file" size={12} style={{marginRight:6}} /> ESPHome (YAML)
                 </button>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'arduino' ? 'on' : ''}`} onClick={() => setFwFormat('arduino')}>
-                  🛠 Arduino C++ (.ino)
+                  <AppIcon name="wrench" size={12} style={{marginRight:6}} /> Arduino C++ (.ino)
                 </button>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'curl' ? 'on' : ''}`} onClick={() => setFwFormat('curl')}>
-                  🌐 cURL / Webhook
+                  <AppIcon name="globe" size={12} style={{marginRight:6}} /> cURL / Webhook
                 </button>
               </div>
 
@@ -3267,12 +3462,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   setWebhookFeedback(res);
                 }}
               >
-                🚀 Inyectar Telemetría de Prueba
+                <AppIcon name="rocket" size={13} style={{marginRight:6}} /> Inyectar Telemetría de Prueba
               </button>
 
               {webhookFeedback && (
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
-                  {webhookFeedback.success ? '✓ ' : '✕ '} {webhookFeedback.msg}
+                  {webhookFeedback.success ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : <AppIcon name="close" size={11} style={{marginRight:4}} />} {webhookFeedback.msg}
                 </div>
               )}
             </div>
@@ -3365,7 +3560,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 </button>
                 {connSaved && (
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
-                    ✓ Puente reiniciado con la configuración nueva
+                    <AppIcon name="check" size={12} style={{marginRight:4}} /> Puente reiniciado con la configuración nueva
                   </span>
                 )}
               </div>
@@ -3382,7 +3577,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
               <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  💧 Humidificación (Bang-Bang con Histéresis)
+                  <AppIcon name="droplet" size={13} style={{marginRight:6}} /> Humidificación (Bang-Bang con Histéresis)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
@@ -3398,7 +3593,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
               <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  💨 Renovación de Aire FAE (Extractor Cloudline)
+                  <AppIcon name="wind" size={13} style={{marginRight:6}} /> Renovación de Aire FAE (Extractor Cloudline)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
@@ -3414,7 +3609,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
               <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  🌡 Seguridad Biológica de Sustrato
+                  <AppIcon name="temp" size={13} style={{marginRight:6}} /> Seguridad Biológica de Sustrato
                 </div>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
@@ -3614,7 +3809,17 @@ const FieldActionModal = ({
     }
   }, [model.options, selectedTo]);
 
-  const STATUS_ICONS = { saved_local: '📱', sending: '📡', confirmed: '☁️', simulated: '🧪', conflict: '⚠️', rejected: '⛔' };
+  const renderStatusIcon = (status) => {
+    switch (status) {
+      case 'saved_local': return <AppIcon name="qr" size={13} />;
+      case 'sending': return <AppIcon name="radio" size={13} />;
+      case 'confirmed': return <AppIcon name="check" size={13} />;
+      case 'simulated': return <AppIcon name="flask" size={13} />;
+      case 'conflict': return <AppIcon name="alert" size={13} />;
+      case 'rejected': return <AppIcon name="close" size={13} />;
+      default: return null;
+    }
+  };
 
   const handleConfirm = async () => {
     if (!selectedTo) return;
@@ -3702,7 +3907,7 @@ const FieldActionModal = ({
           onClick={onClose}
           style={{ background: 'transparent', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ink-2)' }}
         >
-          ✕
+          <AppIcon name="close" size={14} />
         </button>
       </div>
 
@@ -3734,7 +3939,7 @@ const FieldActionModal = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            <span>{STATUS_ICONS[model.simulated ? 'simulated' : model.status] || ''}</span>
+            <span>{renderStatusIcon(model.simulated ? 'simulated' : model.status)}</span>
             <span>{model.statusHeading}</span>
           </div>
           {model.showStatusLabel && (
@@ -3763,7 +3968,7 @@ const FieldActionModal = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
-            <span>⏳</span> <span>ENVIANDO AL SERVIDOR...</span>
+            <AppIcon name="clock" size={13} /> <span>ENVIANDO AL SERVIDOR...</span>
           </div>
           <div style={{ fontSize: 11, marginTop: 4 }}>
             Transmitiendo evento de campo al servidor central...
@@ -3784,7 +3989,7 @@ const FieldActionModal = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
-            <span>⚠️</span> <span>CONFLICTO DE REVISIÓN</span>
+            <AppIcon name="alert" size={13} /> <span>CONFLICTO DE REVISIÓN</span>
           </div>
           <div style={{ fontSize: 12, marginTop: 4 }}>
             El lote cambió de versión en el servidor o fue actualizado desde otro equipo.
@@ -3795,19 +4000,19 @@ const FieldActionModal = ({
             style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
             onClick={handleRefresh}
           >
-            🔄 Refrescar lote
+            <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar lote
           </button>
         </div>
       )}
 
       {actionError && (
         <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
-          ⚠️ {actionError}
+          <><AppIcon name="alert" size={12} style={{marginRight:4}} /> {actionError}</>
         </div>
       )}
       {actionSuccess && (
         <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
-          ✓ {actionSuccess}
+          <><AppIcon name="check" size={12} style={{marginRight:4}} /> {actionSuccess}</>
         </div>
       )}
 
@@ -3893,7 +4098,7 @@ const FieldActionModal = ({
             onClick={handleRefresh}
             style={{ minHeight: 48, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta, #A85C32)' }}
           >
-            🔄 Refrescar Lote
+            <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar Lote
           </button>
         )}
 
@@ -3913,7 +4118,7 @@ const FieldActionModal = ({
             cursor: model.canConfirm && selectedTo ? 'pointer' : 'not-allowed',
           }}
         >
-          {inFlight ? '⏳ Guardando...' : (selectedTo ? `Confirmar: ${model.options.find(option=>option.to===selectedTo)?.label||selectedTo}` : 'Confirmar transición')}
+          {inFlight ? <><AppIcon name="clock" size={12} style={{marginRight:4}} /> Guardando...</> : (selectedTo ? `Confirmar: ${model.options.find(option=>option.to===selectedTo)?.label||selectedTo}` : 'Confirmar transición')}
         </button>
       </div>
     </AccessibleModal>
@@ -5525,9 +5730,9 @@ function matchWeeklyCoverage(projection, commitments = b2bCommitments) {
 }
 
 // Badges for UI coverage status
-const superavit = '🟢';
-const deficit = '🔴';
-const cobertura = '🟡';
+const superavitBadge = 'ok';
+const deficitBadge = 'error';
+const coberturaBadge = 'warn';
 
 // Recommendation when deficit detected with substrate and spawn weights
 function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', options = {}) {
@@ -6152,10 +6357,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
       playSweepBeep(1040, 120);
       triggerHaptic([50, 60]);
-      setSweepStatusBanner(`✓ Barrido aplicado: ${opResult.totalUpdated} bolsas actualizadas al ${targetPct}%${opResult.totalScanned > opResult.totalUpdated ? ` (${opResult.totalScanned - opResult.totalUpdated} protegidas)` : ''}.`);
+      setSweepStatusBanner(`Barrido aplicado: ${opResult.totalUpdated} bolsas actualizadas al ${targetPct}%${opResult.totalScanned > opResult.totalUpdated ? ` (${opResult.totalScanned - opResult.totalUpdated} protegidas)` : ''}.`);
       setSweepQueue([]);
     } else {
-      setSweepStatusBanner('❌ No se pudo aplicar el barrido a las bolsas seleccionadas.');
+      setSweepStatusBanner('No se pudo aplicar el barrido a las bolsas seleccionadas.');
     }
   };
 
@@ -6207,7 +6412,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
       playSweepBeep(660, 150);
       triggerHaptic([60, 40]);
-      setSweepStatusBanner(`✓ Observación de riesgo registrada para ${opResult.totalUpdated} bolsas.`);
+      setSweepStatusBanner(`Observación de riesgo registrada para ${opResult.totalUpdated} bolsas.`);
       setSweepQueue([]);
       setSweepRiskModalOpen(false);
       setSweepRiskNota('');
@@ -6796,14 +7001,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       setRecipe(targetRecipe);
       goTab('produccion');
       setNoticeDlg({
-        title:'⭐ Receta promovida a Producción',
+        title:'Receta promovida a Producción',
         msg:`La receta "${targetName}" ha sido promovida a Producción oficial. Se han cargado los parámetros en la Hoja de Producción lista para lote.`
       });
     };
 
     if(missingStock.length>0){
       setConfirmDlg({
-        title:'⭐ Promover a Producción — Insumos Faltantes',
+        title:'Promover a Producción — Insumos Faltantes',
         msg:`La receta "${targetName}" incluye ingredientes sin stock suficiente en Bodega Tenjo:\n\n• ${missingStock.map(m=>`${m.name} (${m.pct}%) — Stock actual: ${m.inStockKg.toFixed(1)} kg`).join('\n• ')}\n\n¿Deseas promoverla para planificar la producción y compra de insumos?`,
         confirmLabel:'Promover y planificar',
         onConfirm:executePromotion,
@@ -7622,7 +7827,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
 
       setNoticeDlg({
-        title: '🚀 Producción de Lote Lanzada',
+        title: 'Producción de Lote Lanzada',
         msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
       });
     } catch (e) {
@@ -8186,7 +8391,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="stock-critical-card" style={{ marginBottom: 16 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                                <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
                               </span>
                               <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
                                 Registrar Compra +
@@ -8226,7 +8431,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="stock-critical-card" style={{ marginBottom: 16 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                                <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
                               </span>
                               <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
                                 Registrar Compra +
@@ -8332,14 +8537,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     <td data-label="Acciones">
                                       {isEditing?(
                                         <div style={{display:'flex',gap:4}}>
-                                          <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
-                                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
+                                          <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}><AppIcon name="check" size={12} /></button>
+                                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}><AppIcon name="close" size={12} /></button>
                                         </div>
                                       ):(
                                         <div style={{display:'flex',gap:4}}>
                                           <button className="inv-btn inv-btn-sec inv-btn-sm" title="Editar fila completa"
                                             onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
-                                            ✎ Editar
+                                            <AppIcon name="edit" size={12} style={{marginRight:4}} /> Editar
                                           </button>
                                           <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
                                             style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
@@ -8390,7 +8595,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {cmpConfirm?(
                     <div>
                       <div style={{padding:'14px 16px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',marginBottom:14}}>
-                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2}}>✓ Compra registrada</div>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name="check" size={13} color="var(--ink-800)" /> Compra registrada</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                       </div>
                       <div className="inv-section" style={{marginBottom:14}}>
@@ -8412,7 +8617,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                   <div>
                   <div style={{display:'flex',gap:8,marginBottom:14}}>
-                    {[['manual','✎','Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto','✉','Pegar texto']].map(([v,icon,l])=>(
+                    {[['manual',<AppIcon name="edit" size={14}/>,'Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto',<AppIcon name="clipboard" size={14}/>,'Pegar texto']].map(([v,icon,l])=>(
                       <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
                         <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
                         <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{l}</span>
@@ -8479,9 +8684,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <option value="">Seleccionar ingrediente…</option>
                           {INGS.map(gg=>(<option key={gg.id} value={gg.id}>{gg.name}</option>))}
                         </select>
-                        <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1} aria-label={`Quitar ${g?.name||'ítem'} de la compra`}>✕</button>
+                        <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1} aria-label={`Quitar ${g?.name||'ítem'} de la compra`}><AppIcon name="close" size={12} /></button>
                       </div>
-                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8}}>⚠ Sin coincidencia automática — elige el ingrediente.</div>}
+                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-500)" /> Sin coincidencia automática — elige el ingrediente.</div>}
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:4}}>
                           <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String(Math.max(0,(parseFloat(it.kg)||0)-1)))} aria-label={`Reducir cantidad de ${g?.name||'ingrediente'} en 1 kg`}>−</button>
@@ -8503,8 +8708,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div style={{display:'flex',gap:10}}>
-                    <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>✓ Registrar compra</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}>✕ Limpiar</button>
+                    <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>Registrar compra</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}><AppIcon name="close" size={12} /> Limpiar</button>
                   </div>
                   </div>
                   )}
@@ -8537,7 +8742,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <span className="inv-month-label">{label}</span>
                               <div style={{display:'flex',alignItems:'center',gap:12}}>
                                 <span className="inv-month-total">${totalMes.toLocaleString('es-CO')} COP</span>
-                                <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▶':'▼'}</span>
+                                <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▸':'▾'}</span>
                               </div>
                             </button>
                             {!collapsed&&(
@@ -8595,7 +8800,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="prov-name">{p.nombre}</div>
                             <div className="prov-muni">{p.municipio}</div>
                           </div>
-                          <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)} aria-label={`Eliminar proveedor ${p.nombre}`}>✕</button>
+                          <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)} aria-label={`Eliminar proveedor ${p.nombre}`}><AppIcon name="close" size={12} /></button>
                         </div>
                       ))}
                     </div>
@@ -8804,7 +9009,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>setQrEventoObsAbierta(v=>!v)}
                         >
-                          📝 Observación
+                          <AppIcon name="edit" size={13} style={{marginRight:4}} /> Observación
                         </button>)}
                         {qrAllowedActions.has('riego') && (<button
                           type="button"
@@ -8812,7 +9017,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('riego',currentLote,scannedBag)}
                         >
-                          💧 Riego
+                          <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Riego
                         </button>)}
                         {qrAllowedActions.has('contamination') && (<button
                           type="button"
@@ -8820,7 +9025,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('contaminacion',currentLote,scannedBag)}
                         >
-                          ⚠️ Contaminación
+                          <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> Contaminación
                         </button>)}
                         {qrAllowedActions.has('harvest') && (<button
                           type="button"
@@ -8828,7 +9033,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('cosecha_parcial',currentLote,scannedBag)}
                         >
-                          🧺 Cosecha parcial
+                          <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Cosecha parcial
                         </button>)}
                       </div>
                       {qrEventoObsAbierta&&(
@@ -9103,7 +9308,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
           <div style={{display:'flex',gap:6,alignItems:'center'}}>
             <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
-            <button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>🖨</button>
+            <button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}><AppIcon name="print" size={13} /></button>
           </div>
         </div>)}
       </section>;})}
@@ -9125,9 +9330,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="chevron-right" size={13} color="var(--accent-olive,#5B6B44)" /> 📋 Hoja de Acción (QR)</button>
+          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="clipboard" size={13} color="var(--accent-olive,#5B6B44)" /> Hoja de Acción (QR)</button>
           <button className="os-action" type="button" onClick={()=>setPublicTraceModalLoteId(lote.id)} style={{display:'flex',alignItems:'center',gap:6}} title="Ver ficha pública de trazabilidad botánica"><AppIcon name="globe" size={13} color="var(--moss-700)" /> Ver Ficha Pública QR</button>
-          <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> 🏷 Imprimir Etiquetas Térmicas</button>
+          <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> Imprimir Etiquetas Térmicas</button>
         </div>
       </div>
       <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{sheet?sheet.code:lote.codigo}</div><div className="os-batch-header__species">{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{sheet?sheet.stateLabel:(lifecycleLabel[state]||state)}</span></div>
@@ -9164,7 +9369,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <section className="os-finance-panel" data-testid="batch-financial-closure">
           <div className="os-finance-header">
             <div>
-              <span className="os-finance-title">💰 Cierre Financiero & Rendimiento Real</span>
+              <span className="os-finance-title"><AppIcon name="scale" size={14} style={{marginRight:6}} /> Cierre Financiero & Rendimiento Real</span>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
                 Balance económico del lote · Precio venta: ${Math.round(stats.precioVentaKg).toLocaleString('es-CO')} COP/kg
               </div>
@@ -9246,7 +9451,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <section className="os-finance-panel" data-testid="batch-harvest-forecast" style={{marginBottom:12}}>
             <div className="os-finance-header">
               <div>
-                <span className="os-finance-title">🍄 Pronóstico Dinámico de Cosechas & Oleadas</span>
+                <span className="os-finance-title"><AppIcon name="mushroom" size={14} style={{marginRight:6}} /> Pronóstico Dinámico de Cosechas & Oleadas</span>
                 <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
                   Modelo cinético Arrhenius / Q10 · Especie: <b>{flushesForecast.speciesName}</b> · T° base: {flushesForecast.ambientTemp}°C (Factor térmico: {flushesForecast.thermalFactor.toFixed(2)}×)
                 </div>
@@ -9270,7 +9475,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="econ-metric-box">
                 <span className="econ-metric-label">Cinética Térmica</span>
                 <span className="econ-metric-value">{flushesForecast.thermalFactor.toFixed(2)}×</span>
-                <span className="econ-metric-sub">{flushesForecast.coldWarning ? '❄ Retraso por frío Tenjo' : flushesForecast.heatWarning ? '🔥 Estrés térmico' : 'Régimen óptimo'}</span>
+                <span className="econ-metric-sub">{flushesForecast.coldWarning ? 'Retraso por frío Tenjo' : flushesForecast.heatWarning ? 'Estrés térmico' : 'Régimen óptimo'}</span>
               </div>
               <div className="econ-metric-box">
                 <span className="econ-metric-label">Próxima Cosecha Recomendada</span>
@@ -9301,7 +9506,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <td style={{fontFamily:'var(--font-mono)',fontWeight:700}}>Flush {f.flush} · <span style={{fontWeight:400,fontSize:'var(--text-xs)'}}>{f.label}</span></td>
                       <td style={{textAlign:'center'}}>
                         <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',borderRadius:2,background: f.isHarvested ? 'var(--moss-100)' : 'var(--ochre-100)',color: f.isHarvested ? 'var(--moss-700)' : 'var(--ochre-700)',fontWeight:700}}>
-                          {f.isHarvested ? '✓ Cosechado' : '⏳ Proyectado'}
+                          {f.isHarvested ? 'Cosechado' : 'Proyectado'}
                         </span>
                       </td>
                       <td className="num" style={{fontWeight:700}}>{f.kg.toFixed(2)} kg</td>
@@ -9330,7 +9535,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onClick={()=>runBatchAction(a.action,lote,sheet)}>{a.label}</button>
             ))}
             <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
-              🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
+              <AppIcon name="print" size={14} style={{marginRight:6}} /> Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
           <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
@@ -9347,7 +9552,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         dialogStyle={{ width: 'min(900px, 95vw)', maxHeight: '90vh', overflowY: 'auto' }}
       >
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}>✕</button>
+          <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}><AppIcon name="close" size={12} /></button>
         </div>
         <BatchDetailV2 lote={lote} />
       </AccessibleModal>
@@ -9897,7 +10102,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-olive, #5B6B44)', color: 'var(--accent-olive, #5B6B44)', fontWeight: 700 }}
               title="Analizar compatibilidad de especies e intersección de setpoints en la misma carpa"
             >
-              🌿 Co-Cultivo Multiespecie
+              <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Co-Cultivo Multiespecie
             </button>
             <button
               type="button"
@@ -9906,7 +10111,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-terracotta, #C46238)', color: 'var(--accent-terracotta, #C46238)', fontWeight: 700 }}
               title="Simulador de ciclo de autoclave All American a 2.600 msnm (19.04 PSI / F0)"
             >
-              🔥 Autoclave Tenjo (F₀)
+              <AppIcon name="flame" size={13} style={{marginRight:4}} /> Autoclave Tenjo (F₀)
             </button>
             <button
               type="button"
@@ -9915,7 +10120,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
               title="Predicción de vida útil, transpiración y empaque en frío"
             >
-              ❄ Poscosecha & Frío
+              <AppIcon name="snowflake" size={13} style={{marginRight:4}} /> Poscosecha & Frío
             </button>
             <button
               type="button"
@@ -9924,7 +10129,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--line-0)', color: 'var(--ink-1)', fontWeight: 700 }}
               title="Generar y descargar firmware ESPHome YAML para este cuarto de cultivo"
             >
-              ⚡ Exportar ESPHome YAML
+              <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Exportar ESPHome YAML
             </button>
             <div style={{
               padding:'6px 12px',
@@ -9936,7 +10141,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               fontSize:11,
               fontWeight:700
             }}>
-              {climateHealth.severity === 'critical' ? '⚠ ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
+              {climateHealth.severity === 'critical' ? 'ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
             </div>
           </div>
         </div>
@@ -9957,7 +10162,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                 <div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive, #5B6B44)' }}>
-                    🌿 Asesor de Co-Cultivo Multiespecie · Sala Compartida
+                    <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo Multiespecie · Sala Compartida
                   </div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
                     {activeSpeciesInRoom.join(' + ')} ({lotesEnSala.length} lotes activos en {room.name})
@@ -9994,7 +10199,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
               {/* Setpoints Minimax Pareto */}
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 6 }}>
-                🎯 Setpoints Pareto Minimax Recomendados para Co-Existencia:
+                <AppIcon name="target" size={13} style={{marginRight:4}} /> Setpoints Pareto Minimax Recomendados para Co-Existencia:
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 10 }}>
                 <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
@@ -10019,7 +10224,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {(coCultRoomOpt.bottlenecks.length > 0 || coCultRoomOpt.penalties.length > 0) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
-                    ⚠ Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):
+                    <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):
                   </div>
                   {coCultRoomOpt.bottlenecks.map((b, idx) => (
                     <div key={`bn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--coral-300)' }}>
@@ -10056,7 +10261,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 alignItems: 'center',
                 gap: 8
               }}>
-                <span>{al.level === 'alert' ? '🚨' : '⚠'}</span>
+                <span>{al.level === 'alert' ? <AppIcon name="alert" size={13} color="var(--status-error)" /> : <AppIcon name="alert" size={13} color="var(--status-warn-marker)" />}</span>
                 <span>{al.msg}</span>
               </div>
             ))}
@@ -10170,7 +10375,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             return (
               <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
                 <div className="climate-kpi-header">
-                  <span>💨 Ventilación Dinámica FAE (Extracción)</span>
+                  <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span>
                   <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
@@ -10209,7 +10414,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="climate-chart-head">
             <div>
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                🎯 Sintonizador Culinario & Vector de Balance de la Trinidad
+                <AppIcon name="target" size={13} style={{marginRight:4}} /> Sintonizador Culinario & Vector de Balance de la Trinidad
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
                 Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs
@@ -10392,7 +10597,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="climate-chart-head">
             <div>
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                📈 Series Temporales de Telemetría Ambiental
+                <AppIcon name="chart" size={14} style={{marginRight:6}} /> Series Temporales de Telemetría Ambiental
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}} data-testid="climate-series-provenance" data-series-live={seriesAreLive?'true':'false'}>
                 {seriesAreLive
@@ -10469,7 +10674,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
             <div>
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                ⚡ Actuadores y Relés de Potencia (Hosyond 2ch)
+                <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Actuadores y Relés de Potencia (Hosyond 2ch)
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
                 Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto
@@ -10485,7 +10690,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-actuator-card">
               <div className="climate-actuator-head">
                 <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
-                  💧 Humidificador (Relay Ch1 · T7/H05)
+                  <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Humidificador (Relay Ch1 · T7/H05)
                 </span>
                 <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min) ? 'on' : 'off'}`}>
                   {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (currentMetrics.rh < defaultTargets.rh_pct.min ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
@@ -10501,7 +10706,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   className="climate-actuator-btn"
                   onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
                 >
-                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '⚡ Forzar Humidificación (1m)'}
+                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '<AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)'}
                 </button>
                 {humidifierOverride !== null && (
                   <button
@@ -10519,7 +10724,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-actuator-card">
               <div className="climate-actuator-head">
                 <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
-                  💨 Extractor FAE (Relay Ch2 · Cloudline H4)
+                  <AppIcon name="wind" size={13} style={{marginRight:4}} /> Extractor FAE (Relay Ch2 · Cloudline H4)
                 </span>
                 <span className={`climate-actuator-badge ${faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'pulse' : 'off'}`}>
                   {faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'PULSO ACTIVO (35s)' : 'AUTO [EN ESPERA]'}
@@ -10539,7 +10744,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}
                   disabled={faePulseActive}
                 >
-                  {faePulseActive ? '⏳ Pulso en Curso...' : '🌀 Disparar Pulso FAE (35s)'}
+                  {faePulseActive ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Pulso en Curso...</> : <><AppIcon name="wind" size={13} style={{marginRight:4}} /> Disparar Pulso FAE (35s)</>}
                 </button>
               </div>
             </div>
@@ -10548,7 +10753,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           {/* Historial de Eventos Recientes de Actuación */}
           <div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-1)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>
-              📋 Historial Reciente de Conmutación de Relés
+              <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Historial Reciente de Conmutación de Relés
             </div>
             <div className="climate-actuator-logs">
               <div className="climate-log-row">
@@ -10583,7 +10788,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     title="Imprimir etiquetas térmicas para este lote"
                     style={{display:'flex',alignItems:'center',gap:4}}
                   >
-                    🖨 Etiquetas
+                    <AppIcon name="print" size={13} style={{marginRight:4}} /> Etiquetas
                   </button>
                 )}
                 <button
@@ -10592,7 +10797,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   title="Sincronizar fichas públicas de trazabilidad con Firestore"
                   style={{display:'flex',alignItems:'center',gap:4}}
                 >
-                  🌐 Sincronizar Fichas
+                  <AppIcon name="globe" size={13} style={{marginRight:4}} /> Sincronizar Fichas
                 </button>
                 <button
                   className="inv-btn inv-btn-sec inv-btn-sm"
@@ -10600,11 +10805,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   title="Imprimir etiquetas de canastilla grado alimentario (CAN-XX)"
                   style={{display:'flex',alignItems:'center',gap:4}}
                 >
-                  🏷 Canastilla
+                  <AppIcon name="tag" size={12} style={{marginRight:4}} /> Canastilla
                 </button>
-                {publicSyncStatus?.running&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginLeft:6,alignSelf:'center'}}>⏳ Sincronizando...</span>}
+                {publicSyncStatus?.running&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginLeft:6,alignSelf:'center',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="clock" size={12} /> Sincronizando...</span>}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
-                {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center'}} title={bitSyncErr}>⚠ sin sincronizar</span>}
+                {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center',display:'inline-flex',alignItems:'center',gap:4}} title={bitSyncErr}><AppIcon name="alert" size={12} color="#C53030" /> sin sincronizar</span>}
               </div>
             </div>
 
@@ -10657,7 +10862,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 title="Imprimir etiquetas térmicas del lote"
                                 style={{padding:'3px 8px',fontSize:12}}
                               >
-                                🖨
+                                <AppIcon name="print" size={12} />
                               </button>
                             </div>
                           </div>
@@ -10670,7 +10875,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th style={{textAlign:'right'}}>Acciones</th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas">🖨</button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></div></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas"><AppIcon name="print" size={12} /></button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}><AppIcon name="close" size={12} /></button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -10707,7 +10912,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{display:'flex',alignItems:'center',gap:6,fontSize:"var(--text-sm)",padding:'6px 12px'}}
                         title="Imprimir rollo completo de etiquetas térmicas con QR"
                       >
-                        🏷 Imprimir Rollo QR ({lote.numBolsas||12} bolsas)
+                        <AppIcon name="print" size={12} style={{marginRight:4}} /> Imprimir Rollo QR ({lote.numBolsas||12} bolsas)
                       </button>
                       <select name={`loteVerdict-${lote.id}`} aria-label={`Veredicto del lote ${lote.codigo}`} value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         <option value="">— veredicto —</option>
@@ -10803,7 +11008,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 title={`Imprimir etiqueta de la bolsa ${bolsa.codigo}`}
                                 onClick={()=>openThermalForLote(bitActiveLoteId, { bagNum: bolsa.num })}
                               >
-                                🖨
+                                <AppIcon name="print" size={12} />
                               </button>
                             </td>
                           </tr>
@@ -10839,12 +11044,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <td style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",textAlign:'center'}}>{c.flush}</td>
                               <td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.fecha}</td>
                               <td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td>
-                              <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td>
+                              <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{c.calidad ? `${c.calidad}/5` : '—'}</td>
                               <td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td>
                               <td>
                                 <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
-                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Imprimir etiqueta de canastilla para ${c.codigo}, flush ${c.flush}`} title="Imprimir etiqueta térmica de canastilla" onClick={()=>openThermalForCosecha(bitActiveLoteId, c)}>🖨</button>
-                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Imprimir etiqueta de canastilla para ${c.codigo}, flush ${c.flush}`} title="Imprimir etiqueta térmica de canastilla" onClick={()=>openThermalForCosecha(bitActiveLoteId, c)}><AppIcon name="print" size={12} /></button>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}><AppIcon name="close" size={12} /></button>
                                 </div>
                               </td>
                             </tr>
@@ -10901,7 +11106,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                   {lote.recipeRef&&(<div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:14,background:'var(--paper-50)'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:5}}>Receta vinculada — {lote.recipeRef.name}</div><div style={{display:'flex',flexWrap:'wrap',gap:3,marginBottom:5}}>{lote.recipeRef.recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',borderRadius:3}}>{g.name} {parseFloat(r.p).toFixed(1)}%</span>:null;})}</div><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>C:N {lote.recipeRef.cn} · EB ~{lote.recipeRef.eb}% · Score {lote.recipeRef.score}/100{lote.recipeRef.cost?` · $${lote.recipeRef.cost.toLocaleString('es-CO')}/kg`:''}</div></div>)}
-                  {cosechas.length>0&&(<div><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:6}}>Registro de cosechas</div><table className="prod-tbl" style={{marginBottom:14}}><thead><tr><th>Bolsa</th><th style={{textAlign:'center'}}>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th style={{textAlign:'center'}}>Calidad</th><th>Obs.</th></tr></thead><tbody>{cosechas.map(c=><tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.codigo}</td><td style={{textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.fecha}</td><td className="num">{c.pesoFresco}</td><td style={{textAlign:'center'}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-600)'}}>{c.observaciones}</td></tr>)}<tr className="tot"><td colSpan={3}>Total</td><td className="num">{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={2}></td></tr></tbody></table></div>)}
+                  {cosechas.length>0&&(<div><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:6}}>Registro de cosechas</div><table className="prod-tbl" style={{marginBottom:14}}><thead><tr><th>Bolsa</th><th style={{textAlign:'center'}}>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th style={{textAlign:'center'}}>Calidad</th><th>Obs.</th></tr></thead><tbody>{cosechas.map(c=><tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.codigo}</td><td style={{textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.fecha}</td><td className="num">{c.pesoFresco}</td><td style={{textAlign:'center'}}>{c.calidad ? `${c.calidad}/5` : '—'}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-600)'}}>{c.observaciones}</td></tr>)}<tr className="tot"><td colSpan={3}>Total</td><td className="num">{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={2}></td></tr></tbody></table></div>)}
                   {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
                   <div style={{marginTop:16,paddingTop:12,borderTop:'2px solid var(--ink-900)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
@@ -11093,13 +11298,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
                       {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
                     ].map(m=>(
-                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'baseline',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'5px 10px'}}>
+                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
                         <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-0)'}}>{m.value}</span>
                       </button>
                     ))}
                   </div>
-                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
                 </div>
 
                 {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
@@ -11118,7 +11323,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{border:'1px solid var(--accent-blue-grey)',borderRadius:0,padding:'10px 14px',background:'var(--paper-1)'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
                       <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'0.08em',color:'var(--accent-blue-grey)'}}>Traspaso del turno anterior</span>
-                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>Leído [×]</button>
+                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>Leído [×]</button>
                     </div>
                     <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>
@@ -11156,7 +11361,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="sdp-alert sdp-alert--warn stock-critical-card" style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,borderRadius:0}}>
                       <div className="sdp-alert__body" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
                         <span className="sdp-alert__label" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--status-warn-text)'}}>
-                          ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                          <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
                         </span>
                         <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                           {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
@@ -11171,7 +11376,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           )}
                         </div>
                       </div>
-                      <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
+                      <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center'}}>
                         Registrar Compra +
                       </button>
                     </div>
@@ -11196,7 +11401,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               Abrir lote →
                             </button>
                             <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
-                              🏷
+                              <AppIcon name="print" size={15} />
                             </button>
                           </div>
                         </div>
@@ -11205,7 +11410,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ) : (
                     liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && (
                       <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',padding:'4px 0'}}>
-                        ✓ Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal.
+                        <span style={{display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="check" size={13} color="var(--status-ok)" /> Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal.</span>
                       </div>
                     )
                   )}
@@ -11291,7 +11496,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               Ejecutar transición →
                             </button>
                             <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
-                              🏷
+                              <AppIcon name="print" size={15} />
                             </button>
                           </div>
                         </div>
@@ -11314,7 +11519,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
                             <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
                               style={{cursor:'pointer',flexShrink:0,minWidth:44,minHeight:44,width:44,height:44,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)'}}>{t.done ? <AppIcon name="check" size={12} color="var(--paper-0)" /> : ''}</span>
                             </button>
                             <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
                               <span className="sdp-task__title" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
@@ -11493,7 +11698,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                       No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="sdp-btn sdp-btn--field sdp-btn--primary" style={{padding:'8px 16px',minHeight:44,minWidth:44,cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
@@ -11511,7 +11716,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Cámaras de Cultivo
                     </h2>
                   </div>
-                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
+                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
                     Ver Cámaras & IoT ({camaras.length}) →
                   </button>
                 </div>
@@ -11537,7 +11742,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           {c.hasLiveAlert && (
                             <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--accent-terracotta)',marginTop:2,fontWeight:700}}>
-                              ⚠ {c.liveAlertNote}
+                              <AppIcon name="alert" size={11} color="var(--accent-terracotta)" style={{marginRight:4}} /> {c.liveAlertNote}
                             </div>
                           )}
                         </div>
@@ -11836,7 +12041,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {costKg>0&&(
                                 <div className="dash-kv">
                                   <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>+${eDash.toLocaleString()}</span>}</span>
                                 </div>
                               )}
                             </div>
@@ -11873,9 +12078,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginTop:8}} onClick={()=>setEbRealFor(e.id)}>Registrar resultado final</button>
                             </div>
                             <div className="dash-card-foot" style={{display:'flex',gap:6}}>
-                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
+                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje"><AppIcon name="wine" size={12} style={{marginRight:4}} /> Cata</button>
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
-                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
+                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}><AppIcon name="close" size={12} /></button>
                             </div>
                           </div>
                         );
@@ -11892,7 +12097,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const IcoUso=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M2 6h8M6 2v8"/><rect x="1" y="1" width="10" height="10" rx="1"/></svg>;
               return(
               <AccessibleModal onClose={()=>setCatalogModalOpen(false)} label={`Ficha de especie: ${sp.name}`} backdropClassName="cat-modal-bg" dialogClassName="cat-modal-box">
-              <button className="cat-modal-close" onClick={()=>setCatalogModalOpen(false)} title="Cerrar" aria-label="Cerrar ficha de especie">✕</button>
+              <button className="cat-modal-close" onClick={()=>setCatalogModalOpen(false)} title="Cerrar" aria-label="Cerrar ficha de especie"><AppIcon name="close" size={12} /></button>
               <div className="spp-info-2col" style={{margin:0}}>
                 {/* LEFT: Texto + franja de parámetros + CTA */}
                 <div className="spp-info-left">
@@ -11971,7 +12176,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="spp-cta-row" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
-                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)'}}>🍷 Ficha de Cata</button>
+                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)'}}><AppIcon name="wine" size={12} style={{marginRight:4}} /> Ficha de Cata</button>
                     <button onClick={()=>{setCatalogModalOpen(false);openBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
                   </div>
                 </div>
@@ -11996,7 +12201,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('formular')}>
-                <span aria-hidden="true">🥣</span>
+                <AppIcon name="sprout" size={13} />
                 <span>Mesa de Mezcla</span>
                 {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
               </button>
@@ -12010,7 +12215,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
-                <span aria-hidden="true">🧠</span>
+                <AppIcon name="wand" size={13} />
                 <span>Perito & Generador de Recetas</span>
               </button>
             </nav>
@@ -12024,7 +12229,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 aria-controls="co-form-panel"
                 aria-expanded={coFormMode}
                 onClick={()=>setCoFormMode(!coFormMode)}>
-                <span aria-hidden="true">🧬</span>
+                <AppIcon name="trace" size={13} />
                 <span>{coFormMode?'Co-Formulación activa':'Co-Formulación'}</span>
                 <small>{coFormMode?'Ocultar ponderación':'Combinar especies'}</small>
               </button>
@@ -12072,7 +12277,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                     {coAnalysis.allIncompatibilities.length>0&&(
                       <div className="co-form-issue">
-                        ⚠️ Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
+                        <AppIcon name="alert" size={12} color="var(--accent-terracotta)" style={{marginRight:4}} /> Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
                       </div>
                     )}
                     <div className="co-form-species-results">
@@ -12142,7 +12347,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='formular'&&(
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
-          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada en Mesa de Mezcla</div>}
+          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
 
           {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
           {recipe.length>0&&(
@@ -12505,7 +12710,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
                         {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
                           <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}>⚡ Auto-balancear 100%</button>
+                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Auto-balancear 100%</button>
                             <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
                               <option value="proportional">Proporcional</option>
                               <option value="equal">Igualando</option>
@@ -12537,7 +12742,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </button>
                             <div style={{flex:'1 1 100px',minWidth:0,display:'flex',alignItems:'center',gap:4}} title={`${g.name} · C:N ${g.cn||'—'} · N ${g.n||'—'}%${rowFlag?` · ${rowFlag.label}`:''}`}>
                               <span style={{fontSize:"var(--text-sm)",fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.name}</span>
-                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0}}>{rowFlag.priority==='critical'?'⚠':'!'}</span>}
+                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0,display:'inline-flex',alignItems:'center'}}><AppIcon name="alert" size={11} color="currentColor" /></span>}
                               <span className="sr-only">C:N {g.cn||'—'} · N {g.n||'—'}%{rowFlag?`, ${rowFlag.label}`:''}</span>
                             </div>
                             <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
@@ -12549,7 +12754,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </label>
                               {[1,5].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)>=100} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>+{delta}%</button>)}
                             </div>
-                            <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0}}>✕</button>
+                            <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0}}><AppIcon name="close" size={12} /></button>
                           </div>
                         );})}
                       </div>
@@ -12657,15 +12862,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {usePantry&&pantryIds.length>0&&(
                 <div className="pantry-grid" style={{marginBottom:8}}>
                   {pantryIds.slice(0,12).map(id=>{const g=INGS.find(i=>i.id===id);const kg=stockMap[id]||0;return g?(
-                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true"> ✕</span></button>
+                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true" style={{display:'inline-flex',alignItems:'center',marginLeft:4}}><AppIcon name="close" size={10} /></span></button>
                   ):null;})}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
               <div className="cats" role="group" aria-label="Filtrar por categoría">
                 {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
+                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}>Solo compatibles <AppIcon name="close" size={10} /></span> : 'Compatibles'}</button>
+                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por rol':'Lista simple'}</button>
               </div>
               <div className="ingredient-view-toolbar">
                 <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
@@ -12862,9 +13067,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
-                          <span aria-hidden="true">🤖</span> Asistente IA (Gemini)
+                          <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
                         </button>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
@@ -12947,9 +13152,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
                         {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
                       {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
                       {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
                       {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
@@ -13122,7 +13327,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           disabled={!readyForProduction}
                           title={readyForProduction ? `Lanzar producción de ${numBags} bolsas de ${kgBag} kg con descuento automático de inventario` : productionBlockMsg}
                         >
-                          🚀 Lanzar Producción de Lote ({numBags} bolsas · {(numBags*kgBag).toFixed(1)} kg)
+                          <AppIcon name="rocket" size={14} style={{marginRight:6}} /> Lanzar Producción de Lote ({numBags} bolsas · {(numBags*kgBag).toFixed(1)} kg)
                         </button>
                       </div>
                     </div>
@@ -13173,14 +13378,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                 <div className="sbar">
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
-                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px'}}>🚀 Lanzar Lote</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
+                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?<><AppIcon name="check" size={11} style={{marginRight:4}} /> Guardada</>:'Guardar'}</button>
+                  {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px',display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="rocket" size={13} /> Lanzar Lote</button>}
+                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
-                    <span>⚠ {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                    <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> {productionBlockMsg}</span>
+                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="#fff" /> Auto-mejorar</button>}
                   </div>
                 )}
                 </div>
@@ -13207,7 +13412,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {tr.alt&&<div style={{marginTop:10,fontSize:"var(--text-sm)",color:'var(--ink-500)',background:'var(--paper-200)',border:'1px solid var(--paper-300)',padding:'6px 10px',borderLeft:'2px solid var(--border-soft)'}}>{tr.alt}</div>}
                 {tr.energy&&(
                   <div style={{marginTop:10,display:'flex',gap:12,alignItems:'center',padding:'7px 10px',background:'rgba(0,0,0,.04)',borderRadius:'var(--r-xs)',borderTop:'1px solid rgba(0,0,0,.08)'}}>
-                    <span style={{fontSize:"var(--text-md)"}}>⚡</span>
+                    <AppIcon name="bolt" size={14} />
                     <div style={{flex:1}}>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700}}>
                         {tr.energy.cop_per_kg_humedo>0
@@ -13289,25 +13494,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 type="button"
                 className={`seg${workbenchMode==='all'?' on':''}`}
                 onClick={()=>setWorkbenchMode('all')}>
-                🌐 Vista Integral
+                <AppIcon name="globe" size={13} style={{marginRight:4}} /> Vista Integral
               </button>
               <button
                 type="button"
                 className={`seg${workbenchMode==='perito'?' on':''}`}
                 onClick={()=>setWorkbenchMode('perito')}>
-                🔍 Perito Diagnóstico Vivo
+                <AppIcon name="scan" size={13} style={{marginRight:4}} /> Perito Diagnóstico Vivo
               </button>
               <button
                 type="button"
                 className={`seg${workbenchMode==='optimizador'?' on':''}`}
                 onClick={()=>setWorkbenchMode('optimizador')}>
-                ⚡ Optimizador Generativo
+                <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Optimizador Generativo
               </button>
               <button
                 type="button"
                 className={`seg${workbenchMode==='morphing'?' on':''}`}
                 onClick={()=>setWorkbenchMode('morphing')}>
-                ⚖️ Comparador & Morphing {morphTargetRecipe?'(1 activo)':''}
+                <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparador & Morphing {morphTargetRecipe?'(1 activo)':''}
               </button>
             </div>
 
@@ -13343,9 +13548,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
                       {recipeHistory.length>0&&<button type="button" onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>Deshacer ({recipeHistory.length})</button>}
-                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer'}}>🤖 Consultar IA</button>
+                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="wand" size={13} color="var(--paper-0)" /> Consultar IA</button>
                     </div>
                   </div>
 
@@ -13353,7 +13558,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
                     <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{fontSize:16}}>{restrictiveFactor.severity==='critical'?'🚨':restrictiveFactor.severity==='warning'?'⚖️':'🌿'}</span>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
                         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
                           Factor Restrictivo Estimado: {restrictiveFactor.label}
                         </span>
@@ -13368,7 +13573,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       )}
                       {restrictiveFactor.actionRequired&&(
                         <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
-                          ➜ Acción correctiva: {restrictiveFactor.actionRequired}
+                          → Acción correctiva: {restrictiveFactor.actionRequired}
                         </div>
                       )}
                     </div>
@@ -13378,7 +13583,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
-                        🏔️ Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
+                        <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
                       </div>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
                         All American 1941X: {reqPsi.toFixed(2)} psig
@@ -13450,7 +13655,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {criticals.length===0&&warnings.length===0&&tips.length===0&&(
                       <div style={{padding:'12px 16px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#2F4A24'}}>
-                        ✓ Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
+                        <AppIcon name="check" size={13} style={{marginRight:4}} /> Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
                       </div>
                     )}
 
@@ -13560,7 +13765,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         Interpolación Convexa Lineal R(α) = (1-α)R₀ + αR₁
                       </div>
                       <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
-                        ⚖️ Comparador & Morphing de Recetas
+                        <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparador & Morphing de Recetas
                       </h2>
                     </div>
                     {hasCandidate&&hasBase&&(
@@ -13574,7 +13779,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           openBuilderSubTab('formular');
                           setNoticeDlg({msg:isMorphFeasible?'Receta morfeada aplicada exitosamente en la Mesa de Mezcla':'Receta aplicada (Atención: se encuentra fuera de rango óptimo)'});
                         }}>
-                        🥣 Aplicar en Mesa de Mezcla {!isMorphFeasible?'⚠️':''}
+                        <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Aplicar en Mesa de Mezcla {!isMorphFeasible?'(Atención: fuera de rango)':''}
                       </button>
                     )}
                   </div>
@@ -13589,10 +13794,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div>
                       {!isMorphFeasible&&trajectoryAnalysis&&(
                         <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
-                          <b>⚠️ Estado agronómicamente no permitido en α = {morphAlpha.toFixed(2)}:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                          <b><AppIcon name="alert" size={13} color="#9B2C2C" style={{marginRight:4}} /> Estado agronómicamente no permitido en α = {morphAlpha.toFixed(2)}:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
                           {trajectoryAnalysis.feasibleInterval&&(
                             <div style={{marginTop:4,color:'var(--ink-800)'}}>
-                              ➜ Intervalo seguro para esta especie: <b>α ∈ [{trajectoryAnalysis.feasibleInterval[0].toFixed(2)}, {trajectoryAnalysis.feasibleInterval[1].toFixed(2)}]</b>
+                              → Intervalo seguro para esta especie: <b>α ∈ [{trajectoryAnalysis.feasibleInterval[0].toFixed(2)}, {trajectoryAnalysis.feasibleInterval[1].toFixed(2)}]</b>
                             </div>
                           )}
                         </div>
@@ -13663,7 +13868,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pA.toFixed(1)}%</td>
                                   <td style={{padding:'8px 12px',textAlign:'right',fontWeight:800,color:'var(--moss-800)',background:'rgba(77,98,53,.05)'}}>{mItem.p.toFixed(1)}%</td>
                                   <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pB.toFixed(1)}%</td>
-                                  <td style={{padding:'8px 12px',textAlign:'center'}}>{isLocked?'🔒':'—'}</td>
+                                  <td style={{padding:'8px 12px',textAlign:'center'}}>{isLocked?<AppIcon name="lock" size={12}/>:'—'}</td>
                                 </tr>
                               );
                             })}
@@ -13838,12 +14043,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
-                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
+                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="currentColor" /> Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
+                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
-                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}>⚖️ Hibridar / Morph</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Hibridar / Morph</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
@@ -13914,7 +14119,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
                                           ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention-text)',lbl:'Pasteurización 65–75°C núcleo'}
-                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
+                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
                                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
@@ -13949,10 +14154,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                       ))}
                                     </div>
-                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
-                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún suplemento N en bodega es compatible con esta especie.</div>}
-                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6}}>⚠ Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
+                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
+                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún suplemento N en bodega es compatible con esta especie.</div>}
+                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
+                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="#7A5A10" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>
@@ -14117,7 +14322,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                   )}
-                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setSKey(sKey);setRecipe(invResult.recipe);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa de Mezcla</button>
+                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setSKey(sKey);setRecipe(invResult.recipe);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={13} style={{marginRight:6}} /> Cargar en Mesa de Mezcla</button>
                                 </>)
                               }
                             </div>
@@ -14146,7 +14351,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   cursor:'pointer'
                 }}
               >
-                📅 Cronograma & Cinética
+                <AppIcon name="clock" size={14} style={{marginRight:6}} /> Cronograma & Cinética
               </button>
               <button
                 type="button"
@@ -14160,7 +14365,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   cursor:'pointer'
                 }}
               >
-                🍄 Pronóstico de Cosecha & Oleadas
+                <AppIcon name="mushroom" size={14} style={{marginRight:6}} /> Pronóstico de Cosecha & Oleadas
               </button>
               <button
                 type="button"
@@ -14174,7 +14379,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   cursor:'pointer'
                 }}
               >
-                🤝 Matriz B2B & Cobertura
+                <AppIcon name="globe" size={14} style={{marginRight:6}} /> Matriz B2B & Cobertura
               </button>
             </div>
 
@@ -14198,7 +14403,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* Badge cinético térmico Q10 */}
                 {sch&&(
                   <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'rgba(197,48,48,.08)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'rgba(197,48,48,.25)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700,#9B2C2C)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                    <span>🌡️ <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
+                    <span><AppIcon name="temp" size={14} style={{marginRight:6}} /> <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
                     {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
                   </div>
                 )}
@@ -14321,7 +14526,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                     {sowReq&&(
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-800)',background:'var(--paper-50)',padding:'10px 12px',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
-                        💡 <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
+                        <AppIcon name="wand" size={14} style={{marginRight:6}} /> <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
                       </div>
                     )}
                   </div>
@@ -14443,7 +14648,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const bt=BAG_TYPES.find(b=>b.id===prodBagType);
                 if(!bt) return null;
                 const tc=bt.tratamiento==='thermal'
-                  ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'♨',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
+                  ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
                   :bt.tratamiento==='cwlp_thermal'
                   ?{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
                   :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
@@ -14475,7 +14680,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <>
                 {an&&!balanced&&(
                   <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
-                    ⚠ {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
+                    <AppIcon name="alert" size={13} color="#C53030" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div className="prod-batch-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
@@ -14514,8 +14719,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
-                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Ejecutar lote</button>
+                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
                   </div>
                 </div>
                 </>
@@ -14633,7 +14838,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8}}>
                     <div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2,#6B6759)'}}>
-                        💰 Análisis Económico & Rentabilidad por Bolsa
+                        <AppIcon name="scale" size={14} style={{marginRight:6}} /> Análisis Económico & Rentabilidad por Bolsa
                       </div>
                       <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1,#3C392F)',marginTop:2}}>
                         Costeo unitario real en Tenjo para bolsa de {prodKg} kg húmedo al {prodH}% H₂O
@@ -14708,7 +14913,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 {/* C:N efectivo tras redondeo / humedad real */}
                 <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600,#B5451F)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-50,#FCEEE9)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300,#E8B4A0)':'var(--paper-300)'}`}}>
-                  C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · ⚠ el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
+                  C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
                 </div>
                 {/* Agua / spawn / húmedo */}
                 <div className="ps-3col" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:18}}>
@@ -14809,7 +15014,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
           <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
-              <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
+              <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Ejecutar lote — confirmar descuento de inventario</div>
               <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
               <div className="inv-modal-table-wrap">
@@ -14821,13 +15026,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
                         <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
                         <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
-                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok ? <AppIcon name="check" size={12} color="var(--status-ok)" /> : <AppIcon name="alert" size={12} color="var(--status-warn-marker)" />}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
               <div className="inv-modal-actions">
                 <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
@@ -14881,7 +15086,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" aria-invalid={!!captureErrors["harvest-date"]} aria-describedby={captureErrors["harvest-date"]?"harvest-date-error":undefined} onBlur={()=>validateCaptureField("harvest-date")} name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/>{captureErrorNode("harvest-date")}</div>
                 <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>{n}</button>))}</div></div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" aria-invalid={!!captureErrors["harvest-observations"]} aria-describedby={captureErrors["harvest-observations"]?"harvest-observations-error":undefined} onBlur={()=>validateCaptureField("harvest-observations")} name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/>{captureErrorNode("harvest-observations")}</div>
 
               {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
@@ -14914,7 +15119,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', letterSpacing: '0.05em' }}>
-                        ❄️ Poscosecha & Cadena de Frío ({postHarvestShelfLife?.speciesName || harvestSpecies})
+                        <AppIcon name="snowflake" size={14} style={{marginRight:6}} /> Poscosecha & Cadena de Frío ({postHarvestShelfLife?.speciesName || harvestSpecies})
                       </span>
                       {postHarvestShelfLife && (
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--moss-700)' }}>
@@ -14967,7 +15172,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   className="inv-btn inv-btn-sec"
                   title="Guardar cosecha e imprimir inmediatamente la etiqueta de canastilla térmica"
                 >
-                  Guardar y 🖨 Canastilla
+                  Guardar y <AppIcon name="print" size={13} /> Canastilla
                 </button>
                 <button
                   type="button"
@@ -15027,7 +15232,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
                     <AppIcon name="camera" size={14} color="var(--ink-0)" /> {qrScanMode === 'harvest' ? 'Báscula Cosecha · Pesaje Rápido' : qrScanMode === 'sweep' ? 'Barrido Sala · Auditoría Masiva' : 'Ronda de Campo · Registro Rápido'}
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');setHarvestActiveCrate(null);setSweepQueue([]);setSweepRiskModalOpen(false);setSweepStatusBanner('');}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');setHarvestActiveCrate(null);setSweepQueue([]);setSweepRiskModalOpen(false);setSweepStatusBanner('');}}><AppIcon name="close" size={12} /></button>
                 </div>
 
                 {/* SELECTOR DE MODO DE ESCANEO */}
@@ -15038,7 +15243,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
                     onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    🔍 Ronda Lote
+                    <AppIcon name="scan" size={13} style={{marginRight:4}} /> Ronda Lote
                   </button>
                   <button
                     type="button"
@@ -15046,7 +15251,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
                     onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    ⚖️ Báscula Cosecha
+                    <AppIcon name="scale" size={13} style={{marginRight:4}} /> Báscula Cosecha
                   </button>
                   <button
                     type="button"
@@ -15054,7 +15259,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
                     onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    ⚡ Barrido Sala
+                    <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Barrido Sala
                   </button>
                 </div>
 
@@ -15089,7 +15294,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {(!harvestTareInput || harvestTareSource === 'unverified') && (
                         <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
                           <span style={{ fontSize: 10, color: 'var(--warning-text, #8C6B2E)', flex: 1 }}>
-                            ⚠️ Ingresa la tara (g) para calcular peso neto honesto:
+                            <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Ingresa la tara (g) para calcular peso neto honesto:
                           </span>
                           <input
                             type="number"
@@ -15154,14 +15359,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         if (tare > gross) {
                           return (
                             <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
-                              ❌ Tara ({tare}g) excede el peso bruto ({gross}g).
+                              <AppIcon name="close" size={13} color="var(--status-error)" style={{marginRight:4}} /> Tara ({tare}g) excede el peso bruto ({gross}g).
                             </div>
                           );
                         }
                         const net = gross - tare;
                         return (
                           <div style={{ padding: '8px 10px', background: '#DCFCE7', color: '#15803D', borderLeft: '3px solid #16A34A', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
-                            <span>✓ Peso Neto: {net} g</span>
+                            <span><AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Peso Neto: {net} g</span>
                             <span>({(net / 1000).toFixed(3)} kg)</span>
                           </div>
                         );
@@ -15263,7 +15468,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           onClick={stopCameraScanner}
                           style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
                         >
-                          ⏹ Detener Cámara
+                          <AppIcon name="close" size={10} style={{marginRight:4}} /> Detener Cámara
                         </button>
                       </div>
                     ) : (
@@ -15272,13 +15477,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onClick={startCameraScanner}
                         style={{ minHeight: 44, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
                       >
-                        📷 Iniciar Escaneo con Cámara Móvil
+                        <AppIcon name="camera" size={14} style={{marginRight:6}} /> Iniciar Escaneo con Cámara Móvil
                       </button>
                     )}
 
                     {cameraError && (
                       <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                        ⚠️ {cameraError}
+                        <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {cameraError}
                       </div>
                     )}
 
@@ -15318,7 +15523,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {qrScanMode === 'harvest' && (
                       <div style={{ marginBottom: 12 }}>
                         <div style={{ padding: '8px 10px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, fontSize: 11, fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <span>📦 Sesión de Pesaje: <b>{harvestSessionStats.count}</b> canastillas</span>
+                          <span><AppIcon name="box" size={13} style={{marginRight:4}} /> Sesión de Pesaje: <b>{harvestSessionStats.count}</b> canastillas</span>
                           <span><b>{(harvestSessionStats.totalNetGrams / 1000).toFixed(2)} kg</b> netos</span>
                         </div>
                         {activeBatches.length > 0 && (
@@ -15344,7 +15549,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                           <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-0)' }}>
-                            ⚡ Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
+                            <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
                           </strong>
                           {sweepQueue.length > 0 && (
                             <button
@@ -15391,7 +15596,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             className="inv-btn inv-btn-pri inv-btn-sm"
                             style={{ padding: '6px 4px', fontSize: 11, fontWeight: 700 }}
                           >
-                            ✓ 100% Sano
+                            <AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> 100% Sano
                           </button>
                           <button
                             type="button"
@@ -15419,7 +15624,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           className="inv-btn inv-btn-sec inv-btn-sm"
                           style={{ width: '100%', padding: '5px 4px', fontSize: 11, color: 'var(--accent-terracotta)' }}
                         >
-                          ⚠️ Registrar Observación de Riesgo ({sweepQueue.length})
+                          <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Registrar Observación de Riesgo ({sweepQueue.length})
                         </button>
 
                         {sweepStatusBanner && (
@@ -15668,7 +15873,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           setShowThermalModal(true);
                         }}
                       >
-                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 40×30)
+                        <AppIcon name="print" size={14} style={{marginRight:6}} /> Imprimir Etiquetas Térmicas (50×30 / 40×30)
                       </button>
                       <button
                         type="button"
@@ -15718,7 +15923,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               bagCode: `CANASTILLA · FLUSH #${c.flush || 1}`,
               species: lote.especie || 'Seta Fresca',
               date: c.fecha || new Date().toISOString().split('T')[0],
-              recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1000).toFixed(2)} kg) · Calidad ${'★'.repeat(c.calidad || 4)}`,
+              recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1000).toFixed(2)} kg) · Calidad ${c.calidad || 4}/5`,
               bagsText: `Lote ${lote.codigo} · Bolsa ${c.codigo || 'General'}`,
               qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}&flush=${c.flush || 1}`
             });
@@ -15793,13 +15998,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline, #8C7F5B)', paddingBottom: 10 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-0)' }}>
-                      🏷 Impresión Térmica · Rollo Adhesivo
+                      <AppIcon name="print" size={14} style={{marginRight:6}} /> Impresión Térmica · Rollo Adhesivo
                     </div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
                       Lote {lote.codigo} · {lote.especie} {thermalScope === 'cosecha' ? '· Etiqueta Canastilla Cosecha' : ''}
                     </div>
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}><AppIcon name="close" size={12} /></button>
                 </div>
 
                 {/* CONTROLES DE CONFIGURACIÓN */}
@@ -15937,7 +16142,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     className="inv-btn inv-btn-sec"
                     style={{ minHeight: 44, padding: '8px 14px' }}
                   >
-                    📤 Compartir
+                    <AppIcon name="box" size={13} style={{marginRight:4}} /> Compartir
                   </button>
                   <button
                     onClick={() => {
@@ -15946,7 +16151,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     className="inv-btn inv-btn-pri"
                     style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
                   >
-                    🖨 Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
+                    <AppIcon name="print" size={13} style={{marginRight:4}} /> Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
                   </button>
                 </div>
 
@@ -15990,7 +16195,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               dialogStyle={{width:680,maxWidth:'calc(100vw - 32px)'}}
             >
               <div className="prod-launch-modal" data-testid="prod-launch-modal">
-                <h2 className="inv-modal-title">🚀 Lanzador de Producción de Lote</h2>
+                <h2 className="inv-modal-title"><AppIcon name="rocket" size={15} style={{marginRight:6}} /> Lanzador de Producción de Lote</h2>
                 {/* Resumen Superior */}
                 <div className="prod-launch-summary">
                   <div className="prod-launch-stat">
@@ -16016,16 +16221,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)'}}>
-                      📦 Insumos a Descontar de Bodega
+                      <AppIcon name="box" size={14} style={{marginRight:6}} /> Insumos a Descontar de Bodega
                     </span>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:10,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
-                      {allInsumosOk ? '● Stock suficiente para todo el batch' : '⚠ Algunos insumos requieren compra'}
+                      {allInsumosOk ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} color="var(--moss-700)" /> Stock suficiente para todo el batch</span> : <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-500)" /> Algunos insumos requieren compra</span>}
                     </span>
                   </div>
 
                   {f.plan?.shortfalls?.length > 0 && (
                     <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
-                      ⚠ Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
+                      <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
                     </div>
                   )}
 
@@ -16048,7 +16253,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {ins.stockActual.toFixed(1)} {ins.unit || 'kg'}
                             </td>
                             <td style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color: ins.ok ? 'var(--moss-700)' : 'var(--coral-500)'}}>
-                              {ins.ok ? '✓ OK' : '⚠ Escaso'}
+                              {ins.ok ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={12} color="var(--status-ok)" /> OK</span> : <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--status-warn-marker)" /> Escaso</span>}
                             </td>
                           </tr>
                         ))}
@@ -16060,7 +16265,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* Asignación de Sala Ambiental */}
                 <div>
                   <label htmlFor="prod-launch-sala" style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)',display:'block',marginBottom:6}}>
-                    🌱 Sala / Carpa de Destino
+                    <AppIcon name="sprout" size={14} style={{marginRight:6}} /> Sala / Carpa de Destino
                   </label>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                     {Object.values(ROOMS_CONFIG).map(r => (
@@ -16110,7 +16315,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
                           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
-                            🌿 Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
+                            <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
                           </span>
                           <span
                             style={{
@@ -16151,7 +16356,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {coCultAssignOpt.bottlenecks.map((b, idx) => (
                               <div key={`abn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 6px', borderRadius: 2 }}>
-                                ⚠ Alerta Liebig: {b}
+                                <AppIcon name="alert" size={12} color="var(--coral-700)" style={{marginRight:4}} /> Alerta Liebig: {b}
                               </div>
                             ))}
                             {coCultAssignOpt.penalties.map((p, idx) => (
@@ -16175,7 +16380,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onChange={e => setProdLaunchForm(prev => ({ ...prev, printQr: e.target.checked }))}
                       style={{width:16,height:16,accentColor:'var(--moss-700)'}}
                     />
-                    <span>🖨 <b>Imprimir etiquetas térmicas con códigos QR</b> para las {f.numBolsas} bolsas inmediatamente tras crear.</span>
+                    <span><AppIcon name="print" size={14} style={{marginRight:6}} /> <b>Imprimir etiquetas térmicas con códigos QR</b> para las {f.numBolsas} bolsas inmediatamente tras crear.</span>
                   </label>
                 </div>
 
@@ -16196,7 +16401,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     className="btn-launch-prod"
                     style={{minHeight:44,padding:'8px 20px'}}
                   >
-                    {launching ? 'Lanzando…' : '🚀 Confirmar y Lanzar Producción'}
+                    {launching ? 'Lanzando…' : <><AppIcon name="rocket" size={14} style={{marginRight:6}} /> Confirmar y Lanzar Producción</>}
                   </button>
                 </div>
               </div>
@@ -16231,7 +16436,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginBottom: 18 }}>
@@ -16241,15 +16446,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     Notas de Cata & Organolépticas
                   </div>
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>👃 Aroma:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Aroma:</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.aroma}</div>
                   </div>
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>👅 Sabor & Umami:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Sabor & Umami:</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.flavor}</div>
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>🥩 Textura en Boca:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Textura en Boca:</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.texture}</div>
                   </div>
 
@@ -16277,7 +16482,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
-                      🍳 Técnicas Sugeridas por el Chef
+                      Técnicas Sugeridas por el Chef
                     </div>
                     {gastro.cooking.map((c, i) => (
                       <div key={i} style={{ marginBottom: 8, background: 'var(--paper-50, #F3EFE6)', padding: '8px 10px', borderRadius: 2, borderLeft: '3px solid var(--accent-olive, #5B6B44)' }}>
@@ -16289,7 +16494,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
-                      🍷 Armonía & Maridajes Recomendados
+                      Armonía & Maridajes Recomendados
                     </div>
                     {gastro.pairings.map((p, i) => (
                       <div key={i} style={{ marginBottom: 6, display: 'flex', gap: 6, alignItems: 'baseline' }}>
@@ -16300,7 +16505,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div style={{ marginTop: 12, padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', borderRadius: 2, border: '1px dashed var(--border-hairline, #8C7F5B)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>📦 Presentación Óptima: </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>Presentación Óptima: </span>
                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)' }}>{gastro.presentation}</span>
                   </div>
                 </div>
@@ -16321,7 +16526,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     className="inv-btn inv-btn-pri"
                     style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
                   >
-                    🖨 Imprimir Ficha de Cata
+                    <AppIcon name="print" size={13} style={{marginRight:4}} /> Imprimir Ficha de Cata
                   </button>
                 </div>
               </div>
@@ -16505,7 +16710,7 @@ interval:
                     Compensación barométrica a 2.600 msnm (Tenjo) · SHT3x (0x44) + SCD30 (0x61)
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar modal de configuración ESP32" onClick={() => setShowEsp32ConfigModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar modal de configuración ESP32" onClick={() => setShowEsp32ConfigModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               <div className="esp32-code-preview" style={{ marginBottom: 16 }}>
@@ -16521,10 +16726,10 @@ interval:
                     Cerrar
                   </button>
                   <button type="button" onClick={copyYaml} className="inv-btn inv-btn-sec" style={{ minHeight: 40, padding: '6px 14px' }}>
-                    📋 Copiar YAML
+                    <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Copiar YAML
                   </button>
                   <button type="button" onClick={downloadYaml} className="inv-btn inv-btn-pri" style={{ minHeight: 40, padding: '6px 16px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}>
-                    📥 Descargar .yaml
+                    <AppIcon name="box" size={13} style={{marginRight:4}} /> Descargar .yaml
                   </button>
                 </div>
               </div>
@@ -16560,13 +16765,13 @@ interval:
                     Física Térmica en Altitud · All American 1941X (2.600 msnm / 74.5 kPa)
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
-                    🔥 Cinética de Autoclave & Integral F₀ de Esterilización
+                    <AppIcon name="flame" size={14} style={{marginRight:6}} /> Cinética de Autoclave & Integral F₀ de Esterilización
                   </h2>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                     Punto de ebullición local: 91.6°C · Presión requerida: 19.04 psig para vapor a 121.11°C
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar simulador de autoclave" onClick={() => setShowAutoclaveModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar simulador de autoclave" onClick={() => setShowAutoclaveModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               {/* Controles de Parámetros del Ciclo */}
@@ -16644,7 +16849,7 @@ interval:
                   style={{ fontSize: 11, padding: '4px 10px' }}
                   onClick={() => { setAutoclaveGaugePsi(19.04); setAutoclaveHoldMin(120); setAutoclaveBagKg(2.0); }}
                 >
-                  ✓ Preset Profesional Tenjo (19.04 PSI · 120 min · 2.0 kg)
+                  <AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Preset Profesional Tenjo (19.04 PSI · 120 min · 2.0 kg)
                 </button>
                 <button
                   type="button"
@@ -16652,7 +16857,7 @@ interval:
                   style={{ fontSize: 11, padding: '4px 10px' }}
                   onClick={() => { setAutoclaveGaugePsi(19.04); setAutoclaveHoldMin(90); setAutoclaveBagKg(1.5); }}
                 >
-                  ✓ Bolsa Pequeña (19.04 PSI · 90 min · 1.5 kg)
+                  <AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Bolsa Pequeña (19.04 PSI · 90 min · 1.5 kg)
                 </button>
                 <button
                   type="button"
@@ -16660,7 +16865,7 @@ interval:
                   style={{ fontSize: 11, padding: '4px 10px', borderColor: 'var(--accent-terracotta)', color: 'var(--accent-terracotta)' }}
                   onClick={() => { setAutoclaveGaugePsi(15.0); setAutoclaveHoldMin(60); setAutoclaveBagKg(2.0); }}
                 >
-                  ⚠ Simular Error Nivel del Mar (15 PSI sin corrección)
+                  <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Simular Error Nivel del Mar (15 PSI sin corrección)
                 </button>
               </div>
 
@@ -16721,7 +16926,7 @@ interval:
               {/* Alerta de Desviación Barométrica a 15 PSI */}
               <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
-                  ⚖ Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)
+                  <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
                   A 2.600 msnm, un manómetro marcando <strong>15.0 psi</strong> solo genera <strong>{comp15.tempAt15Psi}°C</strong> reales. Esto causa una <strong>pérdida del {comp15.lethalityLossPct}%</strong> en la tasa de destrucción de endosporas, requiriendo <strong>{comp15.factor}x más tiempo ({comp15.requiredHoldMinFor60MinEquivalent} min)</strong> para igualar 60 min a 121°C. Calibrar siempre a 19.04 psi manométricos.
@@ -16782,13 +16987,13 @@ interval:
                     Intersección Climática 4D · Lógica Difusa Trapezoidal & Liebig
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
-                    🌿 Optimizador de Co-Cultivo y Setpoints Pareto
+                    <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Optimizador de Co-Cultivo y Setpoints Pareto
                   </h2>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                     Determina la compatibilidad simultánea en la misma carpa y calcula los setpoints Minimax óptimos
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar optimizador de co-cultivo" onClick={() => setShowCoCultivationModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar optimizador de co-cultivo" onClick={() => setShowCoCultivationModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               {/* Selector de Especies para la Carpa */}
@@ -16815,7 +17020,7 @@ interval:
                           color: isSelected ? '#FFFFFF' : 'var(--ink-0)',
                         }}
                       >
-                        {isSelected ? '✓ ' : '+ '}{sp.name.split(' (')[0]}
+                        {isSelected ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : '+ '}{sp.name.split(' (')[0]}
                       </button>
                     );
                   })}
@@ -16846,7 +17051,7 @@ interval:
                   {/* Setpoints Minimax Pareto Recomendados */}
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-0)', marginBottom: 8 }}>
-                      🎯 Setpoints de Compromiso Minimax para la Carpa:
+                      <AppIcon name="target" size={13} style={{marginRight:4}} /> Setpoints de Compromiso Minimax para la Carpa:
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -16887,7 +17092,7 @@ interval:
                   {(opt.bottlenecks?.length > 0 || opt.biologicalAlerts?.length > 0) && (
                     <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--accent-terracotta)', marginBottom: 6 }}>
-                        ⚠ Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:
+                        <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:
                       </div>
                       <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
                         {opt.bottlenecks?.map((b, idx) => (
@@ -16936,13 +17141,13 @@ interval:
                     Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
-                    ❄ Fisiología Poscosecha & Degradación en Cadena de Frío
+                    <AppIcon name="snowflake" size={14} style={{marginRight:6}} /> Fisiología Poscosecha & Degradación en Cadena de Frío
                   </h2>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                     Predicción de vida útil, pérdida de peso por transpiración cuticular y empaque MAP microperforado
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar poscosecha" onClick={() => setShowPostHarvestModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar poscosecha" onClick={() => setShowPostHarvestModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               {/* Controles de Entrada */}
@@ -17058,7 +17263,7 @@ interval:
                   {/* Comparativa 3 Escenarios Térmicos */}
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-0)', marginBottom: 6 }}>
-                      📊 Vida Útil según Régimen Térmico:
+                      <AppIcon name="chart" size={14} style={{marginRight:6}} /> Vida Útil según Régimen Térmico:
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--moss-100)', borderColor: 'var(--moss-600)' }}>
@@ -17091,7 +17296,7 @@ interval:
                   {resp && (
                     <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
-                        ⚡ Fisiología Respiratoria & Carga Térmica (Lote {postHarvestBatchKg} kg):
+                        <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Fisiología Respiratoria & Carga Térmica (Lote {postHarvestBatchKg} kg):
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5, flexWrap: 'wrap', gap: 10 }}>
                         <span>Tasa respiratoria: <strong>{resp.respirationMgKgH} mg CO₂/kg·h</strong> ({resp.accelerationFactor}x vs 4°C)</span>
@@ -17103,7 +17308,7 @@ interval:
                   {/* Especificación de Empaque MAP */}
                   <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#1D4ED8', marginBottom: 4 }}>
-                      📦 Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
+                      <AppIcon name="box" size={14} style={{marginRight:6}} /> Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
                       <strong>Material:</strong> {slResult.packagingRecommendation.type} · <strong>OTR Objetivo:</strong> {slResult.packagingRecommendation.targetOtr} · <strong>Aditivo:</strong> Anti-fog obligatorio.
@@ -17239,7 +17444,7 @@ interval:
 
             setShowTriageModal(false);
             setNoticeDlg({
-              title: '🛡️ Bioseguridad Aplicada',
+              title: 'Bioseguridad Aplicada',
               msg: `Lote ${currentLote.codigo}: ${triageAffectedBags} bolsas retiradas. Merma: ${lossCalc.lossPct}%. Pérdida estimada: $${lossCalc.lossCostCop.toLocaleString('es-CO')} COP. Nuevo estado: ${targetState.toUpperCase()}.`
             });
           };
@@ -17256,7 +17461,7 @@ interval:
                       Gestión Fitosanitaria · Tenjo 2.587 msnm
                     </div>
                     <h2 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-0)' }}>
-                      🛡️ Triaje de Bioseguridad & Cuarentena
+                      <AppIcon name="trace" size={14} style={{marginRight:6}} /> Triaje de Bioseguridad & Cuarentena
                     </h2>
                   </div>
                   <button
@@ -17439,7 +17644,7 @@ interval:
 
                 <div className="triage-protocol-banner">
                   <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    🚨 Protocolo Inmediato de Bioseguridad: {selectedPathogen.commonName}
+                    <AppIcon name="alert" size={14} color="var(--status-error)" style={{marginRight:6}} /> Protocolo Inmediato de Bioseguridad: {selectedPathogen.commonName}
                   </div>
                   <ul className="triage-protocol-list">
                     {selectedPathogen.biosecurityProtocol.map((step, idx) => (
@@ -17480,7 +17685,7 @@ interval:
                       }
                     }}
                   >
-                    📷 Diagnosticar con Cámara IA Gemini
+                    <AppIcon name="camera" size={14} style={{marginRight:6}} /> Diagnosticar con Cámara IA Gemini
                   </button>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
@@ -17496,7 +17701,7 @@ interval:
                       style={{ background: 'var(--accent-terracotta, #B24C27)', borderColor: 'var(--accent-terracotta, #B24C27)' }}
                       onClick={handleConfirmTriage}
                     >
-                      🛡️ Confirmar & Aplicar Bioseguridad
+                      <AppIcon name="trace" size={14} style={{marginRight:6}} /> Confirmar & Aplicar Bioseguridad
                     </button>
                   </div>
                 </div>
@@ -17620,7 +17825,7 @@ interval:
 
             setShowDiagModal(false);
             setNoticeDlg({
-              title: '🛡 Dictamen Aplicado',
+              title: 'Dictamen Aplicado',
               msg: `Bolsa ${currentBolsa.codigo} actualizada a estado: ${nuevoEstado.toUpperCase()}. ${diagResult.accion_recomendada}`
             });
           };
@@ -17634,7 +17839,7 @@ interval:
                       Microbiología & Sanidad · Setas OS
                     </div>
                     <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
-                      🔬 Diagnóstico Visual de Contaminaciones
+                      <AppIcon name="scan" size={14} style={{marginRight:6}} /> Diagnóstico Visual de Contaminaciones
                     </h2>
                   </div>
                   <button
@@ -17706,7 +17911,7 @@ interval:
 
                 {diagError && (
                   <div style={{padding:'8px 12px',background:'#FEE2E2',color:'#991B1B',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
-                    ⚠ {diagError}
+                    <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {diagError}
                   </div>
                 )}
 
@@ -17731,7 +17936,7 @@ interval:
                   disabled={!diagImageBase64||diagRunning}
                   onClick={handleRunDiagnosis}
                 >
-                  {diagRunning ? '⏳ Analizando imagen con Gemini 2.5 Flash...' : '🔍 Diagnosticar con Gemini AI'}
+                  {diagRunning ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Analizando imagen con Gemini 2.5 Flash...</> : <><AppIcon name="search" size={13} style={{marginRight:4}} /> Diagnosticar con Gemini AI</>}
                 </button>
 
                 {diagResult && (
@@ -17777,7 +17982,7 @@ interval:
                         }}
                         onClick={handleApplyVerdict}
                       >
-                        🛡 Aplicar Dictamen & Actualizar Bolsa
+                        <AppIcon name="trace" size={14} style={{marginRight:6}} /> Aplicar Dictamen & Actualizar Bolsa
                       </button>
                       <button
                         type="button"
@@ -17836,7 +18041,7 @@ interval:
             openBuilderSubTab('generador');
             if (aiFormResult?.meta_cn_sugerida) {
               setNoticeDlg({
-                title: '🤖 Recomendación IA de Perito Registrada',
+                title: 'Recomendación IA de Perito Registrada',
                 msg: `Meta sugerida de C:N: ${aiFormResult.meta_cn_sugerida}. ${aiFormResult.ajuste_suplementacion || ''}`
               });
             }
@@ -17851,10 +18056,10 @@ interval:
                       Perito Asistente Gemini · Setas OS
                     </div>
                     <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
-                      🤖 Asistente IA de Formulaciones y Diagnóstico Agronómico
+                      <AppIcon name="wand" size={13} style={{marginRight:4}} /> Asistente IA de Formulaciones y Diagnóstico Agronómico
                     </h2>
                   </div>
-                  <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal">×</button>
+                  <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal"><AppIcon name="close" size={12} /></button>
                 </div>
 
                 <div style={{padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)',border:'1px solid var(--border-hairline)',marginBottom:12}}>
@@ -17891,13 +18096,13 @@ interval:
                       cursor:aiFormLoading?'not-allowed':'pointer'
                     }}
                   >
-                    {aiFormLoading ? '⏳ Generando dictamen con Gemini...' : '🤖 Analizar Fórmula & Proponer Ajustes'}
+                    {aiFormLoading ? <><AppIcon name="clock" size={14} style={{marginRight:6}} /> Generando dictamen con Gemini...</> : <><AppIcon name="wand" size={14} style={{marginRight:6}} /> Analizar Fórmula & Proponer Ajustes</>}
                   </button>
                 )}
 
                 {aiFormError && (
                   <div style={{marginTop:10,padding:'8px 12px',background:'rgba(197,48,48,.1)',border:'1px solid #C53030',borderRadius:'var(--radius-sm)',fontSize:12,color:'#C53030'}}>
-                    ⚠️ {aiFormError}
+                    <AppIcon name="alert" size={12} color="#C53030" style={{marginRight:4}} /> {aiFormError}
                   </div>
                 )}
 
@@ -17912,12 +18117,12 @@ interval:
                       </div>
                       {aiFormResult.meta_cn_sugerida && (
                         <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--moss-700)',fontWeight:700}}>
-                          🎯 Meta C:N Sugerida: {aiFormResult.meta_cn_sugerida}
+                          <AppIcon name="target" size={14} style={{marginRight:6}} /> Meta C:N Sugerida: {aiFormResult.meta_cn_sugerida}
                         </div>
                       )}
                       {aiFormResult.ajuste_suplementacion && (
                         <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1)',marginTop:4}}>
-                          💡 <b>Suplementación:</b> {aiFormResult.ajuste_suplementacion}
+                          <AppIcon name="wand" size={14} style={{marginRight:6}} /> <b>Suplementación:</b> {aiFormResult.ajuste_suplementacion}
                         </div>
                       )}
                     </div>
@@ -17939,7 +18144,7 @@ interval:
                           cursor:'pointer'
                         }}
                       >
-                        ✦ Abrir Generador de Escenarios Perito con este Dictamen
+                        <AppIcon name="sparkles" size={14} style={{marginRight:6}} /> Abrir Generador de Escenarios Perito con este Dictamen
                       </button>
                       <button
                         type="button"
