@@ -4,17 +4,30 @@
   outline-offset: 2px;
 }
 
-/* Touch Safety Floors */
+/* FIELD touch safety is a surface contract, not a per-component suggestion. */
 .touch-target,
 [data-mode="field"] button,
+[data-mode="field"] a[href],
+[data-mode="field"] [role="button"],
 [data-mode="field"] input,
 [data-mode="field"] select,
 [data-mode="field"] textarea {
-  min-height: 44px;
+  min-height: var(--tap-target-min, 44px);
+  min-width: var(--tap-target-min, 44px);
+  box-sizing: border-box;
+}
+
+/* Interactive inline elements need a real box; form controls keep native layout semantics. */
+[data-mode="field"] button,
+[data-mode="field"] a[href],
+[data-mode="field"] [role="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 [data-mode="field"] .sdp-btn--field {
-  min-height: 48px;
+  min-height: var(--field-cell-min-height, 48px);
 }
 
 /* Disabled Contract */
