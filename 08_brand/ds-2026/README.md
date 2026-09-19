@@ -51,16 +51,20 @@ DS-2026 expone entrypoints canónicos por contexto y mantiene fachadas de compat
 
 ### Entrypoints Públicos Canónicos
 
+Los bundles son **alternativas**, no capas que deban apilarse:
+
 ```html
-<!-- Núcleo universal (tokens + fuentes + base) -->
+<!-- Todo el sistema (Operations + Market). Usar solo si una misma aplicación necesita ambos perfiles. -->
 <link rel="stylesheet" href="index.css">
 
-<!-- Perfil Operativo (Field OS · FOS Operations: telemetría, cuartos, lotes, campo) -->
+<!-- Setas OS / FOS Operations. Incluye tokens + core + shared + operations. -->
 <link rel="stylesheet" href="operations.css">
 
-<!-- Perfil Mercado & Archivo (Swiss Botanical Market: packaging, certificados, botánica) -->
+<!-- Superficies editoriales y comerciales. Incluye tokens + core/shared necesarios + market. -->
 <link rel="stylesheet" href="market.css">
 ```
+
+**No cargar `index.css + operations.css` ni `index.css + market.css` juntos.** Para Setas OS, el entrypoint recomendado es `operations.css`.
 
 ### Fachadas de Compatibilidad (Legacy Facades)
 
@@ -81,7 +85,7 @@ Los tokens residen como fuentes de verdad estructuradas en JSON dentro de `token
 3. **`domain.json`**: Semántica agronómica y operativa (`provenance: measured, calculated, estimated, manual`, `sync: synced, pending, error`, `quarantine`).
 4. **`typography.json`**: Escala tipográfica con floor estandarizado (`micro-screen = 11px`, `micro-print = 9px`, `body = 16px`).
 5. **`spacing.json`**: Cuadrícula base de 8px con medio paso de 4px (`--space-half`).
-6. **`colors.json`**: Definiciones y compatibilidad de nombres históricos.
+6. **`colors.json`**: Vista de compatibilidad **generada** por `build-tokens.mjs`; nunca se edita directamente.
 
 Compilación canónica:
 ```bash
@@ -92,13 +96,13 @@ node scripts/build-tokens.mjs
 
 | Regla | Contrato DS-2026 Criterio |
 |---|---|
-| **Tipografía** | Gaya Patched (especies, hero, títulos) · IBM Plex Sans (prosa e interfaz) · IBM Plex Mono (datos, telemetría, metadatos en mayúsculas tracked ≥ 0.15em) |
-| **Micro Floor** | Mínimo estricto en pantalla: `11px` (`--font-micro-screen`). `9px` (`--font-micro-print`) es exclusivo para etiquetas físicas impresas con x-height ≥ 3mm. |
+| **Tipografía** | Gaya Patched (especies, hero, títulos) · IBM Plex Sans (prosa e interfaz) · IBM Plex Mono (datos tabulares sin tracking; labels/metadatos en mayúsculas con tracking ≥ 0.15em) |
+| **Micro Floor** | Mínimo estricto en pantalla: `11px` (`--size-micro-screen`). `--size-micro-print: 9px` es solo fine print físico; el código de lote usa `--size-lot-code-print: 6mm` y debe verificar x-height ≥ 3mm en la salida final. |
 | **Color Coral** | `--brand-accent` (`coral-500` #B8614D) para bordes, marcas y acentos gráficos no textuales. Para texto accesible sobre papel se exige `--brand-accent-text` (`coral-700` #8A3E2D, ratio 6.79:1 AA). |
 | **Color Ochre** | `WARNING #C49A4C` (2.36:1) reservado para fondos y barras. Para texto de advertencia se exige `WARNING_TEXT #866629` (4.83:1 AA). |
 | **Profundidad** | Cero sombras difusas (`box-shadow: none`). Delimitación exclusivamente mediante bordes minerales y líneas (`border-hairline`, `border-heavy`). |
-| **Modos** | Atributo `<body data-mode="...">`: `field` (campo/móvil, targets ≥ 44px), `control` (escritorio/consola alta densidad), `archive` (editorial/certificados), `culinary` (gastronomía/packaging). |
-| **Trazabilidad** | Toda cifra agronómica debe portar etiqueta de procedencia (`sdp-provenance`): `● MEASURED`, `○ ESTIMATED`, `▲ MANUAL`, `◇ TARGET`. |
+| **Modos** | Atributo `data-mode` sobre el contenedor semántico de la superficie (o `<body>` solo cuando toda la página comparte modo): `field` (campo/móvil, targets ≥ 44px), `control` (escritorio/consola alta densidad), `archive` (editorial/certificados), `culinary` (gastronomía/packaging). |
+| **Trazabilidad** | Toda cifra agronómica relevante debe poder expresar procedencia (`sdp-provenance`): `● measured`, `◆ calculated`, `◇ estimated`, `◎ target`, `△ manual`, `⬡ simulated`, `◌ pending`. Los labels visibles se localizan en la aplicación. |
 
 ## Validación y Distribución
 
@@ -111,7 +115,7 @@ node scripts/build-tokens.mjs
 # 2. Validar estructura, referencias, fuentes y paridad
 python3 scripts/validate.py
 
-# 3. Auditar contratos WCAG AA de contraste (27/27)
+# 3. Auditar el contrato WCAG AA de contraste (pares sancionados y prohibidos)
 python3 scripts/contrast-audit.py
 
 # 4. Verificar contrato visual anti-slop (0 sombras, 0 hex crudo, targets >= 44px)
@@ -127,8 +131,8 @@ cd ../../field-os-simulador/setas-os && node --test ds-2026-sync.test.js
 ## Especies Insignia
 
 El universo visual y de packaging prioriza como especies insignia:
-- **Shiitake** (*Lentinula edodes*) · Cepa Donko
-- **Melena de León** (*Hericium erinaceus*) · Cepa Pom-Pom
+- **Shiitake** (*Lentinula edodes*)
+- **Melena de León** (*Hericium erinaceus*)
 - Apoyo y archivo: *Ganoderma lucidum* (Reishi), *Pleurotus ostreatus* (Ostra).
 
 ---
