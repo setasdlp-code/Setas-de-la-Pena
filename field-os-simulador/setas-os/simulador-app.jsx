@@ -10913,8 +10913,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
   );
 
+  const getSurfaceMode = (t) => {
+    if (t === 'clima') return 'control';
+    if (t === 'perito' || (t === 'formular' && typeof workbenchMode !== 'undefined' && workbenchMode === 'perito')) return 'control';
+    if (t === 'catalogo') return 'archive';
+    if (t === 'market') return 'culinary-market';
+    return 'field';
+  };
+
   return(
-    <div>
+    <main className="workspace app-workspace" data-mode={getSurfaceMode(tab)}>
       <div className="topbar">
         <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:10}}>
           <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="54" height="28" style={{width:54,height:'auto',maxHeight:28,objectFit:'contain'}} />
@@ -10994,11 +11002,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const operationalNow = Date.now();
           const operationalSource = activeLotes.map((lote,index)=>{
             const stats=calcLoteStats(lote.id);
-            const contaminated=stats&&stats.contPct>0;
+            const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
+            const contaminated=(stats&&stats.contPct>0)||isQuarantine;
             const inoculated=Date.parse(lote.fechaInoculacion||'');
             const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):0;
-            return {id:lote.id,lote,severity:stats&&stats.contPct>=20?'critical':undefined,blocked:contaminated&&stats.contPct<20,
-              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString()};
+            return {
+              id:lote.id,
+              lote,
+              severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,
+              blocked:(contaminated&&!!stats&&stats.contPct<20)||isQuarantine,
+              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString(),
+              title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
+              why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[loteLifecycleState(lote)]||lote.estado} · día ${age}`
+            };
           });
           const operationalQueue=workflow?workflow.buildTodayQueue(operationalSource,operationalNow):operationalSource;
           const criticalTaskCount=operationalQueue.filter(item=>item.bucket==='critical').length;
@@ -11011,6 +11027,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
             :(overdueTaskCount>0||incidentCount>0)
               ?{label:`${overdueTaskCount+incidentCount} por resolver`,color:'color-mix(in oklab, var(--ochre-700) 70%, black)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
               :{label:'Operación estable',color:'color-mix(in oklab, var(--moss-700) 75%, black)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
+          const criticalLots=operationalQueue.filter(item=>item.bucket==='critical'||item.bucket==='blocked');
+          const nowLots=operationalQueue.filter(item=>item.bucket==='overdue'||item.bucket==='now');
+          const laterLots=operationalQueue.filter(item=>item.bucket==='later'||item.bucket==='context');
 
           // Ambientes & Sensores: cámaras físicas REALES
           let camaras=[];
@@ -11105,51 +11124,110 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   </div>
                 )}
-                {criticalStockItems.length > 0 && (
-                  <div className="sdp-alert sdp-alert--warn stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,borderRadius:0}}>
-                    <div className="sdp-alert__body" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                      <span className="sdp-alert__label" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--status-warn-text)'}}>
-                        ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
-                      </span>
-                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                        {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--rule)',borderRadius:0,color:'var(--status-warn-text)'}}>
-                            {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
-                          </span>
-                        ))}
-                        {criticalStockItems.length > 3 && (
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',padding:'2px 4px'}}>
-                            +{criticalStockItems.length - 3} más
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
-                      Registrar Compra +
-                    </button>
-                  </div>
-                )}
               </div>
 
-              {/* SECCIÓN A: OPERACIÓN INMEDIATA — Acciones Rápidas (izquierda) y Tareas de Hoy (derecha) */}
-              <div className="home-acciones-tareas-row">
-                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',height:'100%',boxShadow:'none'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                    <div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                        SECCIÓN A · OPERACIÓN INMEDIATA
+              {/* COLA OPERATIVA DE HOY · 3 BANDAS DE PRIORIDAD (DS-2026 CRITERIO FIELD MODE) */}
+              <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
+
+                {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
+                <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-error,#B53A25)',padding:'16px 18px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--status-error,#B53A25)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error,#B53A25)'}}>
+                        Banda 1 · Atención
                       </span>
-                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                        Acciones Rápidas
-                      </h2>
+                      <span className="sdp-provenance">SCD30 · Cuarentena · Insumos</span>
                     </div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>Acceso a 1 clic</span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
+                    </span>
                   </div>
-                  <div style={{
-                    display:'grid',
-                    gridTemplateColumns:'1fr',
-                    gap:10
-                  }}>
+
+                  {/* Alertas de cámaras / telemetría si las hay */}
+                  {liveTelemetry.alerts.length > 0 && (
+                    <div style={{marginBottom: 12}}>
+                      <LiveAlertsSection/>
+                    </div>
+                  )}
+
+                  {/* Alertas de stock crítico si las hay */}
+                  {criticalStockItems.length > 0 && (
+                    <div className="sdp-alert sdp-alert--warn stock-critical-card" style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,borderRadius:0}}>
+                      <div className="sdp-alert__body" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                        <span className="sdp-alert__label" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--status-warn-text)'}}>
+                          ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                        </span>
+                        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                          {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
+                            <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--rule)',borderRadius:0,color:'var(--status-warn-text)'}}>
+                              {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                            </span>
+                          ))}
+                          {criticalStockItems.length > 3 && (
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',padding:'2px 4px'}}>
+                              +{criticalStockItems.length - 3} más
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
+                        Registrar Compra +
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Lotes en cuarentena o con contaminación crítica */}
+                  {criticalLots.length > 0 ? (
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {criticalLots.map(item => (
+                        <div key={item.id} className="sdp-task sdp-task--critical" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--status-error)',border:'1px solid var(--status-error)',padding:'1px 5px'}}>
+                                {item.bucket === 'critical' ? 'Crítico' : 'Bloqueo'}
+                              </span>
+                              <span className="sdp-task__title">{item.title}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:8}}>
+                            <button className="sdp-action sdp-action--field" type="button" onClick={()=>openBatchDetail(item.id)}>
+                              Abrir lote →
+                            </button>
+                            <button className="sdp-action sdp-action--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
+                              🏷
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && (
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',padding:'4px 0'}}>
+                        ✓ Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal.
+                      </div>
+                    )
+                  )}
+                </section>
+
+                {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
+                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-ok,#2E3B2F)',padding:'16px 18px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--status-ok,#2E3B2F)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok,#2E3B2F)'}}>
+                        Banda 2 · Ahora
+                      </span>
+                      <span className="sdp-provenance">Acciones directas ≥ 44px</span>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {nowLots.length + tasksHoy.filter(t=>!t.done).length} pendiente{nowLots.length + tasksHoy.filter(t=>!t.done).length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+
+                  {/* Acciones Rápidas con touch target >= 44px */}
+                  <div className="home-quick-actions-strip" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(190px, 1fr))',gap:8,marginBottom:14}}>
                     {[
                       {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
                         const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
@@ -11163,57 +11241,76 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ].map(btn=>{
                       const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
                       return (
-                      <button
-                        key={btn.label}
-                        onClick={btn.onClick}
-                        className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
-                        style={{
-                          display:'flex',
-                          alignItems:'center',
-                          gap:12,
-                          padding:'12px 14px',
-                          borderRadius:0,
-                          textAlign:'left',
-                          cursor:'pointer',
-                          position:'relative'
-                        }}
-                      >
-                        <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
-                        <div style={{minWidth:0,flex:1}}>
-                          <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                            {btn.label}
+                        <button
+                          key={btn.label}
+                          onClick={btn.onClick}
+                          className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
+                          style={{
+                            display:'flex',
+                            alignItems:'center',
+                            gap:10,
+                            padding:'10px 12px',
+                            minHeight:48,
+                            borderRadius:0,
+                            textAlign:'left',
+                            cursor:'pointer',
+                            position:'relative'
+                          }}
+                        >
+                          <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
+                          <div style={{minWidth:0,flex:1}}>
+                            <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                              {btn.label}
+                            </div>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                              {btn.sub}
+                            </div>
                           </div>
-                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                            {btn.sub}
-                          </div>
-                        </div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-2)',fontWeight:700}}>→</span>
-                      </button>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-2)',fontWeight:700}}>→</span>
+                        </button>
                       );
                     })}
                   </div>
-                </div>
 
-                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'none'}}>
-                  <div>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                      <div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                          SECCIÓN A · TRABAJO DEL DÍA
-                        </span>
-                        <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                          Tareas de Hoy
-                        </h2>
-                      </div>
-                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{props.tasksOpenCount} pendientes</span>}
+                  {/* Lotes activos que requieren acción ahora (overdue o now) */}
+                  {nowLots.length > 0 && (
+                    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
+                      {nowLots.map(item => (
+                        <div key={item.id} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
+                                {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
+                              </span>
+                              <span className="sdp-task__title">{item.title}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:8}}>
+                            <button className="sdp-action sdp-action--field sdp-action--primary" type="button" onClick={()=>openBatchDetail(item.id)}>
+                              Ejecutar transición →
+                            </button>
+                            <button className="sdp-action sdp-action--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
+                              🏷
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {tasksHoy.length===0 ? (
-                      <div style={{textAlign:'center',padding:'20px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
+                  )}
+
+                  {/* Tareas del día (checklist de turno) */}
+                  <div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:8}}>
+                      Checklist del Turno · {tasksHoy.filter(t=>!t.done).length} pendientes
+                    </div>
+                    {tasksHoy.length === 0 ? (
+                      <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
                         Sin tareas pendientes por ahora.
                       </div>
                     ) : (
-                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                        {tasksHoy.slice(0,5).map(t=>(
+                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                        {tasksHoy.map(t => (
                           <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
                             <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
                               style={{cursor:'pointer',flexShrink:0,minWidth:44,minHeight:44,width:44,height:44,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
@@ -11226,15 +11323,53 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <span className="sdp-task__status" style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
-                        {tasksHoy.length>5 && (
-                          <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',paddingTop:2}}>
-                            +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
-                </div>
+                </section>
+
+                {/* ── BANDA 3: DESPUÉS (Transiciones programadas & Monitoreo) ── */}
+                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--text-secondary,#6B6759)',padding:'16px 18px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--text-secondary,#6B6759)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary,#6B6759)'}}>
+                        Banda 3 · Después
+                      </span>
+                      <span className="sdp-provenance">Planificación / Tarde</span>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {laterLots.length} programado{laterLots.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  {laterLots.length === 0 ? (
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)',fontStyle:'italic'}}>
+                      Sin transiciones posteriores pendientes.
+                    </div>
+                  ) : (
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {laterLots.slice(0, 5).map(item => (
+                        <div key={item.id} className="sdp-task sdp-task--later" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span className="sdp-task__due">DESPUÉS</span>
+                              <span className="sdp-task__title">{item.title}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
+                          </div>
+                          <button className="sdp-action sdp-action--field" type="button" onClick={()=>openBatchDetail(item.id)}>
+                            Ver lote →
+                          </button>
+                        </div>
+                      ))}
+                      {laterLots.length > 5 && (
+                        <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)',paddingTop:2}}>
+                          +{laterLots.length - 5} lote{laterLots.length - 5 === 1 ? '' : 's'} en incubación o maduración
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
               </div>
 
               {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
@@ -17910,7 +18045,7 @@ interval:
           </>)}
         </div>
       </section>)}
-    </div>
+    </main>
   );
 }
 

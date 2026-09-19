@@ -12,6 +12,8 @@
 <link rel="preload" href="ds-2026/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="ds-2026/assets/fonts/IBMPlexMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="ds-2026/tokens/fonts.css">
+<link rel="stylesheet" href="ds-2026/index.css">
+<link rel="stylesheet" href="ds-2026/operations.css">
 <script src="./error-buffer.js"></script>
 <!-- Service worker: permite abrir la aplicación sin señal, que es la situación
      en la que el cuaderno de campo tiene que funcionar. Se registra después de
@@ -42,7 +44,7 @@
   html[data-setas-auth-state="unauthenticated"] x-dc { display:none !important; }
 </style>
 </head>
-<body data-mode="field">
+<body>
   <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper,#FAF5E9);contain:strict;">
     <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel,#F3EEE2);border:1px solid var(--ink,#222222);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
       <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper,#FAF5E9);border:1px solid var(--rule,#888888);">
