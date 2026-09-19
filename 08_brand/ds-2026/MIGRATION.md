@@ -1,4 +1,4 @@
-# Guía de Migración: DS-2026 v1 → DS-2026 · Criterio Edition
+# Guía de migración: DS-2026 v1 → DS-2026 · Criterio edition
 
 **Estado:** Canónico
 **Fecha:** Septiembre 2026
@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Resumen de Cambios Estructurales
+## 1. Resumen de cambios estructurales
 
 | Área | DS-2026 Initial Edition (v1) | DS-2026 · Criterio Edition | Razón / Beneficio |
 |---|---|---|---|
@@ -21,7 +21,7 @@
 
 ---
 
-## 2. Fachadas Legacy de Compatibilidad (`Stable Legacy Entrypoints`)
+## 2. Fachadas legacy de compatibilidad (`stable legacy entrypoints`)
 
 Para evitar rupturas en `Setas OS` y en componentes existentes, los siguientes archivos se mantienen en `components/` como fachadas de importación:
 
@@ -34,9 +34,9 @@ Los consumidores pueden seguir apuntando a estas rutas sin cambios inmediatos.
 
 ---
 
-## 3. Mapeo de Tokens v1 → Criterio
+## 3. Mapeo de tokens v1 → Criterio
 
-### 3.1 Colores y Superficies
+### 3.1 Colores y superficies
 
 | Token v1 | Equivalente Canónico Criterio | Valor Hex Criterio | Nota de Compatibilidad |
 |---|---|---|---|
@@ -63,7 +63,7 @@ Los consumidores pueden seguir apuntando a estas rutas sin cambios inmediatos.
 
 ---
 
-## 4. Instrucciones para Consumidores (Setas OS)
+## 4. Instrucciones para consumidores (Setas OS)
 
 1. **Sincronización:** Ejecutar `node scripts/sync-consumers.mjs` tras cualquier cambio canónico.
 2. **Nuevos desarrollos:** Importar `index.css` y `operations.css` en lugar de rutas internas.

@@ -1,4 +1,4 @@
-# Setas de la Peña · DS-2026 (Criterio Edition)
+# Setas de la Peña · DS-2026 (Criterio edition)
 
 El **Design System canónico** unificado de Setas de la Peña: un solo núcleo de tokens y componentes modulares que gobierna tanto las operaciones agronómicas de campo en Tenjo (`FOS Operations`) como la identidad botánica, editorial y de mercado (`Swiss Botanical Market`).
 
@@ -7,7 +7,7 @@ El **Design System canónico** unificado de Setas de la Peña: un solo núcleo d
 - **Gobernanza:** `distribution-manifest.json` rige exactamente qué se sincroniza y qué se comprueba en los tests.
 - **Migración y compatibilidad:** Consulte [`MIGRATION.md`](MIGRATION.md) para el mapeo v1 → Criterio y la política de fachadas de compatibilidad sin roturas.
 
-## Arquitectura de 4 Capas
+## Arquitectura de 4 capas
 
 ```text
 DS-2026 · Criterio
@@ -45,11 +45,11 @@ DS-2026 · Criterio
     Conocimiento
 ```
 
-## Arquitectura de Entrypoints
+## Arquitectura de entrypoints
 
 DS-2026 expone entrypoints canónicos por contexto y mantiene fachadas de compatibilidad:
 
-### Entrypoints Públicos Canónicos
+### Entrypoints públicos canónicos
 
 ```html
 <!-- Núcleo universal (tokens + fuentes + base) -->
@@ -62,7 +62,7 @@ DS-2026 expone entrypoints canónicos por contexto y mantiene fachadas de compat
 <link rel="stylesheet" href="market.css">
 ```
 
-### Fachadas de Compatibilidad (Legacy Facades)
+### Fachadas de compatibilidad (legacy facades)
 
 Para preservar la compatibilidad con integraciones existentes de Setas OS y simuladores sin romper rutas:
 
@@ -72,7 +72,7 @@ Para preservar la compatibilidad con integraciones existentes de Setas OS y simu
 - `components/editorial.css`: Redirige a `market/archive.css`, `market/packaging.css`, `shared/figure.css`.
 - `components/instrument.css`: Redirige a `operations/telemetry.css`, `operations/lot.css`, `operations/room.css`.
 
-## Estructura de Tokens por Capas
+## Estructura de tokens por capas
 
 Los tokens residen como fuentes de verdad estructuradas en JSON dentro de `tokens/`:
 
@@ -88,7 +88,7 @@ Compilación canónica:
 node scripts/build-tokens.mjs
 ```
 
-## Reglas Innegociables de Estilo
+## Reglas innegociables de estilo
 
 | Regla | Contrato DS-2026 Criterio |
 |---|---|
@@ -100,7 +100,7 @@ node scripts/build-tokens.mjs
 | **Modos** | Atributo `<body data-mode="...">`: `field` (campo/móvil, targets ≥ 44px), `control` (escritorio/consola alta densidad), `archive` (editorial/certificados), `culinary` (gastronomía/packaging). |
 | **Trazabilidad** | Toda cifra agronómica debe portar etiqueta de procedencia (`sdp-provenance`): `● MEASURED`, `○ ESTIMATED`, `▲ MANUAL`, `◇ TARGET`. |
 
-## Validación y Distribución
+## Validación y distribución
 
 El sistema cuenta con un pipeline completo de validación local y sincronización:
 
@@ -124,7 +124,7 @@ node scripts/sync-consumers.mjs
 cd ../../field-os-simulador/setas-os && node --test ds-2026-sync.test.js
 ```
 
-## Especies Insignia
+## Especies insignia
 
 El universo visual y de packaging prioriza como especies insignia:
 - **Shiitake** (*Lentinula edodes*) · Cepa Donko
