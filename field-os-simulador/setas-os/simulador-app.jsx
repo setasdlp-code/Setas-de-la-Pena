@@ -8243,7 +8243,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         )}
                         <div className="inv-section">
-                          <table className="inv-table inventory-stock-table">
+                          <table className="inv-table inventory-stock-table sdp-table">
                             <thead>
                               <tr>
                                 <th>Ingrediente</th>
@@ -8323,10 +8323,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     {/* ESTADO */}
                                     <td data-label="Estado">
                                       {r.stock<r.alertaMin
-                                        ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
+                                        ?<span className="sdp-badge sdp-badge--err" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
                                         :r.stock<r.alertaMin*2.5
-                                          ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
-                                          :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
+                                          ?<span className="sdp-badge sdp-badge--warn" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
+                                          :<span className="sdp-badge sdp-badge--ok" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                     </td>
                                     {/* ACCIONES */}
                                     <td data-label="Acciones">
@@ -10066,31 +10066,37 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* 4 KPI Cards en Vivo */}
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
+          <div className="climate-kpi-card sdp-tele">
+            <div className="climate-kpi-header sdp-tele__header">
               <span>Temperatura</span>
-              <span>Target: {defaultTargets.temperature_c.target}°C</span>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <span className="sdp-provenance">● MEASURED</span>
+                <span>Target: {defaultTargets.temperature_c.target}°C</span>
+              </div>
             </div>
-            <div className="climate-kpi-value">
+            <div className="climate-kpi-value sdp-tele__value">
               <span>{currentMetrics.temp}</span>
-              <span style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
+              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
             </div>
-            <div className="climate-kpi-sub">
+            <div className="climate-kpi-sub sdp-tele__label">
               <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
             </div>
           </div>
 
           {/* 2. Humedad Relativa */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
+          <div className="climate-kpi-card sdp-tele">
+            <div className="climate-kpi-header sdp-tele__header">
               <span>Humedad Relativa</span>
-              <span>Target: {defaultTargets.rh_pct.target}%</span>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <span className="sdp-provenance">● MEASURED</span>
+                <span>Target: {defaultTargets.rh_pct.target}%</span>
+              </div>
             </div>
-            <div className="climate-kpi-value">
+            <div className="climate-kpi-value sdp-tele__value">
               <span>{currentMetrics.rh}</span>
-              <span style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
+              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
             </div>
-            <div className="climate-kpi-sub">
+            <div className="climate-kpi-sub sdp-tele__label">
               <span>{climateTimeRange}: {rhMin}% – {rhMax}% · Banda: [{defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%]</span>
             </div>
           </div>
@@ -10110,17 +10116,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745.0, currentMetrics.temp), { live: false })
                 : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
             return (
-              <div className="climate-kpi-card" data-testid="climate-co2-card" data-co2-live={ndirCorr.live?'true':'false'}>
-                <div className="climate-kpi-header">
+              <div className="climate-kpi-card sdp-tele" data-testid="climate-co2-card" data-co2-live={ndirCorr.live?'true':'false'}>
+                <div className="climate-kpi-header sdp-tele__header">
                   <span>Dióxido de Carbono (NDIR)</span>
-                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
+                  <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                    <span className="sdp-provenance">● MEASURED</span>
+                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
+                  </div>
                 </div>
-                <div className="climate-kpi-value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <div className="climate-kpi-value sdp-tele__value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span>{ndirCorr.correctedPpm}</span>
-                  <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
+                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
                   <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
-                <div className="climate-kpi-sub">
+                <div className="climate-kpi-sub sdp-tele__label">
                   <span>Beer-Lambert {(co2Correction&&co2Correction.pressureHpa)||liveTelemetry.config.pressureHpa||745} hPa: <strong>{ndirCorr.baroFactor}x</strong> (+{ndirCorr.deltaPpm} ppm) · Max: {defaultTargets.co2_ppm.max} ppm</span>
                 </div>
               </div>
@@ -10128,18 +10137,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
           })()}
 
           {/* 4. VPD & Punto de Rocío */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
+          <div className="climate-kpi-card sdp-tele">
+            <div className="climate-kpi-header sdp-tele__header">
               <span>VPD & Psicrometría</span>
-              <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
-                {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
-              </span>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <span className="sdp-provenance">○ ESTIMATED</span>
+                <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
+                  {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
+                </span>
+              </div>
             </div>
-            <div className="climate-kpi-value">
+            <div className="climate-kpi-value sdp-tele__value">
               <span>{vpd}</span>
-              <span style={{fontSize:15,color:'var(--ink-2)'}}>kPa</span>
+              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>kPa</span>
             </div>
-            <div className="climate-kpi-sub">
+            <div className="climate-kpi-sub sdp-tele__label">
               <span>Punto de Rocío (Tdp): {dewPoint}°C · ΔT anti-rocío: {(currentMetrics.temp - dewPoint).toFixed(1)}°C</span>
             </div>
           </div>
@@ -10614,24 +10626,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
-                        <div key={lote.id} data-lote-id={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
+                        <div key={lote.id} data-lote-id={lote.id} className="panel sdp-lote" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
                           onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
                           onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--ink-900)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.transform='';}}
                         >
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
-                              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              <div className="sdp-lote__code" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
                               {SetasInventoryConsumptionApi.isPendingForLote(invOps,lote.id)&&<span className="chip" title="El consumo de bodega de este lote aún no se guardó en el servidor" style={{marginLeft:6}}>Pendiente de sincronizar inventario</span>}
                               <div style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:"var(--text-md)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
                             <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
+                              <span className="sdp-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
                               {score!==null&&<span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-700)',lineHeight:1}}>{score}<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>/100</span></span>}
                             </div>
                           </div>
-                          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'var(--paper-300)'}}>
+                          <div className="sdp-lote__meta" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'var(--paper-300)'}}>
                             {[['Sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['BE',stats?.be!=null?stats.be.toFixed(0)+'%':'—'],['Cosecha',stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'8px 4px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:2}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{v}</div></div>))}
                           </div>
                           <div style={{padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--paper-100)',gap:8}}>
@@ -10908,6 +10920,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="54" height="28" style={{width:54,height:'auto',maxHeight:28,objectFit:'contain'}} />
           <span style={{fontSize:15,fontWeight:700}}>Setas de la Peña</span>
         </button>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span className={`sdp-sync-chip ${isOnline?'sdp-sync-chip--synced':'sdp-sync-chip--pending'}`}>
+            <span className="sdp-sync-chip__dot" aria-hidden="true" />
+            <span className="sdp-sync-chip__label">{isOnline ? 'CONECTADO · SINCRONIZADO' : 'MODO LOCAL · PENDIENTE'}</span>
+          </span>
+        </div>
       </div>
       <nav className="fos-rail">
         <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 4px 8px'}}>
@@ -11196,16 +11214,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ) : (
                       <div style={{display:'flex',flexDirection:'column',gap:8}}>
                         {tasksHoy.slice(0,5).map(t=>(
-                          <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
+                          <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
                             <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                              style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                              style={{cursor:'pointer',flexShrink:0,minWidth:44,minHeight:44,width:44,height:44,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
                               <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
                             </button>
-                            <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                              <span style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                              <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                            <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
+                              <span className="sdp-task__title" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                              <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
                             </button>
-                            <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
+                            <span className="sdp-task__status" style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
                         {tasksHoy.length>5 && (
@@ -15094,7 +15112,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <>
                     {/* ESCÁNER DE CÁMARA EN VIVO */}
                     {isCameraActive ? (
-                      <div className="qr-scanner-viewport">
+                      <div className="qr-scanner-viewport sdp-scanner__viewport">
                         <video
                           ref={videoRef}
                           className="qr-scanner-video"
@@ -15102,8 +15120,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           playsInline
                           muted
                         />
-                        <div className="qr-scanner-reticle">
-                          <div className="qr-scanner-laser" />
+                        <div className="qr-scanner-reticle sdp-scanner__reticle">
+                          <div className="qr-scanner-laser sdp-scanner__laser" />
                         </div>
                         <button
                           type="button"
@@ -15117,7 +15135,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button
                         type="button"
                         onClick={startCameraScanner}
-                        style={{ minHeight: 42, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                        style={{ minHeight: 44, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
                       >
                         📷 Iniciar Escaneo con Cámara Móvil
                       </button>
