@@ -100,7 +100,7 @@
         "value": "{color.primitive.moss-700}"
       },
       "secondary": {
-        "value": "{color.primitive.paper-200}"
+        "value": "{color.primitive.paper-50}"
       },
       "focus-ring": {
         "value": "{color.primitive.moss-700}"
@@ -117,6 +117,15 @@
       },
       "danger-text": {
         "value": "{color.primitive.paper-50}"
+      },
+      "primary-hover": {
+        "value": "{color.primitive.moss-900}"
+      },
+      "secondary-hover": {
+        "value": "{color.primitive.paper-200}"
+      },
+      "accent-hover": {
+        "value": "{color.primitive.coral-700}"
       }
     }
   }
