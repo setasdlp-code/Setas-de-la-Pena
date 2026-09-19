@@ -1,4 +1,4 @@
-# DS-2026 · Perfiles y Modos de Superficie
+# DS-2026 · Perfiles y modos de superficie
 
 DS-2026 unifica dos realidades operacionales bajo un único núcleo de tokens: **FOS Operations** (operación agronómica rigurosa en Tenjo a 2.600 msnm) y **Swiss Botanical Market** (archivo botánico, trazabilidad premium y empaque de setas gourmet).
 
@@ -10,7 +10,7 @@ La densidad y la semántica visual se determinan mediante el atributo `data-mode
 
 ---
 
-## Matriz Comparativa de Perfiles
+## Matriz comparativa de perfiles
 
 | Dimensión | `field` (Campo) | `control` (Consola) | `archive` (Botánica) | `culinary` (Mercado) |
 |---|---|---|---|---|
@@ -27,7 +27,7 @@ La densidad y la semántica visual se determinan mediante el atributo `data-mode
 
 ---
 
-## 1. Perfil `field` (Operaciones de Campo)
+## 1. Perfil `field` (operaciones de campo)
 
 Diseñado para uso rudo en las salas de fructificación e incubación de Tenjo: humedad relativa > 85%, operarios con guantes de nitrilo, iluminación de trabajo y conectividad WiFi intermitente.
 
@@ -37,7 +37,7 @@ Diseñado para uso rudo en las salas de fructificación e incubación de Tenjo: 
   - Indicadores visuales explícitos de conectividad: `sdp-sync-chip--synced`, `sdp-sync-chip--pending`, `sdp-sync-chip--offline`.
   - Acciones destructivas o irreversibles requieren doble confirmación táctil.
 
-## 2. Perfil `control` (Telemetría y Formulación)
+## 2. Perfil `control` (telemetría y formulación)
 
 Diseñado para la consola de control ambiental, monitoreo de sensores SCD30 (CO₂, HR, Temp), estado de relevos de actuadores y gestión de inventario de materias primas.
 
@@ -46,7 +46,7 @@ Diseñado para la consola de control ambiental, monitoreo de sensores SCD30 (CO�
   - Tablas con cabeceras fijas, cifras tabulares en IBM Plex Mono y etiquetas de procedencia (`sdp-provenance`).
   - Semántica estricta de estado: `Moss 700` (en rango), `--status-warn-marker` / `--status-warn-text` (precaución o cuarentena) y Coral 700 (alarma crítica). El Ochre 500 no funciona como texto ni regla fina aislada.
 
-## 3. Perfil `archive` (Archivo y Fichas Botánicas)
+## 3. Perfil `archive` (archivo y fichas botánicas)
 
 Diseñado para fichas técnicas de cepas, certificados de lote público con trazabilidad y litografías botánicas.
 
@@ -56,7 +56,7 @@ Diseñado para fichas técnicas de cepas, certificados de lote público con traz
   - Especies nunca recortadas (`object-fit: contain`): silueta completa como evidencia morfológica.
   - Espacio negativo abundante: el aire y el silencio visual transmiten rigor científico y valor patrimonial.
 
-## 4. Perfil `culinary` (Mercado y Packaging)
+## 4. Perfil `culinary` (mercado y packaging)
 
 Diseñado para cajas de cartón kraft plegadizo, bolsas ventiladas y etiquetas de despacho para alta gastronomía.
 

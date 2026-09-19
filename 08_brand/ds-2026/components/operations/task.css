@@ -14,6 +14,14 @@
   border: var(--rule-hairline);
   background: var(--surface-page);
   min-height: var(--field-cell-min-height);
+  gap: var(--space-2);
 }
 .sdp-task--overdue { border-left: 4px solid var(--status-error); }
 .sdp-task--now     { border-left: 4px solid var(--status-ok); }
+.sdp-task--critical{ border-left: 4px solid var(--status-error); background: var(--surface-panel); }
+.sdp-task--later   { border-left: 4px solid var(--text-secondary); }
+
+.sdp-task__body { flex: 1; min-width: 0; }
+.sdp-task__title { font-family: var(--font-sans); font-size: 14px; font-weight: var(--weight-semibold); color: var(--text-primary); }
+.sdp-task__meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.sdp-task__due { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--brand-accent-text); font-weight: bold; }

@@ -1,0 +1,31 @@
+/* DS-2026 · Shared: Operational Reading (metric val, target, meta with provenance/age) */
+.sdp-reading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+}
+
+.sdp-reading__val {
+  font-family: var(--font-mono);
+  font-size: var(--size-body);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+}
+
+.sdp-reading__target {
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-micro);
+}
+
+.sdp-reading__meta {
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  color: var(--text-metadata);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  letter-spacing: var(--tracking-micro);
+}
