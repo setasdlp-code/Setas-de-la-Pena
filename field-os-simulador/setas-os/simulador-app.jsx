@@ -5564,6 +5564,17 @@ function SimuladorShell(props){
     scroller.addEventListener('scroll',onScroll,{passive:true});
     return ()=>{scroller.removeEventListener('scroll',onScroll);if(raf) cancelAnimationFrame(raf);};
   },[]);
+  // Mismo breakpoint que el rail mobile del shell (.dc.html, 859px). Decide si
+  // Batch Detail monta la superficie mobile canónica (una columna, progressive
+  // disclosure) o la vista de escritorio existente — nunca ambas a la vez.
+  const [isMobileViewport,setIsMobileViewport]=useState(()=>typeof window!=='undefined'&&window.innerWidth<=859);
+  useEffect(()=>{
+    if(typeof window==='undefined'||typeof window.matchMedia!=='function') return;
+    const mq=window.matchMedia('(max-width:859px)');
+    const handler=e=>setIsMobileViewport(e.matches);
+    if(mq.addEventListener) mq.addEventListener('change',handler); else mq.addListener(handler);
+    return ()=>{ if(mq.removeEventListener) mq.removeEventListener('change',handler); else mq.removeListener(handler); };
+  },[]);
   const [hasPickedSpecies,setHasPickedSpecies]=useState(()=>{
     try{
       const p=normSpp(props.preselectSpecies);
@@ -9543,6 +9554,219 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
     </article>;
   };
+
+  // ── Batch Detail mobile canónico (DS-2026 Criterio) ────────────────────────
+  // Primera implementación mobile del objeto Batch. No reconstruye estado del
+  // DOM ni reimplementa lifecycle local: todo sale de buildSheetFor(lote)
+  // (batch-sheet.js, que a su vez consulta setas-os-workflow.js). Una sola
+  // columna, progressive disclosure, sin grids ni tablas horizontales.
+  // Responde en orden: qué lote es · en qué estado está · hay algo mal ·
+  // qué debo hacer ahora · qué condiciones tiene · qué ha pasado.
+  const BatchDetailMobile = ({ lote }) => {
+    const sheet = buildSheetFor(lote);
+    const state = sheet ? sheet.state : loteLifecycleState(lote);
+    const stateLabel = sheet ? sheet.stateLabel : (lifecycleLabel[state] || state);
+    const isException = ['quarantine', 'discarded', 'failed'].includes(state);
+    const actions = sheet ? sheet.actions : (workflow ? workflow.validActions(state, operatorRole).map(a => ({ action: a, label: actionLabel[a] || a, blockedBy: null })) : []);
+    const nextAction = (sheet && sheet.nextAction) || actions[0] || null;
+    const secondaryActions = actions.filter(a => a !== nextAction && (!nextAction || a.action !== nextAction.action));
+
+    const roomId = sheet && sheet.room ? sheet.room.id : (lote.sala || lote.ubicacion || null);
+    const roomName = sheet && sheet.room ? sheet.room.name : roomId;
+    const roomLiveNow = roomId ? liveTelemetry.roomLive(roomId) : null;
+    const roomSample = (roomLiveNow && roomLiveNow.sample) || {};
+    const targetBands = roomId ? ROOM_TARGET_BANDS[roomId] : null;
+    const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
+
+    const buildReading = (metricKey, label, unit, decimals) => {
+      const band = targetBands && targetBands[metricKey];
+      const hasLive = Number.isFinite(roomSample[metricKey]);
+      const hasDemo = !hasLive && demoMetrics && Number.isFinite(demoMetrics[metricKey]);
+      if (!hasLive && !hasDemo) return { key: metricKey, label, empty: true };
+      const value = hasLive ? roomSample[metricKey] : demoMetrics[metricKey];
+      const fresh = hasLive ? Boolean(roomLiveNow.freshMetrics && roomLiveNow.freshMetrics[metricKey]) : true;
+      const ageMs = hasLive ? (roomLiveNow.metricAgeMs && roomLiveNow.metricAgeMs[metricKey]) : null;
+      let relation = 'ok';
+      if (band) {
+        if (Number.isFinite(band.criticalMin) && value < band.criticalMin) relation = 'error';
+        else if (Number.isFinite(band.criticalMax) && value > band.criticalMax) relation = 'error';
+        else if (value < band.min || value > band.max) relation = 'warn';
+      }
+      const modifier = (hasLive && !fresh) ? 'stale' : relation;
+      const provenanceKind = hasLive ? 'measured' : 'estimated';
+      const provenanceMeta = hasLive
+        ? `${liveAgeLabel(ageMs)} · ${(roomSample.sources || []).join(' + ') || 'en vivo'}`
+        : 'referencia de modelo';
+      const targetLabel = band
+        ? (metricKey === 'co2_ppm' ? `TARGET < ${band.max}` : `TARGET ${band.min}–${band.max}`)
+        : null;
+      return { key: metricKey, label, unit, value: value.toFixed(decimals), modifier, targetLabel, provenanceKind, provenanceMeta };
+    };
+    const readings = roomId ? [
+      buildReading('temperature_c', 'Temperatura', '°C', 1),
+      buildReading('rh_pct', 'Humedad relativa', '%', 0),
+      buildReading('co2_ppm', 'CO₂', 'ppm', 0),
+    ] : [];
+
+    const hasReadingAlert = readings.some(r => !r.empty && (r.modifier === 'warn' || r.modifier === 'error'));
+    const exceptions = sheet ? [...sheet.anomalies, ...sheet.blocks] : [];
+    const hasExceptions = isException || exceptions.length > 0;
+    const loteBadge = isException ? 'quarantine' : (hasExceptions || hasReadingAlert ? 'warn' : 'ok');
+
+    const events = sheet
+      ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, type: e.title, time: e.at, desc: e.meta, kind: e.provenance }))
+      : [];
+
+    return (
+      <article className="os-batch-detail-mobile" data-testid="ux-v2-batch-detail-mobile" data-batch-state={state}>
+        <div className="sdp-lote" data-testid="active-lote" data-lote-id={lote.id}>
+          <div className="sdp-lote__body">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)' }}>Lote</div>
+                <div className="sdp-lote__id" style={{ fontSize: 18 }}>{sheet ? sheet.code : lote.codigo}</div>
+              </div>
+              <span role="status" aria-live="polite" className={`sdp-sync sdp-sync--${bitSyncErr ? 'error' : 'synced'}`}>{bitSyncErr ? 'Sin sincronizar' : 'Sincronizado'}</span>
+            </div>
+            <div style={{ fontFamily: 'var(--font-editorial)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', marginTop: 4 }}>
+              {(sheet ? sheet.species : lote.especie) || 'Especie sin registrar'}
+              {(sheet ? sheet.speciesScientific : lote.especieCientifico) && (
+                <><br /><i style={{ fontWeight: 400, fontSize: 14, color: 'var(--text-secondary)' }}>{sheet ? sheet.speciesScientific : lote.especieCientifico}</i></>
+              )}
+            </div>
+            <div className="sdp-lote__status" style={{ marginTop: 10 }}>
+              <span className={`sdp-badge sdp-badge--${loteBadge}`}>{stateLabel}{sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : ''}</span>
+            </div>
+            <div className="sdp-lote__meta" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 10 }}>
+              <div>
+                <span className="sdp-lote__mk">Sala</span>
+                <div className="sdp-lote__mv">{roomName || 'Sin asignar'}</div>
+              </div>
+              <div>
+                <span className="sdp-lote__mk">Bolsas activas</span>
+                <div className="sdp-lote__mv">{sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || '—'}`}</div>
+              </div>
+              <div>
+                <span className="sdp-lote__mk">Receta</span>
+                <div className="sdp-lote__mv">{sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ''}` : 'Sin vincular'}</div>
+              </div>
+              <div>
+                <span className="sdp-lote__mk">Spawn</span>
+                <div className="sdp-lote__mv">{sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : 'Sin vincular'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {hasExceptions && (
+          <section className="os-detail-panel" data-testid="batch-blocks-mobile" style={{ marginTop: 14, borderColor: 'var(--status-error)' }}>
+            <h2 style={{ fontSize: 14 }}>Excepciones</h2>
+            {isException && (
+              <div className="sdp-badge sdp-badge--quarantine" style={{ marginBottom: 8 }}>
+                {stateLabel} · {state === 'quarantine' ? 'Sospecha de contaminación' : 'Lifecycle detenido'}
+              </div>
+            )}
+            {sheet && sheet.anomalies.map((a, i) => (
+              <div className="sdp-event" key={`anom-${i}`} style={{ marginBottom: 6 }}>
+                <div className="sdp-event__header"><span className="sdp-event__type">{a.severity === 'critical' ? 'Crítico' : 'Atención'}</span></div>
+                <div className="sdp-event__desc">{a.detail}</div>
+              </div>
+            ))}
+            {sheet && sheet.blocks.map(b => (
+              <div className="sdp-event" key={b.code} style={{ marginBottom: 6 }}>
+                <div className="sdp-event__header"><span className="sdp-event__type">Bloqueo</span></div>
+                <div className="sdp-event__desc">{b.detail}</div>
+              </div>
+            ))}
+            {actions.some(a => a.action === 'inspection' || a.action === 'contamination') && (
+              <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" style={{ marginTop: 8 }}
+                onClick={() => runBatchAction((actions.find(a => a.action === 'contamination') || actions.find(a => a.action === 'inspection')).action, lote, sheet)}>
+                Inspeccionar
+              </button>
+            )}
+          </section>
+        )}
+
+        <section style={{ marginTop: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Siguiente acción</h2>
+          {nextAction ? (
+            <div className="sdp-task sdp-task--now" style={{ flexWrap: 'wrap' }}>
+              <div className="sdp-task__body">
+                <div className="sdp-task__title">{nextAction.label}</div>
+                {nextAction.blockedBy && <div className="sdp-task__meta">Bloqueado por: {nextAction.blockedBy}</div>}
+              </div>
+              <button type="button" className="sdp-btn sdp-btn--primary sdp-btn--field" disabled={Boolean(nextAction.blockedBy)}
+                onClick={() => runBatchAction(nextAction.action, lote, sheet)}>
+                Registrar {nextAction.label.toLowerCase()}
+              </button>
+            </div>
+          ) : (
+            <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Sin acciones pendientes para este lote.</div>
+          )}
+        </section>
+
+        <section style={{ marginTop: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Condiciones</h2>
+          {!roomId && <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Sin sala asignada — no hay lecturas ambientales.</div>}
+          {roomId && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {readings.map(r => r.empty ? (
+                <div key={r.key} className="sdp-reading">
+                  <div className="sdp-reading__label">{r.label}</div>
+                  <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Sin sensor</div>
+                </div>
+              ) : (
+                <div key={r.key} className={`sdp-reading sdp-reading--${r.modifier}`}>
+                  <div className="sdp-reading__label">{r.label}</div>
+                  <div className="sdp-reading__value">{r.value}<span className="sdp-reading__unit">{r.unit}</span></div>
+                  {r.targetLabel && <div className="sdp-reading__target">{r.targetLabel}</div>}
+                  <div className="sdp-reading__meta">
+                    <span className="sdp-provenance" data-provenance={r.provenanceKind}>{r.provenanceKind === 'measured' ? 'MEASURED' : 'ESTIMATED'}</span>
+                    <span>{r.provenanceMeta}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section style={{ marginTop: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
+          {events.length === 0 ? (
+            <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Todavía no hay eventos registrados para este lote.</div>
+          ) : (
+            <ol className="sdp-timeline">
+              {events.map(e => (
+                <li className="sdp-event" key={e.id}>
+                  <div className="sdp-event__header">
+                    <span className="sdp-event__type">{e.type}</span>
+                    <time className="sdp-event__time">{e.time || ''}</time>
+                  </div>
+                  {e.desc && <div className="sdp-event__desc">{e.desc}</div>}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        <section style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-hairline)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {secondaryActions.map(a => (
+            <button key={a.action} type="button" className="sdp-btn sdp-btn--secondary" disabled={Boolean(a.blockedBy)}
+              title={a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : undefined}
+              onClick={() => runBatchAction(a.action, lote, sheet)}>{a.label}</button>
+          ))}
+          <button type="button" className="sdp-btn sdp-btn--secondary" data-testid="btn-field-action-sheet-mobile"
+            onClick={() => { setQrSelectedLoteId(lote.id); setShowFieldActionModal(true); }}>
+            Hoja de acción (QR)
+          </button>
+          <button type="button" className="sdp-btn sdp-btn--secondary" onClick={() => setPublicTraceModalLoteId(lote.id)}>
+            Ver ficha pública QR
+          </button>
+        </section>
+      </article>
+    );
+  };
+
   const BatchSheetModal = ({ isOpen, onClose, lote }) => {
     if (!isOpen || !lote) return null;
     return (
@@ -9554,7 +9778,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}><AppIcon name="close" size={12} /></button>
         </div>
-        <BatchDetailV2 lote={lote} />
+        {isMobileViewport ? <BatchDetailMobile lote={lote} /> : <BatchDetailV2 lote={lote} />}
       </AccessibleModal>
     );
   };
@@ -10043,17 +10267,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className="climate-live-label" data-live={hasLiveMetrics?'true':'false'}><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
             </div>
           </div>
-          {cameras.length>0?<div className="climate-module-grid">
+          {cameras.length>0?<div className="climate-module-grid" data-testid="salas-grid">
             {cameras.map(c=>{
               const roomId=CAMERA_TO_ROOM[c.id]||selectedClimateRoom;
               const cardLive = liveTelemetry.roomLive(roomId);
               const cardSample = (cardLive && cardLive.sample) || {};
               const cardHasLive = ['temperature_c','rh_pct','co2_ppm'].some(metric => Number.isFinite(cardSample[metric]));
+              // Lotes/bolsas reales de la sala — mismo criterio que batch-sheet.js
+              // (bagsActive excluye descartada/contaminada) para que Salas y Batch
+              // Detail nunca discrepen sobre qué bolsa cuenta como activa.
+              const roomBatches = bitLotes.filter(l => (l.sala===roomId || l.ubicacion===roomId) && !['completado','descartado'].includes(l.estado));
+              const roomBagsList = bitBolsas.filter(b => roomBatches.some(l=>l.id===b.loteId));
+              const roomBagsActive = roomBagsList.length
+                ? roomBagsList.filter(b=>b.estado!=='descartada'&&b.estado!=='contaminada').length
+                : roomBatches.reduce((sum,l)=>sum+(parseInt(l.numBolsas,10)||0),0);
+              const roomBagsTotal = roomBagsList.length || roomBatches.reduce((sum,l)=>sum+(parseInt(l.numBolsas,10)||0),0);
               return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
                 <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
                 <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
                 <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
                 {!cardHasLive&&<span className="climate-module-reference">Referencia de modelo · sin lectura de sonda</span>}
+                <span className="climate-module-batches">{roomBatches.length} lote{roomBatches.length===1?'':'s'} · {roomBagsActive}/{roomBagsTotal} bolsas</span>
                 <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
                 {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}
               </button>;
@@ -11078,7 +11312,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const cosechas=[...bitCosechas.filter(c=>c.loteId===bitActiveLoteId)].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
               const stats=calcLoteStats(bitActiveLoteId);const score=stats?calcLoteScore(stats):null;
-              return <BatchDetailV2 lote={lote}/>;
+              return isMobileViewport ? <BatchDetailMobile lote={lote}/> : <BatchDetailV2 lote={lote}/>;
               /* Legacy printable sheet retained below during migration, but no longer rendered. */
               return(
                 <div className="panel prod-sheet" style={{padding:'26px 28px'}}>

@@ -68,8 +68,11 @@ test('Hoy header reports live operational state without duplicated site context'
 
 test('canonical batch detail replaces bit_ficha and derives visible actions from lifecycle', () => {
   assert.match(source, /data-testid="ux-v2-batch-detail"/);
+  assert.match(source, /data-testid="ux-v2-batch-detail-mobile"/);
   assert.match(source, /workflow\.validActions\(state,/);
-  assert.match(source, /return <BatchDetailV2 lote=\{lote\}\/>/);
+  // El rail mobile Criterio reemplazó el <BatchDetailV2> único por un split
+  // desktop/mobile — ambas ramas siguen derivando del mismo lifecycle/workflow.
+  assert.match(source, /isMobileViewport \? <BatchDetailMobile lote=\{lote\}\s*\/> : <BatchDetailV2 lote=\{lote\}\/>/);
 });
 
 test('advancing a legacy lot writes the canonical transition event with the lot update', () => {
