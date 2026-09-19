@@ -19,7 +19,7 @@
 }
 
 .sdp-sync-chip--pending {
-  border-left: 4px solid var(--status-warn);
+  border-left: 4px solid var(--status-warn-marker);
   color: var(--status-warn-text);
 }
 
