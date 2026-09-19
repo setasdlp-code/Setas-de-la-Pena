@@ -11184,7 +11184,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className="sdp-task sdp-task--critical" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
                           <div className="sdp-task__body">
                             <div style={{display:'flex',alignItems:'center',gap:8}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--status-error)',border:'1px solid var(--status-error)',padding:'1px 5px'}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-error)',border:'1px solid var(--status-error)',padding:'1px 5px'}}>
                                 {item.bucket === 'critical' ? 'Crítico' : 'Bloqueo'}
                               </span>
                               <span className="sdp-task__title">{item.title}</span>
@@ -11279,7 +11279,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
                           <div className="sdp-task__body">
                             <div style={{display:'flex',alignItems:'center',gap:8}}>
-                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'10px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
+                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
                                 {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
                               </span>
                               <span className="sdp-task__title">{item.title}</span>
@@ -12330,7 +12330,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span className="live-dash-species" title="Aún no hay ingredientes en la receta">
                       Receta activa
                     </span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
                       sin ingredientes
                     </span>
                   </div>
@@ -12473,18 +12473,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 key={s.id}
                                 onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
                                 style={{
-                                  fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,
+                                  fontFamily:'var(--font-body)',fontSize:'11px',fontWeight:700,
                                   textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
                                   color:'var(--ink-700)',border:'1px solid var(--border-soft)',
                                   borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4
                                 }}>
-                                <IconComp size={10} color="var(--ink-600)" />
+                                <IconComp size={11} color="var(--ink-600)" />
                                 <span>{s.l}</span>
                               </button>
                             );
                           })}
                         </div>
-                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'10px',padding:'2px 6px'}}>
+                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'11px',padding:'2px 6px'}}>
                           <span className="offline-status-dot"></span>
                           <span>{isOnline ? 'En línea' : 'Sin conexión'}</span>
                         </div>
@@ -12497,7 +12497,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <IconAlert size={11} color={sm2.txt} />
                             <span>{limiter}</span>
                           </span>
-                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'10px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
+                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'11px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
                         </div>
                       )}
 
