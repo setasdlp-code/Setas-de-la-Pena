@@ -211,3 +211,24 @@ test('taskStats cuenta correctamente total/pending/done/cancelled/overdue/dueTod
   assert.equal(stats.overdue, 1);
   assert.equal(stats.dueToday, 1);
 });
+
+// --- Regresión BUG B: un generatedBy con forma inválida (p.ej. string plano) debe
+// lanzar un error claro en español, no fallar de forma opaca vía createTask. ---
+test('tasksFromFollowUps rechaza un generatedBy con forma inválida (string plano)', () => {
+  assert.throws(
+    () => taskEngine.tasksFromFollowUps(
+      [{ type: 'reinspection', offsetDays: 3, reason: 'x', generatedBy: 'contamination' }],
+      { objectId: 'LOTE_X', at: '2026-09-16T00:00:00Z' }
+    ),
+    /followUp\.generatedBy inválido.*\{source, ref\}/
+  );
+});
+
+test('tasksFromFollowUps acepta generatedBy {source, ref} válido tal cual, sin normalizar', () => {
+  const tasks = taskEngine.tasksFromFollowUps(
+    [{ type: 'reinspection', offsetDays: 3, reason: 'x', generatedBy: { source: 'incident', ref: 'LOTE_X' } }],
+    { objectId: 'LOTE_X', at: '2026-09-16T00:00:00Z' }
+  );
+  assert.equal(tasks.length, 1);
+  assert.deepEqual(tasks[0].generatedBy, { source: 'incident', ref: 'LOTE_X' });
+});

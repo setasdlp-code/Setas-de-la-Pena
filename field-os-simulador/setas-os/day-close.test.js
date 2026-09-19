@@ -58,7 +58,7 @@ const baseEvents = () => ([
 ]);
 
 const baseTasks = () => ([
-  { id: 't1', type: 'riego', status: 'completed', dueAt: '2026-09-19T08:00:00-05:00', objectId: 'LOTE_OK' },
+  { id: 't1', type: 'riego', status: 'done', dueAt: '2026-09-19T08:00:00-05:00', objectId: 'LOTE_OK' },
   { id: 't2', type: 'colonization_check', status: 'pending', dueAt: '2026-09-20T07:00:00-05:00', objectId: 'LOTE_OK' },
   { id: 't3', type: 'colonization_check', status: 'pending', dueAt: '2026-09-20T09:00:00-05:00', objectId: 'LOTE_CRIT' },
   // Vencida: pending con dueAt < nowMs.

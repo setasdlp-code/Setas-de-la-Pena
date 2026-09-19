@@ -173,15 +173,32 @@
     const baseMs = at ? Date.parse(at) : Date.now();
     if (!Number.isFinite(baseMs)) throw new Error(`at no es una fecha parseable: ${at}`);
 
-    return (followUps || []).map(fu => createTask({
-      type: fu.type,
-      objectType,
-      objectId,
-      dueAt: new Date(baseMs + (fu.offsetDays || 0) * DAY_MS).toISOString(),
-      priority: fu.priority || 'normal',
-      reason: fu.reason,
-      generatedBy: fu.generatedBy || { source: 'operator', ref: null },
-    }));
+    return (followUps || []).map(fu => {
+      let generatedBy = fu.generatedBy;
+      if (generatedBy == null) {
+        generatedBy = { source: 'operator', ref: null };
+      } else if (
+        typeof generatedBy !== 'object' || Array.isArray(generatedBy) ||
+        !GENERATED_BY_SOURCES.includes(generatedBy.source)
+      ) {
+        // Un contrato roto debe avisar: un `generatedBy` con forma inválida no
+        // debe llegar a createTask() a fallar de forma opaca ("source desconocido:
+        // undefined"), sino explicar aquí qué forma se esperaba.
+        throw new Error(
+          `followUp.generatedBy inválido: se esperaba un objeto {source, ref} con source en ` +
+          `[${GENERATED_BY_SOURCES.join(', ')}]; se recibió ${JSON.stringify(generatedBy)}`
+        );
+      }
+      return createTask({
+        type: fu.type,
+        objectType,
+        objectId,
+        dueAt: new Date(baseMs + (fu.offsetDays || 0) * DAY_MS).toISOString(),
+        priority: fu.priority || 'normal',
+        reason: fu.reason,
+        generatedBy,
+      });
+    });
   };
 
   /**

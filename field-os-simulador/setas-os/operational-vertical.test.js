@@ -19,7 +19,6 @@ const assert = require('node:assert/strict');
 const sheetApi = require('./batch-sheet.js');
 const taskApi = require('./task-engine.js');
 const dayCloseApi = require('./day-close.js');
-const workflow = require('./setas-os-workflow.js');
 
 const DIA = 86400000;
 let ahora = Date.parse('2026-09-16T07:00:00-05:00');
@@ -83,75 +82,32 @@ test('escenario 1: el ciclo completo del lote se recorre de planned a closed sin
     return sheet;
   };
 
-  // LÍMITE ACTUAL: actionConsequences() sólo traduce a `transition` las acciones
-  // 'contamination', 'colonization', 'move' y 'advance_stage' — para
-  // 'prepare_mix', 'start_thermal_treatment', 'complete_thermal_treatment',
-  // 'inoculate' y 'discard' IGNORA el `transitionsTo` que sí está declarado en
-  // ACTION_CATALOG (batch-sheet.js), así que llamarlas vía
-  // actionConsequences+applyConsequences registra el evento pero NO mueve el
-  // estado del lote — se queda en el estado anterior. applyAction() sí respeta
-  // ACTION_CATALOG.transitionsTo. Este test usa applyAction() para esas cinco
-  // acciones y actionConsequences+applyConsequences para el resto, que es lo que
-  // la API real permite hoy sin reconstruir la transición a mano.
-  const doCatalogTransitionAction = (action, payload) => {
-    const sheet = build();
-    assert.ok(
-      sheet.actions.some(a => a.action === action),
-      `"${action}" debe estar disponible en estado "${sheet.state}"`
-    );
-    const result = sheetApi.applyAction({ sheet, action, operatorId, payload, log, at: iso(t) });
-    log = result.log;
-    lote = Object.assign({}, lote, { lifecycleState: result.state });
-    if (result.transitioned) transitionsSeen.push(result.state);
-    return sheet;
-  };
-
   // 1. crear lote (planned) → preparar mezcla
-  doCatalogTransitionAction('prepare_mix', { recetaId: 'R-OST-01' });
+  doAction('prepare_mix', { recetaId: 'R-OST-01' });
   lote.recipeRef = { id: 'R-OST-01', name: 'Ostra en paja', version: 1 };
   assert.equal(lote.lifecycleState, 'mix_prepared');
   t += DIA;
 
   // 2. tratamiento térmico
-  doCatalogTransitionAction('start_thermal_treatment', {});
+  doAction('start_thermal_treatment', {});
   assert.equal(lote.lifecycleState, 'thermal_treatment');
   t += DIA;
 
   // 3. cierre del tratamiento → enfriamiento
-  doCatalogTransitionAction('complete_thermal_treatment', {});
+  doAction('complete_thermal_treatment', {});
   assert.equal(lote.lifecycleState, 'cooling');
   t += DIA;
 
   // 4. inocular
-  doCatalogTransitionAction('inoculate', { spawnLotId: 'SPW-260916-01' });
+  doAction('inoculate', { spawnLotId: 'SPW-260916-01' });
   lote.spawnLotId = 'SPW-260916-01';
   assert.equal(lote.lifecycleState, 'inoculated');
   t += DIA;
 
-  // LÍMITE ACTUAL: batch-sheet.ACTION_PRIORITY['inoculated'] es
-  // ['inspection','contamination','photo','move'] — no incluye 'advance_stage', y
-  // setas-os-workflow.ACTIONS_BY_STATE['inoculated'] tampoco lo incluye. No existe
-  // ninguna acción de campo, vía contextualActions/actionConsequences/applyAction,
-  // que mueva un lote de 'inoculated' a 'incubation'. Es un salto de estado sin
-  // acción operativa asociada en la API actual. Para poder seguir recorriendo el
-  // ciclo de vida completo, este test hace la transición directamente con
-  // setas-os-workflow.transitionEvent (el mismo primitivo que applyConsequences usa
-  // por debajo), y la encadena a mano con appendBatchEvent — no es un camino que un
-  // operario de campo pueda tomar hoy con la ficha.
-  {
-    const sheet = build();
-    const transition = workflow.transitionEvent({
-      batchId: lote.id, from: sheet.state, to: 'incubation', operatorId, at: iso(t),
-      reason: 'inicio de incubación (transición sin acción de campo asociada)',
-    });
-    log = sheetApi.appendBatchEvent(log, {
-      batchId: lote.id, action: 'advance_stage', type: 'batch_state_transition',
-      operatorId, at: transition.at, payload: { from: transition.from, to: transition.to, reason: transition.reason },
-    });
-    lote = Object.assign({}, lote, { lifecycleState: 'incubation' });
-    transitionsSeen.push('incubation');
-  }
-  assert.equal(build().state, 'incubation');
+  // 4b. avanzar de inoculado a incubación: acción de campo real (BUG D corregido),
+  // vía el mismo camino actionConsequences+applyConsequences que usa `doAction`.
+  doAction('advance_stage', {});
+  assert.equal(lote.lifecycleState, 'incubation');
   t += DIA;
 
   // 5. inspeccionar (colonización 100%: en incubación es la acción de inspección de
@@ -284,21 +240,12 @@ test('escenario 2: una sola decisión de aislar produce todas las consecuencias 
   assert.equal(consequences.followUps[0].type, 'reinspection');
   assert.equal(consequences.followUps[0].offsetDays, 3);
 
-  // 5) ese followUp, pasado por tasksFromFollowUps, produce una Tarea real.
-  //
-  // LÍMITE ACTUAL: actionConsequences('contamination', …) pone
-  // `followUps[i].generatedBy = 'contamination'` (un string plano), pero
-  // task-engine.createTask exige `generatedBy` con forma `{source, ref}` — y
-  // tasksFromFollowUps sólo aplica su valor por defecto `{source:'operator',...}`
-  // cuando `fu.generatedBy` es falsy, así que un string no-vacío pasa de largo
-  // ese default y createTask lanza `generatedBy.source desconocido: undefined`.
-  // Pasar el followUp de batch-sheet.js tal cual a tasksFromFollowUps ROMPE hoy.
-  // Este test normaliza la forma antes de llamarlo, como tendría que hacerlo
-  // cualquier capa de integración real mientras no se corrija en el origen.
-  const followUpsNormalizados = consequences.followUps.map(fu => Object.assign({}, fu, {
-    generatedBy: { source: 'operator', ref: fu.generatedBy || null },
-  }));
-  const tasks = taskApi.tasksFromFollowUps(followUpsNormalizados, { objectId: lote2.id, at: iso(t0) });
+  // 5) ese followUp, pasado TAL CUAL (sin normalizar a mano) por
+  // tasksFromFollowUps, produce una Tarea real: batch-sheet.js ya emite
+  // `generatedBy: {source, ref}` con `source: 'incident'` para el seguimiento de
+  // contaminación.
+  assert.deepEqual(consequences.followUps[0].generatedBy, { source: 'incident', ref: lote2.id });
+  const tasks = taskApi.tasksFromFollowUps(consequences.followUps, { objectId: lote2.id, at: iso(t0) });
   assert.equal(tasks.length, 1);
   assert.equal(tasks[0].type, 'reinspection');
   assert.equal(tasks[0].dueAt, iso(t0 + 3 * DIA));

@@ -129,7 +129,7 @@
     mix_prepared: ['start_thermal_treatment', 'note', 'photo', 'discard'],
     thermal_treatment: ['complete_thermal_treatment', 'report_problem', 'note', 'photo'],
     cooling: ['inoculate', 'report_problem', 'note', 'photo'],
-    inoculated: ['inspection', 'contamination', 'photo', 'move'],
+    inoculated: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
     incubation: ['colonization', 'contamination', 'photo', 'move', 'advance_stage'],
     maturation: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
     induction: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],

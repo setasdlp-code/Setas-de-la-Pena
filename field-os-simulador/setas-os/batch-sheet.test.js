@@ -351,3 +351,58 @@ test('la ficha expone bagsIsolated y la anomalía de aislamiento', () => {
   assert.ok(withIsolated.anomalies.some(a => a.kind === 'isolation' && a.severity === 'warning'));
   assert.equal(build().bagsIsolated, 0);
 });
+
+// --- Regresión BUG A: actionConsequences debe respetar ACTION_CATALOG.transitionsTo
+// por defecto para acciones sin caso especial (prepare_mix, start_thermal_treatment,
+// complete_thermal_treatment, inoculate, discard). ---
+test('actionConsequences propone transitionsTo por defecto para prepare_mix, tratamiento térmico e inoculación', () => {
+  const planned = build({ lote: Object.assign({}, lote, { lifecycleState: 'planned', estado: undefined }) });
+  const mixCons = sheetApi.actionConsequences(planned, 'prepare_mix', { recetaId: 'R-1' }, { operatorId: 'op-1' });
+  assert.equal(mixCons.transition, 'mix_prepared');
+  const mixApplied = sheetApi.applyConsequences(planned, mixCons, {});
+  assert.equal(mixApplied.state, 'mix_prepared');
+
+  const mixed = build({ lote: Object.assign({}, lote, { lifecycleState: 'mix_prepared', estado: undefined }) });
+  const thermCons = sheetApi.actionConsequences(mixed, 'start_thermal_treatment', {}, { operatorId: 'op-1' });
+  assert.equal(thermCons.transition, 'thermal_treatment');
+
+  const treating = build({ lote: Object.assign({}, lote, { lifecycleState: 'thermal_treatment', estado: undefined }) });
+  const completeCons = sheetApi.actionConsequences(treating, 'complete_thermal_treatment', {}, { operatorId: 'op-1' });
+  assert.equal(completeCons.transition, 'cooling');
+
+  const cooling = build({ lote: Object.assign({}, lote, { lifecycleState: 'cooling', estado: undefined }) });
+  const inoculateCons = sheetApi.actionConsequences(cooling, 'inoculate', { spawnLotId: 'SPW-1' }, { operatorId: 'op-1' });
+  assert.equal(inoculateCons.transition, 'inoculated');
+  const inoculateApplied = sheetApi.applyConsequences(cooling, inoculateCons, {});
+  assert.equal(inoculateApplied.state, 'inoculated');
+});
+
+test('actionConsequences propone transitionsTo por defecto para discard', () => {
+  const planned = build({ lote: Object.assign({}, lote, { lifecycleState: 'planned', estado: undefined }) });
+  const cons = sheetApi.actionConsequences(planned, 'discard', { motivo: 'material vencido' }, { operatorId: 'op-1', role: 'direccion' });
+  assert.equal(cons.transition, 'discarded');
+  const applied = sheetApi.applyConsequences(planned, cons, {});
+  assert.equal(applied.state, 'discarded');
+});
+
+// --- Regresión BUG B: los followUps deben emitir generatedBy con forma {source, ref}
+// usando un source válido del vocabulario de task-engine (source: 'incident' para
+// seguimiento de contaminación), no un string plano. ---
+test('followUps de contamination emiten generatedBy con forma {source, ref}', () => {
+  const s = build();
+  const consequences = sheetApi.actionConsequences(s, 'contamination', {
+    foto: 'x', extension: '1_bolsa', ubicacion: 'y', decision: 'aislar', bagIds: ['B1'],
+  }, { operatorId: 'op-1', bolsas });
+  assert.equal(consequences.followUps.length, 1);
+  assert.deepEqual(consequences.followUps[0].generatedBy, { source: 'incident', ref: s.batchId });
+});
+
+// --- Regresión BUG D: 'advance_stage' debe estar disponible en 'inoculated' tanto
+// en batch-sheet.ACTION_PRIORITY como en la máquina de estados. ---
+test('advance_stage está disponible como acción de campo en estado inoculated', () => {
+  assert.ok(sheetApi.ACTION_PRIORITY.inoculated.includes('advance_stage'));
+  const inoculated = build({ lote: Object.assign({}, lote, { lifecycleState: 'inoculated', estado: undefined }) });
+  assert.ok(inoculated.actions.some(a => a.action === 'advance_stage'));
+  const cons = sheetApi.actionConsequences(inoculated, 'advance_stage', {}, { operatorId: 'op-1' });
+  assert.equal(cons.transition, 'incubation');
+});
