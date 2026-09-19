@@ -45,7 +45,7 @@ Los consumidores pueden seguir apuntando a estas rutas sin cambios inmediatos.
 | `--paper-recessed` | `--paper-200` / `--surface-recessed` | `#EDE8DB` | `--paper-recessed` se preserva como alias |
 | `--ink` | `--ink-900` / `--text-primary` | `#1A1410` | `--ink` se preserva como alias |
 | `--ink-muted` | `--ink-500` / `--text-secondary` | `#6B5B4A` | `--ink-muted` se preserva como alias |
-| `--rule` | `--border-hairline` / `--ink-500` | `#888888` / regla | `--rule` se preserva como alias |
+| `--rule` | `--rule-500` (legacy) | `#888888` | Se preserva solo para compatibilidad; nuevos bordes consumen `--border-hairline` (color) + `--rule-hairline` (geometría) |
 | `--soil` | `--bark-700` / `--surface-inverse` | `#594631` | `--soil` se preserva como alias |
 | `--moss` | `--moss-700` / `--brand-primary` / `--status-ok` | `#2E3B2F` | `--moss` se preserva como alias |
 | `--rust` | `--coral-700` / `--status-error` | `#8A3E2D` | `--rust` se preserva como alias |
@@ -56,7 +56,7 @@ Los consumidores pueden seguir apuntando a estas rutas sin cambios inmediatos.
 
 | Token v1 | Equivalente Criterio | Valor | Regla |
 |---|---|---|---|
-| `--size-micro: 9px` | `--size-micro-screen: 11px`<br>`--size-micro-print: 9px` | 11px pantalla<br>9px impresión | `--size-micro` resuelve a 11px por defecto en pantalla |
+| `--size-micro: 9px` | `--size-micro-screen: 11px`<br>`--size-micro-print: 9px`<br>`--size-lot-code-print: 6mm` | 11px pantalla<br>9px fine print<br>6mm rol de lote | `--size-micro` resuelve a 11px en pantalla. El código de lote nunca usa micro-print y debe verificar x-height ≥ 3mm |
 | `--size-label: 11px` | `--size-label: 11px` | 11px | Requiere tracking `≥ 0.15em` |
 | `--size-data: 13px` | `--size-data: 13px` | 13px | Monospace tabular |
 | `--size-body: 16px` | `--size-body: 16px` | 16px | Piso normativo de prosa |
@@ -66,5 +66,5 @@ Los consumidores pueden seguir apuntando a estas rutas sin cambios inmediatos.
 ## 4. Instrucciones para Consumidores (Setas OS)
 
 1. **Sincronización:** Ejecutar `node scripts/sync-consumers.mjs` tras cualquier cambio canónico.
-2. **Nuevos desarrollos:** Importar `index.css` y `operations.css` en lugar de rutas internas.
+2. **Nuevos desarrollos:** Elegir **un solo bundle público**. Setas OS usa `operations.css`; `index.css` es el bundle universal y no se apila con `operations.css` ni `market.css`.
 3. **Validación:** Correr `node --test ds-2026-sync.test.js` en `field-os-simulador/setas-os/`.

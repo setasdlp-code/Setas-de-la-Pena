@@ -18,7 +18,7 @@
 .sdp-lote--ok    .sdp-lote__state { color: var(--status-ok); }
 .sdp-lote--ok    .sdp-lote__bar span { background: var(--status-ok); }
 .sdp-lote--warn  .sdp-lote__state { color: var(--status-warn-text); }
-.sdp-lote--warn  .sdp-lote__bar span { background: var(--status-warn); }
+.sdp-lote--warn  .sdp-lote__bar span { background: var(--status-warn-marker); }
 .sdp-lote--error .sdp-lote__state { color: var(--status-error); }
 .sdp-lote--error .sdp-lote__bar span { background: var(--status-error); }
 

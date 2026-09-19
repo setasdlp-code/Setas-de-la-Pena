@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "name": "ds-2026-distribution-manifest",
-  "version": "2026.1.0-criterio",
+  "version": "2026.1.1-criterio",
   "description": "Manifiesto canónico de distribución de DS-2026 hacia Setas OS y otros consumidores",
   "files": [
     "README.md",
@@ -54,33 +54,10 @@
     "components/market/traceability.css",
     "components/market/archive.css"
   ],
-  "assets": {
-    "fonts": [
-      "assets/fonts/GayaPatched-Thin.otf",
-      "assets/fonts/GayaPatched-ThinItalic.otf",
-      "assets/fonts/GayaPatched-Light.otf",
-      "assets/fonts/GayaPatched-LightItalic.otf",
-      "assets/fonts/GayaPatched-Regular.otf",
-      "assets/fonts/GayaPatched-Italic.otf",
-      "assets/fonts/GayaPatched-Medium.otf",
-      "assets/fonts/GayaPatched-MediumItalic.otf",
-      "assets/fonts/GayaPatched-Bold.otf",
-      "assets/fonts/GayaPatched-BoldItalic.otf",
-      "assets/fonts/GayaPatched-Black.otf",
-      "assets/fonts/GayaPatched-BlackItalic.otf",
-      "assets/fonts/IBMPlexMono-Regular.ttf",
-      "assets/fonts/IBMPlexMono-Medium.ttf",
-      "assets/fonts/IBMPlexMono-SemiBold.ttf",
-      "assets/fonts/IBMPlexSans-Light.ttf",
-      "assets/fonts/IBMPlexSans-Regular.ttf",
-      "assets/fonts/IBMPlexSans-Medium.ttf",
-      "assets/fonts/IBMPlexSans-SemiBold.ttf",
-      "assets/fonts/IBMPlexSans-Bold.ttf"
-    ],
-    "species_images": [
-      "assets/img/species/shiitake.png",
-      "assets/img/species/lions-mane.png",
-      "assets/img/species/reishi.png"
-    ]
-  }
+  "assetTrees": [
+    "assets/fonts",
+    "assets/icons",
+    "assets/img",
+    "assets/textures"
+  ]
 }
