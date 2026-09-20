@@ -1,6 +1,6 @@
 # Metadata — Especies Cultivadas
 # Setas de la Peña
-# Última actualización: 2026-07-23
+# Última actualización: 2026-09-20
 
 species:
   - id: pleurotus_djamor
@@ -77,7 +77,7 @@ species:
     phase: validation
     document: 01_species/pleurotus_ostreatus.md
     fruiting_temp_c: [10, 21]
-    incubation_temp_c: [22, 27]
+    incubation_temp_c: [20, 24]
     humidity_percent: [85, 95]
     fruiting_co2_ppm_max: 1000
     fae_per_hour: [5, 8]
