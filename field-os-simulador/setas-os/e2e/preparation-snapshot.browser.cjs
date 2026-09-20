@@ -2,6 +2,7 @@
 // Local integration harness: real React, scoring and native adapter; no Firebase
 // account or production writes. Run: node e2e/preparation-snapshot.browser.cjs
 const fs=require('node:fs');
+const os=require('node:os');
 const path=require('node:path');
 const http=require('node:http');
 const assert=require('node:assert/strict');
@@ -63,7 +64,7 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes'))),[]);
   await page.setViewportSize({width:390,height:844});await expect(input).toBeVisible();
   assert.ok(await page.locator('[aria-label="Humedad de preparación"]').evaluate(el=>el.scrollWidth<=el.clientWidth),'moisture controls fit mobile');
-  await page.screenshot({path:'/private/tmp/preparation-mobile.png',fullPage:true});
+  await page.screenshot({path:path.join(os.tmpdir(),'preparation-mobile.png'),fullPage:true});
   const accepted=await spec();await page.getByRole('button',{name:/Ejecutar lote/}).click();
   const dialog=page.getByRole('dialog',{name:'Ejecutar lote',exact:true});await expect(dialog).toContainText(accepted.revision);
   assert.ok(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth),'confirmation fits mobile');
