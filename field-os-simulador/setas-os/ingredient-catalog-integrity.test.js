@@ -1,40 +1,16 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 
-// Extracts the INGS/SPP array/object literals straight out of simulador-app.jsx
-// by balanced-bracket scanning (the source has no module boundary to import
-// from directly — this mirrors the ad-hoc extraction used throughout the
-// catalog audit that found the bugs this test now guards against).
-function extractCatalog() {
-  const src = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
-  const grab = name => {
-    const startIdx = src.indexOf(`const ${name}=`);
-    if (startIdx === -1) throw new Error(`const ${name}= not found in simulador-app.jsx`);
-    let i = src.indexOf('=', startIdx) + 1;
-    while (/\s/.test(src[i])) i++;
-    const openChar = src[i];
-    const closeChar = openChar === '[' ? ']' : '}';
-    let depth = 0, j = i, inStr = null;
-    for (; j < src.length; j++) {
-      const c = src[j];
-      if (inStr) { if (c === '\\') { j++; continue; } if (c === inStr) inStr = null; continue; }
-      if (c === '"' || c === "'" || c === '`') { inStr = c; continue; }
-      if (c === openChar) depth++;
-      else if (c === closeChar) { depth--; if (depth === 0) { j++; break; } }
-    }
-    return src.slice(i, j);
-  };
-  const sppLit = grab('SPP');
-  const ingsLit = grab('INGS');
-  // eslint-disable-next-line no-new-func
-  const build = new Function('return (function(){ const SPP = ' + sppLit + '; const INGS = ' + ingsLit + '; return { SPP, INGS }; })()');
-  return build();
-}
-
-const { INGS } = extractCatalog();
+// El catálogo vive en substrate-catalog.js desde la extracción de Fase 2, así
+// que se require() directo. Antes había que recortar los literales de
+// simulador-app.jsx por conteo de corchetes, porque no existía frontera de
+// módulo de dónde importarlos — el mismo recorte ad-hoc con el que se auditó el
+// catálogo y se encontraron los bugs que esta prueba ahora vigila.
+//
+// La diferencia no es solo de comodidad: esto verifica EL objeto de producción,
+// no una copia evaluada aparte que podría divergir del que carga la app.
+const { INGS } = require('./substrate-catalog.js');
 
 const DIFF_TAG = 'Valor sin diferenciar — ver peritaje';
 const ROLES_NEEDING_SPECIES = ['base_carbono', 'suplemento_n', 'suplemento_medio', 'aireador'];
@@ -120,7 +96,7 @@ test('cada especie tiene al menos 3 base_carbono y 2 suplemento_n/suplemento_med
   // Este test no falla hoy — deja constancia explícita del hueco para que no
   // se pierda, y empieza a fallar en cuanto alguien intente bajar la
   // cobertura actual sin darse cuenta.
-  const { SPP } = extractCatalog();
+  const { SPP } = require('./substrate-catalog.js');
   const species = Object.keys(SPP);
   const coverage = {};
   species.forEach(sp => {

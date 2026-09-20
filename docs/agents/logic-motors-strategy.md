@@ -15,8 +15,8 @@ Fecha de auditoría: 2026-09-20. Verificado contra el árbol de trabajo, no cont
 
 | Motor | Archivo | Líneas | Estado |
 |---|---|---|---|
-| Simulador (modelo físico/agronómico) | `analyze()` **dentro de** `simulador-app.jsx` | ~90 (dentro de 18 512) | Producción |
-| Catálogo `SPP` / `INGS` / `PRESETS` | `simulador-app.jsx` L1036–1241 | ~47 KB | Producción |
+| Simulador (modelo físico/agronómico) | `analyze()` **dentro de** `simulador-app.jsx` | ~90 (dentro de 18 512) | Producción — extraído en Fase 2 a `substrate-analysis.js` |
+| Catálogo `SPP` / `INGS` / `PRESETS` | `simulador-app.jsx` L1036–1241 | ~47 KB | Producción — extraído en Fase 2 a `substrate-catalog.js` |
 | Optimizador activo | `perito-scenarios.js` | 1 892 | Producción (`runHybridRecipeSearch`) |
 | Optimizador legado | `recipe-optimizer.js` | 1 174 | Solo oráculo de paridad |
 | Scoring / perito | `scoring.js` | 465 | Producción, compartido por ambos motores |
@@ -180,31 +180,51 @@ Pendiente (requiere a Sebastián):
 `perito-scenarios.js` entra sin salida verde de `perito-regression-report.js`.**
 Hasta que exista corpus, cualquier "mejora" del modelo es indistinguible de un empeoramiento.
 
-#### Fase 2 — Extracción del motor del monolito (habilitador de costo)
+#### Fase 2 — Extracción del motor del monolito — ✅ NÚCLEO EXTRAÍDO (2026-09-20)
 
-Objetivo: que un agente pueda trabajar el modelo cargando **<2 000 líneas** en vez de 18 512.
+Objetivo: que un agente pueda trabajar el modelo sin cargar 1,25 MB.
 
-Extraer, sin cambiar una sola constante, en módulos UMD con el mismo patrón que ya usa
-`scoring.js` / `species-targets.js`:
+Extraído, **sin cambiar una sola constante**, con el patrón UMD de `scoring.js`:
 
-| Nuevo módulo | Contenido movido desde `simulador-app.jsx` | ~Líneas |
+| Módulo | Contenido | Tamaño |
 |---|---|---|
-| `substrate-catalog.js` | `INGS`, `SPP`, `PRESETS`, `CATS`, `SPP_*` | ~450 |
-| `substrate-analysis.js` | `analyze()`, `EB_PENALTY_BALANCE_BAND`, `DENSOS` | ~120 |
-| `substrate-diagnosis.js` | `diagnose()`, `massBalanceMsg` | ~100 |
-| `batch-costing.js` | `calcBatch()`, `DEFAULT_FRESH_PRICES` | ~90 |
-| `cycle-schedule.js` | `calcSchedule()` | ~60 |
+| `substrate-catalog.js` | `SPP`, `INGS`, `CATS`, `PRESETS` | 46 KB |
+| `substrate-analysis.js` | `analyze()`, `EB_PENALTY_BALANCE_BAND` | 7 KB |
+| `substrate-diagnosis.js` | `diagnose()` | 8 KB |
 
-`simulador-app.jsx` los consume por el puente UMD que ya existe
-(`typeof X!=='undefined' ? X : require('./x.js')`). El JSX queda como UI.
+`simulador-app.jsx` pasó de **18 512 a 18 232 líneas** y consume los tres por el puente
+UMD, así que los nombres siguen en scope y el resto del archivo no cambió.
 
-Validación de que la extracción es neutra: la salida de `perito-regression-report.js`
-y de la suite unitaria debe ser **byte-idéntica** antes y después. Si cambia un decimal,
-la extracción está mal hecha.
+**Costo de contexto para trabajar el modelo: de ~1,25 MB a 61 KB — 20× menos.**
 
-Beneficio secundario inmediato: los 7 tests que usan `jsx-extract.js` pasan a
-`require()` normal, y los 21 tests de regex sobre texto pueden migrar a tests de
-comportamiento (que son los que sí habrían atrapado los bugs de navegación de agosto).
+Pruebas de neutralidad, que es el criterio que el propio plan exigía:
+
+- `analyze()` sobre 1 692 recetas × especies: `sha256 a4e3d2b5…`, **idéntico byte a byte**.
+- `diagnose()` sobre 405 casos: `sha256 9e9a8c36…`, **idéntico byte a byte**.
+- Suite unitaria: **1 016 pass / 0 fail**.
+- Gates de navegador: **11/11**, incluido el gate 08 (recarga en frío offline real),
+  que es lo que prueba que el cableado de `<script>` funciona en el shell y no solo en Node.
+- `perito-regression-report.js`: `meanAbsErrorEB` sin cambio.
+
+Efectos secundarios que valieron tanto como la extracción:
+
+- `test-support/jsx-extract.js` ya resuelve por `require()` todo lo extraído. Cinco
+  archivos de prueba dejaron de re-parsear el JSX **sin tocar una línea de sus tests**;
+  ahora verifican el objeto de producción y no una copia evaluada aparte.
+- `ingredient-catalog-integrity.test.js` perdió su extractor ad-hoc de 25 líneas.
+- **`perito-regression-report.js` medía el `analyze()` del oráculo legado**
+  (`recipe-optimizer.js`), no el de producción, porque el de producción no era
+  require-able. Hoy sus `eb` coinciden, pero la compuerta afirmaba medir algo que no
+  medía. Ahora usa `substrate-analysis.js`, con respaldo al legado para revisiones base
+  anteriores a la extracción.
+- `substrate-modules.test.js` (9 pruebas) fija la frontera: que nadie vuelva a declarar
+  el catálogo en el JSX, que el orden de carga se respete (el análisis lee el catálogo
+  al cargarse; invertirlos deja la app en blanco en el navegador), y que los módulos no
+  crezcan hasta volver a ser ilegibles.
+
+Pendiente, de menor valor y sin bloquear la Fase 3: `calcBatch()` +
+`DEFAULT_FRESH_PRICES` → `batch-costing.js`, y `calcSchedule()` → `cycle-schedule.js`.
+Son economía y calendario, no motores de lógica.
 
 #### Fase 3 — Trabajo paralelo por agentes (solo después de 0–2)
 
@@ -213,7 +233,7 @@ y tiene una compuerta objetiva.
 
 | Agente | Frontera de archivos | Compuerta propia |
 |---|---|---|
-| **A · Modelo** | `substrate-analysis.js`, `substrate-catalog.js` | `perito-regression-report.js` (meanAbsErrorEB no empeora) |
+| **A · Modelo** | `substrate-analysis.js`, `substrate-catalog.js`, `substrate-diagnosis.js` | `perito-regression-report.js` (meanAbsErrorEB no empeora) |
 | **B · Búsqueda** | `perito-scenarios.js` | paridad vs `recipe-optimizer.js` + presupuesto de `evaluationCount` |
 | **C · Scoring/perito** | `scoring.js`, `perito-economy.js`, `perito-evidence.js` | `scoring-integrity.test.js` + invariantes de confianza |
 | **D · Trazabilidad** | `knowledge_base/`, `extraction-factors.json` | `check_kb_sync.py` a 0 mismatches reales |
@@ -254,7 +274,7 @@ Si el corpus no soporta el cambio, el cambio no se hace.
 |---|---|---|
 | **`logic-motor-map`** | El costo #1 es no saber dónde vive un cálculo. Evita que cada agente re-descubra el monolito. | Tabla archivo→responsabilidad, el bridge UMD, la regla `perito-scenarios.js` ≠ `recipe-optimizer.js`, y el comando de verificación por motor. Debe reemplazar la lectura exploratoria. |
 | **`model-change-gate`** | Convierte la regla de la Fase 1 en procedimiento ejecutable. | Secuencia obligatoria: `test:unit` → `perito-regression-report.js --baseline=origin/main` → adjuntar delta al PR. Falla ruidoso si no hay corpus. |
-| **`jsx-extraction`** | La Fase 2 es mecánica y repetitiva: el sitio ideal para un skill. | Patrón UMD exacto del repo, cómo mantener el puente en el JSX, el hook de rebuild, y la prueba de neutralidad (salida idéntica antes/después). |
+| **`jsx-extraction`** | Queda `calcBatch()` y `calcSchedule()` por extraer, y el procedimiento ya está probado tres veces. | Patrón UMD exacto del repo, registro en `firebase/auth-gate.js` + `__harness.html` respetando el orden de carga, el hook de rebuild, y el arnés de neutralidad (snapshot con hash antes/después) que se usó en la Fase 2. |
 | **`search-budget`** | `perito-scenarios.js` no tiene presupuesto de cómputo explícito; `evaluationCount` ya se cuenta pero no se afirma. | Cómo medir y afirmar `evaluationCount`, `beamWidth`, `generations` en tests, para que "mejorar la búsqueda" no signifique "hacerla más lenta en el teléfono del operario". |
 
 Los tres existentes (`agronomic-claims`, `kb-sync`, `perito-regression`) están bien

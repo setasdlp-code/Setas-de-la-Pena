@@ -85,6 +85,36 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 `scoring.js` es compartido entre ambos motores — evitar recrear una segunda función de scoring.
 
+## 3b. El modelo agronómico vive fuera del JSX
+
+Desde la extracción de Fase 2, el catálogo y el modelo ya no están dentro de
+`simulador-app.jsx`:
+
+| Módulo | Contenido | Tamaño |
+|---|---|---|
+| `substrate-catalog.js` | `SPP`, `INGS`, `CATS`, `PRESETS` | 46 KB |
+| `substrate-analysis.js` | `analyze()`, `EB_PENALTY_BALANCE_BAND` | 7 KB |
+| `substrate-diagnosis.js` | `diagnose()` | 8 KB |
+
+`simulador-app.jsx` los consume por el puente UMD de siempre
+(`typeof X!=='undefined' ? X : require('./x.js')`), así que los nombres `SPP`,
+`INGS`, `analyze` y `diagnose` siguen en scope y el resto del archivo no cambió.
+
+Dos reglas al tocarlos:
+
+1. **Orden de carga.** `substrate-analysis.js` lee el catálogo al cargarse, no de
+   forma perezosa. En `firebase/auth-gate.js` y en `__harness.html` el catálogo va
+   primero. Invertirlos no rompe Node (hay `require`) pero deja la app en blanco en
+   el navegador. `substrate-modules.test.js` lo verifica.
+2. **Compuerta empírica.** Cualquier cambio a `substrate-analysis.js`,
+   `substrate-catalog.js` o `scoring.js` exige `npm run perito:regression` con el
+   delta de `meanAbsErrorEB` adjunto al PR. Ver
+   `docs/agents/ground-truth-corpus.md`.
+
+Para probar funciones puras que todavía viven en el JSX, `test-support/jsx-extract.js`
+sigue existiendo, pero ya resuelve por `require()` todo lo que se extrajo. Cada
+declaración que se mueva a un módulo propio es una menos que re-parsear.
+
 ## 4. Build de `simulador-app.jsx`
 
 `simulador-app.jsx` es el fuente editable. El navegador consume `simulador-app.js`, generado con esbuild vía `node build.js` (requiere `npm install` una vez — `esbuild` es devDependency).
