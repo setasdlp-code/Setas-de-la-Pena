@@ -94,8 +94,22 @@ Después de cualquier cambio en `simulador-app.jsx`:
 ```bash
 cd field-os-simulador/setas-os
 node build.js
-node --test *.test.js
+npm run test:unit
 ```
+
+La suite está separada en dos comandos porque tienen costo y modo de fallo
+distintos:
+
+- `npm run test:unit` — ~1000 tests en ~5 s, sin navegador. Es el loop de trabajo.
+- `npm run test:gates` — los gates de Criterio (`paso1-criterio-gate.test.js`),
+  que levantan Chromium headless vía Playwright. Requieren
+  `npx playwright install chromium`. Si el entorno ya trae un Chromium de otra
+  versión, apuntar a él con `SETAS_CHROMIUM_EXECUTABLE=<ruta al binario>` en vez
+  de reinstalar.
+- `npm test` — ambos, en ese orden. Es lo que corre CI.
+
+Mezclarlos en un solo comando hacía que un entorno sin el build exacto de
+Chromium devolviera 11 fallos rojos ajenos al cambio en curso.
 
 `node build.js` transforma JSX a JS y escribe `simulador-app.js` con un SHA-256 del fuente en el encabezado. `build.test.js` recalcula ese hash y falla si no coincide — así un JSX editado sin reconstruir el bundle no llega a producción en silencio, pero **solo si la suite se corre antes del merge**.
 
@@ -103,7 +117,7 @@ Un cambio en React no está terminado hasta que:
 1. `simulador-app.jsx` tiene la modificación.
 2. Se corrió `node build.js`.
 3. `simulador-app.js` regenerado forma parte del mismo commit.
-4. `node --test *.test.js` pasa.
+4. `npm run test:unit` pasa (y `npm run test:gates` si el cambio toca el shell o el DS).
 
 Ninguna CI corre `node build.js`. Lo que hay es verificación: `build.test.js` lee el
 banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un hash

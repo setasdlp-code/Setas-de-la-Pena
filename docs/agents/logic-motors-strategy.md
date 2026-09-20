@@ -119,19 +119,25 @@ Paralelizar agentes sobre un monolito con tests ruidosos multiplica el gasto, no
 
 ### 2.2 Fases
 
-#### Fase 0 — Higiene del loop (1 sesión, 1 agente, sin refactor)
+#### Fase 0 — Higiene del loop ✅ COMPLETADA (2026-09-20)
 
 Precondición de todo lo demás. Barato y desbloquea el resto.
 
-1. Separar comandos en `package.json`:
-   - `test:unit` → `node --test $(ls *.test.js | grep -v criterio-gate)` — 5,7 s, verde real.
-   - `test:gates` → los de Playwright, con `npx playwright install chromium` documentado.
-   - `test` → ambos, para CI.
-2. Alinear la versión de Chromium con `@playwright/test` (o fijar `executablePath`).
-3. Añadir un **SessionStart hook** que imprima: rama, estado de build, y si
-   `ground-truth-fixtures.json` existe.
+1. ✅ Comandos separados en `package.json`:
+   - `test:unit` — 994 tests, **0 fallos, ~5 s**, sin navegador. Es el loop de trabajo.
+   - `test:gates` — `paso1-criterio-gate.test.js`, **11/11 verdes**.
+   - `test` — ambos, en orden. CI los corre como **dos pasos distintos**, para que un
+     Chromium mal instalado no se lea igual que una regresión de lógica.
+2. ✅ `SETAS_CHROMIUM_EXECUTABLE` en `paso1-criterio-gate.test.js`: permite apuntar al
+   binario disponible cuando el entorno trae un build de Chromium distinto al que
+   Playwright fija. CI sigue usando `npx playwright install chromium` — la compuerta no
+   se relajó, solo dejó de fallar por entorno.
+3. ✅ SessionStart hook (`.claude/hooks/session-start.sh`): imprime rama, archivos sin
+   commitear, si el bundle está desfasado contra el `source-hash`, si existe corpus de
+   campo, y la ruta de Chromium si hace falta. Solo lee.
+4. ✅ `ARCHITECTURE.md` actualizado: ya no instruye `node --test *.test.js`.
 
-Criterio de salida: `npm run test:unit` = 0 fallos, <10 s.
+Criterio de salida cumplido: **994 pass / 0 fail en 4,96 s.**
 
 #### Fase 1 — Corpus de verdad de campo (bloqueante para tocar el modelo)
 

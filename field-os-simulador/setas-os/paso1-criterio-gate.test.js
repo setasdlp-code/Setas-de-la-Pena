@@ -76,7 +76,14 @@ before(async () => {
     server.listen(0, '127.0.0.1', resolve);
   });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
-  browser = await chromium.launch({ headless: true });
+  // En CI el navegador lo instala `npx playwright install chromium` y Playwright
+  // resuelve solo su build fijado. En entornos con un Chromium preinstalado de
+  // otra versión (contenedores de agente, imágenes con PLAYWRIGHT_BROWSERS_PATH
+  // poblado por otro release), el build fijado no existe y el gate falla por
+  // entorno y no por contrato. SETAS_CHROMIUM_EXECUTABLE permite apuntar al
+  // binario disponible sin tocar CI ni relajar la compuerta.
+  const executablePath = process.env.SETAS_CHROMIUM_EXECUTABLE || undefined;
+  browser = await chromium.launch({ headless: true, executablePath });
 });
 
 after(async () => {

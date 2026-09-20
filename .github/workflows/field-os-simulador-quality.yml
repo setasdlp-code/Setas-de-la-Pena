@@ -52,5 +52,11 @@ jobs:
       # simulador-app.jsx DOES have a build step (node build.js -> esbuild), but
       # CI never runs it — build.test.js verifies the committed bundle's
       # source-hash matches the source, so a stale bundle fails here instead.
-      - name: Run quality gate
-        run: npm run test
+      # Separado en dos pasos a propósito: la suite unitaria (~5 s, sin
+      # navegador) y los gates de Criterio (Chromium headless) fallan por
+      # razones distintas. Con un solo paso, un Chromium mal instalado se lee
+      # igual que una regresión de lógica.
+      - name: Run unit suite
+        run: npm run test:unit
+      - name: Run Criterio browser gates
+        run: npm run test:gates
