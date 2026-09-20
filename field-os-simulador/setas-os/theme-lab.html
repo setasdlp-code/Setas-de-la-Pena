@@ -1474,6 +1474,210 @@ function applyPreset(name){
   onTokenModified();
 }
 
+
+/* CLICK-TO-EDIT INSPECTOR */
+var inspectRules=[
+  {match:function(x){return x.classList.contains("sdp-btn--primary")},name:"Button · Primary",semantic:{background:["action","primary"],color:["text","inverse"],border:["action","primary"]},type:{size:"data",weight:"label",leading:"label",family:"label",tracking:"label"},spacing:{height:"fieldCellMinHeight",rule:"hairline",radius:"sm"}},
+  {match:function(x){return x.classList.contains("sdp-btn--secondary")},name:"Button · Secondary",semantic:{background:["action","secondary"],color:["text","primary"],border:["border","heavy"]},type:{size:"data",weight:"label",leading:"label",family:"label",tracking:"label"},spacing:{height:"fieldCellMinHeight",rule:"hairline",radius:"sm"}},
+  {match:function(x){return x.classList.contains("sdp-btn--accent")},name:"Button · Accent",semantic:{background:["action","accent"],color:["action","accent-text"],border:["action","accent"]},type:{size:"data",weight:"label",leading:"label",family:"label",tracking:"label"},spacing:{height:"fieldCellMinHeight",rule:"hairline",radius:"sm"}},
+  {match:function(x){return x.classList.contains("sdp-btn--danger")},name:"Button · Danger",semantic:{background:["action","danger"],color:["action","danger-text"],border:["action","danger"]},type:{size:"data",weight:"label",leading:"label",family:"label",tracking:"label"},spacing:{height:"fieldCellMinHeight",rule:"hairline",radius:"sm"}},
+  {match:function(x){return x.classList.contains("species-name")||x.classList.contains("sdp-species__common")},name:"Species · Common",semantic:{color:["text","primary"]},type:{size:"species",weight:"species",leading:"species",family:"species",tracking:"heading-01"}},
+  {match:function(x){return x.classList.contains("latin")||x.classList.contains("sdp-species__latin")},name:"Species · Latin",semantic:{color:["text","secondary"]},type:{size:"latin",weight:"latin",leading:"latin",family:"latin"}},
+  {match:function(x){return x.classList.contains("sdp-provenance")},name:"Provenance",semantic:{background:["surface","panel"],color:["text","secondary"],border:["border","hairline"]},type:{size:"micro",tracking:"label"},spacing:{rule:"hairline",radius:"sm"},domain:"provenance"},
+  {match:function(x){return x.classList.contains("sdp-sync")},name:"Sync state",type:{size:"label",weight:"label",leading:"label",family:"label",tracking:"label"},domain:"sync"},
+  {match:function(x){return x.classList.contains("sdp-reading__value")||x.classList.contains("sdp-reading__val")},name:"Reading · Value",semantic:{color:["text","primary"]},type:{size:"body"},debt:"La lectura fija familia Mono y peso Bold en reading.css; el Inspector solo edita el tamaño canónico body que realmente consume."},
+  {match:function(x){return x.classList.contains("sdp-reading__label")},name:"Reading · Label",semantic:{color:["text","metadata"]},type:{size:"micro",tracking:"label"}},
+  {match:function(x){return x.classList.contains("sdp-reading__target")||x.classList.contains("sdp-reading__status")},name:"Reading · Target",type:{size:"micro",tracking:"micro"}},
+  {match:function(x){return x.classList.contains("sdp-lote__id")},name:"Lot · ID",semantic:{color:["text","primary"]},type:{size:"data",weight:"data",leading:"data",family:"data"}},
+  {match:function(x){return x.classList.contains("sdp-lote")},name:"Lot · Card",semantic:{background:["surface","page"],border:["border","hairline"]},spacing:{rule:"frame",radius:"sm"}},
+  {match:function(x){return x.classList.contains("sdp-task__title")},name:"Task · Title",semantic:{color:["text","primary"]},debt:"task.css todavía fija font-size:14px; no se inventa un token tipográfico."},
+  {match:function(x){return x.classList.contains("sdp-task__meta")},name:"Task · Meta",semantic:{color:["text","secondary"]},debt:"task.css todavía fija font-size:12px; no se inventa un token tipográfico."},
+  {match:function(x){return x.classList.contains("sdp-task")},name:"Task · Row",semantic:{background:["surface","page"],border:["border","hairline"]},spacing:{height:"fieldCellMinHeight",rule:"hairline",radius:"sm"}},
+  {match:function(x){return x.classList.contains("sdp-band")},name:"Hoy · Band",semantic:{background:["surface","page"],border:["border","hairline"]},spacing:{padding:"2",rule:"frame",radius:"sm"}},
+  {match:function(x){return x.classList.contains("sdp-lote--quarantine")||x.classList.contains("sdp-badge--quarantine")},name:"Quarantine",domain:"quarantine"},
+  {match:function(x){return x.classList.contains("preview-card")},name:"Canvas · Panel",semantic:{background:["surface","panel"],border:["border","hairline"]},spacing:{padding:"3",rule:"frame",radius:"sm"}}
+];
+
+function inspectResolve(target){
+  if(!target||target===canvas)return null;
+  for(var i=0;i<inspectRules.length;i++){
+    if(inspectRules[i].match(target)){
+      var r=Object.assign({},inspectRules[i]); r.element=target; return r;
+    }
+  }
+  var cs=getComputedStyle(target);
+  return{name:(target.tagName||"element").toLowerCase(),element:target,computedOnly:true,computed:{color:cs.color,background:cs.backgroundColor,font:cs.font,border:cs.border,padding:cs.padding,minWidth:cs.minWidth,minHeight:cs.minHeight}};
+}
+function inspectNearest(target){
+  var x=target;
+  while(x&&x!==canvas){
+    for(var i=0;i<inspectRules.length;i++)if(inspectRules[i].match(x))return x;
+    x=x.parentElement;
+  }
+  return target;
+}
+function inspectTargetLabel(target){
+  var classes=Array.from(target.classList||[]).filter(function(k){return k.indexOf("sdp-")===0||k==="species-name"||k==="latin"||k==="preview-card"}).slice(0,3);
+  return (target.tagName||"node").toLowerCase()+(classes.length?"."+classes.join("."):"");
+}
+function inspectSemanticPath(pair){return"semantic."+pair[0]+"."+pair[1]+".value"}
+function inspectActivateSubpanel(name){
+  var b=document.querySelector('.lab-tab-btn[data-subpanel="'+name+'"]');
+  if(b)b.click();
+}
+function inspectFocusPath(path){
+  var node=null,m;
+  if((m=path.match(/^primitives\.color\.primitive\.([^.]+)\.value$/)))node=document.querySelector('[data-token="'+m[1]+'"]');
+  if(!node&&(m=path.match(/^semantic\.([^.]+)\.([^.]+)\.value$/)))node=document.querySelector('[data-group="'+m[1]+'"][data-key="'+m[2]+'"]');
+  if(!node)node=document.querySelector('[data-token-path="'+path+'"]');
+  var sub=path.indexOf("primitives.")===0||path.indexOf("semantic.")===0?"colors":path.indexOf("typography.")===0?"type":path.indexOf("spacing.")===0?"spacing":path.indexOf("domain.")===0?"domain":"inspector";
+  inspectActivateSubpanel(sub);
+  if(node){
+    setTimeout(function(){node.scrollIntoView({behavior:"smooth",block:"center"});node.classList.add("inspect-token-flash");setTimeout(function(){node.classList.remove("inspect-token-flash")},1200)},30);
+  }else{
+    el("lab-action-status").textContent="Ruta "+path+" no tiene un control global dedicado; sigue editable desde Inspector.";
+  }
+}
+function inspectPosition(target,active,res){
+  var box=el("inspect-overlay-box"),tip=el("inspect-tooltip"),r=target.getBoundingClientRect();
+  box.style.left=r.left+"px";box.style.top=r.top+"px";box.style.width=r.width+"px";box.style.height=r.height+"px";box.style.display="block";box.dataset.active=String(!!active);
+  var token="";
+  if(res&&res.semantic){var ks=Object.keys(res.semantic);if(ks.length)token=inspectSemanticPath(res.semantic[ks[0]])}
+  else if(res&&res.type&&res.type.size)token="typography.scale."+res.type.size+".size";
+  tip.textContent=(res&&res.name?res.name:inspectTargetLabel(target))+(token?" · "+token:"");
+  tip.style.left=Math.max(6,Math.min(window.innerWidth-360,r.left))+"px";tip.style.top=Math.max(6,r.top-28)+"px";tip.style.display="block";
+}
+function inspectHideOverlay(){el("inspect-overlay-box").style.display="none";el("inspect-tooltip").style.display="none"}
+function inspectClearSelection(){
+  if(state.selectedElement)state.selectedElement.removeAttribute("data-inspect-selected");
+  state.selectedElement=null;state.selectedResolution=null;
+  el("inspector-title").textContent="Ningún elemento seleccionado";el("inspector-path").textContent="";
+  el("inspector-body").innerHTML='<p class="inspector-empty">Activa <strong>⌖ Inspeccionar</strong> y haz clic sobre cualquier elemento del canvas.</p>';
+  inspectHideOverlay();
+}
+function inspectToggle(force){
+  state.inspectMode=typeof force==="boolean"?force:!state.inspectMode;
+  canvas.classList.toggle("inspecting",state.inspectMode);
+  el("inspect-toggle").setAttribute("aria-pressed",String(state.inspectMode));
+  if(!state.inspectMode)inspectHideOverlay();
+  el("lab-action-status").textContent=state.inspectMode?"Modo Inspección activo · clic para seleccionar · Esc para cancelar.":"Modo Inspección desactivado.";
+}
+function inspectComputedBlock(target){
+  var cs=getComputedStyle(target),wrap=node("div","inspector-computed");
+  [["font",cs.font],["color",cs.color],["background",cs.backgroundColor],["border",cs.border],["padding",cs.padding],["min-size",cs.minWidth+" × "+cs.minHeight]].forEach(function(pair){wrap.appendChild(node("strong",null,pair[0]));wrap.appendChild(node("span",null,pair[1]))});
+  return wrap;
+}
+function inspectMakeSemantic(host,label,pair,target){
+  var group=pair[0],key=pair[1],spec=state.semantic.semantic[group]&&state.semantic.semantic[group][key];
+  if(!spec)return;
+  var row=node("div","inspector-control"),lab=node("label",null,label+" · "+inspectSemanticPath(pair)),sel=node("select");
+  refs().forEach(function(ref){var o=node("option",null,ref.replace("{color.","").replace("}",""));o.value=ref;if(ref===spec.value)o.selected=true;sel.appendChild(o)});
+  sel.addEventListener("change",function(){spec.value=sel.value;applySemantic();onTokenModified();inspectRender(target)});
+  row.appendChild(lab);row.appendChild(sel);
+  var rk=refKey(spec.value);
+  if(rk&&state.primitives.color.primitive[rk]){
+    var inline=node("div","inspector-inline"),jump=node("button","lab-btn","Ir a "+rk),sw=node("input","inspector-swatch");
+    jump.type="button";jump.addEventListener("click",function(){inspectFocusPath("primitives.color.primitive."+rk+".value")});
+    sw.type="color";sw.value=pval(rk);sw.addEventListener("input",function(){setPrimitive(rk,sw.value);inspectRender(target)});
+    inline.appendChild(jump);inline.appendChild(sw);row.appendChild(inline);
+  }
+  host.appendChild(row);
+}
+function inspectMakeNumber(host,label,path,value,min,max,step,onChange){
+  var row=node("div","inspector-control"),lab=node("label",null,label+" · "+path),input=node("input");
+  input.type="number";input.value=value;input.min=min;input.max=max;input.step=step;
+  input.addEventListener("change",function(){onChange(input.value)});
+  row.appendChild(lab);row.appendChild(input);host.appendChild(row);
+}
+function inspectRenderType(host,cfg,target){
+  if(!cfg)return;
+  var sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Tipografía"));
+  if(cfg.size&&state.typography.scale[cfg.size])inspectMakeNumber(sec,"Tamaño","typography.scale."+cfg.size+".size",parseFloat(state.typography.scale[cfg.size].size),9,72,1,function(v){state.typography.scale[cfg.size].size=v+"px";applyTypographyLive();onTokenModified();inspectRender(target)});
+  if(cfg.weight&&state.typography.scale[cfg.weight]){
+    var spec=state.typography.scale[cfg.weight],row=node("div","inspector-control"),lab=node("label",null,"Peso · typography.scale."+cfg.weight+".weight"),sel=node("select");
+    [300,400,500,600,700,900].forEach(function(w){var o=node("option",null,String(w));o.value=w;if(spec.weight===w)o.selected=true;sel.appendChild(o)});
+    sel.addEventListener("change",function(){spec.weight=Number(sel.value);applyTypographyLive();onTokenModified();inspectRender(target)});row.appendChild(lab);row.appendChild(sel);sec.appendChild(row);
+  }
+  if(cfg.leading&&state.typography.scale[cfg.leading])inspectMakeNumber(sec,"Interlineado","typography.scale."+cfg.leading+".leading",state.typography.scale[cfg.leading].leading,.9,2,.05,function(v){state.typography.scale[cfg.leading].leading=Number(v);applyTypographyLive();onTokenModified();inspectRender(target)});
+  if(cfg.tracking&&state.typography.scale[cfg.tracking]){
+    var ts=state.typography.scale[cfg.tracking],tr=node("div","inspector-control"),tl=node("label",null,"Tracking · typography.scale."+cfg.tracking+".tracking"),ti=node("input");
+    ti.type="text";ti.value=ts.tracking;ti.addEventListener("change",function(){ts.tracking=ti.value;applyTypographyLive();onTokenModified();inspectRender(target)});tr.appendChild(tl);tr.appendChild(ti);sec.appendChild(tr);
+  }
+  if(cfg.family&&state.typography.scale[cfg.family]){
+    var fs=state.typography.scale[cfg.family],fr=node("div","inspector-control"),fl=node("label",null,"Familia · typography.scale."+cfg.family+".family"),fsel=node("select");
+    ["editorial","sans","mono"].forEach(function(v){var o=node("option",null,v);o.value=v;if(fs.family===v)o.selected=true;fsel.appendChild(o)});
+    fsel.addEventListener("change",function(){fs.family=fsel.value;applyTypographyLive();onTokenModified();inspectRender(target)});fr.appendChild(fl);fr.appendChild(fsel);sec.appendChild(fr);
+  }
+  host.appendChild(sec);
+}
+function inspectRenderSpacing(host,cfg,target){
+  if(!cfg)return;
+  var sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Espaciado / geometría"));
+  if(cfg.height){
+    var hv=parseFloat(state.spacing.structure[cfg.height]);inspectMakeNumber(sec,"Altura mínima","spacing.structure."+cfg.height,hv,44,72,1,function(v){state.spacing.structure[cfg.height]=v+"px";applySpacingLive();onTokenModified();inspectRender(target)});
+  }
+  if(cfg.padding&&state.spacing.scale[cfg.padding]){
+    inspectMakeNumber(sec,"Padding base","spacing.scale."+cfg.padding,parseFloat(state.spacing.scale[cfg.padding]),4,48,4,function(v){state.spacing.scale[cfg.padding]=v+"px";applySpacingLive();onTokenModified();inspectRender(target)});
+  }
+  if(cfg.rule&&state.spacing.structure.rule){
+    inspectMakeNumber(sec,"Grosor de regla","spacing.structure.rule."+cfg.rule,parseFloat(state.spacing.structure.rule[cfg.rule]),1,5,1,function(v){state.spacing.structure.rule[cfg.rule]=v+"px";applySpacingLive();onTokenModified();inspectRender(target)});
+  }
+  if(cfg.radius&&state.spacing.structure.radius){
+    inspectMakeNumber(sec,"Radio","spacing.structure.radius."+cfg.radius,parseFloat(state.spacing.structure.radius[cfg.radius])||0,0,8,1,function(v){state.spacing.structure.radius[cfg.radius]=Number(v)===0?"0":v+"px";applySpacingLive();onTokenModified();inspectRender(target)});
+  }
+  host.appendChild(sec);
+}
+function inspectRenderDomain(host,res,target){
+  var sec;
+  if(res.domain==="provenance"&&target.dataset.provenance&&state.domain.domain.provenance[target.dataset.provenance]){
+    var key=target.dataset.provenance,spec=state.domain.domain.provenance[key];sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Dominio · provenance."+key));
+    [["symbol","Símbolo"],["label","Label"]].forEach(function(p){var row=node("div","inspector-control"),lab=node("label",null,p[1]+" · domain.provenance."+key+"."+p[0]),input=node("input");input.type="text";input.value=spec[p[0]];input.addEventListener("change",function(){spec[p[0]]=input.value;applyDomainLive();onTokenModified();inspectRender(target)});row.appendChild(lab);row.appendChild(input);sec.appendChild(row)});host.appendChild(sec);
+  }else if(res.domain==="sync"&&target.dataset.sync&&state.domain.domain.sync[target.dataset.sync]){
+    var sk=target.dataset.sync,ss=state.domain.domain.sync[sk];sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Dominio · sync."+sk));
+    [["symbol","Símbolo"],["label","Label"]].forEach(function(p){var row=node("div","inspector-control"),lab=node("label",null,p[1]+" · domain.sync."+sk+"."+p[0]),input=node("input");input.type="text";input.value=ss[p[0]];input.addEventListener("change",function(){ss[p[0]]=input.value;applyDomainLive();onTokenModified();inspectRender(target)});row.appendChild(lab);row.appendChild(input);sec.appendChild(row)});host.appendChild(sec);
+  }else if(res.domain==="quarantine"&&state.domain.domain.status&&state.domain.domain.status.quarantine){
+    var q=state.domain.domain.status.quarantine;sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Dominio · quarantine"));
+    var row=node("div","inspector-control"),lab=node("label",null,"Tratamiento · domain.status.quarantine.treatment"),sel=node("select");["solid","dashed","dotted","double"].forEach(function(v){var o=node("option",null,v);o.value=v;if(q.treatment===v)o.selected=true;sel.appendChild(o)});sel.addEventListener("change",function(){q.treatment=sel.value;applyDomainLive();onTokenModified();inspectRender(target)});row.appendChild(lab);row.appendChild(sel);sec.appendChild(row);host.appendChild(sec);
+  }
+}
+function inspectFirstPath(res,target){
+  if(res.semantic){var k=Object.keys(res.semantic)[0];if(k)return inspectSemanticPath(res.semantic[k])}
+  if(res.type&&res.type.size)return"typography.scale."+res.type.size+".size";
+  if(res.spacing&&res.spacing.height)return"spacing.structure."+res.spacing.height;
+  if(res.spacing&&res.spacing.rule)return"spacing.structure.rule."+res.spacing.rule;
+  if(res.domain==="provenance"&&target.dataset.provenance)return"domain.provenance."+target.dataset.provenance+".symbol";
+  if(res.domain==="sync"&&target.dataset.sync)return"domain.sync."+target.dataset.sync+".symbol";
+  if(res.domain==="quarantine")return"domain.status.quarantine.treatment";
+  return null;
+}
+function inspectRender(target){
+  if(!target)return;
+  var res=inspectResolve(target);state.selectedResolution=res;
+  inspectActivateSubpanel("inspector");
+  el("inspector-title").textContent=res.name;el("inspector-path").textContent=inspectTargetLabel(target);
+  var host=el("inspector-body");host.innerHTML="";host.appendChild(inspectComputedBlock(target));
+  if(res.debt)host.appendChild(node("p","inspector-debt",res.debt));
+  if(res.computedOnly){host.appendChild(node("p","inspector-debt","Sin ruta canónica conocida: se muestra el estilo computado, pero no se inventa un token."));return}
+  if(res.semantic){var sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Color / superficie"));Object.keys(res.semantic).forEach(function(prop){inspectMakeSemantic(sec,prop,res.semantic[prop],target)});host.appendChild(sec)}
+  inspectRenderType(host,res.type,target);inspectRenderSpacing(host,res.spacing,target);inspectRenderDomain(host,res,target);
+  var first=inspectFirstPath(res,target);if(first){var jump=node("button","lab-btn","Ir a Token en Sidebar");jump.type="button";jump.addEventListener("click",function(){inspectFocusPath(first)});host.appendChild(jump)}
+}
+function inspectSelect(target){
+  if(state.selectedElement)state.selectedElement.removeAttribute("data-inspect-selected");
+  state.selectedElement=target;target.setAttribute("data-inspect-selected","true");
+  var res=inspectResolve(target);inspectPosition(target,true,res);inspectRender(target);
+}
+function inspectIsChrome(target){return Boolean(target.closest("#inspect-toggle,.canvas-tabs,#canvas-mode-select"))}
+canvas.addEventListener("mouseover",function(e){if(!state.inspectMode||e.target===canvas||inspectIsChrome(e.target))return;var t=inspectNearest(e.target);inspectPosition(t,false,inspectResolve(t))});
+canvas.addEventListener("mouseout",function(){if(state.inspectMode&&!state.selectedElement)inspectHideOverlay()});
+canvas.addEventListener("click",function(e){if(!state.inspectMode||inspectIsChrome(e.target))return;e.preventDefault();e.stopPropagation();inspectSelect(inspectNearest(e.target))},true);
+window.addEventListener("scroll",function(){if(state.inspectMode&&state.selectedElement)inspectPosition(state.selectedElement,true,state.selectedResolution)},true);
+window.addEventListener("resize",function(){if(state.inspectMode&&state.selectedElement)inspectPosition(state.selectedElement,true,state.selectedResolution)});
+document.addEventListener("keydown",function(e){if(e.altKey&&e.key.toLowerCase()==="i"){e.preventDefault();inspectToggle()}else if(e.key==="Escape"&&state.inspectMode){inspectToggle(false);inspectClearSelection()}});
+el("inspect-toggle").addEventListener("click",function(){inspectToggle()});
+window.CriterioThemeLab.resolveElementTokens=inspectResolve;
+window.CriterioThemeLab.inspectFocusPath=inspectFocusPath;
+
 /* INIT & TABS */
 function setupTabs(){
   // Left subpanels
