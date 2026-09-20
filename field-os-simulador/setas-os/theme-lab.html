@@ -220,14 +220,14 @@ button,input,select{font:inherit}
       <h2>Estructura & Tap Targets</h2>
       <div class="lab-field">
         <label for="spacing-tap-target">Tap Target Floor (Operativo)</label>
-        <select id="spacing-tap-target">
+        <select id="spacing-tap-target" data-token-path="spacing.structure.tapTargetMin">
           <option value="44px">44px · Estándar Accesible</option>
           <option value="48px">48px · Campo Rudo (Guantes)</option>
         </select>
       </div>
       <div class="lab-field">
         <label for="spacing-radius">Radio de Bordes</label>
-        <select id="spacing-radius">
+        <select id="spacing-radius" data-token-path="spacing.structure.radius.sm">
           <option value="0">0px · Brutalista Estricto</option>
           <option value="2px">2px · Micro-Radio Sutil</option>
           <option value="4px">4px · Curva Media</option>
@@ -236,7 +236,7 @@ button,input,select{font:inherit}
       </div>
       <div class="lab-field">
         <label for="spacing-rule">Grosor de Reglas</label>
-        <select id="spacing-rule">
+        <select id="spacing-rule" data-token-path="spacing.structure.rule.hairline">
           <option value="1">Hairline 1px / Heavy 2px</option>
           <option value="2">Hairline 2px / Heavy 3px</option>
           <option value="3">Hairline 3px / Heavy 5px</option>
@@ -270,7 +270,7 @@ button,input,select{font:inherit}
       <h2>Tratamiento de Cuarentena</h2>
       <div class="lab-field">
         <label for="domain-quarantine-treatment">Estilo de Borde</label>
-        <select id="domain-quarantine-treatment">
+        <select id="domain-quarantine-treatment" data-token-path="domain.status.quarantine.treatment">
           <option value="dashed">Dashed (Líneas Discontinuas)</option>
           <option value="solid">Solid (Línea Continua Fuerte)</option>
           <option value="double">Double (Doble Línea de Advertencia)</option>
@@ -875,9 +875,17 @@ function applySpacingLive(){
   });
   if(sp.structure){
     if(sp.structure.tapTargetMin) root.style.setProperty("--tap-target-min", sp.structure.tapTargetMin);
+    if(sp.structure.fieldCellMinHeight) root.style.setProperty("--field-cell-min-height", sp.structure.fieldCellMinHeight);
     if(sp.structure.radius){
       root.style.setProperty("--radius-none", sp.structure.radius.none||"0");
       root.style.setProperty("--radius-sm", sp.structure.radius.sm||"0");
+    }
+    if(sp.structure.rule){
+      root.style.setProperty("--rule-hairline", sp.structure.rule.hairline+" solid var(--border-hairline)");
+      root.style.setProperty("--rule-frame", sp.structure.rule.frame+" solid var(--border-hairline)");
+      root.style.setProperty("--rule-heavy", sp.structure.rule.heavy+" solid var(--border-heavy)");
+      root.style.setProperty("--rule-width", sp.structure.rule.hairline);
+      root.style.setProperty("--rule-heavy-width", sp.structure.rule.heavy);
     }
   }
   if(sp.grid && sp.grid.modes){
@@ -941,8 +949,8 @@ function renderPrimitives(){
     lab.appendChild(node("span","token-name",label));
     lab.appendChild(node("span","token-meta","--"+k));
     var cc=node("div","color-control");
-    var color=node("input"); color.type="color"; color.id="color-"+k; color.value=spec.value; color.dataset.token=k;
-    var hex=node("input","hex"); hex.value=spec.value; hex.dataset.hex=k; hex.setAttribute("aria-label","Hex "+k);
+    var color=node("input"); color.type="color"; color.id="color-"+k; color.value=spec.value; color.dataset.token=k; color.dataset.tokenPath="primitives.color.primitive."+k+".value";
+    var hex=node("input","hex"); hex.value=spec.value; hex.dataset.hex=k; hex.dataset.tokenPath="primitives.color.primitive."+k+".value"; hex.setAttribute("aria-label","Hex "+k);
     cc.appendChild(color); cc.appendChild(hex);
     row.appendChild(lab); row.appendChild(cc);
     host.appendChild(row);
@@ -964,7 +972,7 @@ function renderSemantic(){
     var g=item[0],k=item[1],spec=state.semantic.semantic[g]&&state.semantic.semantic[g][k];
     if(!spec)return;
     var row=node("div","semantic-row"), lab=node("label"), code=node("code",null,g+"."+k), sel=node("select");
-    lab.appendChild(code); sel.dataset.group=g; sel.dataset.key=k;
+    lab.appendChild(code); sel.dataset.group=g; sel.dataset.key=k; sel.dataset.tokenPath="semantic."+g+"."+k+".value";
     all.forEach(function(ref){
       var o=node("option",null,ref.replace("{color.","").replace("}",""));
       o.value=ref; if(ref===spec.value)o.selected=true; sel.appendChild(o);
@@ -984,7 +992,7 @@ function renderTypographyControls(){
     var f=node("div","lab-field");
     var row=node("div","lab-range-line");
     var lab=node("label",null,r+" · tamaño");
-    var inp=node("input"); inp.type="range"; inp.min="9"; inp.max="72"; inp.value=parseInt(item.size,10);
+    var inp=node("input"); inp.type="range"; inp.min="9"; inp.max="72"; inp.value=parseInt(item.size,10); inp.dataset.tokenPath="typography.scale."+r+".size";
     var out=node("output",null,item.size);
     inp.addEventListener("input",function(){
       item.size=inp.value+"px"; out.textContent=item.size; applyTypographyLive(); onTokenModified();
@@ -1008,7 +1016,7 @@ function renderTypographyControls(){
       var item=state.typography.scale[r]; if(!item)return;
       var f=node("div","lab-field");
       var lab=node("label",null,r+" · peso");
-      var sel=node("select");
+      var sel=node("select"); sel.dataset.tokenPath="typography.scale."+r+".weight";
       availableWeights.forEach(function(w){
         var o=node("option",null,w.label);
         o.value=w.val;
@@ -1030,7 +1038,7 @@ function renderTypographyControls(){
     var f=node("div","lab-field");
     var row=node("div","lab-range-line");
     var lab=node("label",null,r+" · interlineado");
-    var inp=node("input"); inp.type="range"; inp.min="0.9"; inp.max="1.8"; inp.step="0.05"; inp.value=item.leading;
+    var inp=node("input"); inp.type="range"; inp.min="0.9"; inp.max="1.8"; inp.step="0.05"; inp.value=item.leading; inp.dataset.tokenPath="typography.scale."+r+".leading";
     var out=node("output",null,Number(item.leading).toFixed(2));
     inp.addEventListener("input",function(){
       item.leading=parseFloat(inp.value); out.textContent=Number(item.leading).toFixed(2); applyTypographyLive(); onTokenModified();
@@ -1045,7 +1053,7 @@ function renderTypographyControls(){
     var row=node("div","lab-range-line");
     var lab=node("label",null,r+" · tracking");
     var current=parseFloat(item.tracking)||0;
-    var inp=node("input"); inp.type="range"; inp.min="-0.05"; inp.max="0.30"; inp.step="0.01"; inp.value=current;
+    var inp=node("input"); inp.type="range"; inp.min="-0.05"; inp.max="0.30"; inp.step="0.01"; inp.value=current; inp.dataset.tokenPath="typography.scale."+r+".tracking";
     var out=node("output",null,item.tracking);
     inp.addEventListener("input",function(){
       item.tracking=inp.value+"em"; out.textContent=item.tracking;
@@ -1058,6 +1066,9 @@ function renderTypographyControls(){
 }
 
 function renderSpacingControls(){
+  if(el("spacing-tap-target")) el("spacing-tap-target").value=state.spacing.structure.tapTargetMin||"44px";
+  if(el("spacing-radius")) el("spacing-radius").value=state.spacing.structure.radius&&state.spacing.structure.radius.sm||"0";
+  if(el("spacing-rule")&&state.spacing.structure.rule) el("spacing-rule").value=String(parseInt(state.spacing.structure.rule.hairline,10)||1);
   var modesHost=el("spacing-grid-modes"); modesHost.innerHTML="";
   var modes=state.spacing.grid&&state.spacing.grid.modes;
   if(modes){
@@ -1065,7 +1076,7 @@ function renderSpacingControls(){
       var f=node("div","lab-field");
       var lab=node("label",null,"Modo "+m.toUpperCase()+" (Gutter / Margin)");
       var box=node("div","lab-range-line");
-      var sel=node("select");
+      var sel=node("select"); sel.dataset.tokenPath="spacing.grid.modes."+m+".gutter";
       [["12px","16px"],["24px","32px"],["32px","64px"]].forEach(function(p){
         var o=node("option",null,"Gutter: "+p[0]+" · Margin: "+p[1]);
         o.value=p[0]+"|"+p[1];
@@ -1090,7 +1101,7 @@ function renderDomainControls(){
     Object.keys(provs).forEach(function(k){
       var f=node("div","lab-field");
       var lab=node("label",null,provs[k].label+" ("+k+")");
-      var sel=node("select");
+      var sel=node("select"); sel.dataset.tokenPath="domain.provenance."+k+".symbol";
       ["●","◆","◇","△","◎","⬡","◌","~","ƒ"].forEach(function(s){
         var o=node("option",null,"Símbolo: "+s);
         o.value=s; if(s===provs[k].symbol) o.selected=true; sel.appendChild(o);
@@ -1108,7 +1119,7 @@ function renderDomainControls(){
     Object.keys(syncs).forEach(function(k){
       var f=node("div","lab-field");
       var lab=node("label",null,syncs[k].label+" ("+k+")");
-      var sel=node("select");
+      var sel=node("select"); sel.dataset.tokenPath="domain.sync."+k+".symbol";
       ["✓","◌","✕","⚡","●","!"].forEach(function(s){
         var o=node("option",null,"Símbolo: "+s);
         o.value=s; if(s===syncs[k].symbol) o.selected=true; sel.appendChild(o);
@@ -1535,11 +1546,11 @@ function setupTabs(){
   });
   el("spacing-rule").addEventListener("change",function(){
     var w=Number(this.value);
-    root.style.setProperty("--rule-width",w+"px");
-    root.style.setProperty("--rule-heavy-width",(w+1)+"px");
-    root.style.setProperty("--rule-hairline",w+"px solid var(--border-hairline)");
-    root.style.setProperty("--rule-frame",w+"px solid var(--border-hairline)");
-    root.style.setProperty("--rule-heavy",(w+1)+"px solid var(--border-heavy)");
+    if(!state.spacing.structure.rule) state.spacing.structure.rule={hairline:"1px",heavy:"2px",frame:"1px"};
+    state.spacing.structure.rule.hairline=w+"px";
+    state.spacing.structure.rule.frame=w+"px";
+    state.spacing.structure.rule.heavy=(w===3?5:w+1)+"px";
+    applySpacingLive();
     onTokenModified();
   });
   el("spacing-scale-factor").addEventListener("input",function(){
