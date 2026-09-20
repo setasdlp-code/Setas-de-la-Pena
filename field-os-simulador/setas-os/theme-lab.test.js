@@ -7,6 +7,7 @@ const path = require('node:path');
 
 const ROOT = __dirname;
 const lab = fs.readFileSync(path.join(ROOT, 'theme-lab.html'), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 test('theme lab consumes only the canonical DS-2026 operations public bundle', () => {
   assert.match(lab, /<link rel="stylesheet" href="ds-2026\/operations\.css">/);
@@ -50,10 +51,11 @@ test('theme lab keeps spacing, radii and typography explicitly preview-only', ()
 });
 
 test('theme lab includes live contrast guardrails for critical sanctioned pairs', () => {
-  assert.match(lab, /INK 900 \/ PAPER/);
-  assert.match(lab, /CORAL 700 \/ PAPER/);
-  assert.match(lab, /WARNING TEXT \/ PAPER/);
-  assert.match(lab, /PAPER 50 \/ CORAL 700/);
+  assert.match(lab, /TEXT PRIMARY \/ PAGE/);
+  assert.match(lab, /TEXT METADATA \/ PAGE/);
+  assert.match(lab, /INVERSE \/ ACTION PRIMARY/);
+  assert.match(lab, /ACTION ACCENT TEXT \/ ACCENT/);
+  assert.match(lab, /WARNING TEXT \/ PAGE/);
   assert.match(lab, /data-pass/);
 });
 
@@ -67,4 +69,8 @@ test('theme lab exposes canonical provenance through data-provenance', () => {
   for (const value of ['measured', 'calculated', 'manual', 'estimated']) {
     assert.match(lab, new RegExp('data-provenance="' + value + '"'));
   }
+});
+
+test('package exposes an explicit local Theme Lab preview command', () => {
+  assert.equal(pkg.scripts['theme-lab'], 'python3 -m http.server 4173');
 });
