@@ -1,9 +1,10 @@
 // Capa de acceso a datos para Setas OS sobre Firestore.
-// Cubre las 3 piezas que requerían persistencia real según la auditoría:
+// Cubre las piezas que requerían persistencia real según la auditoría:
 // recetas (con el mismo balance de masa que ya se valida en simulador.html),
-// inventario con descuento FIFO transaccional, y lotes de producción con
-// snapshot congelado de la receta (mismo patrón que `buildProvenance` en
-// Setas OS.dc.html, ahora en un documento en vez de en memoria).
+// el registro append-only del consumo de inventario por lote, y lotes de
+// producción con snapshot congelado de la receta (mismo patrón que
+// `buildProvenance` en Setas OS.dc.html, ahora en un documento en vez de en
+// memoria).
 import { db } from "./firebase-init.js";
 import {
   collection, addDoc, getDocs, query, where, orderBy,
@@ -56,37 +57,17 @@ export async function crearLoteProduccion({ codigo, especie, camara, operador, r
   });
 }
 
-// ── Inventario — descuento FIFO transaccional ─────────────────────────────
-// Evita la condición de carrera de dos operadores ejecutando lotes al mismo
-// tiempo y descontando el mismo kg dos veces.
-export async function descontarInventarioFIFO(ingredienteId, kgNecesarios) {
+// ── Inventario — registro append-only del consumo de un lote ──────────────
+// Registro append-only del consumo de un lote. La identidad es el loteId: reintentar
+// nunca duplica (ADR-0005). No descuenta lotes en servidor — no existe espejo de bodega.
+export async function guardarConsumoInventario(record) {
+  if (!record?.opId || !Array.isArray(record.allocations)) throw new Error("Registro de consumo inválido.");
+  const ref = doc(db, "inventory_consumptions", record.opId);
   return runTransaction(db, async (tx) => {
-    const lotesQ = query(
-      collection(db, "inventario_lotes"),
-      where("ingredienteId", "==", ingredienteId),
-      where("activo", "==", true),
-      orderBy("fechaCompra", "asc")
-    );
-    const snap = await getDocs(lotesQ); // lectura fuera de tx: Firestore Web SDK exige
-    // reads-antes-que-writes dentro de runTransaction vía tx.get(docRef), así que
-    // resolvemos los docRefs aquí y los releemos dentro de la transacción abajo.
-    let restante = kgNecesarios;
-    const actualizaciones = [];
-    for (const d of snap.docs) {
-      if (restante <= 0) break;
-      const ref = doc(db, "inventario_lotes", d.id);
-      const fresh = await tx.get(ref);
-      const disponible = fresh.data().cantidadKgDisponible;
-      const tomar = Math.min(disponible, restante);
-      if (tomar > 0) {
-        actualizaciones.push({ ref, nuevoDisponible: disponible - tomar, activo: disponible - tomar > 0.0001 });
-        restante -= tomar;
-      }
-    }
-    if (restante > 0.0001) {
-      throw new Error(`Inventario insuficiente: faltan ${restante.toFixed(2)} kg.`);
-    }
-    actualizaciones.forEach(u => tx.update(u.ref, { cantidadKgDisponible: u.nuevoDisponible, activo: u.activo }));
+    const snap = await tx.get(ref);
+    if (snap.exists()) return { created: false };
+    tx.set(ref, { ...record, syncedAt: serverTimestamp() });
+    return { created: true };
   });
 }
 
@@ -153,7 +134,7 @@ export async function actualizarIncidencia(id, campos) {
 // que ese script pueda llamarlo, igual que firebase-init.js hace con window.SetasFirebase.
 window.SetasDB = {
   computeTot, isMassBalanced, saveReceta, listRecetas,
-  crearLoteProduccion, descontarInventarioFIFO,
+  crearLoteProduccion, guardarConsumoInventario,
   guardarRoomCycle, guardarTelemetry, guardarTelemetryBatch, guardarCycleEvidence, listCycleEvidence,
   registrarIncidencia, actualizarIncidencia,
 };

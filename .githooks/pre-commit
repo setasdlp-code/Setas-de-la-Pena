@@ -1,0 +1,31 @@
+#!/bin/sh
+# Mantiene simulador-app.js sincronizado con simulador-app.jsx en commits manuales.
+# El hook PostToolUse de .claude/ cubre las ediciones que hace un agente;
+# este cubre el resto (IDE, git add a mano, otro cliente).
+# build.test.js falla en CI si el source-hash del bundle queda desactualizado.
+SRC=field-os-simulador/setas-os/simulador-app.jsx
+OUT=field-os-simulador/setas-os/simulador-app.js
+
+git diff --cached --name-only --diff-filter=ACM | grep -qx "$SRC" || exit 0
+
+# Los clientes gráficos de git arrancan con un PATH mínimo y sin nvm.
+if ! command -v node >/dev/null 2>&1; then
+  for d in "$HOME/.nvm/versions/node"/*/bin; do
+    [ -x "$d/node" ] && PATH="$d:$PATH"
+  done
+  export PATH
+fi
+
+root=$(git rev-parse --show-toplevel)
+
+# Un .jsx a medias (git add -p) haria que el bundle se compile desde el archivo
+# completo y el hash no cuadre con lo commiteado; avisar en vez de fingir exito.
+if ! git diff --quiet -- "$SRC"; then
+  echo "pre-commit: aviso — $SRC tiene cambios sin stagear; el bundle se compila desde el archivo completo." >&2
+fi
+
+(cd "$root/field-os-simulador/setas-os" && node build.js >&2) || {
+  echo "pre-commit: node build.js fallo — commit abortado." >&2
+  exit 1
+}
+git -C "$root" add "$OUT"

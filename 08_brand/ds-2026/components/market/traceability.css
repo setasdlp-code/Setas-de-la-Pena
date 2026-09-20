@@ -1,0 +1,22 @@
+/* DS-2026 · Market: Ficha & Public Traceability sheet */
+.sdp-ficha { border: var(--rule-hairline); background: var(--surface-page); display: grid; }
+.sdp-ficha__hd {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3);
+  padding: var(--space-3); border-bottom: var(--rule-hairline);
+}
+.sdp-ficha__body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); padding: var(--space-4) var(--space-3); }
+.sdp-ficha__prose > p:last-child { margin-bottom: 0; }
+.sdp-ficha__ft {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border-top: var(--rule-hairline);
+}
+.sdp-ficha__cell { padding: var(--space-2) var(--space-3); border-right: var(--rule-hairline); }
+.sdp-ficha__cell:last-child { border-right: 0; }
+.sdp-ficha__k { display: block; font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: var(--space-half); }
+.sdp-ficha__v { font: var(--t-body); }
+.sdp-ficha__v--price { font: var(--t-data); font-size: var(--size-body); }
+@media (max-width: 700px) {
+  .sdp-ficha__body { grid-template-columns: 1fr; }
+  .sdp-ficha__ft { grid-template-columns: 1fr; }
+  .sdp-ficha__cell { border-right: 0; border-bottom: var(--rule-hairline); }
+}

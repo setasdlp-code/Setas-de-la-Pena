@@ -1,0 +1,14 @@
+/* ═══════════════════════════════════════════════════════════════
+   DS-2026 · Instrument Layer [STABLE LEGACY ENTRYPOINT]
+   Maintained for backwards compatibility with Setas OS and existing consumers.
+   Delegates to operations/ and shared/ status components.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --instr-marker-size: 9px;
+}
+
+@import "./shared/status.css";
+@import "./shared/action.css";
+@import "./operations/telemetry.css";
+@import "./operations/room.css";
+@import "./operations/lot.css";

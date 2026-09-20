@@ -4,6 +4,8 @@
 // receta actual, inventarios) como argumentos explícitos.
 (function () {
 
+  const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
+
   const SetasScoring = (typeof require !== 'undefined')
     ? require('./scoring.js')
     : (globalThis.SetasScoring || {});
@@ -25,8 +27,8 @@
       if (!g) return;
       const p = parseFloat(r.p) || 0;
       const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
-      const dryFrac = p * (1 - Math.min(0.92, Math.max(0, (g.moisture || 0) / 100)));
-      if (g.cn > 0 && !esAditivoSeco) { wC += g.c * dryFrac; wN += g.n * dryFrac; nP += dryFrac; }
+      // % de receta en base seca: ponderar por p (D18).
+      if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
       wPh += g.ph * p; wDig += g.dig * p; wCra += g.cra * p;
       if (g.role === 'suplemento_n') suppP += p;
       if (g.role === 'base_carbono') baseP += p;
@@ -42,24 +44,40 @@
     const avgPh = tot ? wPh / tot : 7;
     const avgDig = tot ? wDig / tot : 5;
     const avgCra = tot ? wCra / tot : 3;
+    // COP por kg de mezcla seca (precio por kg tal cual se recibe) — D6.
     const cost = recipe.reduce((s, r) => {
       const g = effectiveINGS.find(i => i.id === r.id);
-      return g ? s + (g.cost * (parseFloat(r.p) || 0) / 100) : s;
+      if (!g) return s;
+      const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
+      return s + (g.cost / (1 - m)) * (parseFloat(r.p) || 0) / 100;
     }, 0);
     const sp = effectiveSPP[sKey];
     let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
     let phF, aerF, digF, ebMods, ebCvVal, ebLow, ebHigh, ebIndex;
     if (sp) {
-      const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - sp.cn_optimal.ideal) / ((sp.cn_optimal.max - sp.cn_optimal.min) / 2), 1.5));
-      const nF = Math.max(0, 1 - Math.pow(Math.abs(avgN - sp.n_optimal.ideal) / ((sp.n_optimal.max - sp.n_optimal.min) / 2), 1.5));
-      eb = sp.eb_baseline + (sp.eb_optimal - sp.eb_baseline) * (cF * 0.6 + nF * 0.4);
-      const needsAutoclave = suppP > sp.supplementation_max;
-      const nThresh = needsAutoclave ? sp.n_optimal.max * 1.2 : sp.n_optimal.max * 1.15;
+      const cnIdeal = Number.isFinite(sp.cn_optimal?.ideal) ? sp.cn_optimal.ideal : 30;
+      const cnMin = Number.isFinite(sp.cn_optimal?.min) ? sp.cn_optimal.min : cnIdeal - 5;
+      const cnMax = Number.isFinite(sp.cn_optimal?.max) ? sp.cn_optimal.max : cnIdeal + 5;
+      const cnHalfSpan = Math.max(0.1, (cnMax - cnMin) / 2);
+
+      const nIdeal = Number.isFinite(sp.n_optimal?.ideal) ? sp.n_optimal.ideal : 1.4;
+      const nMin = Number.isFinite(sp.n_optimal?.min) ? sp.n_optimal.min : nIdeal - 0.3;
+      const nMax = Number.isFinite(sp.n_optimal?.max) ? sp.n_optimal.max : nIdeal + 0.3;
+      const nHalfSpan = Math.max(0.01, (nMax - nMin) / 2);
+
+      const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - cnIdeal) / cnHalfSpan, 1.5));
+      const nF = Math.max(0, 1 - Math.pow(Math.abs(avgN - nIdeal) / nHalfSpan, 1.5));
+      const baseline = Number.isFinite(sp.eb_baseline) ? sp.eb_baseline : 60;
+      const optimal = Number.isFinite(sp.eb_optimal) ? sp.eb_optimal : 95;
+      eb = baseline + (optimal - baseline) * (cF * 0.6 + nF * 0.4);
+      const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
+      const needsAutoclave = suppP > suppLimit;
+      const nThresh = needsAutoclave ? nMax * 1.2 : nMax * 1.15;
       if (avgN > nThresh && !needsAutoclave) { trichoderma = true; eb *= 0.45; }
       else if (avgN > nThresh && needsAutoclave) { eb *= 0.80; }
       else if (needsAutoclave) eb *= 0.85;
       if (incompat.length) eb *= 0.9;
-      if (tot < 95 || tot > 105) eb *= 0.95;
+      if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
       phF = 1;
       if (sp.ph_optimal) {
         if (avgPh < sp.ph_optimal.min) phF = Math.max(0.70, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
@@ -82,13 +100,13 @@
       ebCvVal = Math.min(trichoderma ? 0.50 : 0.40, ebCvVal);
       ebLow = Math.round(eb * (1 - ebCvVal));
       ebHigh = Math.round(eb * (1 + ebCvVal));
-      ebIndex = Math.round(Math.max(0, Math.min(100, (eb - sp.eb_baseline) / Math.max(1, sp.eb_optimal - sp.eb_baseline) * 100)));
+      ebIndex = Math.round(Math.max(0, Math.min(100, (eb - baseline) / Math.max(1, optimal - baseline) * 100)));
       dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppP / 5));
     }
     const eucPct = recipe.reduce((s, r) => r.id === 'aserrin_eucalipto' ? s + (parseFloat(r.p) || 0) : s, 0);
     const pescPct = recipe.reduce((s, r) => r.id === 'harina_pescado' ? s + (parseFloat(r.p) || 0) : s, 0);
     return {
-      tot, avgN, cn, cost, eb, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
+      tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
       ebLow: ebLow !== undefined ? ebLow : Math.round(eb),
       ebHigh: ebHigh !== undefined ? ebHigh : Math.round(eb),
       ebIndex: ebIndex !== undefined ? ebIndex : 0,
@@ -128,6 +146,7 @@
     let weightedBaselineEB = 0, weightedOptimalEB = 0;
     let jointEB = 0, jointEBIndex = 0;
     const allIncompatibilities = [];
+    const bottlenecks = [];
 
     speciesResults.forEach(r => {
       const sp = effectiveSPP[r.speciesKey];
@@ -153,6 +172,21 @@
             }
           });
         }
+        // Liebig law check: si el N está por debajo del mínimo de la especie, el rendimiento se colapsa
+        if (sp?.n_optimal?.min && Number.isFinite(r.an?.avgN) && r.an.avgN < sp.n_optimal.min) {
+          bottlenecks.push(`Deficiencia de Nitrógeno (Ley de Liebig) para ${r.speciesName}: N=${r.an.avgN.toFixed(2)}% < mín ${sp.n_optimal.min}%`);
+        }
+        if (r.an?.trichoderma) {
+          bottlenecks.push(`Riesgo severo de Trichoderma para ${r.speciesName} por exceso de Nitrógeno`);
+        }
+        // Incompatibilidad de pH entre co-cultivados
+        if (sp?.ph_optimal && Number.isFinite(r.an?.avgPh)) {
+          if (r.an.avgPh < sp.ph_optimal.min - 0.5) {
+            bottlenecks.push(`Sustrato excesivamente ácido para ${r.speciesName}: pH=${r.an.avgPh.toFixed(1)} < mín ${sp.ph_optimal.min}`);
+          } else if (r.an.avgPh > sp.ph_optimal.max + 0.5) {
+            bottlenecks.push(`Sustrato excesivamente alcalino para ${r.speciesName}: pH=${r.an.avgPh.toFixed(1)} > máx ${sp.ph_optimal.max}`);
+          }
+        }
       }
     });
 
@@ -170,6 +204,7 @@
       jointEB: Math.round(jointEB * 10) / 10,
       jointEBIndex: Math.round(jointEBIndex),
       allIncompatibilities,
+      bottlenecks,
       baseAnalysis
     };
   };

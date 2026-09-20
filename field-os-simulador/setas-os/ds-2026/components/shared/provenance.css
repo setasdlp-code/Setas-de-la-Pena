@@ -1,0 +1,40 @@
+/* DS-2026 · Shared: Provenance Grammar
+   data-provenance is the canonical API. Modifier classes remain as compatibility aliases.
+*/
+.sdp-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro-screen);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-hairline);
+  border-left: 3px solid var(--provenance-marker, var(--border-hairline));
+  padding: 2px 6px;
+}
+
+.sdp-provenance[data-provenance]::before {
+  content: var(--provenance-symbol, "");
+  flex: none;
+}
+
+/* Canonical attribute API: symbol + semantic marker. */
+.sdp-provenance[data-provenance="measured"]   { --provenance-symbol: var(--provenance-measured-symbol);   --provenance-marker: var(--status-ok); }
+.sdp-provenance[data-provenance="calculated"] { --provenance-symbol: var(--provenance-calculated-symbol); --provenance-marker: var(--text-secondary); }
+.sdp-provenance[data-provenance="estimated"]  { --provenance-symbol: var(--provenance-estimated-symbol);  --provenance-marker: var(--status-warn-marker); }
+.sdp-provenance[data-provenance="target"]     { --provenance-symbol: var(--provenance-target-symbol);     --provenance-marker: var(--brand-accent); }
+.sdp-provenance[data-provenance="manual"]     { --provenance-symbol: var(--provenance-manual-symbol);     --provenance-marker: var(--text-primary); }
+.sdp-provenance[data-provenance="simulated"]  { --provenance-symbol: var(--provenance-simulated-symbol);  --provenance-marker: var(--text-secondary); border-left-style: dashed; }
+.sdp-provenance[data-provenance="pending"]    { --provenance-symbol: var(--provenance-pending-symbol);    --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }
+
+/* Legacy modifier aliases: styling only; migrate markup to data-provenance. */
+.sdp-provenance--measured   { --provenance-marker: var(--status-ok); }
+.sdp-provenance--calculated { --provenance-marker: var(--text-secondary); }
+.sdp-provenance--estimated  { --provenance-marker: var(--status-warn-marker); }
+.sdp-provenance--target     { --provenance-marker: var(--brand-accent); }
+.sdp-provenance--manual     { --provenance-marker: var(--text-primary); }
+.sdp-provenance--simulated  { --provenance-marker: var(--text-secondary); border-left-style: dashed; }
+.sdp-provenance--pending    { --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }

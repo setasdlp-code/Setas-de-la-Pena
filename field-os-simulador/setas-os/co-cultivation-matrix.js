@@ -126,6 +126,54 @@
   };
 
   /**
+   * Mapeo canónico de alias taxonómicos y nombres del sistema a los perfiles de co-cultivo.
+   */
+  const SPECIES_KEY_ALIASES = {
+    p_ostreatus_gris: 'orellana_gris',
+    p_ostreatus_blanco: 'orellana_blanca',
+    p_djamor_rosa: 'orellana_rosa',
+    orellana_rosada: 'orellana_rosa',
+    p_eryngii: 'seta_cardo',
+    seta_de_cardo: 'seta_cardo',
+    lions_mane: 'melena_leon',
+    melena_de_leon: 'melena_leon',
+    melena_de_león: 'melena_leon',
+    pleurotus_ostreatus: 'orellana_gris',
+    pleurotus_florida: 'orellana_blanca',
+    pleurotus_djamor: 'orellana_rosa',
+    pleurotus_eryngii: 'seta_cardo',
+    hericium_erinaceus: 'melena_leon',
+    lentinula_edodes: 'shiitake',
+    flammulina_velutipes: 'enoki',
+    pholiota_nameko: 'nameko',
+    ganoderma_lucidum: 'reishi',
+    ost: 'orellana_gris',
+    obl: 'orellana_blanca',
+    ros: 'orellana_rosa',
+    ery: 'seta_cardo',
+    shi: 'shiitake',
+    mel: 'melena_leon',
+    rei: 'reishi',
+    eno: 'enoki',
+    nam: 'nameko',
+  };
+
+  /**
+   * Resuelve cualquier clave o alias a la clave de perfil climático correspondiente.
+   */
+  const resolveSpeciesKey = (key) => {
+    if (!key || typeof key !== 'string') return null;
+    const clean = key
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[-\s]+/g, '_');
+    if (SPECIES_CLIMATE_PROFILES[clean]) return clean;
+    return SPECIES_KEY_ALIASES[clean] || null;
+  };
+
+  /**
    * Función de pertenencia difusa trapezoidal.
    * @param {number} x Valor evaluado
    * @param {number[]} range [a, b, c, d]
@@ -184,7 +232,7 @@
     const reasons = [];
 
     // 1. Conflicto por esporulación masiva de Pleurotus sobre Melena de León o Shiitake
-    const isPleurotusHeavy = ['orellana_gris', 'orellana_blanca'].includes(speciesA.id) || ['orellana_gris', 'orellana_blanca'].includes(speciesB.id);
+    const isPleurotusHeavy = ['orellana_gris', 'orellana_blanca', 'orellana_rosa'].includes(speciesA.id) || ['orellana_gris', 'orellana_blanca', 'orellana_rosa'].includes(speciesB.id);
     const isDelicate = ['melena_leon', 'shiitake'].includes(speciesA.id) || ['melena_leon', 'shiitake'].includes(speciesB.id);
     if (isPleurotusHeavy && isDelicate) {
       penalty += 0.15;
@@ -192,7 +240,7 @@
     }
 
     // 2. Conflicto por incompatibilidad morfogenética de CO2 (ej. Orellana/Melena vs Reishi/Enoki)
-    const needsHighFae = ['orellana_gris', 'melena_leon'].includes(speciesA.id) || ['orellana_gris', 'melena_leon'].includes(speciesB.id);
+    const needsHighFae = ['orellana_gris', 'orellana_blanca', 'orellana_rosa', 'melena_leon'].includes(speciesA.id) || ['orellana_gris', 'orellana_blanca', 'orellana_rosa', 'melena_leon'].includes(speciesB.id);
     const needsHighCo2 = ['reishi', 'enoki'].includes(speciesA.id) || ['reishi', 'enoki'].includes(speciesB.id);
     if (needsHighFae && needsHighCo2) {
       penalty += 0.25;
@@ -219,14 +267,16 @@
    * @returns {object} Puntuación de compatibilidad (0-100), detalles por eje y veredicto
    */
   const calcPairwiseCompatibility = (keyA, keyB) => {
-    const spA = SPECIES_CLIMATE_PROFILES[keyA];
-    const spB = SPECIES_CLIMATE_PROFILES[keyB];
+    const normA = resolveSpeciesKey(keyA);
+    const normB = resolveSpeciesKey(keyB);
+    const spA = SPECIES_CLIMATE_PROFILES[normA];
+    const spB = SPECIES_CLIMATE_PROFILES[normB];
 
     if (!spA || !spB) {
       return { score: 0, verdict: 'INCOMPATIBLE', details: 'Especie no encontrada' };
     }
 
-    if (keyA === keyB) {
+    if (normA === normB) {
       return {
         speciesA: spA.name,
         speciesB: spB.name,
@@ -306,15 +356,27 @@
   };
 
   /**
+   * Calcula el VPD de la cámara para setpoints dados en kPa.
+   */
+  const calcVPD = (tempC, rhPct) => {
+    const sat = 0.61078 * Math.exp((17.27 * tempC) / (tempC + 237.3));
+    return Math.max(0, sat * (1 - (Math.max(0, Math.min(100, rhPct)) / 100)));
+  };
+
+  /**
    * Optimizador Minimax de Setpoints de Cámara para un grupo de especies en co-cultivo.
    * Encuentra los valores (T, HR, CO2, Lux) que maximizan el bienestar mínimo de cualquier especie seleccionada.
    *
-   * @param {string[]} speciesKeys Array de claves de especies presentes en la carpa
+   * @param {string[]} speciesKeys Array de claves o alias de especies presentes en la carpa
+   * @param {object} [options={}] Opciones de optimización y ponderación de biomasa
    * @returns {object} Setpoints recomendados, puntuación grupal y alertas
    */
-  const optimizeChamberSetpoints = (speciesKeys = []) => {
-    const validKeys = (Array.isArray(speciesKeys) ? speciesKeys : [])
-      .filter((k) => SPECIES_CLIMATE_PROFILES[k]);
+  const optimizeChamberSetpoints = (speciesKeys = [], options = {}) => {
+    const validKeys = Array.from(new Set(
+      (Array.isArray(speciesKeys) ? speciesKeys : [])
+        .map(resolveSpeciesKey)
+        .filter((k) => k && SPECIES_CLIMATE_PROFILES[k])
+    ));
 
     if (validKeys.length === 0) {
       return null;
@@ -322,17 +384,23 @@
 
     if (validKeys.length === 1) {
       const sp = SPECIES_CLIMATE_PROFILES[validKeys[0]];
+      const t = Math.round((sp.tempC[1] + sp.tempC[2]) / 2 * 10) / 10;
+      const rh = Math.round((sp.rhPct[1] + sp.rhPct[2]) / 2);
+      const vpd = Math.round(calcVPD(t, rh) * 1000) / 1000;
       return {
         species: [sp.name],
         groupScore: 100,
         verdict: 'ÓPTIMO (MONOCULTIVO)',
         setpoints: {
-          tempC: Math.round((sp.tempC[1] + sp.tempC[2]) / 2 * 10) / 10,
-          rhPct: Math.round((sp.rhPct[1] + sp.rhPct[2]) / 2),
+          tempC: t,
+          rhPct: rh,
           co2Ppm: Math.round((sp.co2Ppm[1] + sp.co2Ppm[2]) / 2),
           lux: Math.round((sp.lux[1] + sp.lux[2]) / 2),
+          vpdKpa: vpd,
         },
         bottlenecks: [],
+        biologicalAlerts: [],
+        penalties: [],
       };
     }
 
@@ -360,8 +428,17 @@
 
     // Búsqueda en grilla Minimax para setpoints ideales
     const profiles = validKeys.map((k) => SPECIES_CLIMATE_PROFILES[k]);
+    const rawWeights = options.weights || {};
+    const weights = {};
+    Object.keys(rawWeights).forEach((k) => {
+      const norm = resolveSpeciesKey(k);
+      if (norm) {
+        weights[norm] = Number(rawWeights[k]);
+      }
+    });
 
     // Función minimax para un eje: encuentra el setpoint que maximiza el mínimo de satisfacción
+    // Aplicando programación de compromiso de Chebyshev: las especies dominantes penalizan más el desvío
     const solveMinimaxAxis = (axisProp, startVal, endVal, steps) => {
       let bestVal = startVal;
       let maxMinSat = -1;
@@ -370,8 +447,10 @@
       for (let s = 0; s <= steps; s += 1) {
         const candidate = startVal + (s * stepSize);
         let minSatForCandidate = 1.0;
-        profiles.forEach((p) => {
-          const sat = evalTrapezoid(candidate, p[axisProp]);
+        profiles.forEach((p, idx) => {
+          const rawSat = evalTrapezoid(candidate, p[axisProp]);
+          const spWeight = weights[validKeys[idx]] != null ? Math.max(0.2, Math.min(2.0, weights[validKeys[idx]])) : 1.0;
+          const sat = Math.max(0, 1.0 - (spWeight * (1.0 - rawSat)));
           if (sat < minSatForCandidate) minSatForCandidate = sat;
         });
 
@@ -380,13 +459,21 @@
           bestVal = candidate;
         }
       }
-      return { bestVal, satisfaction: maxMinSat };
+
+      // Satisfacción biológica real en el punto óptimo seleccionado
+      const actualSats = profiles.map((p) => evalTrapezoid(bestVal, p[axisProp]));
+      const actualMinSat = Math.min(...actualSats);
+      return { bestVal, satisfaction: actualMinSat };
     };
 
     const optT = solveMinimaxAxis('tempC', 8, 32, 48);
     const optRh = solveMinimaxAxis('rhPct', 70, 100, 30);
     const optCo2 = solveMinimaxAxis('co2Ppm', 400, 3000, 52);
     const optLux = solveMinimaxAxis('lux', 100, 2500, 48);
+
+    const tFinal = Math.round(optT.bestVal * 10) / 10;
+    const rhFinal = Math.round(optRh.bestVal);
+    const vpdFinal = Math.round(calcVPD(tFinal, rhFinal) * 1000) / 1000;
 
     let verdict = 'CO-CULTIVO FACTIBLE';
     let badge = '🟢';
@@ -396,6 +483,12 @@
     } else if (groupScore < 70) {
       verdict = 'CO-CULTIVO CON RENDIMIENTO SUB-ÓPTIMO';
       badge = '🟡';
+    }
+
+    if (vpdFinal < 0.15) {
+      allPenalties.add(`VPD resultante muy bajo (${vpdFinal} kPa). Riesgo de condensación líquida sobre basidiocarpos y bacteriosis.`);
+    } else if (vpdFinal > 0.45) {
+      allPenalties.add(`VPD resultante elevado (${vpdFinal} kPa). Riesgo de deshidratación acelerada de primordios.`);
     }
 
     return {
@@ -410,18 +503,22 @@
         luz: Math.round(optLux.satisfaction * 100),
       },
       setpoints: {
-        tempC: Math.round(optT.bestVal * 10) / 10,
-        rhPct: Math.round(optRh.bestVal),
+        tempC: tFinal,
+        rhPct: rhFinal,
         co2Ppm: Math.round(optCo2.bestVal / 50) * 50,
         lux: Math.round(optLux.bestVal / 50) * 50,
+        vpdKpa: vpdFinal,
       },
       biologicalAlerts: Array.from(allPenalties),
+      penalties: Array.from(allPenalties),
       bottlenecks,
     };
   };
 
   const api = {
     SPECIES_CLIMATE_PROFILES,
+    SPECIES_KEY_ALIASES,
+    resolveSpeciesKey,
     calcPairwiseCompatibility,
     generateFullMatrix,
     optimizeChamberSetpoints,

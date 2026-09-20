@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>07 · Flujo móvil de campo · Setas de la Peña (DS-2026)</title>
+  <link rel="stylesheet" href="../../operations.css">
+  <link rel="stylesheet" href="../_shell.css">
+  <style>
+    .mobile-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .mobile-frame {
+      width: 100%;
+      max-width: 390px;
+      background: var(--surface-page);
+      border: 2px solid var(--border-heavy);
+      padding: 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    .mobile-statusbar {
+      background: var(--surface-panel);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .mobile-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .workflow-step {
+      border: 1px solid var(--border-hairline);
+      background: var(--surface-panel);
+      padding: 14px;
+    }
+    .workflow-step--active {
+      border-left: 4px solid var(--brand-accent-text);
+      background: var(--surface-page);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <div class="stage stage--col mobile-stage">
+    <div class="spec">07 · Flujo operativo móvil (modo campo · viewport 390px) · Sincronización sin conexión</div>
+
+    <!-- Sync status indicators demo banner -->
+    <div style="max-width: 390px; width: 100%; margin-bottom: 12px; display: flex; justify-content: space-between;">
+      <span class="sdp-badge sdp-badge--ok">✓ Sincronizado</span>
+      <span class="sdp-badge sdp-badge--warn">◌ 2 pendientes</span>
+      <span class="sdp-badge sdp-badge--err">✕ Sin conexión</span>
+    </div>
+
+    <div class="mobile-frame">
+      <!-- Status bar -->
+      <div class="mobile-statusbar">
+        <span class="t-micro" style="font-weight: bold;">Setas OS · Campo</span>
+        <span class="sdp-sync-chip sdp-sync-chip--pending">◌ Sin conexión · 2 pendientes</span>
+      </div>
+
+      <!-- App Header -->
+      <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-heavy); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div class="t-micro">Operario: C. Peña (Tenjo)</div>
+          <div class="t-heading" style="font-size: 16px; font-weight: bold;">Registro de cosecha</div>
+        </div>
+        <button type="button" class="sdp-btn sdp-btn--secondary sdp-btn--field" style="padding: 6px 12px; min-height: 44px;">
+          Cambiar
+        </button>
+      </div>
+
+      <div class="mobile-content">
+        <!-- Step 1: Scan / Resolve -->
+        <div class="workflow-step">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="t-micro" style="color: var(--text-secondary);">Paso 1 · Escaneo QR</span>
+            <span class="t-micro" style="color: var(--status-ok);">✓ Resuelto</span>
+          </div>
+          <div class="t-data" style="font-size: 14px; margin-top: 4px; font-weight: bold;">
+            LOTE-2026-0817-SHI
+          </div>
+          <div class="t-small" style="color: var(--text-secondary);">
+            <i>Lentinula edodes</i> · Sala 02 · Estantería B-3
+          </div>
+        </div>
+
+        <!-- Step 2: Batch State -->
+        <div class="workflow-step">
+          <div class="t-micro" style="color: var(--text-secondary);">Paso 2 · Estado de lote</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+            <span class="sdp-badge sdp-badge--ok">Fructificación · Ola 1</span>
+            <span class="t-data">Día 14</span>
+          </div>
+          <div class="t-small" style="margin-top: 6px; color: var(--text-secondary);">
+            Bolsas activas: 118 / 120 · Humedad sala: 88 %
+          </div>
+        </div>
+
+        <!-- Step 3: Action Execution (Active Form) -->
+        <div class="workflow-step workflow-step--active">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="t-micro" style="color: var(--brand-accent-text); font-weight: bold;">Paso 3 · Registrar acción</span>
+            <span class="sdp-provenance">● Manual</span>
+          </div>
+
+          <form style="margin-top: 10px;" onsubmit="return false;">
+            <div class="form-group">
+              <label class="sdp-label t-label" for="harvest-weight">Peso cosechado total (kg)</label>
+              <input type="number" id="harvest-weight" class="sdp-input sdp-input--field" step="0.05" value="14.25" style="font-size: 18px; font-weight: bold; height: 48px;">
+            </div>
+
+            <div class="form-group">
+              <label class="sdp-label t-label">Clasificación de calidad</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button type="button" class="sdp-btn sdp-btn--field sdp-btn--primary" style="min-height: 48px;">
+                  Grado A (11,8 kg)
+                </button>
+                <button type="button" class="sdp-btn sdp-btn--field sdp-btn--secondary" style="min-height: 48px;">
+                  Grado B (2,45 kg)
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="sdp-label t-label" for="dest-crate">Canastilla / Destino</label>
+              <input type="text" id="dest-crate" class="sdp-input sdp-input--field" value="CAN-04 · Cuarto frío" style="height: 48px;">
+            </div>
+
+            <div style="margin-top: 16px;">
+              <button type="submit" class="sdp-btn sdp-btn--primary sdp-btn--field" style="width: 100%; min-height: 52px; font-size: 15px; font-weight: bold;">
+                Confirmar registro (sin conexión)
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 4: Local Queue Confirmation -->
+        <div class="workflow-step" style="border-style: dashed;">
+          <div class="t-micro" style="color: var(--text-secondary);">Cola local de acciones</div>
+          <div class="t-small" style="margin-top: 4px;">
+            Se guardará en IndexedDB local hasta recuperar señal WiFi de sala de control.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Mobile Footer Touch Area -->
+      <div style="padding: 12px 16px; background: var(--surface-panel); border-top: 1px solid var(--border-heavy); display: flex; justify-content: space-between; align-items: center;">
+        <span class="t-micro">Tenjo campo · v2026.1</span>
+        <button type="button" class="sdp-btn sdp-btn--secondary sdp-btn--field" style="min-height: 44px; padding: 0 16px;">
+          Volver al menú
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

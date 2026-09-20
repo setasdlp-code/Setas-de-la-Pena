@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>06 · Sala de fructificación · Telemetría (DS-2026)</title>
+  <link rel="stylesheet" href="../../operations.css">
+  <link rel="stylesheet" href="../_shell.css">
+  <style>
+    .room-container { max-width: 920px; width: 100%; background: var(--surface-page); border: 1px solid var(--border-heavy); padding: 32px; }
+    .room-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+    .actuators-bar { display: flex; gap: 16px; background: var(--surface-panel); border: 1px solid var(--border-hairline); padding: 16px; align-items: center; justify-content: space-between; }
+  </style>
+</head>
+<body data-mode="control" data-content-status="illustrative">
+  <div class="stage stage--col">
+    <div class="spec">06 · Control ambiental de sala (modo control) · Sensórica y actuadores</div>
+
+    <div class="room-container">
+      <header style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--border-heavy); padding-bottom: 12px;">
+        <div>
+          <div class="t-label">Telemetría en vivo · ESP32 / SCD30</div>
+          <h1 style="margin: 0; font: var(--t-display-02); color: var(--text-primary);">Sala 02 · Fructificación</h1>
+        </div>
+        <div style="text-align: right;">
+          <span class="sdp-badge sdp-badge--ok">Condiciones en rango (OK)</span>
+          <div class="t-micro" style="margin-top: 4px;">Última lectura: hace 12 seg</div>
+        </div>
+      </header>
+
+      <div class="room-tiles">
+        <!-- CO2 -->
+        <div class="sdp-tele">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="sdp-tele__k">Dióxido de carbono (CO₂)</span>
+            <span class="sdp-provenance">● Medido</span>
+          </div>
+          <div class="sdp-tele__v">845<span class="sdp-tele__u">PPM</span></div>
+          <div class="sdp-tele__meter"><span style="width: 55%;"></span></div>
+          <div class="t-micro" style="display: flex; justify-content: space-between;">
+            <span>Objetivo: 800 - 950 ppm</span>
+            <span>Ventilación auto</span>
+          </div>
+        </div>
+
+        <!-- Humedad Relativa -->
+        <div class="sdp-tele">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="sdp-tele__k">Humedad relativa (HR)</span>
+            <span class="sdp-provenance">● Medido</span>
+          </div>
+          <div class="sdp-tele__v">88.2<span class="sdp-tele__u">%</span></div>
+          <div class="sdp-tele__meter"><span style="width: 88%;"></span></div>
+          <div class="t-micro" style="display: flex; justify-content: space-between;">
+            <span>Objetivo: 85 - 92 %</span>
+            <span>Nebulizador pulso</span>
+          </div>
+        </div>
+
+        <!-- Temperatura -->
+        <div class="sdp-tele">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="sdp-tele__k">Temperatura ambiente</span>
+            <span class="sdp-provenance">● Medido</span>
+          </div>
+          <div class="sdp-tele__v">18.4<span class="sdp-tele__u">°C</span></div>
+          <div class="sdp-tele__meter"><span style="width: 62%;"></span></div>
+          <div class="t-micro" style="display: flex; justify-content: space-between;">
+            <span>Punto de consigna: 18,0 - 19,0 °C</span>
+            <span>Estable</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actuators-bar">
+        <div>
+          <span class="t-label">Estado de actuadores y relés</span>
+          <div class="t-small" style="color: var(--text-secondary);">Automatización por umbral de sensor local (funciona sin conexión)</div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <span class="sdp-badge sdp-badge--ok">Extractor: ciclo 4/15 min</span>
+          <span class="sdp-badge sdp-badge--ok">Humidificador: espera</span>
+          <span class="sdp-badge sdp-badge--ok">Iluminación: 12 h día</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* DS-2026 · Core: Interaction (Focus, touch targets, reduced motion) */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* FIELD touch safety is a surface contract, not a per-component suggestion. */
+.touch-target,
+[data-mode="field"] button,
+[data-mode="field"] a[href],
+[data-mode="field"] [role="button"],
+[data-mode="field"] input,
+[data-mode="field"] select,
+[data-mode="field"] textarea {
+  min-height: var(--tap-target-min, 44px) !important;
+  min-width: var(--tap-target-min, 44px) !important;
+  box-sizing: border-box;
+}
+
+/* Interactive inline elements need a real box; form controls keep native layout semantics. */
+[data-mode="field"] button,
+[data-mode="field"] a[href],
+[data-mode="field"] [role="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-mode="field"] .sdp-btn--field {
+  min-height: var(--field-cell-min-height, 48px) !important;
+}
+
+/* Disabled Contract */
+:disabled,
+[aria-disabled="true"],
+.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

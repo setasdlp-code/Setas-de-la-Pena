@@ -14,12 +14,31 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const require = createRequire(
-  '/Users/sebastianpinzon/Projects/Setas-de-la-Pena/field-os-simulador/setas-os/package.json'
-);
-const { chromium } = require('playwright');
-
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function resolveChromium() {
+  const candidatePkgs = [
+    path.resolve(ROOT, '../../field-os-simulador/setas-os/package.json'),
+    '/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/field-os-simulador/setas-os/package.json',
+  ];
+  for (const pkg of candidatePkgs) {
+    if (existsSync(pkg)) {
+      try {
+        const req = createRequire(pkg);
+        const pw = req('playwright');
+        if (pw?.chromium) return pw.chromium;
+      } catch {}
+      try {
+        const req = createRequire(pkg);
+        const pw = req('@playwright/test');
+        if (pw?.chromium) return pw.chromium;
+      } catch {}
+    }
+  }
+  throw new Error('Playwright not found in candidate package.json paths.');
+}
+
+const chromium = resolveChromium();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',

@@ -1,0 +1,28 @@
+/* DS-2026 · Operations: Tables, Inventory & Substrate Properties */
+.sdp-table { width: 100%; border-collapse: collapse; }
+.sdp-table th {
+  text-align: left; font: var(--t-label); letter-spacing: var(--tracking-label);
+  text-transform: uppercase; color: var(--text-metadata);
+  padding: var(--space-1); border-bottom: var(--rule-heavy); white-space: nowrap;
+}
+.sdp-table td { font: var(--t-data); color: var(--text-primary); padding: var(--space-1); border-bottom: var(--rule-hairline); }
+.sdp-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.sdp-table td.name { font: var(--t-small); }
+.sdp-table td.name i { font-family: var(--font-editorial); font-size: var(--size-small); }
+.sdp-table tbody tr:nth-child(even) { background: var(--surface-panel); }
+.sdp-table .is-ok    { color: var(--status-ok); }
+.sdp-table .is-warn  { color: var(--status-warn-text); }
+.sdp-table .is-error { color: var(--status-error); }
+
+/* Receta & Substrate proportion bars */
+.sdp-receta { border: var(--rule-frame); background: var(--surface-page); padding: var(--space-3); display: grid; gap: var(--space-2); }
+.sdp-receta__hd { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); border-bottom: var(--rule-hairline); padding-bottom: var(--space-1); }
+.sdp-receta__ing { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.sdp-receta__row { display: grid; grid-template-columns: 64px 1fr auto; gap: var(--space-2); align-items: center; }
+.sdp-receta__name { font: var(--t-body); }
+.sdp-receta__pct  { font: var(--t-data); font-size: var(--size-body); color: var(--text-primary); }
+.sdp-receta__prop { grid-column: 2 / -1; height: 2px; background: var(--surface-recessed); }
+.sdp-receta__prop span { display: block; height: 100%; background: var(--soil); }
+.sdp-receta__steps { counter-reset: step; display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; border-top: var(--rule-hairline); padding-top: var(--space-2); }
+.sdp-receta__step { display: grid; grid-template-columns: 28px 1fr; gap: var(--space-1); font: var(--t-small); color: var(--text-primary); }
+.sdp-receta__step::before { counter-increment: step; content: counter(step, decimal-leading-zero); font: var(--t-label); letter-spacing: var(--tracking-label); color: var(--text-metadata); }

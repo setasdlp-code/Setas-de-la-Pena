@@ -29,6 +29,32 @@ GOOGLE_APPLICATION_CREDENTIALS=./service-account.json \
 La cuenta debe cerrar sesión y volver a entrar (o refrescar su ID token)
 para que el claim tome efecto en el cliente.
 
+## Backfill de lotes viejos (`firebase/scripts/backfill-public-lotes.js`)
+
+`public-trace-sync.js` solo sincroniza hacia adelante: lotes creados o
+cosechas registradas *antes* de que ese sync existiera nunca escriben en
+`public_lotes`, así que su QR impreso apunta a una ficha pública vacía.
+Este script recorre `bitacora_lotes`/`bitacora_cosechas` una sola vez y
+llena ese hueco, aplicando la misma sanitización que el sync automático
+(nunca costo, proveedor, receta completa, notas).
+
+```
+npm install --no-save firebase-admin
+
+# vista previa, no escribe nada:
+GOOGLE_APPLICATION_CREDENTIALS=./service-account.json \
+  node firebase/scripts/backfill-public-lotes.js --dry-run
+
+# backfill real:
+GOOGLE_APPLICATION_CREDENTIALS=./service-account.json \
+  node firebase/scripts/backfill-public-lotes.js
+```
+
+Es idempotente — correrlo más de una vez no duplica nada, solo
+re-escribe los mismos documentos. No hace falta que las reglas de
+Firestore ya estén desplegadas para correrlo: usa Admin SDK, que ignora
+`firestore.rules` por diseño.
+
 ## Pruebas de las reglas (`test/firestore.rules.test.js`)
 
 Requieren el emulador de Firestore (Java 11+ instalado) y las

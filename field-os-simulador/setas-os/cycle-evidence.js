@@ -12,6 +12,8 @@
     return globalThis.SetasTelemetry;
   };
 
+  const getHistory = () => typeof module !== 'undefined' && module.exports ? require('./historical-calibration.js') : globalThis.SetasHistoricalCalibration;
+
   const toKg = (value, unit) => {
     const n = Number(value);
     if (!Number.isFinite(n)) return 0;
@@ -61,6 +63,7 @@
     if (!telem?.aggregateTelemetry) throw new Error('SetasTelemetry unavailable');
 
     const stats = bitacora.calcLoteStats(lote, bolsas, cosechas);
+    const finalOutcome = getHistory().batchOutcome(lote, cosechas);
     const cycleReadings = telemetry.filter((r) => telem.readingBelongsToCycle(r, cycle));
     const environment = telem.aggregateTelemetry(cycleReadings);
     const flushes = harvestByFlush(cosechas);
@@ -90,8 +93,11 @@
       recipeSnapshot,
       ingredientLots: ingredientLots.map((x) => ({ ...x })),
       spawnLot: spawnLot ? { ...spawnLot } : null,
+      outcome: finalOutcome.outcome,
+      outcomeExclusionReason: finalOutcome.exclusionReason || null,
+      batchState: lote.lifecycleState || lote.estado || null,
       metrics: stats ? {
-        be_pct: stats.be,
+        be_pct: finalOutcome.be,
         contamination_pct: stats.contPct,
         colonization_days: stats.diasCol,
         total_fresh_kg: stats.totalFresco,
@@ -122,7 +128,10 @@
       if (recipeVersionId && r.recipeSnapshot?.versionId !== recipeVersionId && r.recipeSnapshot?.id !== recipeVersionId) return false;
       return true;
     });
-    const completed = filtered.filter(r => r.metrics?.total_fresh_kg > 0);
+    const eligibility = getHistory().assessHistory(filtered.map(r => ({...r,
+      ebReal:r.metrics?.be_pct, recipe:r.recipeSnapshot?.recipe || [],
+      exclusionReason:r.outcomeExclusionReason || null})));
+    const completed = eligibility.eligibleRows;
     const withEnvironment = completed.filter(r => (r.telemetrySummary?.metricsWithValidData || 0) >= 2);
     const withTraceability = completed.filter(r => r.recipeSnapshot && (r.ingredientLots || []).length > 0);
     // Observaciones históricas por sí solas se limitan a medium; high queda
@@ -135,10 +144,13 @@
       filters: { speciesId, recipeVersionId },
       summary: {
         sampleSize: completed.length,
+        excludedRecords: eligibility.excludedN,
+        exclusionReasons: eligibility.exclusionReasons,
         recordsWithEnvironment: withEnvironment.length,
         recordsWithFullIngredientTraceability: withTraceability.length,
       },
       records: completed,
+      observations: eligibility.observations,
     };
   };
 

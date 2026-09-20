@@ -1,7 +1,7 @@
 
 
 
-const {useState,useMemo,useEffect,useRef}=React;
+const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // --- Bio-Check & Lab Extraction storage helpers ---
 const BIO_CHECK_KEY = 'setas_os_bio_check';
@@ -88,7 +88,7 @@ function BioCheck() {
   return (
     <div className="bio-check" style={{padding: '24px', maxWidth: 800, margin: '0 auto'}}>
       <h2 style={{fontFamily: 'var(--font-serif, serif)', fontSize: '1.5rem', marginBottom: 8, color: 'var(--ink-900)'}}>Checklist Digital de Bioseguridad</h2>
-      {allChecked && <div className="badge" style={{display:'inline-block', padding:'4px 10px', background:'var(--moss-100, #e8f0e4)', color:'var(--moss-800, #2e5a36)', borderRadius:4, fontWeight:700, marginBottom:16}}>✅ Bio‑Check OK</div>}
+      {allChecked && <div className="badge" style={{display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'var(--moss-100, #e8f0e4)', color:'var(--moss-800, #2e5a36)', borderRadius:4, fontWeight:700, marginBottom:16}}><AppIcon name="check" size={13} color="var(--moss-800, #2e5a36)" /> Bio‑Check OK</div>}
       <ul style={{listStyle:'none', padding:0}}>
         {items.map(item => (
           <li key={item.id} style={{marginBottom: '1rem', background:'var(--paper-50, #fff)', border:'1px solid var(--border-soft, #e2e4dd)', padding:'14px', borderRadius:6}}>
@@ -265,6 +265,28 @@ function calculateCost(biomassGrams, solventLiters, speciesKey, methodKey, rawBi
   const { yieldGrams } = calculateYield(biomassGrams, speciesKey, methodKey, factors);
   const costPerGramExtract = yieldGrams > 0 ? Math.round(totalCost / yieldGrams) : 0;
   return { biomassCost, solventCost, totalCost, costPerGramExtract };
+}
+
+// Decodificador QR de respaldo para navegadores sin BarcodeDetector — todo
+// iOS hoy, por obligación de Apple de correr sobre WebKit. jsQR es puro JS
+// (decodifica ImageData de un canvas, sin depender de una API nativa), así
+// que funciona igual en Safari/Chrome-iOS que en cualquier escritorio.
+// Se carga bajo demanda (no en el arranque) porque la mayoría de operadores
+// en Android/desktop nunca lo necesita — cachea la promesa para no pedirlo
+// dos veces si el operador abre y cierra el escáner varias veces.
+let jsQRLoadPromise = null;
+function loadJsQR() {
+  if (typeof window !== 'undefined' && window.jsQR) return Promise.resolve(window.jsQR);
+  if (jsQRLoadPromise) return jsQRLoadPromise;
+  jsQRLoadPromise = new Promise((resolve, reject) => {
+    if (typeof document === 'undefined') { reject(new Error('Sin document')); return; }
+    const script = document.createElement('script');
+    script.src = 'vendor/jsQR.js';
+    script.onload = () => (window.jsQR ? resolve(window.jsQR) : reject(new Error('jsQR no se expuso en window tras cargar')));
+    script.onerror = () => { jsQRLoadPromise = null; reject(new Error('No se pudo cargar el decodificador QR (sin conexión y sin caché previa)')); };
+    document.head.appendChild(script);
+  });
+  return jsQRLoadPromise;
 }
 
 function generateBatchQrDataUrl(batch) {
@@ -621,7 +643,7 @@ function LabExtraction() {
 
             {factors[speciesKey]?.methods[methodKey]?.notes && (
               <div style={{ fontSize: "0.82rem", color: "var(--ink-600)", background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 4 }}>
-                ℹ {factors[speciesKey].methods[methodKey].notes}
+                <AppIcon name="info" size={12} style={{marginRight:4}} /> {factors[speciesKey].methods[methodKey].notes}
               </div>
             )}
           </div>
@@ -684,21 +706,21 @@ function LabExtraction() {
                           title="Generar QR de Trazabilidad"
                           style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
-                          📱 QR
+                          <AppIcon name="qr" size={12} style={{marginRight:4}} /> QR
                         </button>
                         <button
                           onClick={() => exportBatchPdfStub(b)}
                           title="Exportar Certificado"
                           style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
-                          📄 Cert
+                          <AppIcon name="file" size={12} style={{marginRight:4}} /> Cert
                         </button>
                         <button
                           onClick={() => handleDeleteBatch(b.id)}
                           title="Eliminar registro"
                           style={{ padding: "4px 8px", background: "transparent", border: "1px solid #e57373", color: "#c62828", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
-                          ✕
+                          <AppIcon name="close" size={12} />
                         </button>
                       </div>
                     </td>
@@ -778,6 +800,17 @@ const IMG={
   reishi:(window.__resources&&window.__resources.img_reishi)||'_standalone_imgs/reishi.png',
   enoki:(window.__resources&&window.__resources.img_enoki)||'_standalone_imgs/enoki.png',
   nameko:(window.__resources&&window.__resources.img_nameko)||'_standalone_imgs/nameko.png',
+};
+
+const resolveLogo = (path = '_standalone_imgs/logo-sdlp.png') => {
+  if (typeof window !== 'undefined' && typeof window.resolveImg === 'function') {
+    return window.resolveImg(path);
+  }
+  if (typeof window !== 'undefined' && window.__resources) {
+    if (window.__resources.imgLogoSdlp) return window.__resources.imgLogoSdlp;
+    if (window.__resources.img_logo_sdlp) return window.__resources.img_logo_sdlp;
+  }
+  return path;
 };
 
 const SPP_DIFFICULTY={p_ostreatus_gris:'Baja',p_ostreatus_blanco:'Baja',p_djamor_rosa:'Media',p_eryngii:'Alta',shiitake:'Alta',lions_mane:'Media',reishi:'Muy alta',enoki:'Alta',nameko:'Media'};
@@ -1004,7 +1037,7 @@ const SPP={
   p_ostreatus_gris:{name:'Orellana Gris',scientific:'Pleurotus ostreatus',cn_optimal:{min:25,max:50,ideal:35},n_optimal:{min:0.8,max:2.0,ideal:1.4},ph_optimal:{min:6.0,max:7.5},moisture:{ideal:65},eb_baseline:90,eb_optimal:130,supplementation_max:20,spawn_rate:8,notes:'La más fácil de cultivar. Tolera amplio rango de C:N. Ideal clima Sabana.',temp_fruit:'12–22°C'},
   p_ostreatus_blanco:{name:'Orellana Blanca',scientific:'Pleurotus florida',cn_optimal:{min:25,max:45,ideal:30},n_optimal:{min:1.0,max:2.0,ideal:1.5},ph_optimal:{min:6.0,max:7.0},moisture:{ideal:65},eb_baseline:80,eb_optimal:120,supplementation_max:18,spawn_rate:8,notes:'Tallos blancos premium.',temp_fruit:'14–20°C'},
   p_djamor_rosa:{name:'Orellana Rosa',scientific:'Pleurotus djamor',cn_optimal:{min:30,max:50,ideal:40},n_optimal:{min:0.8,max:1.8,ideal:1.2},ph_optimal:{min:5.5,max:6.5},moisture:{ideal:67},eb_baseline:70,eb_optimal:110,supplementation_max:15,spawn_rate:7,notes:'TERMÓFILA. Aborta primordios bajo 15°C.',temp_fruit:'20–28°C'},
-  p_eryngii:{name:'Seta de Cardo',scientific:'Pleurotus eryngii',cn_optimal:{min:40,max:65,ideal:50},n_optimal:{min:0.8,max:1.6,ideal:1.2},ph_optimal:{min:5.5,max:7.0},moisture:{ideal:63},eb_baseline:60,eb_optimal:90,supplementation_max:25,spawn_rate:5,notes:'PREMIUM. Requiere esterilización. C:N alto 40–65 (literatura Kim 2011). Precio 2–3× orellana.',temp_fruit:'12–18°C'},
+  p_eryngii:{name:'Seta de Cardo',scientific:'Pleurotus eryngii',cn_optimal:{min:40,max:65,ideal:50},n_optimal:{min:0.8,max:1.6,ideal:1.2},ph_optimal:{min:5.5,max:7.0},moisture:{ideal:63},eb_baseline:60,eb_optimal:90,supplementation_max:25,spawn_rate:5,notes:'PREMIUM. Requiere esterilización. C:N 25–40 en bolsa suplementada esterilizada (Li 2024). Precio 2–3× orellana.',temp_fruit:'12–18°C'},
   shiitake:{name:'Shiitake',scientific:'Lentinula edodes',cn_optimal:{min:35,max:70,ideal:50},n_optimal:{min:0.6,max:1.2,ideal:0.9},ph_optimal:{min:5.0,max:6.0},moisture:{ideal:60},eb_baseline:50,eb_optimal:100,supplementation_max:20,spawn_rate:5,notes:'Ciclo largo 90–120 d. REQUIERE ESTERILIZACIÓN.',temp_fruit:'12–18°C'},
   lions_mane:{name:'Melena de León',scientific:'Hericium erinaceus',cn_optimal:{min:25,max:48,ideal:33},n_optimal:{min:1.0,max:2.0,ideal:1.5},ph_optimal:{min:5.0,max:6.5},moisture:{ideal:65},eb_baseline:50,eb_optimal:160,supplementation_max:25,spawn_rate:5,notes:'MEDICINAL premium. Master Mix (madera dura + cascarilla de soya 50:50) = sustrato óptimo, EB 150–180%. Evitar eucalipto.',temp_fruit:'15–20°C'},
   reishi:{name:'Reishi',scientific:'Ganoderma lucidum',cn_optimal:{min:35,max:65,ideal:50},n_optimal:{min:0.7,max:1.2,ideal:0.9},ph_optimal:{min:4.5,max:6.0},moisture:{ideal:60},eb_baseline:30,eb_optimal:60,supplementation_max:15,spawn_rate:5,notes:'MEDICINAL. Ciclo 4–6 meses.',temp_fruit:'20–26°C'},
@@ -1022,7 +1055,7 @@ const INGS=[
   {id:'bagazo_caña',name:'Bagazo de caña fresco',cat:'base',cn:60,n:.7,c:42,moisture:55,cra:4,ph:5.5,dig:7,role:'base_carbono',tags:['Base','Local','Fresco 50–60% H₂O'],cost:1200,cs:['p_ostreatus_gris','p_ostreatus_blanco','p_djamor_rosa','shiitake'],notes:'Compatibilidad con shiitake verificada en literatura: bagazo+salvado de trigo+aserrín en mezcla optimizada (Frontiers in Microbiology 2024, PMC11151849).'},
   {id:'aserrin_roble',name:'Aserrín de roble',cat:'base',cn:500,n:.1,c:50,moisture:12,cra:3,ph:4.5,dig:2,role:'base_carbono',tags:['Base','Madera dura'],cost:2500,cs:['shiitake','lions_mane','reishi','nameko']},
   {id:'aserrin_caucho',name:'Aserrín de caucho (Hevea brasiliensis)',cat:'base',cn:65,n:.75,c:49,moisture:12,cra:3,ph:5.8,dig:5,role:'base_carbono',tags:['Base','Madera','No disponible en Tenjo — requiere transporte desde zonas cálidas (Meta/Caquetá)'],cost:9000,cs:['lions_mane'],notes:'C:N=65.48 verificado en Nature Sci Rep 2023 (doi:10.1038/s41598-023-40601-y) — rinde mejor que aserrín de bambú (C:N=33.44) para Hericium erinaceus. %N y %C estimados a partir del C:N reportado (no medidos directamente en la fuente). El caucho no se cultiva en la Sabana de Bogotá (2600msnm, clima frío) — este insumo requeriría transporte desde plantaciones en clima cálido colombiano; costo estimado incluye ese transporte, sin cotización real de proveedor.'},
-  {id:'aserrin_eucalipto',name:'Aserrín de eucalipto',cat:'base',cn:350,n:.15,c:50,moisture:12,cra:3,ph:5.0,dig:3,role:'base_carbono',tags:['Base','Madera','⚠Aceites: rinde menos que madera dura'],cost:2000,cs:['p_ostreatus_gris','shiitake']},
+  {id:'aserrin_eucalipto',name:'Aserrín de eucalipto',cat:'base',cn:350,n:.15,c:50,moisture:12,cra:3,ph:5.0,dig:3,role:'base_carbono',tags:['Base','Madera','Aceites: rinde menos que madera dura'],cost:2000,cs:['p_ostreatus_gris','shiitake']},
   {id:'aserrin_pino',name:'Aserrín de pino fresco (requiere pretratamiento)',cat:'base',cn:600,n:.08,c:50,moisture:12,cra:2.5,ph:4.5,dig:1,role:'base_carbono',tags:['NO usar fresco','Terpenos inhibitorios','Exige lavado/compostaje 3–4 m'],cost:1500,cs:[],notes:'Terpenos y resinas abortan el micelio de Pleurotus/Hericium de inmediato. PROHIBIDO en fresco: requiere compostaje térmico prolongado (3–4 meses) o lavado químico parametrizado antes de cualquier uso. Para producción real usar la variante compostada.'},
   {id:'aserrin_pino_compostado',name:'Aserrín pino compostado (3–4 m)',cat:'base',cn:200,n:.2,c:40,moisture:15,cra:3,ph:5.5,dig:4,role:'base_carbono',tags:['Base','Gratis'],cost:2200,cs:['p_ostreatus_gris','shiitake','lions_mane']},
   {id:'aserrin_alamo',name:'Aserrín de álamo/sauce (Sabana)',cat:'base',cn:200,n:.20,c:45,moisture:12,cra:3.5,ph:5.5,dig:4,role:'base_carbono',tags:['Base','Madera','Sabana','Fácil conseguir'],cost:1800,cs:['p_ostreatus_gris','p_ostreatus_blanco','lions_mane','shiitake','reishi','nameko','enoki']},
@@ -1141,15 +1174,15 @@ const PRESETS={
   'orellana_rosa_calida':{name:'Orellana Rosa — Cálida Caña+Arroz (C:N≈39)',s:'p_djamor_rosa',i:[{id:'bagazo_caña',p:50},{id:'paja_arroz',p:20},{id:'borra_cafe',p:10},{id:'salvado_trigo',p:12},{id:'carbonato_calcio',p:5},{id:'yeso',p:3}]},
   /* ── Presets Sabana de Bogotá 2026 — ingredientes locales validados ── */
   // Alfalfa: paja_trigo×68 + pulpa_alfalfa(c33,n3.0)×17 + afrecho×8 → C:N≈35 ✓ | EB referenciado 166%
-  'alfalfa_eb166':{name:'★ Pulpa de Alfalfa — Máximo EB (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'paja_trigo',p:68},{id:'pulpa_alfalfa',p:17},{id:'afrecho_cerveceria',p:8},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'alfalfa_eb166':{name:'Pulpa de Alfalfa — Máximo EB (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'paja_trigo',p:68},{id:'pulpa_alfalfa',p:17},{id:'afrecho_cerveceria',p:8},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   // Uchuva: cascara_uchuva(c35,n1.2)×50 + paja_trigo×28 + borra×5 + salvado×10 → C:N≈33 ✓ (validado Colombia)
-  'uchuva_local':{name:'★ Uchuva Cundinamarca — Validado CO (C:N≈33)',s:'p_ostreatus_gris',i:[{id:'cascara_uchuva',p:50},{id:'paja_trigo',p:28},{id:'borra_cafe',p:5},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'uchuva_local':{name:'Uchuva Cundinamarca — Validado CO (C:N≈33)',s:'p_ostreatus_gris',i:[{id:'cascara_uchuva',p:50},{id:'paja_trigo',p:28},{id:'borra_cafe',p:5},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   // Floricultura: tallo_floricultura(c42,n0.9)×50 + paja_arroz×25 + afrecho×15 + borra×5 → C:N≈33 ✓ (exploración)
-  'floricultura_exploracion':{name:'★ Tallo de Floricultura — Exploración (C:N≈33)',s:'p_ostreatus_blanco',i:[{id:'tallo_floricultura',p:50},{id:'paja_arroz',p:25},{id:'afrecho_cerveceria',p:15},{id:'borra_cafe',p:5},{id:'carbonato_calcio',p:3},{id:'yeso',p:2}]},
+  'floricultura_exploracion':{name:'Tallo de Floricultura — Exploración (C:N≈33)',s:'p_ostreatus_blanco',i:[{id:'tallo_floricultura',p:50},{id:'paja_arroz',p:25},{id:'afrecho_cerveceria',p:15},{id:'borra_cafe',p:5},{id:'carbonato_calcio',p:3},{id:'yeso',p:2}]},
   // Tuza de maíz: tusa_maiz(c45,n0.7)×60 + salvado(c45,n2.8)×25 + borra(c47,n2.0)×8 → C:N≈35.2 ✓
-  'tuza_maiz_sabana':{name:'★ Tuza de Maíz — Estándar Sabana (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'tusa_maiz',p:60},{id:'salvado_trigo',p:25},{id:'borra_cafe',p:8},{id:'carbonato_calcio',p:4},{id:'yeso',p:3}]},
+  'tuza_maiz_sabana':{name:'Tuza de Maíz — Estándar Sabana (C:N≈35)',s:'p_ostreatus_gris',i:[{id:'tusa_maiz',p:60},{id:'salvado_trigo',p:25},{id:'borra_cafe',p:8},{id:'carbonato_calcio',p:4},{id:'yeso',p:3}]},
   // Circular: chips_poda×35 + raices_hidrop×15 + roble×25 + cascarilla_soya×8 + salvado×10 → C:N≈39 ✓
-  'circular_hidroponico':{name:'★ Circular Hidropónico — Economía Circular (C:N≈39)',s:'lions_mane',i:[{id:'chips_poda_urbana',p:35},{id:'raices_hidroponicas',p:15},{id:'aserrin_roble',p:25},{id:'cascarilla_soya',p:8},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
+  'circular_hidroponico':{name:'Circular Hidropónico — Economía Circular (C:N≈39)',s:'lions_mane',i:[{id:'chips_poda_urbana',p:35},{id:'raices_hidroponicas',p:15},{id:'aserrin_roble',p:25},{id:'cascarilla_soya',p:8},{id:'salvado_trigo',p:10},{id:'carbonato_calcio',p:5},{id:'yeso',p:2}]},
   /* ── Bodega Tenjo 2026 — formuladas con inventario propio (sin afrecho de cervecería) ── */
   'bodega_gris':{name:'⬡ Bodega — Orellana Gris (C:N≈33, solo inventario)',s:'p_ostreatus_gris',i:[{id:'bagazo_caña',p:50},{id:'salvado_trigo',p:20},{id:'borra_cafe',p:13},{id:'cascarilla_arroz',p:11},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
   'bodega_rosa':{name:'⬡ Bodega — Orellana Rosa (C:N≈42, solo inventario)',s:'p_djamor_rosa',i:[{id:'bagazo_caña',p:60},{id:'cascarilla_arroz',p:10},{id:'borra_cafe',p:9},{id:'cascara_cafe',p:8},{id:'salvado_trigo',p:7},{id:'carbonato_calcio',p:4},{id:'sulfato_magnesio',p:2}]},
@@ -1227,7 +1260,8 @@ const SppSvg=({sKey,c})=>{
   return <svg viewBox="0 0 70 90" width="66" height="79" style={{display:'block',overflow:'visible'}}>{m[sKey]||m.p_ostreatus_gris}</svg>;
 };
 
-const analyze=(recipe,sKey,ings=INGS)=>{
+const EB_PENALTY_BALANCE_BAND={min:95,max:105}; // castigo de EB por balance muy fuera de 100 — no es la tolerancia de guardado
+const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
   if(!recipe.length) return null;
   const tot=recipe.reduce((s,r)=>s+(parseFloat(r.p)||0),0);if(!tot) return null;
   let wC=0,wN=0,wPh=0,wDig=0,wCra=0,nP=0,suppP=0,suppMedP=0,baseP=0,addP=0,cafeP=0,manP=0,airP=0,densaP=0,incompat=[];
@@ -1240,10 +1274,9 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     // relación C:N — se usan solo como modificadores de pH y textura. Evita el sesgo de
     // dilución del denominador lignocelulósico.
     const esAditivoSeco=(g.role==='aditivo_ph'||g.role==='aditivo_estructura');
-    // C:N BASE SECA: los valores c/n de la BD son % materia seca → ponderar por fracción seca
-    // para corregir diferencias de humedad entre insumos (borra café 60% vs paja 12%).
-    const dryFrac=p*(1-Math.min(0.92,Math.max(0,(g.moisture||0)/100)));
-    if(g.cn>0&&!esAditivoSeco){wC+=g.c*dryFrac;wN+=g.n*dryFrac;nP+=dryFrac;}
+    // Los % de la receta ya están en base seca ("Porcentaje en base seca"): ponderar por p.
+    // Descontar humedad aquí la aplicaba dos veces y subestimaba insumos húmedos (D18).
+    if(g.cn>0&&!esAditivoSeco){wC+=g.c*p;wN+=g.n*p;nP+=p;}
     wPh+=g.ph*p; wDig+=g.dig*p; wCra+=g.cra*p;
     if(g.role==='suplemento_n') suppP+=p;
     if(g.role==='suplemento_medio') suppMedP+=p;
@@ -1261,8 +1294,9 @@ const analyze=(recipe,sKey,ings=INGS)=>{
   const avgCra=tot?wCra/tot:3;
   const suppTotalP=suppP+suppMedP;
   const suppEffectiveP=suppP+(suppMedP*0.6);
-  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);return g?s+(g.cost*(parseFloat(r.p)||0)/100):s;},0);
-  const sp=SPP[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
+  // COP por kg de mezcla SECA: el precio de bodega es por kg tal cual se recibe (D6).
+  const cost=recipe.reduce((s,r)=>{const g=ings.find(i=>i.id===r.id);if(!g) return s;const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100));return s+(g.cost/(1-m))*(parseFloat(r.p)||0)/100;},0);
+  const sp=spp[sKey];let eb=0,trichoderma=false,dynSpawn=sp?.spawn_rate||8;
   if(sp){
     const cF=Math.max(0,1-Math.pow(Math.abs(cn-sp.cn_optimal.ideal)/((sp.cn_optimal.max-sp.cn_optimal.min)/2),1.5));
     const nF=Math.max(0,1-Math.pow(Math.abs(avgN-sp.n_optimal.ideal)/((sp.n_optimal.max-sp.n_optimal.min)/2),1.5));
@@ -1273,7 +1307,7 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     else if(avgN>nThresh&&needsAutoclave){eb*=.80;}
     else if(needsAutoclave) eb*=.85;
     if(incompat.length) eb*=.9;
-    if(tot<95||tot>105) eb*=.95;
+    if(tot<EB_PENALTY_BALANCE_BAND.min||tot>EB_PENALTY_BALANCE_BAND.max) eb*=.95;
     // ── Modificadores multifactor de EB (penalizaciones ≤1: una receta en óptimo no se ve afectada) ──
     // pH fuera de rango: la acidez excesiva bloquea más que la alcalinidad ligera
     var phF=1;
@@ -1305,19 +1339,23 @@ const analyze=(recipe,sKey,ings=INGS)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 if (typeof window !== 'undefined') { window.INGS = INGS; window.SPP = SPP; window.analyze = analyze; }
 if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP = SPP; globalThis.analyze = analyze; }
 
 // ── Balance de masa: única fuente de verdad usada por Formulador, Ficha,
-//    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp.
-const MASS_BALANCE_TOL=0.5;
+//    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp,
+//    definida una sola vez en recipe-version.js (declarado antes de usarse
+//    aquí; el resto de los puentes UMD vive más abajo, junto a los módulos
+//    que importan).
+const SetasRecipeVersionApi=(typeof SetasRecipeVersion!=='undefined'?SetasRecipeVersion:(typeof require!=='undefined'?require('./recipe-version.js'):null));
+const MASS_BALANCE_TOL=SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced=a=>!!a&&Math.abs(a.tot-100)<=MASS_BALANCE_TOL;
 const massBalanceMsg=a=>{
   if(!a) return'';
   const d=a.tot-100;
-  if(Math.abs(d)<=MASS_BALANCE_TOL) return`Balance de masa: ${a.tot.toFixed(1)}% = 100% ✓`;
+  if(Math.abs(d)<=MASS_BALANCE_TOL) return`Balance de masa: ${a.tot.toFixed(1)}% = 100% (OK)`;
   return d<0?`Balance de masa: ${a.tot.toFixed(1)}% − 100% = ${d.toFixed(1)} pp · faltan ${Math.abs(d).toFixed(1)}%`
             :`Balance de masa: ${a.tot.toFixed(1)}% − 100% = +${d.toFixed(1)} pp · sobran ${d.toFixed(1)}%`;
 };
@@ -1325,16 +1363,16 @@ const massBalanceMsg=a=>{
 const diagnose=(a,sKey)=>{
   if(!a) return{main:'Selecciona ingredientes para comenzar.',sugs:[]};
   const{tot,cn,avgN,suppP,baseP,addP,cafeP,airP,densaP,incompat,eb,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct}=a;const s=[];
-  if(tot<95) s.push({t:'error',i:'⚠',tx:`Total ${tot.toFixed(1)}% — necesitas ${(100-tot).toFixed(1)}% más.`});
-  else if(tot>105) s.push({t:'error',i:'⚠',tx:`Total ${tot.toFixed(1)}% — reduce ${(tot-100).toFixed(1)}%.`});
+  if(tot<95) s.push({t:'error',i:'!',tx:`Total ${tot.toFixed(1)}% — necesitas ${(100-tot).toFixed(1)}% más.`});
+  else if(tot>105) s.push({t:'error',i:'!',tx:`Total ${tot.toFixed(1)}% — reduce ${(tot-100).toFixed(1)}%.`});
   if(sp){
     if(cn<sp.cn_optimal.min) s.push({t:'warning',i:'↓',tx:`C:N bajo (${cn.toFixed(1)}:1). Agrega base carbono. Objetivo ${sp.cn_optimal.min}–${sp.cn_optimal.max}:1.`});
     else if(cn>sp.cn_optimal.max) s.push({t:'warning',i:'↑',tx:`C:N alto (${cn.toFixed(1)}:1). Agrega salvado o café.`});
-    else s.push({t:'success',i:'✓',tx:`C:N óptimo (${cn.toFixed(1)}:1) para ${sp.name}.`});
-    if(trichoderma) s.push({t:'error',i:'⚠',tx:`COLAPSO TRICHODERMA: N=${avgN.toFixed(2)}% supera umbral crítico sin autoclave. EB cae ~85%. Opciones: reducir N, usar autoclave 121°C×90min, spawn ${dynSpawn}%+.`});
+    else s.push({t:'success',i:'',tx:`C:N óptimo (${cn.toFixed(1)}:1) para ${sp.name}.`});
+    if(trichoderma) s.push({t:'error',i:'!',tx:`COLAPSO TRICHODERMA: N=${avgN.toFixed(2)}% supera umbral crítico sin autoclave. EB cae ~85%. Opciones: reducir N, usar autoclave 121°C×90min, spawn ${dynSpawn}%+.`});
     else if(avgN<sp.n_optimal.min) s.push({t:'warning',i:'↓',tx:`Nitrógeno bajo (${avgN.toFixed(2)}%). Aumenta salvado o borra de café.`});
     else if(avgN>sp.n_optimal.max) s.push({t:'warning',i:'↑',tx:`Nitrógeno elevado (${avgN.toFixed(2)}%). Riesgo moderado. Spawn ajustado: ${dynSpawn}%.`});
-    else s.push({t:'success',i:'✓',tx:`Nitrógeno óptimo (${avgN.toFixed(2)}%). Spawn dinámico: ${dynSpawn}%.`});
+    else s.push({t:'success',i:'',tx:`Nitrógeno óptimo (${avgN.toFixed(2)}%). Spawn dinámico: ${dynSpawn}%.`});
     if(suppP>sp.supplementation_max) s.push({t:'error',i:'!',tx:`Suplementación ${suppP.toFixed(0)}% excede ${sp.supplementation_max}%. REQUIERE AUTOCLAVE 121°C×90min. Spawn: ${dynSpawn}%.`});
     // pH
     if(sp.ph_optimal){
@@ -1346,8 +1384,8 @@ const diagnose=(a,sKey)=>{
   if(baseP<50) s.push({t:'warning',i:'↓',tx:`Base carbono baja (${baseP.toFixed(0)}%). Mínimo 50%.`});
   if(addP<2) s.push({t:'warning',i:'!',tx:`Sin minerales. Agrega 2–4% carbonato/yeso.`});
   if(cafeP>30) s.push({t:'error',i:'!',tx:`Borra café ${cafeP.toFixed(0)}% — compactación. Máx 30%.`});
-  if(eucPct>20) s.push({t:'warning',i:'⚠',tx:`Aserín de eucalipto ${eucPct.toFixed(0)}% — aceites esenciales (cineol, terpineol) reducen colonización 20–35%. Máximo recomendado: 20%.`});
-  if(pescPct>3) s.push({t:'error',i:'⚠',tx:`Harina de pescado ${pescPct.toFixed(0)}% supera el 3% — riesgo elevado de ácaros y Sciaridae por olor. Reducir a ≤3% o eliminar.`});
+  if(eucPct>20) s.push({t:'warning',i:'!',tx:`Aserín de eucalipto ${eucPct.toFixed(0)}% — aceites esenciales (cineol, terpineol) reducen colonización 20–35%. Máximo recomendado: 20%.`});
+  if(pescPct>3) s.push({t:'error',i:'!',tx:`Harina de pescado ${pescPct.toFixed(0)}% supera el 3% — riesgo elevado de ácaros y Sciaridae por olor. Reducir a ≤3% o eliminar.`});
   else if(cafeP>0) s.push({t:'success',i:'',tx:`Café en proporción saludable (${cafeP.toFixed(0)}%).`});
   if(densaP>60&&airP<10) s.push({t:'error',i:'',tx:`Riesgo anaerobiosis: ${densaP.toFixed(0)}% material denso + solo ${airP.toFixed(0)}% aireador. Agrega 10–15% cascarilla de arroz o tamo.`});
   else if(densaP>40&&airP<8) s.push({t:'warning',i:'',tx:`Estructura densa (${densaP.toFixed(0)}% fino, ${airP.toFixed(0)}% aireador). Agrega 8–10% cascarilla.`});
@@ -1358,7 +1396,9 @@ const diagnose=(a,sKey)=>{
   // CRA
   const craLbl=avgCra>=4?'Alta — reduce agua de hidratación ~10%':avgCra<=2?'Baja — hidratar bien, revisar punto de campo':null;
   if(craLbl) s.push({t:'warning',i:'',tx:`CRA ${avgCra.toFixed(1)}/5 — ${craLbl}`});
-  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo 67–68%. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
+  const moistLbl=SetasSpeciesTargetsApi?.targetSourceLabel(sp?.targets,'moisture');
+  const moistNote=moistLbl==='Objetivo heredado'?' (valor heredado sin verificar)':moistLbl==='Objetivo genérico'?' (objetivo genérico)':'';
+  s.push({t:'success',i:'△',tx:`Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal??'—'}%${moistNote}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.`});
   if(incompat.length) s.push({t:'warning',i:'!',tx:`No ideales para ${sp?.name}: ${incompat.join(', ')}.`});
   // Transparencia del modelo: qué factores penalizan la EB y cuánto
   if(a.ebMods){
@@ -1366,7 +1406,7 @@ const diagnose=(a,sKey)=>{
     if(m.phF<1) pen.push(`pH −${Math.round((1-m.phF)*100)}%`);
     if(m.aerF<1) pen.push(`aireación −${Math.round((1-m.aerF)*100)}%`);
     if(m.digF<1) pen.push(`digestibilidad −${Math.round((1-m.digF)*100)}%`);
-    if(pen.length) s.push({t:'warning',i:'⚙',tx:`EB ajustada por: ${pen.join(', ')}. Corrige estos factores para acercarte al EB máximo de la especie.`});
+    if(pen.length) s.push({t:'warning',i:'-',tx:`EB ajustada por: ${pen.join(', ')}. Corrige estos factores para acercarte al EB máximo de la especie.`});
   }
   let main='';
   if(s.filter(x=>x.t==='error').length) main='Problemas críticos. Revisar antes de continuar.';
@@ -1398,10 +1438,24 @@ const {
   ? SetasRecipeOptimizer
   : (typeof require !== 'undefined' ? require('./recipe-optimizer.js') : {}));
 
+// ── Objetivos de formulación sourced por especie × sustrato — puente hacia
+//    species-targets.js. Solo se lee dentro del componente (effectiveSPP), en
+//    tiempo de render — no en la inicialización de este módulo — así que da
+//    igual que este bloque quede antes o después de que species-targets.js
+//    registre su global.
+const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
+
+// ── Plan de lanzamiento de lote y consumo de inventario — puente hacia
+//    launch-plan.js / inventory-consumption.js. BAG_TYPES ya está definido
+//    (línea ~1199), así que UNIT_INGREDIENT_IDS puede construirse aquí.
+const SetasLaunchPlanApi=(typeof SetasLaunchPlan!=='undefined'?SetasLaunchPlan:(typeof require!=='undefined'?require('./launch-plan.js'):null));
+const SetasInventoryConsumptionApi=(typeof SetasInventoryConsumption!=='undefined'?SetasInventoryConsumption:(typeof require!=='undefined'?require('./inventory-consumption.js'):null));
+const UNIT_INGREDIENT_IDS=BAG_TYPES.map(b=>b.stockId).filter(Boolean);
+
 // ── Calibración histórica — puente hacia historical-calibration.js ──
 // Deriva la eficiencia biológica de lotes REALES de Bitácora. Antes esto se
 // alimentaba del array `yields` del shell, que son 5 filas de demo inventadas.
-const { bitacoraEBRows, historicalEB } = (typeof SetasHistoricalCalibration !== 'undefined'
+const { bitacoraObservations, historicalEB, assessHistory, finiteEB, confirmedOutcome, describeHistory } = (typeof SetasHistoricalCalibration !== 'undefined'
   ? SetasHistoricalCalibration
   : (typeof require !== 'undefined' ? require('./historical-calibration.js') : {}));
 
@@ -1410,6 +1464,7 @@ const {
   SPECIES_FLUSH_PROFILES,
   calcThermalDelayFactor,
   calculateLotYieldAndFlushes,
+  calculateRemainingFlushes,
   calculateSowingRequirement,
   sowingRecommendation: engineSowingRecommendation,
   matchWeeklyCoverage: engineMatchWeeklyCoverage,
@@ -1426,6 +1481,7 @@ const {
   calcRequiredGaugePressurePsi: engineCalcRequiredGaugePressurePsi,
   calcTimeCompFactorAt15Psi: engineCalcTimeCompFactorAt15Psi,
   simulateCorePenetration: engineSimulateCorePenetration,
+  calcOptimalHoldTime: engineCalcOptimalHoldTime,
 } = (typeof SetasSterilization !== 'undefined'
   ? SetasSterilization
   : (typeof require !== 'undefined' ? require('./sterilization-kinetics.js') : {}));
@@ -1442,12 +1498,26 @@ const {
 // ── Fisiología Poscosecha y Cadena de Frío — puente hacia post-harvest-engine.js ──
 const {
   predictShelfLife: enginePredictShelfLife,
+  assessCondensationRiskOnUnpack: engineAssessCondensationRiskOnUnpack,
   calcPostHarvestRespiration: engineCalcPostHarvestRespiration,
   calcTranspirationLoss: engineCalcTranspirationLoss,
   SPECIES_POSTHARVEST_PROFILES,
 } = (typeof SetasPostHarvest !== 'undefined'
   ? SetasPostHarvest
   : (typeof require !== 'undefined' ? require('./post-harvest-engine.js') : {}));
+
+// ── Perito Workbench Core — puente hacia perito-workbench-core.js ──
+const {
+  TENJO_PHYSICAL_CONTEXT: engineTenjoPhysicalContext,
+  calcRestrictiveFactor: engineCalcRestrictiveFactor,
+  calcLiebigBottleneck: engineCalcLiebigBottleneck,
+  simulateSuggestionDelta: engineSimulateSuggestionDelta,
+  morphRecipes: engineMorphRecipes,
+  analyzeMorphTrajectory: engineAnalyzeMorphTrajectory,
+  filterParetoFrontier: engineFilterParetoFrontier,
+} = (typeof SetasPeritoWorkbench !== 'undefined'
+  ? SetasPeritoWorkbench
+  : (typeof require !== 'undefined' ? require('./perito-workbench-core.js') : {}));
 
 const METRIC_LABEL = { cn: 'C:N', n: 'N', ph: 'pH' };
 const fmtMetric = (metric, v) => metric === 'cn' ? `${v.toFixed(1)}:1` : metric === 'n' ? `${v.toFixed(2)}%` : v.toFixed(1);
@@ -1477,40 +1547,47 @@ const DEFAULT_FRESH_PRICES={
   nameko:32000
 };
 
-const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300)=>{
-  if(!recipe.length||!n||!kg) return null;
+const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=null,eb=null,sKey='p_ostreatus_gris',customFreshPrice=null,customBagConsumable=300,preparation=null)=>{
+  if(!Array.isArray(recipe)||!recipe.length||!Number.isFinite(Number(n))||Number(n)<=0||!Number.isFinite(Number(kg))||Number(kg)<=0) return null;
   const wet=n*kg;                                   // sustrato húmedo final objetivo (kg)
-  const hF=Math.min(0.85,Math.max(0.40,hObj/100));  // fracción de humedad objetivo
-  const dry=wet*(1-hF);                             // masa seca total requerida (kg)
-  const spawnRate=Math.min(0.15,Math.max(0.05,dynSpawn/100));
+  const hF=Math.min(0.85,Math.max(0.40,(Number(hObj)||67)/100));  // fracción de humedad objetivo
+  const dry=preparation?preparation.totals.dryKg:wet*(1-hF);                             // masa seca total requerida (kg)
+  const spawnRate=Math.min(0.15,Math.max(0.05,(Number(dynSpawn)||8)/100));
+  const effectiveIngs=Array.isArray(ings)&&ings.length?ings:INGS;
   const items=recipe.map(r=>{
-    const g=ings.find(i=>i.id===r.id);if(!g) return null;
-    const masaSeca=dry*(parseFloat(r.p)/100);       // aporte seco del insumo
-    const m=Math.min(0.92,Math.max(0,(g.moisture||0)/100)); // humedad intrínseca
-    const kr=masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
+    const g=effectiveIngs.find(i=>i.id===r.id);if(!g) return null;
+    const spec=preparation?.items.find(i=>i.ingredientId===r.id);
+    const masaSeca=spec?spec.dryKg:dry*(parseFloat(r.p||r.pct||0)/100);       // aporte seco del insumo
+    const m=Math.min(0.92,Math.max(0,(Number(g.moisture)||0)/100)); // humedad intrínseca
+    const kr=spec?spec.asReceivedKg:masaSeca/(1-m);                         // kg comerciales reales a pesar en báscula
     const aguaOculta=kr*m;                           // agua que ya trae el insumo
-    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*g.cost,unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
+    return{name:g.name,kr,masaSeca,aguaOculta,cost:kr*(Number(g.cost)||0),unit:kr<.5?`${Math.round(kr*1000)} g`:`${kr.toFixed(2)} kg`};
   }).filter(Boolean);
+  if(!items.length) return null;
   const aguaTot=dry*(hF/(1-hF));                     // agua total que debe contener la mezcla
   const aguaInh=items.reduce((s,i)=>s+i.aguaOculta,0); // agua aportada por los insumos
   const agua=Math.max(0,aguaTot-aguaInh);            // agua neta a inyectar (L ≈ kg)
+  const waterExcessKg=Math.max(0,aguaInh-aguaTot);
+  const actualWetTotal=dry+aguaInh+agua;
+  const resultingMoisturePct=actualWetTotal>0?Math.round(((aguaInh+agua)/actualWetTotal)*1000)/10:Math.round(hF*1000)/10;
+  const isOverhydrated=waterExcessKg>0.05;
   const kgComercialTotal=items.reduce((s,i)=>s+i.kr,0); // peso total a pesar (base húmeda comercial)
   const sustCost=items.reduce((s,i)=>s+i.cost,0);
   const spawnKg=wet*spawnRate;
-  const spawnCostTotal=spawnKg*spawnCostKg;
-  const energyCostKgSeco=tr?.energy?.cop_per_kg_seco||0;
+  const spawnCostTotal=spawnKg*(Number(spawnCostKg)||12000);
+  const energyCostKgSeco=Number.isFinite(Number(tr?.energy?.cop_per_kg_seco))?Number(tr.energy.cop_per_kg_seco):0;
   const energyCostTotal=dry*energyCostKgSeco;
-  const bagConsumableCostUnit=customBagConsumable!=null?customBagConsumable:300;
+  const bagConsumableCostUnit=customBagConsumable!=null?Number(customBagConsumable):300;
   const bagConsumableCostTotal=n*bagConsumableCostUnit;
   const totalCost=sustCost+spawnCostTotal+energyCostTotal+bagConsumableCostTotal;
   const costPerBag=n>0?totalCost/n:0;
 
   // Proyección de cosecha en fresco y margen comercial
   const dryPerBag=n>0?dry/n:0;
-  const ebRate=Math.max(0,(eb!=null?eb:85)/100);
+  const ebRate=Math.max(0,(eb!=null?Number(eb):85)/100);
   const projectedFreshKgPerBag=dryPerBag*ebRate;
   const projectedFreshKgTotal=dry*ebRate;
-  const freshPriceKg=customFreshPrice||DEFAULT_FRESH_PRICES[sKey]||22000;
+  const freshPriceKg=(customFreshPrice!=null&&Number.isFinite(Number(customFreshPrice))&&Number(customFreshPrice)>=0)?Number(customFreshPrice):(DEFAULT_FRESH_PRICES[sKey]??22000);
   const projectedRevenuePerBag=projectedFreshKgPerBag*freshPriceKg;
   const projectedGrossMarginPerBag=projectedRevenuePerBag-costPerBag;
   const projectedMarginPct=projectedRevenuePerBag>0?(projectedGrossMarginPerBag/projectedRevenuePerBag)*100:0;
@@ -1522,6 +1599,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
     energyCostTotal,energyCostKgSeco,
     bagConsumableCostUnit,bagConsumableCostTotal,
     totalCost,costPerBag,agua,hObj,
+    waterExcessKg,resultingMoisturePct,isOverhydrated,
     dryPerBag,ebRate,
     projectedFreshKgPerBag,projectedFreshKgTotal,
     freshPriceKg,projectedRevenuePerBag,
@@ -1545,6 +1623,7 @@ const calcBatch=(recipe,n,kg,hObj=67,spawnCostKg=12000,ings=INGS,dynSpawn=8,tr=n
 const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   const sp=SPP[sKey];if(!sp||!dateStr) return null;
   const base=new Date(dateStr+'T12:00:00');
+  if(isNaN(base.getTime())) return null;
   const add=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
   const fmt=d=>d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
   const T={p_ostreatus_gris:{c50:12,c100:22,pr:28,f1:35,f2:52,f3:68},p_ostreatus_blanco:{c50:14,c100:26,pr:32,f1:40,f2:57,f3:74},p_djamor_rosa:{c50:14,c100:28,pr:34,f1:42,f2:59,f3:76},p_eryngii:{c50:18,c100:32,pr:40,f1:48,f2:66,f3:84},shiitake:{c50:30,c100:55,pr:75,f1:90,f2:115,f3:140},lions_mane:{c50:20,c100:35,pr:42,f1:50,f2:68,f3:86},reishi:{c50:25,c100:50,pr:80,f1:120,f2:160,f3:200},enoki:{c50:15,c100:28,pr:35,f1:42,f2:58,f3:74},nameko:{c50:20,c100:38,pr:48,f1:60,f2:80,f3:100}};
@@ -1562,8 +1641,8 @@ const calcSchedule=(sKey,dateStr,eb,ambientTemp=16)=>{
   // clima ambiente de la Sabana/Tenjo (~14–18°C) y requieren cámara con control térmico activo.
   const COLD_SENSITIVE={p_djamor_rosa:'28–30°C'};
   const coldWarn=COLD_SENSITIVE[sKey]
-    ? ` ⚠️ Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
-    : (thermal.coldWarning ? ` ⚠️ ${thermal.coldWarning}` : '');
+    ? ` Especie sensible al frío: requiere ${COLD_SENSITIVE[sKey]}. El clima ambiente de la Sabana/Tenjo (~14–18°C) no alcanza este rango — usa cámara de fructificación con control térmico activo (>22°C), no fructificación pasiva a temperatura ambiente.`
+    : (thermal.coldWarning ? ` ${thermal.coldWarning}` : '');
 
   // Matriz biológica diferencial de oleadas por especie
   const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(sKey))
@@ -1625,7 +1704,7 @@ const PasteGuide=({tr,recipe,numBags,kgBag})=>{
   };
   const steps=guides[tr.col]||[];
   return(
-    <div style={{marginTop:14,background:'var(--paper-200)',border:'1px solid var(--border-soft)',padding:'var(--space-4)'}}>
+    <div style={{marginTop:14,background:'var(--paper-200)',border:'1px solid var(--border-soft)',padding:'var(--fos-space-4)'}}>
       <div className="sec">Guía de {tr.name} · Tenjo 2.580 msnm</div>
       {steps.map(st=>(
         <div key={st.n} style={{display:'flex',gap:14,marginBottom:12,paddingBottom:12,borderBottom:'1px solid var(--paper-300)'}}>
@@ -1692,16 +1771,16 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   
   if(fullscreen) return(
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:'var(--z-overlay)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
-      <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}>✕</button>
+      <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}><AppIcon name="close" size={12} /></button>
       <RadarSVG size={600}/>
-      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en ✕ para cerrar</div>
+      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en Cerrar</div>
     </div>
   );
   
   return(
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--space-5) 0 var(--space-4)',background:'var(--paper-200)',marginBottom:14}}>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--fos-space-5) 0 var(--fos-space-4)',background:'var(--paper-200)',marginBottom:14}}>
       <RadarSVG size={260}/>
-      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--space-2) var(--space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}>⛶ Pantalla completa</button>
+      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}><AppIcon name="target" size={12} style={{marginRight:4}} /> Pantalla completa</button>
     </div>
   );
 };
@@ -1981,9 +2060,9 @@ const SpeciesRecommender=({recipe})=>{
 
 // ── PERITO: componente estable a nivel módulo (no redefinido en cada render) ──
 const PERITO_STATUS={
-  excellent:{label:'Apta',veredicto:'Apta',accion:'Producir normalmente.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
-  good:{label:'Apta con ajustes',veredicto:'Apta con ajustes',accion:'Aplicar las mejoras del Perito antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
-  needs_work:{label:'Experimental',veredicto:'Experimental',accion:'Máximo 3–5 bolsas de prueba. Registrar colonización al día 7, 14 y 21.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
+  excellent:{label:'Ajuste favorable',veredicto:'Ajuste favorable del modelo',accion:'Revisar preparación y aprobación humana antes de producir.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
+  good:{label:'Revisar ajustes',veredicto:'Modelo con ajustes pendientes',accion:'Revisar recomendaciones, existencias y proceso antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
+  needs_work:{label:'Requiere validación',veredicto:'Requiere validación',accion:'Definir una prueba y su seguimiento con el responsable antes de escalar.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
@@ -1993,7 +2072,7 @@ const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
   if(!first) return null;
-  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','⚠':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Sin mineral estabilizador de pH','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
+  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','!':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Sin mineral estabilizador de pH','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
   return MAP[first.icon]||first.label;
 };
 const peritoCorreccionMinima=(opt)=>{
@@ -2001,9 +2080,52 @@ const peritoCorreccionMinima=(opt)=>{
   if(!first) return null;
   return first.action.replace(/<[^>]+>/g,'');
 };
-const PeritoItem=React.memo(({item,onApply,baseScore})=>{
+// Preview uses the same transformation and live inputs as applyOptStep.
+const describePeritoChanges=(recipe,apply,lockedIds,ingredients)=>{
+  if(!apply) return [];
+  const next=applyOptToRecipe(recipe,apply,lockedIds,ingredients);
+  const before=new Map(recipe.map(r=>[r.id,Number(r.p)||0]));
+  const after=new Map(next.map(r=>[r.id,Number(r.p)||0]));
+  return [...new Set([...before.keys(),...after.keys()])].map(id=>({
+    id,name:ingredients.find(g=>g.id===id)?.name||id,
+    before:before.get(id)||0,after:after.get(id)||0,
+  })).filter(row=>Math.abs(row.after-row.before)>0.000001);
+};
+const PeritoChangePreview=({changes})=>(
+  <details style={{marginTop:6,fontSize:'var(--text-sm)'}}>
+    <summary style={{cursor:'pointer',fontWeight:700}}>Ver cambios de la receta ({changes.length})</summary>
+    <p style={{margin:'5px 0',color:'var(--ink-600)'}}>Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo.</p>
+    <ul style={{margin:0,paddingLeft:18}}>{changes.map(row=><li key={row.id} style={{overflowWrap:'anywhere'}}>{row.name}: {Number(row.before.toFixed(2))}% → {Number(row.after.toFixed(2))}%</li>)}</ul>
+    {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
+  </details>
+);
+const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,speciesKey,onMorph})=>{
+  const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
+  const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
   const hasPrediction=item.predictedScore!=null&&baseScore!=null;
   const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
+
+  const deltaSim=React.useMemo(()=>{
+    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length) return null;
+    try{
+      const sK=speciesKey||(item.speciesKey)||'p_ostreatus_gris';
+      const curAn=analyze(recipe,sK,ingredients,SPP);
+      return engineSimulateSuggestionDelta({
+        recipe,
+        apply:item.apply,
+        lockedIds,
+        ingredients,
+        applyOptToRecipe,
+        analyze:(r)=>analyze(r,sK,ingredients,SPP),
+        score:(anObj,extra)=>scoreAn(anObj,extra),
+        baseAn:curAn,
+        baseScore,
+      });
+    }catch(_){
+      return null;
+    }
+  },[recipe,item.apply,lockedIds,ingredients,speciesKey,baseScore]);
+
   return(
   <div className={`perito-item pi-${item.priority}`}>
     <div className="pi-icon-col">
@@ -2013,27 +2135,64 @@ const PeritoItem=React.memo(({item,onApply,baseScore})=>{
       <div className="pi-head">
         <span className="pi-label">{item.label}</span>
         {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#8C4020',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}>🛒 no en bodega — a comprar</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
+      {deltaSim?.diff&&(
+        <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
+            ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
+          </span>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({deltaSim.diff.newEb}%)
+          </span>
+          {deltaSim.diff.confidence&&(
+            <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>
+              confianza: {deltaSim.diff.confidence==='high'?'alta':deltaSim.diff.confidence==='low'?'baja':'media'}
+            </span>
+          )}
+          {deltaSim.diff.deltaCost!==0&&(
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
+              ΔCosto: {deltaSim.diff.deltaCost<=0?`-$${Math.abs(deltaSim.diff.deltaCost)}/kg`:`+$${deltaSim.diff.deltaCost}/kg`}
+            </span>
+          )}
+          {deltaSim.diff.deltaCn!==0&&(
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:'var(--paper-200)',color:'var(--ink-700)'}}>
+              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({deltaSim.diff.newCn}:1)
+            </span>
+          )}
+        </div>
+      )}
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
-      {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Score si se aplica: {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
-      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>⚠ {item.sideEffect}</div>}
+      {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+      {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+      {item.apply&&<PeritoChangePreview changes={changes}/>}
+      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600,#B5451F)" /> {item.sideEffect}</span></div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
-        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Score si se aplica junto: {Math.round(item.comboPredictedScore)}/100</div>
-        <button onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
+        <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
+        <PeritoChangePreview changes={comboChanges}/>
+        <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
     </div>
-    <div className="pi-actions">
+    <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
-        ?<button onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar</button>
+        ?<button disabled={!changes.length} aria-label={`Aplicar ajuste: ${item.label}`} onClick={()=>onApply(item.apply,item.icon)} className="pi-apply">Aplicar ajuste</button>
         :<div className="pi-spacer"/>}
+      {deltaSim?.resultingRecipe&&onMorph&&(
+        <button
+          type="button"
+          title="Hibridar interactivamente la receta activa con esta sugerencia"
+          onClick={()=>onMorph(deltaSim.resultingRecipe)}
+          style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>
+          <AppIcon name="scale" size={13} style={{marginRight:4}} /> Morph
+        </button>
+      )}
     </div>
   </div>
   );
@@ -2213,6 +2372,201 @@ const AppIcon=({name,size=14,className='',style={},color='currentColor'})=>{
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       );
+    case 'bolt':
+    case 'zap':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case 'scale':
+    case 'balance':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <line x1="12" y1="2" x2="12" y2="20"/>
+          <path d="M5 7l7-3 7 3M5 7L2 14h6L5 7zM19 7l-3 7h6l-3-7zM8 21h8"/>
+        </svg>
+      );
+    case 'mushroom':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M12 3a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9z"/>
+          <path d="M9 12v6a3 3 0 0 0 6 0v-6"/>
+        </svg>
+      );
+    case 'flame':
+    case 'fire':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M12 2c.75 3.75 4.5 6 4.5 10.5a7.5 7.5 0 0 1-15 0c0-4.5 3.75-6.75 4.5-10.5 1.5 3 3 4.5 6 0z"/>
+        </svg>
+      );
+    case 'snowflake':
+    case 'cold':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="m4.93 4.93 14.14 14.14M19.07 4.93 4.93 19.07"/>
+        </svg>
+      );
+    case 'box':
+    case 'package':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M3 6.75L12 2.25l9 4.5v10.5l-9 4.5-9-4.5V6.75z"/>
+          <path d="M3 6.75L12 11.25l9-4.5M12 11.25v10.5"/>
+        </svg>
+      );
+    case 'target':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="12" y1="2" x2="12" y2="5"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="5" y2="12"/>
+          <line x1="19" y1="12" x2="22" y2="12"/>
+        </svg>
+      );
+    case 'clipboard':
+    case 'task':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M15 2H9a1 1 0 0 0-1 1v2h8V3a1 1 0 0 0-1-1z"/>
+          <path d="M7 5H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <line x1="8" y1="11" x2="16" y2="11"/>
+          <line x1="8" y1="16" x2="14" y2="16"/>
+        </svg>
+      );
+    case 'edit':
+    case 'pencil':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 18.5 3 19.5l1-4L16.5 3.5z"/>
+        </svg>
+      );
+    case 'cart':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="9" cy="20" r="1.5"/>
+          <circle cx="18" cy="20" r="1.5"/>
+          <path d="M2 3h3.5l2.2 10.5h11.8l2-7.5H6"/>
+        </svg>
+      );
+    case 'lock':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <rect x="4" y="10" width="16" height="12" rx="2"/>
+          <path d="M7 10V6a5 5 0 0 1 10 0v4"/>
+        </svg>
+      );
+    case 'rotate':
+    case 'refresh':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M2.5 3.5v5h5"/>
+          <path d="M3.5 14a8.5 8.5 0 1 0 1.7-8.5L2.5 8.5"/>
+        </svg>
+      );
+    case 'star':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill={color === 'none' ? 'none' : 'currentColor'} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      );
+    case 'chart':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+        </svg>
+      );
+    case 'info':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      );
+    case 'file':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      );
+    case 'radio':
+    case 'antenna':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M4.93 19.07a10 10 0 0 1 0-14.14"/>
+          <path d="M7.76 16.24a6 6 0 0 1 0-8.48"/>
+          <circle cx="12" cy="12" r="2"/>
+          <path d="M16.24 7.76a6 6 0 0 1 0 8.48"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      );
+    case 'flask':
+    case 'lab':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/>
+          <path d="M8.5 2h7"/>
+          <path d="M7 16h10"/>
+        </svg>
+      );
+    case 'plug':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M12 22v-5"/>
+          <path d="M9 8V2"/>
+          <path d="M15 8V2"/>
+          <path d="M18 8v5a6 6 0 0 1-12 0V8z"/>
+        </svg>
+      );
+    case 'gear':
+    case 'settings':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      );
+    case 'wrench':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      );
+    case 'wine':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M8 22h8"/>
+          <path d="M12 15v7"/>
+          <path d="M12 15a7 7 0 0 0 7-7V3H5v5a7 7 0 0 0 7 7Z"/>
+        </svg>
+      );
+    case 'bowl':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <path d="M4 11h16a8 8 0 0 1-16 0z"/>
+          <line x1="8" y1="19" x2="16" y2="19"/>
+        </svg>
+      );
+    case 'search':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      );
     default:
       return null;
   }
@@ -2274,7 +2628,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
         <button
           type="button"
           className="inv-btn inv-btn-sec inv-btn-sm"
-          style={{flex:1,minWidth:90,fontSize:10.5,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
+          style={{flex:1,minWidth:90,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
           onClick={()=>onQuickAction('primordios')}
           title="Detectados primordios visibles (inicio de fructificación)"
         >
@@ -2283,7 +2637,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
         <button
           type="button"
           className="inv-btn inv-btn-sec inv-btn-sm"
-          style={{flex:1,minWidth:90,fontSize:10.5,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
+          style={{flex:1,minWidth:90,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
           onClick={()=>onQuickAction('riego')}
           title="Verificación de humedad y niebla"
         >
@@ -2292,7 +2646,7 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
         <button
           type="button"
           className="inv-btn inv-btn-sec inv-btn-sm"
-          style={{flex:1,minWidth:90,fontSize:10.5,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
+          style={{flex:1,minWidth:90,fontSize:11,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}
           onClick={()=>onQuickAction('ventilacion')}
           title="Extracción y recambio de aire"
         >
@@ -2303,12 +2657,14 @@ const ColonizationScaleSelector=({value=0,onChange,onQuickAction})=>{
   );
 };
 
-const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>{
+const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],onClose})=>{
   const lote=lotes.find(l=>l.id===loteId||l.codigo===loteCode||l.id===loteCode)||lotes[0];
   const harvests=lote?cosechas.filter(c=>c.loteId===lote.id):[];
-  const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
+  const totalKg=harvests.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
   const spImg=lote?.especieKey?(IMG[lote.especieKey]||IMG.p_ostreatus_gris):IMG.p_ostreatus_gris;
   const [copied,setCopied]=useState(false);
+  const [syncing,setSyncing]=useState(false);
+  const [syncResult,setSyncResult]=useState(lote?.publicTrace||null);
   const traceUrl=lote?.codigo?`${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`:(typeof window!=='undefined'?window.location.href:PUBLIC_TRACE_BASE_URL);
   const qrDataUrl=generateQrSvgDataUrl(traceUrl);
 
@@ -2331,7 +2687,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
       <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'22px 22px 18px',position:'relative'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
           <div style={{display:'flex',gap:14,alignItems:'center'}}>
-            <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
+            <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
             <div>
               <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
                 <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
@@ -2344,11 +2700,68 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
               </div>
             </div>
           </div>
-          <button type="button" className="modal-icon-close" style={{color:'var(--paper-200)',background:'rgba(255,255,255,.08)',borderRadius:'50%',width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer'}} onClick={onClose} aria-label="Cerrar ficha">✕</button>
+          <button type="button" className="modal-icon-close" style={{color:'var(--paper-200)',background:'rgba(255,255,255,.08)',borderRadius:'50%',width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'none',cursor:'pointer'}} onClick={onClose} aria-label="Cerrar ficha"><AppIcon name="close" size={12} /></button>
         </div>
       </div>
 
       <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:16}}>
+        {/* ESTADO DE SINCRONIZACIÓN EN FIRESTORE */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--paper-100,#F5F2E9)',borderRadius:4,border:'1px solid var(--border-soft,#D8D3C5)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-500)'}}>
+              Ficha en Nube:
+            </span>
+            <span style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 3,
+              background: syncResult?.status === 'synced' ? 'var(--moss-100,#E8F0E0)' : syncResult?.status === 'failed' ? 'var(--coral-100,#FDE8E8)' : 'var(--paper-200,#E5E0D3)',
+              color: syncResult?.status === 'synced' ? 'var(--moss-800,#3B5A24)' : syncResult?.status === 'failed' ? 'var(--coral-800,#9B1C1C)' : 'var(--ink-600)'
+            }}>
+              {syncResult?.status === 'synced' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Publicado</span> : syncResult?.status === 'failed' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} /> Error al publicar</span> : 'Pendiente de Sincronización'}
+            </span>
+            {syncResult?.lastPublishedAt && (
+              <span style={{fontSize: 10, color: 'var(--ink-500)', fontFamily: 'var(--font-mono)'}}>
+                {new Date(syncResult.lastPublishedAt).toLocaleDateString('es-CO')}
+              </span>
+            )}
+            {syncResult?.lastError && (
+              <span style={{fontSize: 10, color: 'var(--coral-700)', fontFamily: 'var(--font-mono)'}}>
+                ({syncResult.lastError})
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            disabled={syncing || !lote}
+            style={{fontSize:10.5,padding:'4px 10px',minHeight:32,display:'flex',alignItems:'center',gap:4}}
+            onClick={async () => {
+              if (!window.SetasPublicTraceDB?.publicarLote) {
+                setSyncResult({ status: 'failed', lastError: 'SetasPublicTraceDB no disponible' });
+                return;
+              }
+              setSyncing(true);
+              try {
+                const loteBolsas = bolsas.filter(b => b.loteId === lote.id);
+                const res = await window.SetasPublicTraceDB.publicarLote(lote, harvests, loteBolsas);
+                if (res && res.ok) {
+                  setSyncResult({ status: 'synced', lastPublishedAt: new Date().toISOString(), lastError: null, publicSchemaVersion: 2 });
+                } else {
+                  setSyncResult({ status: 'failed', lastError: res?.reason || 'Error' });
+                }
+              } catch (err) {
+                setSyncResult({ status: 'failed', lastError: err?.message || 'Error' });
+              } finally {
+                setSyncing(false);
+              }
+            }}
+          >
+            {syncing ? 'Sincronizando...' : 'Publicar ahora'}
+          </button>
+        </div>
+
         {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
         <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100,#F5F2E9)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft,#D8D3C5)'}}>
           <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -2423,7 +2836,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],onClose})=>
         {/* ACCIONES DEL MODAL */}
         <div style={{display:'flex',gap:8,justifyContent:'space-between',alignItems:'center',marginTop:4}}>
           <span style={{fontSize:11,color:copied?'var(--moss-700)':'var(--ink-500)',fontWeight:copied?700:400}}>
-            {copied?'✓ Enlace QR copiado al portapapeles':'Enlace público para clientes y auditorías'}
+            {copied?<span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Enlace QR copiado al portapapeles</span>:'Enlace público para clientes y auditorías'}
           </span>
           <div style={{display:'flex',gap:8}}>
             <button
@@ -2802,26 +3215,26 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
           </div>
         </div>
-        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}>✕</button>
+        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
       </div>
 
       {/* Navigation Pills */}
       <div style={{ padding: '16px 24px 0', background: 'var(--paper-50)' }}>
         <div className="iot-hub-pills">
           <button type="button" className={`iot-hub-pill ${tab === 'nodos' ? 'on' : ''}`} onClick={() => setTab('nodos')}>
-            📡 Nodos en Finca ({nodes.length})
+            <AppIcon name="radio" size={12} style={{marginRight:6}} /> Nodos en Finca ({nodes.length})
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'firmware' ? 'on' : ''}`} onClick={() => setTab('firmware')}>
-            ⚡ Generador de Firmware
+            <AppIcon name="bolt" size={12} style={{marginRight:6}} /> Generador de Firmware
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'webhook' ? 'on' : ''}`} onClick={() => setTab('webhook')}>
-            🧪 Consola Webhook / Test
+            <AppIcon name="flask" size={12} style={{marginRight:6}} /> Consola Webhook / Test
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'conexion' ? 'on' : ''}`} onClick={() => setTab('conexion')}>
-            🔌 Conexión en Vivo
+            <AppIcon name="plug" size={12} style={{marginRight:6}} /> Conexión en Vivo
           </button>
           <button type="button" className={`iot-hub-pill ${tab === 'reglas' ? 'on' : ''}`} onClick={() => setTab('reglas')}>
-            ⚙ Reglas de Automatización
+            <AppIcon name="gear" size={12} style={{marginRight:6}} /> Reglas de Automatización
           </button>
         </div>
       </div>
@@ -2970,13 +3383,13 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'esphome' ? 'on' : ''}`} onClick={() => setFwFormat('esphome')}>
-                  📄 ESPHome (YAML)
+                  <AppIcon name="file" size={12} style={{marginRight:6}} /> ESPHome (YAML)
                 </button>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'arduino' ? 'on' : ''}`} onClick={() => setFwFormat('arduino')}>
-                  🛠 Arduino C++ (.ino)
+                  <AppIcon name="wrench" size={12} style={{marginRight:6}} /> Arduino C++ (.ino)
                 </button>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'curl' ? 'on' : ''}`} onClick={() => setFwFormat('curl')}>
-                  🌐 cURL / Webhook
+                  <AppIcon name="globe" size={12} style={{marginRight:6}} /> cURL / Webhook
                 </button>
               </div>
 
@@ -3049,12 +3462,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   setWebhookFeedback(res);
                 }}
               >
-                🚀 Inyectar Telemetría de Prueba
+                <AppIcon name="rocket" size={13} style={{marginRight:6}} /> Inyectar Telemetría de Prueba
               </button>
 
               {webhookFeedback && (
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
-                  {webhookFeedback.success ? '✓ ' : '✕ '} {webhookFeedback.msg}
+                  {webhookFeedback.success ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : <AppIcon name="close" size={11} style={{marginRight:4}} />} {webhookFeedback.msg}
                 </div>
               )}
             </div>
@@ -3147,7 +3560,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 </button>
                 {connSaved && (
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
-                    ✓ Puente reiniciado con la configuración nueva
+                    <AppIcon name="check" size={12} style={{marginRight:4}} /> Puente reiniciado con la configuración nueva
                   </span>
                 )}
               </div>
@@ -3164,7 +3577,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
               <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  💧 Humidificación (Bang-Bang con Histéresis)
+                  <AppIcon name="droplet" size={13} style={{marginRight:6}} /> Humidificación (Bang-Bang con Histéresis)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
@@ -3180,7 +3593,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
               <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  💨 Renovación de Aire FAE (Extractor Cloudline)
+                  <AppIcon name="wind" size={13} style={{marginRight:6}} /> Renovación de Aire FAE (Extractor Cloudline)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
@@ -3196,7 +3609,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
               <div style={{ background: 'var(--paper-100)', padding: 14, borderRadius: 4, border: '1px solid var(--border-hairline)' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                  🌡 Seguridad Biológica de Sustrato
+                  <AppIcon name="temp" size={13} style={{marginRight:6}} /> Seguridad Biológica de Sustrato
                 </div>
                 <div>
                   <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
@@ -3236,11 +3649,28 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
   );
 };
 
-const AccessibleModal=({onClose,label,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle})=>{
+// Drafts live in this tab's session namespace, separate from operational collections.
+const useCaptureDraft=(key,initial)=>{
+  const [value,setValue]=useState(()=>{try{const d=JSON.parse(sessionStorage.getItem('setas_capture_v1:'+key));if(d?.version===1)return d.value;}catch{}return typeof initial==='function'?initial():initial;});
+  useEffect(()=>{try{sessionStorage.setItem('setas_capture_v1:'+key,JSON.stringify({version:1,value}));}catch{}},[key,value]);
+  return [value,setValue];
+};
+const CaptureInput=({rules={},style,...props})=>{
+  const [touched,setTouched]=useState(false);
+  const error=touched?SetasBitacora.captureError(props.value,rules):'';
+  return <><input {...props} data-capture="true" onBlur={()=>setTouched(true)} aria-invalid={!!error} aria-describedby={error?props.id+'-error':undefined} style={{...style,minHeight:44,fontSize:16}}/>{error&&<span id={props.id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{error}</span>}</>;
+};
+const AccessibleModal=({onClose,label,title,ariaLabel,children,backdropClassName='inv-modal-bg',dialogClassName='inv-modal',dialogStyle,width,maxWidth,id})=>{
   const dialogRef=useDialogA11y(onClose);
+  const resolvedLabel=label||ariaLabel||title;
+  const mergedStyle={
+    ...(width?{width}:{}),
+    ...(maxWidth?{maxWidth}:{}),
+    ...dialogStyle
+  };
   return(
     <div className={backdropClassName} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={label} style={dialogStyle}>
+      <div id={id} onKeyDown={e=>{if(['Nueva prueba experimental','Registrar cosecha'].includes(resolvedLabel)&&e.key==='Enter'&&e.target.tagName==='INPUT'){e.preventDefault();e.currentTarget.querySelector('.inv-btn-pri')?.click();}}} ref={dialogRef} tabIndex={-1} className={dialogClassName} role="dialog" aria-modal="true" aria-label={resolvedLabel} style={Object.keys(mergedStyle).length>0?mergedStyle:undefined}>
         {children}
       </div>
     </div>
@@ -3250,10 +3680,10 @@ const ConfirmModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Confirmar'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">{dlg.title||'Confirmar'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
-      <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+      <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
         <button onClick={()=>{dlg.onConfirm();onClose();}} className={`inv-btn ${dlg.danger?'inv-btn-danger':'inv-btn-pri'}`}>{dlg.confirmLabel||'Confirmar'}</button>
       </div>
@@ -3267,11 +3697,11 @@ const PromptModal=({dlg,onClose})=>{
   const submit=()=>{if(!val.trim())return;dlg.onSubmit(val.trim());onClose();};
   return(
     <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:420}}>
+      <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Nombre'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
         <div className="inv-modal-title">{dlg.title||'Nombre'}</div>
         {dlg.label&&<label className="inv-label" htmlFor="setas-prompt-input">{dlg.label}</label>}
         <input data-autofocus id="setas-prompt-input" name="promptValue" className="inv-input" value={val} placeholder={dlg.placeholder||''} autoComplete="off" onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} style={{marginBottom:18}}/>
-        <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+        <div className="inv-modal-actions">
           <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
           <button onClick={submit} disabled={!val.trim()} className="inv-btn inv-btn-pri">{dlg.confirmLabel||'Guardar'}</button>
         </div>
@@ -3283,16 +3713,418 @@ const NoticeModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
   <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:420}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label={dlg.title||'Aviso'} style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">{dlg.title||'Aviso'}</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>{dlg.msg}</div>
-      <div style={{display:'flex',justifyContent:'flex-end'}}>
+      <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-pri">Aceptar</button>
       </div>
     </div>
   </div>
   );
 };
+
+const FieldActionModal = ({
+  onClose,
+  lote,
+  db,
+  operatorRole = 'produccion',
+  operatorId = 'operario_local',
+  accountId = 'setas_default_account',
+  onTransitionConfirmed,
+  captureContent,
+}) => {
+  const [selectedTo, setSelectedTo] = React.useState('');
+  const [inFlight, setInFlight] = React.useState(false);
+  const [queueEntry, setQueueEntry] = React.useState(null);
+  const [actionError, setActionError] = React.useState('');
+  const [actionSuccess, setActionSuccess] = React.useState('');
+  const [localBatch, setLocalBatch] = React.useState(lote);
+
+  React.useEffect(() => {
+    setLocalBatch(lote);
+    setSelectedTo('');
+    setActionError('');
+    setActionSuccess('');
+  }, [lote]);
+
+  React.useEffect(() => {
+    if (!localBatch || !db) return;
+    let active = true;
+    const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+    if (queue && typeof queue.getReservation === 'function') {
+      const batchId = localBatch.id || localBatch.codigo;
+      queue.getReservation(db, accountId, batchId).then(reservation => {
+        if (!active) return;
+        if (!reservation) {
+          setQueueEntry(null);
+          return;
+        }
+        try {
+          const tx = db.transaction('queue_entries', 'readonly');
+          const req = tx.objectStore('queue_entries').get(reservation.eventId);
+          req.onsuccess = () => {
+            if (active) setQueueEntry(req.result || null);
+          };
+          req.onerror = () => {
+            if (active) setQueueEntry(null);
+          };
+        } catch (_) {
+          if (active) setQueueEntry(null);
+        }
+      }).catch(() => {
+        if (active) setQueueEntry(null);
+      });
+    }
+    return () => { active = false; };
+  }, [localBatch, db, accountId]);
+
+  const actionSheetModule = typeof window !== 'undefined' ? window.SetasFieldActionSheet : null;
+  // acceptFieldEvent ya está desplegada, así que la confirmación es real salvo
+  // que alguien haya pedido el simulacro a propósito.
+  const model = actionSheetModule && typeof actionSheetModule.buildActionSheetModel === 'function'
+    ? actionSheetModule.buildActionSheetModel({
+        simulated: fieldMockRequested(),
+        batch: localBatch,
+        batchId: localBatch?.id || localBatch?.codigo,
+        state: localBatch?.workflowState || localBatch?.state,
+        operatorRole,
+        queueEntry,
+        inFlight,
+      })
+    : {
+        title: localBatch ? `Lote ${localBatch.codigo || localBatch.id}` : 'Lote',
+        subtitle: localBatch?.especie || '',
+        state: localBatch?.workflowState || localBatch?.estado || 'inoculated',
+        options: [],
+        status: 'idle',
+        statusLabel: 'Listo para registrar',
+        canConfirm: false,
+        canRefresh: false,
+      };
+
+  React.useEffect(() => {
+    if (model.options && model.options.length > 0 && !selectedTo) {
+      setSelectedTo(model.options[0].to);
+    }
+  }, [model.options, selectedTo]);
+
+  const renderStatusIcon = (status) => {
+    switch (status) {
+      case 'saved_local': return <AppIcon name="qr" size={13} />;
+      case 'sending': return <AppIcon name="radio" size={13} />;
+      case 'confirmed': return <AppIcon name="check" size={13} />;
+      case 'simulated': return <AppIcon name="flask" size={13} />;
+      case 'conflict': return <AppIcon name="alert" size={13} />;
+      case 'rejected': return <AppIcon name="close" size={13} />;
+      default: return null;
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedTo) return;
+    setActionError('');
+    setActionSuccess('');
+    setInFlight(true);
+
+    try {
+      if (!actionSheetModule || typeof actionSheetModule.confirmTransition !== 'function') {
+        throw new Error('field_action_sheet_unavailable: módulo de hoja de acción no cargado');
+      }
+      if (!db) {
+        throw new Error('db_unavailable: base de datos local no inicializada');
+      }
+
+      const fromState = model.state;
+      const expectedBatchRevision = Number.isInteger(localBatch?.revision) ? localBatch.revision : 0;
+
+      const result = await actionSheetModule.confirmTransition({
+        db,
+        batch: localBatch,
+        from: fromState,
+        to: selectedTo,
+        accountId,
+        operatorId,
+        operatorRole,
+        expectedBatchRevision,
+        confirmed: true,
+      });
+
+      setQueueEntry(result.queueEntry);
+      setActionSuccess(`Transición guardada localmente: ${model.state} → ${selectedTo}`);
+
+      // Sincronizar de inmediato. Sin esto el evento se quedaría en
+      // "Guardado en este equipo" para siempre, que es justo el estado que el
+      // operario no debe confundir con una confirmación.
+      await runFieldSync(db, accountId, result.event.id, setQueueEntry);
+      setInFlight(false);
+
+      if (typeof onTransitionConfirmed === 'function') {
+        onTransitionConfirmed(localBatch.id, selectedTo, result.event);
+      }
+    } catch (err) {
+      setInFlight(false);
+      setActionError(err.message || 'Error al confirmar transición');
+    }
+  };
+
+  const handleRefresh = () => {
+    setQueueEntry(null);
+    setActionError('');
+    setActionSuccess('');
+  };
+
+  return (
+    <AccessibleModal
+      onClose={onClose}
+      label="Hoja de acción de campo (QR)"
+      dialogStyle={{
+        width: 'min(480px, 94vw)',
+        padding: '20px 18px',
+        background: 'var(--paper-1, #EFEBE0)',
+        border: '1px solid var(--border-hairline, #8C7F5B)',
+        borderRadius: 'var(--radius-md, 3px)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2, #6B7280)', marginBottom: 2 }}>
+            Registro de campo · Acciones del lote
+          </div>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: 'var(--ink-0, #1F2937)', fontWeight: 700 }}>
+            {model.title}
+          </h2>
+          {model.subtitle && (
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #4B5563)', marginTop: 2 }}>
+              {model.subtitle}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className="modal-icon-close"
+          aria-label="Cerrar hoja de acción"
+          onClick={onClose}
+          style={{ background: 'transparent', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--ink-2)' }}
+        >
+          <AppIcon name="close" size={14} />
+        </button>
+      </div>
+
+      <div style={{ padding: '10px 12px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2, #6B7280)', display: 'block' }}>
+            Estado Actual
+          </span>
+          <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0, #111827)' }}>
+            {actionSheetModule?.STATE_LABELS?.[model.state] || model.state}
+          </strong>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2, #6B7280)', background: 'var(--paper-100, #E5E0D0)', padding: '3px 7px', borderRadius: 2 }}>
+          Rol: {operatorRole}
+        </span>
+      </div>
+
+      {['saved_local', 'sending', 'confirmed', 'conflict', 'rejected'].includes(model.status) && (
+        <div
+          data-testid={`status-${model.status.replace('_', '-')}`}
+          data-simulated={model.simulated ? 'true' : 'false'}
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: model.statusPalette.bg,
+            border: `1.5px solid ${model.statusPalette.border}`,
+            borderRadius: 3,
+            color: model.statusPalette.fg,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <span>{renderStatusIcon(model.simulated ? 'simulated' : model.status)}</span>
+            <span>{model.statusHeading}</span>
+          </div>
+          {model.showStatusLabel && (
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+              {model.statusLabel}
+            </div>
+          )}
+          <div style={{ fontSize: 11, marginTop: 4, lineHeight: 1.4, color: model.statusPalette.sub }}>
+            {model.statusDetail}
+          </div>
+        </div>
+      )}
+
+      {captureContent}
+
+      {model.status === 'sending' && (
+        <div
+          data-testid="status-sending"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#EFF6FF',
+            border: '1px solid #3B82F6',
+            borderRadius: 3,
+            color: '#1E40AF',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <AppIcon name="clock" size={13} /> <span>ENVIANDO AL SERVIDOR...</span>
+          </div>
+          <div style={{ fontSize: 11, marginTop: 4 }}>
+            Transmitiendo evento de campo al servidor central...
+          </div>
+        </div>
+      )}
+
+      {model.status === 'conflict' && (
+        <div
+          data-testid="status-conflict"
+          style={{
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: '#FEF2F2',
+            border: '1.5px solid #DC2626',
+            borderRadius: 3,
+            color: '#991B1B',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
+            <AppIcon name="alert" size={13} /> <span>CONFLICTO DE REVISIÓN</span>
+          </div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>
+            El lote cambió de versión en el servidor o fue actualizado desde otro equipo.
+          </div>
+          <button
+            type="button"
+            className="inv-btn inv-btn-sec"
+            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
+            onClick={handleRefresh}
+          >
+            <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar lote
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          <><AppIcon name="alert" size={12} style={{marginRight:4}} /> {actionError}</>
+        </div>
+      )}
+      {actionSuccess && (
+        <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+          <><AppIcon name="check" size={12} style={{marginRight:4}} /> {actionSuccess}</>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-1, #374151)', marginBottom: 8 }}>
+          Transiciones Disponibles
+        </div>
+
+        {model.options.length === 0 ? (
+          <div style={{ padding: '12px', background: 'var(--paper-0, #F7F4EC)', border: '1px dashed var(--border-hairline, #8C7F5B)', borderRadius: 3, fontSize: 12, color: 'var(--ink-2, #6B7280)', textAlign: 'center' }}>
+            No hay transiciones disponibles para este lote en su estado actual ({model.state}).
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {model.options.map(opt => {
+              const isSelected = selectedTo === opt.to;
+              const isDiscard = opt.transitionClass === 'discard';
+              const isException = opt.transitionClass === 'exception';
+
+              return (
+                <label
+                  key={opt.to}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: isSelected ? 'var(--paper-0, #F7F4EC)' : '#fff',
+                    border: isSelected ? '2px solid var(--accent-olive, #5B6B44)' : '1px solid var(--border-hairline, #8C7F5B)',
+                    borderRadius: 3,
+                    cursor: model.canConfirm ? 'pointer' : 'default',
+                    opacity: model.canConfirm ? 1 : 0.7,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="radio"
+                      name="transitionTarget"
+                      value={opt.to}
+                      checked={isSelected}
+                      disabled={!model.canConfirm}
+                      onChange={() => setSelectedTo(opt.to)}
+                    />
+                    <div>
+                      <strong style={{ fontSize: 13, color: isDiscard ? 'var(--coral-700, #C53030)' : (isException ? 'var(--ochre-700, #B45309)' : 'var(--ink-0, #111827)') }}>
+                        {opt.label}
+                      </strong>
+
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    padding: '2px 6px',
+                    borderRadius: 2,
+                    background: isDiscard ? '#FEE2E2' : (isException ? '#FEF3C7' : '#E0E7FF'),
+                    color: isDiscard ? '#991B1B' : (isException ? '#92400E' : '#3730A3'),
+                  }}>
+                    {{advance:'Avance',exception:'Excepción',discard:'Descarte'}[opt.transitionClass]||'Cambio'}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap:'wrap', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <button
+          type="button"
+          className="inv-btn inv-btn-sec"
+          onClick={onClose}
+          style={{ minHeight: 48, padding: '0 14px', fontSize: 12 }}
+        >
+          Cerrar
+        </button>
+
+        {model.canRefresh && (
+          <button
+            type="button"
+            className="inv-btn inv-btn-pri"
+            onClick={handleRefresh}
+            style={{ minHeight: 48, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta, #A85C32)' }}
+          >
+            <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar Lote
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="inv-btn inv-btn-pri"
+          disabled={!model.canConfirm || inFlight || !selectedTo}
+          onClick={handleConfirm}
+          data-testid="btn-confirm-field-transition"
+          style={{
+            minHeight: 48,
+            maxWidth:'100%',whiteSpace:'normal',
+            padding: '8px 16px',
+            fontSize: 12,
+            fontWeight: 700,
+            background: model.canConfirm && selectedTo ? 'var(--accent-olive, #5B6B44)' : 'var(--border-soft)',
+            cursor: model.canConfirm && selectedTo ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {inFlight ? <><AppIcon name="clock" size={12} style={{marginRight:4}} /> Guardando...</> : (selectedTo ? `Confirmar: ${model.options.find(option=>option.to===selectedTo)?.label||selectedTo}` : 'Confirmar transición')}
+        </button>
+      </div>
+    </AccessibleModal>
+  );
+};
+
 
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
@@ -3716,12 +4548,15 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
 
 
 // ── v4: INVENTARIO helpers ──
-// Duplicados a propósito respecto a inventario.js (mismo patrón que MASS_BALANCE_TOL
-// en firebase/db.js): el bundler de este .dc.html (dc-runtime, ver support.js) ejecuta
-// este archivo dentro de un `new Function(...)` propio y no engancha de forma confiable
-// los globals de un <script src> añadido a mano, así que no puede depender en vivo de
-// inventario.js. inventario.js + inventario.test.js son la fuente de verdad probada;
-// si cambias la lógica aquí, cambia también inventario.js (y viceversa).
+// Lecturas de bodega (stock y precio ponderado) duplicadas a propósito respecto a
+// inventario.js (mismo patrón que MASS_BALANCE_TOL en firebase/db.js): el bundler de
+// este .dc.html (dc-runtime, ver support.js) ejecuta este archivo dentro de un
+// `new Function(...)` propio y no engancha de forma confiable los globals de un
+// <script src> añadido a mano. inventario.js + inventario.test.js solo prueban estas
+// dos lecturas — si cambias una, cambia la otra. No son la fuente de verdad del
+// consumo: el plan y la asignación FIFO viven en launch-plan.js y el descuento
+// idempotente por lote en inventory-consumption.js; la bodega de registro es
+// localStorage sdp_lotes.
 const stockActual=(ingredienteId,lotes)=>
   lotes.filter(l=>l.activo&&l.ingredienteId===ingredienteId)
        .reduce((s,l)=>s+(l.cantidadKgDisponible||0),0);
@@ -3733,21 +4568,22 @@ const precioPonderado=(ingredienteId,lotes)=>{
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
 };
 
-// Descuenta inventario FIFO — misma lógica que SetasInventario.consumirInventarioFIFO
-// en inventario.js (ver el comentario de arriba sobre por qué está duplicada).
-const consumirInventarioFIFOLocal=(lotes,rows)=>{
-  let updated=[...lotes];
-  for(const row of rows){
-    let remaining=row.krKg;
-    const lotesIng=updated.filter(l=>l.activo&&l.ingredienteId===row.id).sort((a,b)=>new Date(a.fechaIngreso)-new Date(b.fechaIngreso));
-    for(const lote of lotesIng){
-      if(remaining<=0.001) break;
-      const consume=Math.min(lote.cantidadKgDisponible,remaining);
-      updated=updated.map(l=>l.id===lote.id?{...l,cantidadKgDisponible:Math.max(0,Math.round((l.cantidadKgDisponible-consume)*1000)/1000)}:l);
-      remaining-=consume;
-    }
-  }
-  return updated;
+// Costo real de bodega en COP/kg de mezcla SECA (I6): los precios de lote son
+// por kg tal cual se recibe, así que se pasan a base seca con la misma cuenta y
+// el mismo tope de humedad que analyze() usa para an.cost — solo así las dos
+// cifras se pueden comparar. null si ningún ingrediente tiene lote con precio.
+const realCostPerKgSeco=(recipe,invLotes,ings)=>{
+  if(!recipe||!recipe.length) return null;
+  let known=false;
+  const total=recipe.reduce((s,r)=>{
+    const pp=precioPonderado(r.id,invLotes||[]);
+    const g=(ings||[]).find(i=>i.id===r.id);
+    if(pp!=null) known=true;
+    const price=pp!=null?pp:(g?g.cost:0);
+    const m=Math.min(0.92,Math.max(0,(Number(g?.moisture)||0)/100));
+    return s+(price/(1-m))*(parseFloat(r.p)||0)/100;
+  },0);
+  return known?Math.round(total):null;
 };
 
 const SEED_PROVEEDORES=[
@@ -3851,10 +4687,13 @@ const runHybridRecipeSearch=({
   profileKey='produccion',
   stockMap={},
   lockedIds=[],
+  // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
+  // spp explícito se conserva el catálogo heredado para los llamadores viejos.
+  spp=SPP,
 })=>{
   const engine=globalThis.SetasPeritoScenarios;
   if(!engine?.searchScenarios) throw new Error('SetasPeritoScenarios no disponible');
-  const target=SPP[targetKey];
+  const target=spp[targetKey];
   if(!target) return{ranked:[],pareto:[],recommended:[],noStock:false,diagnostics:{error:'Especie no encontrada'}};
   const stockIds = new Set([
     ...Object.keys(stockMap || {}).filter(k => Number(stockMap[k]) > 0),
@@ -3864,9 +4703,9 @@ const runHybridRecipeSearch=({
     (!useStock || stockIds.has(g.id)) &&
     (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients);
+  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients,spp);
   const scoreAdapter=(analysis,ctx)=>{
-    const treatment=calcTreatment(analysis,targetKey,SPP);
+    const treatment=calcTreatment(analysis,targetKey,spp);
     return scoreAn(analysis,{
       treatment,
       recipe:ctx.recipe,
@@ -3875,10 +4714,10 @@ const runHybridRecipeSearch=({
   };
   return engine.searchScenarios({
     recipe,
-    context:{sKey:targetKey,spp:SPP,stockIds},
+    context:{sKey:targetKey,spp,stockIds},
     searchMode:'hybrid',
     targetKey,
-    spp:SPP,
+    spp,
     ingredients:compatible,
     analyze:analyzeAdapter,
     score:scoreAdapter,
@@ -3897,9 +4736,60 @@ const runHybridRecipeSearch=({
     lockedIds:new Set(lockedIds||[]),
   });
 };
+// ── Auto-mejorar: aplica en cadena la sugerencia crítica/advertencia que de
+//    verdad mejora el score global (hasta maxIter pasos) — prueba las 3 de
+//    mayor score predicho y se queda con la mejor tras aplicarla, no solo con la
+//    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
+//    análisis y las cantidades de cada paso usan los mismos rangos que la UI
+//    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
+const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+  let cur=recipe;let bestScore=-1;
+  for(let i=0;i<maxIter;i++){
+    const a=analyze(cur,sKey,ings,spp);
+    if(!a) break;
+    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,spp,usageCounts);
+    if(o.score<=bestScore) break;
+    bestScore=o.score;
+    const candidates=o.items
+      .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
+      .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
+      .slice(0,3);
+    if(!candidates.length) break;
+    let bestCandScore=-1,bestCandidate=null,bestO2=null;
+    for(const cand of candidates){
+      const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
+      const tryA=analyze(tryRec,sKey,ings,spp);
+      if(!tryA) continue;
+      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,spp,usageCounts);
+      if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
+    }
+    if(!bestCandidate) break;
+    if(bestO2.score<=o.score) break; // no aceptar si no mejora el score global
+    cur=bestCandidate;
+  }
+  return cur;
+};
+// ── Entradas del plan de lanzamiento compartidas por "Lanzar Lote" y
+//    "Ejecutar Lote" (I4/I5). La humedad que el operador editó a mano manda;
+//    si no la tocó, el objetivo resuelto de la especie. El spawn es grano
+//    tal cual se recibe: bolsas × kg/bolsa × tasa dinámica de spawn.
+const launchMoisture=({touched,manual,target})=>touched?manual:(target??manual??65);
+const launchSpawn=(bags,kgPerBag,dynSpawn)=>dynSpawn?{ingredientId:'spawn_grano',kg:bags*kgPerBag*(dynSpawn/100)}:null;
+// Resumen del descuento para el aviso de éxito (m2): con faltantes no se afirma
+// que todo salió de bodega — solo se descontó lo disponible.
+// Humedad dentro del objetivo (m3): rango resuelto de la especie cuando trae
+// min y max; si no (heredado solo con ideal), el umbral histórico ≥67%.
+const moistureInTargetRange=(h,m)=>(m?.min!=null&&m?.max!=null)?(h>=m.min&&h<=m.max):h>=67;
+const launchDiscountSummary=(plan,ings=[])=>{
+  const sf=plan?.shortfalls||[];
+  if(!sf.length) return 'Las materias primas fueron descontadas de Bodega.';
+  const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
+  return `Se descontó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
+};
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
-  const sp=SPP[targetKey];
+  // an.sp trae los objetivos con los que se evaluó el candidato (spp de la búsqueda).
+  const sp=an?.sp||SPP[targetKey];
   const profile=OPT_PROFILES[profileKey]||OPT_PROFILES.produccion;
   const speciesSupp=Number(sp?.supplementation_max)||20;
   const suppLimit=profile.maxSupp!=null?Math.min(speciesSupp,profile.maxSupp):speciesSupp;
@@ -3921,7 +4811,7 @@ const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>
     scenario:candidate,
   };
 };
-const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey)=>{
+const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKey,spp=SPP)=>{
   const stockIds=new Set((invLotes||[]).filter(l=>l?.activo&&Number(l.cantidadKgDisponible)>0).map(l=>l.ingredienteId));
   const pool=useStock
     ?(ingredients||[]).filter(g=>stockIds.has(g.id))
@@ -3938,7 +4828,7 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     aers:aers.length,
     tried:Number(out?.explored)||0,
     resultsRaw:Number(out?.diagnostics?.allowedCount??out?.ranked?.length??0),
-    suppLimit:Number(out?.profile?.maxSupp??SPP[targetKey]?.supplementation_max??20),
+    suppLimit:Number(out?.profile?.maxSupp??spp[targetKey]?.supplementation_max??20),
     profileKey,
     targetKey,
     baseNames:bases.map(g=>g.name),
@@ -3955,9 +4845,11 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
 const PERITO_EVIDENCE_CONFIDENCE_LABEL={low:'baja',medium:'media'};
 const describePeritoEvidence=(evidence)=>{
   const sampleSize=evidence?.summary?.sampleSize||0;
-  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0};
+  const exclusions=evidence?.summary?.excludedRecords>0 ? describeHistory({eligibleN:sampleSize,excludedN:evidence.summary.excludedRecords,exclusionReasons:evidence.summary.exclusionReasons}) : null;
+  if(!evidence||sampleSize===0) return{hasEvidence:false,sampleSize:0,exclusions};
   return{
     hasEvidence:true,
+    exclusions,
     sampleSize,
     recordsWithEnvironment:evidence.summary?.recordsWithEnvironment||0,
     confidenceLabel:PERITO_EVIDENCE_CONFIDENCE_LABEL[evidence.confidence]||evidence.confidence,
@@ -3986,6 +4878,301 @@ const generateQrSvgDataUrl = (text) => {
     return '';
   }
 };
+
+// Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
+// es Bluetooth propietario, no AirPrint, así que window.print() nunca lo
+// detecta desde Safari/iOS (WebKit tampoco expone Web Bluetooth). En vez de
+// depender de una captura de pantalla manual, se genera aquí la misma
+// información que ya pinta la vista previa (QR + especie + código + fecha)
+// directo a un PNG que el share sheet del sistema puede mandar a la app de
+// Phomemo en un solo toque.
+// Escala de exportación: cuántos px de canvas equivalen a 1mm real de la
+// etiqueta. 12 da buena nitidez sin generar PNGs pesados en el share sheet.
+const THERMAL_PX_PER_MM = 12;
+// 1mm de CSS a 96dpi (el estándar del navegador) son 3.7795px — todo valor
+// del diseño que en sim.css está en px (fuentes, gaps, letter-spacing), no en
+// mm, se reescala con este factor para guardar la misma proporción visual
+// que ve el operador en la vista previa, sin importar THERMAL_PX_PER_MM.
+const CSS_PX_PER_MM = 96 / 25.4;
+const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
+const FONT_EDITORIAL = "'Gaya Patched','Iowan Old Style',Georgia,serif";
+const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
+const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
+// Mismos valores que .thermal-card-40x30/50x30 en sim.css (DS-2026 QR Maximizado) —
+// si el diseño de la etiqueta cambia ahí, hay que actualizar esto también para que
+// "Compartir" no se desalinee.
+const THERMAL_LABEL_SPECS = {
+  '40x30': {
+    wMm: 40,
+    hMm: 30,
+    padXMm: 1.5,
+    padYMm: 1.5,
+    gapPx: 5,
+    qrMm: 23.5,
+    eyebrowPx: 5.5,
+    speciesPx: 11.0,
+    badgePx: 6.5,
+    codePx: 7.0,
+    codeMarginTopPx: 1,
+    metaPx: 6.0,
+    metaMarginTopPx: 1.5
+  },
+  '50x30': {
+    wMm: 50,
+    hMm: 30,
+    padXMm: 1.5,
+    padYMm: 1.5,
+    gapPx: 6,
+    qrMm: 26.0,
+    eyebrowPx: 6.5,
+    speciesPx: 13.5,
+    badgePx: 7.5,
+    codePx: 8.0,
+    codeMarginTopPx: 1.5,
+    metaPx: 6.5,
+    metaMarginTopPx: 2.0
+  },
+};
+
+// Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
+// es Bluetooth propietario, no AirPrint, así que window.print() nunca lo
+// detecta desde Safari/iOS (WebKit tampoco expone Web Bluetooth). En vez de
+// depender de una captura de pantalla manual, se genera aquí el mismo
+// diseño que ya pinta la vista previa/impresión (.thermal-card-* en
+// sim.css: QR a la izquierda, especie/código/fecha a la derecha) directo a
+// un PNG que el share sheet del sistema puede mandar a PrintMaster.
+// Divide texto en líneas para Canvas asegurando que ninguna exceda maxW y
+// sin deformar ni aplastar horizontalmente los caracteres (evita fillText con maxWidth).
+function wrapCanvasText(ctx, text, maxW) {
+  if (!text) return [];
+  const words = text.split(/\s+/);
+  const lines = [];
+  let currentLine = '';
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const testLine = currentLine ? currentLine + ' ' + word : word;
+    if (ctx.measureText(testLine).width <= maxW) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      // Si una sola palabra/token excede maxW (como un código largo: SDP-260904-SHI-R01)
+      if (ctx.measureText(word).width > maxW) {
+        if (word.includes('-')) {
+          const parts = word.split('-');
+          let subLine = '';
+          for (let p = 0; p < parts.length; p++) {
+            const piece = (p < parts.length - 1) ? parts[p] + '-' : parts[p];
+            const testSub = subLine ? subLine + piece : piece;
+            if (ctx.measureText(testSub).width <= maxW) {
+              subLine = testSub;
+            } else {
+              if (subLine) lines.push(subLine);
+              subLine = piece;
+            }
+          }
+          if (subLine) lines.push(subLine);
+          currentLine = '';
+        } else {
+          let chunk = '';
+          for (const ch of word) {
+            if (ctx.measureText(chunk + ch).width <= maxW) {
+              chunk += ch;
+            } else {
+              if (chunk) lines.push(chunk);
+              chunk = ch;
+            }
+          }
+          currentLine = chunk;
+        }
+      } else {
+        currentLine = word;
+      }
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
+function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  const w = spec.wMm * THERMAL_PX_PER_MM;
+  const h = spec.hMm * THERMAL_PX_PER_MM;
+  const padX = spec.padXMm * THERMAL_PX_PER_MM;
+  const padY = spec.padYMm * THERMAL_PX_PER_MM;
+  const gap = cssPxToCanvas(spec.gapPx);
+  const qrSize = spec.qrMm * THERMAL_PX_PER_MM;
+
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#777';
+  ctx.setLineDash([2, 2]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([]);
+
+  // .thermal-aside: QR maximizado centrado verticalmente
+  const qrX = padX;
+  const qrY = (h - qrSize) / 2;
+  const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
+  if (qrMini && typeof qrMini.matrix === 'function') {
+    const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
+    const n = m.length;
+    const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos)
+    const dim = n + q * 2;
+    const cell = qrSize / dim;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+    ctx.fillStyle = '#000';
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (m[r][c]) {
+          ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+        }
+      }
+    }
+  }
+
+  // Filete vertical separador suizo (DS-2026 divider)
+  const divX = Math.round(qrX + qrSize + gap / 2);
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(divX, padY, 1, h - padY * 2);
+
+  // .thermal-body: columna tipográfica estructurada con DS-2026
+  const textX = divX + Math.round(gap / 2);
+  const textW = w - textX - padX;
+
+  const eyebrow = (item.eyebrow || 'SETAS DE LA PEÑA · TENJO').toUpperCase();
+  const species = (item.species || 'Seta Cultivada').trim();
+  const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
+  const code = (item.id || '').trim();
+  const date = (item.date || '').trim();
+
+  // 1. Medidas Eyebrow
+  let eyebrowFontPx = Math.round(cssPxToCanvas(spec.eyebrowPx || 5.0));
+  ctx.font = `700 ${eyebrowFontPx}px ${FONT_MONO}`;
+  const eyebrowLines = wrapCanvasText(ctx, eyebrow, textW);
+  const eyebrowLineHeight = Math.round(eyebrowFontPx * 1.15);
+  const eyebrowBlockH = eyebrowLines.length * eyebrowLineHeight;
+  const eyebrowMarginB = cssPxToCanvas(1.5);
+
+  // 2. Medidas Species (Gaya Patched / Serif)
+  let speciesFontPx = Math.round(cssPxToCanvas(spec.speciesPx || 9.5));
+  ctx.font = `700 ${speciesFontPx}px ${FONT_EDITORIAL}`;
+  const sWords = species.split(/\s+/);
+  let maxSW = Math.max(...sWords.map(word => ctx.measureText(word).width));
+  while (maxSW > textW && speciesFontPx > 14) {
+    speciesFontPx -= 1;
+    ctx.font = `700 ${speciesFontPx}px ${FONT_EDITORIAL}`;
+    maxSW = Math.max(...sWords.map(word => ctx.measureText(word).width));
+  }
+  const speciesLines = wrapCanvasText(ctx, species, textW);
+  const speciesLineHeight = Math.round(speciesFontPx * 1.08);
+  const speciesBlockH = speciesLines.length * speciesLineHeight;
+  const speciesMarginB = cssPxToCanvas(2.0);
+
+  // 3. Medidas Badge (Inverted black block)
+  let badgeFontPx = Math.round(cssPxToCanvas(spec.badgePx || 6.0));
+  const bPadX = cssPxToCanvas(3);
+  ctx.font = `800 ${badgeFontPx}px ${FONT_MONO}`;
+  let bTextW = ctx.measureText(badge).width;
+  if (badge && bTextW + bPadX * 2 > textW) {
+    const scale = (textW - bPadX * 2) / bTextW;
+    badgeFontPx = Math.max(10, Math.floor(badgeFontPx * scale));
+    ctx.font = `800 ${badgeFontPx}px ${FONT_MONO}`;
+    bTextW = ctx.measureText(badge).width;
+  }
+  const badgeW = badge ? Math.min(textW, bTextW + bPadX * 2) : 0;
+  const badgeH = badge ? Math.round(badgeFontPx * 1.35) : 0;
+  const badgeMarginT = badge ? cssPxToCanvas(1.5) : 0;
+  const badgeMarginB = badge ? cssPxToCanvas(2.0) : 0;
+
+  // 4. Medidas Code
+  let codeFontPx = Math.round(cssPxToCanvas(spec.codePx || 6.5));
+  ctx.font = `800 ${codeFontPx}px ${FONT_MONO}`;
+  const codeLines = wrapCanvasText(ctx, code, textW);
+  const codeLineHeight = Math.round(codeFontPx * 1.12);
+  const codeBlockH = codeLines.length * codeLineHeight;
+  const codeMarginB = cssPxToCanvas(1.5);
+
+  // 5. Medidas Meta / Date
+  const metaFontPx = Math.round(cssPxToCanvas(spec.metaPx || 5.5));
+  const metaLineHeight = Math.round(metaFontPx * 1.15);
+  const metaBlockH = date ? metaLineHeight : 0;
+
+  // Altura total y centrado vertical armónico
+  const totalHeight = eyebrowBlockH + eyebrowMarginB +
+                      speciesBlockH + speciesMarginB +
+                      badgeMarginT + badgeH + badgeMarginB +
+                      codeBlockH + codeMarginB +
+                      metaBlockH;
+
+  let curY = Math.max(padY, Math.round((h - totalHeight) / 2));
+  ctx.textBaseline = 'top';
+
+  // Render 1: Eyebrow
+  ctx.fillStyle = '#000000';
+  ctx.font = `700 ${eyebrowFontPx}px ${FONT_MONO}`;
+  eyebrowLines.forEach(line => {
+    ctx.fillText(line, textX, curY);
+    curY += eyebrowLineHeight;
+  });
+  curY += eyebrowMarginB;
+
+  // Render 2: Species
+  ctx.fillStyle = '#000000';
+  ctx.font = `700 ${speciesFontPx}px ${FONT_EDITORIAL}`;
+  speciesLines.forEach(line => {
+    ctx.fillText(line, textX, curY);
+    curY += speciesLineHeight;
+  });
+  curY += speciesMarginB;
+
+  // Render 3: Badge
+  if (badge) {
+    curY += badgeMarginT;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(textX, curY, badgeW, badgeH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `800 ${badgeFontPx}px ${FONT_MONO}`;
+    ctx.fillText(badge, textX + bPadX, curY + Math.round((badgeH - badgeFontPx) / 2));
+    curY += badgeH + badgeMarginB;
+  }
+
+  // Render 4: Code
+  ctx.fillStyle = '#000000';
+  ctx.font = `800 ${codeFontPx}px ${FONT_MONO}`;
+  codeLines.forEach(line => {
+    ctx.fillText(line, textX, curY);
+    curY += codeLineHeight;
+  });
+  curY += codeMarginB;
+
+  // Render 5: Meta / Date
+  if (date) {
+    ctx.fillStyle = '#000000';
+    ctx.font = `600 ${metaFontPx}px ${FONT_MONO}`;
+    ctx.fillText(date, textX, curY);
+  }
+
+  ctx.restore();
+}
+function buildThermalShareCanvas(items, sizeKey) {
+  const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  const wPx = spec.wMm * THERMAL_PX_PER_MM;
+  const hPx = spec.hMm * THERMAL_PX_PER_MM;
+  const gap = Math.round(THERMAL_PX_PER_MM); // 1mm de separación entre etiquetas apiladas
+  const canvas = document.createElement('canvas');
+  canvas.width = wPx;
+  canvas.height = items.length * hPx + Math.max(0, items.length - 1) * gap;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  items.forEach((item, i) => drawThermalLabelToCanvas(ctx, item, 0, i * (hPx + gap), sizeKey));
+  return canvas;
+}
 
 const FORM_DRAFT_KEY='setas_formulator_draft_v1';
 const readFormDraft=()=>{
@@ -4205,6 +5392,23 @@ function liveSeverityOf(alerts) {
   return 'warning';
 }
 
+// Presentation policy for the compact room strip. It intentionally consumes
+// the bridge's per-metric freshness rather than re-evaluating cultivation
+// thresholds in the UI.
+function liveClimatePresentation({ hasAnyLive, completeFresh, alerts }) {
+  const alertSeverity = hasAnyLive ? liveSeverityOf(alerts) : 'optimal';
+  const severity = alertSeverity === 'critical' || alertSeverity === 'warning'
+    ? alertSeverity
+    : completeFresh ? 'optimal'
+    : hasAnyLive ? 'partial'
+    : 'unknown';
+  return {
+    severity,
+    badge: severity === 'critical' ? 'Alerta' : severity === 'warning' ? 'Vigilar' : completeFresh ? 'En rango' : hasAnyLive ? 'Lectura parcial' : 'Sin lectura',
+    statusClass: severity === 'critical' ? 'fos-status--error' : severity === 'warning' ? 'fos-status--attention' : completeFresh ? 'fos-status--within-target' : 'fos-status--pending',
+  };
+}
+
 // "hace 45 s" / "hace 3 min" — la frescura del dato es parte del dato.
 function liveAgeLabel(ms) {
   if (!Number.isFinite(ms)) return 'sin datos';
@@ -4212,6 +5416,128 @@ function liveAgeLabel(ms) {
   if (ms < 3600000) return `hace ${Math.round(ms / 60000)} min`;
   return `hace ${Math.round(ms / 3600000)} h`;
 }
+
+
+let _fieldDbPromise = null;
+const getFieldDb = () => {
+  if (_fieldDbPromise) return _fieldDbPromise;
+  const queue = typeof window !== 'undefined' ? window.SetasFieldEventQueue : null;
+  if (!queue || typeof queue.initializeQueue !== 'function') {
+    return Promise.reject(new Error('field_event_queue_unavailable: SetasFieldEventQueue no cargado'));
+  }
+  _fieldDbPromise = queue.initializeQueue().catch(err => {
+    _fieldDbPromise = null;
+    throw err;
+  });
+  return _fieldDbPromise;
+};
+
+// Servidor de aceptación simulado. acceptFieldEvent exige el plan Blaze y el
+// proyecto sigue en Spark, así que el prototipo ejercita el ciclo completo
+// contra un simulacro que respeta el mismo contrato de idempotencia. Los
+// recibos que emite llevan `simulated`, y la hoja de acción los rotula como
+// tales: el operario nunca debe leer un simulacro como confirmación real.
+// El rol que gobierna las transiciones sale de `usuarios/{uid}.rol` del usuario
+// autenticado, traducido con la tabla compartida — la misma que aplica
+// acceptFieldEvent. Antes se derivaba de props.isAdmin, que viene del selector
+// de operario del encabezado y no de la sesión de Firebase: un operario veía
+// ofrecidas acciones de cuarentena que el servidor rechazaba.
+let _fieldRolePromise = null;
+const getFieldOperatorRole = () => {
+  if (_fieldRolePromise) return _fieldRolePromise;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
+  const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
+  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+
+  _fieldRolePromise = (async () => {
+    try {
+      const { doc, getDoc } = await import('./vendor/firebase/firebase-firestore.js');
+      const snap = await getDoc(doc(fb.db, 'usuarios', uid));
+      return contracts.mapWorkflowRole(snap.exists() ? snap.data().rol : null);
+    } catch (e) {
+      // Mínimo privilegio si no se puede leer: mejor ofrecer de menos que
+      // ofrecer acciones que el servidor va a rechazar.
+      return 'operario';
+    }
+  })();
+  return _fieldRolePromise;
+};
+
+let _fieldMock = null;
+const getFieldMockTransport = () => {
+  if (_fieldMock) return _fieldMock;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventMockTransport : null;
+  if (!mod || typeof mod.createMockTransport !== 'function') return null;
+  _fieldMock = mod.createMockTransport();
+  return _fieldMock;
+};
+
+// El simulacro sólo se usa si alguien lo pide explícitamente (banco de pruebas,
+// demo sin sesión). Nunca como respaldo silencioso: si el transporte real
+// fallara y el simulacro lo tapara, la hoja diría "confirmado" sin que el
+// servidor tenga nada, que es exactamente la mentira que este cuaderno existe
+// para evitar.
+const fieldMockRequested = () =>
+  typeof window !== 'undefined' && window.__setasFieldMockSync === true;
+
+let _fieldCallable = null;
+const getFieldCallableTransport = () => {
+  if (_fieldCallable) return _fieldCallable;
+  const mod = typeof window !== 'undefined' ? window.SetasFieldEventCallableTransport : null;
+  const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
+  const projectId = fb && fb.app && fb.app.options && fb.app.options.projectId;
+  if (!mod || typeof mod.createCallableTransport !== 'function' || !fb || !fb.auth || !projectId) return null;
+
+  _fieldCallable = mod.createCallableTransport({
+    projectId,
+    getIdToken: () => {
+      const user = fb.auth.currentUser;
+      if (!user) return Promise.reject(new Error('sin sesión activa'));
+      return user.getIdToken();
+    },
+  });
+  return _fieldCallable;
+};
+
+// Devuelve { transport, simulated }. `simulated` gobierna el rótulo de la hoja.
+const getFieldSyncTransport = () => {
+  if (fieldMockRequested()) {
+    const mock = getFieldMockTransport();
+    return mock ? { transport: mock.transport, simulated: true } : null;
+  }
+  const real = getFieldCallableTransport();
+  return real ? { transport: real, simulated: false } : null;
+};
+
+const readQueueEntry = (db, eventId) => new Promise((resolve) => {
+  try {
+    const req = db.transaction('queue_entries', 'readonly').objectStore('queue_entries').get(eventId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  } catch (e) { resolve(null); }
+});
+
+/**
+ * Empuja los eventos pendientes de la cuenta y refresca la entrada de cola.
+ * Un fallo aquí no es un error del operario: el evento ya está guardado en el
+ * equipo y el motor lo reintentará, así que se refleja el estado y no se lanza.
+ */
+const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
+  try {
+    const sync = typeof window !== 'undefined' ? window.SetasFieldEventSync : null;
+    const chosen = getFieldSyncTransport();
+    if (!db || !sync || !chosen || typeof sync.createSyncEngine !== 'function') return;
+
+    const engine = sync.createSyncEngine({ db, accountId, transport: chosen.transport });
+    await engine.syncOnce();
+  } catch (e) {
+    // Silencio deliberado: el estado real lo cuenta la entrada de cola.
+  }
+  if (typeof setQueueEntry === 'function' && db && eventId) {
+    setQueueEntry(await readQueueEntry(db, eventId));
+  }
+};
 
 function SimuladorShell(props){
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
@@ -4238,6 +5564,17 @@ function SimuladorShell(props){
     scroller.addEventListener('scroll',onScroll,{passive:true});
     return ()=>{scroller.removeEventListener('scroll',onScroll);if(raf) cancelAnimationFrame(raf);};
   },[]);
+  // Mismo breakpoint que el rail mobile del shell (.dc.html, 859px). Decide si
+  // Batch Detail monta la superficie mobile canónica (una columna, progressive
+  // disclosure) o la vista de escritorio existente — nunca ambas a la vez.
+  const [isMobileViewport,setIsMobileViewport]=useState(()=>typeof window!=='undefined'&&window.innerWidth<=859);
+  useEffect(()=>{
+    if(typeof window==='undefined'||typeof window.matchMedia!=='function') return;
+    const mq=window.matchMedia('(max-width:859px)');
+    const handler=e=>setIsMobileViewport(e.matches);
+    if(mq.addEventListener) mq.addEventListener('change',handler); else mq.addListener(handler);
+    return ()=>{ if(mq.removeEventListener) mq.removeEventListener('change',handler); else mq.removeListener(handler); };
+  },[]);
   const [hasPickedSpecies,setHasPickedSpecies]=useState(()=>{
     try{
       const p=normSpp(props.preselectSpecies);
@@ -4262,11 +5599,11 @@ function SimuladorShell(props){
   const [recipe,setRecipe]=useState(()=>initialFormDraft?.recipe||[]);
   const [search,setSearch]=useState('');
   const [cat,setCat]=useState('all');
-  const [numBags,setNumBags]=useState(6);
-  const [kgBag,setKgBag]=useState(1.5);
+  const [numBags,setNumBags]=useCaptureDraft('prodBags',6);
+  const [kgBag,setKgBag]=useCaptureDraft('prodKg',1.5);
   const [spawnCost,setSpawnCost]=useState(12000);
   const [showOpt,setShowOpt]=useState(false);
-  const [hObj,setHObj]=useState(67);
+  const [hObj,setHObj]=useCaptureDraft('prodH',67);
   const [showGuide,setShowGuide]=useState(false);
   const [showBatch,setShowBatch]=useState(false);
   const [saved,setSaved]=useState([]);
@@ -4275,13 +5612,6 @@ function SimuladorShell(props){
   const [flash,setFlash]=useState(false);
   const [saveSyncErr,setSaveSyncErr]=useState('');
   const [loteSyncErr,setLoteSyncErr]=useState('');
-  // Cola de sincronización de la Bitácora (SetasSyncQueue): persiste en
-  // localStorage bajo 'sdp_sync_queue' via serialize/deserialize para que
-  // sobreviva a un recargue del navegador — una cola que no sobrevive a eso
-  // no sirve para el caso (sala sin señal) que este módulo existe para cubrir.
-  const [syncQueue,setSyncQueue]=React.useState([]);
-  const [showDayClose,setShowDayClose]=useState(false);
-  const [dayCloseNote,setDayCloseNote]=useState(null);
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{
@@ -4342,8 +5672,8 @@ function SimuladorShell(props){
   const [schKey,setSchKey]=useState('p_ostreatus_gris');
   const [normMode,setNormMode]=useState(false);
   const [coFormMode,setCoFormMode]=useState(false);
-  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosada:40});
-  const [vegPrice,setVegPrice]=useState(12000);
+  const [coSpecConfig,setCoSpecConfig]=useState({p_ostreatus_gris:60,p_djamor_rosa:40});
+  const [vegPrice,setVegPrice]=useState(null);
   const [priceOverrides,setPriceOverrides]=useState({});
   const [showPrices,setShowPrices]=useState(false);
   const [invBase,setInvBase]=useState('');
@@ -4410,9 +5740,9 @@ function matchWeeklyCoverage(projection, commitments = b2bCommitments) {
 }
 
 // Badges for UI coverage status
-const superavit = '🟢';
-const deficit = '🔴';
-const cobertura = '🟡';
+const superavitBadge = 'ok';
+const deficitBadge = 'error';
+const coberturaBadge = 'warn';
 
 // Recommendation when deficit detected with substrate and spawn weights
 function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', options = {}) {
@@ -4450,9 +5780,28 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [optProfile,setOptProfile]=useState('produccion');
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
+  const [showFieldActionModal,setShowFieldActionModal]=useState(false);
+  const [fieldDb,setFieldDb]=useState(null);
+  useEffect(()=>{
+    let active=true;
+    getFieldDb().then(d=>{if(active)setFieldDb(d);}).catch(()=>{});
+    if (typeof window !== 'undefined' && !('BarcodeDetector' in window)) {
+      const prewarm = () => { loadJsQR().catch(() => {}); };
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(prewarm, { timeout: 3000 });
+      } else {
+        setTimeout(prewarm, 1500);
+      }
+    }
+    return ()=>{active=false;};
+  },[]);
   // Bolsa concreta leída del QR, cuando la etiqueta escaneada es de bolsa y no de lote.
   const [qrScannedBagId,setQrScannedBagId]=useState('');
   const [isCameraActive,setIsCameraActive]=useState(false);
+  // El render de la captura rápida lee cameraError; sin este estado el modal
+  // entero reventaba con ReferenceError al abrirse y no se escaneaba nada.
+  const [cameraError,setCameraError]=useState('');
+  const [manualScanCode,setManualScanCode]=useState('');
   const [showEsp32ConfigModal,setShowEsp32ConfigModal]=useState(false);
   const [showAutoclaveModal, setShowAutoclaveModal] = useState(false);
   const [autoclaveHoldMin, setAutoclaveHoldMin] = useState(90);
@@ -4471,51 +5820,264 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [postHarvestPackaged, setPostHarvestPackaged] = useState(true);
   const videoRef = React.useRef(null);
   const scannerIntervalRef = React.useRef(null);
+  // Canvas fuera de pantalla para el respaldo jsQR — nunca se monta en el DOM,
+  // solo sirve para volcar cada fotograma del <video> y leer sus píxeles.
+  const qrCanvasRef = React.useRef(null);
+  // El stream vive en su propia ref y no colgado del <video>: al cerrar la hoja
+  // React ya desmontó el elemento, y sin esta ref la cámara del teléfono se
+  // quedaba encendida con el modal cerrado.
+  const cameraStreamRef = React.useRef(null);
+  // Invariante de seguridad contra carreras asíncronas de la cámara:
+  // A lo sumo un payload decodificado puede transicionar la UI de activa a resuelta.
+  const scanResolvingRef = React.useRef(false);
+  const isDecodingPausedRef = React.useRef(false);
+  const isSavingHarvestRef = React.useRef(false);
+  const [qrScanMode, setQrScanMode] = useState('round'); // 'round' | 'harvest' | 'sweep'
+  const [harvestActiveCrate, setHarvestActiveCrate] = useState(null);
+  const [harvestGrossInput, setHarvestGrossInput] = useState('');
+  const [harvestTareInput, setHarvestTareInput] = useState('');
+  const [harvestTareSource, setHarvestTareSource] = useState('unverified');
+  const [harvestFlush, setHarvestFlush] = useState(1);
+  const [harvestCalidad, setHarvestCalidad] = useState(1);
+  const [harvestError, setHarvestError] = useState('');
+  const [harvestSessionStats, setHarvestSessionStats] = useState({ count: 0, totalNetGrams: 0, totalGrossGrams: 0 });
+  const [sweepQueue, setSweepQueue] = useState([]);
+  const [sweepRiskModalOpen, setSweepRiskModalOpen] = useState(false);
+  const [sweepRiskType, setSweepRiskType] = useState('micelio_debil');
+  const [sweepRiskNota, setSweepRiskNota] = useState('');
+  const [sweepStatusBanner, setSweepStatusBanner] = useState('');
+
+  const playSweepBeep = (freq = 880, durationMs = 100) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+      const ctx = window.__setasAudioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (durationMs / 1000));
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + (durationMs / 1000));
+    } catch (e) {}
+  };
+  const triggerHaptic = (pattern = [50]) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    } catch (e) {}
+  };
 
   const stopCameraScanner = () => {
     setIsCameraActive(false);
+    isDecodingPausedRef.current = false;
     if (scannerIntervalRef.current) {
       clearInterval(scannerIntervalRef.current);
       scannerIntervalRef.current = null;
     }
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject;
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') {
       stream.getTracks().forEach(t => t.stop());
-      videoRef.current.srcObject = null;
+    }
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+
+  // Apagar la cámara si el componente se va sin pasar por el botón de cerrar.
+  useEffect(() => () => {
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    const stream = cameraStreamRef.current;
+    if (stream && typeof stream.getTracks === 'function') stream.getTracks().forEach(t => t.stop());
+    cameraStreamRef.current = null;
+  }, []);
+
+  // Formatos que el navegador sabe decodificar de verdad. Chrome expone
+  // BarcodeDetector con la lista vacía en algunos escritorios: comprobar sólo
+  // que el constructor existe deja la cámara encendida sin leer nunca nada.
+  // Si getSupportedFormats() falla, NO asumir que sí hay soporte (eso dejaba
+  // la cámara "escaneando" para siempre sin detectar nada ni avisar) — caer
+  // al respaldo jsQR es la opción segura.
+  const detectQrSupport = async () => {
+    // En WebKit/Safari (iOS/iPadOS y Safari macOS), BarcodeDetector es experimental
+    // y falla al procesar HTMLVideoElement (lanza excepciones o devuelve vacío).
+    // jsQR sobre canvas es el motor probado y 100% fiable en WebKit.
+    if (typeof navigator !== 'undefined') {
+      const isWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+        (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent));
+      if (isWebKit) return false;
+    }
+    if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return false;
+    try {
+      const formats = await window.BarcodeDetector.getSupportedFormats();
+      return Array.isArray(formats) ? formats.includes('qr_code') : true;
+    } catch (e) {
+      return false;
     }
   };
 
+  // setIsCameraActive(true) sólo pide el render; el <video> aparece un tick
+  // después. Esperar a la ref evita el fotograma en negro cuando el permiso ya
+  // estaba concedido y getUserMedia resuelve de inmediato.
+  const attachCameraStream = async (stream) => {
+    for (let i = 0; i < 40 && !videoRef.current; i++) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    if (!videoRef.current) return false;
+    const v = videoRef.current;
+    v.srcObject = stream;
+    // Atributos DOM críticos para iOS Safari / WebKit PWA inline playback:
+    v.setAttribute('playsinline', 'true');
+    v.setAttribute('webkit-playsinline', 'true');
+    v.muted = true;
+    const playing = v.play();
+    if (playing && typeof playing.catch === 'function') playing.catch(() => {});
+    return true;
+  };
+
+  // Bucle de decodificación con jsQR sobre un <canvas> fuera de pantalla —
+  // el respaldo para iOS (y cualquier otro navegador sin BarcodeDetector).
+  // Más lento que la API nativa (dibuja + decodifica cada fotograma en JS
+  // puro), pero es justamente lo que hace que funcione en Safari/WebKit.
+  const startJsQRLoop = (jsQR) => {
+    if (!qrCanvasRef.current) qrCanvasRef.current = document.createElement('canvas');
+    const canvas = qrCanvasRef.current;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+    // Si dibujar/leer el fotograma falla de verdad (no "no hay QR en cuadro",
+    // sino una excepción real: canvas contaminado, decodificador roto, etc.)
+    // no hay que quedarse escaneando en silencio para siempre — tras unos
+    // intentos seguidos fallidos se corta el bucle y se avisa.
+    let consecutiveErrors = 0;
+    scannerIntervalRef.current = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2 || !video.videoWidth) return;
+      try {
+        // El stream de cámara pide 1080p como ideal (ver getUserMedia) para
+        // que el QR denso e impreso en 17-22mm tenga detalle suficiente —
+        // pero decodificar esa resolución completa con jsQR (JS puro) cada
+        // 300ms es pesado. Se topa el lado mayor del canvas: conserva casi
+        // todo el detalle que importa y evita que el teléfono se quede sin
+        // aire a mitad de escaneo.
+        const MAX_DECODE_SIDE = 1280;
+        const scale = Math.min(1, MAX_DECODE_SIDE / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * scale);
+        canvas.height = Math.round(video.videoHeight * scale);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+        consecutiveErrors = 0;
+        if (code && code.data && !isDecodingPausedRef.current) handleScannedValue(code.data);
+      } catch (e) {
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 10) {
+          stopCameraScanner();
+          setCameraError('El escáner dejó de poder leer la cámara (' + (e && e.message ? e.message : 'error desconocido') + ') — escribe abajo el código impreso en la etiqueta.');
+        }
+      }
+    }, 300);
+  };
+
   const startCameraScanner = async () => {
+    scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
     setCameraError('');
-    setIsCameraActive(true);
+    setScanMiss('');
+
+    // Desbloqueo proactivo de AudioContext en respuesta directa al tap del usuario (requerido por iOS Safari)
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        if (!window.__setasAudioCtx) window.__setasAudioCtx = new AudioCtx();
+        if (window.__setasAudioCtx.state === 'suspended') {
+          window.__setasAudioCtx.resume().catch(() => {});
+        }
+      }
+    } catch (e) {}
+
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Cámara no disponible o no compatible en este navegador');
       }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      // BarcodeDetector nativo es la vía rápida cuando existe (Chrome/Android); si no, se
+      // intenta el respaldo jsQR antes de rendirse. En WebKit/iOS detectQrSupport devuelve false
+      // para ir directo a jsQR y evitar cuelgues con BarcodeDetector experimental.
+      const nativeOk = await detectQrSupport();
+      let jsQR = null;
+      if (!nativeOk) {
+        try {
+          jsQR = await loadJsQR();
+        } catch (e) {
+          setCameraError('No se pudo cargar el decodificador de QR (revisa tu conexión la primera vez que uses el escáner) — escribe abajo el código impreso en la etiqueta.');
+          return;
+        }
+      }
+      setIsCameraActive(true);
+
+      // Cadena de fallback escalonada para máxima compatibilidad con iPads, iPhones y Android
+      // (evita OverconstrainedError en iPads con cámara única o en Desktop Mode)
+      let stream = null;
+      const constraintsTiers = [
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: { ideal: 'environment' } } },
+        { video: true }
+      ];
+      let lastMediaErr = null;
+      for (const c of constraintsTiers) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          if (stream) break;
+        } catch (err) {
+          lastMediaErr = err;
+        }
+      }
+      if (!stream) {
+        throw (lastMediaErr || new Error('No se pudo acceder al hardware de cámara'));
+      }
+      cameraStreamRef.current = stream;
+      await attachCameraStream(stream);
+
+      if (jsQR) {
+        startJsQRLoop(jsQR);
+        return;
       }
 
-      if ('BarcodeDetector' in window) {
-        const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
-        scannerIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes && barcodes.length > 0) {
-              const rawVal = barcodes[0].rawValue;
-              handleScannedValue(rawVal);
-            }
-          } catch (e) {}
-        }, 300);
-      }
+      const detector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
+      if (scannerIntervalRef.current) clearInterval(scannerIntervalRef.current);
+      let nativeFailures = 0;
+      scannerIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) return;
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          nativeFailures = 0;
+          if (barcodes && barcodes.length > 0) {
+            const rawVal = barcodes[0].rawValue;
+            if (!isDecodingPausedRef.current) handleScannedValue(rawVal);
+          }
+        } catch (e) {
+          nativeFailures++;
+          // Si el detector nativo falla repetidamente (e.g. bug de WebKit en video), caer a jsQR dinámicamente
+          if (nativeFailures >= 3) {
+            try {
+              const fallbackJsQR = await loadJsQR();
+              if (fallbackJsQR) {
+                startJsQRLoop(fallbackJsQR);
+                return;
+              }
+            } catch (err) {}
+          }
+        }
+      }, 300);
     } catch (err) {
-      setCameraError(err.message || 'No se pudo acceder al hardware de cámara');
-      setIsCameraActive(false);
+      setCameraError(err && err.message ? err.message : 'No se pudo acceder al hardware de cámara');
+      stopCameraScanner();
     }
   };
 
@@ -4523,9 +6085,126 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // interpreta código de lote, id, etiqueta de bolsa, URL de trazabilidad y
   // payload JSON, y devuelve un motivo explícito cuando no resuelve.
   const [scanMiss, setScanMiss] = useState('');
+  // "Reportar evento" del action sheet móvil: Observación pide texto antes de
+  // registrar, por eso vive en su propio estado en vez de resolverse en un
+  // solo clic como Riego, Contaminación y Cosecha parcial.
+  const [qrEventoObsAbierta, setQrEventoObsAbierta] = useState(false);
+  const [qrEventoObsNota, setQrEventoObsNota] = useState('');
+  const [qrEventoStatuses, setQrEventoStatuses] = useState([]);
+  const qrSavingRef=useRef(new Set());
   const handleScannedValue = (raw) => {
-    if (!raw) return;
+    if (!raw || scanResolvingRef.current) return;
+    if (isDecodingPausedRef.current) return;
     const sheetApi = typeof window !== 'undefined' ? window.SetasBatchSheet : null;
+
+    // --- MODO BÁSCULA COSECHA ---
+    if (qrScanMode === 'harvest') {
+      let resolved = null;
+      if (sheetApi) {
+        resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas, crates: sheetApi.CONFIG_CRATES || [] });
+      } else {
+        resolved = { kind: 'unknown', reason: 'no_match' };
+      }
+
+      if (resolved.kind === 'crate' || resolved.kind === 'crate_unregistered') {
+        if (resolved.reason === 'inactive_crate') {
+          setScanMiss(`La canastilla ${resolved.crateCode || raw} está marcada como inactiva.`);
+          return;
+        }
+        isDecodingPausedRef.current = true;
+        playSweepBeep(980, 100);
+        triggerHaptic([40, 50]);
+        setHarvestActiveCrate({
+          crateId: resolved.crateId || ('crate_' + resolved.crateCode),
+          crateCode: resolved.crateCode,
+          taraGramos: resolved.taraGramos,
+          taraSource: resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'),
+          harvestId: 'COS_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        });
+        setHarvestGrossInput('');
+        setHarvestTareInput(resolved.taraGramos !== null ? String(resolved.taraGramos) : '');
+        setHarvestTareSource(resolved.taraSource || (resolved.taraGramos !== null ? 'catalog_default' : 'unverified'));
+        setHarvestError('');
+        setScanMiss('');
+        return;
+      }
+
+      if (resolved.kind === 'batch' && resolved.batchId) {
+        setQrSelectedLoteId(resolved.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote activo para cosecha cambiado a ${resolved.batchCode || resolved.batchId}. Ahora escanea una canastilla.`);
+        return;
+      }
+
+      setScanMiss(`Código "${String(raw).slice(0, 30)}" no es una canastilla registrada. Escanea una canastilla (CAN-01) o ingresa el peso.`);
+      return;
+    }
+
+    // --- MODO BARRIDO SALA (AUDIT SWEEP) ---
+    if (qrScanMode === 'sweep') {
+      let resolved = null;
+      if (sheetApi) {
+        resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
+      } else {
+        resolved = { kind: 'unknown', reason: 'no_match' };
+      }
+
+      let targetBag = null;
+      if (resolved.kind === 'bag' && resolved.bagId) {
+        targetBag = bitBolsas.find(b => b.id === resolved.bagId || b.codigo === resolved.bagId);
+      }
+      if (!targetBag) {
+        const rawStr = String(raw).trim();
+        targetBag = bitBolsas.find(b => b.codigo === rawStr || b.id === rawStr);
+        if (!targetBag) {
+          const bagMatch = rawStr.match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+          if (bagMatch) {
+            const suffix = bagMatch[1].toUpperCase();
+            targetBag = bitBolsas.find(b => (b.codigo?.endsWith(suffix) || b.id?.endsWith(suffix)) && (!qrSelectedLoteId || b.loteId === qrSelectedLoteId));
+          }
+        }
+      }
+
+      if (targetBag) {
+        if (sweepQueue.some(item => item.bagId === targetBag.id)) {
+          triggerHaptic([20]);
+          return;
+        }
+
+        playSweepBeep(880, 80);
+        triggerHaptic([40]);
+        const entry = window.SetasSweepJournal
+          ? window.SetasSweepJournal.createSweepEntry(targetBag)
+          : {
+              bagId: targetBag.id,
+              codigo: targetBag.codigo || targetBag.id,
+              loteId: targetBag.loteId,
+              estado: targetBag.estado || 'sana',
+              colonizacion: targetBag.colonizacion || 0,
+              col100: targetBag.col100 || null,
+              expectedRevision: targetBag.revision || 0,
+              scannedAt: Date.now(),
+            };
+        setSweepQueue(prev => [entry, ...prev]);
+        setScanMiss('');
+        if (targetBag.loteId && targetBag.loteId !== qrSelectedLoteId) {
+          setQrSelectedLoteId(targetBag.loteId);
+        }
+        return;
+      }
+
+      if (resolved.kind === 'batch' && resolved.batchId) {
+        setQrSelectedLoteId(resolved.batchId);
+        playSweepBeep(700, 80);
+        setScanMiss(`Lote fijado a ${resolved.batchCode || resolved.batchId}. Continúa escaneando las bolsas de la hilera.`);
+        return;
+      }
+
+      setScanMiss(`Etiqueta "${String(raw).slice(0, 30)}" no encontrada entre las bolsas.`);
+      return;
+    }
+
+    // --- MODO RONDA TRADICIONAL (DEFAULT) ---
     let resolved = null;
     if (sheetApi) {
       resolved = sheetApi.resolveScan(raw, { lotes: bitLotes, bolsas: bitBolsas });
@@ -4536,15 +6215,222 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       resolved = foundLote ? { kind: 'batch', batchId: foundLote.id, bagId: null } : { kind: 'unknown', batchId: null, reason: 'no_match' };
     }
     if (resolved.batchId) {
+      scanResolvingRef.current = true; // Invariante: a lo sumo un payload decodificado transiciona la UI de activa a resuelta
       setScanMiss('');
       setQrSelectedLoteId(resolved.batchId);
-      if (resolved.bagId) setQrScannedBagId(resolved.bagId);
+      const bagSuffix = String(raw).match(/(?:-|_)(B\d+)(?:&|\/|\?|$)/i);
+      const matchedBagId = resolved.bagId || (bagSuffix ? bagSuffix[1].toUpperCase() : '');
+      setQrScannedBagId(matchedBagId);
+      setQrEventoObsAbierta(false);
+      setQrEventoObsNota('');
       stopCameraScanner();
+      setShowQrSheet(false);
+      setShowFieldActionModal(true);
       try { if (navigator.vibrate) navigator.vibrate([40, 60, 40]); } catch(e) {}
-    } else if (resolved.reason === 'no_match') {
+    } else {
       setScanMiss(`La etiqueta "${String(raw).slice(0, 40)}" no corresponde a ningún lote ni bolsa registrada.`);
     }
   };
+
+  // Único punto de entrada al escáner real. La hoja resuelve la etiqueta contra
+  // los lotes de la bitácora; el escáner del shell (openScan en el .dc) trabaja
+  // sobre contenedores de demostración y no sabe nada de estos lotes.
+  const openFieldScanSheet = (initialMode = 'round') => {
+    scanResolvingRef.current = false;
+    isDecodingPausedRef.current = false;
+    isSavingHarvestRef.current = false;
+    setQrScanMode(initialMode);
+    setHarvestActiveCrate(null);
+    setSweepQueue([]);
+    setSweepStatusBanner('');
+    const firstActive = bitLotes.find(l => !['completado','descartado'].includes(l.estado));
+    setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || '');
+    setQrScannedBagId('');
+    setScanMiss('');
+    setCameraError('');
+    setManualScanCode('');
+    setShowQrSheet(true);
+  };
+
+  const handleSaveHarvestCrate = () => {
+    if (isSavingHarvestRef.current) return;
+    if (!harvestActiveCrate || !harvestGrossInput) return;
+    const gross = parseFloat(harvestGrossInput);
+    if (!gross || gross <= 0) {
+      setHarvestError('Ingresa un peso bruto válido.');
+      return;
+    }
+    const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+    if (tare !== null && tare > gross) {
+      setHarvestError(`La tara (${tare}g) no puede exceder el peso bruto (${gross}g).`);
+      return;
+    }
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    if (!activeLot) {
+      setHarvestError('No hay un lote seleccionado para registrar la cosecha.');
+      return;
+    }
+
+    isSavingHarvestRef.current = true;
+    try {
+      const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot.operador || 'operario_local';
+      const harvestRecord = {
+        id: harvestActiveCrate.harvestId,
+        loteId: activeLot.id,
+        crateId: harvestActiveCrate.crateId,
+        crateCode: harvestActiveCrate.crateCode,
+        pesoBrutoGramos: gross,
+        taraGramos: tare,
+        taraSource: tare !== null ? harvestTareSource : 'unverified',
+        flush: harvestFlush,
+        calidad: harvestCalidad,
+        fecha: new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toISOString(),
+        operador: uid,
+      };
+
+      const normalized = window.SetasBitacora.normalizeHarvestCapture(harvestRecord);
+      const ok = addBitCosecha(normalized);
+      if (ok) {
+        setHarvestSessionStats(prev => ({
+          count: prev.count + 1,
+          totalNetGrams: prev.totalNetGrams + (normalized.pesoFrescoGramos || 0),
+          totalGrossGrams: prev.totalGrossGrams + normalized.pesoBrutoGramos,
+        }));
+        playSweepBeep(1200, 80);
+        triggerHaptic([30, 40]);
+        setHarvestActiveCrate(null);
+        isDecodingPausedRef.current = false;
+      }
+    } catch (err) {
+      setHarvestError(err.message || 'Error al guardar la cosecha');
+    } finally {
+      isSavingHarvestRef.current = false;
+    }
+  };
+
+  const handleApplySweepColonizacion = (targetPct) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || 'operario_local';
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) {
+      setScanMiss('Módulo SetasSweepJournal no disponible.');
+      return;
+    }
+
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      targetColonizacion: targetPct,
+      operator: uid,
+      now: Date.now(),
+    });
+
+    if (opResult.status !== 'failed') {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+
+      for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
+        encolarSync({type:'actualizarBolsa',key:'bolsa:'+bId,args:[bId,updatedBag]});
+      }
+
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: 'note',
+          operatorId: uid,
+          at: new Date().toISOString(),
+          payload: {
+            nota: `Barrido de sala: ${opResult.totalUpdated} de ${opResult.totalScanned} bolsas actualizadas al ${targetPct}%.`,
+            operationId: opResult.operationId,
+          },
+        });
+        const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+        } catch (e) {}
+        encolarSync({type:'actualizarLote',key:'lote:'+activeLot.id,args:[activeLot.id,{lifecycleEvents:nextLog}]});
+      }
+
+      playSweepBeep(1040, 120);
+      triggerHaptic([50, 60]);
+      setSweepStatusBanner(`Barrido aplicado: ${opResult.totalUpdated} bolsas actualizadas al ${targetPct}%${opResult.totalScanned > opResult.totalUpdated ? ` (${opResult.totalScanned - opResult.totalUpdated} protegidas)` : ''}.`);
+      setSweepQueue([]);
+    } else {
+      setSweepStatusBanner('No se pudo aplicar el barrido a las bolsas seleccionadas.');
+    }
+  };
+
+  const handleApplySweepRisk = (riskType, riskNota) => {
+    if (!sweepQueue.length) return;
+    const activeLot = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || bitLotes[0];
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || activeLot?.operador || 'operario_local';
+    const journalApi = window.SetasSweepJournal;
+    if (!journalApi) return;
+
+    const opResult = journalApi.applySweepOperation({
+      allBolsas: bitBolsas,
+      sweepQueue,
+      isRiskObservation: true,
+      riskType,
+      riskNota,
+      operator: uid,
+      now: Date.now(),
+    });
+
+    if (opResult.status !== 'failed') {
+      setBitBolsas(opResult.updatedBolsas);
+      try {
+        localStorage.setItem('sdp_bit_bolsas', JSON.stringify(opResult.updatedBolsas));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+
+      const sheetApi = window.SetasBatchSheet;
+      if (sheetApi && activeLot) {
+        const prevLog = activeLot.lifecycleEvents || [];
+        const nextLog = sheetApi.appendBatchEvent(prevLog, {
+          id: opResult.operationId,
+          batchId: activeLot.id,
+          action: 'note',
+          operatorId: uid,
+          at: new Date().toISOString(),
+          payload: {
+            nota: `Observación de riesgo en barrido (${riskType}): ${riskNota || 'sin nota adicional'} en ${opResult.totalUpdated} bolsas.`,
+            operationId: opResult.operationId,
+          },
+        });
+        const updLotes = bitLotes.map(l => l.id === activeLot.id ? { ...l, lifecycleEvents: nextLog } : l);
+        setBitLotes(updLotes);
+        try {
+          localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
+        } catch (e) {}
+      }
+
+      playSweepBeep(660, 150);
+      triggerHaptic([60, 40]);
+      setSweepStatusBanner(`Observación de riesgo registrada para ${opResult.totalUpdated} bolsas.`);
+      setSweepQueue([]);
+      setSweepRiskModalOpen(false);
+      setSweepRiskNota('');
+    }
+  };
+
+  // El botón «Escanear» del shell no abre su propio escáner: sube el nonce y
+  // esta hoja se abre aquí, donde están los lotes de verdad.
+  useEffect(()=>{
+    if(!Number(props.scanNonce)) return;
+    openFieldScanSheet();
+  },[props.scanNonce]);
 
   const [showThermalModal,setShowThermalModal]=useState(false);
   const [thermalLote,setThermalLote]=useState(null);
@@ -4562,7 +6448,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [diagImageMime,setDiagImageMime]=useState('image/jpeg');
   const [diagRunning,setDiagRunning]=useState(false);
   const [diagResult,setDiagResult]=useState(null);
+  const [diagNotes,setDiagNotes]=useState('');
+  const [diagError,setDiagError]=useState('');
   const [showDiagNotes,setShowDiagNotes]=useState('');
+  const [showTriageModal,setShowTriageModal]=useState(false);
+  const [triageLoteId,setTriageLoteId]=useState('');
+  const [triagePathogenKey,setTriagePathogenKey]=useState('trichoderma');
+  const [triageAffectedBags,setTriageAffectedBags]=useState(1);
+  const [triageLocation,setTriageLocation]=useState('');
+  const [triageDecision,setTriageDecision]=useState('isolate_bags');
+  const [triageNotes,setTriageNotes]=useState('');
   const [showAIFormModal,setShowAIFormModal]=useState(false);
   const [aiFormGoal,setAiFormGoal]=useState('');
   const [aiFormLoading,setAiFormLoading]=useState(false);
@@ -4694,25 +6589,39 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
-  const [prodBags,setProdBags]=useState(6);
-  const [prodKg,setProdKg]=useState(1.5);
-  const [prodH,setProdH]=useState(67);
-  const [prodDate,setProdDate]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
-  const [prodScaleG,setProdScaleG]=useState(0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
-  const [prodMoist,setProdMoist]=useState({});    // override de humedad real por insumo {id: %} para el lote del día
-  const [prodLoteNum,setProdLoteNum]=useState('');  // número de lote imprimible
-  const [checkedSteps,setCheckedSteps]=useState({}); // checkboxes interactivos de la hoja
+  const [prodBags,setProdBags]=[numBags,setNumBags];
+  const [prodKg,setProdKg]=[kgBag,setKgBag];
+  const [prodH,setProdH]=[hObj,setHObj];
+  const [prodDate,setProdDate]=useCaptureDraft('prodDate',(()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
+  const [prodScaleG,setProdScaleG]=useCaptureDraft('prodScaleG',0.1); // resolución de báscula en gramos (0.1 g = 100 mg)
+  const [prodMoist,setProdMoist]=useCaptureDraft('prodMoist',{});    // override de humedad real por insumo {id: %} para el lote del día
+  const [prodLoteNum,setProdLoteNum]=useCaptureDraft('prodLoteNum','');  // número de lote imprimible
+  // These checks are operator progress during preparation, so keep them with
+  // the tab-scoped preparation draft instead of losing them on navigation.
+  const [checkedSteps,setCheckedSteps]=useCaptureDraft('checkedSteps',{});
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
   const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
+  const [bitLotesLoaded,setBitLotesLoaded]=useState(false);
+  const initialDeepLinkHandled=useRef(false);
+  const [publicSyncStatus,setPublicSyncStatus]=useState(null);
+  const qrLotesRef=useRef(bitLotes);
+  qrLotesRef.current=bitLotes;
   const [bitBolsas,setBitBolsas]=useState([]);
   const [bitCosechas,setBitCosechas]=useState([]);
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
   const [bitTasks,setBitTasks]=useState([]);
+  // Cola de sincronización de la Bitácora (SetasSyncQueue): persiste en
+  // localStorage bajo 'sdp_sync_queue' via serialize/deserialize para que
+  // sobreviva a un recargue del navegador — una cola que no sobrevive a eso
+  // no sirve para el caso (sala sin señal) que este módulo existe para cubrir.
+  const [syncQueue,setSyncQueue]=React.useState([]);
+  const [showDayClose,setShowDayClose]=useState(false);
+  const [dayCloseNote,setDayCloseNote]=useState(null);
   const [bitTab,setBitTab]=useState('bit_dash');
   const [bitActiveLoteId,setBitActiveLoteId]=useState(null);
   const applyBitTab=(raw,hasActiveLote=!!bitActiveLoteId)=>{
@@ -4739,10 +6648,41 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   },[props.bitSubtab,props.bitSubtabNonce,bitActiveLoteId]);
   const [bitDashView,setBitDashView]=useState('grid');
   const [showBitNuevo,setShowBitNuevo]=useState(false);
-  const [bitNuevoForm,setBitNuevoForm]=useState({});
+  const [bitNuevoForm,setBitNuevoForm]=useCaptureDraft('bitNuevoForm',{});
   const [showBitCosecha,setShowBitCosecha]=useState(false);
-  const [bitCosechaForm,setBitCosechaForm]=useState({});
-  const [prodBagType,setProdBagType]=useState('bolsa_20x50'); // tipo de contenedor activo
+  const [bitCosechaForm,setBitCosechaForm]=useCaptureDraft('bitCosechaForm',{});
+  const [captureErrors,setCaptureErrors]=useState({});
+  const [captureSaveError,setCaptureSaveError]=useState('');
+  const captureFields={
+    'bit-codigo':[bitNuevoForm.codigo,{required:true},'text'], 'bit-especie':[bitNuevoForm.especie,{required:true},'text'],
+    'bit-bags':[bitNuevoForm.numBolsas,{required:true,min:1,integer:true}],
+    'bit-wet-kg':[bitNuevoForm.pesoHumedo,{min:0}], 'bit-spawn':[bitNuevoForm.spawnPct,{min:0,max:100}],
+    'bit-moisture':[bitNuevoForm.humedad,{min:0,max:100}], 'bit-dry-weight':[bitNuevoForm.peseSeco,{min:0}],
+    'harvest-bag':[bitBolsas.some(b=>b.id===bitCosechaForm.bolsaId&&b.loteId===bitCosechaForm.loteId)?bitCosechaForm.bolsaId:'',{required:true},'text'],
+    'harvest-flush':[bitCosechaForm.flush,{required:true,min:1,integer:true}],
+    'harvest-date':[bitCosechaForm.fecha,{required:true},'text'],
+    'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}]
+  };
+  const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Completa este campo.':''):SetasBitacora.captureError(f[0],f[1]);};
+  const validateCaptureField=id=>setCaptureErrors(p=>({...p,[id]:captureFieldError(id)}));
+  const captureErrorNode=id=>captureErrors[id]?<span id={id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{captureErrors[id]}</span>:null;
+  const validateCapture=kind=>{
+    setCaptureSaveError('');
+    const errors=Object.fromEntries(Object.keys(captureFields).filter(id=>id.startsWith(kind==='trial'?'bit-':'harvest-')).map(id=>[id,captureFieldError(id)]));
+    setCaptureErrors(errors);const first=Object.keys(errors).find(id=>errors[id]);
+    if(first){document.getElementById(first)?.focus();return false;}return true;
+  };
+  const harvestDraftKey=form=>'setas_capture_v1:harvest:'+form.loteId+':'+(form.bolsaId||'batch');
+  useEffect(()=>{if(bitCosechaForm.loteId){try{sessionStorage.setItem(harvestDraftKey(bitCosechaForm),JSON.stringify(bitCosechaForm));}catch{}}},[bitCosechaForm]);
+  const openHarvestCapture=form=>{
+    setCaptureErrors({});
+    try{const saved=JSON.parse(sessionStorage.getItem(harvestDraftKey(form)));if(saved?.loteId===form.loteId){setBitCosechaForm(saved);return;}}catch{}
+    setBitCosechaForm(form);
+  };
+  const clearHarvestCapture=()=>{try{sessionStorage.removeItem(harvestDraftKey(bitCosechaForm));}catch{}setBitCosechaForm({});};
+  const [showBatchSheetModal,setShowBatchSheetModal]=useState(false);
+  const [batchSheetModalLote,setBatchSheetModalLote]=useState(null);
+  const [prodBagType,setProdBagType]=useCaptureDraft('prodBagType','bolsa_20x50'); // tipo de contenedor activo
   const [showFlush,setShowFlush]=useState(false);
   const [showCompChart,setShowCompChart]=useState(false);
   const [showSpeciesRec,setShowSpeciesRec]=useState(false);
@@ -4751,11 +6691,18 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invProveedores,setInvProveedores]=useState([]);
   const [invCompras,setInvCompras]=useState([]);
   const [invLotes,setInvLotes]=useState([]);
+  const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
   const [invTab,setInvTab]=useState('stock');
+  const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
   const [formularMode,setFormularMode]=useState('auto');
   const [showOptimizer,setShowOptimizer]=useState(true);
   const [builderSubTab,setBuilderSubTab]=useState('formular');
+  const [workbenchMode,setWorkbenchMode]=useState('all');
+  const [morphTargetRecipe,setMorphTargetRecipe]=useState(null);
+  const [morphAlpha,setMorphAlpha]=useState(0.5);
+  const peritoWorkerRef=useRef(null);
+  const peritoRequestIdRef=useRef(0);
   const focusFormTop=()=>requestAnimationFrame(()=>{
     const main=document.getElementById('setas-main');
     if(main) main.scrollTo({top:0,left:0});
@@ -4814,12 +6761,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -4940,6 +6887,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(l) setInvLotes(JSON.parse(l));
         if(m) setInvMovimientos(JSON.parse(m));
       }
+      setPeritoInventoryLoaded(true);
     }catch(e){}
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
@@ -4951,6 +6899,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     }catch(e){
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
+    }finally{
+      setBitLotesLoaded(true);
     }
   },[]);
 
@@ -5009,6 +6959,63 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     };
   },[]);
 
+  // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
+  useEffect(()=>{
+    if(!bitLotesLoaded||initialDeepLinkHandled.current) return;
+    initialDeepLinkHandled.current=true;
+    try{
+      const navigation=typeof window!=='undefined'?window.SetasOSNavigation:null;
+      const target=navigation?.resolveOperationalTarget
+        ?navigation.resolveOperationalTarget(window.location)
+        :null;
+      if(!target) return;
+
+      if(target.kind==='crate'&&target.crateCode){
+        goTab('bitacora');
+        openFieldScanSheet('harvest');
+        const sheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
+        const resolved=sheetApi?sheetApi.resolveScan(target.crateCode,{crates:sheetApi.CONFIG_CRATES||[]}):null;
+        if(resolved&&(resolved.kind==='crate'||resolved.kind==='crate_unregistered')){
+          setHarvestActiveCrate({
+            crateId:resolved.crateId||('crate_'+resolved.crateCode),
+            crateCode:resolved.crateCode,
+            taraGramos:resolved.taraGramos,
+            taraSource:resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'),
+            harvestId:'COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+          });
+          setHarvestGrossInput('');
+          setHarvestTareInput(resolved.taraGramos!==null?String(resolved.taraGramos):'');
+          setHarvestTareSource(resolved.taraSource||(resolved.taraGramos!==null?'catalog_default':'unverified'));
+        }
+        return;
+      }
+
+      if(target.batchCode){
+        const found=bitLotes.find(l=>
+          l.codigo===target.batchCode||
+          l.id===target.batchCode||
+          (l.codigo&&target.batchCode&&l.codigo.toUpperCase()===target.batchCode.toUpperCase())
+        );
+        if(found){
+          setBitActiveLoteId(found.id);
+          goTab('bitacora');
+          goBitTab('bit_ficha',true);
+          if(target.kind==='bag'&&target.bagCode){
+            setQrScannedBagId(target.bagCode);
+          }
+        }else{
+          goTab('bitacora');
+          setNoticeDlg({
+            title:'Lote no encontrado localmente',
+            msg:`Se intentó abrir el lote o bolsa "${target.bagCode||target.batchCode}", pero no está registrado en los datos locales de este dispositivo. Si fue registrado recientemente en otro equipo, sincroniza la bitácora desde la nube.`
+          });
+        }
+      }
+    }catch(err){
+      console.warn('Error resolviendo target operativo de navegación:', err);
+    }
+  },[bitLotesLoaded,bitLotes]);
+
   // ── v4: sincronizar pantry con stock
   useEffect(()=>{
     if(!invLotes.length) return;
@@ -5023,9 +7030,54 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   useEffect(()=>{try{const s=localStorage.getItem('sdp_alertas');if(s) setAlertaConfig(JSON.parse(s));}catch(e){};},[]);
   useEffect(()=>{try{const s=localStorage.getItem('sdp_prov_override');if(s) setProvOverride(JSON.parse(s));}catch(e){};},[]);
 
+  // ── Cola de trabajo del turno, derivada del motor de tareas ───────────────
+  // Vive aquí y no dentro del cockpit porque el cockpit se pinta desde una IIFE
+  // dentro del render: un hook ahí violaría las reglas de React. Lo que el
+  // operario ve al entrar es el cockpit, así que la cola tiene que llegarle a él.
+  const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
+
+  // Siembra única: la cola sale de bitTasks, pero todo usuario actual tiene
+  // lotes sin ninguna tarea persistida todavía. Si bitTasks está vacío y hay
+  // lotes activos, se derivan tareas SOP del estado vigente de cada uno y se
+  // persisten una sola vez — después de eso manda el motor.
+  React.useEffect(()=>{
+    if(bitTasks.length>0) return;
+    if(!taskEngine) return;
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    if(!activos.length) return;
+    const ahora=Date.now();
+    const seeded=activos.flatMap(lote=>{
+      const toState=lote.lifecycleState||loteLifecycleState(lote);
+      try{
+        return taskEngine.tasksFromTransition({batchId:lote.id,toState,at:lote.createdAt||new Date(ahora).toISOString(),nowMs:ahora});
+      }catch(e){ return []; }
+    });
+    if(seeded.length) mergeIntoTasks(seeded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[bitTasks.length,bitLotes.length]);
+
+  /** Índice de objetos para que la cola resuelva código de lote y sala, no ids crudos. */
+  const buildTaskIndex=(activeLotes)=>{
+    const index={batches:{},rooms:ROOMS_CONFIG};
+    activeLotes.forEach(lote=>{
+      // Un lote en cuarentena es un caso de bioseguridad, no un paso más del
+      // ciclo: su stateLabel lo dice explícito para que cualquier tarea que lo
+      // señale (por objectId) se lea como alerta de bioseguridad y no como una
+      // transición de rutina más.
+      const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
+      index.batches[lote.id]={
+        code:lote.codigo,
+        species:lote.especie,
+        stateLabel:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':(lifecycleLabel[loteLifecycleState(lote)]||lote.estado),
+        room:lote.sala||lote.ubicacion||null,
+      };
+    });
+    return index;
+  };
+
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
-    const trSave=an?calcTreatment(an, sKey, SPP):null;
+    const trSave=an?calcTreatment(an, sKey, effectiveSPP):null;
     const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an?an.eb.toFixed(0):'—',cn:an?an.cn.toFixed(1):'—',score:opt.score,cost:an?Math.round(an.cost):0,treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};
     const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
@@ -5068,14 +7120,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       setRecipe(targetRecipe);
       goTab('produccion');
       setNoticeDlg({
-        title:'⭐ Receta promovida a Producción',
+        title:'Receta promovida a Producción',
         msg:`La receta "${targetName}" ha sido promovida a Producción oficial. Se han cargado los parámetros en la Hoja de Producción lista para lote.`
       });
     };
 
     if(missingStock.length>0){
       setConfirmDlg({
-        title:'⭐ Promover a Producción — Insumos Faltantes',
+        title:'Promover a Producción — Insumos Faltantes',
         msg:`La receta "${targetName}" incluye ingredientes sin stock suficiente en Bodega Tenjo:\n\n• ${missingStock.map(m=>`${m.name} (${m.pct}%) — Stock actual: ${m.inStockKg.toFixed(1)} kg`).join('\n• ')}\n\n¿Deseas promoverla para planificar la producción y compra de insumos?`,
         confirmLabel:'Promover y planificar',
         onConfirm:executePromotion,
@@ -5111,16 +7163,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const setEbRealFor=id=>{
     const entry=saved.find(s=>s.id===id);
     if(!entry) return;
-    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Guardar',onSubmit:val=>{
-      const n=parseFloat(val);
-      if(!Number.isFinite(n)) return;
-      const u=saved.map(s=>s.id===id?{...s,ebReal:Math.round(n*10)/10}:s);
+    setPromptDlg({title:'Registrar EB real',label:`EB real obtenida al final del ciclo (%) · estimado: ${entry.eb}%`,placeholder:String(entry.eb),confirmLabel:'Confirmar resultado final',onSubmit:val=>{
+      const n=finiteEB(val);
+      if(n==null) return;
+      const ebReal=Math.round(n*10)/10;
+      const u=saved.map(s=>s.id===id?{...s,ebReal,outcome:confirmedOutcome(ebReal)}:s);
       setSaved(u);
       try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
     }});
   };
 
-  const sp=SPP[sKey];
   const effectiveINGS=useMemo(()=>INGS.map(ing=>{
     const invPr=precioPonderado(ing.id,invLotes);
     if(invPr!==null) return{...ing,cost:Math.round(invPr)};
@@ -5154,17 +7206,31 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Calibración por evidencia real: lotes de Bitácora con peso seco y cosechas
   // registradas. Sin lotes reales n=0 y weight=0 — el score cae limpio al EB
   // teórico en vez de mezclarse con las filas de demo del shell.
-  const histRows=useMemo(()=>bitacoraEBRows(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
+  const histRows=useMemo(()=>bitacoraObservations(bitLotes,bitCosechas),[bitLotes,bitCosechas]);
   const histStats=useMemo(()=>historicalEB(sKey,histRows,recipe),[sKey,histRows,recipe]);
-  const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS),[recipe,sKey,effectiveINGS]);
+  const effectiveSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,recipe,effectiveINGS),[sKey,recipe,effectiveINGS]);
+  // Búsquedas híbridas desde receta vacía: objetivos de la clase por defecto de
+  // la especie (sin receta no hay sustrato que clasificar). No depende de
+  // `recipe`, así que no relanza la búsqueda en cada edición de la receta.
+  const searchSPP=useMemo(()=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],optimizerINGS),[sKey,optimizerINGS]);
+  // Especie activa con targets resueltos (D5/D8) — todo el render de este
+  // componente lee `sp` de aquí, no del catálogo legado SPP[sKey].
+  const sp=effectiveSPP[sKey];
+  const an=useMemo(()=>analyze(recipe,sKey,effectiveINGS,effectiveSPP),[recipe,sKey,effectiveINGS,effectiveSPP]);
+  // Los inputs de humedad del batch siguen el objetivo resuelto (D5) al cambiar
+  // de especie o de clase de sustrato, salvo que el operador ya los haya editado
+  // a mano — en cuyo caso su valor manual no se pisa.
+  const moistureTouched=useRef({hObj:sessionStorage.getItem('setas_capture_v1:prodH')!=null});
+  useEffect(()=>{
+    const t=an?.moistureTarget; if(t==null) return;
+    if(!moistureTouched.current.hObj) setHObj(t);
+  },[sKey,an?.targets?.resolvedClass,an?.moistureTarget]);
   const coAnalysis=useMemo(()=>{
     if(!coFormMode||!recipe.length||!window.SetasRecipeOptimizer?.analyzeCoFormulation) return null;
-    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,SPP);
-  },[coFormMode,recipe,coSpecConfig,effectiveINGS]);
+    return window.SetasRecipeOptimizer.analyzeCoFormulation(recipe,coSpecConfig,effectiveINGS,effectiveSPP);
+  },[coFormMode,recipe,coSpecConfig,effectiveINGS,effectiveSPP]);
   const balanced=isMassBalanced(an);
   const balMsg=balanced?'':massBalanceMsg(an);
-  const readyForProduction=balanced&&hasPickedSpecies;
-  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg;
   const optimalAn=useMemo(()=>{try{
     const r=runHybridRecipeSearch({
       targetKey:sKey,
@@ -5175,30 +7241,38 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       useStock:false,
       profileKey:'produccion',
       stockMap:{},
+      spp:searchSPP,
     });
     return r.ranked?.[0]?.evaluation?.analysis||null;
-  }catch(e){return null;}},[sKey,invLotes,optimizerINGS]);
+  }catch(e){return null;}},[sKey,invLotes,optimizerINGS,searchSPP]);
   const dg=useMemo(()=>diagnose(an,sKey),[an,sKey]);
-  const tr=useMemo(()=>calcTreatment(an, sKey, SPP),[an,sKey]);
-  const bd=useMemo(()=>showBatch?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,effectiveINGS,an?.dynSpawn):null,[recipe,numBags,kgBag,showBatch,hObj,spawnCost,effectiveINGS,an?.dynSpawn]);
-  // ── Ficha: rows precalculados para botón Ejecutar Lote ──
-  const prodRows=useMemo(()=>{
-    if(!recipe.length||!balanced) return null;
-    const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-    const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn);
-    if(!pb) return null;
-    const resG=prodScaleG||0.1;
-    const roundG=x=>Math.round(x/resG)*resG;
-    return recipe.map(r=>{
-      const g=prodIngs.find(x=>x.id===r.id);
-      const it=g?pb.items.find(x=>x.name===g.name):null;
-      const krTeo=it?it.kr:0;
-      const grR=roundG(krTeo*1000);
-      const m=g?Math.min(0.92,Math.max(0,(g.moisture||0)/100)):0;
-      const masaSecaR=(grR/1000)*(1-m);
-      return{g,r,krTeo,grR,m,masaSecaR};
-    });
-  },[recipe,effectiveINGS,prodMoist,prodBags,prodKg,prodH,spawnCost,prodScaleG,an]);
+  const tr=useMemo(()=>calcTreatment(an, sKey, effectiveSPP),[an,sKey,effectiveSPP]);
+  const preparationResult=useMemo(()=>{
+    try{return {snapshot:SetasLaunchPlanApi.buildPreparationSnapshot({recipe,ingredients:effectiveINGS,moistureOverrides:prodMoist,lockedIds:[...lockedIds],speciesKey:sKey,bags:numBags,kgPerBag:kgBag,moistureTarget:hObj,scaleG:prodScaleG,spawnPct:an?.dynSpawn}),error:''};}
+    catch(e){return {snapshot:null,error:e.message};}
+  },[recipe,effectiveINGS,prodMoist,lockedIds,sKey,numBags,kgBag,hObj,prodScaleG,an?.dynSpawn]);
+  const preparation=preparationResult.snapshot;
+  const prepValid=!!preparation;
+  const readyForProduction=balanced&&hasPickedSpecies&&prepValid;
+  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg||preparationResult.error;
+  const prodIngs=useMemo(()=>effectiveINGS.map(g=>{
+    const item=preparation?.items.find(i=>i.ingredientId===g.id);
+    return item?{...g,moisture:item.moisture.pct}:g;
+  }),[effectiveINGS,preparation]);
+  const preparedBatch=useMemo(()=>preparation?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice,300,preparation):null,[preparation,recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
+  const bd=showBatch?preparedBatch:null;
+  const validatePreparation=()=>{
+    if(preparation)return true;
+    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult.error});return false;
+  };
+  const prodRows=useMemo(()=>preparation?preparation.items.map(item=>({
+    g:prodIngs.find(g=>g.id===item.ingredientId),r:recipe.find(r=>r.id===item.ingredientId),
+    krTeo:item.theoreticalWetKg,grR:item.asReceivedKg*1000,m:item.moisture.pct/100,masaSecaR:item.dryKg,
+  })):null,[preparation,prodIngs,recipe]);
+  const launchRevision=JSON.stringify([preparation,invLotes,prodBagType,an,tr,saveName,hasPickedSpecies]);
+  useEffect(()=>{
+    setLoteBatchConfirm(null);setShowProdLaunchModal(false);setCheckedSteps({});
+  },[launchRevision]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
   const lowStockCount=useMemo(()=>{
@@ -5225,6 +7299,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         stockMap,
         ingredients:INGS,
         profileKey:optProfile||'produccion',
+        spp:SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],INGS),
       });
       let cand = (r.recommended && r.recommended[0]) || (r.ranked && r.ranked[0]) || (r.pareto && r.pareto[0]) || (r.best?.recipe?.length ? r.best : null);
       if (!cand || !cand.recipe || !cand.recipe.length) {
@@ -5287,25 +7362,53 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,undefined,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,usageCounts]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts]);
+  // One committed React snapshot for the presentation bridge. Batch size,
+  // locks, inventory and evidence changes invalidate it even without a recipe edit.
+  const peritoRevisionRef=React.useRef(0);
+  useEffect(()=>{
+    const input={
+      inputRevision:++peritoRevisionRef.current,
+      species:{key:sKey,name:sp?.name||sKey,confirmed:hasPickedSpecies},
+      recipe:recipe.map(r=>({id:r.id,p:Number(r.p)})),
+      lockedIds:[...lockedIds],
+      preparation,
+      batch:{wetKg:Number(numBags)*Number(kgBag),targetMoisturePct:preparation?.target.moisturePct??Number(hObj)},
+      inventory:{available:peritoInventoryLoaded,stockKgById:{...stockMap},source:'Bodega activa'},
+      ingredients:effectiveINGS.map(g=>({id:g.id,name:g.name})),
+      ingredientMoistureById:Object.fromEntries(prodIngs.map(g=>[g.id,g.moisture??null])),
+      processCapabilities:null,approval:null,
+      treatment:tr,an,
+      historicalEvidence:{trials:saved,lotes:bitLotes,harvests:bitCosechas},
+    };
+    globalThis.__setasPeritoInput=input;
+    window.dispatchEvent(new CustomEvent('setas-perito-input',{detail:input}));
+  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded,preparation,prodIngs]);
+  useEffect(()=>{
+    const navigate=event=>{
+      const action=event.detail?.action;
+      if(action==='inventory'){goTab('inventario');return;}
+      if(action==='history'){goTab('catalogo');return;}
+      if(action==='recipe'){focusActiveRecipe();return;}
+      if(action==='species'){focusFormTop();requestAnimationFrame(()=>document.getElementById('form-species-context-select')?.focus());return;}
+      if(action==='batch') setShowBatch(true);
+      const id={batch:'bl-batch',process:'bl-tratamiento',recommendations:'perito-recommendations'}[action];
+      if(id) requestAnimationFrame(()=>{
+        const target=document.getElementById(id);
+        target?.scrollIntoView({behavior:'smooth',block:'start'});
+        if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
+      });
+    };
+    window.addEventListener('setas-perito-navigate',navigate);
+    return()=>window.removeEventListener('setas-perito-navigate',navigate);
+  });
   // Costo real de bodega (precio ponderado por lote FIFO, precioPonderado) vs.
   // costo de catálogo que usa an.cost/scoreCost. Antes el Perito solo conocía
   // el precio de catálogo aunque dos ingredientes del mismo rol tuvieran costo
   // de compra distinto en bodega — se muestra aparte, sin tocar el score, para
   // no introducir un cambio de comportamiento en runAutoOptimizer/scoreCost
   // que ya son consumidos en varios sitios con el costo de catálogo.
-  const realCostPerKg=useMemo(()=>{
-    if(!recipe.length) return null;
-    let known=false;
-    const total=recipe.reduce((s,r)=>{
-      const pp=precioPonderado(r.id,invLotes);
-      const g=effectiveINGS.find(i=>i.id===r.id);
-      if(pp!=null) known=true;
-      const price=pp!=null?pp:(g?g.cost:0);
-      return s+price*(parseFloat(r.p)||0)/100;
-    },0);
-    return known?Math.round(total):null;
-  },[recipe,invLotes,effectiveINGS]);
+  const realCostPerKg=useMemo(()=>realCostPerKgSeco(recipe,invLotes,effectiveINGS),[recipe,invLotes,effectiveINGS]);
   // Similitud de Jaccard entre conjuntos de ingredientes (ignora %, solo IDs).
   const recipeSimilarity=(recA,recB)=>{
     const a=new Set(recA.map(r=>r.id)),b=new Set(recB.map(r=>r.id));
@@ -5318,10 +7421,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // setEbRealFor) en pruebas guardadas de la misma especie, se usa para (a)
   // mostrar qué tan preciso ha sido el modelo aquí en esta bodega y (b) avisar
   // si la receta activa se parece a una prueba ya hecha, con su resultado real.
-  const trialsWithReal=useMemo(()=>saved.filter(s=>s.sKey===sKey&&s.ebReal!=null),[saved,sKey]);
+  const trialsWithReal=useMemo(()=>assessHistory(saved.filter(s=>s.sKey===sKey)).eligibleRows,[saved,sKey]);
   const modelAccuracy=useMemo(()=>{
     if(!trialsWithReal.length) return null;
-    const avgAbsDiff=trialsWithReal.reduce((s,t)=>s+Math.abs(t.ebReal-parseFloat(t.eb)),0)/trialsWithReal.length;
+    const comparable=trialsWithReal.filter(t=>finiteEB(t.eb)!=null);
+    if(!comparable.length) return null;
+    const avgAbsDiff=comparable.reduce((s,t)=>s+Math.abs(t.ebReal-finiteEB(t.eb)),0)/comparable.length;
     return Math.round(avgAbsDiff*10)/10;
   },[trialsWithReal]);
   const similarTrial=useMemo(()=>{
@@ -5379,42 +7484,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
   const autoImprove=()=>{
-    let cur=recipe;let bestScore=-1;
-    for(let i=0;i<6;i++){
-      const a=analyze(cur,sKey,effectiveINGS);
-      if(!a) break;
-      const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),optUseStock,undefined,undefined,usageCounts);
-      if(o.score<=bestScore) break;
-      bestScore=o.score;
-      const candidates=o.items
-        .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
-        .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
-        .slice(0,3);
-      if(!candidates.length) break;
-      let bestCandScore=-1,bestCandidate=null,bestA2=null,bestO2=null;
-      for(const cand of candidates){
-        const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-        const tryA=analyze(tryRec,sKey,effectiveINGS);
-        if(!tryA) continue;
-        const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),optUseStock,undefined,undefined,usageCounts);
-        if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestA2=tryA;bestO2=tryO;}
-      }
-      if(!bestCandidate) break;
-      const candidate=bestCandidate;
-      const a2=bestA2;
-      if(!a2) break;
-      const o2=bestO2;
-      if(o2.score<=o.score) break; // no aceptar si no mejora el score global
-      cur=candidate;
-    }
-    setRecipe(cur);
+    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
   };
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
   // Usa getComputedStyle para resolver variables CSS (oklab, etc.) antes de escribir la ventana.
   // Recoge solo <style> inline (sin CORS) para evitar ventana en blanco.
   const openPrintWindow=(mode)=>{
-    const el=document.querySelector('.prod-sheet');
+    const el=document.querySelector('.prod-sheet[data-preparation-revision]');
     if(!el){setNoticeDlg({msg:'Genera la hoja primero (debe haber una receta activa).'});return;}
     el.querySelectorAll('input').forEach(inp=>inp.setAttribute('value',inp.value));
     const nombre=(an?.sp?.name||'Sustrato').replace(/\s+/g,'_');
@@ -5465,77 +7542,175 @@ body{margin:0;padding:20px 24px;background:#fff;}
     pw.document.title=filename;
     setTimeout(()=>{if(pw&&!pw.closed){pw.focus();pw.print();}},900);
   };
-  const printProdSheet=()=>openPrintWindow('print');
+  const printProdSheet=()=>{if(validatePreparation())openPrintWindow('print');};
   // Exporta la hoja como PDF — misma ventana, mismo mecanismo; el usuario elige "Guardar como PDF".
-  const exportPDF=()=>openPrintWindow('pdf');
+  const exportPDF=()=>{if(validatePreparation())openPrintWindow('pdf');};
   // ── Ejecutar Lote: muestra modal de confirmación antes de descontar inventario ──
   const ejecutarLote=(rows,loteNum,fecha)=>{
-    if(!rows||!rows.length) return;
-    const preview=rows.filter(x=>x.g).map(x=>{
-      const krKg=x.grR/1000;
-      const stock=invLotes.filter(l=>l.activo&&l.ingredienteId===x.g.id).reduce((s,l)=>s+l.cantidadKgDisponible,0);
-      return{id:x.g.id,name:x.g.name,krKg,stockActual:stock,unit:'kg',ok:stock>=krKg*0.999};
-    });
-    // La bolsa seleccionada en "Tipo de contenedor" también se descuenta del inventario
-    // (en unidades, no kg) — comparte el mismo modelo FIFO que el sustrato vía stockId.
-    const bt=BAG_TYPES.find(b=>b.id===prodBagType);
-    if(bt&&bt.stockId){
-      const needed=parseInt(prodBags)||0;
-      const stock=stockActual(bt.stockId,invLotes);
-      preview.push({id:bt.stockId,name:bt.name,krKg:needed,stockActual:stock,unit:'uds',ok:stock>=needed});
+    if(!validatePreparation())return;
+    if(!prepValid||!rows||!rows.length) return;
+    // Misma compuerta que "Lanzar Lote" (openProdLauncher): receta balanceada y
+    // especie elegida explícitamente antes de descontar bodega (I5c).
+    if(!readyForProduction){
+      setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
+      return;
     }
-    setLoteBatchConfirm({preview,loteNum,fecha});
-  };
-  const confirmarEjecucion=()=>{
-    if(!loteBatchConfirm) return;
-    const{preview,loteNum,fecha}=loteBatchConfirm;
-    const now=new Date().toISOString();
-    setInvLotes(prev=>{
-      const updated=consumirInventarioFIFOLocal(prev,preview);
-      try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
-      return updated;
+    const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
+    const plan=SetasLaunchPlanApi.buildLaunchPlan({
+      preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bagType?.stockId?{ingredientId:bagType.stockId,units:preparation.target.bags}:null,
+      unitIngredientIds:UNIT_INGREDIENT_IDS,
     });
-    const ts=Date.now();
-    const newMovs=preview.map((row,i)=>({id:'mov_lote_'+ts+'_'+i,tipo:'consumo_lote',ingredienteId:row.id,kgMovidos:row.krKg,loteNum:loteNum||'—',fecha,nota:`Lote ${loteNum||'—'} · ${fecha}`,timestamp:now}));
-    saveMovimientos([...invMovimientos,...newMovs]);
-    setLoteBatchConfirm(null);
-    setLoteSyncErr('');
-    // localStorage ya descontó al instante (mismo patrón que saveR): la transacción de
-    // Firestore corre en segundo plano y es la que de verdad evita el doble descuento
-    // entre operadores/dispositivos concurrentes — un fallo de red no bloquea al operador,
-    // solo se avisa si no sincronizó.
-    if(window.SetasDB){
-      (async()=>{
-        try{
-          for(const row of preview){
-            await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
+    const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
+    const preview=[
+      ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,stockActual:stockActual(i.ingredientId,invLotes),unit:'kg',ok:!faltante(i.ingredientId)})),
+      ...(plan.spawnItem?[{id:plan.spawnItem.ingredientId,name:'Spawn (grano)',krKg:plan.spawnItem.asReceivedKg,stockActual:stockActual(plan.spawnItem.ingredientId,invLotes),unit:'kg',ok:!faltante(plan.spawnItem.ingredientId)}]:[]),
+      ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,stockActual:stockActual(u.ingredientId,invLotes),unit:'uds',ok:!faltante(u.ingredientId)})),
+    ];
+    // Nueva sesión de "Ejecutar Lote": rearma la guarda de re-entrancia (Task 8).
+    ejecutarLoteInFlight.current=false;
+    setEjecutandoLote(false);
+    setLoteBatchConfirm({preview,plan,loteNum,fecha,launchRevision});
+  };
+
+  // ── Guarda de re-entrancia contra doble clic — "Ejecutar Lote" (Task 8) ──
+  // Ref/estado propios, NO compartidos con launchInFlight/conGuardaLanzamiento
+  // (Task 7, "Lanzar Lote"): son dos flujos distintos, visibles a la vez en el
+  // mismo Formulador, con sus propios modales (loteBatchConfirm vs.
+  // prodLaunchForm/showProdLaunchModal) y sus propios puntos de reapertura. Si
+  // compartieran una sola bandera, abrir uno de los dos flujos (que rearma su
+  // guarda al abrirse, igual que openProdLauncher) podría liberar de golpe la
+  // guarda del otro flujo mientras éste sigue latched en caso 2 (consumo ya
+  // registrado, a la espera de que el operador abra una sesión nueva) —
+  // reintroduciendo el riesgo de doble descuento que la guarda existe para
+  // evitar. Mismo patrón que conGuardaLanzamiento, aplicado a su propio ref.
+  const ejecutarLoteInFlight=useRef(false);
+  const [ejecutandoLote,setEjecutandoLote]=useState(false);
+  const conGuardaEjecucion=fn=>(...args)=>{
+    if(ejecutarLoteInFlight.current) return;
+    ejecutarLoteInFlight.current=true;
+    setEjecutandoLote(true);
+    try{
+      return fn(...args);
+    }catch(e){
+      ejecutarLoteInFlight.current=false;
+      setEjecutandoLote(false);
+      console.error('Error en operación protegida por conGuardaEjecucion:',e);
+    }
+  };
+
+  const confirmarEjecucion=conGuardaEjecucion(()=>{
+    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
+      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
+    }
+    const{preview,plan,loteNum,fecha}=loteBatchConfirm;
+    let consumoRegistrado=false;
+    try{
+      const now=Date.now();
+      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now});
+      const registered=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,nota:`Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}`});
+      if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+      consumoRegistrado=true;
+
+      // Al entrar el lote en bitLotes, el N.º de lote del Formulador pasa a la
+      // siguiente sugerencia (I5b) — un segundo "Ejecutar" no reusa el código.
+      refrescarCodigoTrasEjecutar.current=true;
+      setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+      setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+      encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
+      encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
+
+      setLoteBatchConfirm(null);
+      setLoteSyncErr('');
+      setEjecutandoLote(false);
+      // El descuento de bodega ya quedó hecho arriba por registrarConsumo: aplicado al
+      // instante en localStorage (sdp_lotes) y encolado en sdp_inventory_ops, cuya
+      // identidad es el loteId — enqueue rechaza un segundo consumo del mismo lote y
+      // el servidor guarda inventory_consumptions/{loteId} append-only. Eso es lo que
+      // evita el doble descuento; aquí solo se crea en segundo plano el registro del
+      // lote de producción en Firestore — un fallo de red no bloquea al operador,
+      // solo se avisa si no sincronizó.
+      if(window.SetasDB){
+        (async()=>{
+          try{
+            await window.SetasDB.crearLoteProduccion({
+              codigo: lote.codigo,
+              especie: SPP[sKey]?.name || sKey,
+              camara: '—',
+              operador: '—',
+              receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
+            });
+          }catch(err){
+            setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
           }
-          await window.SetasDB.crearLoteProduccion({
-            codigo: loteNum || ('LOTE-'+ts),
-            especie: SPP[sKey]?.name || sKey,
-            camara: '—',
-            operador: '—',
-            receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
-          });
-        }catch(err){
-          setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
-        }
-      })();
+        })();
+      }
+    }catch(e){
+      console.error('Error al ejecutar lote:',e);
+      if(consumoRegistrado){
+        // Caso 2: el consumo de bodega YA quedó registrado (idempotente, por
+        // loteId) antes de que algo más fallara. Reintentar acuñaría un loteId
+        // nuevo y descontaría el inventario una segunda vez, así que la guarda
+        // NO se libera aquí — solo se reabre al volver a llamar ejecutarLote.
+        setLoteBatchConfirm(null);
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title:'Lote ejecutado con errores',
+          msg:`El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
+        });
+      }else{
+        // Caso 1: nada se registró todavía — es seguro reintentar. Se libera
+        // la guarda y se deja el modal de confirmación abierto.
+        ejecutarLoteInFlight.current=false;
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title:'No se pudo ejecutar el lote',
+          msg:`Ocurrió un error antes de registrar el consumo de bodega: ${e?.message||'error desconocido'}. Intenta de nuevo.`
+        });
+      }
     }
-  };
+  });
   // ── Bitácora helpers ──
-  const buildBitNuevoForm=()=>{
+  // Código SDP-{fecha}-{especie}-R{n}: misma nomenclatura en Bitácora (nuevo
+  // lote), Producción (Lanzar producción) y Formulador (N.º lote a imprimir/
+  // ejecutar) — un solo lugar para no repetir el mapa de especie→código ni
+  // dejar que una de las tres se desactualice sola.
+  const SPP_CODE={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
+  const sugerirCodigoLote=(key)=>{
     const today=new Date().toISOString().split('T')[0];
-    const sp=SPP[sKey];const tr=an?calcTreatment(an, sKey, SPP):null;
-    const SC={p_ostreatus_gris:'OST',p_ostreatus_blanco:'OBL',p_djamor_rosa:'ROS',p_eryngii:'ERY',shiitake:'SHI',lions_mane:'MEL',reishi:'REI',enoki:'ENO',nameko:'NAM'};
-    const sppCode=SC[sKey]||'EXP';const dc=today.replace(/-/g,'').slice(2);
-    const cnt=bitLotes.length+1;const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
+    const sppCode=SPP_CODE[key]||'EXP';const dc=today.replace(/-/g,'').slice(2);
+    const cnt=bitLotes.length+1;
+    return `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+  };
+  // Precarga el N.º de lote del Formulador con la sugerencia — sin esto el
+  // campo se queda vacío hasta que el operador escribe algo a mano, con
+  // riesgo de que invente un formato distinto al SDP-{fecha}-{especie}-R{n}
+  // que usan Bitácora y Producción. Solo autocompleta mientras el campo
+  // sigue vacío: si el operador ya escribió algo (o lo borró a propósito),
+  // un cambio de especie no se lo pisa.
+  useEffect(()=>{
+    if(!sessionStorage.getItem('setas_capture_v1:prodLoteNum') && sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  },[sKey]);
+  // Tras un "Ejecutar Lote" exitoso: nueva sugerencia con el mismo generador,
+  // calculada cuando bitLotes ya incluye el lote recién creado.
+  const refrescarCodigoTrasEjecutar=useRef(false);
+  useEffect(()=>{
+    if(!refrescarCodigoTrasEjecutar.current) return;
+    refrescarCodigoTrasEjecutar.current=false;
+    if(sKey) setProdLoteNum(sugerirCodigoLote(sKey));
+  },[bitLotes]);
+  const buildBitNuevoForm=()=>{
+    const sp=effectiveSPP[sKey];const tr=an?calcTreatment(an, sKey, effectiveSPP):null;
+    const today=new Date().toISOString().split('T')[0];
+    const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
     return{
-      codigo:`SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`,
+      codigo:sugerirCodigoLote(sKey),
       especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',
-      fechaMezcla:today,fechaInoculacion:today,
-      numBolsas:nb,pesoHumedo:kb,peseSeco:parseFloat((nb*kb*(1-hm/100)).toFixed(3)),
-      spawnPct:an?.dynSpawn||tr?.spawn||8,humedad:hm,tratamiento:tr?.name||'',
+      fechaMezcla:'',fechaInoculacion:'',
+      numBolsas:'',pesoHumedo:'',peseSeco:'',
+      spawnPct:'',humedad:'',tratamiento:'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'incubacion',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
@@ -5570,44 +7745,92 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setShowThermalModal(true);
   };
 
+  const openThermalForCrate = (crateCode = 'CAN-01') => {
+    const dummyLote = bitLotes[0] || { codigo: 'SDP-CANASTILLA', especie: 'Canastilla Grado Alimentario', numBolsas: 1 };
+    setThermalLote(dummyLote);
+    setThermalScope('crate');
+    setThermalCosechaItem({ crateCode });
+    setShowThermalModal(true);
+  };
+
+  const sincronizarFichasPublicas = async (onlyLoteId = null) => {
+    if (!window.SetasPublicTraceDB) {
+      setNoticeDlg({
+        title: 'Servicio no disponible',
+        msg: 'El módulo de sincronización pública (SetasPublicTraceDB) no está cargado o Firestore no está conectado.'
+      });
+      return;
+    }
+    const targetLotes = onlyLoteId
+      ? bitLotes.filter(l => l.id === onlyLoteId)
+      : bitLotes;
+
+    if (!targetLotes.length) {
+      setNoticeDlg({ title: 'Sin lotes', msg: 'No hay lotes disponibles para sincronizar.' });
+      return;
+    }
+
+    setPublicSyncStatus({ running: true, message: `Sincronizando ${targetLotes.length} lote(s)...`, type: 'info' });
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    for (const lt of targetLotes) {
+      const harvests = bitCosechas.filter(c => c.loteId === lt.id);
+      const bolsas = bitBolsas.filter(b => b.loteId === lt.id);
+      try {
+        const res = await window.SetasPublicTraceDB.publicarLote(lt, harvests, bolsas);
+        if (res && res.ok) {
+          successCount++;
+        } else {
+          failedCount++;
+          errors.push(`${lt.codigo}: ${res?.reason || 'falló'}`);
+        }
+      } catch (err) {
+        failedCount++;
+        errors.push(`${lt.codigo}: ${err?.message || 'error'}`);
+      }
+    }
+
+    try {
+      localStorage.setItem('sdp_bit_lotes', JSON.stringify(bitLotes));
+    } catch (e) {}
+
+    const summaryMsg = `${targetLotes.length} lotes procesados: ${successCount} sincronizados, ${failedCount} con error.` + (errors.length ? `\nDetalles:\n${errors.slice(0, 5).join('\n')}` : '');
+    setPublicSyncStatus({
+      running: false,
+      message: summaryMsg,
+      type: failedCount > 0 ? 'warning' : 'success'
+    });
+    setNoticeDlg({
+      title: 'Trazabilidad Pública · Resultado de Sincronización',
+      msg: summaryMsg
+    });
+  };
+
   const openProdLauncher = () => {
     if (!readyForProduction || !recipe.length || !an) {
       setNoticeDlg({ title: 'Receta no lista', msg: productionBlockMsg || 'Balancea la receta al 100% antes de lanzar producción.' });
       return;
     }
     const today = new Date().toISOString().split('T')[0];
-    const sp = SPP[sKey];
-    const SC = { p_ostreatus_gris:'OST', p_ostreatus_blanco:'OBL', p_djamor_rosa:'ROS', p_eryngii:'ERY', shiitake:'SHI', lions_mane:'MEL', reishi:'REI', enoki:'ENO', nameko:'NAM' };
-    const sppCode = SC[sKey] || 'EXP';
-    const dc = today.replace(/-/g,'').slice(2);
-    const cnt = bitLotes.length + 1;
-    const codigo = `SDP-${dc}-${sppCode}-R${String(cnt).padStart(2,'0')}`;
+    const sp = effectiveSPP[sKey];
+    const codigo = sugerirCodigoLote(sKey);
 
-    // Desglose de insumos a descontar
-    const insumos = (bd?.items || []).map(it => {
-      const g = INGS.find(i => i.name === it.name || i.id === it.id);
-      const id = g ? g.id : it.name;
-      const krKg = it.asIsKg || (parseFloat(it.unit) || 0);
-      const stockActual = invLotes.filter(l => l.activo && l.ingredienteId === id).reduce((s,l) => s + l.cantidadKgDisponible, 0);
-      return {
-        id,
-        name: it.name,
-        krKg,
-        stockActual,
-        ok: stockActual >= krKg * 0.999
-      };
+    const nb=preparation.target.bags,kb=preparation.target.kgPerBag;
+    const humedadLote=preparation.target.moisturePct;
+    const bagType=BAG_TYPES.find(b=>b.id===prodBagType);
+    const plan=SetasLaunchPlanApi.buildLaunchPlan({
+      preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bagType?.stockId?{ingredientId:bagType.stockId,units:nb}:null,
+      unitIngredientIds:UNIT_INGREDIENT_IDS,
     });
-
-    if (bd?.spawn && bd.spawn > 0) {
-      const spawnStock = invLotes.filter(l => l.activo && l.ingredienteId === 'spawn_grano').reduce((s,l) => s + l.cantidadKgDisponible, 0);
-      insumos.push({
-        id: 'spawn_grano',
-        name: `Spawn / Micelio (${sp?.name || sKey})`,
-        krKg: bd.spawn,
-        stockActual: spawnStock,
-        ok: spawnStock >= bd.spawn * 0.999
-      });
-    }
+    const faltante=id=>plan.shortfalls.find(s=>s.ingredientId===id);
+    const insumos=[
+      ...plan.items.map(i=>({id:i.ingredientId,name:i.name,krKg:i.asReceivedKg,unit:'kg',stockActual:stockActual(i.ingredientId,invLotes),ok:!faltante(i.ingredientId)})),
+      ...(plan.spawnItem?[{id:plan.spawnItem.ingredientId,name:'Spawn (grano)',krKg:plan.spawnItem.asReceivedKg,unit:'kg',stockActual:stockActual(plan.spawnItem.ingredientId,invLotes),ok:!faltante(plan.spawnItem.ingredientId)}]:[]),
+      ...plan.unitItems.map(u=>({id:u.ingredientId,name:bagType?.name||u.ingredientId,krKg:u.units,unit:'uds',stockActual:stockActual(u.ingredientId,invLotes),ok:!faltante(u.ingredientId)})),
+    ];
 
     setProdLaunchForm({
       codigo,
@@ -5616,143 +7839,127 @@ body{margin:0;padding:20px 24px;background:#fff;}
       cepa: '',
       fechaMezcla: today,
       fechaInoculacion: today,
-      numBolsas: numBags || 10,
-      pesoHumedo: kgBag || 1.5,
-      humedad: hObj || 67,
+      numBolsas: nb,
+      pesoHumedo: kb,
+      humedad: humedadLote,
       sala: selectedClimateRoom || 'martha_01',
       operador: 'Operario Granja Tenjo',
       notas: '',
       printQr: true,
+      launchRevision,
+      plan,
       insumos
     });
+    // Nueva sesión de lanzamiento: rearma la guarda de re-entrancia.
+    launchInFlight.current = false;
+    setLaunching(false);
     setShowProdLaunchModal(true);
   };
 
-  const ejecutarLanzamientoProduccion = () => {
-    if (!prodLaunchForm) return;
-    const { codigo, especie, especieCientifico, cepa, fechaMezcla, fechaInoculacion, numBolsas, pesoHumedo, humedad, sala, operador, notas, printQr, insumos } = prodLaunchForm;
-    const nb = parseInt(numBolsas) || 1;
-    const kb = parseFloat(pesoHumedo) || 1.5;
-    const hm = parseFloat(humedad) || 67;
-    const now = new Date().toISOString();
-    const ts = Date.now();
+  // ── Guarda de re-entrancia contra doble clic / doble envío — Task 7/8.
+  // Es un ref, no un estado: toma efecto de inmediato (síncrono), antes de
+  // que React re-renderice y deshabilite el botón. No se libera solo al
+  // terminar la función (eso no protegería un segundo clic separado — cada
+  // evento de clic corre como una llamada íntegra e independiente, así que
+  // un `finally` síncrono ya habría desbloqueado la guarda para cuando el
+  // segundo clic llega). Se libera explícitamente al reabrir el lanzador
+  // (nueva sesión) o si el intento de lanzamiento no llegó a completarse.
+  const launchInFlight = useRef(false);
+  const [launching, setLaunching] = useState(false);
+  const conGuardaLanzamiento = fn => (...args) => {
+    if (launchInFlight.current) return;
+    launchInFlight.current = true;
+    setLaunching(true);
+    try {
+      return fn(...args);
+    } catch (e) {
+      // Red de seguridad genérica (Task 7/8): si la función envuelta deja
+      // escapar un error sin manejarlo ella misma, por defecto se libera
+      // la guarda — equivale al caso 1 (nada se alcanzó a registrar). Una
+      // operación que SÍ necesita mantener la guarda cerrada tras un
+      // registro parcial (caso 2) debe atrapar su propio error y decidirlo
+      // explícitamente, como hace ejecutarLanzamientoProduccion abajo — en
+      // ese caso este catch nunca se alcanza porque el error ya fue
+      // absorbido adentro.
+      launchInFlight.current = false;
+      setLaunching(false);
+      console.error('Error en operación protegida por conGuardaLanzamiento:', e);
+    }
+  };
 
-    // 1. Descontar Inventario en Bodega (FIFO)
-    const insumosADescontar = (insumos || []).filter(i => i.krKg > 0);
-    if (insumosADescontar.length > 0) {
-      setInvLotes(prev => {
-        const updated = consumirInventarioFIFOLocal(prev, insumosADescontar);
-        try { localStorage.setItem('sdp_lotes', JSON.stringify(updated)); } catch(e) {}
-        return updated;
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
+    const f = prodLaunchForm;
+    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
+      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
+    }
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
+      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+      if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
+      consumoRegistrado = true;
+
+      setBitLotes(prev => {
+        const upd = [lote, ...prev];
+        try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+        return upd;
       });
-      const newMovs = insumosADescontar.map((row, i) => ({
-        id: 'mov_lote_' + ts + '_' + i,
-        tipo: 'consumo_lote',
-        ingredienteId: row.id,
-        kgMovidos: row.krKg,
-        loteNum: codigo,
-        fecha: fechaInoculacion,
-        nota: `Lote ${codigo} (${nb} bolsas × ${kb} kg) · ${fechaInoculacion}`,
-        timestamp: now
-      }));
-      saveMovimientos([...invMovimientos, ...newMovs]);
+      setBitBolsas(prev => {
+        const upd = [...prev, ...bolsas];
+        try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
+        return upd;
+      });
 
-      if (window.SetasDB) {
-        (async () => {
-          try {
-            for (const row of insumosADescontar) {
-              await window.SetasDB.descontarInventarioFIFO(row.id, row.krKg);
-            }
-          } catch (e) {
-            console.warn('Error sincronizando descuento FIFO a Firestore:', e);
-          }
-        })();
+      encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
+      encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
+      window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter(b => b.loteId === lote.id)).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
+
+      // 3. Cerrar modal y proceder
+      setShowProdLaunchModal(false);
+
+      if (f.printQr) {
+        setThermalLote(lote);
+        setThermalBagEnd(lote.numBolsas || 12);
+        setThermalScope('all');
+        setShowThermalModal(true);
+      } else {
+        setBitActiveLoteId(lote.id);
+        goTab('bitacora');
+      }
+
+      setNoticeDlg({
+        title: 'Producción de Lote Lanzada',
+        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
+      });
+    } catch (e) {
+      console.error('Error al lanzar producción de lote:', e);
+      if (consumoRegistrado) {
+        // Caso 2: el consumo de bodega YA quedó registrado (idempotente,
+        // por loteId) antes de que algo más fallara. Reintentar acuñaría
+        // un loteId nuevo y descontaría el inventario una segunda vez, así
+        // que la guarda NO se libera aquí — solo se reabre al abrir un
+        // nuevo lanzamiento (openProdLauncher). Se cierra el modal porque
+        // no hay nada seguro que reintentar desde él.
+        setShowProdLaunchModal(false);
+        setLaunching(false);
+        setNoticeDlg({
+          title: 'Lote lanzado con errores',
+          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
+        });
+      } else {
+        // Caso 1: nada se registró todavía — es seguro reintentar. Se
+        // libera la guarda y se deja el modal de lanzamiento abierto.
+        launchInFlight.current = false;
+        setLaunching(false);
+        setNoticeDlg({
+          title: 'No se pudo lanzar el lote',
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || 'error desconocido'}. Intenta de nuevo.`
+        });
       }
     }
-
-    // 2. Crear Lote y Bolsas en Bitácora
-    const lote = {
-      id: 'BIT_' + ts,
-      codigo,
-      especie,
-      especieCientifico,
-      cepa,
-      fechaMezcla,
-      fechaInoculacion,
-      numBolsas: nb,
-      pesoHumedo: kb,
-      peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
-      spawnPct: an?.dynSpawn || 8,
-      humedad: hm,
-      tratamiento: tr?.name || 'Pasteurización Térmica',
-      costoIngKg: an ? Math.round(an.cost) : 0,
-      operador,
-      objetivo: 'Lanzamiento directo desde Formulador',
-      notas,
-      estado: 'incubacion',
-      veredicto: '',
-      sala,
-      ubicacion: sala,
-      recipeRef: {
-        id: ts,
-        name: saveName || `Receta ${especie} (${codigo})`,
-        sKey,
-        recipe: [...recipe],
-        cn: an ? an.cn.toFixed(1) : '—',
-        eb: an ? an.eb.toFixed(0) : '—',
-        score: opt ? opt.score : 0,
-        cost: an ? Math.round(an.cost) : 0
-      },
-      createdAt: now
-    };
-
-    const bolsas = Array.from({ length: nb }, (_, i) => ({
-      id: 'BOLSA_' + ts + '_' + i,
-      loteId: lote.id,
-      codigo: `${lote.codigo}-B${String(i + 1).padStart(2, '0')}`,
-      num: i + 1,
-      estado: 'sana',
-      col25: null,
-      col50: null,
-      col100: null,
-      pesoInicial: kb,
-      fechaDescarte: null,
-      motivoDescarte: '',
-      observaciones: '',
-      foto: null
-    }));
-
-    setBitLotes(prev => {
-      const upd = [lote, ...prev];
-      try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-      return upd;
-    });
-    setBitBolsas(prev => {
-      const upd = [...prev, ...bolsas];
-      try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-      return upd;
-    });
-
-    encolarSync({ type: 'guardarLote', key: 'lote:' + lote.id, args: [lote] });
-    encolarSync({ type: 'guardarBolsas', key: 'lote:' + lote.id + ':bolsas', args: [bolsas] });
-    window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
-
-    // 3. Cerrar modal y proceder
-    setShowProdLaunchModal(false);
-
-    if (printQr) {
-      setThermalLoteId(lote.id);
-      setShowThermalModal(true);
-    } else {
-      setBitActiveLoteId(lote.id);
-      goTab('bitacora');
-    }
-
-    setNoticeDlg({
-      title: '🚀 Producción de Lote Lanzada',
-      msg: `El lote "${codigo}" (${nb} bolsas de ${kb} kg) ha sido creado exitosamente en Bitácora. Las materias primas fueron descontadas de Bodega y el lote quedó asignado a la sala "${ROOMS_CONFIG[sala]?.name || sala}".`
-    });
-  };
+  });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
@@ -5781,15 +7988,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
-    const nb=parseInt(form.numBolsas)||1;const ts=Date.now();
-    const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
-    setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    const nb=Number(form.numBolsas);const ts=Date.now();
+    const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:null,col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_lotes',[lote,...bitLotes]],['sdp_bit_bolsas',[...bitBolsas,...bolsas]]]);}catch(e){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return null;}
+    setBitLotes([lote,...bitLotes]);setBitBolsas([...bitBolsas,...bolsas]);
     // Se encolan por separado (no en un solo allSettled): son documentos
     // distintos y cada uno debe reintentarse de forma independiente si falla.
     encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
     encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
-    window.SetasPublicTraceDB?.publicarLote(lote).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+    window.SetasPublicTraceDB?.publicarLote(lote, [], bolsas).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
@@ -5797,7 +8004,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
-      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
+      const cos=bitCosechas.filter(c=>c.loteId===loteId);
+      const bol=bitBolsas.filter(b=>b.loteId===loteId);
+      window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, cos, bol).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     }
   };
   const updateBitBolsa=(bolsaId,fields)=>{
@@ -5818,10 +8027,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // y persiste con el mismo patrón try/catch + bitQuotaWarn que bitLotes/bitBolsas.
   const mergeIntoTasks=(nuevasTareas=[])=>{
     if(!nuevasTareas.length) return;
-    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
-    if(!taskEngine) return;
+    const taskEngineApi=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    if(!taskEngineApi) return;
     setBitTasks(prev=>{
-      const upd=taskEngine.mergeTasks(prev,nuevasTareas);
+      const upd=taskEngineApi.mergeTasks(prev,nuevasTareas);
       try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
       return upd;
     });
@@ -5830,13 +8039,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // vinculándolas al evento que las cumplió, y persiste igual que mergeIntoTasks.
   const completeBitTasks=(taskIds=[],eventId)=>{
     if(!taskIds.length||!eventId) return;
-    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
-    if(!taskEngine) return;
+    const taskEngineApi=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    if(!taskEngineApi) return;
     setBitTasks(prev=>{
       let upd=prev;
       taskIds.forEach(taskId=>{
         if(upd.some(t=>t.id===taskId&&t.status==='pending')){
-          upd=taskEngine.completeTask(upd,taskId,eventId);
+          upd=taskEngineApi.completeTask(upd,taskId,eventId);
         }
       });
       try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
@@ -5844,13 +8053,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
     });
   };
   const addBitCosecha=(cosecha)=>{
-    const e={...cosecha,id:'COS_'+Date.now()};
-    setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){bitQuotaWarn();}return upd;});
+    const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
+    setBitCosechas([...bitCosechas,e]);
     encolarSync({type:'guardarCosecha',key:'cosecha:'+e.id,args:[e]});
     const loteCosecha=bitLotes.find(l=>l.id===e.loteId);
     if(loteCosecha?.codigo){
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
     }
+    return true;
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
@@ -5887,6 +8098,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         useStock:false,
         profileKey:'produccion',
         stockMap:{},
+        spp:searchSPP,
       });
       if(r.ranked?.length){setRecipe(r.ranked[0].recipe);setLockedIds([]);}
       else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
@@ -5918,6 +8130,59 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const saveCompras=list=>{setInvCompras(list);try{localStorage.setItem('sdp_compras',JSON.stringify(list));}catch(e){}};
   const saveLotes=list=>{setInvLotes(list);try{localStorage.setItem('sdp_lotes',JSON.stringify(list));}catch(e){}};
   const saveMovimientos=list=>{setInvMovimientos(list);try{localStorage.setItem('sdp_movimientos',JSON.stringify(list));}catch(e){}};
+
+  // ── Consumo de inventario por lote — cola idempotente sdp_inventory_ops,
+  // descuento local inmediato + reintento contra Firestore (Task 7/8, D3).
+  const readInvOps=()=>{try{return JSON.parse(localStorage.getItem(SetasInventoryConsumptionApi.QUEUE_KEY)||'[]');}catch(e){return [];}};
+  const [invOps,setInvOps]=useState(readInvOps);
+  const saveInvOps=q=>{setInvOps(q);try{localStorage.setItem(SetasInventoryConsumptionApi.QUEUE_KEY,JSON.stringify(q));}catch(e){}};
+  // Una sola sincronización en vuelo (I2): una llamada durante el await devuelve
+  // la promesa en curso y agenda UNA pasada más al terminar, para que las ops
+  // que vencieron o se encolaron entretanto no esperen al próximo evento. Al
+  // guardar, la cola se re-lee y solo se le aplica el resultado de syncDue
+  // (mergeSyncResults) — una op encolada durante el await no se pierde.
+  const invSyncRef=useRef({inFlight:null,again:false});
+  const runInventorySync=useCallback(()=>{
+    const st=invSyncRef.current;
+    if(st.inFlight){st.again=true;return st.inFlight;}
+    if(!window.SetasDB?.guardarConsumoInventario) return Promise.resolve();
+    st.inFlight=(async()=>{
+      try{
+        const synced=await SetasInventoryConsumptionApi.syncDue({queue:readInvOps(),now:Date.now(),persist:rec=>window.SetasDB.guardarConsumoInventario(rec)});
+        saveInvOps(SetasInventoryConsumptionApi.mergeSyncResults(readInvOps(),synced));
+      }finally{
+        st.inFlight=null;
+        if(st.again){st.again=false;runInventorySync();}
+      }
+    })();
+    return st.inFlight;
+  },[]);
+  const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
+    const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
+    const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
+    if(!added) return false;   // this lote was already discounted: never apply twice
+    // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
+    // distintos lanzados muy seguido) deben componerse sobre el prev más
+    // reciente, no sobre el invLotes/invMovimientos capturado por closure
+    // en el render que originó cada llamada. Los movimientos se derivan
+    // solo de op.allocations — no dependen de los lotes — así que se
+    // calculan una vez fuera del updater y se reutilizan en ambos lados.
+    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
+    setInvLotes(prev => {
+      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
+      try { localStorage.setItem('sdp_lotes', JSON.stringify(r.lotes)); } catch(e) {}
+      return r.lotes;
+    });
+    setInvMovimientos(prev => {
+      const upd = [...prev, ...movimientos];
+      try { localStorage.setItem('sdp_movimientos', JSON.stringify(upd)); } catch(e) {}
+      return upd;
+    });
+    saveInvOps(queue);
+    runInventorySync();
+    return true;
+  };
+  useEffect(()=>{runInventorySync();const on=()=>runInventorySync();window.addEventListener('online',on);window.addEventListener('setas-db-ready',on);return()=>{window.removeEventListener('online',on);window.removeEventListener('setas-db-ready',on);};},[runInventorySync]);
 
   const agregarProveedor=()=>{
     const n=newProv.nombre.trim();if(!n||!newProv.municipio.trim()) return;
@@ -6166,12 +8431,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const exportR=()=>{
     if(!recipe.length) return;
-    const t=calcTreatment(an, sKey, SPP);const batch=calcBatch(recipe,numBags,kgBag,67,12000,INGS,an?.dynSpawn);
+    const t=calcTreatment(an, sKey, effectiveSPP);const batch=preparedBatch;
     let txt=`SETAS DE LA PEÑA — FICHA DE RECETA\nValle de Tenjo · ${new Date().toLocaleDateString('es-CO')}\n${'─'.repeat(44)}\nESPECIE: ${sp.name} (${sp.scientific})\n\nINGREDIENTES:\n`;
     recipe.forEach(r=>{const g=INGS.find(i=>i.id===r.id);if(g) txt+=`  ${g.name.padEnd(32)}${r.p}%\n`;});
     if(an) txt+=`\nANÁLISIS:\n  C:N ${an.cn.toFixed(1)}:1  ·  N ${an.avgN.toFixed(2)}%  ·  EB ${an.eb.toFixed(0)}%  ·  $${Math.round(an.cost)}/kg\n`;
     if(t) txt+=`\nTRATAMIENTO: ${t.name}\n  ${t.temp}  ·  ${t.time}  ·  Spawn ${t.spawn}%\n  ${t.prep}\n`;
-    if(batch){txt+=`\nBATCH (${numBags}×${kgBag} kg):\n`;batch.items.forEach(i=>{txt+=`  ${i.name.padEnd(32)}${i.unit.padStart(9)}  $${Math.round(i.cost).toLocaleString()}\n`;});txt+=`  Spawn ${batch.spawn.toFixed(2)} kg  ·  TOTAL $${Math.round(batch.cost).toLocaleString()} COP\n`;}
+    if(batch){txt+=`\nBATCH (${numBags}×${kgBag} kg):\n`;batch.items.forEach(i=>{txt+=`  ${i.name.padEnd(32)}${i.unit.padStart(9)}  $${Math.round(i.cost).toLocaleString()}\n`;});txt+=`  Spawn ${batch.spawn.toFixed(2)} kg · Agua ${batch.agua.toFixed(3)} L · ${preparation.revision}  ·  TOTAL $${Math.round(batch.cost).toLocaleString()} COP\n`;}
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download=`receta_${sp.name.replace(/\s+/g,'_')}.txt`;a.click();
   };
 
@@ -6185,6 +8450,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           <div>
             <div className="panel">
+              {SetasInventoryConsumptionApi.failuresForBanner(invOps).length>0&&(
+                <div role="alert" className="inv-section" style={{borderColor:'var(--status-error)'}}>
+                  <strong>Consumos de bodega sin guardar en el servidor</strong>
+                  <ul>{SetasInventoryConsumptionApi.failuresForBanner(invOps).map(o=>(<li key={o.opId}>{o.codigo||o.loteId} · {o.attempts} intentos · {o.lastError}</li>))}</ul>
+                  <button className="btn" style={{minHeight:44}} onClick={()=>{saveInvOps(readInvOps().map(o=>o.status==='failed'?{...o,nextAttemptAt:0}:o));runInventorySync();}}>Reintentar ahora</button>
+                </div>
+              )}
               {/* STATS ROW — editorial */}
               <div className="inv-stat-row">
                 <div className="inv-stat">
@@ -6236,19 +8508,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="stock-critical-card" style={{ marginBottom: 16 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                                <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
                               </span>
                               <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
                                 Registrar Compra +
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                   {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                                 </span>
                               ))}
                             </div>
+                            {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
                         <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
@@ -6275,23 +8548,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="stock-critical-card" style={{ marginBottom: 16 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
+                                <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
                               </span>
                               <button type="button" onClick={()=>setInvTab('compra')} style={{ background: 'none', border: 'none', color: 'color-mix(in oklab, var(--coral-700) 70%, black)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>
                                 Registrar Compra +
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {criticalStockItems.map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
                                   {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
                                 </span>
                               ))}
                             </div>
+                            {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
                         <div className="inv-section">
-                          <table className="inv-table inventory-stock-table">
+                          <table className="inv-table inventory-stock-table sdp-table">
                             <thead>
                               <tr>
                                 <th>Ingrediente</th>
@@ -6371,23 +8645,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     {/* ESTADO */}
                                     <td data-label="Estado">
                                       {r.stock<r.alertaMin
-                                        ?<span style={{color:'var(--coral-500)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
+                                        ?<span className="sdp-badge sdp-badge--err" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
                                         :r.stock<r.alertaMin*2.5
-                                          ?<span style={{color:'var(--ochre-500,#A07828)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
-                                          :<span style={{color:'var(--accent-olive)',fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
+                                          ?<span className="sdp-badge sdp-badge--warn" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
+                                          :<span className="sdp-badge sdp-badge--ok" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                     </td>
                                     {/* ACCIONES */}
                                     <td data-label="Acciones">
                                       {isEditing?(
                                         <div style={{display:'flex',gap:4}}>
-                                          <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}>✓</button>
-                                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}>✕</button>
+                                          <button className="inv-btn inv-btn-pri inv-btn-sm" onClick={()=>saveRowEdit(r.id)} title="Guardar" aria-label={`Guardar cambios de ${r.name}`}><AppIcon name="check" size={12} /></button>
+                                          <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setEditingRowId(null)} title="Cancelar" aria-label={`Cancelar edición de ${r.name}`}><AppIcon name="close" size={12} /></button>
                                         </div>
                                       ):(
                                         <div style={{display:'flex',gap:4}}>
                                           <button className="inv-btn inv-btn-sec inv-btn-sm" title="Editar fila completa"
                                             onClick={()=>{setEditingRowId(r.id);setEditingRowData({stock:r.stock.toFixed(1),precio:r.pp!=null?Math.round(r.pp):'',proveedorId:r.provId||'',alertaMin:r.alertaMin,ingredienteNuevoId:r.id});}}>
-                                            ✎ Editar
+                                            <AppIcon name="edit" size={12} style={{marginRight:4}} /> Editar
                                           </button>
                                           <button className="inv-btn inv-btn-sm" title="Eliminar stock de este ingrediente" aria-label={`Eliminar ${r.name} del stock`}
                                             style={{background:'var(--coral-500)',color:'var(--paper-0)',border:'none'}}
@@ -6438,7 +8712,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {cmpConfirm?(
                     <div>
                       <div style={{padding:'14px 16px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',marginBottom:14}}>
-                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2}}>✓ Compra registrada</div>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name="check" size={13} color="var(--ink-800)" /> Compra registrada</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                       </div>
                       <div className="inv-section" style={{marginBottom:14}}>
@@ -6460,7 +8734,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                   <div>
                   <div style={{display:'flex',gap:8,marginBottom:14}}>
-                    {[['manual','✎','Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto','✉','Pegar texto']].map(([v,icon,l])=>(
+                    {[['manual',<AppIcon name="edit" size={14}/>,'Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto',<AppIcon name="clipboard" size={14}/>,'Pegar texto']].map(([v,icon,l])=>(
                       <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
                         <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
                         <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{l}</span>
@@ -6527,9 +8801,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <option value="">Seleccionar ingrediente…</option>
                           {INGS.map(gg=>(<option key={gg.id} value={gg.id}>{gg.name}</option>))}
                         </select>
-                        <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1} aria-label={`Quitar ${g?.name||'ítem'} de la compra`}>✕</button>
+                        <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1} aria-label={`Quitar ${g?.name||'ítem'} de la compra`}><AppIcon name="close" size={12} /></button>
                       </div>
-                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8}}>⚠ Sin coincidencia automática — elige el ingrediente.</div>}
+                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-500)" /> Sin coincidencia automática — elige el ingrediente.</div>}
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:4}}>
                           <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String(Math.max(0,(parseFloat(it.kg)||0)-1)))} aria-label={`Reducir cantidad de ${g?.name||'ingrediente'} en 1 kg`}>−</button>
@@ -6551,8 +8825,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div style={{display:'flex',gap:10}}>
-                    <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>✓ Registrar compra</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}>✕ Limpiar</button>
+                    <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>Registrar compra</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}><AppIcon name="close" size={12} /> Limpiar</button>
                   </div>
                   </div>
                   )}
@@ -6585,7 +8859,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <span className="inv-month-label">{label}</span>
                               <div style={{display:'flex',alignItems:'center',gap:12}}>
                                 <span className="inv-month-total">${totalMes.toLocaleString('es-CO')} COP</span>
-                                <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▶':'▼'}</span>
+                                <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▸':'▾'}</span>
                               </div>
                             </button>
                             {!collapsed&&(
@@ -6643,7 +8917,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="prov-name">{p.nombre}</div>
                             <div className="prov-muni">{p.municipio}</div>
                           </div>
-                          <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)} aria-label={`Eliminar proveedor ${p.nombre}`}>✕</button>
+                          <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)} aria-label={`Eliminar proveedor ${p.nombre}`}><AppIcon name="close" size={12} /></button>
                         </div>
                       ))}
                     </div>
@@ -6674,7 +8948,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <input id="provider-city" name="providerCity" autoComplete="address-level2" className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
                     </div>
                   </div>
-                  <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                  <div className="inv-modal-actions">
                     <button className="inv-btn inv-btn-sec" onClick={()=>setShowProvModal(false)}>Cancelar</button>
                     <button className="inv-btn inv-btn-pri" onClick={agregarProveedor}>Guardar proveedor</button>
                   </div>
@@ -6684,11 +8958,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
   );
 
   const workflow=typeof window!=='undefined'?window.SetasOSWorkflow:null;
-  const legacyLifecycle={incubacion:'incubation',fructificacion:'fruiting',completado:'closed',descartado:'discarded'};
-  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado'};
-  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)'};
-  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote'};
+  // El estado del lote se resuelve con la MISMA regla que aplica el servidor
+  // (functions/accept-field-event.js) y la ficha. Aquí hubo una tabla local sin
+  // `activo`, y cada llamador improvisaba su respaldo: 'incubation' en un sitio,
+  // 'planned' en otro, undefined en un tercero — mientras el servidor decía
+  // 'inoculated' para todo lote recién creado. La tabla compartida ya cubre
+  // `cuarentena`, así que el triaje de bioseguridad no pierde nada.
+  const loteLifecycleState=(lote)=>{
+    if(!lote) return 'inoculated';
+    if(lote.lifecycleState) return lote.lifecycleState;
+    const bs=typeof window!=='undefined'?window.SetasBatchSheet:null;
+    return bs&&bs.normalizeLifecycleState?bs.normalizeLifecycleState(lote.estado,'inoculated'):'inoculated';
+  };
+  const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
+  const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
+  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote',discard:'Descartar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
+  const openContaminationTriage=(loteId)=>{
+    const l=bitLotes.find(x=>x.id===loteId)||bitLotes[0];
+    if(!l) return;
+    setTriageLoteId(l.id);
+    setTriagePathogenKey('trichoderma');
+    setTriageAffectedBags(1);
+    setTriageLocation(l.sala||l.ubicacion||'Sala 1');
+    setTriageDecision('isolate_bags');
+    setTriageNotes('');
+    setShowTriageModal(true);
+  };
+  const openBatchSheetModal=(loteOrId)=>{const l=typeof loteOrId==='string'?bitLotes.find(x=>x.id===loteOrId):loteOrId;if(l){setBatchSheetModalLote(l);setShowBatchSheetModal(true);}};
+  if(typeof window!=='undefined'){window.openBatchSheetModal=openBatchSheetModal;}
 
   // ── Ficha operativa canónica del lote ─────────────────────────────────────
   // batch-sheet.js reúne código, especie, etapa, sala, bolsas, receta, semilla,
@@ -6696,7 +8995,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // solo objeto, y deriva de ahí las acciones válidas ahora. La UI no vuelve a
   // decidir qué acción cabe: pregunta a la ficha.
   const batchSheetApi=typeof window!=='undefined'?window.SetasBatchSheet:null;
-  const operatorRole=(props.isAdmin===true||props.isAdmin==='true')?'direccion':'operario';
+  // El rol de autorización lo resuelve getFieldOperatorRole() desde
+  // usuarios/{uid}.rol de la sesión, que es contra lo que autoriza el servidor.
+  // props.isAdmin viene del selector de operario del encabezado y no coincide.
+  const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
+  useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
+  const operatorRole=fieldOperatorRole;
   const buildSheetFor=(lote)=>{
     if(!batchSheetApi||!lote) return null;
     const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
@@ -6711,13 +9015,225 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
     }catch(e){ return null; }
   };
+
+  // Cerrar una tarea desde la casilla del cockpit. El contrato del motor es que
+  // una tarea sólo se cierra con el evento que la cumple, nunca "a mano": por eso
+  // la casilla registra antes un evento manual explícito en el lote y cierra la
+  // tarea con el id de ESE evento. Así la bitácora conserva quién cerró qué.
+  const closeTaskFromCheckbox=(row)=>{
+    const lote=bitLotes.find(l=>l.id===row.objectId);
+    if(!lote||!batchSheetApi||!taskEngine) return;
+    try{
+      const log=batchSheetApi.appendBatchEvent(lote.lifecycleEvents||[],{
+        batchId:lote.id,
+        action:'note',
+        operatorId:lote.operador||'operador-local',
+        payload:{nota:`Tarea cerrada manualmente desde Hoy: ${row.what}`,taskId:row.taskId},
+      });
+      const evento=log[log.length-1];
+      updateBitLote(lote.id,{lifecycleEvents:log});
+      completeBitTasks([row.taskId],evento.id);
+    }catch(err){
+      setNoticeDlg({title:'No se pudo cerrar la tarea',msg:err.message});
+    }
+  };
+
+  // Complete observations are saved locally first, then both server writes
+  // are acknowledged. Harvest/contamination open their structured capture;
+  // cancelling those forms must never create a placeholder event.
+  const reportarEventoCultivo = async (tipo, selectedLote, bag, nota = '', eventOverride = null) => {
+    const lote=qrLotesRef.current.find(l=>l.id===selectedLote?.id);
+    const qrEvents=window.SetasFieldQrEvents;
+    if(!batchSheetApi||!lote||!qrEvents?.isAllowed(buildSheetFor(lote),tipo)){
+      setNoticeDlg({title:'Acción no disponible',msg:'La acción no está permitida para este lote y tu rol en su estado actual.'});
+      return;
+    }
+    if (tipo === 'riego' || tipo === 'observacion') {
+      // Suppress duplicate clicks while the same capture is being handed off.
+      const captureKey=eventOverride?.id||`${lote.id}:${tipo}`;
+      if(qrSavingRef.current.has(captureKey)) return;
+      qrSavingRef.current.add(captureKey);
+      const uid=window.SetasFirebase?.auth?.currentUser?.uid||lote.operador||'operario_local';
+      let evento=eventOverride;
+      let savedLocally=false;
+      const updateStatus=patch=>setQrEventoStatuses(previous=>{
+        const record={...previous.find(item=>item.eventId===evento.id),...patch,eventId:evento.id,event:evento,tipo,loteId:lote.id,bag,nota};
+        return [...previous.filter(item=>item.eventId!==evento.id),record];
+      });
+      try{
+        if(!evento) evento=batchSheetApi.buildCultivoEvento({batchId:lote.id,bagId:bag?.id||null,tipo,operatorId:uid,nota});
+        const previousLog=lote.lifecycleEvents||[];
+        // A retry reuses both the remote event ID and the existing local entry.
+        const nextLog=previousLog.some(entry=>entry.id===evento.id)?previousLog:batchSheetApi.appendBatchEvent(previousLog,{
+          id:evento.id,batchId:lote.id,action:tipo==='riego'?'riego':'note',operatorId:evento.operatorId,at:evento.at,
+          payload:{nota:evento.nota||'Riego registrado por QR'},
+        });
+        const updated=qrLotesRef.current.map(item=>item.id===lote.id?{...item,lifecycleEvents:nextLog}:item);
+        // Confirm durable local storage before saying saved; do not depend on
+        // updateBitLote, whose legacy setter catches quota errors internally.
+        localStorage.setItem('sdp_bit_lotes',JSON.stringify(updated));
+        qrLotesRef.current=updated;
+        setBitLotes(updated);
+        savedLocally=true;
+        updateStatus({status:'pending',savedLocally:true,error:null});
+        const result=await qrEvents.persistQuickEvent({tipo,lote,bag,nota,sheet:buildSheetFor(lote),batchSheetApi,eventDb:window.SetasEventosCultivoDB,awaitPersistence:false,event:evento});
+        const syncLog=window.SetasBitacoraDB?.actualizarLote
+          ? Promise.resolve().then(()=>window.SetasBitacoraDB.actualizarLote(lote.id,{lifecycleEvents:nextLog}))
+          : Promise.reject(new Error('Respaldo de Bitácora no disponible.'));
+        // Firestore setDoc resolves after server acknowledgement, not merely
+        // local enqueue. Both event and batch-log writes must be acknowledged.
+        Promise.all([result.syncPromise,syncLog]).then(()=>updateStatus({status:'synchronized',savedLocally:true,error:null}))
+          .catch(err=>updateStatus({status:'error',savedLocally:true,error:err.message||'No se pudo sincronizar.'}));
+        setQrEventoObsAbierta(false);
+        setQrEventoObsNota('');
+      }catch(err){
+        if(evento) updateStatus({status:'error',savedLocally,error:err.message||'No se pudo guardar el evento.'});
+        else setNoticeDlg({title:'No se pudo guardar',msg:err.message});
+      }finally{
+        qrSavingRef.current.delete(captureKey);
+      }
+      return;
+    }
+
+    if (tipo === 'contaminacion') {
+      setDiagLoteId(lote.id);
+      const b = bag || bitBolsas.find(x => x.loteId === lote.id && x.estado !== 'descartada');
+      setDiagBolsaId(b ? b.id : '');
+      setDiagImageBase64('');
+      setDiagResult(null);
+      setDiagError('');
+      setDiagNotes('');
+      setShowQrSheet(false);
+      setShowFieldActionModal(false);
+      setShowDiagModal(true);
+      return;
+    }
+
+    if (tipo === 'cosecha_parcial') {
+      setBitActiveLoteId(lote.id);
+      openHarvestCapture({
+        loteId: lote.id,
+        bolsaId: bag ? bag.id : '',
+        codigo: bag ? bag.codigo : '',
+        flush: 1,
+        fecha: new Date().toISOString().split('T')[0],
+        pesoFresco: '',
+        calidad: '',
+        observaciones: '',
+      });
+      setShowQrSheet(false);
+      setShowFieldActionModal(false);
+      setShowBitCosecha(true);
+    }
+  };
+
+  const renderQrCaptures=(currentLote,scannedBag,currentSheet)=>{
+    if(!currentLote) return null;
+    const qrAllowedActions=new Set((currentSheet?.actions||[]).filter(action=>!action.blockedBy).map(action=>action.action));
+    return <section aria-label="Registrar en este lote" style={{marginBottom:16}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
+                        Reportar evento
+                      </div>
+                      {qrEventoStatuses.filter(item=>item.loteId===currentLote.id).map(item=>(
+                        <div key={item.eventId} data-testid="qr-evento-status" data-sync-status={item.status} role="status" style={{fontSize:16,lineHeight:1.5,padding:10,border:'1px solid var(--border-soft)',overflowWrap:'anywhere'}}>
+                          <strong>{item.tipo==='riego'?'Riego':'Observación'}</strong> · {item.nota}
+                          <div>{item.status==='pending'?'Guardado en este equipo · sincronización pendiente':item.status==='synchronized'?'Sincronizado con el servidor':`${item.savedLocally?'Guardado en este equipo. ': 'No se guardó en este equipo. '}${item.error}`}</div>
+                          {item.status==='error'&&<button type="button" className="inv-btn inv-btn-sec" style={{minHeight:48,fontSize:16}} onClick={()=>reportarEventoCultivo(item.tipo,currentLote,item.bag,item.nota,item.event)}>Reintentar</button>}
+                        </div>
+                      ))}
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}} data-testid="qr-reportar-evento">
+                        {qrAllowedActions.has('inspection') && (<button
+                          type="button"
+                          data-action="evento-observacion"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>setQrEventoObsAbierta(v=>!v)}
+                        >
+                          <AppIcon name="edit" size={13} style={{marginRight:4}} /> Observación
+                        </button>)}
+                        {qrAllowedActions.has('riego') && (<button
+                          type="button"
+                          data-action="evento-riego"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('riego',currentLote,scannedBag)}
+                        >
+                          <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Riego
+                        </button>)}
+                        {qrAllowedActions.has('contamination') && (<button
+                          type="button"
+                          data-action="evento-contaminacion"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('contaminacion',currentLote,scannedBag)}
+                        >
+                          <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> Contaminación
+                        </button>)}
+                        {qrAllowedActions.has('harvest') && (<button
+                          type="button"
+                          data-action="evento-cosecha_parcial"
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          onClick={()=>reportarEventoCultivo('cosecha_parcial',currentLote,scannedBag)}
+                        >
+                          <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Cosecha parcial
+                        </button>)}
+                      </div>
+                      {qrEventoObsAbierta&&(
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                          <textarea
+                            data-testid="qr-evento-observacion-nota"
+                            className="inv-input"
+                            rows={2}
+                            placeholder="Nota de campo (obligatoria)"
+                            value={qrEventoObsNota}
+                            onChange={e=>setQrEventoObsNota(e.target.value)}
+                            style={{resize:'vertical',fontSize:16}}
+                          />
+                          <button
+                            type="button"
+                            className="inv-btn inv-btn-pri"
+                            style={{minHeight:48}}
+                            disabled={!qrEventoObsNota.trim()}
+                            onClick={()=>reportarEventoCultivo('observacion',currentLote,scannedBag,qrEventoObsNota)}
+                          >
+                            Guardar observación
+                          </button>
+                        </div>
+                      )}
+
+    </section>;
+  };
+
+  // Registra la acción elegida en la ficha: valida contra el estado, encadena el
+  // evento inmutable y persiste la transición cuando la acción la produce.
+  /**
+   * Encola una transición para que la acepte el servidor. Es la única vía hacia
+   * `lifecycleState`: el cliente ya no lo escribe. Si el lote tiene otra
+   * transición pendiente se avisa en vez de encolar una segunda, que es la
+   * misma reserva que impide dos avances simultáneos del mismo lote.
+   */
+  const enqueueFieldTransition=async(lote,from,to)=>{
+    const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
+    const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
+      ? window.SetasFirebase.auth.currentUser.uid : null;
+    if(!SHEET||!uid) return;
+    try{
+      const db=await getFieldDb();
+      const res=await SHEET.confirmTransition({
+        db,batch:lote,from,to,accountId:uid,operatorId:uid,
+        operatorRole:await getFieldOperatorRole(),
+        expectedBatchRevision:Number.isInteger(lote.revision)?lote.revision:0,
+        confirmed:true,
+      });
+      await runFieldSync(db,uid,res.event.id,()=>{});
+    }catch(err){
+      setNoticeDlg({title:'No se pudo registrar la transición',msg:err.message});
+    }
+  };
+
   // Registra la acción elegida en la ficha vía la cascada real: declara TODAS
-  // las consecuencias con actionConsequences (evento, cambios de bolsa,
-  // parche del lote, transición y follow-ups) y las aplica de una sola vez con
+  // las consecuencias con actionConsequences (evento, cambios de bolsa, parche
+  // del lote, transición y follow-ups) y las aplica de una sola vez con
   // applyConsequences, en vez de encadenar llamadas sueltas a mano.
   const commitSheetAction=(sheet,lote,action,payload={})=>{
     if(!batchSheetApi||!sheet) return false;
-    const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
     try{
       const bolsasDelLote=bitBolsas.filter(b=>b.loteId===lote.id);
       const consequences=batchSheetApi.actionConsequences(sheet,action,payload,{
@@ -6726,20 +9242,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
       const applied=batchSheetApi.applyConsequences(sheet,consequences,{log:lote.lifecycleEvents||[]});
 
-      // 1. Persistir el log de eventos y el parche del lote (batchPatch), y si
-      // hubo transición, el estado/lifecycleState como ya se hacía.
-      const patch={lifecycleEvents:applied.log,...(applied.batchPatch||{})};
-      if(consequences.transition){
-        patch.lifecycleState=applied.state;
-        const legacyByState=Object.entries(legacyLifecycle).find(([,v])=>v===applied.state);
-        if(legacyByState) patch.estado=legacyByState[0];
-      }
-      updateBitLote(lote.id,patch);
+      // El estado canónico lo escribe acceptFieldEvent, no el cliente: las reglas
+      // protegen lifecycleState y revision precisamente para que dos operarios
+      // sin señal no puedan avanzar el mismo lote sin que ninguna escritura vea
+      // a la otra. Aquí sólo se persiste la bitácora local (log + batchPatch de
+      // bolsas) y, si hubo transición, se encola vía el Field Event Queue como
+      // antes — el estado cambia cuando el servidor la acepta.
+      updateBitLote(lote.id,{lifecycleEvents:applied.log,...(applied.batchPatch||{})});
 
-      // 2. Aplicar bagUpdates: aquí es donde una bolsa pasa a 'aislada', etc.
+      // Aplicar bagUpdates: aquí es donde una bolsa pasa a 'aislada', etc.
       (applied.bagUpdates||[]).forEach(u=>updateBitBolsa(u.bagId,u.fields));
 
-      // 3. Si hubo transición, generar las tareas SOP del nuevo estado.
+      if(consequences.transition){
+        enqueueFieldTransition(lote,sheet.state,consequences.transition);
+      }
+
+      // Si hubo transición, generar las tareas SOP del nuevo estado.
       if(consequences.transition&&taskEngine){
         const sopTasks=taskEngine.tasksFromTransition({
           batchId:lote.id,toState:consequences.transition,at:new Date().toISOString(),
@@ -6747,7 +9265,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         mergeIntoTasks(sopTasks);
       }
 
-      // 4. Convertir followUps en tareas reales.
+      // Convertir followUps en tareas reales.
       if((applied.followUps||[]).length&&taskEngine){
         const followUpTasks=taskEngine.tasksFromFollowUps(applied.followUps,{
           objectId:lote.id,objectType:'batch',at:new Date().toISOString(),
@@ -6755,7 +9273,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         mergeIntoTasks(followUpTasks);
       }
 
-      // 5. Cerrar las tareas que la acción cumple.
+      // Cerrar las tareas que la acción cumple.
       if((consequences.completes||[]).length){
         const eventId=(applied.log[applied.log.length-1]||{}).id||consequences.event.id;
         completeBitTasks(consequences.completes,eventId);
@@ -6773,7 +9291,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(lote&&lote.id!==bitActiveLoteId) setBitActiveLoteId(lote.id);
     if(action==='harvest'){
       const bolsa=bitBolsas.find(b=>b.loteId===lote.id&&b.estado==='sana');
-      setBitCosechaForm({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});
+      openHarvestCapture({bolsaId:bolsa?.id||'',loteId:lote.id,codigo:bolsa?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});
       setShowBitCosecha(true);return;
     }
     if(action==='advance_stage'){
@@ -6782,36 +9300,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const activeSheet=sheet||buildSheetFor(lote);
       if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
       const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
-      const from=legacyLifecycle[lote.estado];const to=legacyLifecycle[next];
+      const from=loteLifecycleState(lote);const to=loteLifecycleState({estado:next});
       if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
         const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{estado:next,lifecycleState:to,lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,to);
       }
       return;
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    if(action==='discard'){
+      const from=loteLifecycleState(lote);
+      if(workflow&&workflow.canTransition(from,'discarded')){
+        const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
+        // El estado canónico lo escribe acceptFieldEvent; aquí sólo la bitácora.
+        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
+        enqueueFieldTransition(lote,from,'discarded');
+      }
+      return;
+    }
     if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
     // Inspección, colonización y evidencia fotográfica se capturan sobre la
     // bolsa, que es donde viven el %, la fecha y la foto.
     if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
     if(action==='contamination'){
-      setDiagLoteId(lote.id);
-      const b=bitBolsas.find(x=>x.loteId===lote.id&&x.estado!=='descartada');
-      setDiagBolsaId(b?.id||'');
-      setDiagImageBase64('');
-      setDiagResult(null);
-      setDiagError('');
-      setDiagNotes('');
-      setShowDiagModal(true);
+      openContaminationTriage(lote.id);
       return;
     }
     setNoticeDlg({title:actionLabel[action]||'Acción de lote',msg:'Esta captura conserva el flujo operativo existente del lote.'});
   };
-  // ── Piezas de telemetría en vivo, compartidas entre cockpits ───────────────
-  // Se definen una vez y se montan tanto en el Tablero de Control (la pantalla
-  // que el operario ve al entrar) como en TodayV2. Sin esto, cada cockpit
-  // acabaría con su propia copia del markup y su propio criterio de severidad,
-  // que es exactamente cómo el strip de Hoy terminó mostrando 17.2 °C fijos.
+  // ── Piezas de telemetría en vivo, compartidas por el cockpit ───────────────
+  // Se definen una vez y solo se montan en el Tablero de Control. TodayV2 is a
+  // dormant implementation, so mounting the strip there would invite a second
+  // operational criterion if it is ever restored.
   // Estado del puente en vivo: transporte activo, frescura y recordatorio de
   // que el CO₂ que se está mostrando ya viene compensado por altitud.
   const LiveTelemetryStatusBar=()=>(
@@ -6869,135 +9390,81 @@ body{margin:0;padding:20px 24px;background:#fff;}
     </React.Fragment>
   );
 
-  // Micro-tarjetas de telemetría ambiental por sala.
+  // Micro-tarjetas de telemetría ambiental por sala. A missing value remains
+  // visibly missing; a reference reading must never impersonate a sensor.
   const LiveClimateStrip=()=>(
       <div className="today-climate-strip" data-testid="today-climate-strip">
         {Object.values(ROOMS_CONFIG).map(r => {
           const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
           const live = liveTelemetry.roomLive(r.id);
-          const demo = DEMO_ROOM_METRICS[r.id] || DEMO_ROOM_METRICS.martha_01;
-          // Una lectura real manda sobre el respaldo de demo, métrica por métrica:
-          // una sala puede tener sonda de T°/HR conectada y todavía no de CO₂.
           const sample = (live && live.sample) || {};
           const isLive = (metric) => Number.isFinite(sample[metric]);
-          const t = isLive('temperature_c') ? sample.temperature_c : demo.temperature_c;
-          const rh = isLive('rh_pct') ? sample.rh_pct : demo.rh_pct;
-          const co2 = isLive('co2_ppm') ? sample.co2_ppm : demo.co2_ppm;
+          const isFresh = (metric) => isLive(metric) && live && live.freshMetrics && live.freshMetrics[metric] === true;
+          const t = isLive('temperature_c') ? sample.temperature_c : null;
+          const rh = isLive('rh_pct') ? sample.rh_pct : null;
+          const co2 = isLive('co2_ppm') ? sample.co2_ppm : null;
           const anyLive = isLive('temperature_c') || isLive('rh_pct') || isLive('co2_ppm');
-          const vpd = climateMath ? climateMath.calcVPD(t, rh) : null;
+          const completeLive = isLive('temperature_c') && isLive('rh_pct') && isLive('co2_ppm');
+          const completeFresh = isFresh('temperature_c') && isFresh('rh_pct') && isFresh('co2_ppm');
+          const vpd = climateMath && t != null && rh != null ? climateMath.calcVPD(t, rh) : null;
           const roomAlerts = liveTelemetry.roomAlerts(r.id);
-          // Con datos reales manda el motor de umbrales (con dwell e histéresis);
-          // sin ellos se cae al diagnóstico instantáneo sobre los números de demo.
-          const severity = anyLive
-            ? liveSeverityOf(roomAlerts)
-            : (climateMath ? climateMath.evalClimateHealth({ tC: t, rhPct: rh, co2Ppm: co2, targets: ROOM_TARGET_BANDS[r.id] }).severity : 'optimal');
-          const badge = severity === 'critical' ? '⚠ ALERTA' : severity === 'warning' ? '◐ VIGILAR' : '● EN RANGO';
+          // An actual threshold alert always wins. Completeness and freshness
+          // only decide whether an otherwise healthy room can say "En rango".
+          const { severity, badge, statusClass } = liveClimatePresentation({
+            hasAnyLive: anyLive, completeFresh, alerts: roomAlerts,
+          });
+          const formatMetric = (value, unit, decimals=1) => value == null ? `— ${unit}` : `${Number(value).toFixed(decimals)} ${unit}`;
 
           return (
-            <div
+            <button
+              type="button"
               key={r.id}
-              className={`today-climate-card ${severity === 'critical' ? 'os-alert-row--critical' : ''} ${anyLive ? 'today-climate-card--live' : 'today-climate-card--demo'}`}
+              className={`today-climate-card ${severity === 'critical' ? 'os-alert-row--critical' : ''} ${anyLive ? 'today-climate-card--live' : 'today-climate-card--missing'}`}
               onClick={() => { setSelectedClimateRoom(r.id); goTab('clima'); }}
-              title={anyLive ? 'Ver telemetría y curvas en vivo' : 'Sin telemetría conectada — valores de referencia'}
+              aria-label={`${r.name}: ${badge}. ${anyLive ? 'Abrir telemetría de la cámara' : 'Sin telemetría conectada; abrir configuración de cámara'}`}
+              title={anyLive ? 'Ver telemetría y curvas en vivo' : 'Sin telemetría conectada'}
             >
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{fontFamily:'var(--font-display)',fontSize:13,fontWeight:700,color:'var(--ink-0)'}}>
-                  🌱 {r.name}
+                  {r.name}
                 </span>
-                <span className={`fos-status ${severity === 'critical' ? 'fos-status--attention' : 'fos-status--within-target'}`}>
+                <span className={`fos-status ${statusClass}`}>
                   <span className="fos-status__dot" aria-hidden="true"></span>
                   {badge}
                 </span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',fontFamily:'var(--font-num)',fontSize:14,color:'var(--ink-0)',marginTop:4}}>
-                <span>🌡 {Math.round(t*10)/10}°C</span>
-                <span>💧 {Math.round(rh*10)/10}%</span>
-                <span>💨 {Math.round(co2)} ppm</span>
-                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd!=null?vpd:'—'} kPa</span>
+                <span>{formatMetric(t, '°C')}</span>
+                <span>{formatMetric(rh, '%')}</span>
+                <span>{formatMetric(co2, 'ppm', 0)}</span>
+                <span style={{fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)'}}>VPD {vpd!=null?`${vpd} kPa`:'— kPa'}</span>
               </div>
               {/* La procedencia del número es parte del número: un valor de demo
                   presentado como medición vale menos que no mostrar nada. */}
               <div className="today-climate-card__prov">
                 {anyLive
-                  ? `${liveAgeLabel(live.ageMs)} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
-                  : 'sin telemetría · valores de referencia'}
+                  ? `${completeFresh ? liveAgeLabel(live.ageMs) : 'lectura parcial o vencida'} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
+                  : 'sin telemetría conectada · sin lectura'}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
   );
 
-  // ── Cola de trabajo del turno, derivada del motor de tareas ───────────────
-  // Vive aquí y no dentro del cockpit porque el cockpit se pinta desde una IIFE
-  // dentro del render: un hook ahí violaría las reglas de React. Lo que el
-  // operario ve al entrar es el cockpit, así que la cola tiene que llegarle a él.
-  const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
-
-  // Siembra única: la cola sale de bitTasks, pero todo usuario actual tiene
-  // lotes sin ninguna tarea persistida todavía. Si bitTasks está vacío y hay
-  // lotes activos, se derivan tareas SOP del estado vigente de cada uno y se
-  // persisten una sola vez — después de eso manda el motor.
-  React.useEffect(()=>{
-    if(bitTasks.length>0) return;
-    if(!taskEngine) return;
-    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
-    if(!activos.length) return;
-    const ahora=Date.now();
-    const seeded=activos.flatMap(lote=>{
-      const toState=lote.lifecycleState||legacyLifecycle[lote.estado]||lote.estado;
-      try{
-        return taskEngine.tasksFromTransition({batchId:lote.id,toState,at:lote.createdAt||new Date(ahora).toISOString(),nowMs:ahora});
-      }catch(e){ return []; }
-    });
-    if(seeded.length) mergeIntoTasks(seeded);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[bitTasks.length,bitLotes.length]);
-
-  /** Índice de objetos para que la cola resuelva código de lote y sala, no ids crudos. */
-  const buildTaskIndex=(activeLotes)=>{
-    const index={batches:{},rooms:ROOMS_CONFIG};
-    activeLotes.forEach(lote=>{
-      index.batches[lote.id]={
-        code:lote.codigo,
-        species:lote.especie,
-        stateLabel:lifecycleLabel[legacyLifecycle[lote.estado]]||lote.estado,
-        room:lote.sala||lote.ubicacion||null,
-      };
-    });
-    return index;
-  };
-
-  // Cerrar una tarea desde la casilla del cockpit. El contrato del motor es que
-  // una tarea sólo se cierra con el evento que la cumple, nunca "a mano": por eso
-  // la casilla registra antes un evento manual explícito en el lote y cierra la
-  // tarea con el id de ESE evento. Así la bitácora conserva quién cerró qué.
-  const closeTaskFromCheckbox=(row)=>{
-    const lote=bitLotes.find(l=>l.id===row.objectId);
-    if(!lote||!batchSheetApi||!taskEngine) return;
-    try{
-      const log=batchSheetApi.appendBatchEvent(lote.lifecycleEvents||[],{
-        batchId:lote.id,
-        action:'note',
-        operatorId:lote.operador||'operador-local',
-        payload:{nota:`Tarea cerrada manualmente desde Hoy: ${row.what}`,taskId:row.taskId},
-      });
-      const evento=log[log.length-1];
-      updateBitLote(lote.id,{lifecycleEvents:log});
-      completeBitTasks([row.taskId],evento.id);
-    }catch(err){
-      setNoticeDlg({title:'No se pudo cerrar la tarea',msg:err.message});
-    }
-  };
-
+  // TodayV2 (la pantalla "Hoy" con buckets crítico/vencido/ahora) nunca se
+  // montaba en ningún return: era exactamente el mismo cálculo de vencimientos
+  // fabricados que el cockpit real ya no usa (ver operationalQueue arriba,
+  // ahora derivado de taskEngine.buildTodayFromTasks). Un arnés que monta la
+  // app de verdad lo confirmó: se elimina en vez de dejarlo como código muerto.
   const BatchDetailV2=({lote})=>{
     const stats=calcLoteStats(lote.id);
     const sheet=buildSheetFor(lote);
-    const state=sheet?sheet.state:(legacyLifecycle[lote.estado]||'planned');
+    const state=sheet?sheet.state:loteLifecycleState(lote);
     const isAdmin=props.isAdmin===true||props.isAdmin==='true';
     // Las acciones salen de la ficha (estado + permisos + bloqueos). Sin la ficha
     // se cae a la máquina de estados desnuda, nunca a un menú genérico.
-    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,isAdmin?'direccion':'operario').map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
+    const actions=sheet?sheet.actions:(workflow?workflow.validActions(state,operatorRole).map(a=>({action:a,label:actionLabel[a]||a,blockedBy:null})):[]);
     const bolsas=bitBolsas.filter(b=>b.loteId===lote.id);const cosechas=bitCosechas.filter(c=>c.loteId===lote.id);
     const events=sheet
       ?sheet.timeline.map((e,i)=>({id:e.eventId||e.bagId||e.cosechaId||`${e.type}-${i}`,title:e.title,meta:[e.at,e.meta].filter(Boolean).join(' · '),kind:e.provenance}))
@@ -7006,8 +9473,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="clipboard" size={13} color="var(--accent-olive,#5B6B44)" /> Hoja de Acción (QR)</button>
           <button className="os-action" type="button" onClick={()=>setPublicTraceModalLoteId(lote.id)} style={{display:'flex',alignItems:'center',gap:6}} title="Ver ficha pública de trazabilidad botánica"><AppIcon name="globe" size={13} color="var(--moss-700)" /> Ver Ficha Pública QR</button>
-          <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> 🏷 Imprimir Etiquetas Térmicas</button>
+          <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> Imprimir Etiquetas Térmicas</button>
         </div>
       </div>
       <header className="os-batch-header" data-testid="active-lote" data-lote-id={lote.id}><div className="os-batch-header__top"><div><div className="os-batch-header__code">{sheet?sheet.code:lote.codigo}</div><div className="os-batch-header__species">{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div></div><span className="os-lifecycle-state" style={{borderTopColor:lifecycleColor[state]||'var(--text-metadata)',color:lifecycleColor[state]||'var(--text-metadata)'}}>{sheet?sheet.stateLabel:(lifecycleLabel[state]||state)}</span></div>
@@ -7044,7 +9512,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <section className="os-finance-panel" data-testid="batch-financial-closure">
           <div className="os-finance-header">
             <div>
-              <span className="os-finance-title">💰 Cierre Financiero & Rendimiento Real</span>
+              <span className="os-finance-title"><AppIcon name="scale" size={14} style={{marginRight:6}} /> Cierre Financiero & Rendimiento Real</span>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
                 Balance económico del lote · Precio venta: ${Math.round(stats.precioVentaKg).toLocaleString('es-CO')} COP/kg
               </div>
@@ -7079,7 +9547,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
           {stats.flushes&&stats.flushes.length>0&&(
             <div style={{marginTop:12}}>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte por Oleada (Flushes)</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
                   <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
@@ -7098,6 +9566,106 @@ body{margin:0;padding:20px 24px;background:#fff;}
           )}
         </section>
       )}
+      {(() => {
+        const validHarvests = cosechas.filter(c => c && c.fecha);
+        const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+        const maxFlush = cosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
+        const ebVal = stats?.ebEstimada || lote.eb || lote.ebEstimada || (lote.recipeRef && lote.recipeRef.eb) || stats?.be;
+        const contamVal = stats ? (stats.contPct / 100) : (lote.contamRate ?? 0);
+        const flushesForecast = sheet?.flushForecast || (
+          typeof calculateRemainingFlushes === 'function'
+            ? calculateRemainingFlushes(lote, {
+                currentFlush: maxFlush,
+                lastFlushDate: lastHarvest?.fecha || null,
+                eb: ebVal,
+                contamRate: contamVal,
+              })
+            : (typeof calculateLotYieldAndFlushes === 'function'
+                ? calculateLotYieldAndFlushes(lote, {
+                    currentFlush: maxFlush,
+                    lastFlushDate: lastHarvest?.fecha || null,
+                    eb: ebVal,
+                    contamRate: contamVal,
+                  })
+                : null)
+        );
+        if (!flushesForecast) return null;
+        return (
+          <section className="os-finance-panel" data-testid="batch-harvest-forecast" style={{marginBottom:12}}>
+            <div className="os-finance-header">
+              <div>
+                <span className="os-finance-title"><AppIcon name="mushroom" size={14} style={{marginRight:6}} /> Pronóstico Dinámico de Cosechas & Oleadas</span>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
+                  Modelo cinético Arrhenius / Q10 · Especie: <b>{flushesForecast.speciesName}</b> · T° base: {flushesForecast.ambientTemp}°C (Factor térmico: {flushesForecast.thermalFactor.toFixed(2)}×)
+                </div>
+              </div>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:'var(--moss-200,#DCE1D1)',color:'var(--moss-700,#404D2E)'}}>
+                {flushesForecast.remainingFlushes.length} oleadas restantes · {flushesForecast.remainingExpectedKg.toFixed(2)} kg pendientes
+              </span>
+            </div>
+
+            <div className="os-finance-grid" style={{marginBottom:12}}>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Rendimiento Proyectado</span>
+                <span className="econ-metric-value">{flushesForecast.totalKg.toFixed(2)} kg</span>
+                <span className="econ-metric-sub">{flushesForecast.expectedKgPerBag.toFixed(3)} kg/bolsa · EB {flushesForecast.eb}%</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Pendiente por Cosechar</span>
+                <span className="econ-metric-value">{flushesForecast.remainingExpectedKg.toFixed(2)} kg</span>
+                <span className="econ-metric-sub">{flushesForecast.remainingFlushes.length} de {flushesForecast.flushes.length} oleadas</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Cinética Térmica</span>
+                <span className="econ-metric-value">{flushesForecast.thermalFactor.toFixed(2)}×</span>
+                <span className="econ-metric-sub">{flushesForecast.coldWarning ? 'Retraso por frío Tenjo' : flushesForecast.heatWarning ? 'Estrés térmico' : 'Régimen óptimo'}</span>
+              </div>
+              <div className="econ-metric-box">
+                <span className="econ-metric-label">Próxima Cosecha Recomendada</span>
+                <span className="econ-metric-value" style={{fontSize:14}}>
+                  {flushesForecast.remainingFlushes[0] ? flushesForecast.remainingFlushes[0].date : 'Ciclo cerrado'}
+                </span>
+                <span className="econ-metric-sub">
+                  {flushesForecast.remainingFlushes[0] ? `${flushesForecast.remainingFlushes[0].kg.toFixed(2)} kg en Flush ${flushesForecast.remainingFlushes[0].flush}` : 'Sin oleadas pendientes'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+              <table className="prod-tbl" style={{marginBottom:0,minWidth:480}}>
+                <thead>
+                  <tr>
+                    <th style={{textAlign:'left'}}>Oleada</th>
+                    <th style={{textAlign:'center'}}>Estado</th>
+                    <th style={{textAlign:'right'}}>Proyección (kg)</th>
+                    <th style={{textAlign:'right'}}>Aporte (%)</th>
+                    <th style={{textAlign:'right'}}>Fecha Estimada</th>
+                    <th style={{textAlign:'right'}}>Días Inoc.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flushesForecast.flushes.map((f) => (
+                    <tr key={f.flush} style={{background: f.isHarvested ? 'var(--paper-50)' : 'transparent', opacity: f.isHarvested ? 0.65 : 1}}>
+                      <td style={{fontFamily:'var(--font-mono)',fontWeight:700}}>Flush {f.flush} · <span style={{fontWeight:400,fontSize:'var(--text-xs)'}}>{f.label}</span></td>
+                      <td style={{textAlign:'center'}}>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',borderRadius:2,background: f.isHarvested ? 'var(--moss-100)' : 'var(--ochre-100)',color: f.isHarvested ? 'var(--moss-700)' : 'var(--ochre-700)',fontWeight:700}}>
+                          {f.isHarvested ? 'Cosechado' : 'Proyectado'}
+                        </span>
+                      </td>
+                      <td className="num" style={{fontWeight:700}}>{f.kg.toFixed(2)} kg</td>
+                      <td className="num">{f.pctTotal.toFixed(1)}%</td>
+                      <td style={{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight: f.isHarvested ? 400 : 700, color: f.isHarvested ? 'var(--ink-400)' : 'var(--moss-700)'}}>
+                        {f.date}
+                      </td>
+                      <td className="num">{f.adjustedDays}d</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })()}
       <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
@@ -7110,7 +9678,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onClick={()=>runBatchAction(a.action,lote,sheet)}>{a.label}</button>
             ))}
             <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
-              🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+              <AppIcon name="print" size={14} style={{marginRight:6}} /> Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
           {(()=>{
@@ -7130,6 +9698,247 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
     </article>;
   };
+
+  // ── Batch Detail mobile canónico (DS-2026 Criterio) ────────────────────────
+  // Primera implementación mobile del objeto Batch. No reconstruye estado del
+  // DOM ni reimplementa lifecycle local: todo sale de buildSheetFor(lote)
+  // (batch-sheet.js, que a su vez consulta setas-os-workflow.js). Una sola
+  // columna, progressive disclosure, sin grids ni tablas horizontales.
+  // Responde en orden: qué lote es · en qué estado está · hay algo mal ·
+  // qué debo hacer ahora · qué condiciones tiene · qué ha pasado.
+  const BatchDetailMobile = ({ lote }) => {
+    const sheet = buildSheetFor(lote);
+    const state = sheet ? sheet.state : loteLifecycleState(lote);
+    const stateLabel = sheet ? sheet.stateLabel : (lifecycleLabel[state] || state);
+    const isException = ['quarantine', 'discarded', 'failed'].includes(state);
+    const actions = sheet ? sheet.actions : (workflow ? workflow.validActions(state, operatorRole).map(a => ({ action: a, label: actionLabel[a] || a, blockedBy: null })) : []);
+    const nextAction = (sheet && sheet.nextAction) || actions[0] || null;
+    const secondaryActions = actions.filter(a => a !== nextAction && (!nextAction || a.action !== nextAction.action));
+
+    const roomId = sheet && sheet.room ? sheet.room.id : (lote.sala || lote.ubicacion || null);
+    const roomName = sheet && sheet.room ? sheet.room.name : roomId;
+    const roomLiveNow = roomId ? liveTelemetry.roomLive(roomId) : null;
+    const roomSample = (roomLiveNow && roomLiveNow.sample) || {};
+    const targetBands = roomId ? ROOM_TARGET_BANDS[roomId] : null;
+    const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
+
+    const buildReading = (metricKey, label, unit, decimals) => {
+      const band = targetBands && targetBands[metricKey];
+      const hasLive = Number.isFinite(roomSample[metricKey]);
+      const hasDemo = !hasLive && demoMetrics && Number.isFinite(demoMetrics[metricKey]);
+      if (!hasLive && !hasDemo) return { key: metricKey, label, empty: true };
+      const value = hasLive ? roomSample[metricKey] : demoMetrics[metricKey];
+      const fresh = hasLive ? Boolean(roomLiveNow.freshMetrics && roomLiveNow.freshMetrics[metricKey]) : true;
+      const ageMs = hasLive ? (roomLiveNow.metricAgeMs && roomLiveNow.metricAgeMs[metricKey]) : null;
+      let relation = 'ok';
+      if (band) {
+        if (Number.isFinite(band.criticalMin) && value < band.criticalMin) relation = 'error';
+        else if (Number.isFinite(band.criticalMax) && value > band.criticalMax) relation = 'error';
+        else if (value < band.min || value > band.max) relation = 'warn';
+      }
+      const modifier = (hasLive && !fresh) ? 'stale' : relation;
+      const provenanceKind = hasLive ? 'measured' : 'estimated';
+      const provenanceMeta = hasLive
+        ? `${liveAgeLabel(ageMs)} · ${(roomSample.sources || []).join(' + ') || 'en vivo'}`
+        : 'referencia de modelo';
+      const targetLabel = band
+        ? (metricKey === 'co2_ppm' ? `TARGET < ${band.max}` : `TARGET ${band.min}–${band.max}`)
+        : null;
+      return { key: metricKey, label, unit, value: value.toFixed(decimals), modifier, targetLabel, provenanceKind, provenanceMeta };
+    };
+    const readings = roomId ? [
+      buildReading('temperature_c', 'Temperatura', '°C', 1),
+      buildReading('rh_pct', 'Humedad relativa', '%', 0),
+      buildReading('co2_ppm', 'CO₂', 'ppm', 0),
+    ] : [];
+
+    const hasReadingAlert = readings.some(r => !r.empty && (r.modifier === 'warn' || r.modifier === 'error'));
+    const exceptions = sheet ? [...sheet.anomalies, ...sheet.blocks] : [];
+    const hasExceptions = isException || exceptions.length > 0;
+    const loteBadge = isException ? 'quarantine' : (hasExceptions || hasReadingAlert ? 'warn' : 'ok');
+
+    const events = sheet
+      ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, type: e.title, time: e.at, desc: e.meta, kind: e.provenance }))
+      : [];
+
+    return (
+      <article className="os-batch-detail-mobile" data-testid="ux-v2-batch-detail-mobile" data-batch-state={state}>
+        <div className="sdp-lote" data-testid="active-lote" data-lote-id={lote.id}>
+          <div className="sdp-lote__body">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)' }}>Lote</div>
+                <div className="sdp-lote__id" style={{ fontSize: 18 }}>{sheet ? sheet.code : lote.codigo}</div>
+              </div>
+              {(()=>{
+                const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" className={`sdp-sync sdp-sync--${st.stuck>0?'error':(st.pending>0?'pending':'synced')}`}>
+                  {label}
+                  {st.stuck>0&&<button type="button" onClick={()=>{
+                    const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                    setSyncQueue(next);
+                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                  }} style={{marginLeft:6}}>Reintentar</button>}
+                </span>;
+              })()}
+            </div>
+            <div style={{ fontFamily: 'var(--font-editorial)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', marginTop: 4 }}>
+              {(sheet ? sheet.species : lote.especie) || 'Especie sin registrar'}
+              {(sheet ? sheet.speciesScientific : lote.especieCientifico) && (
+                <><br /><i style={{ fontWeight: 400, fontSize: 14, color: 'var(--text-secondary)' }}>{sheet ? sheet.speciesScientific : lote.especieCientifico}</i></>
+              )}
+            </div>
+            <div className="sdp-lote__status" style={{ marginTop: 10 }}>
+              <span className={`sdp-badge sdp-badge--${loteBadge}`}>{stateLabel}{sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : ''}</span>
+            </div>
+            <div className="sdp-lote__meta" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 10 }}>
+              <div>
+                <span className="sdp-lote__mk">Sala</span>
+                <div className="sdp-lote__mv">{roomName || 'Sin asignar'}</div>
+              </div>
+              <div>
+                <span className="sdp-lote__mk">Bolsas activas</span>
+                <div className="sdp-lote__mv">{sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || '—'}`}</div>
+              </div>
+              <div>
+                <span className="sdp-lote__mk">Receta</span>
+                <div className="sdp-lote__mv">{sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ''}` : 'Sin vincular'}</div>
+              </div>
+              <div>
+                <span className="sdp-lote__mk">Spawn</span>
+                <div className="sdp-lote__mv">{sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : 'Sin vincular'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {hasExceptions && (
+          <section className="os-detail-panel" data-testid="batch-blocks-mobile" style={{ marginTop: 14, borderColor: 'var(--status-error)' }}>
+            <h2 style={{ fontSize: 14 }}>Excepciones</h2>
+            {isException && (
+              <div className="sdp-badge sdp-badge--quarantine" style={{ marginBottom: 8 }}>
+                {stateLabel} · {state === 'quarantine' ? 'Sospecha de contaminación' : 'Lifecycle detenido'}
+              </div>
+            )}
+            {sheet && sheet.anomalies.map((a, i) => (
+              <div className="sdp-event" key={`anom-${i}`} style={{ marginBottom: 6 }}>
+                <div className="sdp-event__header"><span className="sdp-event__type">{a.severity === 'critical' ? 'Crítico' : 'Atención'}</span></div>
+                <div className="sdp-event__desc">{a.detail}</div>
+              </div>
+            ))}
+            {sheet && sheet.blocks.map(b => (
+              <div className="sdp-event" key={b.code} style={{ marginBottom: 6 }}>
+                <div className="sdp-event__header"><span className="sdp-event__type">Bloqueo</span></div>
+                <div className="sdp-event__desc">{b.detail}</div>
+              </div>
+            ))}
+            {actions.some(a => a.action === 'inspection' || a.action === 'contamination') && (
+              <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" style={{ marginTop: 8 }}
+                onClick={() => runBatchAction((actions.find(a => a.action === 'contamination') || actions.find(a => a.action === 'inspection')).action, lote, sheet)}>
+                Inspeccionar
+              </button>
+            )}
+          </section>
+        )}
+
+        <section style={{ marginTop: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Siguiente acción</h2>
+          {nextAction ? (
+            <div className="sdp-task sdp-task--now" style={{ flexWrap: 'wrap' }}>
+              <div className="sdp-task__body">
+                <div className="sdp-task__title">{nextAction.label}</div>
+                {nextAction.blockedBy && <div className="sdp-task__meta">Bloqueado por: {nextAction.blockedBy}</div>}
+              </div>
+              <button type="button" className="sdp-btn sdp-btn--primary sdp-btn--field" disabled={Boolean(nextAction.blockedBy)}
+                onClick={() => runBatchAction(nextAction.action, lote, sheet)}>
+                Registrar {nextAction.label.toLowerCase()}
+              </button>
+            </div>
+          ) : (
+            <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Sin acciones pendientes para este lote.</div>
+          )}
+        </section>
+
+        <section style={{ marginTop: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Condiciones</h2>
+          {!roomId && <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Sin sala asignada — no hay lecturas ambientales.</div>}
+          {roomId && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {readings.map(r => r.empty ? (
+                <div key={r.key} className="sdp-reading">
+                  <div className="sdp-reading__label">{r.label}</div>
+                  <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Sin sensor</div>
+                </div>
+              ) : (
+                <div key={r.key} className={`sdp-reading sdp-reading--${r.modifier}`}>
+                  <div className="sdp-reading__label">{r.label}</div>
+                  <div className="sdp-reading__value">{r.value}<span className="sdp-reading__unit">{r.unit}</span></div>
+                  {r.targetLabel && <div className="sdp-reading__target">{r.targetLabel}</div>}
+                  <div className="sdp-reading__meta">
+                    <span className="sdp-provenance" data-provenance={r.provenanceKind}>{r.provenanceKind === 'measured' ? 'MEASURED' : 'ESTIMATED'}</span>
+                    <span>{r.provenanceMeta}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section style={{ marginTop: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
+          {events.length === 0 ? (
+            <div style={{ font: 'var(--t-small)', color: 'var(--text-metadata)' }}>Todavía no hay eventos registrados para este lote.</div>
+          ) : (
+            <ol className="sdp-timeline">
+              {events.map(e => (
+                <li className="sdp-event" key={e.id}>
+                  <div className="sdp-event__header">
+                    <span className="sdp-event__type">{e.type}</span>
+                    <time className="sdp-event__time">{e.time || ''}</time>
+                  </div>
+                  {e.desc && <div className="sdp-event__desc">{e.desc}</div>}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        <section style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-hairline)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {secondaryActions.map(a => (
+            <button key={a.action} type="button" className="sdp-btn sdp-btn--secondary" disabled={Boolean(a.blockedBy)}
+              title={a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : undefined}
+              onClick={() => runBatchAction(a.action, lote, sheet)}>{a.label}</button>
+          ))}
+          <button type="button" className="sdp-btn sdp-btn--secondary" data-testid="btn-field-action-sheet-mobile"
+            onClick={() => { setQrSelectedLoteId(lote.id); setShowFieldActionModal(true); }}>
+            Hoja de acción (QR)
+          </button>
+          <button type="button" className="sdp-btn sdp-btn--secondary" onClick={() => setPublicTraceModalLoteId(lote.id)}>
+            Ver ficha pública QR
+          </button>
+        </section>
+      </article>
+    );
+  };
+
+  const BatchSheetModal = ({ isOpen, onClose, lote }) => {
+    if (!isOpen || !lote) return null;
+    return (
+      <AccessibleModal
+        onClose={onClose}
+        label={`Ficha Canónica del Lote ${lote.codigo || lote.id}`}
+        dialogStyle={{ width: 'min(900px, 95vw)', maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}><AppIcon name="close" size={12} /></button>
+        </div>
+        {isMobileViewport ? <BatchDetailMobile lote={lote} /> : <BatchDetailV2 lote={lote} />}
+      </AccessibleModal>
+    );
+  };
+  if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
     let cameras=[];
@@ -7141,6 +9950,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Obtener lotes activos alojados en esta sala
     const lotesEnSala = bitLotes.filter(l => (l.sala === selectedClimateRoom || l.ubicacion === selectedClimateRoom || (!l.sala && selectedClimateRoom === 'martha_01')) && !['completado','descartado'].includes(l.estado));
     const mainLote = lotesEnSala[0] || bitLotes[0];
+    const activeSpeciesInRoom = Array.from(new Set(
+      lotesEnSala.map(l => l.especie || l.speciesKey || l.sKey).filter(Boolean)
+    ));
+    const coCultRoomOpt = activeSpeciesInRoom.length > 1
+      ? (typeof engineOptimizeChamberSetpoints === 'function'
+          ? engineOptimizeChamberSetpoints(activeSpeciesInRoom)
+          : (typeof SetasCoCultivation !== 'undefined' && typeof SetasCoCultivation.optimizeChamberSetpoints === 'function'
+              ? SetasCoCultivation.optimizeChamberSetpoints(activeSpeciesInRoom)
+              : null))
+      : null;
 
     // Targets por sala desde la fuente única (ROOM_TARGET_BANDS): las mismas
     // bandas que evalúa el motor de umbrales del puente en vivo, para que el
@@ -7149,7 +9968,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
-    const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'valores de referencia' };
+    const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'referencia de modelo · sin lectura de sonda' };
     const physicalMetrics=selectedCamera?{
       temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'monitor de cámara'
     }:{};
@@ -7604,13 +10423,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className="climate-live-label" data-live={hasLiveMetrics?'true':'false'}><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
             </div>
           </div>
-          {cameras.length>0?<div className="climate-module-grid">
+          {cameras.length>0?<div className="climate-module-grid" data-testid="salas-grid">
             {cameras.map(c=>{
               const roomId=CAMERA_TO_ROOM[c.id]||selectedClimateRoom;
+              const cardLive = liveTelemetry.roomLive(roomId);
+              const cardSample = (cardLive && cardLive.sample) || {};
+              const cardHasLive = ['temperature_c','rh_pct','co2_ppm'].some(metric => Number.isFinite(cardSample[metric]));
+              // Lotes/bolsas reales de la sala — mismo criterio que batch-sheet.js
+              // (bagsActive excluye descartada/contaminada) para que Salas y Batch
+              // Detail nunca discrepen sobre qué bolsa cuenta como activa.
+              const roomBatches = bitLotes.filter(l => (l.sala===roomId || l.ubicacion===roomId) && !['completado','descartado'].includes(l.estado));
+              const roomBagsList = bitBolsas.filter(b => roomBatches.some(l=>l.id===b.loteId));
+              const roomBagsActive = roomBagsList.length
+                ? roomBagsList.filter(b=>b.estado!=='descartada'&&b.estado!=='contaminada').length
+                : roomBatches.reduce((sum,l)=>sum+(parseInt(l.numBolsas,10)||0),0);
+              const roomBagsTotal = roomBagsList.length || roomBatches.reduce((sum,l)=>sum+(parseInt(l.numBolsas,10)||0),0);
               return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
                 <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
                 <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
                 <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
+                {!cardHasLive&&<span className="climate-module-reference">Referencia de modelo · sin lectura de sonda</span>}
+                <span className="climate-module-batches">{roomBatches.length} lote{roomBatches.length===1?'':'s'} · {roomBagsActive}/{roomBagsTotal} bolsas</span>
                 <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
                 {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}
               </button>;
@@ -7659,7 +10492,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-olive, #5B6B44)', color: 'var(--accent-olive, #5B6B44)', fontWeight: 700 }}
               title="Analizar compatibilidad de especies e intersección de setpoints en la misma carpa"
             >
-              🌿 Co-Cultivo Multiespecie
+              <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Co-Cultivo Multiespecie
             </button>
             <button
               type="button"
@@ -7668,7 +10501,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-terracotta, #C46238)', color: 'var(--accent-terracotta, #C46238)', fontWeight: 700 }}
               title="Simulador de ciclo de autoclave All American a 2.600 msnm (19.04 PSI / F0)"
             >
-              🔥 Autoclave Tenjo (F₀)
+              <AppIcon name="flame" size={13} style={{marginRight:4}} /> Autoclave Tenjo (F₀)
             </button>
             <button
               type="button"
@@ -7677,7 +10510,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
               title="Predicción de vida útil, transpiración y empaque en frío"
             >
-              ❄ Poscosecha & Frío
+              <AppIcon name="snowflake" size={13} style={{marginRight:4}} /> Poscosecha & Frío
             </button>
             <button
               type="button"
@@ -7686,7 +10519,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--line-0)', color: 'var(--ink-1)', fontWeight: 700 }}
               title="Generar y descargar firmware ESPHome YAML para este cuarto de cultivo"
             >
-              ⚡ Exportar ESPHome YAML
+              <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Exportar ESPHome YAML
             </button>
             <div style={{
               padding:'6px 12px',
@@ -7698,10 +10531,106 @@ body{margin:0;padding:20px 24px;background:#fff;}
               fontSize:11,
               fontWeight:700
             }}>
-              {climateHealth.severity === 'critical' ? '⚠ ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
+              {climateHealth.severity === 'critical' ? 'ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
             </div>
           </div>
         </div>
+
+        {/* Asesor de Co-Cultivo Multiespecie en la Sala */}
+        {coCultRoomOpt && (
+          <section className="climate-live-alerts" data-testid="fruiting-cocultivation-advisor" aria-label="Asesor de Co-Cultivo Multiespecie">
+            <div
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                borderRadius: 'var(--radius-sm, 3px)',
+                background: 'var(--paper-0, #F7F4EC)',
+                border: `1.5px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-700, #A83232)'}`,
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive, #5B6B44)' }}>
+                    <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo Multiespecie · Sala Compartida
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
+                    {activeSpeciesInRoom.join(' + ')} ({lotesEnSala.length} lotes activos en {room.name})
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      padding: '4px 10px',
+                      borderRadius: 2,
+                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-100, #FDF0DE)' : 'var(--coral-100, #FDE8E8)',
+                      color: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-700, #8A4B09)' : 'var(--coral-700, #A83232)',
+                      border: `1px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--moss-600, #617346)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-500, #E05252)'}`,
+                    }}
+                  >
+                    Compatibilidad Grupal: {coCultRoomOpt.groupScore}% · {coCultRoomOpt.verdict}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoCultSelectedSpecies(activeSpeciesInRoom);
+                      setShowCoCultivationModal(true);
+                    }}
+                    className="inv-btn inv-btn-sec"
+                    style={{ minHeight: 44, padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
+                  >
+                    Ver Matriz Completa →
+                  </button>
+                </div>
+              </div>
+
+              {/* Setpoints Minimax Pareto */}
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 6 }}>
+                <AppIcon name="target" size={13} style={{marginRight:4}} /> Setpoints Pareto Minimax Recomendados para Co-Existencia:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: 10 }}>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>T° Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.tempC}°C</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>HR Pareto</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.rhPct}%</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>CO₂ Límite</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.co2Ppm} ppm</div>
+                </div>
+                <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>VPD Óptimo</div>
+                  <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)' }}>{coCultRoomOpt.setpoints.vpdKpa} kPa</div>
+                </div>
+              </div>
+
+              {/* Cuellos de Botella Liebig */}
+              {(coCultRoomOpt.bottlenecks.length > 0 || coCultRoomOpt.penalties.length > 0) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--coral-700)' }}>
+                    <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):
+                  </div>
+                  {coCultRoomOpt.bottlenecks.map((b, idx) => (
+                    <div key={`bn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--coral-300)' }}>
+                      • {b}
+                    </div>
+                  ))}
+                  {coCultRoomOpt.penalties.map((p, idx) => (
+                    <div key={`pen-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ochre-700)', background: 'var(--ochre-100)', padding: '4px 8px', borderRadius: 2, border: '1px solid var(--ochre-300)' }}>
+                      • {p}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Alertas Activas (diagnóstico instantáneo).
             Cuando el motor de umbrales en vivo ya tiene alertas para esta sala,
@@ -7722,7 +10651,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 alignItems: 'center',
                 gap: 8
               }}>
-                <span>{al.level === 'alert' ? '🚨' : '⚠'}</span>
+                <span>{al.level === 'alert' ? <AppIcon name="alert" size={13} color="var(--status-error)" /> : <AppIcon name="alert" size={13} color="var(--status-warn-marker)" />}</span>
                 <span>{al.msg}</span>
               </div>
             ))}
@@ -7732,31 +10661,37 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {/* 4 KPI Cards en Vivo */}
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
+          <div className="climate-kpi-card sdp-tele">
+            <div className="climate-kpi-header sdp-tele__header">
               <span>Temperatura</span>
-              <span>Target: {defaultTargets.temperature_c.target}°C</span>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <span className="sdp-provenance">● MEASURED</span>
+                <span>Target: {defaultTargets.temperature_c.target}°C</span>
+              </div>
             </div>
-            <div className="climate-kpi-value">
+            <div className="climate-kpi-value sdp-tele__value">
               <span>{currentMetrics.temp}</span>
-              <span style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
+              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
             </div>
-            <div className="climate-kpi-sub">
+            <div className="climate-kpi-sub sdp-tele__label">
               <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
             </div>
           </div>
 
           {/* 2. Humedad Relativa */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
+          <div className="climate-kpi-card sdp-tele">
+            <div className="climate-kpi-header sdp-tele__header">
               <span>Humedad Relativa</span>
-              <span>Target: {defaultTargets.rh_pct.target}%</span>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <span className="sdp-provenance">● MEASURED</span>
+                <span>Target: {defaultTargets.rh_pct.target}%</span>
+              </div>
             </div>
-            <div className="climate-kpi-value">
+            <div className="climate-kpi-value sdp-tele__value">
               <span>{currentMetrics.rh}</span>
-              <span style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
+              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
             </div>
-            <div className="climate-kpi-sub">
+            <div className="climate-kpi-sub sdp-tele__label">
               <span>{climateTimeRange}: {rhMin}% – {rhMax}% · Banda: [{defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%]</span>
             </div>
           </div>
@@ -7776,17 +10711,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745.0, currentMetrics.temp), { live: false })
                 : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
             return (
-              <div className="climate-kpi-card" data-testid="climate-co2-card" data-co2-live={ndirCorr.live?'true':'false'}>
-                <div className="climate-kpi-header">
+              <div className="climate-kpi-card sdp-tele" data-testid="climate-co2-card" data-co2-live={ndirCorr.live?'true':'false'}>
+                <div className="climate-kpi-header sdp-tele__header">
                   <span>Dióxido de Carbono (NDIR)</span>
-                  <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
+                  <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                    <span className="sdp-provenance">● MEASURED</span>
+                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
+                  </div>
                 </div>
-                <div className="climate-kpi-value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <div className="climate-kpi-value sdp-tele__value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span>{ndirCorr.correctedPpm}</span>
-                  <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
+                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
                   <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
-                <div className="climate-kpi-sub">
+                <div className="climate-kpi-sub sdp-tele__label">
                   <span>Beer-Lambert {(co2Correction&&co2Correction.pressureHpa)||liveTelemetry.config.pressureHpa||745} hPa: <strong>{ndirCorr.baroFactor}x</strong> (+{ndirCorr.deltaPpm} ppm) · Max: {defaultTargets.co2_ppm.max} ppm</span>
                 </div>
               </div>
@@ -7794,18 +10732,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
           })()}
 
           {/* 4. VPD & Punto de Rocío */}
-          <div className="climate-kpi-card">
-            <div className="climate-kpi-header">
+          <div className="climate-kpi-card sdp-tele">
+            <div className="climate-kpi-header sdp-tele__header">
               <span>VPD & Psicrometría</span>
-              <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
-                {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
-              </span>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <span className="sdp-provenance">○ ESTIMATED</span>
+                <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
+                  {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
+                </span>
+              </div>
             </div>
-            <div className="climate-kpi-value">
+            <div className="climate-kpi-value sdp-tele__value">
               <span>{vpd}</span>
-              <span style={{fontSize:15,color:'var(--ink-2)'}}>kPa</span>
+              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>kPa</span>
             </div>
-            <div className="climate-kpi-sub">
+            <div className="climate-kpi-sub sdp-tele__label">
               <span>Punto de Rocío (Tdp): {dewPoint}°C · ΔT anti-rocío: {(currentMetrics.temp - dewPoint).toFixed(1)}°C</span>
             </div>
           </div>
@@ -7824,7 +10765,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             return (
               <div className="climate-kpi-card" style={{ gridColumn: 'span 2' }}>
                 <div className="climate-kpi-header">
-                  <span>💨 Ventilación Dinámica FAE (Extracción)</span>
+                  <span><AppIcon name="wind" size={13} style={{marginRight:4}} /> Ventilación Dinámica FAE (Extracción)</span>
                   <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-1)' }}>Biomasa activa: {activeBiomassKg.toFixed(1)} kg</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
@@ -7863,7 +10804,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="climate-chart-head">
             <div>
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                🎯 Sintonizador Culinario & Vector de Balance de la Trinidad
+                <AppIcon name="target" size={13} style={{marginRight:4}} /> Sintonizador Culinario & Vector de Balance de la Trinidad
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
                 Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs
@@ -8046,7 +10987,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="climate-chart-head">
             <div>
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                📈 Series Temporales de Telemetría Ambiental
+                <AppIcon name="chart" size={14} style={{marginRight:6}} /> Series Temporales de Telemetría Ambiental
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}} data-testid="climate-series-provenance" data-series-live={seriesAreLive?'true':'false'}>
                 {seriesAreLive
@@ -8123,7 +11064,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
             <div>
               <h3 style={{margin:0,fontFamily:'var(--font-display)',fontSize:15,color:'var(--ink-0)'}}>
-                ⚡ Actuadores y Relés de Potencia (Hosyond 2ch)
+                <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Actuadores y Relés de Potencia (Hosyond 2ch)
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
                 Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto
@@ -8139,7 +11080,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-actuator-card">
               <div className="climate-actuator-head">
                 <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
-                  💧 Humidificador (Relay Ch1 · T7/H05)
+                  <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Humidificador (Relay Ch1 · T7/H05)
                 </span>
                 <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min) ? 'on' : 'off'}`}>
                   {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (currentMetrics.rh < defaultTargets.rh_pct.min ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
@@ -8155,7 +11096,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   className="climate-actuator-btn"
                   onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
                 >
-                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '⚡ Forzar Humidificación (1m)'}
+                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '<AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)'}
                 </button>
                 {humidifierOverride !== null && (
                   <button
@@ -8173,7 +11114,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-actuator-card">
               <div className="climate-actuator-head">
                 <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
-                  💨 Extractor FAE (Relay Ch2 · Cloudline H4)
+                  <AppIcon name="wind" size={13} style={{marginRight:4}} /> Extractor FAE (Relay Ch2 · Cloudline H4)
                 </span>
                 <span className={`climate-actuator-badge ${faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'pulse' : 'off'}`}>
                   {faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'PULSO ACTIVO (35s)' : 'AUTO [EN ESPERA]'}
@@ -8193,7 +11134,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}
                   disabled={faePulseActive}
                 >
-                  {faePulseActive ? '⏳ Pulso en Curso...' : '🌀 Disparar Pulso FAE (35s)'}
+                  {faePulseActive ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Pulso en Curso...</> : <><AppIcon name="wind" size={13} style={{marginRight:4}} /> Disparar Pulso FAE (35s)</>}
                 </button>
               </div>
             </div>
@@ -8202,7 +11143,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           {/* Historial de Eventos Recientes de Actuación */}
           <div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-1)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>
-              📋 Historial Reciente de Conmutación de Relés
+              <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Historial Reciente de Conmutación de Relés
             </div>
             <div className="climate-actuator-logs">
               <div className="climate-log-row">
@@ -8227,7 +11168,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const BitacoraSection=()=>(
 <div>
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
-              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8}}>
+              <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8,flexWrap:'wrap'}}>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_ficha'?' on':'')} onClick={()=>goBitTab('bit_ficha')} disabled={!bitActiveLoteId} style={{opacity:bitActiveLoteId?1:0.45}}>Ficha experimental</button>
                 {bitActiveLoteId&&(
@@ -8237,9 +11178,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     title="Imprimir etiquetas térmicas para este lote"
                     style={{display:'flex',alignItems:'center',gap:4}}
                   >
-                    🖨 Etiquetas
+                    <AppIcon name="print" size={13} style={{marginRight:4}} /> Etiquetas
                   </button>
                 )}
+                <button
+                  className="inv-btn inv-btn-sec inv-btn-sm"
+                  onClick={()=>sincronizarFichasPublicas()}
+                  title="Sincronizar fichas públicas de trazabilidad con Firestore"
+                  style={{display:'flex',alignItems:'center',gap:4}}
+                >
+                  <AppIcon name="globe" size={13} style={{marginRight:4}} /> Sincronizar Fichas
+                </button>
+                <button
+                  className="inv-btn inv-btn-sec inv-btn-sm"
+                  onClick={()=>openThermalForCrate('CAN-01')}
+                  title="Imprimir etiquetas de canastilla grado alimentario (CAN-XX)"
+                  style={{display:'flex',alignItems:'center',gap:4}}
+                >
+                  <AppIcon name="tag" size={12} style={{marginRight:4}} /> Canastilla
+                </button>
+                {publicSyncStatus?.running&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginLeft:6,alignSelf:'center',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="clock" size={12} /> Sincronizando...</span>}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
                 {(()=>{
                   const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
@@ -8264,34 +11222,35 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',gap:6}}>
                     <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>⊞ Cuadrícula</button>
                     <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>≡ Tabla</button>
-                    <button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
                   </div>
                 </div>
                 {bitLotes.length>0&&(()=>{const allStats=bitLotes.map(lt=>({lt,s:calcLoteStats(lt.id)}));const wd=allStats.filter(x=>x.s&&x.s.totalFresco>0);const avgBE=wd.length?wd.reduce((s,x)=>s+(x.s.be||0),0)/wd.length:null;const ws=allStats.filter(x=>x.s);const avgCont=ws.length?ws.reduce((s,x)=>s+(x.s.contPct||0),0)/ws.length:null;const totalKg=allStats.reduce((s,x)=>s+(x.s?.totalFresco||0),0);return(<div className="inv-stat-row" style={{marginBottom:16}}><div className="inv-stat"><div className="inv-stat-val">{bitLotes.length}</div><div className="inv-stat-lbl">Lotes</div></div><div className="inv-stat"><div className="inv-stat-val">{avgBE!=null?avgBE.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE media</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:avgCont!=null&&avgCont>15?'var(--coral-700)':'inherit'}}>{avgCont!=null?avgCont.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">Contam. media</div></div><div className="inv-stat"><div className="inv-stat-val">{totalKg.toFixed(2)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>);})()} 
-                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
+                {bitLotes.length===0&&(<div style={{textAlign:'center',padding:'48px 20px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-md)'}}>Sin lotes experimentales registrados.<br/><button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri" style={{marginTop:14}}>+ Crear primer lote</button></div>)}
                 {bitLotes.length>0&&bitDashView==='grid'&&(
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
                     {bitLotes.map(lote=>{
                       const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
-                        <div key={lote.id} data-lote-id={lote.id} className="panel" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
+                        <div key={lote.id} data-lote-id={lote.id} className="panel sdp-lote" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
                           onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
                           onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--ink-900)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.transform='';}}
                         >
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
-                              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              <div className="sdp-lote__code" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              {SetasInventoryConsumptionApi.isPendingForLote(invOps,lote.id)&&<span className="chip" title="El consumo de bodega de este lote aún no se guardó en el servidor" style={{marginLeft:6}}>Pendiente de sincronizar inventario</span>}
                               <div style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:"var(--text-md)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
                             <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
-                              <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
+                              <span className="sdp-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
                               {score!==null&&<span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-700)',lineHeight:1}}>{score}<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>/100</span></span>}
                             </div>
                           </div>
-                          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'var(--paper-300)'}}>
+                          <div className="sdp-lote__meta" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'var(--paper-300)'}}>
                             {[['Sanas',stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'],['BE',stats?.be!=null?stats.be.toFixed(0)+'%':'—'],['Cosecha',stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'8px 4px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:2}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{v}</div></div>))}
                           </div>
                           <div style={{padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--paper-100)',gap:8}}>
@@ -8305,7 +11264,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 title="Imprimir etiquetas térmicas del lote"
                                 style={{padding:'3px 8px',fontSize:12}}
                               >
-                                🖨
+                                <AppIcon name="print" size={12} />
                               </button>
                             </div>
                           </div>
@@ -8318,7 +11277,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th style={{textAlign:'right'}}>Acciones</th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas">🖨</button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}>✕</button></div></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas"><AppIcon name="print" size={12} /></button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}><AppIcon name="close" size={12} /></button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -8330,11 +11289,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const bolsas=bitBolsas.filter(b=>b.loteId===bitActiveLoteId);
               const stats=calcLoteStats(bitActiveLoteId);
               // 'aislada' viene de BAG_STATE_LABELS (batch-sheet.js): separa "bajo
-              // observación" de "confirmada contaminada". Usa --slate-500 (azul-gris
-              // neutro, ya en la paleta de tokens) para no confundirse con el rojo
-              // de contaminación ni con el ámbar de dudosa.
+              // observación" de la contaminación confirmada, con un color propio
+              // (nunca el rojo de 'contaminada').
               const bagStateLabels=(batchSheetApi&&batchSheetApi.BAG_STATE_LABELS)||{};
-              const EB={sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},aislada:{c:'var(--slate-500)',l:bagStateLabels.aislada||'Aislada'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
+              const EB={'':{c:'var(--ink-500)',l:'Sin evaluar'},sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},aislada:{c:'var(--slate-500)',l:bagStateLabels.aislada||'Aislada'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
               return(
                 <div className="panel" data-testid="active-lote" data-lote-id={lote.id}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>
@@ -8360,7 +11318,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{display:'flex',alignItems:'center',gap:6,fontSize:"var(--text-sm)",padding:'6px 12px'}}
                         title="Imprimir rollo completo de etiquetas térmicas con QR"
                       >
-                        🏷 Imprimir Rollo QR ({lote.numBolsas||12} bolsas)
+                        <AppIcon name="print" size={12} style={{marginRight:4}} /> Imprimir Rollo QR ({lote.numBolsas||12} bolsas)
                       </button>
                       <select name={`loteVerdict-${lote.id}`} aria-label={`Veredicto del lote ${lote.codigo}`} value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
                         <option value="">— veredicto —</option>
@@ -8420,12 +11378,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <tbody>{bolsas.map(bolsa=>{
                         const cosBolsa=bitCosechas.filter(c=>c.bolsaId===bolsa.id);
                         const totalBolsa=cosBolsa.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0);
-                        const est=EB[bolsa.estado]||EB.sana;
+                        const est=EB[bolsa.estado]||EB[''];
                         return(
                           <tr key={bolsa.id}>
                             <td data-label="Código" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",whiteSpace:'nowrap'}}>{bolsa.codigo}</td>
                             <td data-label="Estado">
-                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
+                              <select name={`bagStatus-${bolsa.id}`} aria-label={`Estado de la bolsa ${bolsa.codigo}`} value={bolsa.estado??''} onChange={e=>updateBitBolsa(bolsa.id,{estado:e.target.value||null})} style={{width:'100%',padding:'3px 4px',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",border:`1px solid ${est.c}`,borderRadius:3,background:'var(--paper-50)',color:est.c,cursor:'pointer'}}>
                                 {Object.entries(EB).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
                               </select>
                             </td>
@@ -8445,7 +11403,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <td data-label="Cosechas">
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
                                 <span style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{totalBolsa>0?(totalBolsa/1000).toFixed(3)+' kg':'—'}</span>
-                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{setBitCosechaForm({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+</button>
+                                <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo}`} onClick={()=>{openHarvestCapture({bolsaId:bolsa.id,loteId:bitActiveLoteId,codigo:bolsa.codigo,flush:cosBolsa.length+1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+</button>
                               </div>
                             </td>
                             <td data-label="Etiqueta" style={{textAlign:'center'}}>
@@ -8456,7 +11414,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 title={`Imprimir etiqueta de la bolsa ${bolsa.codigo}`}
                                 onClick={()=>openThermalForLote(bitActiveLoteId, { bagNum: bolsa.num })}
                               >
-                                🖨
+                                <AppIcon name="print" size={12} />
                               </button>
                             </td>
                           </tr>
@@ -8477,7 +11435,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="panel">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Cosechas — {lote.codigo}</div>
-                    <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');setBitCosechaForm({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:4,observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
+                    <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');openHarvestCapture({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
                   </div>
                   {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
                   {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
@@ -8492,12 +11450,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <td style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",textAlign:'center'}}>{c.flush}</td>
                               <td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{c.fecha}</td>
                               <td style={{textAlign:'right',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}}>{c.pesoFresco}</td>
-                              <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{'★'.repeat(c.calidad||0)}</td>
+                              <td style={{textAlign:'center',fontSize:"var(--text-sm)"}}>{c.calidad ? `${c.calidad}/5` : '—'}</td>
                               <td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)'}}>{c.observaciones}</td>
                               <td>
                                 <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
-                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Imprimir etiqueta de canastilla para ${c.codigo}, flush ${c.flush}`} title="Imprimir etiqueta térmica de canastilla" onClick={()=>openThermalForCosecha(bitActiveLoteId, c)}>🖨</button>
-                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}>✕</button>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Imprimir etiqueta de canastilla para ${c.codigo}, flush ${c.flush}`} title="Imprimir etiqueta térmica de canastilla" onClick={()=>openThermalForCosecha(bitActiveLoteId, c)}><AppIcon name="print" size={12} /></button>
+                                  <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" aria-label={`Eliminar cosecha de ${c.codigo}, flush ${c.flush}`} onClick={()=>setConfirmDlg({title:'Eliminar cosecha',msg:`¿Eliminar la cosecha de ${c.codigo}, flush ${c.flush}? Esta acción no se puede deshacer.`,danger:true,confirmLabel:'Eliminar',onConfirm:()=>deleteBitCosecha(c.id)})}><AppIcon name="close" size={12} /></button>
                                 </div>
                               </td>
                             </tr>
@@ -8526,7 +11484,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const cosechas=[...bitCosechas.filter(c=>c.loteId===bitActiveLoteId)].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
               const stats=calcLoteStats(bitActiveLoteId);const score=stats?calcLoteScore(stats):null;
-              return <BatchDetailV2 lote={lote}/>;
+              return isMobileViewport ? <BatchDetailMobile lote={lote}/> : <BatchDetailV2 lote={lote}/>;
               /* Legacy printable sheet retained below during migration, but no longer rendered. */
               return(
                 <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
@@ -8554,7 +11512,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                   {lote.recipeRef&&(<div style={{border:'1px solid var(--paper-300)',padding:'10px 14px',marginBottom:14,background:'var(--paper-50)'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:5}}>Receta vinculada — {lote.recipeRef.name}</div><div style={{display:'flex',flexWrap:'wrap',gap:3,marginBottom:5}}>{lote.recipeRef.recipe.map(r=>{const g=INGS.find(i=>i.id===r.id);return g?<span key={r.id} style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',borderRadius:3}}>{g.name} {parseFloat(r.p).toFixed(1)}%</span>:null;})}</div><div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>C:N {lote.recipeRef.cn} · EB ~{lote.recipeRef.eb}% · Score {lote.recipeRef.score}/100{lote.recipeRef.cost?` · $${lote.recipeRef.cost.toLocaleString('es-CO')}/kg`:''}</div></div>)}
-                  {cosechas.length>0&&(<div><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:6}}>Registro de cosechas</div><table className="prod-tbl" style={{marginBottom:14}}><thead><tr><th>Bolsa</th><th style={{textAlign:'center'}}>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th style={{textAlign:'center'}}>Calidad</th><th>Obs.</th></tr></thead><tbody>{cosechas.map(c=><tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.codigo}</td><td style={{textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.fecha}</td><td className="num">{c.pesoFresco}</td><td style={{textAlign:'center'}}>{'★'.repeat(c.calidad||0)}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-600)'}}>{c.observaciones}</td></tr>)}<tr className="tot"><td colSpan={3}>Total</td><td className="num">{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={2}></td></tr></tbody></table></div>)}
+                  {cosechas.length>0&&(<div><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-900)',marginBottom:6}}>Registro de cosechas</div><table className="prod-tbl" style={{marginBottom:14}}><thead><tr><th>Bolsa</th><th style={{textAlign:'center'}}>Flush</th><th>Fecha</th><th style={{textAlign:'right'}}>Peso fresco (g)</th><th style={{textAlign:'center'}}>Calidad</th><th>Obs.</th></tr></thead><tbody>{cosechas.map(c=><tr key={c.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.codigo}</td><td style={{textAlign:'center'}}>{c.flush}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>{c.fecha}</td><td className="num">{c.pesoFresco}</td><td style={{textAlign:'center'}}>{c.calidad ? `${c.calidad}/5` : '—'}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-600)'}}>{c.observaciones}</td></tr>)}<tr className="tot"><td colSpan={3}>Total</td><td className="num">{cosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0).toFixed(0)} g</td><td colSpan={2}></td></tr></tbody></table></div>)}
                   {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
                   <div style={{marginTop:16,paddingTop:12,borderTop:'2px solid var(--ink-900)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
@@ -8566,17 +11524,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
   );
 
+  const getSurfaceMode = (t) => {
+    if (t === 'clima') return 'control';
+    if (t === 'perito' || (t === 'formular' && typeof workbenchMode !== 'undefined' && workbenchMode === 'perito')) return 'control';
+    if (t === 'catalogo') return 'archive';
+    if (t === 'market') return 'culinary';
+    return 'field';
+  };
+
   return(
-    <div>
+    <main className="workspace app-workspace" data-mode={getSurfaceMode(tab)}>
       <div className="topbar">
         <button type="button" className="topbar-mark" onClick={()=>goTab('catalogo')} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:10}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="54" height="28" style={{width:54,height:'auto',maxHeight:28,objectFit:'contain'}} />
+          <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="54" height="28" style={{width:54,height:'auto',maxHeight:28,objectFit:'contain'}} />
           <span style={{fontSize:15,fontWeight:700}}>Setas de la Peña</span>
         </button>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span className={`sdp-sync-chip ${isOnline?'sdp-sync-chip--synced':'sdp-sync-chip--pending'}`}>
+            <span className="sdp-sync-chip__dot" aria-hidden="true" />
+            <span className="sdp-sync-chip__label">{isOnline ? 'CONECTADO · SINCRONIZADO' : 'MODO LOCAL · PENDIENTE'}</span>
+          </span>
+        </div>
       </div>
       <nav className="fos-rail">
         <span className="fos-rail-mark" style={{position:'relative',width:91,display:'flex',alignItems:'center',justifyContent:'center',padding:'12px 4px 8px'}}>
-          <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="80" height="42" style={{width:80,height:'auto',maxHeight:48,objectFit:'contain',display:'block'}} />
+          <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="80" height="42" style={{width:80,height:'auto',maxHeight:48,objectFit:'contain',display:'block'}} />
         </span>
         {NAV_GROUPS.map(g=>{const on=g.tabs.includes(tab);return(
           <button key={g.key} className={'fos-rail-btn'+(on?' on':'')} onClick={()=>goTab(g.tabs[0])}>{g.icon}<span>{g.label}</span></button>
@@ -8657,6 +11629,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             :(overdueTaskCount>0||incidentCount>0)
               ?{label:`${overdueTaskCount+incidentCount} por resolver`,color:'color-mix(in oklab, var(--ochre-700) 70%, black)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
               :{label:'Operación estable',color:'color-mix(in oklab, var(--moss-700) 75%, black)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
+          // Las bandas del rail leen directamente las filas del motor: taskId
+          // como key, where/what/why ya resueltos contra el índice de lotes, y
+          // objectId/objectType para poder abrir el lote o imprimir su etiqueta.
+          const criticalLots=operationalQueue.filter(item=>item.bucket==='critical'||item.bucket==='blocked');
+          const nowLots=operationalQueue.filter(item=>item.bucket==='overdue'||item.bucket==='now');
+          const laterLots=operationalQueue.filter(item=>item.bucket==='later'||item.bucket==='context');
 
           // Ambientes & Sensores: cámaras físicas REALES
           let camaras=[];
@@ -8737,13 +11715,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
                       {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
                     ].map(m=>(
-                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'baseline',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'5px 10px'}}>
+                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
                         <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-0)'}}>{m.value}</span>
                       </button>
                     ))}
                   </div>
-                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
                 </div>
 
                 {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
@@ -8762,180 +11740,291 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{border:'1px solid var(--accent-blue-grey)',borderRadius:0,padding:'10px 14px',background:'var(--paper-1)'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
                       <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'0.08em',color:'var(--accent-blue-grey)'}}>Traspaso del turno anterior</span>
-                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>Leído [×]</button>
+                      <button onClick={()=>props.onClearHandoff&&props.onClearHandoff()} className="home-handoff-dismiss" style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>Leído [×]</button>
                     </div>
                     <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{props.handoffText}</div>
                   </div>
                   </div>
                 )}
-                {criticalStockItems.length > 0 && (
-                  <div className="sdp-alert sdp-alert--warn stock-critical-card" style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,borderRadius:0}}>
-                    <div className="sdp-alert__body" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                      <span className="sdp-alert__label" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--status-warn-text)'}}>
-                        ⚠ Alerta de Stock Crítico ({criticalStockItems.length})
-                      </span>
-                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                        {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
-                          <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--rule)',borderRadius:0,color:'var(--status-warn-text)'}}>
-                            {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
-                          </span>
-                        ))}
-                        {criticalStockItems.length > 3 && (
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',padding:'2px 4px'}}>
-                            +{criticalStockItems.length - 3} más
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:0}}>
-                      Registrar Compra +
-                    </button>
-                  </div>
-                )}
               </div>
 
-              {/* SECCIÓN A: OPERACIÓN INMEDIATA — Acciones Rápidas (izquierda) y Tareas de Hoy (derecha) */}
-              <div className="home-acciones-tareas-row">
-                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',height:'100%',boxShadow:'none'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                    <div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                        SECCIÓN A · OPERACIÓN INMEDIATA
+              {/* COLA OPERATIVA DE HOY · 3 BANDAS DE PRIORIDAD (DS-2026 CRITERIO FIELD MODE) */}
+              <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
+
+                {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
+                <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-error,#B53A25)',padding:'16px 18px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--status-error,#B53A25)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error,#B53A25)'}}>
+                        Banda 1 · Atención
                       </span>
-                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                        Acciones Rápidas
-                      </h2>
+                      <span className="sdp-provenance">SCD30 · Cuarentena · Insumos</span>
                     </div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>Acceso a 1 clic</span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
+                    </span>
                   </div>
-                  <div style={{
-                    display:'grid',
-                    gridTemplateColumns:'1fr',
-                    gap:10
-                  }}>
+
+                  {/* Alertas de cámaras / telemetría si las hay */}
+                  {liveTelemetry.alerts.length > 0 && (
+                    <div style={{marginBottom: 12}}>
+                      <LiveAlertsSection/>
+                    </div>
+                  )}
+
+                  {/* Alertas de stock crítico si las hay */}
+                  {criticalStockItems.length > 0 && (
+                    <div className="sdp-alert sdp-alert--warn stock-critical-card" style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12,borderRadius:0}}>
+                      <div className="sdp-alert__body" style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                        <span className="sdp-alert__label" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'var(--status-warn-text)'}}>
+                          <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
+                        </span>
+                        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                          {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
+                            <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--rule)',borderRadius:0,color:'var(--status-warn-text)'}}>
+                              {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                            </span>
+                          ))}
+                          {criticalStockItems.length > 3 && (
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',padding:'2px 4px'}}>
+                              +{criticalStockItems.length - 3} más
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center'}}>
+                        Registrar Compra +
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Lotes en cuarentena o con contaminación crítica */}
+                  {criticalLots.length > 0 ? (
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {criticalLots.map(item => (
+                        <div key={item.taskId} className="sdp-task sdp-task--critical" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-error)',border:'1px solid var(--status-error)',padding:'1px 5px'}}>
+                                {item.bucket === 'critical' ? 'Crítico' : 'Bloqueo'}
+                              </span>
+                              <span className="sdp-task__title">{item.what}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:8}}>
+                            <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
+                              Abrir lote →
+                            </button>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
+                              <AppIcon name="print" size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && (
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',padding:'4px 0'}}>
+                        <span style={{display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="check" size={13} color="var(--status-ok)" /> Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal.</span>
+                      </div>
+                    )
+                  )}
+                </section>
+
+                {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
+                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-ok,#2E3B2F)',padding:'16px 18px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--status-ok,#2E3B2F)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok,#2E3B2F)'}}>
+                        Banda 2 · Ahora
+                      </span>
+                      <span className="sdp-provenance">Acciones directas ≥ 44px</span>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {nowLots.length + tasksHoy.filter(t=>!t.done).length} pendiente{nowLots.length + tasksHoy.filter(t=>!t.done).length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+
+                  {/* Acciones Rápidas con touch target >= 44px */}
+                  <div className="home-quick-actions-strip" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(190px, 1fr))',gap:8,marginBottom:14}}>
                     {[
                       {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
                         const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
                         if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
                         else props.onStartSession&&props.onStartSession();
                       },jornada:true},
-                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>props.onScanLot&&props.onScanLot(),pri:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
                       const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
                       return (
-                      <button
-                        key={btn.label}
-                        onClick={btn.onClick}
-                        className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
-                        style={{
-                          display:'flex',
-                          alignItems:'center',
-                          gap:12,
-                          padding:'12px 14px',
-                          borderRadius:0,
-                          textAlign:'left',
-                          cursor:'pointer',
-                          position:'relative'
-                        }}
-                      >
-                        <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
-                        <div style={{minWidth:0,flex:1}}>
-                          <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                            {btn.label}
+                        <button
+                          key={btn.label}
+                          onClick={btn.onClick}
+                          className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
+                          style={{
+                            display:'flex',
+                            alignItems:'center',
+                            gap:10,
+                            padding:'10px 12px',
+                            minHeight:48,
+                            borderRadius:0,
+                            textAlign:'left',
+                            cursor:'pointer',
+                            position:'relative'
+                          }}
+                        >
+                          <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
+                          <div style={{minWidth:0,flex:1}}>
+                            <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                              {btn.label}
+                            </div>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                              {btn.sub}
+                            </div>
                           </div>
-                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                            {btn.sub}
-                          </div>
-                        </div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-2)',fontWeight:700}}>→</span>
-                      </button>
+                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-2)',fontWeight:700}}>→</span>
+                        </button>
                       );
                     })}
                   </div>
-                </div>
 
-                <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'18px 20px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',boxShadow:'none'}}>
-                  <div>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                      <div>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                          SECCIÓN A · TRABAJO DEL DÍA
-                        </span>
-                        <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                          Tareas de Hoy
-                        </h2>
-                      </div>
-                      {/* El contador tiene que contar LO QUE SE VE. Antes salía de
-                          props.tasksOpenCount mientras la lista salía del motor:
-                          dos fuentes distintas, y con el shell sin datos el número
-                          desaparecía dejando un "pendientes" suelto. */}
-                      {tasksHoy.length>0 && <span data-testid="cockpit-task-count" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{(()=>{const n=tasksHoy.some(t=>t.fromEngine)?tasksHoy.filter(t=>!t.done).length:(props.tasksOpenCount||tasksHoy.length);return `${n} pendiente${n===1?'':'s'}`;})()}</span>}
+                  {/* Lotes activos que requieren acción ahora (overdue o now) */}
+                  {nowLots.length > 0 && (
+                    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
+                      {nowLots.map(item => (
+                        <div key={item.taskId} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
+                                {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
+                              </span>
+                              <span className="sdp-task__title">{item.what}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:8}}>
+                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
+                              Ejecutar transición →
+                            </button>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
+                              <AppIcon name="print" size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {tasksHoy.length===0 ? (
-                      <div style={{textAlign:'center',padding:'20px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
+                  )}
+
+                  {/* Tareas del día (checklist de turno) */}
+                  <div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:8}}>
+                      {/* El contador tiene que contar LO QUE SE VE, no una prop
+                          suelta que puede no coincidir con la lista del motor. */}
+                      Checklist del Turno · <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
+                    </div>
+                    {tasksHoy.length === 0 ? (
+                      <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
                         Sin tareas pendientes por ahora.
                       </div>
                     ) : (
-                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                        {tasksHoy.slice(0,5).map(t=>(
-                          <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
-                            {/* 48×48: es una acción de campo y se toca con guantes.
-                                El estándar del proyecto para estos objetivos es
-                                ≥48px (setas-os-components.css, MOBILE_A11Y_REVIEW). */}
+                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                        {tasksHoy.map(t => (
+                          <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
+                            {/* 48×48: es una acción de campo y se toca con guantes
+                                (estándar del proyecto, MOBILE_A11Y_REVIEW). */}
                             <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label={`Marcar tarea: ${t.title}`}
                               style={{cursor:'pointer',flexShrink:0,width:48,height:48,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
+                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)'}}>{t.done ? <AppIcon name="check" size={12} color="var(--paper-0)" /> : ''}</span>
                             </button>
-                            <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
-                              {/* qué / dónde / por qué ahora / qué hago: las cuatro
-                                  respuestas vienen de la tarea, no se inventan aquí. */}
-                              <span style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                              <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                            <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
+                              <span className="sdp-task__title" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                              <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
                               {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
                             </button>
-                            <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
+                            <span className="sdp-task__status" style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
-                        {tasksHoy.length>5 && (
-                          <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)',paddingTop:2}}>
-                            +{tasksHoy.length-5} tarea{tasksHoy.length-5===1?'':'s'} más
-                          </div>
-                        )}
                       </div>
                     )}
-                    {/* Cierre de jornada: cierra el turno y entrega contexto al
-                        relevo, para que lo ocurrido no se reconstruya después
-                        desde memoria o WhatsApp. */}
-                    {/* El estado de sincronización va en la pantalla de inicio, no
-                        sólo en el detalle del lote: el operario tiene que poder ver
-                        desde donde trabaja si algo quedó sin subir, sin navegar a
-                        buscarlo. Es la mitad visible de la cola. */}
-                    <div style={{marginTop:12,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                      {(()=>{
-                        const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-                        const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
-                        const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
-                        return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true"
-                          style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
-                          <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
-                          {label}
-                          {st.stuck>0&&<button type="button" onClick={()=>{
-                            const next=syncQueueApi.retryStuck(syncQueue,Date.now());
-                            setSyncQueue(next);
-                            try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
-                          }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
-                        </span>;
-                      })()}
-                      <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
-                        style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                        Cerrar jornada
-                      </button>
-                    </div>
                   </div>
-                </div>
+
+                  {/* El estado de sincronización va en la pantalla de inicio, no
+                      sólo en el detalle del lote: el operario tiene que poder ver
+                      desde donde trabaja si algo quedó sin subir, sin navegar a
+                      buscarlo. Es la mitad visible de la cola. Junto a él, el
+                      cierre de jornada, para que lo ocurrido no se reconstruya
+                      después desde memoria o WhatsApp. */}
+                  <div style={{marginTop:12,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                    {(()=>{
+                      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                      const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                      const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                      return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true"
+                        style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
+                        <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
+                        {label}
+                        {st.stuck>0&&<button type="button" onClick={()=>{
+                          const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                          setSyncQueue(next);
+                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                        }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
+                      </span>;
+                    })()}
+                    <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
+                      style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                      Cerrar jornada
+                    </button>
+                  </div>
+                </section>
+
+                {/* ── BANDA 3: DESPUÉS (Transiciones programadas & Monitoreo) ── */}
+                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--text-secondary,#6B6759)',padding:'16px 18px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--text-secondary,#6B6759)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary,#6B6759)'}}>
+                        Banda 3 · Después
+                      </span>
+                      <span className="sdp-provenance">Planificación / Tarde</span>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {laterLots.length} programado{laterLots.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  {laterLots.length === 0 ? (
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)',fontStyle:'italic'}}>
+                      Sin transiciones posteriores pendientes.
+                    </div>
+                  ) : (
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {laterLots.slice(0, 5).map(item => (
+                        <div key={item.taskId} className="sdp-task sdp-task--later" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span className="sdp-task__due">DESPUÉS</span>
+                              <span className="sdp-task__title">{item.what}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
+                          </div>
+                          <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
+                            Ver lote →
+                          </button>
+                        </div>
+                      ))}
+                      {laterLots.length > 5 && (
+                        <div style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)',paddingTop:2}}>
+                          +{laterLots.length - 5} lote{laterLots.length - 5 === 1 ? '' : 's'} en incubación o maduración
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
               </div>
 
               {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
@@ -9059,7 +12148,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
                       No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
-                    <button onClick={()=>setShowBitNuevo(true)} style={{padding:'6px 14px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-button)',textTransform:'uppercase',cursor:'pointer'}}>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="sdp-btn sdp-btn--field sdp-btn--primary" style={{padding:'8px 16px',minHeight:44,minWidth:44,cursor:'pointer'}}>
                       + Iniciar Primer Lote
                     </button>
                   </div>
@@ -9077,7 +12166,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Cámaras de Cultivo
                     </h2>
                   </div>
-                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
+                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
                     Ver Cámaras & IoT ({camaras.length}) →
                   </button>
                 </div>
@@ -9103,7 +12192,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                           {c.hasLiveAlert && (
                             <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--accent-terracotta)',marginTop:2,fontWeight:700}}>
-                              ⚠ {c.liveAlertNote}
+                              <AppIcon name="alert" size={11} color="var(--accent-terracotta)" style={{marginRight:4}} /> {c.liveAlertNote}
                             </div>
                           )}
                         </div>
@@ -9267,8 +12356,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
-              {saved.length > 0 && (() => {
-                const costs = saved.map(e => {
+              {/* Resumen de la selección activa. Las métricas vienen de #218, que las
+                  movió aquí desde el panel "Finanzas & Rendimiento" de la home; al
+                  fusionar Catálogo y Recetario pasan a seguir el filtro de especie,
+                  porque el costo/kg varía demasiado entre especies para que un
+                  promedio global signifique algo (orellana ~$640 vs shiitake ~$1.730).
+                  Con "Todas" seleccionado siguen siendo las cifras de cartera de #218.
+                  El tile de ciclo se sustituyó por EB promedio: `sch` depende de
+                  `schKey`, el selector de la pestaña Cronograma, y no de estas
+                  recetas — mostraba un dato ajeno a la especie en pantalla. */}
+              {shown.length > 0 && (() => {
+                const costs = shown.map(e => {
                   const needsA2 = !(e.cost > 0) || e.energyCopKg == null;
                   const a2 = needsA2 ? analyze(e.recipe, e.sKey, effectiveINGS) : null;
                   const costIngKg = e.cost > 0 ? e.cost : (a2 ? Math.round(a2.cost) : 0);
@@ -9281,33 +12379,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 }).filter(c => c > 0);
                 const avgCostKg = costs.length > 0 ? Math.round(costs.reduce((a,b)=>a+b, 0) / costs.length) : (an?.cost ? Math.round(an.cost) : 0);
                 const avgBagCost = Math.round(avgCostKg * 1.5 * 0.35);
-                const avgCycleDays = sch?.totDays || 45;
-
+                const ebs = shown.map(e => parseFloat(e.eb)).filter(v => v > 0);
+                const avgEb = ebs.length > 0 ? Math.round(ebs.reduce((a,b)=>a+b, 0) / ebs.length) : null;
+                const tiles = [
+                  {lbl:'Fórmulas Guardadas', val:shown.length, unit:shown.length===1?'receta':'recetas'},
+                  {lbl:'Costo Promedio / kg', val:'$'+avgCostKg.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'Bolsa Estándar (1.5 kg)', val:'$'+avgBagCost.toLocaleString('es-CO'), unit:'COP'},
+                  {lbl:'EB Promedio', val:avgEb!=null?avgEb+'%':'—', unit:avgEb==null?'sin dato':(ebs.length===shown.length?'eficiencia biológica':`sobre ${ebs.length} de ${shown.length}`)},
+                ];
                 return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: 'var(--paper-50)', border: '1px solid var(--paper-300)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginBottom: 18 }}>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Fórmulas Guardadas</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        {saved.length} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>recetas</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Costo Promedio / kg</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgCostKg.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Bolsa Estándar (1.5 kg)</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ${avgBagCost.toLocaleString('es-CO')} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>COP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', color: 'var(--ink-500)', textTransform: 'uppercase' }}>Ciclo Promedio Estimado</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--ink-900)' }}>
-                        ~{avgCycleDays} <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>días</span>
-                      </div>
+                  <div className="recetario-kpis">
+                    <div className="recetario-kpis-lbl">Promedios · {focusSpp?focusSpp.name:'Todas las recetas'}</div>
+                    <div className="recetario-kpis-grid">
+                      {tiles.map(t => (
+                        <div key={t.lbl}>
+                          <div className="recetario-kpi-lbl">{t.lbl}</div>
+                          <div className="recetario-kpi-val">{t.val} <span>{t.unit}</span></div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
@@ -9327,7 +12416,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="sdp-ficha recetario-ficha">
                   <div className="sdp-ficha__hd" style={{background:'var(--paper-0)',padding:'12px 16px',borderBottom:'1px solid var(--border-hairline)'}}>
                     <div className="sdp-species">
-                      <div className="sdp-species__common" style={{fontFamily:'var(--font-editorial)',fontWeight:700,fontSize:'22px'}}>{focusSpp.name}</div>
+                      <div className="sdp-species__common">{focusSpp.name}</div>
                       <div className="sdp-species__latin" style={{fontFamily:'var(--font-editorial)',fontStyle:'italic'}}>{focusSpp.scientific}</div>
                     </div>
                     <div className="sdp-plateline">{SPP_CODE[focusKey]} · Tenjo · 2.600 m</div>
@@ -9402,7 +12491,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {costKg>0&&(
                                 <div className="dash-kv">
                                   <span className="dk">Costo total/kg</span>
-                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>⚡+${eDash.toLocaleString()}</span>}</span>
+                                  <span className="dv" style={{color:'var(--ink-900)',fontFamily:'var(--font-num)',fontSize:"var(--text-base)"}} title={`Ingredientes: $${costIngKg.toLocaleString('es-CO')} + Energía proceso: $${eDash.toLocaleString('es-CO')}`}>${costKg.toLocaleString('es-CO')} COP{eDash>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:4}}>+${eDash.toLocaleString()}</span>}</span>
                                 </div>
                               )}
                             </div>
@@ -9434,10 +12523,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {e.recipe.length>4&&<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',padding:'1px 3px'}}>+{e.recipe.length-4} más</span>}
                               </div>
                             </div>
+                            <div style={{padding:'12px 16px',fontSize:'var(--text-sm)',lineHeight:1.5}} data-trial-outcome>
+                              <div>{finiteEB(e.ebReal)!=null?`EB observada: ${finiteEB(e.ebReal)}%. `:''}{describeHistory(assessHistory([e]))}</div>
+                              <button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginTop:8}} onClick={()=>setEbRealFor(e.id)}>Registrar resultado final</button>
+                            </div>
                             <div className="dash-card-foot" style={{display:'flex',gap:6}}>
-                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje">🍷 Cata</button>
+                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje"><AppIcon name="wine" size={12} style={{marginRight:4}} /> Cata</button>
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
-                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}>✕</button>
+                              <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}><AppIcon name="close" size={12} /></button>
                             </div>
                           </div>
                         );
@@ -9454,11 +12547,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const IcoUso=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"><path d="M2 6h8M6 2v8"/><rect x="1" y="1" width="10" height="10" rx="1"/></svg>;
               return(
               <AccessibleModal onClose={()=>setCatalogModalOpen(false)} label={`Ficha de especie: ${sp.name}`} backdropClassName="cat-modal-bg" dialogClassName="cat-modal-box">
-              <button className="cat-modal-close" onClick={()=>setCatalogModalOpen(false)} title="Cerrar" aria-label="Cerrar ficha de especie">✕</button>
+              <button className="cat-modal-close" onClick={()=>setCatalogModalOpen(false)} title="Cerrar" aria-label="Cerrar ficha de especie"><AppIcon name="close" size={12} /></button>
               <div className="spp-info-2col" style={{margin:0}}>
                 {/* LEFT: Texto + franja de parámetros + CTA */}
                 <div className="spp-info-left">
                   <div className="spp-info-top" style={{background:'color-mix(in oklab,var(--moss-100) 40%,var(--paper-50))'}}>
+                    <div className="ed-folio" style={{marginBottom:10}}>
+                      <span className="ed-folio__t">Ficha de especie</span>
+                      <span className="ed-folio__n">{SPP_CODE[sKey]} · Tenjo</span>
+                    </div>
                     <div className="spp-info-sci">{sp.scientific}</div>
                     <h2 className="spp-info-name">{sp.name}</h2>
                     <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:12,paddingBottom:12,borderBottom:'1px solid color-mix(in oklab,var(--moss-400) 20%,transparent)'}}>
@@ -9529,7 +12626,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="spp-cta-row" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
-                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)'}}>🍷 Ficha de Cata</button>
+                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)'}}><AppIcon name="wine" size={12} style={{marginRight:4}} /> Ficha de Cata</button>
                     <button onClick={()=>{setCatalogModalOpen(false);openBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
                   </div>
                 </div>
@@ -9554,7 +12651,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 className={`formular-mode-btn${builderSubTab==='formular'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('formular')}>
-                <span aria-hidden="true">🥣</span>
+                <AppIcon name="sprout" size={13} />
                 <span>Mesa de Mezcla</span>
                 {recipe.length>0&&<span className="formular-mode-badge" aria-label={`${recipe.length} ingredientes`}>{recipe.length}</span>}
               </button>
@@ -9568,8 +12665,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 className={`formular-mode-btn${builderSubTab==='generador'?' is-active':''}`}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
-                <span aria-hidden="true">⚡</span>
-                <span>Generador de Recetas</span>
+                <AppIcon name="wand" size={13} />
+                <span>Perito & Generador de Recetas</span>
               </button>
             </nav>
             <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
@@ -9582,7 +12679,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 aria-controls="co-form-panel"
                 aria-expanded={coFormMode}
                 onClick={()=>setCoFormMode(!coFormMode)}>
-                <span aria-hidden="true">🧬</span>
+                <AppIcon name="trace" size={13} />
                 <span>{coFormMode?'Co-Formulación activa':'Co-Formulación'}</span>
                 <small>{coFormMode?'Ocultar ponderación':'Combinar especies'}</small>
               </button>
@@ -9630,7 +12727,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                     {coAnalysis.allIncompatibilities.length>0&&(
                       <div className="co-form-issue">
-                        ⚠️ Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
+                        <AppIcon name="alert" size={12} color="var(--accent-terracotta)" style={{marginRight:4}} /> Incompatibilidades de co-formulación: {coAnalysis.allIncompatibilities.join(', ')}
                       </div>
                     )}
                     <div className="co-form-species-results">
@@ -9683,7 +12780,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               onClick={focusActiveRecipe}
               aria-label={`Revisar receta activa: ${recipe.length} ingrediente${recipe.length===1?'':'s'}`}>
               <span>Ruta de producción</span>
-              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Receta lista para preparar'}</strong>
+              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Composición lista · revisar Perito'}</strong>
               <em>{recipe.length} ingrediente{recipe.length===1?'':'s'} · Revisar receta · Autoguardado</em>
             </button>
             <button
@@ -9700,31 +12797,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='formular'&&(
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
-          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite">✓ Receta cargada en Mesa de Mezcla</div>}
-
-          {/* 5.1 Encabezado contextual editorial */}
-          <header className="form-editorial-context-header" aria-labelledby="form-editorial-title">
-            <div className="form-editorial-context-head">
-              <span className="os-provenance-line" style={{marginTop:0}}>Setas OS · Swiss Botanical</span>
-              <span className={`fos-status ${recipe.length>0?'fos-status--attention':'fos-status--available'}`}>
-                <span className="fos-status__dot" aria-hidden="true"></span>
-                {recipe.length>0?'Borrador activo':'Listo para formular'}
-              </span>
-            </div>
-            <h1 id="form-editorial-title" className="form-editorial-context-title">
-              Formulador de receta · {hasPickedSpecies?(sp?.name||'Especie activa'):'Especie por definir'}
-            </h1>
-            <div className="form-editorial-context-meta">
-              <span>{hasPickedSpecies?<em>{sp?.scientific||'Sin clasificación'}</em>:'Sin especie asignada'}</span>
-              <span aria-hidden="true">·</span>
-              <span>Objetivo: {globalMode==='produccion'?'Producción comercial (Bodega)':'Investigación (Catálogo)'}</span>
-              <span aria-hidden="true">·</span>
-              <span>{recipe.length} ingrediente{recipe.length===1?'':'s'} en mezcla</span>
-            </div>
-            <p className="form-editorial-context-desc">
-              Diseño agronómico y balance de masa para sustratos de fructificación en Tenjo, Cundinamarca (2.600 msnm).
-            </p>
-          </header>
+          {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
 
           {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
           {recipe.length>0&&(
@@ -9750,9 +12823,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className="os-provenance-line">Calculado</span>
               </div>
               <div className="form-summary-cell">
-                <span className="form-summary-k">Humedad</span>
-                <span className="form-summary-v">{an?.h!=null?`${an.h.toFixed(1)}%`:'—'}</span>
-                <span className="os-provenance-line">Calculado</span>
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line">{[SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">BE estimada</span>
@@ -9762,7 +12835,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
                 <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line">Inventario</span>
+                <span className="os-provenance-line">COP / kg seco</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>
@@ -9785,7 +12858,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               </div>
               <span className="form-flow-progress" aria-live="polite">
-                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=0.5?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
+                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
               </span>
             </div>
             <ol className="form-flow-grid form-flow-grid--5">
@@ -9830,21 +12903,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </li>
 
               {/* Paso 04: Balance */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=0.5)?'is-ready':''}`}>
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
                 <span className="form-step-num">04</span>
                 <span className="form-step-label">Balance</span>
                 <div className="form-step-species-state">
                   <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
                   <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
                 </div>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=0.5)?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=0.5)?'Completado':'Requiere atención'}
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
                 </span>
                 <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
               </li>
 
               {/* Paso 05: Revisión */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=0.5&&(opt?.score||0)>=70)?'is-ready':''}`}>
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
                 <span className="form-step-num">05</span>
                 <span className="form-step-label">Revisión</span>
                 <button
@@ -9912,7 +12985,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span className="live-dash-species" title="Aún no hay ingredientes en la receta">
                       Receta activa
                     </span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
                       sin ingredientes
                     </span>
                   </div>
@@ -9920,12 +12993,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="live-dash-tray" id="bl-receta">
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
-                    <div className="rec-empty-sub">Selecciona ingredientes a la izquierda para comenzar a formular.</div>
-                    <div style={{marginTop:18,padding:'14px 16px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)',textAlign:'center'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:6}}>¿No sabes por dónde empezar?</div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',lineHeight:1.6,marginBottom:12}}>El <strong>Generador</strong> crea automáticamente las mejores combinaciones de ingredientes para tu especie — con los ratios C:N, humedad y costo ya calculados. Solo elige especie y pulsa calcular.</div>
-                      <button onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'9px 16px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Abrir Generador</button>
-                    </div>
+                    <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
+                    <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
                   </div>
                 </div>
               </div>
@@ -9938,7 +13007,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const ebOk=ebVal>=ebOpt;
               const ebMid=ebVal>=ebBase;
               const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
-              const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=0.5:false;
+              const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=MASS_BALANCE_TOL:false;
               const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
 
               return(
@@ -9950,7 +13019,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="live-dash-species" title="Ingredientes y evaluación de la receta activa">
                         Receta activa
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'9px',padding:'1px 4px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase'}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'1px 5px',borderRadius:2,background:'rgba(77,98,53,.15)',color:'color-mix(in oklab, var(--moss-700) 80%, black)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.08em'}}>
                         evaluación en vivo
                       </span>
                     </div>
@@ -10059,18 +13128,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 key={s.id}
                                 onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
                                 style={{
-                                  fontFamily:'var(--font-body)',fontSize:'10px',fontWeight:700,
+                                  fontFamily:'var(--font-body)',fontSize:'11px',fontWeight:700,
                                   textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
                                   color:'var(--ink-700)',border:'1px solid var(--border-soft)',
                                   borderRadius:'var(--r-xs)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4
                                 }}>
-                                <IconComp size={10} color="var(--ink-600)" />
+                                <IconComp size={11} color="var(--ink-600)" />
                                 <span>{s.l}</span>
                               </button>
                             );
                           })}
                         </div>
-                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'10px',padding:'2px 6px'}}>
+                        <div className={`offline-status-chip ${isOnline?'is-online':'is-offline'}`} style={{fontSize:'11px',padding:'2px 6px'}}>
                           <span className="offline-status-dot"></span>
                           <span>{isOnline ? 'En línea' : 'Sin conexión'}</span>
                         </div>
@@ -10083,15 +13152,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <IconAlert size={11} color={sm2.txt} />
                             <span>{limiter}</span>
                           </span>
-                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'10px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
+                          <button onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})} style={{background:'none',border:'none',color:sm2.txt,fontWeight:700,fontSize:'11px',cursor:'pointer',textDecoration:'underline'}}>Ver dictamen</button>
                         </div>
                       )}
 
                       {/* Acciones de balance y edición de la receta (antes en el header de #bl-receta) */}
                       <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                        {an&&Math.abs(an.tot-100)>0.5&&(
+                        {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
                           <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}>⚡ Auto-balancear 100%</button>
+                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Auto-balancear 100%</button>
                             <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
                               <option value="proportional">Proporcional</option>
                               <option value="equal">Igualando</option>
@@ -10123,7 +13192,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </button>
                             <div style={{flex:'1 1 100px',minWidth:0,display:'flex',alignItems:'center',gap:4}} title={`${g.name} · C:N ${g.cn||'—'} · N ${g.n||'—'}%${rowFlag?` · ${rowFlag.label}`:''}`}>
                               <span style={{fontSize:"var(--text-sm)",fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.name}</span>
-                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0}}>{rowFlag.priority==='critical'?'⚠':'!'}</span>}
+                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0,display:'inline-flex',alignItems:'center'}}><AppIcon name="alert" size={11} color="currentColor" /></span>}
                               <span className="sr-only">C:N {g.cn||'—'} · N {g.n||'—'}%{rowFlag?`, ${rowFlag.label}`:''}</span>
                             </div>
                             <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
@@ -10135,11 +13204,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </label>
                               {[1,5].map(delta=><button key={delta} type="button" className="mix-step-btn" disabled={isLocked||Number(r.p)>=100} onClick={()=>updP(r.id,Math.max(0,Math.min(100,(parseFloat(r.p)||0)+delta)))}>+{delta}%</button>)}
                             </div>
-                            <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0}}>✕</button>
+                            <button type="button" className="rem mix-remove-btn" onClick={()=>{remI(r.id);setLockedIds(l=>l.filter(x=>x!==r.id));}} aria-label={`Quitar ${g?.name||'ingrediente'} de la receta`} style={{flexShrink:0}}><AppIcon name="close" size={12} /></button>
                           </div>
                         );})}
                       </div>
-                      {an&&<div className={`tbar ${an.tot>=99&&an.tot<=101?'ok':an.tot<95||an.tot>105?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
+                      {an&&<div className={`tbar ${isMassBalanced(an)?'ok':(an.tot<EB_PENALTY_BALANCE_BAND.min||an.tot>EB_PENALTY_BALANCE_BAND.max)?'err':'warn'}`}><span>Total</span><span style={{fontWeight:600}}>{an.tot.toFixed(1)}% / 100%</span></div>}
                       {normMode&&recipe.length>0&&(
                         <div className="norm-bar">
                           <span>⇌</span>
@@ -10243,15 +13312,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {usePantry&&pantryIds.length>0&&(
                 <div className="pantry-grid" style={{marginBottom:8}}>
                   {pantryIds.slice(0,12).map(id=>{const g=INGS.find(i=>i.id===id);const kg=stockMap[id]||0;return g?(
-                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true"> ✕</span></button>
+                    <button key={id} type="button" className="pantry-chip on" style={{borderColor:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'var(--moss-500)':undefined,background:INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))':undefined}} title={INGS.find(i=>i.id===id)?.cs?.includes(sKey)?'Compatible con '+sp.name:undefined} aria-label={`Quitar ${g.name} de bodega`} onClick={()=>setPantryIds(prev=>prev.filter(x=>x!==id))}>{INGS.find(i=>i.id===id)?.cs?.includes(sKey)&&<span aria-hidden="true" style={{display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--moss-500)',marginRight:4,verticalAlign:'middle',marginTop:-1}}/>}{g.name.length>18?g.name.slice(0,18)+'…':g.name}{kg>0&&<span className="pantry-chip-kg">{kg.toFixed(1)} kg</span>}<span aria-hidden="true" style={{display:'inline-flex',alignItems:'center',marginLeft:4}}><AppIcon name="close" size={10} /></span></button>
                   ):null;})}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
               <div className="cats" role="group" aria-label="Filtrar por categoría">
                 {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly?'Solo compatibles ✕':'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por Rol ✓':'Lista simple'}</button>
+                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}>Solo compatibles <AppIcon name="close" size={10} /></span> : 'Compatibles'}</button>
+                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por rol':'Lista simple'}</button>
               </div>
               <div className="ingredient-view-toolbar">
                 <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
@@ -10448,15 +13517,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
-                          <span aria-hidden="true">🤖</span> Asistente IA (Gemini)
+                          <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
                         </button>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
                         {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, SPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
                       </div>
                     </div>
                   )}
@@ -10515,7 +13584,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
                         </div>}
                       {histStats&&histStats.n>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
@@ -10533,12 +13602,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
                         {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {(an.tot<97||an.tot>103)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700}}>⚠ Total {an.tot.toFixed(1)}%</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>✦ Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score}/>)}</details>}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
@@ -10632,9 +13701,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
-                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>setHObj(parseInt(e.target.value)||67)} style={{borderColor:hObj>=67?'var(--moss-500)':'var(--coral-500)'}}/></div>
+                    <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:moistureInTargetRange(hObj,an?.targets?.moisture)?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
-                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice} onChange={e=>setVegPrice(parseInt(e.target.value)||0)}/></div>
+                    <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
                     <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
@@ -10675,9 +13744,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{fontFamily:"var(--font-num)",fontSize:22,fontWeight:600,color:'var(--coral-500)'}}>${Math.round(bd.cost/bd.wet).toLocaleString()}</div>
                         </div>
                       </div>
-                      {vegPrice>0&&an&&an.eb>0&&(()=>{
+                      {bd.freshPriceKg>0&&an&&an.eb>0&&(()=>{
                         const yieldKg=bd.dry*(an.eb/100);
-                        const revenue=yieldKg*vegPrice;
+                        const revenue=yieldKg*bd.freshPriceKg;
                         const margin=revenue-bd.totalCost;
                         const marginPct=revenue>0?((margin/revenue)*100).toFixed(1):0;
                         const positive=margin>=0;
@@ -10696,7 +13765,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               ))}
                             </div>
-                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${vegPrice.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
+                            <div style={{padding:'6px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>Precio venta ${bd.freshPriceKg.toLocaleString()}/kg · Costo total ${Math.round(bd.totalCost).toLocaleString()} COP · Sin contar labor ni servicios · EB sobre materia seca (${bd.dry.toFixed(1)} kg de ${bd.wet.toFixed(1)} kg húmedos).</div>
                           </div>
                         );
                       })()}
@@ -10708,7 +13777,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           disabled={!readyForProduction}
                           title={readyForProduction ? `Lanzar producción de ${numBags} bolsas de ${kgBag} kg con descuento automático de inventario` : productionBlockMsg}
                         >
-                          🚀 Lanzar Producción de Lote ({numBags} bolsas · {(numBags*kgBag).toFixed(1)} kg)
+                          <AppIcon name="rocket" size={14} style={{marginRight:6}} /> Lanzar Producción de Lote ({numBags} bolsas · {(numBags*kgBag).toFixed(1)} kg)
                         </button>
                       </div>
                     </div>
@@ -10759,14 +13828,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                 <div className="sbar">
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
-                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?'✓ Guardada':'Guardar'}</button>
-                  {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px'}}>🚀 Lanzar Lote</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}} title={saveSyncErr}>⚠ sin sincronizar</span>}
+                  <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?<><AppIcon name="check" size={11} style={{marginRight:4}} /> Guardada</>:'Guardar'}</button>
+                  {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px',display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="rocket" size={13} /> Lanzar Lote</button>}
+                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
-                    <span>⚠ {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer'}}><span aria-hidden="true">✦</span> Auto-mejorar</button>}
+                    <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> {productionBlockMsg}</span>
+                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="#fff" /> Auto-mejorar</button>}
                   </div>
                 )}
                 </div>
@@ -10793,7 +13862,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {tr.alt&&<div style={{marginTop:10,fontSize:"var(--text-sm)",color:'var(--ink-500)',background:'var(--paper-200)',border:'1px solid var(--paper-300)',padding:'6px 10px',borderLeft:'2px solid var(--border-soft)'}}>{tr.alt}</div>}
                 {tr.energy&&(
                   <div style={{marginTop:10,display:'flex',gap:12,alignItems:'center',padding:'7px 10px',background:'rgba(0,0,0,.04)',borderRadius:'var(--r-xs)',borderTop:'1px solid rgba(0,0,0,.08)'}}>
-                    <span style={{fontSize:"var(--text-md)"}}>⚡</span>
+                    <AppIcon name="bolt" size={14} />
                     <div style={{flex:1}}>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700}}>
                         {tr.energy.cop_per_kg_humedo>0
@@ -10859,7 +13928,411 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='generador'&&(
           <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
-{/* ── GENERADOR DE RECETAS ── */}
+            {/* ── WORKBENCH PERITO & OPTIMIZADOR BAR ── */}
+            <div className="workbench-top-bar" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,margin:'12px 0 16px',flexWrap:'wrap',paddingBottom:12,borderBottom:'1.5px solid var(--border-soft)'}}>
+              <div>
+                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Intelligence & Optimization Suite</div>
+                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Workbench Perito & Generador de Recetas</h1>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <button type="button" className="btn sm" onClick={()=>openBuilderSubTab('formular')}>← Volver a Mesa de Mezcla</button>
+              </div>
+            </div>
+
+            <div className="seg-row perito-workbench-modes" style={{marginBottom:18,display:'flex',gap:6,background:'var(--paper-200)',padding:4,borderRadius:'var(--r-sm)',flexWrap:'wrap'}}>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='all'?' on':''}`}
+                onClick={()=>setWorkbenchMode('all')}>
+                <AppIcon name="globe" size={13} style={{marginRight:4}} /> Vista Integral
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='perito'?' on':''}`}
+                onClick={()=>setWorkbenchMode('perito')}>
+                <AppIcon name="scan" size={13} style={{marginRight:4}} /> Perito Diagnóstico Vivo
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='optimizador'?' on':''}`}
+                onClick={()=>setWorkbenchMode('optimizador')}>
+                <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Optimizador Generativo
+              </button>
+              <button
+                type="button"
+                className={`seg${workbenchMode==='morphing'?' on':''}`}
+                onClick={()=>setWorkbenchMode('morphing')}>
+                <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparador & Morphing {morphTargetRecipe?'(1 activo)':''}
+              </button>
+            </div>
+
+            {/* ── SECCIÓN 1: PERITO DIAGNÓSTICO VIVO (STANDALONE) ── */}
+            {['all','perito'].includes(workbenchMode)&&(()=>{
+              const hasPer=recipe.length>0;
+              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+              const criticals=items.filter(s=>s.priority==='critical');
+              const warnings=items.filter(s=>s.priority==='warning');
+              const tips=items.filter(s=>s.priority==='tip');
+              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+              const restrictiveFactor=engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null);
+              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+              const cur=sp?Math.min(an?.cn||0,max):0;
+              const cnOk=sp&&an&&an.cn>=oMin&&an.cn<=oMax;
+              const reqPsi=engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03);
+              const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+
+              return (
+                <section className="panel perito-standalone-panel" style={{background:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,marginBottom:16,paddingBottom:14,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap'}}>
+                    <div style={{display:'flex',gap:14,alignItems:'center'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:68,height:68,borderRadius:'50%',background:sm.badge,flexShrink:0,boxShadow:'0 4px 10px rgba(0,0,0,.1)'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.8)',letterSpacing:'var(--tracking-button)',marginTop:2}}>PERITO</span>
+                      </div>
+                      <div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,fontWeight:800}}>Dictamen Pericial Dinámico · Receta Activa</div>
+                        <h2 style={{fontFamily:'var(--font-display)',fontSize:"var(--text-xl)",fontWeight:700,color:sm.txt,margin:'2px 0 4px'}}>{sm.veredicto}</h2>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)'}}>
+                          {sm.accion} · Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
+                      {recipeHistory.length>0&&<button type="button" onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>Deshacer ({recipeHistory.length})</button>}
+                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="wand" size={13} color="var(--paper-0)" /> Consultar IA</button>
+                    </div>
+                  </div>
+
+                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
+                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                          Factor Restrictivo Estimado: {restrictiveFactor.label}
+                        </span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
+                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
+                      </div>
+                      {restrictiveFactor.counterfactualOpportunity&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
+                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
+                        </div>
+                      )}
+                      {restrictiveFactor.actionRequired&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                          → Acción correctiva: {restrictiveFactor.actionRequired}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
+                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
+                        <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
+                      </div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                        All American 1941X: {reqPsi.toFixed(2)} psig
+                      </span>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
+                      <div>
+                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                      </div>
+                      <div>
+                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
+                      </div>
+                      <div>
+                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumen Métricas */}
+                  {an&&(
+                    <div className="mgrid" style={{marginBottom:14}}>
+                      {[
+                        {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
+                        {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                        {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
+                        {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                      ].map(m=>(
+                        <div key={m.l} className="mc">
+                          <div className="mlbl">{m.l}</div>
+                          <div className="mval">{m.v}</div>
+                          <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Gauges */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginBottom:16}}>
+                    <EBDial an={an} sp={sp}/>
+                    {sp&&an?.cn>0&&(
+                      <div className="gauge-wrap" style={{marginTop:0}}>
+                        <div className="gauge-hdr">
+                          <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                          <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                        </div>
+                        <div className="gauge-tr">
+                          <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                          <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                        </div>
+                        <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                        <NitrogenChart recipe={recipe}/>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sugerencias Dinámicas con Simulación Delta */}
+                  <div className="perito-suggestions-deck" style={{marginTop:12}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,paddingBottom:6,borderBottom:'1px solid var(--border-soft)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-700)'}}>
+                        Sugerencias Inteligentes con Simulación Delta ({items.length})
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
+                        Simulación de impacto en vivo sin mutar mesa
+                      </div>
+                    </div>
+
+                    {criticals.length===0&&warnings.length===0&&tips.length===0&&(
+                      <div style={{padding:'12px 16px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#2F4A24'}}>
+                        <AppIcon name="check" size={13} style={{marginRight:4}} /> Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
+                      </div>
+                    )}
+
+                    {criticals.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)',marginBottom:6}}>
+                          Críticos ({criticals.length})
+                        </div>
+                        {criticals.map((item,i)=>(
+                          <PeritoItem
+                            key={i}
+                            item={item}
+                            onApply={applyOptStep}
+                            baseScore={opt.score}
+                            recipe={recipe}
+                            lockedIds={lockedIds}
+                            ingredients={optimizerINGS}
+                            speciesKey={sKey}
+                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {warnings.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)',marginBottom:6}}>
+                          Mejoras y Balance ({warnings.length})
+                        </div>
+                        {warnings.map((item,i)=>(
+                          <PeritoItem
+                            key={i}
+                            item={item}
+                            onApply={applyOptStep}
+                            baseScore={opt.score}
+                            recipe={recipe}
+                            lockedIds={lockedIds}
+                            ingredients={optimizerINGS}
+                            speciesKey={sKey}
+                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {tips.length>0&&(
+                      <details style={{marginBottom:10}}>
+                        <summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'6px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}>
+                          <span>Opcionales &amp; Ajustes Finos ({tips.length})</span>
+                          <span style={{fontSize:"var(--text-xs)"}}>▾</span>
+                        </summary>
+                        <div style={{marginTop:6}}>
+                          {tips.map((item,i)=>(
+                            <PeritoItem
+                              key={i}
+                              item={item}
+                              onApply={applyOptStep}
+                              baseScore={opt.score}
+                              recipe={recipe}
+                              lockedIds={lockedIds}
+                              ingredients={optimizerINGS}
+                              speciesKey={sKey}
+                              onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
+                            />
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
+
+            {/* ── SECCIÓN 2: COMPARADOR & MORPHING DE RECETAS ── */}
+            {['all','morphing'].includes(workbenchMode)&&(()=>{
+              const activeCandidate = morphTargetRecipe || (optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe) || [];
+              const hasCandidate = activeCandidate && activeCandidate.length > 0;
+              const hasBase = recipe && recipe.length > 0;
+              const morphedRec = (hasBase && hasCandidate && engineMorphRecipes)
+                ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds)
+                : (recipe || []);
+              const anMorph = (hasBase && hasCandidate)
+                ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP)
+                : an;
+              const scoreMorphObj = (hasBase && hasCandidate && anMorph)
+                ? scoreAn(anMorph, { recipe: morphedRec })
+                : opt;
+              const scoreMorph = Math.round(scoreMorphObj?.score || 0);
+
+              const trajectoryAnalysis = (hasBase && hasCandidate && engineAnalyzeMorphTrajectory)
+                ? engineAnalyzeMorphTrajectory({
+                    recipeA: recipe,
+                    recipeB: activeCandidate,
+                    lockedIds,
+                    species: sp,
+                    analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+                    requestedAlpha: morphAlpha,
+                  })
+                : null;
+              const isMorphFeasible = trajectoryAnalysis ? trajectoryAnalysis.isFeasibleAtRequestedAlpha : true;
+
+              return (
+                <section className="panel perito-morph-panel" style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap',gap:12}}>
+                    <div>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
+                        Interpolación Convexa Lineal R(α) = (1-α)R₀ + αR₁
+                      </div>
+                      <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
+                        <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparador & Morphing de Recetas
+                      </h2>
+                    </div>
+                    {hasCandidate&&hasBase&&(
+                      <button
+                        type="button"
+                        className="btn pri"
+                        style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 14px',opacity:isMorphFeasible?1:0.6}}
+                        title={!isMorphFeasible?'La receta actual en este punto de transición no cumple los criterios agronómicos':''}
+                        onClick={()=>{
+                          setRecipe(morphedRec);
+                          openBuilderSubTab('formular');
+                          setNoticeDlg({msg:isMorphFeasible?'Receta morfeada aplicada exitosamente en la Mesa de Mezcla':'Receta aplicada (Atención: se encuentra fuera de rango óptimo)'});
+                        }}>
+                        <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Aplicar en Mesa de Mezcla {!isMorphFeasible?'(Atención: fuera de rango)':''}
+                      </button>
+                    )}
+                  </div>
+
+                  {(!hasBase || !hasCandidate)?(
+                    <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
+                      {!hasBase
+                        ? 'Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
+                        : 'Calcula escenarios en el Optimizador o selecciona una sugerencia del Perito para activar el Morphing.'}
+                    </div>
+                  ):(
+                    <div>
+                      {!isMorphFeasible&&trajectoryAnalysis&&(
+                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
+                          <b><AppIcon name="alert" size={13} color="#9B2C2C" style={{marginRight:4}} /> Estado agronómicamente no permitido en α = {morphAlpha.toFixed(2)}:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                          {trajectoryAnalysis.feasibleInterval&&(
+                            <div style={{marginTop:4,color:'var(--ink-800)'}}>
+                              → Intervalo seguro para esta especie: <b>α ∈ [{trajectoryAnalysis.feasibleInterval[0].toFixed(2)}, {trajectoryAnalysis.feasibleInterval[1].toFixed(2)}]</b>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{margin:'14px 0 20px',background:'var(--paper-100)',padding:16,borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
+                          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                            Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
+                          </span>
+                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'#C53030'}}>
+                            α = {morphAlpha.toFixed(2)} {!isMorphFeasible?'(Inválido)':''}
+                          </span>
+                          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
+                            Candidato Objetivo ({(morphAlpha * 100).toFixed(0)}%)
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={morphAlpha}
+                          onChange={(e)=>setMorphAlpha(parseFloat(e.target.value)||0)}
+                          aria-label="Factor de interpolación convexa de recetas"
+                          style={{width:'100%',accentColor:'var(--moss-600)',cursor:'pointer'}}
+                        />
+                      </div>
+
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))',gap:10,marginBottom:18}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Score Morfeado</div>
+                          <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--ink-900)'}}>{scoreMorph}/100</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>EB Morfeada</div>
+                          <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--moss-700)'}}>{anMorph?.eb?.toFixed(0)||'—'}%</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N Morfeado</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{anMorph?.cn?.toFixed(1)||'—'}:1</div>
+                        </div>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Costo / kg Seco</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>${Math.round(anMorph?.cost||0).toLocaleString('es-CO')}</div>
+                        </div>
+                      </div>
+
+                      <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}>
+                          <thead>
+                            <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
+                              <th style={{padding:'8px 12px'}}>Insumo</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Receta Activa</th>
+                              <th style={{padding:'8px 12px',textAlign:'right',background:'rgba(77,98,53,.08)'}}>% Morfeado</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Candidato</th>
+                              <th style={{padding:'8px 12px',textAlign:'center'}}>Candado</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {morphedRec.map((mItem,mIdx)=>{
+                              const ingDef=INGS.find(g=>g.id===mItem.id);
+                              const pA=recipe.find(r=>r.id===mItem.id)?.p||0;
+                              const pB=activeCandidate.find(r=>r.id===mItem.id)?.p||0;
+                              const isLocked=lockedIds.includes(mItem.id);
+                              return (
+                                <tr key={mIdx} style={{borderBottom:'1px solid var(--border-soft)'}}>
+                                  <td style={{padding:'8px 12px',fontWeight:700}}>{ingDef?.name||mItem.id}</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pA.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',fontWeight:800,color:'var(--moss-800)',background:'rgba(77,98,53,.05)'}}>{mItem.p.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'right',color:'var(--ink-600)'}}>{pB.toFixed(1)}%</td>
+                                  <td style={{padding:'8px 12px',textAlign:'center'}}>{isLocked?<AppIcon name="lock" size={12}/>:'—'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              );
+            })()}
+
+            {/* ── SECCIÓN 3: GENERADOR DE RECETAS (OPTIMIZADOR) ── */}
+            {['all','optimizador'].includes(workbenchMode)&&(
             <section id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" aria-busy={optRunning} style={{marginTop:18}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
                 <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Automejora · Generador de recetas</h2>
@@ -10913,9 +14386,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 disabled={optRunning}
                                 onClick={()=>{
                                   setOptRunning(true);setOptResults(null);setGeneratorStatus('Calculando escenarios…');
+                                  const reqId=++peritoRequestIdRef.current;
                                   setTimeout(()=>{
+                                    if(reqId!==peritoRequestIdRef.current) return;
                                     let noStock=false;let _diag=null;
                                     const byProfile={};
+                                    // Objetivos resueltos para la especie objetivo del generador (C1).
+                                    const optTargetSPP=SetasSpeciesTargetsApi.applyToSpp(SPP,optTarget,lockedIds.length?recipe:[],optimizerINGS);
                                     Object.keys(OPT_PROFILES).forEach(pk=>{
                                       try{
                                         const out=runHybridRecipeSearch({
@@ -10928,12 +14405,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           profileKey:pk,
                                           stockMap,
                                           lockedIds,
+                                          spp:optTargetSPP,
                                         });
                                         noStock=noStock||!!out.noStock;
                                         byProfile[pk]=(out.ranked||[]).slice(0,12).map(c=>
                                           hybridOptimizerRow(c,optTarget,optimizerINGS,stockMap,pk)
                                         );
-                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk);
+                                        const diag=hybridOptimizerDiag(out,optTarget,optimizerINGS,optUseStock,invLotes,pk,optTargetSPP);
                                         const stockCount=diag.stockIds;
                                         byProfile[`_diag_${pk}`]={stockCount,diag};
                                         // Evidencia de producción tal como la adjuntó production-learning-bridge.js
@@ -10948,6 +14426,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         if(pk===optProfile)_diag={stockCount:0,diag};
                                       }
                                     });
+                                    if(reqId!==peritoRequestIdRef.current) return;
                                     // Sin fallback — cada perfil muestra solo lo que le corresponde
                                     setOptResults({...byProfile,noStock,_diag});
                                     setOptRunning(false);
@@ -10996,7 +14475,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-50,#F0F4EB)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300,#B8C9A0)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
                                       {evi.hasEvidence
                                         ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
-                                        :`Sin evidencia de producción registrada aún para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                        :`Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
+                                      {evi.exclusions&&<div>{evi.exclusions}. Observaciones disponibles como contexto.</div>}
                                     </div>
                                   );
                                 })()}
@@ -11013,16 +14493,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div className="opt-pills" style={{flex:1}}>
                                           {mainIngs.map((s,j)=><span key={j} className="opt-pill">{s}</span>)}
-                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention)'}}>⚠ Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
+                                          {r.suppOverLimit&&<span className="opt-pill" style={{background:'var(--status-attention-bg)',borderColor:'var(--status-attention)',color:'var(--status-attention-text)',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="currentColor" /> Supl. {r.suppPct.toFixed(0)}% &gt; límite</span>}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa</button>
+                                          <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Hibridar / Morph</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
                                         {(()=>{
-                                          const tOpt=calcTreatment(r.an, optTarget, SPP);
+                                          const tOpt=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                           const eCost=tOpt?.energy?.cop_per_kg_seco||0;
                                           const totalCost=Math.round(r.an.cost)+eCost;
                                           return[
@@ -11057,7 +14538,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         )}
                                       </div>
                                       {r.an.cost>0&&(()=>{
-                                        const tOpt2=calcTreatment(r.an, optTarget, SPP);
+                                        const tOpt2=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         const eCost2=tOpt2?.energy?.cop_per_kg_seco||0;
                                         const bags=[
                                           {nom:'Bolsa 20×50',kgH:1.8},
@@ -11082,13 +14563,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         );
                                       })()}
                                       {(()=>{
-                                        const t=calcTreatment(r.an, optTarget, SPP);
+                                        const t=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
                                           ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
-                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention)',lbl:'Pasteurización 65–75°C núcleo'}
-                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'❄',lbl:'CWLP — Cal en Frío pH≥12'};
+                                          ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention-text)',lbl:'Pasteurización 65–75°C núcleo'}
+                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
                                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
@@ -11123,17 +14604,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                       ))}
                                     </div>
-                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
-                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ Ningún suplemento N en bodega es compatible con esta especie.</div>}
-                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6}}>⚠ C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6}}>⚠ Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
+                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
+                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún suplemento N en bodega es compatible con esta especie.</div>}
+                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
+                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="#7A5A10" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </button>
                             )}
@@ -11291,7 +14772,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       ))}
                                     </div>
                                   )}
-                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setSKey(sKey);setRecipe(invResult.recipe);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}>🥣 Cargar en Mesa de Mezcla</button>
+                                  <button className="btn pri" style={{width:'100%',minHeight:44}} onClick={()=>{setSKey(sKey);setRecipe(invResult.recipe);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={13} style={{marginRight:6}} /> Cargar en Mesa de Mezcla</button>
                                 </>)
                               }
                             </div>
@@ -11300,7 +14781,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             )}
                 </div>
               </>)}
-            </section>
+            </section>)}
           </div>
         )}
 
@@ -11320,7 +14801,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   cursor:'pointer'
                 }}
               >
-                📅 Cronograma & Cinética
+                <AppIcon name="clock" size={14} style={{marginRight:6}} /> Cronograma & Cinética
               </button>
               <button
                 type="button"
@@ -11334,7 +14815,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   cursor:'pointer'
                 }}
               >
-                🍄 Pronóstico de Cosecha & Oleadas
+                <AppIcon name="mushroom" size={14} style={{marginRight:6}} /> Pronóstico de Cosecha & Oleadas
               </button>
               <button
                 type="button"
@@ -11348,7 +14829,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   cursor:'pointer'
                 }}
               >
-                🤝 Matriz B2B & Cobertura
+                <AppIcon name="globe" size={14} style={{marginRight:6}} /> Matriz B2B & Cobertura
               </button>
             </div>
 
@@ -11372,7 +14853,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* Badge cinético térmico Q10 */}
                 {sch&&(
                   <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'rgba(197,48,48,.08)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'rgba(197,48,48,.25)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700,#9B2C2C)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                    <span>🌡️ <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
+                    <span><AppIcon name="temp" size={14} style={{marginRight:6}} /> <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
                     {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
                   </div>
                 )}
@@ -11495,7 +14976,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                     {sowReq&&(
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-800)',background:'var(--paper-50)',padding:'10px 12px',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
-                        💡 <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
+                        <AppIcon name="wand" size={14} style={{marginRight:6}} /> <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
                       </div>
                     )}
                   </div>
@@ -11617,7 +15098,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const bt=BAG_TYPES.find(b=>b.id===prodBagType);
                 if(!bt) return null;
                 const tc=bt.tratamiento==='thermal'
-                  ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'♨',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
+                  ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
                   :bt.tratamiento==='cwlp_thermal'
                   ?{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
                   :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
@@ -11649,7 +15130,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <>
                 {an&&!balanced&&(
                   <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
-                    ⚠ {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
+                    <AppIcon name="alert" size={13} color="#C53030" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div className="prod-batch-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
@@ -11661,16 +15142,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div>
                     <label htmlFor="prod-bags" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}># Bolsas</label>
-                    <input id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>{const v=e.target.value;setProdBags(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodBags===''||isNaN(prodBags))setProdBags(1);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>setProdBags(e.target.value)} rules={{required:true,min:1,integer:true}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-kg" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>kg / bolsa</label>
-                    <input id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>{const v=e.target.value;setProdKg(v===''?'':(parseFloat(v)||''));}} onBlur={()=>{if(prodKg===''||isNaN(prodKg))setProdKg(1.5);}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>setProdKg(e.target.value)} rules={{required:true,min:0.1}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <input id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{const v=e.target.value;setProdH(v===''?'':(parseInt(v)||''));}} onBlur={()=>{if(prodH===''||isNaN(prodH))setProdH(67);}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.hObj=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                       <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
@@ -11688,43 +15169,41 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>prodRows&&ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!prodRows} title={prodRows?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows?'var(--moss-700)':'var(--paper-300)',color:prodRows?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:prodRows?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}>⚡ Ejecutar lote</button>
-                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9}} title={loteSyncErr}>⚠ sin sincronizar</span>}
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Ejecutar lote</button>
+                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
                   </div>
                 </div>
                 </>
               )}
             </div>
 
+            {recipe.length>0&&<section aria-label="Humedad de preparación" style={{margin:'16px 0',padding:16,border:'1px solid var(--border-soft)'}}>
+              <p>Una preparación compartida con Formulador. Ingresa humedad medida para este lote; vacío conserva la estimación del catálogo.</p>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,240px),1fr))',gap:12}}>
+                {recipe.map(r=>{const g=effectiveINGS.find(g=>g.id===r.id);return <label key={r.id} htmlFor={`ingredient-moisture-${r.id}`}>
+                  {g?.name||r.id} · catálogo: {g?.moisture??'sin dato'}%
+                  <CaptureInput id={`ingredient-moisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
+                </label>;})}
+              </div>
+              {!prepValid&&<p role="alert">{preparationResult.error}</p>}
+            </section>}
+
             {/* LA HOJA IMPRIMIBLE — bloqueada si la receta no cierra en 100% (balance de masa) */}
-            {recipe.length>0&&an&&balanced&&(()=>{
-              // Override de humedad por insumo: usa el valor real medido del lote del día
-              const prodIngs=effectiveINGS.map(g=>prodMoist[g.id]!=null?{...g,moisture:prodMoist[g.id]}:g);
-              const ptr=calcTreatment(an, sKey, SPP);
-              const pb=calcBatch(recipe,prodBags||1,prodKg||1.5,prodH||67,spawnCost,prodIngs,an?.dynSpawn,ptr,an?.eb,sKey);
+            {recipe.length>0&&an&&balanced&&prepValid&&(()=>{
+              const ptr=tr;
+              const pb=preparedBatch;
               const psch=calcSchedule(sKey,prodDate,an?.eb);
-              const spn=an?.dynSpawn||ptr?.spawn||8;
-              if(!pb) return null;
-              // ── Redondeo a resolución real de báscula + recálculo del C:N efectivo ──
-              const resG=prodScaleG||0.1;
-              const roundG=x=>Math.round(x/resG)*resG;
-              const rows=recipe.map(r=>{
-                const g=prodIngs.find(x=>x.id===r.id);
-                const it=g?pb.items.find(x=>x.name===g.name):null;
-                const krTeo=it?it.kr:0;
-                const grR=roundG(krTeo*1000);                 // gramos redondeados a báscula
-                const m=g?Math.min(0.92,Math.max(0,(g.moisture||0)/100)):0;
-                const masaSecaR=(grR/1000)*(1-m);             // masa seca real tras redondeo
-                return{g,r,krTeo,grR,m,masaSecaR};
-              });
-              const dryR=rows.reduce((s,x)=>s+x.masaSecaR,0);
-              const kgComR=rows.reduce((s,x)=>s+x.grR/1000,0);
+              const spn=preparation.spawn.pct;
+              if(!pb)return null;
+              const resG=preparation.weighing.resolutionG;
+              const rows=prodRows;
+              const dryR=preparation.totals.dryKg;
+              const kgComR=preparation.totals.asReceivedKg;
               const recipeR=rows.filter(x=>x.g).map(x=>({id:x.g.id,p:dryR>0?(x.masaSecaR/dryR*100):0}));
               const anR=analyze(recipeR,sKey,effectiveINGS)||an;
-              const hFr=Math.min(0.85,Math.max(0.40,(prodH||67)/100));
-              const aguaTotR=dryR*(hFr/(1-hFr));
-              const aguaInhR=rows.reduce((s,x)=>s+(x.grR/1000)*x.m,0);
-              const aguaR=Math.max(0,aguaTotR-aguaInhR);
+              const aguaInhR=preparation.totals.intrinsicWaterKg;
+              const aguaTotR=aguaInhR+preparation.totals.waterToAddKg;
+              const aguaR=preparation.totals.waterToAddKg;
               const cnDrift=Math.abs(anR.cn-an.cn);
               const trSteps={
                 autoclave:`Esterilizar en autoclave a ${ptr?.temp||'121°C/18.5–19 PSI'} durante ${ptr?.time||'90–120 min'}. Purgar aire al inicio. A 2.600 msnm, 15 PSI no alcanza 121°C real — usar 18.5–19 PSI manométricos o sensor de núcleo.`,
@@ -11768,7 +15247,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-700)',whiteSpace:'nowrap'}}>{doneChecks}/{totalChecks} pasos</span>
                   </div>
                 </div>
-              <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
+              <div className="panel prod-sheet" data-preparation-revision={preparation.revision} style={{padding:'26px 28px'}}>
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
                   <div>
@@ -11778,7 +15257,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                     <div>Fecha lote: <b style={{color:'var(--ink-900)'}}>{prodDate}</b></div>
-                    <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo</div>
+                    <div>{prodBags} bolsas × {prodKg} kg = {pb.wet.toFixed(1)} kg húmedo objetivo</div>
+                    <div data-preparation-revision={preparation.revision}>Preparación v1 · {preparation.revision}</div>
+                    <div>Receta en base seca · pesos de insumos tal como se reciben · báscula {resG} g · Bodega redondea a 1 g.</div>
+                    <div>Spawn: {preparation.spawn.pct}% del sustrato húmedo objetivo, adicional al sustrato.</div>
+                    <div>Mezcla calculada tras redondeo: {preparation.totals.preparedWetKg.toFixed(4)} kg · agua a añadir {aguaR.toFixed(4)} L. Cantidades planificadas, no mediciones de ejecución.</div>
                     <div>{(()=>{const bt=BAG_TYPES.find(b=>b.id===prodBagType);return bt?<span>{bt.icon} {bt.name.split('·')[0].trim()} · {bt.dim}</span>:null;})()}</div>
                     <div style={{fontWeight:700,color:'var(--ink-900)'}}>{'N.\u00ba '+(prodLoteNum||'___________')}</div>
                   </div>
@@ -11805,7 +15288,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8}}>
                     <div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2,#6B6759)'}}>
-                        💰 Análisis Económico & Rentabilidad por Bolsa
+                        <AppIcon name="scale" size={14} style={{marginRight:6}} /> Análisis Económico & Rentabilidad por Bolsa
                       </div>
                       <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1,#3C392F)',marginTop:2}}>
                         Costeo unitario real en Tenjo para bolsa de {prodKg} kg húmedo al {prodH}% H₂O
@@ -11856,21 +15339,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca requerida: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> = {pb.wet.toFixed(1)} kg húmedo × (1 − {prodH}%). Gramos redondeados a la báscula ({resG} g). Edita la columna <b style={{color:'var(--ink-900)'}}>H₂O%</b> con la humedad real del insumo del día.</div>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca tras redondeo: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> · objetivo seco: {preparation.target.dryKg.toFixed(3)} kg. Gramos redondeados a la báscula ({resG} g). Edita la humedad del insumo del día en los controles de preparación. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
                 <div className="ps-tbl-wrap">
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
-                    {rows.map((x,i)=>{const id=x.r.id;const baseM=x.g?x.g.moisture:0;const ov=prodMoist[id]!=null;return(
+                    {rows.map((x,i)=>{const id=x.r.id;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
                       <tr key={i}>
-                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · ajustado</span>:null}</td>
+                        <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · medido</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
                         <td style={{textAlign:'center'}}>
-                          <input name={`ingredientMoisture-${id}`} aria-label={`Humedad real de ${x.g?x.g.name:id}, porcentaje`} type="number" min="0" max="92" step="1" value={prodMoist[id]!=null?prodMoist[id]:baseM}
-                            onChange={e=>{const v=e.target.value;setProdMoist(prev=>{const n={...prev};if(v==='')delete n[id];else n[id]=Math.min(92,Math.max(0,parseFloat(v)||0));return n;});}}
-                            style={{width:44,padding:'2px 4px',textAlign:'center',border:`1px solid ${ov?'var(--coral-500)':'var(--paper-300)'}`,borderRadius:3,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",background:ov?'var(--coral-50,#FCEEE9)':'var(--paper-0)'}}/>
+                          {preparation.items[i].moisture.pct}% · {ov?'medido':'estimación catálogo'}
                         </td>
-                        <td className="num">{Math.round(x.grR).toLocaleString()}</td>
+                        <td className="num">{x.grR.toLocaleString('es-CO',{maximumFractionDigits:3})}</td>
                         <td className="num">{x.grR>=500?(x.grR/1000).toFixed(2):'—'}</td>
                         <td className="num" style={{color:'var(--ink-500)'}}>{x.masaSecaR.toFixed(2)}</td>
                         <td style={{textAlign:'center'}}><input name={`ingredientDone-${id}`} type="checkbox" aria-label={`${x.g?x.g.name:id} pesado`} checked={!!checkedSteps['ing_'+i]} onChange={e=>setCheckedSteps(prev=>({...prev,['ing_'+i]:e.target.checked}))} style={{accentColor:'var(--coral-500)',width:14,height:14,cursor:'pointer'}}/></td>
@@ -11882,14 +15363,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 {/* C:N efectivo tras redondeo / humedad real */}
                 <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600,#B5451F)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-50,#FCEEE9)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300,#E8B4A0)':'var(--paper-300)'}`}}>
-                  C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · ⚠ el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
+                  C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
                 </div>
                 {/* Agua / spawn / húmedo */}
                 <div className="ps-3col" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:18}}>
                   {[
                     ['Agua neta a inyectar',`${aguaR.toFixed(2)} L`,`req. ${aguaTotR.toFixed(1)} L − ${aguaInhR.toFixed(1)} L ya en insumos`],
-                    [`Spawn (${spn}%)`,`${pb.spawn.toFixed(2)} kg`,'micelio en grano · 8% del húmedo'],
-                    ['Sustrato húmedo final',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
+                    [`Spawn (${spn}%)`,`${pb.spawn.toFixed(2)} kg`,`micelio en grano · ${spn}% del húmedo objetivo`],
+                    ['Sustrato húmedo objetivo',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{border:'1px solid var(--paper-300)',padding:'10px 12px',background:'var(--paper-50)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
@@ -11982,99 +15463,172 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
-          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:520,maxWidth:'calc(100vw - 32px)'}}>
-              <div className="inv-modal-title">⚡ Ejecutar lote — confirmar descuento de inventario</div>
+          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Ejecutar lote — confirmar descuento de inventario</div>
+              <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
-              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:12}}>
-                <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px'}}>{h}</th>))}</tr></thead>
-                <tbody>
-                  {loteBatchConfirm.preview.map(row=>(
-                    <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
-                      <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok?'✓':'⚠'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12}}>⚠ Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end',paddingTop:4}}>
-                <button onClick={()=>setLoteBatchConfirm(null)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={confirmarEjecucion} className="inv-btn inv-btn-pri">Confirmar y descontar</button>
+              <div className="inv-modal-table-wrap">
+                <table style={{width:'100%',minWidth:340,borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:0}}>
+                  <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px',whiteSpace:'nowrap'}}>{h}</th>))}</tr></thead>
+                  <tbody>
+                    {loteBatchConfirm.preview.map(row=>(
+                      <tr key={row.id} style={{background:row.ok?'transparent':'color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))'}}>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',color:'var(--ink-900)'}}>{row.name}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.krKg:row.krKg.toFixed(3))} {row.unit||'kg'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'right',color:row.ok?'var(--moss-700)':'var(--coral-700)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{(row.unit==='uds'?row.stockActual:row.stockActual.toFixed(3))} {row.unit||'kg'}</td>
+                        <td style={{padding:'6px 8px',borderBottom:'1px solid var(--paper-300)',textAlign:'center',fontSize:"var(--text-base)"}}>{row.ok ? <AppIcon name="check" size={12} color="var(--status-ok)" /> : <AppIcon name="alert" size={12} color="var(--status-warn-marker)" />}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
+              <div className="inv-modal-actions">
+                <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
+                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
               </div>
           </AccessibleModal>
         )}
         {/* MODAL NUEVA PRUEBA EXPERIMENTAL */}
         {showBitNuevo&&(
-          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
-              <div className="inv-modal-title">Nueva prueba experimental</div>
+          <AccessibleModal onClose={()=>setShowBitNuevo(false)} label="Nueva prueba experimental" dialogStyle={{width:'min(560px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <style>{`[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Nueva prueba experimental</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña.</p><p>Plan de preparación: {prodBags} bolsas × {prodKg} kg · {prodH}% humedad. No confirma medidas.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" aria-invalid={!!captureErrors["bit-codigo"]} aria-describedby={captureErrors["bit-codigo"]?"bit-codigo-error":undefined} onBlur={()=>validateCaptureField("bit-codigo")} name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/>{captureErrorNode("bit-codigo")}</div>
+                <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" aria-invalid={!!captureErrors["bit-especie"]} aria-describedby={captureErrors["bit-especie"]?"bit-especie-error":undefined} onBlur={()=>validateCaptureField("bit-especie")} name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/>{captureErrorNode("bit-especie")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
+                <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" aria-invalid={!!captureErrors["bit-operador"]} aria-describedby={captureErrors["bit-operador"]?"bit-operador-error":undefined} onBlur={()=>validateCaptureField("bit-operador")} name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/>{captureErrorNode("bit-operador")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-fecha-mezcla">Fecha mezcla</label><input id="bit-fecha-mezcla" aria-invalid={!!captureErrors["bit-fecha-mezcla"]} aria-describedby={captureErrors["bit-fecha-mezcla"]?"bit-fecha-mezcla-error":undefined} onBlur={()=>validateCaptureField("bit-fecha-mezcla")} name="fechaMezcla" type="date" className="inv-input" value={bitNuevoForm.fechaMezcla||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaMezcla:e.target.value}))}/>{captureErrorNode("bit-fecha-mezcla")}</div>
+                <div><label className="inv-label" htmlFor="bit-fecha-inoculacion">Fecha inoculación</label><input id="bit-fecha-inoculacion" aria-invalid={!!captureErrors["bit-fecha-inoculacion"]} aria-describedby={captureErrors["bit-fecha-inoculacion"]?"bit-fecha-inoculacion-error":undefined} onBlur={()=>validateCaptureField("bit-fecha-inoculacion")} name="fechaInoculacion" type="date" className="inv-input" value={bitNuevoForm.fechaInoculacion||''} onChange={e=>setBitNuevoForm(p=>({...p,fechaInoculacion:e.target.value}))}/>{captureErrorNode("bit-fecha-inoculacion")}</div>
               </div>
               <div className="inv-row inv-row-4" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas||6} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:parseInt(e.target.value)||1}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa</label><input id="bit-wet-kg" name="wetKgPerBag" type="number" className="inv-input" min={0.1} step={0.1} value={bitNuevoForm.pesoHumedo||1.5} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:parseFloat(e.target.value)||0.1}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-spawn">% spawn</label><input id="bit-spawn" name="spawnPercent" type="number" className="inv-input" min={1} max={30} value={bitNuevoForm.spawnPct||8} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:parseFloat(e.target.value)||8}))}/></div>
-                <div><label className="inv-label" htmlFor="bit-moisture">Humedad %</label><input id="bit-moisture" name="moisturePercent" type="number" className="inv-input" min={55} max={80} value={bitNuevoForm.humedad||67} onChange={e=>setBitNuevoForm(p=>({...p,humedad:parseInt(e.target.value)||67}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-bags"># Bolsas</label><input id="bit-bags" aria-invalid={!!captureErrors["bit-bags"]} aria-describedby={captureErrors["bit-bags"]?"bit-bags-error":undefined} onBlur={()=>validateCaptureField("bit-bags")} name="bagCount" type="number" className="inv-input" min={1} value={bitNuevoForm.numBolsas??''} onChange={e=>setBitNuevoForm(p=>({...p,numBolsas:e.target.value}))}/>{captureErrorNode("bit-bags")}</div>
+                <div><label className="inv-label" htmlFor="bit-wet-kg">kg húmedo/bolsa medidos · opcional</label><input id="bit-wet-kg" aria-invalid={!!captureErrors["bit-wet-kg"]} aria-describedby={captureErrors["bit-wet-kg"]?"bit-wet-kg-error":undefined} onBlur={()=>validateCaptureField("bit-wet-kg")} name="wetKgPerBag" type="number" className="inv-input" min={0} step={0.1} value={bitNuevoForm.pesoHumedo??''} onChange={e=>setBitNuevoForm(p=>({...p,pesoHumedo:e.target.value}))}/>{captureErrorNode("bit-wet-kg")}</div>
+                <div><label className="inv-label" htmlFor="bit-spawn">% spawn confirmado · opcional</label><input id="bit-spawn" aria-invalid={!!captureErrors["bit-spawn"]} aria-describedby={captureErrors["bit-spawn"]?"bit-spawn-error":undefined} onBlur={()=>validateCaptureField("bit-spawn")} name="spawnPercent" type="number" className="inv-input" min={0} max={100} value={bitNuevoForm.spawnPct??''} onChange={e=>setBitNuevoForm(p=>({...p,spawnPct:e.target.value}))}/>{captureErrorNode("bit-spawn")}</div>
+                <div><label className="inv-label" htmlFor="bit-moisture">Humedad medida % · opcional</label><input id="bit-moisture" aria-invalid={!!captureErrors["bit-moisture"]} aria-describedby={captureErrors["bit-moisture"]?"bit-moisture-error":undefined} onBlur={()=>validateCaptureField("bit-moisture")} name="moisturePercent" type="number" className="inv-input" min={0} max={100} value={bitNuevoForm.humedad??''} onChange={e=>setBitNuevoForm(p=>({...p,humedad:e.target.value}))}/>{captureErrorNode("bit-moisture")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco (kg)</label><input id="bit-dry-weight" name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco||''} placeholder="Calculado automáticamente…" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:parseFloat(e.target.value)||0}))}/></div>
+                <div><label className="inv-label" htmlFor="bit-treatment">Tratamiento</label><select id="bit-treatment" aria-invalid={!!captureErrors["bit-treatment"]} aria-describedby={captureErrors["bit-treatment"]?"bit-treatment-error":undefined} onBlur={()=>validateCaptureField("bit-treatment")} name="treatment" className="inv-input" value={bitNuevoForm.tratamiento||''} onChange={e=>setBitNuevoForm(p=>({...p,tratamiento:e.target.value}))}><option value="">—</option>{['Pasteurización','Autoclave','Cal hidratada (CWLP)','Sin tratamiento'].map(t=><option key={t} value={t}>{t}</option>)}</select>{captureErrorNode("bit-treatment")}</div>
+                <div><label className="inv-label" htmlFor="bit-dry-weight">Peso seco medido total (kg) · opcional</label><input id="bit-dry-weight" aria-invalid={!!captureErrors["bit-dry-weight"]} aria-describedby={captureErrors["bit-dry-weight"]?"bit-dry-weight-error":undefined} onBlur={()=>validateCaptureField("bit-dry-weight")} name="dryWeight" type="number" className="inv-input" step={0.01} value={bitNuevoForm.peseSeco??''} min={0} placeholder="Sin medición" onChange={e=>setBitNuevoForm(p=>({...p,peseSeco:e.target.value}))}/>{captureErrorNode("bit-dry-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/></div>
+              <div style={{marginBottom:12}}><label className="inv-label" htmlFor="bit-objective">Objetivo de la prueba</label><input id="bit-objective" aria-invalid={!!captureErrors["bit-objective"]} aria-describedby={captureErrors["bit-objective"]?"bit-objective-error":undefined} onBlur={()=>validateCaptureField("bit-objective")} name="testObjective" autoComplete="off" className="inv-input" placeholder="Ej. comparar humedad 63% vs. 66%…" value={bitNuevoForm.objetivo||''} onChange={e=>setBitNuevoForm(p=>({...p,objetivo:e.target.value}))}/>{captureErrorNode("bit-objective")}</div>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="bit-notes">Notas</label><textarea id="bit-notes" name="testNotes" autoComplete="off" className="inv-input" rows={2} value={bitNuevoForm.notas||''} onChange={e=>setBitNuevoForm(p=>({...p,notas:e.target.value}))} style={{resize:'vertical'}}/></div>
               {bitNuevoForm.recipeRef&&(<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--moss-700)',background:'var(--paper-100)',border:'1px solid var(--moss-200)',borderRadius:4,padding:'7px 12px',marginBottom:14}}>Receta vinculada: <b>{bitNuevoForm.recipeRef.name}</b> · C:N {bitNuevoForm.recipeRef.cn} · EB ~{bitNuevoForm.recipeRef.eb}%</div>)}
-              <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+              <div className="inv-modal-actions">
                 <button onClick={()=>setShowBitNuevo(false)} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={()=>{if(!bitNuevoForm.codigo?.trim()||!bitNuevoForm.especie?.trim()){setNoticeDlg({msg:'Completa código y especie.'});return;}const newId=crearBitLote(bitNuevoForm);setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
+                <button onClick={()=>{if(!validateCapture('trial'))return;const newId=crearBitLote(SetasBitacora.normalizeTrialCapture(bitNuevoForm));if(!newId)return;setBitNuevoForm({});setBitActiveLoteId(newId);goTab('bitacora');goBitTab('bit_bolsas',true);setShowBitNuevo(false);}} className="inv-btn inv-btn-pri">Crear lote y generar bolsas</button>
               </div>
           </AccessibleModal>
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:440}}>
-              <div className="inv-modal-title">Registrar cosecha</div>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <style>{`[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Registrar cosecha</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición. Borrador conservado en esta pestaña.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||''}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select></div>
-                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush||1} onChange={e=>setBitCosechaForm(p=>({...p,flush:parseInt(e.target.value)||1}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" aria-invalid={!!captureErrors["harvest-bag"]} aria-describedby={captureErrors["harvest-bag"]?"harvest-bag-error":undefined} onBlur={()=>validateCaptureField("harvest-bag")} name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select>{captureErrorNode("harvest-bag")}</div>
+                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" aria-invalid={!!captureErrors["harvest-flush"]} aria-describedby={captureErrors["harvest-flush"]?"harvest-flush-error":undefined} onBlur={()=>validateCaptureField("harvest-flush")} name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush??''} onChange={e=>setBitCosechaForm(p=>({...p,flush:e.target.value}))}/>{captureErrorNode("harvest-flush")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/></div>
-                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco||''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:parseFloat(e.target.value)||''}))}/></div>
+                <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" aria-invalid={!!captureErrors["harvest-date"]} aria-describedby={captureErrors["harvest-date"]?"harvest-date-error":undefined} onBlur={()=>validateCaptureField("harvest-date")} name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/>{captureErrorNode("harvest-date")}</div>
+                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><span className="inv-label">Calidad</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>★</button>))}</div></div>
-              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/></div>
-              <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>{n}</button>))}</div></div>
+              <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" aria-invalid={!!captureErrors["harvest-observations"]} aria-describedby={captureErrors["harvest-observations"]?"harvest-observations-error":undefined} onBlur={()=>validateCaptureField("harvest-observations")} name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/>{captureErrorNode("harvest-observations")}</div>
+
+              {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
+              {(() => {
+                const harvestLote = bitLotes.find(l => l.id === (bitCosechaForm.loteId || bitActiveLoteId));
+                const harvestSpecies = harvestLote ? (harvestLote.especie || harvestLote.speciesKey) : 'p_ostreatus_gris';
+                const postHarvestShelfLife = typeof enginePredictShelfLife === 'function'
+                  ? enginePredictShelfLife(harvestSpecies, 4.0, 90.0)
+                  : (typeof SetasPostHarvest !== 'undefined' && typeof SetasPostHarvest.predictShelfLife === 'function'
+                      ? SetasPostHarvest.predictShelfLife(harvestSpecies, 4.0, 90.0)
+                      : null);
+                const postHarvestCondensation = typeof engineAssessCondensationRiskOnUnpack === 'function'
+                  ? engineAssessCondensationRiskOnUnpack(4.0, 18.0, 75.0)
+                  : (typeof SetasPostHarvest !== 'undefined' && typeof SetasPostHarvest.assessCondensationRiskOnUnpack === 'function'
+                      ? SetasPostHarvest.assessCondensationRiskOnUnpack(4.0, 18.0, 75.0)
+                      : null);
+
+                if (!postHarvestShelfLife && !postHarvestCondensation) return null;
+
+                return (
+                  <div
+                    data-testid="harvest-postharvest-advisor"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm, 3px)',
+                      background: 'var(--paper-1, #EFEBE0)',
+                      border: '1px solid var(--border-hairline, #8C7F5B)',
+                      marginBottom: 14,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', letterSpacing: '0.05em' }}>
+                        <AppIcon name="snowflake" size={14} style={{marginRight:6}} /> Poscosecha & Cadena de Frío ({postHarvestShelfLife?.speciesName || harvestSpecies})
+                      </span>
+                      {postHarvestShelfLife && (
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--moss-700)' }}>
+                          Vida útil: ~{postHarvestShelfLife.marketableShelfLifeDays || postHarvestShelfLife.marketableDays} días a 4°C
+                        </span>
+                      )}
+                    </div>
+
+                    {postHarvestShelfLife && (
+                      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)', marginBottom: 6, lineHeight: 1.35 }}>
+                        <b>Factor limitante:</b> {postHarvestShelfLife.limitingFactor.replace(/_/g, ' ')} · Transpiración: {postHarvestShelfLife.transpiration.weightLossPctPerDay}%/día · VPD: {postHarvestShelfLife.transpiration.storageVpdKpa} kPa.
+                      </div>
+                    )}
+
+                    {postHarvestCondensation && (
+                      <div
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 2,
+                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100, #FDE8E8)' : 'var(--moss-100, #EAEFD9)',
+                          border: `1px solid ${postHarvestCondensation.condensationRisk ? 'var(--coral-500, #E05252)' : 'var(--moss-600, #617346)'}`,
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 11,
+                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700, #9B1C1C)' : 'var(--moss-800, #2E3A1F)',
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                          <span>{postHarvestCondensation.badge}</span>
+                          <span>{postHarvestCondensation.verdict}</span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'inherit', lineHeight: 1.3 }}>
+                          {postHarvestCondensation.recommendation} (Pto. Rocío: {postHarvestCondensation.ambientDewPoint}°C · ΔT: {postHarvestCondensation.deltaT}°C)
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+              <div className="inv-modal-actions">
                 <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button
                   type="button"
                   onClick={()=>{
-                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
-                    const cData = {...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId};
-                    addBitCosecha(cData);
+                    if(!validateCapture('harvest'))return;
+                    const cData = SetasBitacora.normalizeHarvestCapture(bitCosechaForm);
+                    if(!addBitCosecha(cData))return;clearHarvestCapture();
                     setShowBitCosecha(false);
                     openThermalForCosecha(cData.loteId, cData);
                   }}
                   className="inv-btn inv-btn-sec"
                   title="Guardar cosecha e imprimir inmediatamente la etiqueta de canastilla térmica"
                 >
-                  Guardar y 🖨 Canastilla
+                  Guardar y <AppIcon name="print" size={13} /> Canastilla
                 </button>
                 <button
                   type="button"
                   onClick={()=>{
-                    if(!bitCosechaForm.bolsaId||!bitCosechaForm.pesoFresco){setNoticeDlg({msg:'Selecciona bolsa y peso.'});return;}
-                    addBitCosecha({...bitCosechaForm,loteId:bitActiveLoteId||bitCosechaForm.loteId});
+                    if(!validateCapture('harvest'))return;
+                    if(!addBitCosecha(SetasBitacora.normalizeHarvestCapture(bitCosechaForm)))return;clearHarvestCapture();
                     setShowBitCosecha(false);
                   }}
                   className="inv-btn inv-btn-pri"
@@ -12130,6 +15684,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
               onClick={e=>e.target.select()} style={{width:'100%',minHeight:220,marginTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}/>}
           </AccessibleModal>;
         })()}
+        {/* HOJA DE ACCIÓN DE CAMPO (MODAL DE TRANSICIÓN OFFLINE QR) */}
+        {showFieldActionModal && (()=>{
+          const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
+          const currentLote = bitLotes.find(l => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
+          const isAdmin = props.isAdmin === true || props.isAdmin === 'true';
+          const operatorRole = props.operatorRole || fieldOperatorRole;
+          const operatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operario_local';
+          const accountId = props.accountId || (typeof window !== 'undefined' && window.__setasAccountId) || (typeof window !== 'undefined' && window.firebaseAuth?.currentUser?.uid) || 'setas_default_account';
+
+          return (
+            <FieldActionModal
+              onClose={() => setShowFieldActionModal(false)}
+              lote={currentLote}
+              captureContent={renderQrCaptures(currentLote,bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id)||null,buildSheetFor(currentLote))}
+              db={fieldDb}
+              operatorRole={operatorRole}
+              operatorId={operatorId}
+              accountId={accountId}
+              onTransitionConfirmed={(batchId, nextState) => {
+                setBitLotes(prev => prev.map(l => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+              }}
+            />
+          );
+        })()}
 
         {/* MODAL / ACTION SHEET QR DE CAMPO (MODO RONDA DE CAMPO) */}
         {showQrSheet&&(()=>{
@@ -12139,64 +15717,472 @@ body{margin:0;padding:20px 24px;background:#fff;}
           // La ficha resuelve qué cabe ahora; la ronda ya no muestra el mismo
           // menú fijo para un lote en enfriamiento que para uno en fructificación.
           const currentSheet=currentLote?buildSheetFor(currentLote):null;
-          const scannedBag=qrScannedBagId?bitBolsas.find(b=>b.id===qrScannedBagId&&b.loteId===currentLote?.id):null;
+          const scannedBag=qrScannedBagId?bitBolsas.find(b=>(b.id===qrScannedBagId||b.codigo===qrScannedBagId)&&b.loteId===currentLote?.id):null;
           return(
             <AccessibleModal
-              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');}}
+              onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}
               label="Captura rápida de campo"
               dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
             >
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
-                    <AppIcon name="camera" size={14} color="var(--ink-0)" /> Ronda de Campo · Registro Rápido
+                    <AppIcon name="camera" size={14} color="var(--ink-0)" /> {qrScanMode === 'harvest' ? 'Báscula Cosecha · Pesaje Rápido' : qrScanMode === 'sweep' ? 'Barrido Sala · Auditoría Masiva' : 'Ronda de Campo · Registro Rápido'}
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');}}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar captura rápida" onClick={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');setHarvestActiveCrate(null);setSweepQueue([]);setSweepRiskModalOpen(false);setSweepStatusBanner('');}}><AppIcon name="close" size={12} /></button>
                 </div>
 
-                {/* ESCÁNER DE CÁMARA EN VIVO */}
-                {isCameraActive ? (
-                  <div className="qr-scanner-viewport">
-                    <video
-                      ref={videoRef}
-                      className="qr-scanner-video"
-                      autoPlay
-                      playsInline
-                      muted
-                    />
-                    <div className="qr-scanner-reticle">
-                      <div className="qr-scanner-laser" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={stopCameraScanner}
-                      style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
-                    >
-                      ⏹ Detener Cámara
-                    </button>
-                  </div>
-                ) : (
+                {/* SELECTOR DE MODO DE ESCANEO */}
+                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2, #E5DFC8)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
                   <button
                     type="button"
-                    onClick={startCameraScanner}
-                    style={{ minHeight: 42, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
                   >
-                    📷 Iniciar Escaneo con Cámara Móvil
+                    <AppIcon name="scan" size={13} style={{marginRight:4}} /> Ronda Lote
                   </button>
-                )}
+                  <button
+                    type="button"
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'harvest' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                  >
+                    <AppIcon name="scale" size={13} style={{marginRight:4}} /> Báscula Cosecha
+                  </button>
+                  <button
+                    type="button"
+                    className={`inv-btn inv-btn-sm ${qrScanMode === 'sweep' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
+                    onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                  >
+                    <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Barrido Sala
+                  </button>
+                </div>
 
-                {cameraError && (
-                  <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                    ⚠️ {cameraError}
+                {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}
+                {qrScanMode === 'harvest' && harvestActiveCrate ? (
+                  <div style={{ padding: '12px 14px', background: 'var(--paper-0, #F7F4EC)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 'var(--radius-md, 3px)', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Canastilla</span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-olive, #5B6B44)' }}>
+                          {harvestActiveCrate.crateCode}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Lote Destino</span>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)' }}>
+                          {currentLote ? currentLote.codigo : 'Sin lote'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* TARA CARD */}
+                    <div style={{ padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, marginBottom: 10, fontSize: 11 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ink-1)' }}>
+                          Tara: {harvestTareInput ? `${harvestTareInput} g` : 'Sin verificar'}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                          Fuente: {harvestTareSource === 'field_measured' ? 'Balanza campo' : harvestTareSource === 'catalog_default' ? 'Catálogo' : harvestTareSource === 'manual' ? 'Manual' : 'Sin verificar'}
+                        </span>
+                      </div>
+                      {(!harvestTareInput || harvestTareSource === 'unverified') && (
+                        <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span style={{ fontSize: 10, color: 'var(--warning-text, #8C6B2E)', flex: 1 }}>
+                            <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Ingresa la tara (g) para calcular peso neto honesto:
+                          </span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="Tara g"
+                            value={harvestTareInput}
+                            onChange={(e) => {
+                              setHarvestTareInput(e.target.value);
+                              setHarvestTareSource(e.target.value ? 'manual' : 'unverified');
+                            }}
+                            style={{ width: 80, padding: '4px 6px', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* PESO BRUTO INPUT */}
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, marginBottom: 4, color: 'var(--ink-0)' }}>
+                        Peso Bruto Total (g):
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        autoFocus
+                        placeholder="Ej: 1450"
+                        value={harvestGrossInput}
+                        onChange={(e) => { setHarvestGrossInput(e.target.value); setHarvestError(''); }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveHarvestCrate();
+                          }
+                        }}
+                        style={{ width: '100%', minHeight: 48, fontSize: 24, fontWeight: 700, textAlign: 'center', fontFamily: 'var(--font-mono)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 2 }}
+                      />
+                      {/* QUICK PRESETS */}
+                      <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                        {[100, 250, 500, 1000].map(inc => (
+                          <button
+                            key={inc}
+                            type="button"
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ flex: 1, padding: '4px 2px', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                            onClick={() => {
+                              const cur = parseFloat(harvestGrossInput) || 0;
+                              setHarvestGrossInput(String(cur + inc));
+                            }}
+                          >
+                            +{inc >= 1000 ? `${inc / 1000}kg` : `${inc}g`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CÁLCULO NETO EN VIVO */}
+                    {(() => {
+                      const gross = parseFloat(harvestGrossInput);
+                      const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
+                      if (!gross || isNaN(gross)) return null;
+                      if (tare !== null && !isNaN(tare)) {
+                        if (tare > gross) {
+                          return (
+                            <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
+                              <AppIcon name="close" size={13} color="var(--status-error)" style={{marginRight:4}} /> Tara ({tare}g) excede el peso bruto ({gross}g).
+                            </div>
+                          );
+                        }
+                        const net = gross - tare;
+                        return (
+                          <div style={{ padding: '8px 10px', background: '#DCFCE7', color: '#15803D', borderLeft: '3px solid #16A34A', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                            <span><AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Peso Neto: {net} g</span>
+                            <span>({(net / 1000).toFixed(3)} kg)</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div style={{ padding: '6px 8px', background: 'var(--paper-2, #E5DFC8)', color: 'var(--ink-1)', borderLeft: '3px solid var(--accent-terracotta)', fontSize: 11, marginBottom: 10 }}>
+                          Bruto: {gross} g · Neto: No calculado (bloqueado por falta de tara verificada)
+                        </div>
+                      );
+                    })()}
+
+                    {/* FLUSH & CALIDAD */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Oleada (Flush):</label>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {[1, 2, 3].map(f => (
+                            <button
+                              key={f}
+                              type="button"
+                              className={`inv-btn inv-btn-sm ${harvestFlush === f ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              onClick={() => setHarvestFlush(f)}
+                            >
+                              F{f}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 10, fontWeight: 700, marginBottom: 2 }}>Calidad:</label>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {[
+                            { val: 1, lbl: '1ra' },
+                            { val: 2, lbl: '2da' },
+                            { val: 3, lbl: 'Merma' }
+                          ].map(q => (
+                            <button
+                              key={q.val}
+                              type="button"
+                              className={`inv-btn inv-btn-sm ${harvestCalidad === q.val ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                              style={{ flex: 1, padding: '3px 0', fontSize: 10 }}
+                              onClick={() => setHarvestCalidad(q.val)}
+                            >
+                              {q.lbl}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {harvestError && (
+                      <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', fontSize: 11, marginBottom: 10 }}>
+                        {harvestError}
+                      </div>
+                    )}
+
+                    {/* ACCIONES DE PESADA */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        disabled={!harvestGrossInput || (harvestTareInput && parseFloat(harvestTareInput) > parseFloat(harvestGrossInput))}
+                        onClick={handleSaveHarvestCrate}
+                        className="inv-btn inv-btn-pri"
+                        style={{ flex: 1, minHeight: 40, fontSize: 12, fontWeight: 700 }}
+                      >
+                        Guardar Canastilla (Enter)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHarvestActiveCrate(null);
+                          isDecodingPausedRef.current = false;
+                        }}
+                        className="inv-btn inv-btn-sec"
+                        style={{ minHeight: 40, fontSize: 12 }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* ESCÁNER DE CÁMARA EN VIVO */}
+                    {isCameraActive ? (
+                      <div className="qr-scanner-viewport sdp-scanner__viewport">
+                        <video
+                          ref={videoRef}
+                          className="qr-scanner-video"
+                          autoPlay
+                          playsInline
+                          muted
+                        />
+                        <div className="qr-scanner-reticle sdp-scanner__reticle">
+                          <div className="qr-scanner-laser sdp-scanner__laser" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={stopCameraScanner}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                        >
+                          <AppIcon name="close" size={10} style={{marginRight:4}} /> Detener Cámara
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={startCameraScanner}
+                        style={{ minHeight: 44, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                      >
+                        <AppIcon name="camera" size={14} style={{marginRight:6}} /> Iniciar Escaneo con Cámara Móvil
+                      </button>
+                    )}
+
+                    {cameraError && (
+                      <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {cameraError}
+                      </div>
+                    )}
+
+                    <form
+                      data-testid="scan-manual-code"
+                      onSubmit={(e)=>{e.preventDefault();const code=manualScanCode.trim();if(!code)return;handleScannedValue(code);setManualScanCode('');}}
+                      style={{display:'flex',gap:6,marginBottom:12}}
+                    >
+                      <input
+                        type="text"
+                        value={manualScanCode}
+                        onChange={(e)=>setManualScanCode(e.target.value)}
+                        placeholder={qrScanMode === 'harvest' ? 'Código de canastilla (p. ej. CAN-01)' : qrScanMode === 'sweep' ? 'Código de bolsa (p. ej. OST-01-B12)' : 'Código impreso en la etiqueta'}
+                        aria-label="Código impreso en la etiqueta"
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!manualScanCode.trim()}
+                        className="inv-btn inv-btn-sec"
+                        style={{minHeight:42,padding:'8px 14px',fontSize:12,fontWeight:700}}
+                      >
+                        Abrir
+                      </button>
+                    </form>
+
+                    {scanMiss && (
+                      <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        {scanMiss} Elige el lote manualmente o vuelve a escanear.
+                      </div>
+                    )}
+
+                    {/* MODO BÁSCULA: RESUMEN DE SESIÓN Y SELECCIÓN DE LOTE */}
+                    {qrScanMode === 'harvest' && (
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ padding: '8px 10px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, fontSize: 11, fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span><AppIcon name="box" size={13} style={{marginRight:4}} /> Sesión de Pesaje: <b>{harvestSessionStats.count}</b> canastillas</span>
+                          <span><b>{(harvestSessionStats.totalNetGrams / 1000).toFixed(2)} kg</b> netos</span>
+                        </div>
+                        {activeBatches.length > 0 && (
+                          <div style={{ fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                            <label style={{ display: 'block', fontWeight: 600, color: 'var(--ink-1)', marginBottom: 2 }}>Lote activo a cosechar:</label>
+                            <select
+                              className="inv-input"
+                              style={{ fontSize: 11, minHeight: 34 }}
+                              value={currentLote?.id}
+                              onChange={e=>setQrSelectedLoteId(e.target.value)}
+                            >
+                              {activeBatches.map(l=>(
+                                <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.estado})</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* MODO BARRIDO: COLA DE BOLSAS Y ACCIONES MASIVAS */}
+                    {qrScanMode === 'sweep' && (
+                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-0)' }}>
+                            <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
+                          </strong>
+                          {sweepQueue.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSweepQueue([])}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent-terracotta)', fontSize: 10, cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                            >
+                              Limpiar cola
+                            </button>
+                          )}
+                        </div>
+
+                        {sweepQueue.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 72, overflowY: 'auto', marginBottom: 8, padding: 2 }}>
+                            {sweepQueue.map(item => (
+                              <span
+                                key={item.bagId}
+                                style={{
+                                  padding: '2px 6px',
+                                  background: item.estado === 'contaminada' ? '#FEE2E2' : 'var(--paper-1)',
+                                  color: item.estado === 'contaminada' ? '#991B1B' : 'var(--ink-0)',
+                                  border: '1px solid var(--border-hairline)',
+                                  borderRadius: 2,
+                                  fontSize: 10,
+                                  fontFamily: 'var(--font-mono)',
+                                }}
+                              >
+                                {item.codigo} ({item.colonizacion}%)
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 8, fontFamily: 'var(--font-sans)' }}>
+                            Pasa la cámara sobre las bolsas. Sonará un pitido y se agregarán a la hilera automáticamente.
+                          </div>
+                        )}
+
+                        {/* ACCIONES MASIVAS DE BARRIDO */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(100)}
+                            className="inv-btn inv-btn-pri inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11, fontWeight: 700 }}
+                          >
+                            <AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> 100% Sano
+                          </button>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(75)}
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11 }}
+                          >
+                            75%
+                          </button>
+                          <button
+                            type="button"
+                            disabled={sweepQueue.length === 0}
+                            onClick={() => handleApplySweepColonizacion(50)}
+                            className="inv-btn inv-btn-sec inv-btn-sm"
+                            style={{ padding: '6px 4px', fontSize: 11 }}
+                          >
+                            50%
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={sweepQueue.length === 0}
+                          onClick={() => setSweepRiskModalOpen(true)}
+                          className="inv-btn inv-btn-sec inv-btn-sm"
+                          style={{ width: '100%', padding: '5px 4px', fontSize: 11, color: 'var(--accent-terracotta)' }}
+                        >
+                          <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Registrar Observación de Riesgo ({sweepQueue.length})
+                        </button>
+
+                        {sweepStatusBanner && (
+                          <div style={{ marginTop: 8, padding: '6px 8px', background: 'var(--paper-1)', borderLeft: '3px solid var(--accent-olive)', fontSize: 11, fontFamily: 'var(--font-sans)' }}>
+                            {sweepStatusBanner}
+                          </div>
+                        )}
+
+                        {/* SUB-PANEL OBSERVACIÓN DE RIESGO */}
+                        {sweepRiskModalOpen && (
+                          <div style={{ marginTop: 10, padding: 10, background: 'var(--paper-1)', border: '1px solid var(--accent-terracotta)', borderRadius: 2 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 6, color: 'var(--accent-terracotta)' }}>
+                              Observación de Riesgo ({sweepQueue.length} bolsas)
+                            </div>
+                            <select
+                              className="inv-input"
+                              style={{ fontSize: 11, minHeight: 32, marginBottom: 6 }}
+                              value={sweepRiskType}
+                              onChange={(e) => setSweepRiskType(e.target.value)}
+                            >
+                              <option value="micelio_debil">Micelio débil o lento</option>
+                              <option value="humedad_baja">Sustrato seco / Humedad baja</option>
+                              <option value="humedad_excesiva">Condensación / Humedad excesiva</option>
+                              <option value="posible_contaminacion">Sospecha de contaminación</option>
+                              <option value="fuga_filtro">Fuga o daño en filtro</option>
+                              <option value="deformidad_primordio">Deformidad en primordios</option>
+                              <option value="general">Otro riesgo</option>
+                            </select>
+                            <input
+                              type="text"
+                              className="inv-input"
+                              placeholder="Detalle u observación..."
+                              style={{ fontSize: 11, minHeight: 32, marginBottom: 8 }}
+                              value={sweepRiskNota}
+                              onChange={(e) => setSweepRiskNota(e.target.value)}
+                            />
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-pri inv-btn-sm"
+                                style={{ flex: 1 }}
+                                onClick={() => handleApplySweepRisk(sweepRiskType, sweepRiskNota)}
+                              >
+                                Registrar Riesgo
+                              </button>
+                              <button
+                                type="button"
+                                className="inv-btn inv-btn-sec inv-btn-sm"
+                                onClick={() => setSweepRiskModalOpen(false)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {scanMiss && (
-                  <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                    {scanMiss} Elige el lote manualmente o vuelve a escanear.
-                  </div>
-                )}
-
-                {currentLote?(
+                {/* MODO RONDA: CARRUSEL Y ACCIONES CONTEXTUALES DE LOTE */}
+                {qrScanMode === 'round' && currentLote ? (
                   <>
                     {/* NAVEGACIÓN SECUENCIAL DE LOTES (CARRUSEL DE SALA) */}
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,gap:8}}>
@@ -12243,9 +16229,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           ?`${currentSheet.stateLabel}${currentSheet.daysInStage!=null?` · día ${currentSheet.daysInStage}`:''} · ${currentSheet.bagsActive}/${currentSheet.bagsTotal} bolsas · ${currentSheet.room?currentSheet.room.name:'sin sala'}`
                           :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
-                      {scannedBag&&(
+                      {(scannedBag||qrScannedBagId)&&(
                         <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
-                          Etiqueta leída: bolsa {scannedBag.codigo}
+                          Etiqueta leída: bolsa {scannedBag ? scannedBag.codigo : qrScannedBagId}
                         </div>
                       )}
                       {currentSheet&&currentSheet.blocks.length>0&&(
@@ -12322,48 +16308,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           Acciones válidas en {currentSheet.stateLabel.toLowerCase()}
                         </div>
                       )}
-                      {(currentSheet?currentSheet.actions:[{action:'harvest',label:'Registrar cosecha',blockedBy:null},{action:'contamination',label:'Reportar contaminación',blockedBy:null}]).map((a,i)=>(
+                      {(currentSheet ? currentSheet.actions.filter(a=>!['inspection','riego','contamination','harvest'].includes(a.action)) : []).map((a,i)=>(
                         <button
                           key={a.action}
                           type="button"
                           data-action={a.action}
                           disabled={Boolean(a.blockedBy)}
                           title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
-                          style={{minHeight:i===0?46:44,cursor:a.blockedBy?'not-allowed':'pointer',opacity:a.blockedBy?0.5:1,
+                          style={{minHeight:48,cursor:a.blockedBy?'not-allowed':'pointer',opacity:a.blockedBy?0.5:1,
                             background:a.action==='contamination'?'var(--accent-terracotta-dim,#EFE0D3)':(i===0?'var(--accent-olive,#5B6B44)':'var(--paper-0,#F7F4EC)'),
                             color:a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--paper-0,#F7F4EC)':'var(--ink-0)'),
                             border:`1px solid ${a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--accent-olive,#5B6B44)':'var(--border-hairline,#8C7F5B)')}`,
-                            borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:i===0?13:12,fontWeight:i===0?700:600,
+                            borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:i===0?700:600,
                             display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                           onClick={()=>{
-                            if(a.action==='harvest'){
-                              setBitActiveLoteId(currentLote.id);
-                              setBitCosechaForm({
-                                loteId:currentLote.id,
-                                bolsaId:scannedBag?scannedBag.id:'',
-                                codigo:scannedBag?scannedBag.codigo:'',
-                                flush:1,
-                                fecha:new Date().toISOString().split('T')[0],
-                                pesoFresco:'',
-                                calidad:3,
-                                observaciones:''
-                              });
-                              setShowQrSheet(false);
-                              setShowBitCosecha(true);
-                              return;
-                            }
-                            if(a.action==='contamination'){
-                              setDiagLoteId(currentLote.id);
-                              const b=scannedBag||bitBolsas.find(x=>x.loteId===currentLote.id&&x.estado!=='descartada');
-                              setDiagBolsaId(b?.id||'');
-                              setDiagImageBase64('');
-                              setDiagResult(null);
-                              setDiagError('');
-                              setDiagNotes('');
-                              setShowQrSheet(false);
-                              setShowDiagModal(true);
-                              return;
-                            }
                             setShowQrSheet(false);
                             runBatchAction(a.action,currentLote,currentSheet);
                           }}
@@ -12373,6 +16331,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {a.label}
                         </button>
                       ))}
+
+                      {/* REPORTAR EVENTO — se atribuye al operador con sesión activa;
+                          no requiere ni habilita nada en la ficha pública (trace.html). */}
+                      {renderQrCaptures(currentLote,scannedBag,currentSheet)}
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
                         Siempre disponible
                       </div>
@@ -12388,6 +16350,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
+                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        onClick={()=>{
+                          setShowQrSheet(false);
+                          openContaminationTriage(currentLote.id);
+                        }}
+                      >
+                        <AppIcon name="alert" size={14} color="var(--accent-terracotta)" /> Reportar Contaminación / Merma
+                      </button>
+                      <button
+                        type="button"
                         style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setThermalLote(currentLote);
@@ -12397,7 +16369,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           setShowThermalModal(true);
                         }}
                       >
-                        <AppIcon name="print" size={14} color="var(--ink-0)" /> 🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
+                        <AppIcon name="print" size={14} style={{marginRight:6}} /> Imprimir Etiquetas Térmicas (50×30 / 40×30)
                       </button>
                       <button
                         type="button"
@@ -12411,11 +16383,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     </div>
                   </>
-                ):(
+                ) : (qrScanMode === 'round' ? (
                   <div style={{textAlign:'center',padding:'16px 0',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)'}}>
                     No hay lotes activos registrados para escanear.
                   </div>
-                )}
+                ) : null)}
             </AccessibleModal>
           );
         })()}
@@ -12425,20 +16397,37 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const totalBags = Math.max(1, lote.numBolsas || 12);
           const items = [];
 
-          if (thermalScope === 'cosecha' && thermalCosechaItem) {
+          if (thermalScope === 'crate') {
+            const crateCode = thermalCosechaItem?.crateCode || 'CAN-01';
+            items.push({
+              id: crateCode,
+              badge: 'TARA 420 G',
+              eyebrow: 'SETAS DE LA PEÑA',
+              bagCode: 'CANASTILLA REUTILIZABLE',
+              species: 'Canastilla Grado Alimentario',
+              date: new Date().toISOString().split('T')[0],
+              recipe: 'Báscula continua · Cosecha y pesaje',
+              bagsText: `Tara fija 420 g · ${crateCode}`,
+              qrUrl: `${PUBLIC_TRACE_BASE_URL}?crate=${encodeURIComponent(crateCode)}`
+            });
+          } else if (thermalScope === 'cosecha' && thermalCosechaItem) {
             const c = thermalCosechaItem;
             items.push({
               id: `CAN-${lote.codigo}-F${c.flush || 1}`,
+              badge: `FLUSH #${c.flush || 1}`,
+              eyebrow: 'COSECHA · TENJO',
               bagCode: `CANASTILLA · FLUSH #${c.flush || 1}`,
               species: lote.especie || 'Seta Fresca',
               date: c.fecha || new Date().toISOString().split('T')[0],
-              recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1000).toFixed(2)} kg) · Calidad ${'★'.repeat(c.calidad || 4)}`,
+              recipe: `${c.pesoFresco} g (${(parseFloat(c.pesoFresco || 0) / 1000).toFixed(2)} kg) · Calidad ${c.calidad || 4}/5`,
               bagsText: `Lote ${lote.codigo} · Bolsa ${c.codigo || 'General'}`,
               qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}&flush=${c.flush || 1}`
             });
           } else if (thermalScope === 'lote') {
             items.push({
               id: lote.codigo,
+              badge: 'LOTE MAESTRO',
+              eyebrow: 'SETAS DE LA PEÑA · TENJO',
               bagCode: 'LOTE MAESTRO',
               species: lote.especie || 'Sustrato colonizado',
               date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
@@ -12454,12 +16443,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const bagId = `${lote.codigo}-B${bagNum}`;
               items.push({
                 id: bagId,
+                badge: `BOLSA #${bagNum} DE ${totalBags}`,
+                eyebrow: 'SDP · TENJO',
                 bagCode: `BOLSA #${bagNum} de ${totalBags}`,
                 species: lote.especie || 'Sustrato colonizado',
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
                 recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
-                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
+                qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
               });
             }
           }
@@ -12473,14 +16464,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${
-                        thermalSize === '40x30' ? '40mm 30mm' :
-                        thermalSize === '50x30' ? '50mm 30mm' :
-                        thermalSize === '60x40' ? '60mm 40mm' :
-                        thermalSize === 'gourmet-wood' ? '180mm 60mm' :
-                        thermalSize === 'kraft-tray' ? '80mm 120mm' :
-                        thermalSize === 'apothecary-50' ? '85mm 42mm' : 'auto'
-                      };
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -12510,13 +16494,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline, #8C7F5B)', paddingBottom: 10 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-0)' }}>
-                      🏷 Impresión Térmica · Rollo Adhesivo
+                      <AppIcon name="print" size={14} style={{marginRight:6}} /> Impresión Térmica · Rollo Adhesivo
                     </div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
                       Lote {lote.codigo} · {lote.especie} {thermalScope === 'cosecha' ? '· Etiqueta Canastilla Cosecha' : ''}
                     </div>
                   </div>
-                  <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}>✕</button>
+                  <button type="button" className="modal-icon-close" aria-label="Cerrar generador de etiquetas" onClick={() => setShowThermalModal(false)}><AppIcon name="close" size={12} /></button>
                 </div>
 
                 {/* CONTROLES DE CONFIGURACIÓN */}
@@ -12541,35 +16525,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('60x40')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '60x40' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '60x40' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        60 × 40 mm
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('gourmet-wood')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'gourmet-wood' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'gourmet-wood' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Faja Madera (180×60)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('kraft-tray')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'kraft-tray' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'kraft-tray' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Bandeja Kraft (80×120)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setThermalSize('apothecary-50')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === 'apothecary-50' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === 'apothecary-50' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
-                      >
-                        Apotecario (50 ml)
-                      </button>
 
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
+                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
                     </div>
                   </div>
 
@@ -12589,6 +16548,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <option value="lote">Solo etiqueta maestra de lote</option>
                       <option value="custom">Rango personalizado</option>
                       <option value="cosecha">Etiqueta de Canastilla / Cosecha</option>
+                      <option value="crate">Canastilla Reutilizable (CAN-XX)</option>
                     </select>
                   </div>
                 </div>
@@ -12609,7 +16569,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x30' ? '50×30 mm' : thermalSize === '60x40' ? '60×40 mm' : thermalSize === 'gourmet-wood' ? 'Faja Madera 180×60 mm' : thermalSize === 'kraft-tray' ? 'Bandeja Kraft 80×120 mm' : 'Apotecario 50 ml'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -12620,17 +16580,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
                           <div className="thermal-aside">
                             <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                            <div className="thermal-code">{item.id}</div>
                           </div>
+                          <div className="thermal-divider" />
                           <div className="thermal-body">
+                            <div className="thermal-eyebrow">{item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
                             <div className="thermal-species">{item.species}</div>
+                            {item.badge && <div className="thermal-badge">{item.badge}</div>}
+                            <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
-                              {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                               <div>{item.date}</div>
-                              <div>{item.recipe}</div>
-                            </div>
-                            <div className="thermal-footer">
-                              <span>Setas de la Peña</span>
                             </div>
                           </div>
                         </div>
@@ -12645,13 +16603,51 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     Cancelar
                   </button>
                   <button
+                    type="button"
+                    onClick={async () => {
+                      // El Phomemo M110 es Bluetooth propietario (no AirPrint), así que
+                      // window.print() nunca lo detecta desde Safari/iOS — WebKit tampoco
+                      // expone Web Bluetooth. Este botón manda la etiqueta ya renderizada
+                      // directo al share sheet del sistema, para abrirla en PrintMaster
+                      // (la app de Phomemo) sin depender de una captura de pantalla manual.
+                      try {
+                        // Si IBM Plex Sans/Mono todavía no terminó de cargar, el canvas
+                        // dibuja en la fuente de sistema sin avisar — esperar aquí evita
+                        // compartir una etiqueta con la tipografía equivocada.
+                        if (document.fonts && document.fonts.ready) {
+                          try { await document.fonts.ready; } catch (e) {}
+                        }
+                        const canvas = buildThermalShareCanvas(items, thermalSize);
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        if (!blob) throw new Error('No se pudo generar la imagen de la etiqueta');
+                        const file = new File([blob], `etiquetas-${lote.codigo || 'lote'}.png`, { type: 'image/png' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                          await navigator.share({ files: [file], title: 'Etiquetas Setas OS', text: `Etiquetas de ${lote.codigo || ''} — ábrelas en PrintMaster para imprimir en el Phomemo M110.` });
+                        } else {
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url; a.download = file.name; a.click();
+                          setTimeout(() => URL.revokeObjectURL(url), 4000);
+                          setNoticeDlg({ title: 'Imagen descargada', msg: 'Este navegador no soporta compartir archivos directamente — la imagen se descargó. Ábrela desde Archivos/Fotos y compártela con PrintMaster.' });
+                        }
+                      } catch (e) {
+                        if (e && e.name === 'AbortError') return; // el operador cerró el share sheet
+                        setNoticeDlg({ title: 'No se pudo compartir la etiqueta', msg: e && e.message ? e.message : 'Intenta de nuevo o usa Imprimir.' });
+                      }
+                    }}
+                    className="inv-btn inv-btn-sec"
+                    style={{ minHeight: 44, padding: '8px 14px' }}
+                  >
+                    <AppIcon name="box" size={13} style={{marginRight:4}} /> Compartir
+                  </button>
+                  <button
                     onClick={() => {
                       try { window.print(); } catch (e) { console.error(e); }
                     }}
                     className="inv-btn inv-btn-pri"
                     style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
                   >
-                    🖨 Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
+                    <AppIcon name="print" size={13} style={{marginRight:4}} /> Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
                   </button>
                 </div>
 
@@ -12663,17 +16659,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
                         <div className="thermal-aside">
                           <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          <div className="thermal-code">{item.id}</div>
                         </div>
+                        <div className="thermal-divider" />
                         <div className="thermal-body">
+                          <div className="thermal-eyebrow">{item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
                           <div className="thermal-species">{item.species}</div>
+                          {item.badge && <div className="thermal-badge">{item.badge}</div>}
+                          <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
-                            {item.bagCode && item.bagCode !== 'LOTE MAESTRO' && <div>{item.bagCode}</div>}
                             <div>{item.date}</div>
-                            <div>{item.recipe}</div>
-                          </div>
-                          <div className="thermal-footer">
-                            <span>Setas de la Peña</span>
                           </div>
                         </div>
                       </div>
@@ -12686,19 +16680,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {showProdLaunchModal && prodLaunchForm && (() => {
           const f = prodLaunchForm;
-          const allInsumosOk = f.insumos.every(i => i.ok);
+          const allInsumosOk = f.insumos.length > 0 && f.insumos.every(i => i.ok);
           const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
 
           return (
             <AccessibleModal
               id="prod-launch-modal"
-              isOpen={showProdLaunchModal}
               onClose={() => setShowProdLaunchModal(false)}
-              title="🚀 Lanzador de Producción de Lote"
-              ariaLabel="Lanzador de Producción de Lote"
-              maxWidth="680px"
+              label="Lanzador de producción de lote"
+              dialogStyle={{width:680,maxWidth:'calc(100vw - 32px)'}}
             >
               <div className="prod-launch-modal" data-testid="prod-launch-modal">
+                <h2 className="inv-modal-title"><AppIcon name="rocket" size={15} style={{marginRight:6}} /> Lanzador de Producción de Lote</h2>
                 {/* Resumen Superior */}
                 <div className="prod-launch-summary">
                   <div className="prod-launch-stat">
@@ -12719,19 +16712,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
+                <p>{f.plan.preparation.revision} · agua {f.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {f.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
                 {/* Desglose de Insumos y Descuento en Bodega */}
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)'}}>
-                      📦 Insumos a Descontar de Bodega
+                      <AppIcon name="box" size={14} style={{marginRight:6}} /> Insumos a Descontar de Bodega
                     </span>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:10,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
-                      {allInsumosOk ? '● Stock suficiente para todo el batch' : '⚠ Algunos insumos requieren compra'}
+                      {allInsumosOk ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} color="var(--moss-700)" /> Stock suficiente para todo el batch</span> : <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-500)" /> Algunos insumos requieren compra</span>}
                     </span>
                   </div>
 
-                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflow:'hidden'}}>
-                    <table className="prod-launch-table">
+                  {f.plan?.shortfalls?.length > 0 && (
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                      <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
+                    </div>
+                  )}
+
+                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+                    <table className="prod-launch-table" style={{minWidth:360}}>
                       <thead>
                         <tr>
                           <th>Insumo</th>
@@ -12744,12 +16744,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {f.insumos.map((ins, i) => (
                           <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
                             <td style={{fontWeight:600}}>{ins.name}</td>
-                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} kg</td>
+                            <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} {ins.unit || 'kg'}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
-                              {ins.stockActual.toFixed(1)} kg
+                              {ins.stockActual.toFixed(1)} {ins.unit || 'kg'}
                             </td>
                             <td style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color: ins.ok ? 'var(--moss-700)' : 'var(--coral-500)'}}>
-                              {ins.ok ? '✓ OK' : '⚠ Escaso'}
+                              {ins.ok ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={12} color="var(--status-ok)" /> OK</span> : <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--status-warn-marker)" /> Escaso</span>}
                             </td>
                           </tr>
                         ))}
@@ -12761,7 +16761,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* Asignación de Sala Ambiental */}
                 <div>
                   <label htmlFor="prod-launch-sala" style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)',display:'block',marginBottom:6}}>
-                    🌱 Sala / Carpa de Destino
+                    <AppIcon name="sprout" size={14} style={{marginRight:6}} /> Sala / Carpa de Destino
                   </label>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                     {Object.values(ROOMS_CONFIG).map(r => (
@@ -12783,6 +16783,88 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     ))}
                   </div>
+                  {(() => {
+                    const targetRoom = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
+                    const targetRoomBatches = bitLotes.filter(l => (l.sala === f.sala || l.ubicacion === f.sala || (!l.sala && f.sala === 'martha_01')) && !['completado','descartado'].includes(l.estado));
+                    const targetRoomSpecies = Array.from(new Set(targetRoomBatches.map(l => l.especie || l.speciesKey).filter(Boolean)));
+                    const assignedSpeciesList = Array.from(new Set([...targetRoomSpecies, f.especie].filter(Boolean)));
+                    const coCultAssignOpt = assignedSpeciesList.length > 1
+                      ? (typeof engineOptimizeChamberSetpoints === 'function'
+                          ? engineOptimizeChamberSetpoints(assignedSpeciesList)
+                          : (typeof SetasCoCultivation !== 'undefined' && typeof SetasCoCultivation.optimizeChamberSetpoints === 'function'
+                              ? SetasCoCultivation.optimizeChamberSetpoints(assignedSpeciesList)
+                              : null))
+                      : null;
+
+                    if (!coCultAssignOpt) return null;
+
+                    return (
+                      <div
+                        data-testid="room-assignment-cocultivation-advisor"
+                        style={{
+                          marginTop: 10,
+                          padding: '12px 14px',
+                          borderRadius: 'var(--radius-sm, 3px)',
+                          background: 'var(--paper-0, #F7F4EC)',
+                          border: `1.5px solid ${coCultAssignOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : 'var(--ochre-500, #C97A2C)'}`,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                            <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: 2,
+                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : 'var(--ochre-100, #FDF0DE)',
+                              color: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : 'var(--ochre-700, #8A4B09)',
+                            }}
+                          >
+                            Compatibilidad: {coCultAssignOpt.groupScore}% · {coCultAssignOpt.verdict}
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-1)', marginBottom: 8, lineHeight: 1.35 }}>
+                          La sala <b>{targetRoom.name}</b> ya cuenta con lotes de <b>{targetRoomSpecies.join(', ')}</b>. Para asegurar la coexistencia fisiológica, se calculan los siguientes setpoints Minimax de compromiso:
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 6, marginBottom: 8 }}>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>T° Pareto</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.tempC}°C</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>HR Pareto</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.rhPct}%</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>CO₂ Límite</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.co2Ppm} ppm</strong>
+                          </div>
+                          <div style={{ padding: '6px 8px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', display: 'block' }}>VPD Óptimo</span>
+                            <strong style={{ fontFamily: 'var(--font-num)', fontSize: 14 }}>{coCultAssignOpt.setpoints.vpdKpa} kPa</strong>
+                          </div>
+                        </div>
+                        {(coCultAssignOpt.bottlenecks.length > 0 || coCultAssignOpt.penalties.length > 0) && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            {coCultAssignOpt.bottlenecks.map((b, idx) => (
+                              <div key={`abn-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--coral-700)', background: 'var(--coral-100)', padding: '4px 6px', borderRadius: 2 }}>
+                                <AppIcon name="alert" size={12} color="var(--coral-700)" style={{marginRight:4}} /> Alerta Liebig: {b}
+                              </div>
+                            ))}
+                            {coCultAssignOpt.penalties.map((p, idx) => (
+                              <div key={`apen-${idx}`} style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ochre-700)', background: 'var(--ochre-100)', padding: '4px 6px', borderRadius: 2 }}>
+                                • {p}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Opciones Adicionales */}
@@ -12794,12 +16876,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onChange={e => setProdLaunchForm(prev => ({ ...prev, printQr: e.target.checked }))}
                       style={{width:16,height:16,accentColor:'var(--moss-700)'}}
                     />
-                    <span>🖨 <b>Imprimir etiquetas térmicas con códigos QR</b> para las {f.numBolsas} bolsas inmediatamente tras crear.</span>
+                    <span><AppIcon name="print" size={14} style={{marginRight:6}} /> <b>Imprimir etiquetas térmicas con códigos QR</b> para las {f.numBolsas} bolsas inmediatamente tras crear.</span>
                   </label>
                 </div>
 
                 {/* Botones de Cierre */}
-                <div style={{display:'flex',justifyContent:'flex-end',gap:8,borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
+                <div className="inv-modal-actions" style={{borderTop:'1px solid var(--border-hairline)',paddingTop:12}}>
                   <button
                     type="button"
                     onClick={() => setShowProdLaunchModal(false)}
@@ -12811,10 +16893,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button
                     type="button"
                     onClick={ejecutarLanzamientoProduccion}
+                    disabled={launching}
                     className="btn-launch-prod"
                     style={{minHeight:44,padding:'8px 20px'}}
                   >
-                    🚀 Confirmar y Lanzar Producción
+                    {launching ? 'Lanzando…' : <><AppIcon name="rocket" size={14} style={{marginRight:6}} /> Confirmar y Lanzar Producción</>}
                   </button>
                 </div>
               </div>
@@ -12836,7 +16919,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive, #5B6B44)', paddingBottom: 12, marginBottom: 16 }}>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                  <img src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="60" height="32" style={{ width: 60, height: 'auto', maxHeight: 34, objectFit: 'contain' }} />
+                  <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{ width: 60, height: 'auto', maxHeight: 34, objectFit: 'contain' }} />
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
                       Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
@@ -12849,7 +16932,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar dossier de cata" onClick={() => setShowTastingModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginBottom: 18 }}>
@@ -12859,15 +16942,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     Notas de Cata & Organolépticas
                   </div>
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>👃 Aroma:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Aroma:</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.aroma}</div>
                   </div>
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>👅 Sabor & Umami:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Sabor & Umami:</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.flavor}</div>
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>🥩 Textura en Boca:</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Textura en Boca:</div>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.texture}</div>
                   </div>
 
@@ -12895,7 +16978,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
-                      🍳 Técnicas Sugeridas por el Chef
+                      Técnicas Sugeridas por el Chef
                     </div>
                     {gastro.cooking.map((c, i) => (
                       <div key={i} style={{ marginBottom: 8, background: 'var(--paper-50, #F3EFE6)', padding: '8px 10px', borderRadius: 2, borderLeft: '3px solid var(--accent-olive, #5B6B44)' }}>
@@ -12907,7 +16990,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 8 }}>
-                      🍷 Armonía & Maridajes Recomendados
+                      Armonía & Maridajes Recomendados
                     </div>
                     {gastro.pairings.map((p, i) => (
                       <div key={i} style={{ marginBottom: 6, display: 'flex', gap: 6, alignItems: 'baseline' }}>
@@ -12918,7 +17001,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div style={{ marginTop: 12, padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', borderRadius: 2, border: '1px dashed var(--border-hairline, #8C7F5B)' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>📦 Presentación Óptima: </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>Presentación Óptima: </span>
                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)' }}>{gastro.presentation}</span>
                   </div>
                 </div>
@@ -12939,7 +17022,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     className="inv-btn inv-btn-pri"
                     style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
                   >
-                    🖨 Imprimir Ficha de Cata
+                    <AppIcon name="print" size={13} style={{marginRight:4}} /> Imprimir Ficha de Cata
                   </button>
                 </div>
               </div>
@@ -13123,7 +17206,7 @@ interval:
                     Compensación barométrica a 2.600 msnm (Tenjo) · SHT3x (0x44) + SCD30 (0x61)
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar modal de configuración ESP32" onClick={() => setShowEsp32ConfigModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar modal de configuración ESP32" onClick={() => setShowEsp32ConfigModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               <div className="esp32-code-preview" style={{ marginBottom: 16 }}>
@@ -13139,10 +17222,10 @@ interval:
                     Cerrar
                   </button>
                   <button type="button" onClick={copyYaml} className="inv-btn inv-btn-sec" style={{ minHeight: 40, padding: '6px 14px' }}>
-                    📋 Copiar YAML
+                    <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Copiar YAML
                   </button>
                   <button type="button" onClick={downloadYaml} className="inv-btn inv-btn-pri" style={{ minHeight: 40, padding: '6px 16px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}>
-                    📥 Descargar .yaml
+                    <AppIcon name="box" size={13} style={{marginRight:4}} /> Descargar .yaml
                   </button>
                 </div>
               </div>
@@ -13178,13 +17261,13 @@ interval:
                     Física Térmica en Altitud · All American 1941X (2.600 msnm / 74.5 kPa)
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
-                    🔥 Cinética de Autoclave & Integral F₀ de Esterilización
+                    <AppIcon name="flame" size={14} style={{marginRight:6}} /> Cinética de Autoclave & Integral F₀ de Esterilización
                   </h2>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                     Punto de ebullición local: 91.6°C · Presión requerida: 19.04 psig para vapor a 121.11°C
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar simulador de autoclave" onClick={() => setShowAutoclaveModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar simulador de autoclave" onClick={() => setShowAutoclaveModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               {/* Controles de Parámetros del Ciclo */}
@@ -13262,7 +17345,7 @@ interval:
                   style={{ fontSize: 11, padding: '4px 10px' }}
                   onClick={() => { setAutoclaveGaugePsi(19.04); setAutoclaveHoldMin(120); setAutoclaveBagKg(2.0); }}
                 >
-                  ✓ Preset Profesional Tenjo (19.04 PSI · 120 min · 2.0 kg)
+                  <AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Preset Profesional Tenjo (19.04 PSI · 120 min · 2.0 kg)
                 </button>
                 <button
                   type="button"
@@ -13270,7 +17353,7 @@ interval:
                   style={{ fontSize: 11, padding: '4px 10px' }}
                   onClick={() => { setAutoclaveGaugePsi(19.04); setAutoclaveHoldMin(90); setAutoclaveBagKg(1.5); }}
                 >
-                  ✓ Bolsa Pequeña (19.04 PSI · 90 min · 1.5 kg)
+                  <AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Bolsa Pequeña (19.04 PSI · 90 min · 1.5 kg)
                 </button>
                 <button
                   type="button"
@@ -13278,7 +17361,7 @@ interval:
                   style={{ fontSize: 11, padding: '4px 10px', borderColor: 'var(--accent-terracotta)', color: 'var(--accent-terracotta)' }}
                   onClick={() => { setAutoclaveGaugePsi(15.0); setAutoclaveHoldMin(60); setAutoclaveBagKg(2.0); }}
                 >
-                  ⚠ Simular Error Nivel del Mar (15 PSI sin corrección)
+                  <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Simular Error Nivel del Mar (15 PSI sin corrección)
                 </button>
               </div>
 
@@ -13339,7 +17422,7 @@ interval:
               {/* Alerta de Desviación Barométrica a 15 PSI */}
               <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
-                  ⚖ Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)
+                  <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)
                 </div>
                 <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
                   A 2.600 msnm, un manómetro marcando <strong>15.0 psi</strong> solo genera <strong>{comp15.tempAt15Psi}°C</strong> reales. Esto causa una <strong>pérdida del {comp15.lethalityLossPct}%</strong> en la tasa de destrucción de endosporas, requiriendo <strong>{comp15.factor}x más tiempo ({comp15.requiredHoldMinFor60MinEquivalent} min)</strong> para igualar 60 min a 121°C. Calibrar siempre a 19.04 psi manométricos.
@@ -13400,13 +17483,13 @@ interval:
                     Intersección Climática 4D · Lógica Difusa Trapezoidal & Liebig
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
-                    🌿 Optimizador de Co-Cultivo y Setpoints Pareto
+                    <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Optimizador de Co-Cultivo y Setpoints Pareto
                   </h2>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                     Determina la compatibilidad simultánea en la misma carpa y calcula los setpoints Minimax óptimos
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar optimizador de co-cultivo" onClick={() => setShowCoCultivationModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar optimizador de co-cultivo" onClick={() => setShowCoCultivationModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               {/* Selector de Especies para la Carpa */}
@@ -13433,7 +17516,7 @@ interval:
                           color: isSelected ? '#FFFFFF' : 'var(--ink-0)',
                         }}
                       >
-                        {isSelected ? '✓ ' : '+ '}{sp.name.split(' (')[0]}
+                        {isSelected ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : '+ '}{sp.name.split(' (')[0]}
                       </button>
                     );
                   })}
@@ -13464,7 +17547,7 @@ interval:
                   {/* Setpoints Minimax Pareto Recomendados */}
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-0)', marginBottom: 8 }}>
-                      🎯 Setpoints de Compromiso Minimax para la Carpa:
+                      <AppIcon name="target" size={13} style={{marginRight:4}} /> Setpoints de Compromiso Minimax para la Carpa:
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10 }}>
@@ -13505,7 +17588,7 @@ interval:
                   {(opt.bottlenecks?.length > 0 || opt.biologicalAlerts?.length > 0) && (
                     <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--accent-terracotta)', marginBottom: 6 }}>
-                        ⚠ Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:
+                        <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:
                       </div>
                       <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
                         {opt.bottlenecks?.map((b, idx) => (
@@ -13554,13 +17637,13 @@ interval:
                     Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
-                    ❄ Fisiología Poscosecha & Degradación en Cadena de Frío
+                    <AppIcon name="snowflake" size={14} style={{marginRight:6}} /> Fisiología Poscosecha & Degradación en Cadena de Frío
                   </h2>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                     Predicción de vida útil, pérdida de peso por transpiración cuticular y empaque MAP microperforado
                   </div>
                 </div>
-                <button type="button" className="modal-icon-close" aria-label="Cerrar poscosecha" onClick={() => setShowPostHarvestModal(false)}>✕</button>
+                <button type="button" className="modal-icon-close" aria-label="Cerrar poscosecha" onClick={() => setShowPostHarvestModal(false)}><AppIcon name="close" size={12} /></button>
               </div>
 
               {/* Controles de Entrada */}
@@ -13676,7 +17759,7 @@ interval:
                   {/* Comparativa 3 Escenarios Térmicos */}
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-0)', marginBottom: 6 }}>
-                      📊 Vida Útil según Régimen Térmico:
+                      <AppIcon name="chart" size={14} style={{marginRight:6}} /> Vida Útil según Régimen Térmico:
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                       <div className="climate-kpi-card" style={{ padding: 10, background: 'var(--moss-100)', borderColor: 'var(--moss-600)' }}>
@@ -13709,7 +17792,7 @@ interval:
                   {resp && (
                     <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
-                        ⚡ Fisiología Respiratoria & Carga Térmica (Lote {postHarvestBatchKg} kg):
+                        <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Fisiología Respiratoria & Carga Térmica (Lote {postHarvestBatchKg} kg):
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5, flexWrap: 'wrap', gap: 10 }}>
                         <span>Tasa respiratoria: <strong>{resp.respirationMgKgH} mg CO₂/kg·h</strong> ({resp.accelerationFactor}x vs 4°C)</span>
@@ -13721,7 +17804,7 @@ interval:
                   {/* Especificación de Empaque MAP */}
                   <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#1D4ED8', marginBottom: 4 }}>
-                      📦 Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
+                      <AppIcon name="box" size={14} style={{marginRight:6}} /> Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
                       <strong>Material:</strong> {slResult.packagingRecommendation.type} · <strong>OTR Objetivo:</strong> {slResult.packagingRecommendation.targetOtr} · <strong>Aditivo:</strong> Anti-fog obligatorio.
@@ -13741,6 +17824,395 @@ interval:
             </AccessibleModal>
           );
         })()}
+
+        {showTriageModal && (() => {
+          const currentLote = bitLotes.find(l => l.id === triageLoteId) || bitLotes[0];
+          const cw = typeof window !== 'undefined' ? window.SetasContaminationWorkflow : null;
+          const pathogens = cw?.PATHOGENS_CATALOG || {
+            trichoderma: { id: 'trichoderma', commonName: 'Moho Verde', scientific: 'Trichoderma spp.', dangerLevel: 'critical', biosecurityProtocol: ['Apagar ventilación forzada FAE inmediatamente.', 'Pulverizar alcohol al 70% o solución clorada suavemente.', 'Embolsar herméticamente antes de mover.'] },
+            neurospora: { id: 'neurospora', commonName: 'Moho Naranja del Pan', scientific: 'Neurospora sitophila', dangerLevel: 'critical', biosecurityProtocol: ['Aislamiento inmediato. No abrir ni apretar la bolsa.', 'Esterilizar o incinerar el material descartado.'] },
+            cobweb: { id: 'cobweb', commonName: 'Moho Telaraña', scientific: 'Dactylium dendroides', dangerLevel: 'high', biosecurityProtocol: ['Cubrir con sal marina fina (salting) antes de retirar.', 'Reducir HR a 82-84% y ventilar suavemente.'] },
+            bacillus: { id: 'bacillus', commonName: 'Grano Húmedo / Bacteriosis', scientific: 'Bacillus subtilis', dangerLevel: 'medium', biosecurityProtocol: ['Descartar bolsas afectadas.', 'Revisar F₀ de esterilización y remojo previo de 12 horas.'] },
+            mycogone: { id: 'mycogone', commonName: 'Burbuja Húmeda', scientific: 'Mycogone perniciosa', dangerLevel: 'high', biosecurityProtocol: ['Cubrir con alcohol al 70% o yodo al 1%.', 'Retirar en bolsa sellada.'] }
+          };
+
+          const selectedPathogen = pathogens[triagePathogenKey] || pathogens.trichoderma;
+          const totalBags = currentLote ? (Number(currentLote.numBolsas) || 12) : 12;
+          const lossCalc = cw
+            ? cw.calculateContaminationLoss({ batch: currentLote, affectedBags: triageAffectedBags, totalBags })
+            : {
+                totalBags,
+                affectedBags: triageAffectedBags,
+                healthyBags: Math.max(0, totalBags - triageAffectedBags),
+                lossPct: Math.round((triageAffectedBags / totalBags) * 100),
+                lossCostCop: triageAffectedBags * (currentLote?.costoBolsa || (currentLote?.costoIngKg ? Math.round(currentLote.costoIngKg * (currentLote.pesoHumedo || 2)) : 3500)),
+                suggestedAction: triageAffectedBags / totalBags >= 0.5 ? 'discard' : triageAffectedBags / totalBags >= 0.2 ? 'quarantine' : 'isolate_bags',
+                severity: triageAffectedBags / totalBags >= 0.2 ? 'critical' : 'warning'
+              };
+
+          const handleConfirmTriage = () => {
+            if (!currentLote) return;
+            const currentLifecycle = loteLifecycleState(currentLote);
+            const targetState = cw
+              ? cw.determineTargetLifecycleState(currentLifecycle, triageDecision, lossCalc.lossPct)
+              : (triageDecision === 'discard' ? 'discarded' : triageDecision === 'quarantine' ? 'quarantine' : currentLifecycle);
+
+            // Si la máquina de estados no permite el salto (p. ej. incubación →
+            // descartado), no se escribe nada: marcar el lote en el teléfono y
+            // encolar una transición que el servidor rechaza deja el lote
+            // descartado aquí y activo allá.
+            const changesState = targetState !== currentLifecycle;
+            if (changesState && !(workflow && workflow.canTransition(currentLifecycle, targetState))) {
+              setNoticeDlg({
+                title: 'Transición no permitida',
+                msg: `Un lote en ${lifecycleLabel[currentLifecycle] || currentLifecycle} no puede pasar directamente a ${lifecycleLabel[targetState] || targetState}. ${targetState === 'discarded' ? 'Trasládalo primero a cuarentena y descártalo desde allí.' : 'Revisa el estado del lote.'}`
+              });
+              return;
+            }
+
+            const contamEvent = cw
+              ? cw.buildContaminationEvent({
+                  batchId: currentLote.id,
+                  pathogenKey: triagePathogenKey,
+                  affectedBags: triageAffectedBags,
+                  totalBags,
+                  location: triageLocation || currentLote.sala || 'Sala 1',
+                  decision: triageDecision,
+                  operatorId: currentLote.operador || 'operador-local',
+                  notes: triageNotes,
+                  lossCostCop: lossCalc.lossCostCop
+                })
+              : {
+                  type: 'contamination_incident',
+                  batchId: currentLote.id,
+                  pathogenId: triagePathogenKey,
+                  pathogenName: selectedPathogen.commonName,
+                  affectedBags: triageAffectedBags,
+                  totalBags,
+                  lossPct: lossCalc.lossPct,
+                  lossCostCop: lossCalc.lossCostCop,
+                  location: triageLocation,
+                  decision: triageDecision,
+                  operatorId: currentLote.operador || 'operador-local',
+                  at: new Date().toISOString()
+                };
+
+            let transitionEvt = null;
+            if (changesState) {
+              transitionEvt = workflow.transitionEvent({
+                batchId: currentLote.id,
+                from: currentLifecycle,
+                to: targetState,
+                operatorId: currentLote.operador || 'operador-local',
+                reason: `Contaminación por ${selectedPathogen.commonName} (${lossCalc.lossPct}% afectación, decisión: ${triageDecision})`
+              });
+            }
+
+            // Sólo bolsas aún sanas: las ya contaminadas de un reporte anterior no
+            // cuentan como nuevas, o un segundo reporte re-marcaría las mismas.
+            const loteBags = bitBolsas.filter(b => b.loteId === currentLote.id && b.estado !== 'descartada' && b.estado !== 'contaminada');
+            const bagsToMark = loteBags.slice(0, triageAffectedBags);
+            bagsToMark.forEach(b => {
+              updateBitBolsa(b.id, {
+                estado: triageDecision === 'discard' ? 'descartada' : 'contaminada',
+                obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
+              });
+            });
+
+            const nextEstado = targetState === 'quarantine' ? 'cuarentena' : targetState === 'discarded' ? 'descartado' : currentLote.estado;
+            const updatedEvents = [
+              ...(currentLote.lifecycleEvents || []),
+              contamEvent,
+              ...(transitionEvt ? [transitionEvt] : [])
+            ];
+
+            // `lifecycleState` es del servidor: las reglas lo deniegan al cliente
+            // y updateBitLote sincroniza después de pintar, así que un rechazo
+            // dejaba el lote en cuarentena en el teléfono y activo en el servidor.
+            updateBitLote(currentLote.id, {
+              estado: nextEstado,
+              numBolsas: lossCalc.healthyBags,
+              lifecycleEvents: updatedEvents
+            });
+            if (changesState) {
+              enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+            }
+
+            setShowTriageModal(false);
+            setNoticeDlg({
+              title: 'Bioseguridad Aplicada',
+              msg: `Lote ${currentLote.codigo}: ${triageAffectedBags} bolsas retiradas. Merma: ${lossCalc.lossPct}%. Pérdida estimada: $${lossCalc.lossCostCop.toLocaleString('es-CO')} COP. Nuevo estado: ${targetState.toUpperCase()}.`
+            });
+          };
+
+          return (
+            <AccessibleModal
+              label="Triaje de Bioseguridad y Contaminación"
+              onClose={() => setShowTriageModal(false)}
+            >
+              <div className="biosecurity-triage-modal" data-testid="biosecurity-triage-modal" onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Gestión Fitosanitaria · Tenjo 2.587 msnm
+                    </div>
+                    <h2 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--ink-0)' }}>
+                      <AppIcon name="trace" size={14} style={{marginRight:6}} /> Triaje de Bioseguridad & Cuarentena
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--ink-2)' }}
+                    onClick={() => setShowTriageModal(false)}
+                    aria-label="Cerrar triaje de bioseguridad"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                      Lote Afectado
+                    </label>
+                    <select
+                      style={{ width: '100%', padding: '7px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={currentLote?.id || ''}
+                      onChange={e => {
+                        setTriageLoteId(e.target.value);
+                        setTriageAffectedBags(1);
+                      }}
+                    >
+                      {bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado)).map(l => (
+                        <option key={l.id} value={l.id}>{l.codigo} — {l.especie} ({l.numBolsas} bolsas)</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                      Ubicación / Sala
+                    </label>
+                    <input
+                      type="text"
+                      style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={triageLocation}
+                      onChange={e => setTriageLocation(e.target.value)}
+                      placeholder="Ej: Estantería B · Nivel 2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Patógeno Sospechoso / Diagnóstico
+                  </label>
+                  <div className="triage-pathogen-grid">
+                    {Object.values(pathogens).map(p => {
+                      const isSelected = triagePathogenKey === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className={`triage-pathogen-card ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => setTriagePathogenKey(p.id)}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
+                              {p.commonName}
+                            </span>
+                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : '#FEF3C7', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : '#B45309' }}>
+                              {p.dangerLevel === 'critical' ? 'Crítico' : p.dangerLevel === 'high' ? 'Alto' : 'Medio'}
+                            </span>
+                          </div>
+                          <div style={{ fontStyle: 'italic', fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)' }}>
+                            {p.scientific}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: '10px 14px' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
+                      Bolsas con Síntomas Visibles
+                    </div>
+                    <div style={{ fontSize: 10.5, color: 'var(--ink-2)' }}>
+                      Total de bolsas en el lote: {totalBags}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      style={{ minWidth: 32, minHeight: 32, padding: 0 }}
+                      onClick={() => setTriageAffectedBags(prev => Math.max(1, prev - 1))}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalBags}
+                      style={{ width: 44, textAlign: 'center', padding: '5px 2px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      value={triageAffectedBags}
+                      onChange={e => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) setTriageAffectedBags(Math.max(1, Math.min(totalBags, val)));
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      style={{ minWidth: 32, minHeight: 32, padding: 0 }}
+                      onClick={() => setTriageAffectedBags(prev => Math.min(totalBags, prev + 1))}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="triage-impact-grid">
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Merma Lote</span>
+                    <span className="triage-impact-val" style={{ color: lossCalc.lossPct >= 20 ? 'var(--accent-terracotta)' : 'inherit' }}>
+                      {lossCalc.lossPct}%
+                    </span>
+                  </div>
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Pérdida ($ COP)</span>
+                    <span className="triage-impact-val" style={{ color: 'var(--accent-terracotta)' }}>
+                      ${lossCalc.lossCostCop.toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                  <div className="triage-impact-item">
+                    <span className="triage-impact-label">Bolsas Sanas</span>
+                    <span className="triage-impact-val" style={{ color: 'var(--moss-800)' }}>
+                      {lossCalc.healthyBags} / {totalBags}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 6 }}>
+                    Decisión Operativa & Destino del Lote
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label className={`triage-decision-option ${triageDecision === 'isolate_bags' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="isolate_bags"
+                        checked={triageDecision === 'isolate_bags'}
+                        onChange={() => setTriageDecision('isolate_bags')}
+                      />
+                      <span>
+                        <strong>Extracción Quirúrgica:</strong> Descartar las {triageAffectedBags} bolsas y mantener el resto del lote en {currentLote?.estado || 'producción'}.
+                      </span>
+                    </label>
+                    <label className={`triage-decision-option ${triageDecision === 'quarantine' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="quarantine"
+                        checked={triageDecision === 'quarantine'}
+                        onChange={() => setTriageDecision('quarantine')}
+                      />
+                      <span>
+                        <strong>Traslado a Cuarentena:</strong> Mover el lote completo a Sala de Cuarentena (cambio formal a <code>quarantine</code>).
+                      </span>
+                    </label>
+                    <label className={`triage-decision-option ${triageDecision === 'discard' ? 'is-selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="triageDecision"
+                        value="discard"
+                        checked={triageDecision === 'discard'}
+                        onChange={() => setTriageDecision('discard')}
+                      />
+                      <span>
+                        <strong>Descarte Total:</strong> Pérdida irreparable del lote (cambio formal a <code>discarded</code>).
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="triage-protocol-banner">
+                  <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <AppIcon name="alert" size={14} color="var(--status-error)" style={{marginRight:6}} /> Protocolo Inmediato de Bioseguridad: {selectedPathogen.commonName}
+                  </div>
+                  <ul className="triage-protocol-list">
+                    {selectedPathogen.biosecurityProtocol.map((step, idx) => (
+                      <li key={idx}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-1)', marginBottom: 3 }}>
+                    Observaciones de Campo
+                  </label>
+                  <input
+                    type="text"
+                    style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                    value={triageNotes}
+                    onChange={e => setTriageNotes(e.target.value)}
+                    placeholder="Detalles sobre olor, avance de la mancha o causa probable..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <button
+                    type="button"
+                    className="inv-btn inv-btn-sec"
+                    style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}
+                    onClick={() => {
+                      if (currentLote) {
+                        setDiagLoteId(currentLote.id);
+                        const b = bitBolsas.find(x => x.loteId === currentLote.id && x.estado !== 'descartada');
+                        setDiagBolsaId(b?.id || '');
+                        setDiagImageBase64('');
+                        setDiagResult(null);
+                        setDiagError('');
+                        setDiagNotes('');
+                        setShowTriageModal(false);
+                        setShowDiagModal(true);
+                      }
+                    }}
+                  >
+                    <AppIcon name="camera" size={14} style={{marginRight:6}} /> Diagnosticar con Cámara IA Gemini
+                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-sec"
+                      onClick={() => setShowTriageModal(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="inv-btn inv-btn-pri"
+                      style={{ background: 'var(--accent-terracotta, #B24C27)', borderColor: 'var(--accent-terracotta, #B24C27)' }}
+                      onClick={handleConfirmTriage}
+                    >
+                      <AppIcon name="trace" size={14} style={{marginRight:6}} /> Confirmar & Aplicar Bioseguridad
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </AccessibleModal>
+          );
+        })()}
+
+        {showBatchSheetModal && batchSheetModalLote && (
+          <BatchSheetModal
+            isOpen={showBatchSheetModal}
+            onClose={() => { setShowBatchSheetModal(false); setBatchSheetModalLote(null); }}
+            lote={batchSheetModalLote}
+          />
+        )}
 
         {showDiagModal && (() => {
           const currentLote = bitLotes.find(l => l.id === diagLoteId) || bitLotes[0];
@@ -13815,28 +18287,41 @@ interval:
             });
 
             if (workflow && currentLote) {
-              const fromState = legacyLifecycle[currentLote.estado] || 'incubation';
+              const fromState = loteLifecycleState(currentLote);
               const contBags = bolsasDelLote.filter(b => b.id !== currentBolsa.id && b.estado === 'contaminada').length + (nuevoEstado === 'contaminada' ? 1 : 0);
               const contPct = bolsasDelLote.length ? Math.round((contBags / bolsasDelLote.length) * 100) : 0;
               
-              if (contPct >= 50 && fromState !== 'discarded') {
+              // Sólo cuarentena puede ir a descartado; desde las demás etapas la
+              // contaminación masiva lleva a cuarentena. Sin esta elección,
+              // transitionEvent lanzaba y el modal quedaba abierto.
+              const massTarget = contPct < 50 ? null
+                : workflow.canTransition(fromState, 'discarded') ? 'discarded'
+                : workflow.canTransition(fromState, 'quarantine') ? 'quarantine'
+                : null;
+              if (massTarget) {
                 const evt = workflow.transitionEvent({
                   batchId: currentLote.id,
                   from: fromState,
-                  to: 'discarded',
+                  to: massTarget,
+                  operatorId: currentLote.operador || 'operador-local',
                   reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
                 });
+                // El descarte se encola como cualquier otra transición. Escribir
+                // lifecycleState aquí lo rechazaban las reglas, y como
+                // updateBitLote guarda primero en local y sincroniza después, el
+                // fallo aterrizaba en un aviso lateral: el lote se veía
+                // descartado en el teléfono y seguía activo en el servidor, donde
+                // otro operario lo encontraba disponible.
                 updateBitLote(currentLote.id, {
-                  estado: 'descartado',
-                  lifecycleState: 'discarded',
                   lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
                 });
+                enqueueFieldTransition(currentLote, fromState, massTarget);
               }
             }
 
             setShowDiagModal(false);
             setNoticeDlg({
-              title: '🛡 Dictamen Aplicado',
+              title: 'Dictamen Aplicado',
               msg: `Bolsa ${currentBolsa.codigo} actualizada a estado: ${nuevoEstado.toUpperCase()}. ${diagResult.accion_recomendada}`
             });
           };
@@ -13850,7 +18335,7 @@ interval:
                       Microbiología & Sanidad · Setas OS
                     </div>
                     <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
-                      🔬 Diagnóstico Visual de Contaminaciones
+                      <AppIcon name="scan" size={14} style={{marginRight:6}} /> Diagnóstico Visual de Contaminaciones
                     </h2>
                   </div>
                   <button
@@ -13922,7 +18407,7 @@ interval:
 
                 {diagError && (
                   <div style={{padding:'8px 12px',background:'#FEE2E2',color:'#991B1B',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
-                    ⚠ {diagError}
+                    <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {diagError}
                   </div>
                 )}
 
@@ -13947,7 +18432,7 @@ interval:
                   disabled={!diagImageBase64||diagRunning}
                   onClick={handleRunDiagnosis}
                 >
-                  {diagRunning ? '⏳ Analizando imagen con Gemini 2.5 Flash...' : '🔍 Diagnosticar con Gemini AI'}
+                  {diagRunning ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Analizando imagen con Gemini 2.5 Flash...</> : <><AppIcon name="search" size={13} style={{marginRight:4}} /> Diagnosticar con Gemini AI</>}
                 </button>
 
                 {diagResult && (
@@ -13993,7 +18478,7 @@ interval:
                         }}
                         onClick={handleApplyVerdict}
                       >
-                        🛡 Aplicar Dictamen & Actualizar Bolsa
+                        <AppIcon name="trace" size={14} style={{marginRight:6}} /> Aplicar Dictamen & Actualizar Bolsa
                       </button>
                       <button
                         type="button"
@@ -14052,7 +18537,7 @@ interval:
             openBuilderSubTab('generador');
             if (aiFormResult?.meta_cn_sugerida) {
               setNoticeDlg({
-                title: '🤖 Recomendación IA de Perito Registrada',
+                title: 'Recomendación IA de Perito Registrada',
                 msg: `Meta sugerida de C:N: ${aiFormResult.meta_cn_sugerida}. ${aiFormResult.ajuste_suplementacion || ''}`
               });
             }
@@ -14067,10 +18552,10 @@ interval:
                       Perito Asistente Gemini · Setas OS
                     </div>
                     <h2 style={{margin:'2px 0 0',fontFamily:'var(--font-display)',fontSize:18,color:'var(--ink-0)'}}>
-                      🤖 Asistente IA de Formulaciones y Diagnóstico Agronómico
+                      <AppIcon name="wand" size={13} style={{marginRight:4}} /> Asistente IA de Formulaciones y Diagnóstico Agronómico
                     </h2>
                   </div>
-                  <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal">×</button>
+                  <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal"><AppIcon name="close" size={12} /></button>
                 </div>
 
                 <div style={{padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)',border:'1px solid var(--border-hairline)',marginBottom:12}}>
@@ -14107,13 +18592,13 @@ interval:
                       cursor:aiFormLoading?'not-allowed':'pointer'
                     }}
                   >
-                    {aiFormLoading ? '⏳ Generando dictamen con Gemini...' : '🤖 Analizar Fórmula & Proponer Ajustes'}
+                    {aiFormLoading ? <><AppIcon name="clock" size={14} style={{marginRight:6}} /> Generando dictamen con Gemini...</> : <><AppIcon name="wand" size={14} style={{marginRight:6}} /> Analizar Fórmula & Proponer Ajustes</>}
                   </button>
                 )}
 
                 {aiFormError && (
                   <div style={{marginTop:10,padding:'8px 12px',background:'rgba(197,48,48,.1)',border:'1px solid #C53030',borderRadius:'var(--radius-sm)',fontSize:12,color:'#C53030'}}>
-                    ⚠️ {aiFormError}
+                    <AppIcon name="alert" size={12} color="#C53030" style={{marginRight:4}} /> {aiFormError}
                   </div>
                 )}
 
@@ -14128,12 +18613,12 @@ interval:
                       </div>
                       {aiFormResult.meta_cn_sugerida && (
                         <div style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--moss-700)',fontWeight:700}}>
-                          🎯 Meta C:N Sugerida: {aiFormResult.meta_cn_sugerida}
+                          <AppIcon name="target" size={14} style={{marginRight:6}} /> Meta C:N Sugerida: {aiFormResult.meta_cn_sugerida}
                         </div>
                       )}
                       {aiFormResult.ajuste_suplementacion && (
                         <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1)',marginTop:4}}>
-                          💡 <b>Suplementación:</b> {aiFormResult.ajuste_suplementacion}
+                          <AppIcon name="wand" size={14} style={{marginRight:6}} /> <b>Suplementación:</b> {aiFormResult.ajuste_suplementacion}
                         </div>
                       )}
                     </div>
@@ -14155,7 +18640,7 @@ interval:
                           cursor:'pointer'
                         }}
                       >
-                        ✦ Abrir Generador de Escenarios Perito con este Dictamen
+                        <AppIcon name="sparkles" size={14} style={{marginRight:6}} /> Abrir Generador de Escenarios Perito con este Dictamen
                       </button>
                       <button
                         type="button"
@@ -14190,6 +18675,7 @@ interval:
             loteCode={publicTraceModalLoteId}
             lotes={bitLotes}
             cosechas={bitCosechas}
+            bolsas={bitBolsas}
             onClose={() => setPublicTraceModalLoteId(null)}
           />
         )}
@@ -14260,7 +18746,7 @@ interval:
           </>)}
         </div>
       </section>)}
-    </div>
+    </main>
   );
 }
 

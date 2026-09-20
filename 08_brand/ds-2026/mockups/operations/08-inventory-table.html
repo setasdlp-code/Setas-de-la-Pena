@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>08 · Tabla de Inventario de Materias Primas · Setas de la Peña (DS-2026)</title>
+  <link rel="stylesheet" href="../../operations.css">
+  <link rel="stylesheet" href="../_shell.css">
+  <style>
+    .inv-container {
+      max-width: 980px;
+      width: 100%;
+      background: var(--surface-page);
+      border: 1px solid var(--border-heavy);
+      padding: 32px;
+    }
+    .inv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid var(--border-heavy);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .inv-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    .inv-table th {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 2px solid var(--border-heavy);
+      background: var(--surface-panel);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      font-family: var(--font-sans);
+      color: var(--text-secondary);
+    }
+    .inv-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid var(--border-hairline);
+      vertical-align: middle;
+    }
+    .inv-table tr:hover {
+      background: var(--surface-panel);
+    }
+    .prop-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 6px;
+      background: var(--surface-panel);
+      border: 1px solid var(--border-hairline);
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body data-mode="control" data-content-status="illustrative">
+  <div class="stage stage--col">
+    <div class="spec">08 · Materias primas y propiedades agronómicas · Inventario técnico</div>
+
+    <div class="inv-container">
+      <div class="inv-header">
+        <div>
+          <div class="t-micro" style="color: var(--text-secondary); margin-bottom: 4px;">
+            Setas OS · Control de materias primas (Tenjo)
+          </div>
+          <h1 style="margin: 0; font: var(--t-heading-01); color: var(--text-primary);">
+            Existencias y propiedades de sustrato
+          </h1>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <span class="sdp-provenance">● Propiedades certificadas</span>
+          <button type="button" class="sdp-btn sdp-btn--secondary" style="padding: 8px 16px;">
+            Filtrar por tipo
+          </button>
+          <button type="button" class="sdp-btn sdp-btn--primary" style="padding: 8px 16px;">
+            + Registrar entrada
+          </button>
+        </div>
+      </div>
+
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>Materia prima / Tipo</th>
+            <th>Lote proveedor</th>
+            <th>Propiedades químicas</th>
+            <th>Existencias actuales</th>
+            <th>Trazabilidad / Análisis</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="t-data" style="font-weight: bold;">Salvado de trigo</div>
+              <div class="t-micro" style="color: var(--text-secondary);">Suplemento nitrogenado</div>
+            </td>
+            <td>
+              <div class="t-data">PROV-MOL-2026-03</div>
+              <div class="t-micro">Molinos del Oriente</div>
+            </td>
+            <td>
+              <span class="prop-tag">C:N 17:1</span>
+              <span class="prop-tag">N: 2.8%</span>
+              <span class="prop-tag">H: 11.4%</span>
+            </td>
+            <td>
+              <div class="t-data" style="font-weight: bold;">420,0 kg</div>
+              <div class="t-micro">8,4 bultos (50 kg)</div>
+            </td>
+            <td>
+              <span class="sdp-provenance">● Medido · Lab #441</span>
+            </td>
+            <td>
+              <span class="sdp-badge sdp-badge--ok">Disponible</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="t-data" style="font-weight: bold;">Aserrín de roble blanco</div>
+              <div class="t-micro" style="color: var(--text-secondary);">Base estructural / Carbono</div>
+            </td>
+            <td>
+              <div class="t-data">MAD-BOY-2026-11</div>
+              <div class="t-micro">Maderas Sostenibles Boyacá</div>
+            </td>
+            <td>
+              <span class="prop-tag">C:N ~500:1</span>
+              <span class="prop-tag">N: 0.1%</span>
+              <span class="prop-tag">H: 14.8%</span>
+            </td>
+            <td>
+              <div class="t-data" style="font-weight: bold;">1.850,0 kg</div>
+              <div class="t-micro">37 sacos</div>
+            </td>
+            <td>
+              <span class="sdp-provenance">○ Estimado · Tabla fibra</span>
+            </td>
+            <td>
+              <span class="sdp-badge sdp-badge--ok">Disponible</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="t-data" style="font-weight: bold;">Carbonato de calcio (CaCO3)</div>
+              <div class="t-micro" style="color: var(--text-secondary);">Buffer pH / Mineral</div>
+            </td>
+            <td>
+              <div class="t-data">MIN-PAZ-2025-99</div>
+              <div class="t-micro">Minerales del Río</div>
+            </td>
+            <td>
+              <span class="prop-tag">Pureza: 98.2%</span>
+              <span class="prop-tag">pH target: 6.8</span>
+            </td>
+            <td>
+              <div class="t-data" style="font-weight: bold;">125,0 kg</div>
+              <div class="t-micro">5 bultos (25 kg)</div>
+            </td>
+            <td>
+              <span class="sdp-provenance">● Medido · COA Prov</span>
+            </td>
+            <td>
+              <span class="sdp-badge sdp-badge--ok">Disponible</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="t-data" style="font-weight: bold;">Sulfato de calcio (yeso)</div>
+              <div class="t-micro" style="color: var(--text-secondary);">Antialmendra / Mineral</div>
+            </td>
+            <td>
+              <div class="t-data">MIN-YES-2026-02</div>
+              <div class="t-micro">Yesos Agrícolas Andinos</div>
+            </td>
+            <td>
+              <span class="prop-tag">Pureza: 94.5%</span>
+              <span class="prop-tag">CaSO4·2H2O</span>
+            </td>
+            <td>
+              <div class="t-data" style="font-weight: bold;">75,0 kg</div>
+              <div class="t-micro">3 bultos (25 kg)</div>
+            </td>
+            <td>
+              <span class="sdp-provenance">● Medido · COA Prov</span>
+            </td>
+            <td>
+              <span class="sdp-badge sdp-badge--ok">Disponible</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="t-data" style="font-weight: bold;">Grano de mijo dorado</div>
+              <div class="t-micro" style="color: var(--text-secondary);">Matriz inóculo (spawn)</div>
+            </td>
+            <td>
+              <div class="t-data">SEM-VAL-2026-08</div>
+              <div class="t-micro">Semillas del Valle</div>
+            </td>
+            <td>
+              <span class="prop-tag">H: 12.0%</span>
+              <span class="prop-tag">Germinación: N/A</span>
+            </td>
+            <td>
+              <div class="t-data" style="font-weight: bold;">50,0 kg</div>
+              <div class="t-micro">2 bultos en prueba</div>
+            </td>
+            <td>
+              <span class="sdp-provenance">▲ Manual · Control micro</span>
+            </td>
+            <td>
+              <span class="sdp-badge sdp-badge--warn">Cuarentena</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: space-between; align-items: center;">
+        <span class="t-micro" style="color: var(--text-secondary);">
+          Total 5 materias primas registradas · 2.520 kg en bodega Tenjo
+        </span>
+        <span class="t-micro" style="font-family: var(--font-mono);">
+          Última auditoría: 2026-09-17 · Operador: CP
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

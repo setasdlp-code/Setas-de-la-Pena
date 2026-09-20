@@ -1,23 +1,38 @@
 #!/usr/bin/env python3
-"""WCAG 2.1 contrast gate for the Setas de la Peña DS-2026 palette.
+"""WCAG contrast contract for DS-2026 · Criterio Edition.
 
-Every pair the system actually uses is asserted here, with an expectation:
-  ALLOW  — this pairing is sanctioned; it MUST meet its ratio.
-  FORBID — this pairing is banned by the system; it MUST fail its ratio.
-           (If one ever starts passing, the palette moved and the ban is stale.)
-
-Exit 0 only when every expectation holds.
-Run:  python3 scripts/contrast-audit.py [--md]
+Palette values come from tokens/primitives.json. No color is duplicated here.
+ALLOW pairs must meet their threshold; FORBID pairs must remain below it so
+the documented ban cannot silently become stale after a palette change.
 """
+import json
+import pathlib
 import sys
 
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+TOKENS = json.loads((ROOT / "tokens" / "primitives.json").read_text())
+PRIM = TOKENS["color"]["primitive"]
+DER = TOKENS["color"]["derived"]
+
 P = {
-    "PAPER": "#FAF5E9", "INK": "#222222", "INK_MUTED": "#555555",
-    "RULE": "#888888", "SOIL": "#4A3C31", "MOSS": "#4E6B3F",
-    "RUST": "#8E2C14", "WARNING": "#C49A4C", "WARNING_TEXT": "#8C6B2E",
-    "PAPER_PANEL": "#F3EEE2", "PAPER_RECESSED": "#EAE4D8",
-    "MOSS_TINT": "#E5E4D5", "RUST_TINT": "#EDDDCF",
-    "WARNING_TINT": "#F4EAD6", "SOIL_TINT": "#E5DFD3",
+    "PAPER": PRIM["paper-100"]["value"],
+    "PAPER_PANEL": PRIM["paper-50"]["value"],
+    "PAPER_RECESSED": PRIM["paper-200"]["value"],
+    "INK": PRIM["ink-900"]["value"],
+    "INK_700": PRIM["ink-700"]["value"],
+    "INK_MUTED": PRIM["ink-500"]["value"],
+    "RULE": PRIM["rule-500"]["value"],
+    "SOIL": PRIM["bark-700"]["value"],
+    "MOSS": PRIM["moss-700"]["value"],
+    "SLATE": PRIM["slate-500"]["value"],
+    "CORAL_500": PRIM["coral-500"]["value"],
+    "CORAL_700": PRIM["coral-700"]["value"],
+    "WARNING": PRIM["warning"]["value"],
+    "WARNING_TEXT": PRIM["warning-text"]["value"],
+    "MOSS_TINT": DER["moss-tint"]["value"],
+    "CORAL_TINT": DER["coral-tint"]["value"],
+    "WARNING_TINT": DER["warning-tint"]["value"],
+    "SOIL_TINT": DER["bark-tint"]["value"],
 }
 
 def lin(c):
@@ -34,54 +49,57 @@ def ratio(a, b):
     hi, lo = max(la, lb), min(la, lb)
     return (hi + 0.05) / (lo + 0.05)
 
-A, F = "ALLOW", "FORBID"
-# (fg, bg, purpose, required-ratio, expectation)
+ALLOW, FORBID = "ALLOW", "FORBID"
+# fg, bg, purpose, required ratio, expectation
 PAIRS = [
-    ("INK",          "PAPER",          "Body, headings, species names",          4.5, A),
-    ("INK",          "PAPER_PANEL",    "Text on panels",                         4.5, A),
-    ("INK",          "PAPER_RECESSED", "Text in recessed wells",                 4.5, A),
-    ("INK_MUTED",    "PAPER",          "Captions, metadata values",              4.5, A),
-    ("INK_MUTED",    "PAPER_PANEL",    "Metadata on panels",                     4.5, A),
-    ("MOSS",         "PAPER",          "OK status text",                         4.5, A),
-    ("MOSS",         "MOSS_TINT",      "OK text on OK banner",                   4.5, A),
-    ("RUST",         "PAPER",          "Error status text",                      4.5, A),
-    ("RUST",         "RUST_TINT",      "Error text on error banner",             4.5, A),
-    ("SOIL",         "PAPER",          "Infill label text",                      4.5, A),
-    ("PAPER",        "SOIL",           "Inverse text on soil block (signage)",   4.5, A),
-    ("PAPER",        "MOSS",           "Text on solid moss fill",                4.5, A),
-    ("PAPER",        "RUST",           "Text on solid rust fill",                4.5, A),
-    ("INK",          "WARNING",        "Text on solid ochre fill",               4.5, A),
-    ("WARNING_TEXT", "PAPER",          "Caution text (sanctioned ochre)",        4.5, A),
-    ("INK",          "WARNING_TINT",   "Caution banner text (sanctioned)",       4.5, A),
-    ("RULE",         "PAPER",          "Hairlines, specimen frames (non-text)",  3.0, A),
-    ("MOSS",         "PAPER",          "Meter fill (non-text)",                  3.0, A),
-    # --- Banned pairings. The system forbids these; the gate proves why. ---
-    ("WARNING",      "PAPER",          "Ochre as TEXT — use WARNING_TEXT",       4.5, F),
-    ("WARNING",      "WARNING_TINT",   "Ochre text on its own tint — use INK",   4.5, F),
-    ("PAPER",        "WARNING",        "Paper on ochre fill — use INK",          4.5, F),
-    ("WARNING",      "PAPER",          "Ochre hairline/meter alone — needs INK", 3.0, F),
+    ("INK", "PAPER", "Primary body and headings", 4.5, ALLOW),
+    ("INK", "PAPER_PANEL", "Text on panels", 4.5, ALLOW),
+    ("INK", "PAPER_RECESSED", "Text in recessed wells", 4.5, ALLOW),
+    ("INK_700", "PAPER", "Strong secondary text", 4.5, ALLOW),
+    ("INK_MUTED", "PAPER", "Metadata and captions", 4.5, ALLOW),
+    ("INK_MUTED", "PAPER_PANEL", "Metadata on panels", 4.5, ALLOW),
+    ("MOSS", "PAPER", "OK / active status text", 4.5, ALLOW),
+    ("MOSS", "MOSS_TINT", "OK text on OK tint", 4.5, ALLOW),
+    ("SLATE", "PAPER", "Information text", 4.5, ALLOW),
+    ("CORAL_700", "PAPER", "Terracotta text and error state", 4.5, ALLOW),
+    ("CORAL_700", "CORAL_TINT", "Error text on error tint", 4.5, ALLOW),
+    ("PAPER_PANEL", "CORAL_700", "Small text on accessible terracotta action fill", 4.5, ALLOW),
+    ("SOIL", "PAPER", "Earth/infill text", 4.5, ALLOW),
+    ("PAPER_PANEL", "SOIL", "Inverse text on bark surface", 4.5, ALLOW),
+    ("PAPER_PANEL", "MOSS", "Text on primary moss action fill", 4.5, ALLOW),
+    ("INK", "WARNING", "Dark text on solid caution fill", 4.5, ALLOW),
+    ("WARNING_TEXT", "PAPER", "Caution text / thin caution marker", 4.5, ALLOW),
+    ("WARNING_TEXT", "WARNING_TINT", "Caution text on caution tint", 4.5, ALLOW),
+    ("INK", "WARNING_TINT", "Body text on caution tint", 4.5, ALLOW),
+    ("RULE", "PAPER", "Legacy specimen rule (non-text)", 3.0, ALLOW),
+    ("MOSS", "PAPER", "OK graphical marker", 3.0, ALLOW),
+    ("CORAL_500", "PAPER", "Decorative terracotta rule/fill", 3.0, ALLOW),
+
+    # Explicitly banned uses.
+    ("WARNING", "PAPER", "Ochre as small text", 4.5, FORBID),
+    ("WARNING", "PAPER", "Ochre as standalone thin marker", 3.0, FORBID),
+    ("PAPER", "WARNING", "Light text on ochre fill", 4.5, FORBID),
+    ("CORAL_500", "PAPER", "Coral 500 as small text", 4.5, FORBID),
+    ("PAPER_PANEL", "CORAL_500", "Light small text on Coral 500 button", 4.5, FORBID),
+    ("INK", "CORAL_500", "Dark small text on Coral 500 button", 4.5, FORBID),
 ]
 
 rows = []
-for fg, bg, why, req, exp in PAIRS:
+for fg, bg, purpose, need, rule in PAIRS:
     r = ratio(fg, bg)
-    meets = r >= req
-    ok = meets if exp == A else not meets
-    rows.append((fg, bg, why, req, r, exp, meets, ok))
+    meets = r >= need
+    ok = meets if rule == ALLOW else not meets
+    rows.append((fg, bg, purpose, need, r, rule, ok))
 
 if "--md" in sys.argv:
-    print("| Foreground | Background | Purpose | Needs | Ratio | Rule |")
-    print("|---|---|---|---|---|---|")
-    for fg, bg, why, req, r, exp, meets, ok in rows:
-        verdict = "Sanctioned" if exp == A else "**Banned**"
-        print(f"| `{fg}` | `{bg}` | {why} | {req}:1 | {r:.2f}:1 | {verdict} |")
+    print("| Foreground | Background | Purpose | Needs | Ratio | Contract |")
+    print("|---|---|---|---:|---:|---|")
+    for fg, bg, purpose, need, r, rule, ok in rows:
+        print(f"| `{fg}` | `{bg}` | {purpose} | {need}:1 | {r:.2f}:1 | {'Sanctioned' if rule == ALLOW else '**Banned**'} |")
 else:
-    for fg, bg, why, req, r, exp, meets, ok in rows:
-        tag = "ok  " if ok else "BAD "
-        kind = "allow " if exp == A else "forbid"
-        print(f"{tag} [{kind}] {r:5.2f}:1 (need {req})  {fg} on {bg} — {why}")
+    for fg, bg, purpose, need, r, rule, ok in rows:
+        print(f"{'ok  ' if ok else 'BAD '} [{rule.lower():6}] {r:5.2f}:1 (need {need})  {fg} on {bg} — {purpose}")
 
-bad = [x for x in rows if not x[7]]
-print(f"\n{len(rows)-len(bad)}/{len(rows)} expectations hold"
-      f"{'' if not bad else '  — ' + str(len(bad)) + ' VIOLATED'}")
+bad = [row for row in rows if not row[-1]]
+print(f"\n{len(rows)-len(bad)}/{len(rows)} contrast expectations hold" + ("" if not bad else f" — {len(bad)} VIOLATED"))
 sys.exit(1 if bad else 0)

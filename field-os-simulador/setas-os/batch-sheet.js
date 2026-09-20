@@ -27,6 +27,8 @@
   // está garantizado. Un require() de Node sí es estable.
   const workflowRef = () => (isNode ? require('./setas-os-workflow.js') : (glob && glob.SetasOSWorkflow) || null);
   const bitacoraRef = () => (isNode ? require('./bitacora-model.js') : (glob && glob.SetasBitacora) || null);
+  const flushForecastRef = () => (isNode ? require('./flush-forecast-engine.js') : (glob && glob.SetasFlushForecast) || null);
+  const traceIdentityRef = () => (isNode ? require('./trace-identity.js') : (glob && glob.SetasTraceIdentity) || null);
 
   const DAY_MS = 86400000;
 
@@ -56,7 +58,13 @@
     cuarentena: 'quarantine',
     descartado: 'discarded',
     fallido: 'failed',
-    activo: 'incubation',
+    // El lote nace en la inoculación, no en la incubación:
+    // knowledge_base/06_operations/batch_tracking.md:32 — "Each lot is assigned
+    // a unique identifier at inoculation", y el sistema traza el lote "from
+    // inoculation through sale or disposal". Mapear `activo` a incubation hacía
+    // que la transición inoculado -> incubación nunca se ofreciera al operario,
+    // que es justamente el primer registro que hace en campo.
+    activo: 'inoculated',
   });
 
   /**
@@ -113,6 +121,7 @@
     photo: { label: 'Adjuntar foto', requires: ['foto'] },
     move: { label: 'Mover de sala', requires: ['salaDestinoId'] },
     note: { label: 'Nota de campo', requires: ['nota'] },
+    riego: { label: 'Riego', requires: [] },
     harvest: { label: 'Registrar cosecha', requires: ['pesoFresco', 'flush'] },
     advance_stage: { label: 'Avanzar etapa', requires: [] },
     report_problem: { label: 'Reportar problema', requires: ['observacion'] },
@@ -170,66 +179,228 @@
 
   const stateLabel = state => STATE_LABELS[state] || state;
 
+  // Catálogo inicial de canastillas plásticas reutilizables configuradas en Tenjo.
+  // Nota operativa: taraGramos se define como null (taraSource: 'unverified')
+  // hasta que cada canastilla sea calibrada físicamente en báscula.
+  const CONFIG_CRATES = Object.freeze([
+    Object.freeze({ id: 'crate_CAN-01', codigo: 'CAN-01', taraGramos: null, taraSource: 'unverified', activa: true }),
+    Object.freeze({ id: 'crate_CAN-02', codigo: 'CAN-02', taraGramos: null, taraSource: 'unverified', activa: true }),
+    Object.freeze({ id: 'crate_CAN-03', codigo: 'CAN-03', taraGramos: null, taraSource: 'unverified', activa: true }),
+  ]);
+
   /**
-   * Resuelve el contenido de una etiqueta QR a un objeto operativo.
+   * Constructor canónico uniforme de 10 claves para todas las resoluciones.
+   * Garantiza que todas las ramas (incluidas unknown y fallos) tengan la misma forma de objeto.
+   */
+  const emptyResolution = (raw, kind = 'unknown', reason = null) => ({
+    kind,
+    batchId: null,
+    batchCode: null,
+    bagId: null,
+    crateId: null,
+    crateCode: null,
+    taraGramos: null,
+    taraSource: null,
+    raw: raw == null ? '' : String(raw),
+    reason,
+  });
+
+  // Parámetros de query que definen explícitamente la intención de escaneo
+  const INTENT_PARAMS = [
+    { key: 'crate', intent: 'crate' },
+    { key: 'lote', intent: 'batch' },
+    { key: 'batch', intent: 'batch' },
+    { key: 'bag', intent: 'bag' },
+    { key: 'bolsa', intent: 'bag' },
+  ];
+
+  // Nombres de parámetro que llevan el código en una URL de etiqueta o enlace
+  // público. `flush`, `utm_*` y compañía viajan al lado y deben ignorarse.
+  const SCAN_CODE_PARAMS = ['codigo', 'code', 'lote', 'batch', 'bolsa', 'bag', 'c', 'id'];
+
+  // Un QR ajeno puede traer un `%` suelto: decodeURIComponent lanzaría y se
+  // llevaría por delante el escaneo entero, así que el crudo es el respaldo.
+  const safeDecode = (value) => {
+    try { return decodeURIComponent(value); } catch (err) { return value; }
+  };
+
+  const readParamValue = (search, targetKey) => {
+    if (!search) return '';
+    const normKey = targetKey.toLowerCase();
+    const pairs = String(search).split(/[&;]/);
+    for (const pair of pairs) {
+      const eq = pair.indexOf('=');
+      if (eq < 0) continue;
+      if (safeDecode(pair.slice(0, eq)).trim().toLowerCase() !== normKey) continue;
+      const value = safeDecode(pair.slice(eq + 1).replace(/\+/g, ' ')).trim();
+      if (value) return value;
+    }
+    return '';
+  };
+
+  const readScanCodeParam = (search) => {
+    if (!search) return '';
+    const pairs = String(search).split(/[&;]/);
+    for (const key of SCAN_CODE_PARAMS) {
+      for (const pair of pairs) {
+        const eq = pair.indexOf('=');
+        if (eq < 0) continue;
+        if (safeDecode(pair.slice(0, eq)).trim().toLowerCase() !== key) continue;
+        const value = safeDecode(pair.slice(eq + 1).replace(/\+/g, ' ')).trim();
+        if (value) return value;
+      }
+    }
+    return '';
+  };
+
+  /**
+   * Resuelve el contenido de una etiqueta QR a un objeto operativo uniforme de 10 claves.
    *
-   * Acepta el código de lote crudo, el id interno, un código de bolsa
-   * (`<lote>-B03`), una URL de trazabilidad (`.../trace/<codigo>`) y payloads
-   * JSON `{"batch":"..."}`. Devuelve siempre un resultado explícito para que la
-   * UI nunca aterrice en un menú genérico.
+   * Acepta código de lote crudo, id interno, código de bolsa (`<lote>-B03`),
+   * canastillas reutilizables (`CAN-01`, `setas:crate:CAN-01`), entregas de lote
+   * históricas (`CAN-<lote>-F1`), URLs de trazabilidad y deep-links.
    *
    * @param {string} raw Texto leído del QR
-   * @param {object} index { lotes, bolsas }
-   * @returns {{kind:'batch'|'bag'|'unknown', batchId:?string, batchCode:?string, bagId:?string, raw:string, reason:?string}}
+   * @param {object} [options]
+   * @param {Array} [options.lotes=[]] Lotes registrados
+   * @param {Array} [options.bolsas=[]] Bolsas registradas
+   * @param {Array} [options.crates=CONFIG_CRATES] Catálogo de canastillas
+   * @returns {{
+   *   kind: 'batch'|'bag'|'crate'|'crate_unregistered'|'unknown',
+   *   batchId: string|null,
+   *   batchCode: string|null,
+   *   bagId: string|null,
+   *   crateId: string|null,
+   *   crateCode: string|null,
+   *   taraGramos: number|null,
+   *   taraSource: string|null,
+   *   raw: string,
+   *   reason: string|null
+   * }}
    */
-  const resolveScan = (raw, { lotes = [], bolsas = [] } = {}) => {
+  const resolveScan = (raw, { lotes = [], bolsas = [], crates = CONFIG_CRATES } = {}) => {
     const text = raw == null ? '' : String(raw).trim();
-    const miss = reason => ({ kind: 'unknown', batchId: null, batchCode: null, bagId: null, raw: text, reason });
-    if (!text) return miss('empty_payload');
+    if (!text) return emptyResolution(raw, 'unknown', 'empty_payload');
 
-    let candidate = text;
-    if (text.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(text);
-        candidate = parsed.batch || parsed.batchCode || parsed.codigo || parsed.id || parsed.bag || text;
-      } catch (err) { /* payload no-JSON: se sigue tratando como texto */ }
+    // Compatibilidad y parsing rápido de query
+    const query = text.includes('?') ? text.slice(text.indexOf('?') + 1) : '';
+    const queryCodeFallback = readScanCodeParam(query);
+
+    const ti = traceIdentityRef();
+    const identity = ti && ti.resolveTraceIdentity ? ti.resolveTraceIdentity(raw) : null;
+    if (!identity || !identity.valid) {
+      let failReason = identity ? identity.reason : 'invalid_payload';
+      if (identity && identity.intent === 'crate' && (failReason === 'invalid-crate-code' || failReason === 'invalid_crate_code')) {
+        failReason = 'unregistered_crate';
+      }
+      return emptyResolution(text, 'unknown', failReason);
     }
-    // URL de trazabilidad o deep-link: el último segmento no vacío es el código.
-    if (/[:/]/.test(candidate)) {
-      const segments = candidate.split(/[?#]/)[0].split('/').filter(Boolean);
-      if (segments.length) candidate = decodeURIComponent(segments[segments.length - 1]);
-    }
-    candidate = candidate.replace(/^(?:SDP-CERT-|CAN-)/i, '').trim();
-    if (!candidate) return miss('empty_payload');
 
     const norm = s => String(s == null ? '' : s).trim().toLowerCase();
-    const target = norm(candidate);
 
-    const bag = bolsas.find(b => norm(b.codigo) === target || norm(b.id) === target);
-    if (bag) {
-      const lote = lotes.find(l => l.id === bag.loteId) || null;
-      return {
-        kind: 'bag',
-        batchId: bag.loteId || (lote ? lote.id : null),
-        batchCode: lote ? (lote.codigo || lote.id) : null,
-        bagId: bag.id,
-        raw: text,
-        reason: null,
-      };
+    // 1. Detección de colisión / ambigüedad si no hubo intención explícita:
+    // Si el código coincide simultáneamente con más de una entidad en los catálogos proporcionados
+    if (!identity.intent) {
+      const candidateCode = identity.crateCode || identity.batchCode;
+      const targetNorm = norm(candidateCode);
+      const matchedCrateInCat = crates.find(c => norm(c.codigo) === targetNorm || norm(c.id) === targetNorm);
+      const isCrateSyntax = ti.CRATE_CODE_REGEX ? ti.CRATE_CODE_REGEX.test(candidateCode) : /^CAN-\d{1,4}$/i.test(candidateCode);
+      const hasCrateMatch = Boolean(matchedCrateInCat || isCrateSyntax);
+      const hasLotMatch = lotes.some(l => norm(l.codigo) === targetNorm || norm(l.id) === targetNorm);
+      const hasBagMatch = bolsas.some(b => norm(b.codigo) === targetNorm || norm(b.id) === targetNorm);
+
+      if ((hasCrateMatch && hasLotMatch) || (hasCrateMatch && hasBagMatch) || (hasLotMatch && hasBagMatch)) {
+        return emptyResolution(text, 'unknown', 'ambiguous_identifier');
+      }
     }
 
-    const exact = lotes.find(l => norm(l.codigo) === target || norm(l.id) === target);
-    if (exact) {
-      return { kind: 'batch', batchId: exact.id, batchCode: exact.codigo || exact.id, bagId: null, raw: text, reason: null };
+    // 2. Canastillas (crate)
+    if (identity.kind === 'crate') {
+      const targetNorm = norm(identity.crateCode);
+      const matchedCrate = crates.find(c => norm(c.codigo) === targetNorm || norm(c.id) === targetNorm);
+      if (matchedCrate) {
+        if (matchedCrate.activa === false) {
+          const res = emptyResolution(text, 'unknown', 'inactive_crate');
+          res.crateId = matchedCrate.id;
+          res.crateCode = matchedCrate.codigo;
+          return res;
+        }
+        const res = emptyResolution(text, 'crate', null);
+        res.crateId = matchedCrate.id;
+        res.crateCode = matchedCrate.codigo;
+        res.taraGramos = matchedCrate.taraGramos ?? null;
+        res.taraSource = matchedCrate.taraSource ?? 'unverified';
+        return res;
+      }
+      const res = emptyResolution(text, 'crate_unregistered', 'unregistered_crate');
+      res.crateCode = identity.crateCode;
+      return res;
     }
 
-    // Etiqueta de bolsa cuyo registro aún no existe: `<codigoLote>-B07`.
-    const prefixed = lotes.find(l => l.codigo && target.startsWith(norm(l.codigo) + '-'));
-    if (prefixed) {
-      return { kind: 'batch', batchId: prefixed.id, batchCode: prefixed.codigo, bagId: null, raw: text, reason: 'resolved_by_prefix' };
+    // 3. Bolsas (bag)
+    if (identity.kind === 'bag') {
+      const bagNorm = norm(identity.bagCode);
+      const batchNorm = norm(identity.batchCode);
+      const matchedBag = bolsas.find(b => norm(b.codigo) === bagNorm || norm(b.id) === bagNorm);
+      const parentLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+
+      if (matchedBag) {
+        const resolvedParent = parentLot || lotes.find(l => l.id === matchedBag.loteId) || null;
+        const res = emptyResolution(text, 'bag', null);
+        res.batchId = matchedBag.loteId || (resolvedParent ? resolvedParent.id : null);
+        res.batchCode = resolvedParent ? (resolvedParent.codigo || resolvedParent.id) : identity.batchCode;
+        res.bagId = matchedBag.id;
+        return res;
+      }
+
+      // Si la bolsa específica no está en el array bolsas pero el lote padre sí, cae al lote (resolved_by_prefix)
+      if (parentLot) {
+        const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
+        res.batchId = parentLot.id;
+        res.batchCode = parentLot.codigo || parentLot.id;
+        return res;
+      }
+
+      return emptyResolution(text, 'unknown', 'no_match');
     }
 
-    return miss('no_match');
+    // 4. Flush (histórico o por query)
+    if (identity.kind === 'flush') {
+      const batchNorm = norm(identity.batchCode);
+      const matchedLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+      if (matchedLot) {
+        const res = emptyResolution(text, 'batch', null);
+        res.batchId = matchedLot.id;
+        res.batchCode = matchedLot.codigo || matchedLot.id;
+        return res;
+      }
+      return emptyResolution(text, 'unknown', 'historical_batch_not_found');
+    }
+
+    // 5. Lote Maestro (batch)
+    if (identity.kind === 'batch') {
+      const batchNorm = norm(identity.batchCode);
+      const matchedLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+      if (matchedLot) {
+        const res = emptyResolution(text, 'batch', null);
+        res.batchId = matchedLot.id;
+        res.batchCode = matchedLot.codigo || matchedLot.id;
+        return res;
+      }
+
+      // Prefijo si algún lote coincide con el inicio del código
+      const prefixedLot = lotes.find(l => l.codigo && (batchNorm.startsWith(norm(l.codigo) + '-') || norm(l.codigo).startsWith(batchNorm)));
+      if (prefixedLot) {
+        const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
+        res.batchId = prefixedLot.id;
+        res.batchCode = prefixedLot.codigo;
+        return res;
+      }
+
+      return emptyResolution(text, 'unknown', 'no_match');
+    }
+
+    return emptyResolution(text, 'unknown', 'no_match');
   };
 
   const buildEventTimeline = ({ lote, bolsas, cosechas, events, incidencias, nowMs }) => {
@@ -337,11 +508,10 @@
       : (lote.stageSince || null);
     const stageSince = lastTransitionAt || lote.fechaInoculacion || lote.fechaMezcla || null;
 
-    // `aislada` no cuenta como activa: está en observación, no en producción normal,
-    // pero tampoco es una baja confirmada como `contaminada`/`descartada`.
     const bagsActive = loteBolsas.length
       ? loteBolsas.filter(b => !['descartada', 'contaminada', 'aislada'].includes(b.estado)).length
       : (parseInt(lote.numBolsas, 10) || 0);
+
     const bagsIsolated = loteBolsas.filter(b => b.estado === 'aislada').length;
 
     const recipeRef = recipe || lote.recipeRef || lote.recetaSnapshot || null;
@@ -374,14 +544,14 @@
         detail: `${stats.bolsasContaminadas}/${stats.numBolsas} bolsas contaminadas (${stats.contPct.toFixed(0)}%)`,
       });
     }
+    if (bagsIsolated > 0) {
+      anomalies.push({ kind: 'isolation', severity: 'warning', detail: `${bagsIsolated} bolsa(s) aislada(s) en observación` });
+    }
     loteIncidencias.forEach(inc => {
       anomalies.push({ kind: 'environment', severity: inc.severity || 'warning', detail: inc.title || inc.msg || inc.detail || 'Incidencia ambiental', incidentId: inc.id || null });
     });
     if (stats && stats.varianzaEB != null && stats.varianzaEB <= -15) {
       anomalies.push({ kind: 'yield', severity: 'warning', detail: `EB real ${stats.be.toFixed(0)}% vs ${stats.ebEstimada}% estimada de la receta` });
-    }
-    if (bagsIsolated > 0) {
-      anomalies.push({ kind: 'isolation', severity: 'warning', detail: `${bagsIsolated} bolsa(s) aislada(s) en observación` });
     }
 
     // Bloqueos: lo que impide avanzar. Se muestran para explicar por qué falta
@@ -444,6 +614,26 @@
         contaminationPct: stats.contPct,
         colonizationDays: stats.diasCol,
       } : null,
+      flushForecast: (() => {
+        const flushEngine = flushForecastRef();
+        if (!flushEngine || typeof (flushEngine.calculateRemainingFlushes || flushEngine.calculateLotYieldAndFlushes) !== 'function') {
+          return null;
+        }
+        const calcFn = flushEngine.calculateRemainingFlushes || flushEngine.calculateLotYieldAndFlushes;
+        const maxHarvestedFlush = loteCosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
+        const validHarvests = loteCosechas.filter(c => c && c.fecha);
+        const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+        try {
+          return calcFn(lote, {
+            currentFlush: maxHarvestedFlush,
+            lastFlushDate: lastHarvest ? lastHarvest.fecha : null,
+            eb: stats?.ebEstimada || lote.eb || lote.ebEstimada || (lote.recipeRef && lote.recipeRef.eb) || stats?.be,
+            contamRate: stats ? (stats.contPct / 100) : (lote.contamRate ?? 0),
+          });
+        } catch (err) {
+          return null;
+        }
+      })(),
       anomalies,
       blocks,
       photos,
@@ -584,6 +774,50 @@
   };
 
   /**
+   * Tipos de evento reportables desde el escáner QR del action sheet móvil
+   * (ver "Reportar evento" en simulador-app.jsx). Viven en su propia
+   * colección Firestore `eventos_cultivo` — no reemplazan ni duplican el
+   * historial inmutable de `appendBatchEvent`, aunque Riego y Observación
+   * también se reflejan ahí para que aparezcan en la línea de tiempo del lote.
+   */
+  const CULTIVO_EVENT_TIPOS = Object.freeze(['observacion', 'riego', 'contaminacion', 'cosecha_parcial']);
+
+  /**
+   * Construye el documento de un evento de cultivo reportado por QR. Lógica
+   * pura: no escribe a Firestore (eso lo hace firebase/eventos-cultivo-sync.js
+   * con este mismo objeto) ni muta nada — solo valida y da forma al payload.
+   *
+   * @param {object} params
+   * @param {string} params.batchId Lote resuelto por el escáner
+   * @param {?string} [params.bagId] Bolsa resuelta por el escáner, si la hubo
+   * @param {'observacion'|'riego'|'contaminacion'|'cosecha_parcial'} params.tipo
+   * @param {string} params.operatorId Operador con sesión activa que escaneó
+   * @param {string} [params.nota] Texto libre (obligatorio para 'observacion')
+   * @param {string} [params.at] Timestamp ISO inyectable (por defecto: ahora)
+   * @returns {{id:string,batchId:string,bagId:?string,tipo:string,operatorId:string,nota:string,at:string,source:string}}
+   */
+  const buildCultivoEvento = ({ batchId, bagId = null, tipo, operatorId, nota = '', at = null } = {}) => {
+    if (!batchId) throw new Error('batchId es requerido para registrar un evento de cultivo');
+    if (!CULTIVO_EVENT_TIPOS.includes(tipo)) {
+      throw new Error(`tipo debe ser uno de: ${CULTIVO_EVENT_TIPOS.join(', ')}`);
+    }
+    if (!operatorId) throw new Error('operatorId es requerido para registrar un evento de cultivo');
+    if (tipo === 'observacion' && !String(nota || '').trim()) {
+      throw new Error('nota es requerida para un evento de tipo "observacion"');
+    }
+    return {
+      id: `EVC_${batchId}_${Date.now()}`,
+      batchId,
+      bagId: bagId || null,
+      tipo,
+      operatorId,
+      nota: String(nota || '').trim(),
+      at: at || new Date().toISOString(),
+      source: 'qr_scan',
+    };
+  };
+
+  /**
    * Aplica una acción a la ficha: valida que sea válida ahora, construye el
    * evento inmutable y devuelve el estado resultante. Es el paso
    * `registrar → actualizar estado` del flujo de captura.
@@ -629,24 +863,43 @@
   };
 
   /**
-   * Declara TODAS las consecuencias digitales de una acción física, sin
-   * aplicarlas ni tocar nada externo: evento, cambios de bolsa, contadores del
-   * lote, transición propuesta e intenciones de seguimiento. Una herramienta de
-   * operación de verdad no deja que el operario reconstruya el día a mano
-   * encadenando cinco llamadas — esta función es ese "todo de una vez".
+   * Indicadores de éxito del modelo de ficha, calculados sobre las fichas ya
+   * construidas. Lo que no se puede derivar de una ficha (intentos de transición
+   * inválida, operaciones iniciadas por QR) se inyecta como contadores del runtime.
    *
-   * `followUps` son INTENCIONES, no tareas: quien convierte esto en un objeto
-   * `Task` es task-engine.js (vía `tasksFromFollowUps`), nunca este módulo — el
-   * acoplamiento va en una sola dirección y aquí no se importa task-engine.js.
-   *
-   * @param {object} sheet Ficha construida por buildBatchSheet
-   * @param {string} action Acción del catálogo (ver ACTION_CATALOG)
-   * @param {object} [payload] Datos capturados en campo para la acción
-   * @param {object} [options] { role, operatorId, at, bolsas } — `bolsas` son
-   *   las bolsas del lote (mismo shape que en buildBatchSheet), necesarias para
-   *   recalcular contadores tras una decisión de contaminación
-   * @returns {object} Consecuencias congeladas, listas para `applyConsequences`
+   * @param {Array<object>} sheets Fichas construidas por buildBatchSheet
+   * @param {object} [counters] { invalidTransitionAttempts, qrStartedOps, totalFieldOps, inspectionDurationsMs }
    */
+  const batchScoreboard = (sheets = [], counters = {}) => {
+    const total = sheets.length;
+    const pct = n => (total ? Math.round((n / total) * 1000) / 10 : null);
+    const closed = sheets.filter(s => s.state === 'closed');
+    const durations = counters.inspectionDurationsMs || [];
+
+    return {
+      batches: total,
+      // % de eventos vinculados a un lote: por construcción la ficha sólo contiene
+      // eventos del lote, así que aquí se mide cuántas fichas tienen historial.
+      eventsLinkedPct: pct(sheets.filter(s => s.timeline.length > 0).length),
+      batchesWithoutNextActionPct: pct(sheets.filter(s => !s.nextAction).length),
+      batchesWithoutRecipeOrRoomPct: pct(sheets.filter(s => !s.traceability.recipeLinked || !s.traceability.roomLinked).length),
+      avgTraceabilityCompletenessPct: total
+        ? Math.round((sheets.reduce((sum, s) => sum + s.completenessPct, 0) / total) * 10) / 10
+        : null,
+      closedBatchTraceabilityPct: closed.length
+        ? Math.round((closed.reduce((sum, s) => sum + s.completenessPct, 0) / closed.length) * 10) / 10
+        : null,
+      blockedBatches: sheets.filter(s => s.blocks.length > 0).length,
+      invalidTransitionAttempts: counters.invalidTransitionAttempts || 0,
+      qrStartedOpsPct: counters.totalFieldOps
+        ? Math.round(((counters.qrStartedOps || 0) / counters.totalFieldOps) * 1000) / 10
+        : null,
+      medianInspectionMs: durations.length
+        ? [...durations].sort((a, b) => a - b)[Math.floor(durations.length / 2)]
+        : null,
+    };
+  };
+
   const actionConsequences = (sheet, action, payload = {}, options = {}) => {
     const workflow = workflowRef();
     const role = options.role || 'operario';
@@ -803,49 +1056,13 @@
     };
   };
 
-  /**
-   * Indicadores de éxito del modelo de ficha, calculados sobre las fichas ya
-   * construidas. Lo que no se puede derivar de una ficha (intentos de transición
-   * inválida, operaciones iniciadas por QR) se inyecta como contadores del runtime.
-   *
-   * @param {Array<object>} sheets Fichas construidas por buildBatchSheet
-   * @param {object} [counters] { invalidTransitionAttempts, qrStartedOps, totalFieldOps, inspectionDurationsMs }
-   */
-  const batchScoreboard = (sheets = [], counters = {}) => {
-    const total = sheets.length;
-    const pct = n => (total ? Math.round((n / total) * 1000) / 10 : null);
-    const closed = sheets.filter(s => s.state === 'closed');
-    const durations = counters.inspectionDurationsMs || [];
-
-    return {
-      batches: total,
-      // % de eventos vinculados a un lote: por construcción la ficha sólo contiene
-      // eventos del lote, así que aquí se mide cuántas fichas tienen historial.
-      eventsLinkedPct: pct(sheets.filter(s => s.timeline.length > 0).length),
-      batchesWithoutNextActionPct: pct(sheets.filter(s => !s.nextAction).length),
-      batchesWithoutRecipeOrRoomPct: pct(sheets.filter(s => !s.traceability.recipeLinked || !s.traceability.roomLinked).length),
-      avgTraceabilityCompletenessPct: total
-        ? Math.round((sheets.reduce((sum, s) => sum + s.completenessPct, 0) / total) * 10) / 10
-        : null,
-      closedBatchTraceabilityPct: closed.length
-        ? Math.round((closed.reduce((sum, s) => sum + s.completenessPct, 0) / closed.length) * 10) / 10
-        : null,
-      blockedBatches: sheets.filter(s => s.blocks.length > 0).length,
-      invalidTransitionAttempts: counters.invalidTransitionAttempts || 0,
-      qrStartedOpsPct: counters.totalFieldOps
-        ? Math.round(((counters.qrStartedOps || 0) / counters.totalFieldOps) * 1000) / 10
-        : null,
-      medianInspectionMs: durations.length
-        ? [...durations].sort((a, b) => a - b)[Math.floor(durations.length / 2)]
-        : null,
-    };
-  };
-
   const api = {
+    CONFIG_CRATES,
+    emptyResolution,
     LEGACY_STATE_ALIASES,
-    STATE_LABELS,
     BAG_STATES,
     BAG_STATE_LABELS,
+    STATE_LABELS,
     ACTION_CATALOG,
     ACTION_PRIORITY,
     MAX_CONTEXTUAL_ACTIONS,
@@ -861,6 +1078,8 @@
     actionConsequences,
     applyConsequences,
     batchScoreboard,
+    CULTIVO_EVENT_TIPOS,
+    buildCultivoEvento,
   };
 
   if (isNode) module.exports = api;

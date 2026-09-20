@@ -16,5 +16,5 @@ test('sim.css define un estilo para .is-adjustable (border-left, cue complementa
 });
 
 test('el banner de bloqueo por producción ofrece un atajo directo a Auto-mejorar cuando el balance es la causa', () => {
-  assert.match(jsx, /⚠ \{productionBlockMsg\}[\s\S]{0,200}!balanced&&<button[\s\S]{0,50}onClick=\{autoImprove\}/);
+  assert.match(jsx, /<AppIcon name="alert"[^>]*\/>\s*\{productionBlockMsg\}[\s\S]{0,200}!balanced&&<button[\s\S]{0,50}onClick=\{autoImprove\}/);
 });

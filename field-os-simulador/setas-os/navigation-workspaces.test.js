@@ -44,7 +44,9 @@ test('context tabs are keyboard accessible and mobile targets stay usable', () =
   assert.match(shell, /role="tablist"/);
   assert.match(shell, /role="tab" aria-selected="\{\{ t\.on \}\}" tabindex="\{\{ t\.tabIndex \}\}"/);
   for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) assert.match(shell, new RegExp(key));
-  assert.match(shell, /\.rail-btn \{ flex:1 1 25%; min-width:0;[^}]*min-height:48px;/);
+  // El rail mobile Criterio (Hoy/Lotes/Scan/Salas/Más) reemplazó al rail de
+  // escritorio replegado en bottom-bar; conserva el mismo piso táctil de 48px.
+  assert.match(shell, /\.rail-mobile-btn \{[^}]*min-height:48px;/);
   assert.match(shell, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
@@ -110,7 +112,7 @@ test('long UI collections use progressive disclosure and mobile-safe layouts', (
   assert.match(jsx, /className="role-group-content" hidden=\{isCollapsed\}/);
   assert.match(css, /\.builder-wrap \.ing-list\{max-height:none;overflow:visible\}/);
   assert.match(jsx, /compatible\{compatCount===1\?'':'s'\}/);
-  assert.match(jsx, /className="inv-table inventory-stock-table"/);
+  assert.match(jsx, /className="inv-table inventory-stock-table/);
   assert.match(css, /\.inventory-stock-table td::before\{content:attr\(data-label\)/);
   assert.match(css, /\.home-workspaces-grid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /@media\(max-width:480px\)[\s\S]*\.spp-grid\{grid-template-columns:minmax\(0,1fr\)!important/);
@@ -142,7 +144,7 @@ test('Bitácora and Producción controls expose contextual accessible names', ()
   assert.match(jsx, /aria-label=\{`Quitar foto de la bolsa \$\{bolsa\.codigo\}`\}/);
   assert.match(jsx, /aria-label=\{`Registrar cosecha para la bolsa \$\{bolsa\.codigo\}`\}/);
   assert.match(jsx, /title:'Eliminar cosecha'[\s\S]*onConfirm:\(\)=>deleteBitCosecha/);
-  assert.match(jsx, /aria-label=\{`Humedad real de \$\{x\.g\?x\.g\.name:id\}, porcentaje`\}/);
+  assert.match(jsx, /aria-label=\{`Humedad real de \$\{g\?\.name\|\|r\.id\}, porcentaje`\}/);
   assert.match(jsx, /aria-label=\{`Paso \$\{i\+1\} completado: \$\{t\}`\}/);
   assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true" className=\{'os-sync-state/);
   assert.match(jsx, /name=\{`stockKg-\$\{r\.id\}`\} aria-label=\{`Stock de \$\{r\.name\} en kg`\}/);

@@ -35,10 +35,13 @@ const DC_RUNTIME_SCRIPTS = [
   "../bridge-protocol.js",
   "../navigation-state.js",
   "../setas-os-workflow.js",
+  "../contamination-workflow.js",
   "../climate-sparkline.js",
   "../support.js",
 ];
 const PROTECTED_APP_SCRIPTS = [
+  "../trace-identity.js",
+  "../public-trace-dto.js",
   "../recipe-recommender.js",
   "../scoring.js",
   "../bitacora-model.js",
@@ -48,6 +51,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../task-engine.js",
   "../day-close.js",
   "../sync-queue.js",
+  "../sweep-journal.js",
   "../climate-math.js",
   // El puente de telemetría en vivo depende del contrato y del adaptador ESP32
   // en ese orden: cada uno lee el global que publica el anterior.
@@ -59,15 +63,36 @@ const PROTECTED_APP_SCRIPTS = [
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
   "../post-harvest-engine.js",
+  "../perito-workbench-core.js",
   "../historical-calibration.js",
+  "../species-targets.js",
+  "../recipe-version.js",
+  "../launch-plan.js",
+  "../inventory-consumption.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Cuaderno de campo offline. setas-os-workflow.js llega después, en
+  // DC_RUNTIME_SCRIPTS, así que field-events-model.js resuelve ese global de
+  // forma perezosa en cada llamada en vez de capturarlo al cargarse.
+  "../field-event-contracts.js",
+  "../field-event-queue.js",
+  "../field-events-model.js",
+  "../field-event-reconcile.js",
+  "../field-event-sync.js",
+  "../field-event-account.js",
+  "../field-qr-resolve.js",
+  "../field-action-sheet.js",
+  "../field-qr-events.js",
+  "../field-event-callable-transport.js",
+  // field-event-mock-transport.js NO se carga aquí a propósito: es un servidor
+  // de aceptación falso. Sólo __harness.html lo incluye, con su propia etiqueta.
 ];
 let dataRuntimePromise = null;
 let protectedAppScriptsPromise = null;
 let authRuntimePromise = null;
 let dcRuntimePromise = null;
 let authDocumentResourcesObserver = null;
+let authGatedResourcesObserver = null;
 
 function loadClassicScript(src) {
   return new Promise((resolve, reject) => {
@@ -143,6 +168,7 @@ function loadDataRuntime() {
         import("./db.js"),
         import("./bitacora-sync.js"),
         import("./public-trace-sync.js"),
+        import("./eventos-cultivo-sync.js"),
       ]);
       // Estos motores UMD dependen entre sí y el bundle React los resuelve
       // como globals. Se ejecutan en orden solo tras Auth, antes del bundle.
@@ -194,15 +220,37 @@ function syncAuthGatedResources(authenticated) {
   const scope = document.querySelector("#dc-root") || document;
   scope.querySelectorAll("[data-auth-src]").forEach((node) => {
     if (authenticated) {
-      if (!node.getAttribute("src")) node.setAttribute("src", node.dataset.authSrc);
+      const rawSrc = node.dataset.authSrc;
+      const resolved = (typeof window !== "undefined" && typeof window.resolveImg === "function")
+        ? window.resolveImg(rawSrc)
+        : ((rawSrc === "_standalone_imgs/logo-sdlp.png" && typeof window !== "undefined" && window.__resources && window.__resources.imgLogoSdlp) ? window.__resources.imgLogoSdlp : rawSrc);
+      if (!node.getAttribute("src") || node.getAttribute("src") !== resolved) {
+        node.setAttribute("src", resolved);
+      }
     } else {
       node.removeAttribute("src");
     }
   });
 }
 
+function setAuthGatedResources(authenticated) {
+  if (authenticated) {
+    syncAuthGatedResources(true);
+    if (!authGatedResourcesObserver) {
+      authGatedResourcesObserver = new MutationObserver(() => syncAuthGatedResources(true));
+      const target = document.querySelector("#dc-root") || document.body || document.documentElement;
+      authGatedResourcesObserver.observe(target, { childList: true, subtree: true });
+    }
+  } else {
+    authGatedResourcesObserver?.disconnect();
+    authGatedResourcesObserver = null;
+    syncAuthGatedResources(false);
+  }
+}
+
 function publishAuthState(authenticated) {
   setAuthDocumentResources(authenticated);
+  setAuthGatedResources(authenticated);
   window.__setasAuthState = authenticated;
   document.documentElement.dataset.setasAuthState = authenticated ? "authenticated" : "unauthenticated";
   syncAuthGatedResources(authenticated);
@@ -245,7 +293,7 @@ export function buildGate() {
   Object.assign(signoutBtn.style, {
     position: "fixed", top: "10px", right: "10px", zIndex: "var(--z-fab, 65)",
     minHeight: "44px", padding: "8px 12px", background: "var(--paper-0,#f7f4ec)", border: "1px solid var(--border-hairline,#8c7f5b)",
-    borderRadius: "var(--radius-sm,2px)", fontFamily: "var(--font-mono,monospace)", fontSize: "10.5px", fontWeight: "700",
+    borderRadius: "var(--radius-sm,2px)", fontFamily: "var(--font-mono,monospace)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "700",
     color: "var(--ink-2,#6b6759)", cursor: "pointer", display: "none",
   });
 
