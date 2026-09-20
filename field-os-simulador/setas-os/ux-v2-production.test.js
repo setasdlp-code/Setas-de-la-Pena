@@ -59,6 +59,18 @@ test('la cola de trabajo vive en el cockpit que el operario ve, no en un compone
   assert.match(source, /mergeIntoTasks\(seeded\)/);
 });
 
+test('la casilla de tarea cumple el objetivo tactil de campo y el contador cuenta lo que se ve', () => {
+  // Ambos fallos los encontró un arnés que montó la app de verdad: la casilla
+  // medía 36px (el estándar de campo del proyecto es >=48, se toca con guantes)
+  // y el contador salía de props.tasksOpenCount mientras la lista salía del
+  // motor — dos fuentes distintas, y sin datos del shell el número desaparecía.
+  assert.match(source, /width:48,height:48,display:'grid',placeItems:'center'/);
+  assert.doesNotMatch(source, /flexShrink:0,width:36,height:36/);
+  assert.match(source, /data-testid="cockpit-task-count"/);
+  assert.match(source, /tasksHoy\.filter\(t=>!t\.done\)\.length/);
+  assert.match(source, /pendiente\$\{n===1\?'':'s'\}/);
+});
+
 test('marcar una tarea en el cockpit registra el evento que la cierra', () => {
   // El contrato del motor es que una tarea sólo se cierra con el evento que la
   // cumple. La casilla no puede saltárselo: registra un evento manual y cierra

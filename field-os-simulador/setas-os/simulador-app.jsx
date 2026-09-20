@@ -8806,7 +8806,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           Tareas de Hoy
                         </h2>
                       </div>
-                      {tasksHoy.length>0 && <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{props.tasksOpenCount} pendientes</span>}
+                      {/* El contador tiene que contar LO QUE SE VE. Antes salía de
+                          props.tasksOpenCount mientras la lista salía del motor:
+                          dos fuentes distintas, y con el shell sin datos el número
+                          desaparecía dejando un "pendientes" suelto. */}
+                      {tasksHoy.length>0 && <span data-testid="cockpit-task-count" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{(()=>{const n=tasksHoy.some(t=>t.fromEngine)?tasksHoy.filter(t=>!t.done).length:(props.tasksOpenCount||tasksHoy.length);return `${n} pendiente${n===1?'':'s'}`;})()}</span>}
                     </div>
                     {tasksHoy.length===0 ? (
                       <div style={{textAlign:'center',padding:'20px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
@@ -8816,8 +8820,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:8}}>
                         {tasksHoy.slice(0,5).map(t=>(
                           <div key={t.key} style={{display:'flex',alignItems:'center',gap:2,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
-                            <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label="Marcar tarea"
-                              style={{cursor:'pointer',flexShrink:0,width:36,height:36,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                            {/* 48×48: es una acción de campo y se toca con guantes.
+                                El estándar del proyecto para estos objetivos es
+                                ≥48px (setas-os-components.css, MOBILE_A11Y_REVIEW). */}
+                            <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label={`Marcar tarea: ${t.title}`}
+                              style={{cursor:'pointer',flexShrink:0,width:48,height:48,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
                               <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)',fontSize:11}}>{t.done?'✓':''}</span>
                             </button>
                             <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',padding:0,display:'flex',flexDirection:'column',gap:2}}>
