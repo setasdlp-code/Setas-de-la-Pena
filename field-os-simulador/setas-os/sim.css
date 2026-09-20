@@ -6355,3 +6355,110 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: #F2F5F2;
   font-weight: 600;
 }
+
+/* ── DS-2026 · Mobile Navigation Criterio & Safe Area ── */
+.app-rail-mobile { display: none; }
+
+@media (max-width: 859px) {
+  .app-workspace {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  .app-rail-mobile {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-rail, 90);
+    background: var(--paper-0);
+    border-top: 1px solid var(--border-strong);
+    padding: 4px 2px calc(6px + env(safe-area-inset-bottom));
+    gap: 0;
+  }
+  .rail-mobile-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-2);
+    padding: 6px 2px;
+    touch-action: manipulation;
+  }
+  .rail-mobile-btn svg {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+  }
+  .rail-mobile-btn span {
+    font-family: var(--font-mono);
+    font-size: var(--size-label, 11px);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .rail-mobile-btn:hover {
+    color: var(--ink-1);
+  }
+  .rail-mobile-btn.on {
+    color: var(--ink-0);
+    background: var(--paper-2);
+  }
+  .rail-mobile-btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+  .rail-mobile-btn--scan {
+    flex: 0 0 60px;
+    min-height: 60px;
+    margin-top: -14px;
+    background: var(--ink-0);
+    color: var(--paper-0);
+    border: 2px solid var(--paper-0);
+  }
+  .rail-mobile-btn--scan svg {
+    width: 24px;
+    height: 24px;
+  }
+  .rail-mobile-btn--scan:hover,
+  .rail-mobile-btn--scan:active {
+    background: var(--accent-olive);
+  }
+  .mobile-more-flyout {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    z-index: var(--z-rail, 90);
+    background: var(--paper-0);
+    border-top: 1px solid var(--border-strong);
+    flex-direction: column;
+    padding: 8px;
+  }
+  .rail-flyout-item {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--ink-1);
+    cursor: pointer;
+    text-align: left;
+  }
+  .rail-flyout-item:hover,
+  .rail-flyout-item.on {
+    background: var(--paper-2);
+    color: var(--ink-0);
+  }
+}
