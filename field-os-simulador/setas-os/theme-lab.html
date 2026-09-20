@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="es" data-mode="field">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Criterio Theme Lab · Setas de la Peña</title>
+<link rel="stylesheet" href="ds-2026/operations.css">
+<script src="qr-mini.js"></script>
+<script src="species-targets.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--surface-page);color:var(--text-primary);font:var(--t-body)}
+button,input,select{font:inherit}
+.lab-shell{min-height:100vh;display:grid;grid-template-columns:minmax(340px,420px) minmax(0,1fr)}
+.lab-controls{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:var(--rule-heavy);background:var(--surface-panel);padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-2)}
+.lab-canvas{min-width:0;padding:var(--page-margin, var(--space-4));background:var(--surface-page);transition:padding 0.15s ease}
+.lab-brand{border-bottom:var(--rule-heavy);padding-bottom:var(--space-2)}
+.lab-top-row{display:flex;justify-content:space-between;align-items:center;gap:var(--space-1)}
+.lab-kicker{font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--text-metadata)}
+.lab-title{margin:var(--space-half) 0 0;font-family:var(--font-editorial);font-size:var(--size-heading-01);line-height:1}
+.working-badge{display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:10px;padding:3px 6px;border:var(--rule-hairline);text-transform:uppercase;letter-spacing:0.05em}
+.working-badge[data-canonical=true]{background:var(--status-ok-bg);color:var(--status-ok);border-color:var(--status-ok)}
+.working-badge[data-canonical=false]{background:var(--status-warning-bg);color:var(--status-warning-text);border-color:var(--status-warning-marker)}
+.lab-nav-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:var(--rule-hairline);padding-bottom:var(--space-1);margin-top:var(--space-1)}
+.lab-tab-btn{border:var(--rule-hairline);background:var(--surface-page);color:var(--text-secondary);font-family:var(--font-mono);font-size:var(--size-micro-screen);padding:6px 9px;cursor:pointer;text-transform:uppercase}
+.lab-tab-btn[aria-selected=true]{background:var(--action-primary);color:var(--text-inverse);border-color:var(--action-primary);font-weight:var(--weight-bold)}
+.lab-subpanel{display:none}
+.lab-subpanel[data-active=true]{display:block}
+.lab-section{border-top:var(--rule-hairline);padding-top:var(--space-2);margin-top:var(--space-2)}
+.lab-section h2,.preview-card h2{margin:0 0 var(--space-1);font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--text-secondary)}
+.token-grid,.semantic-list,.preview-stack,.mini-hoy,.spec-grid{display:grid;gap:var(--space-1)}
+.token-row{display:grid;grid-template-columns:1fr auto;gap:var(--space-1);align-items:center;min-height:44px}
+.token-name{display:block;font-family:var(--font-mono);font-size:var(--size-data)}
+.token-meta{display:block;margin-top:2px;font-size:var(--size-micro);color:var(--text-metadata)}
+.color-control{display:flex;align-items:center;gap:var(--space-half)}
+.color-control input[type=color]{width:44px;height:44px;border:var(--rule-hairline);padding:2px;background:var(--surface-panel)}
+.hex{width:86px;min-height:44px;padding:0 8px;border:var(--rule-hairline);background:var(--surface-page);color:var(--text-primary);font-family:var(--font-mono);font-size:var(--size-micro-screen);text-transform:uppercase}
+.lab-field,.semantic-row{display:grid;gap:var(--space-half);margin-bottom:var(--space-2)}
+.lab-field label{font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--text-secondary)}
+.lab-field select,.semantic-row select,.lab-field input[type=range],.lab-field input[type=text]{width:100%;min-height:44px}
+.lab-field select,.semantic-row select,.lab-field input[type=text]{border:var(--rule-hairline);background:var(--surface-page);color:var(--text-primary);padding:0 var(--space-1)}
+.semantic-row code{font-size:var(--size-micro);color:var(--text-secondary)}
+.lab-range-line{display:flex;align-items:center;gap:var(--space-1)}
+.lab-range-line output{min-width:54px;text-align:right;font-family:var(--font-mono);font-size:var(--size-data)}
+.contrast-grid{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-family:var(--font-mono);font-size:var(--size-micro-screen)}
+.contrast-grid strong[data-pass=true]{color:var(--status-ok)}
+.contrast-grid strong[data-pass=false]{color:var(--status-error)}
+.lab-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-1)}
+.lab-actions .wide{grid-column:1/-1}
+.lab-btn{min-height:44px;border:var(--rule-hairline);background:var(--surface-page);color:var(--text-primary);padding:8px 10px;cursor:pointer}
+.lab-btn.primary{background:var(--action-primary);color:var(--text-inverse);border-color:var(--action-primary);font-weight:var(--weight-bold)}
+.lab-btn.danger{background:var(--action-danger);color:var(--text-inverse);border-color:var(--action-danger)}
+.lab-btn:disabled{opacity:var(--btn-disabled-opacity,0.5);cursor:not-allowed}
+.lab-status{min-height:24px;margin-top:var(--space-1);font-family:var(--font-mono);font-size:var(--size-micro-screen);color:var(--text-secondary)}
+.canvas-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);border-bottom:var(--rule-heavy);padding-bottom:var(--space-2);margin-bottom:var(--space-4)}
+.canvas-top h1{margin:0;font:var(--t-heading-01);line-height:1}
+.canvas-top p{margin:var(--space-1) 0 0;color:var(--text-secondary);max-width:65ch}
+.canvas-tabs{display:flex;gap:4px;margin-bottom:var(--space-3);border-bottom:var(--rule-hairline);padding-bottom:var(--space-1)}
+.canvas-tab-btn{border:var(--rule-hairline);background:var(--surface-panel);color:var(--text-secondary);padding:8px 14px;font-family:var(--font-mono);font-size:var(--size-micro-screen);text-transform:uppercase;cursor:pointer}
+.canvas-tab-btn[aria-selected=true]{background:var(--action-primary);color:var(--text-inverse);border-color:var(--action-primary);font-weight:var(--weight-bold)}
+.canvas-panel{display:none}
+.canvas-panel[data-active=true]{display:block}
+.mode-chip{flex:none;font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;border:var(--rule-hairline);padding:8px 10px;background:var(--surface-panel)}
+.preview-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gutter, var(--space-3));transition:gap 0.15s ease}
+.preview-card{min-width:0;border:var(--rule-frame);background:var(--surface-panel);padding:var(--space-3);border-radius:var(--radius-sm, 0px);border-width:var(--rule-width, 1px);transition:border-radius 0.15s ease, border-width 0.15s ease}
+.preview-card--6{grid-column:span 6}
+.preview-card--12{grid-column:1/-1}
+.preview-actions{display:flex;flex-wrap:wrap;gap:var(--space-1);align-items:center}
+.species-name{font:var(--t-species);letter-spacing:var(--tracking-tight);margin:0}
+.latin{font:var(--t-latin);color:var(--text-secondary);margin-top:2px}
+.sdp-btn, .sdp-reading, .sdp-task, .sdp-lote, .sdp-badge, .sdp-provenance, .sdp-sync, input, select { border-radius: var(--radius-sm, 0px) !important; border-width: var(--rule-width, 1px); transition: border-radius 0.15s ease, border-width 0.15s ease; }
+.room-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)}
+.export-box{margin-top:var(--space-2);border:var(--rule-hairline);background:var(--surface-recessed);max-height:280px;overflow:auto}
+.export-box pre{margin:0;padding:var(--space-2);font-family:var(--font-mono);font-size:11px;white-space:pre}
+.diff-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:11px;margin-top:var(--space-1)}
+.diff-table th,.diff-table td{border:var(--rule-hairline);padding:4px 6px;text-align:left;vertical-align:middle}
+.diff-table th{background:var(--surface-recessed);font-size:10px;text-transform:uppercase}
+.revert-btn{border:var(--rule-hairline);background:var(--surface-page);padding:2px 6px;font-size:10px;cursor:pointer}
+.revert-btn:hover{background:var(--surface-recessed)}
+.gates-list{display:grid;gap:4px;font-family:var(--font-mono);font-size:11px;margin:var(--space-1) 0}
+.gate-item{display:flex;justify-content:space-between;padding:4px 8px;border:var(--rule-hairline);background:var(--surface-page)}
+.gate-item[data-pass=true] span:last-child{color:var(--status-ok);font-weight:bold}
+.gate-item[data-pass=false] span:last-child{color:var(--status-error);font-weight:bold}
+.command-banner{background:var(--surface-recessed);border-left:3px solid var(--action-primary);padding:var(--space-2);font-family:var(--font-mono);font-size:11px;margin-top:var(--space-2);word-break:break-all}
+/* Phomemo M110 Physical Simulator */
+.phomemo-stage{display:flex;flex-direction:column;align-items:center;gap:var(--space-3);padding:var(--space-3);background:var(--surface-recessed);border:var(--rule-frame)}
+.phomemo-toolbar{display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;width:100%;justify-content:space-between}
+.phomemo-label-container{background:#ffffff;color:#000000;box-shadow:0 2px 8px rgba(0,0,0,0.12);position:relative;overflow:hidden;border:1px solid #d0d0d0}
+.phomemo-label-container[data-size="40x30"]{width:320px;height:240px}
+.phomemo-label-container[data-size="50x30"]{width:400px;height:240px}
+.phomemo-label{width:100%;height:100%;padding:12px;display:flex;flex-direction:column;justify-content:space-between;font-family:var(--font-sans);color:#000000}
+.phomemo-label-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000000;padding-bottom:4px}
+.phomemo-brand{font-family:var(--font-editorial);font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:0.04em}
+.phomemo-species{font-family:var(--font-editorial);font-size:18px;font-weight:700;line-height:1;margin-top:2px}
+.phomemo-latin{font-family:var(--font-editorial);font-style:italic;font-size:11px}
+.phomemo-mid{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:4px 0}
+.phomemo-lot{font-family:var(--font-mono);font-size:14px;font-weight:700;letter-spacing:0.06em}
+.phomemo-qr{width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.phomemo-footer{border-top:1px solid #000000;padding-top:4px;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;text-transform:uppercase}
+.phomemo-label-container[data-onebit="true"]{filter:contrast(1000%) grayscale(100%);image-rendering:pixelated}
+.phomemo-label-container[data-onebit="true"] *{text-shadow:none!important;box-shadow:none!important}
+/* Agronomy Gauge & Ficha */
+.agronomy-gauge{display:grid;gap:6px;margin:var(--space-2) 0}
+.gauge-bar{position:relative;height:24px;background:var(--surface-recessed);border:var(--rule-hairline);overflow:hidden}
+.gauge-target-zone{position:absolute;top:0;bottom:0;background:var(--status-ok-bg);opacity:0.8;border-left:1px dashed var(--status-ok);border-right:1px dashed var(--status-ok)}
+.gauge-needle{position:absolute;top:0;bottom:0;width:4px;background:var(--action-primary);transform:translateX(-50%)}
+.gauge-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:var(--size-micro-screen);color:var(--text-secondary)}
+.agronomy-meta-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:var(--size-micro-screen);margin-top:var(--space-2)}
+.agronomy-meta-table td{padding:4px 6px;border-bottom:var(--rule-hairline)}
+@media(max-width:1000px){.lab-shell{grid-template-columns:1fr}.lab-controls{position:relative;height:auto;border-right:0;border-bottom:var(--rule-heavy)}.preview-card--6{grid-column:1/-1}}
+@media(max-width:620px){.lab-controls,.lab-canvas{padding:var(--space-2)}.token-row{grid-template-columns:1fr}.color-control{justify-content:space-between}.canvas-top{flex-direction:column}.room-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="lab-shell">
+<aside class="lab-controls" aria-label="Controles de Theme Lab">
+  <header class="lab-brand">
+    <div class="lab-top-row">
+      <div class="lab-kicker">DS-2026 · Criterio Authoring</div>
+      <span id="canonical-status" class="working-badge" data-canonical="true">CANONICAL (BASELINE)</span>
+    </div>
+    <h1 class="lab-title">Theme Lab</h1>
+    <nav class="lab-nav-tabs" aria-label="Navegación de tokens y exportación">
+      <button class="lab-tab-btn" data-subpanel="colors" aria-selected="true" type="button">Colores</button>
+      <button class="lab-tab-btn" data-subpanel="type" aria-selected="false" type="button">Tipografía</button>
+      <button class="lab-tab-btn" data-subpanel="spacing" aria-selected="false" type="button">Espaciado</button>
+      <button class="lab-tab-btn" data-subpanel="domain" aria-selected="false" type="button">Dominio</button>
+      <button class="lab-tab-btn" data-subpanel="export" aria-selected="false" type="button">Export / Diff</button>
+    </nav>
+  </header>
+
+  <!-- PIGMENTOS & SEMÁNTICA -->
+  <div id="subpanel-colors" class="lab-subpanel" data-active="true">
+    <section class="lab-section"><h2>Pigmentos minerales</h2><div id="primitive-controls" class="token-grid"></div></section>
+    <section class="lab-section"><h2>Roles semánticos</h2><div id="semantic-controls" class="semantic-list"></div></section>
+    <section class="lab-section"><h2>Contraste WCAG en vivo</h2><div id="contrast-grid" class="contrast-grid"></div></section>
+  </div>
+
+  <!-- TIPOGRAFÍA -->
+  <div id="subpanel-type" class="lab-subpanel" data-active="false">
+    <section class="lab-section">
+      <h2>Jerarquía & Escala</h2>
+      <div id="typography-scale-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Pesos Tipográficos</h2>
+      <div id="typography-weight-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Interlineado (Leading)</h2>
+      <div id="typography-leading-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Espaciado (Tracking)</h2>
+      <div id="typography-tracking-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Probador de Tipografía en Vivo</h2>
+      <div class="lab-field">
+        <label for="type-specimen-role">Rol tipográfico</label>
+        <select id="type-specimen-role">
+          <option value="display-01">display-01 · Título de portada</option>
+          <option value="display-02">display-02 · Título de sección</option>
+          <option value="heading-01">heading-01 · Cabecera principal</option>
+          <option value="species" selected>species · Nombre común</option>
+          <option value="latin">latin · Binomio científico</option>
+          <option value="body">body · Texto de lectura</option>
+          <option value="data">data · Métricas & Telemetría</option>
+          <option value="label">label · Claves & Metadatos</option>
+          <option value="micro">micro · Microetiqueta</option>
+        </select>
+      </div>
+      <div class="lab-field">
+        <label for="type-specimen-input">Texto de prueba</label>
+        <input id="type-specimen-input" type="text" value="Setas de la Peña · Lentinula edodes 88% HR">
+      </div>
+      <div id="type-specimen-output" style="padding:var(--space-2);background:var(--bg-surface);border:1px solid var(--border-hairline);margin-top:var(--space-1);min-height:54px;display:flex;align-items:center;word-break:break-word"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Dominancia de Familia</h2>
+      <div class="lab-field">
+        <label for="type-dominance">Familia dominante</label>
+        <select id="type-dominance">
+          <option value="canonical">Canónica (Gaya editorial / Plex UI & Mono)</option>
+          <option value="plex">Plex Dominant (IBM Plex Sans en títulos)</option>
+          <option value="gaya">Gaya Dominant (Gaya en componentes)</option>
+        </select>
+      </div>
+    </section>
+  </div>
+
+  <!-- ESPACIADO & ESTRUCTURA -->
+  <div id="subpanel-spacing" class="lab-subpanel" data-active="false">
+    <section class="lab-section">
+      <h2>Estructura & Tap Targets</h2>
+      <div class="lab-field">
+        <label for="spacing-tap-target">Tap Target Floor (Operativo)</label>
+        <select id="spacing-tap-target">
+          <option value="44px">44px · Estándar Accesible</option>
+          <option value="48px">48px · Campo Rudo (Guantes)</option>
+        </select>
+      </div>
+      <div class="lab-field">
+        <label for="spacing-radius">Radio de Bordes</label>
+        <select id="spacing-radius">
+          <option value="0">0px · Brutalista Estricto</option>
+          <option value="2px">2px · Micro-Radio Sutil</option>
+          <option value="4px">4px · Curva Media</option>
+          <option value="8px">8px · Tarjeta Redondeada</option>
+        </select>
+      </div>
+      <div class="lab-field">
+        <label for="spacing-rule">Grosor de Reglas</label>
+        <select id="spacing-rule">
+          <option value="1">Hairline 1px / Heavy 2px</option>
+          <option value="2">Hairline 2px / Heavy 3px</option>
+          <option value="3">Hairline 3px / Heavy 5px</option>
+        </select>
+      </div>
+      <div class="lab-field">
+        <label for="spacing-scale-factor">Factor de escala base</label>
+        <div class="lab-range-line">
+          <input id="spacing-scale-factor" type="range" min="0.75" max="1.35" step="0.05" value="1">
+          <output id="spacing-scale-output">1.00×</output>
+        </div>
+      </div>
+    </section>
+    <section class="lab-section">
+      <h2>Gutters y Márgenes por Modo</h2>
+      <div id="spacing-grid-modes" class="spec-grid"></div>
+    </section>
+  </div>
+
+  <!-- DOMINIO & PROVENANCE -->
+  <div id="subpanel-domain" class="lab-subpanel" data-active="false">
+    <section class="lab-section">
+      <h2>Símbolos de Procedencia</h2>
+      <div id="domain-provenance-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Símbolos de Sincronización</h2>
+      <div id="domain-sync-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Tratamiento de Cuarentena</h2>
+      <div class="lab-field">
+        <label for="domain-quarantine-treatment">Estilo de Borde</label>
+        <select id="domain-quarantine-treatment">
+          <option value="dashed">Dashed (Líneas Discontinuas)</option>
+          <option value="solid">Solid (Línea Continua Fuerte)</option>
+          <option value="double">Double (Doble Línea de Advertencia)</option>
+        </select>
+      </div>
+    </section>
+  </div>
+
+  <!-- EXPORT / DIFF / GATES -->
+  <div id="subpanel-export" class="lab-subpanel" data-active="false">
+    <section class="lab-section">
+      <h2>Working Copy & Presets</h2>
+      <div class="lab-field">
+        <label for="preset-select">Variación de Trabajo</label>
+        <select id="preset-select">
+          <option value="canonical">Criterio Canónico (Baseline)</option>
+          <option value="field-contrast">Alto Contraste Campo (Exploración)</option>
+          <option value="warm-botanical">Cálido Botánico (Exploración)</option>
+          <option value="dark-chamber">Cámara Oscura / Low-Glare (Nocturno)</option>
+        </select>
+      </div>
+      <div class="lab-actions">
+        <button id="apply-preset-btn" class="lab-btn" type="button">Cargar variación</button>
+        <button id="revert-all-btn" class="lab-btn" type="button">Restablecer todo</button>
+      </div>
+    </section>
+
+    <section class="lab-section">
+      <h2>Compuertas Pre-Flight (Gates)</h2>
+      <div id="preflight-gates" class="gates-list"></div>
+    </section>
+
+    <section class="lab-section">
+      <h2>Acciones de Repositorio</h2>
+      <div class="lab-actions">
+        <button id="apply-repo-btn" class="lab-btn primary wide" type="button">Aplicar JSON al Repo</button>
+        <button id="download-bundle-btn" class="lab-btn wide" type="button">Descargar paquete JSON (5)</button>
+        <button id="copy-active-json-btn" class="lab-btn wide" type="button">Copiar JSON activo</button>
+      </div>
+      <div id="lab-action-status" class="lab-status" role="status" aria-live="polite"></div>
+      <div id="command-helper" class="command-banner" style="display:none"></div>
+    </section>
+
+    <section class="lab-section">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2>Diff Inspector</h2>
+        <select id="diff-filter" style="width:auto;min-height:30px;font-size:11px">
+          <option value="all">Todos los cambios</option>
+          <option value="colors">Solo colores</option>
+          <option value="type">Solo tipografía</option>
+          <option value="spacing">Solo espaciado</option>
+          <option value="domain">Solo dominio</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="diff-table">
+          <thead><tr><th>Token</th><th>Canónico</th><th>Working</th><th>Acción</th></tr></thead>
+          <tbody id="diff-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="lab-section">
+      <div class="lab-field">
+        <label for="export-json-view">Inspeccionar JSON</label>
+        <select id="export-json-view">
+          <option value="primitives">primitives.json</option>
+          <option value="semantic">semantic.json</option>
+          <option value="typography">typography.json</option>
+          <option value="spacing">spacing.json</option>
+          <option value="domain">domain.json</option>
+        </select>
+      </div>
+      <div class="export-box"><pre id="export-json-display"></pre></div>
+    </section>
+  </div>
+</aside>
+
+<main id="lab-canvas" class="lab-canvas" data-mode="field">
+  <header class="canvas-top">
+    <div>
+      <div class="lab-kicker">Authoring Canvas · Setas OS</div>
+      <h1 id="canvas-main-title">Operations & Cockpit</h1>
+      <p>Vista simultánea de componentes canónicos en tiempo real.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-half)">
+      <div id="mode-chip" class="mode-chip">FIELD</div>
+      <div class="lab-field" style="margin:0">
+        <select id="canvas-mode-select" style="min-height:32px;font-size:11px;padding:0 4px">
+          <option value="field">field</option>
+          <option value="control">control</option>
+          <option value="culinary">culinary</option>
+          <option value="archive">archive</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <nav class="canvas-tabs" aria-label="Secciones del Canvas">
+    <button class="canvas-tab-btn" data-panel="components" aria-selected="true" type="button">Components</button>
+    <button class="canvas-tab-btn" data-panel="agronomy" aria-selected="false" type="button">Agronomy</button>
+    <button class="canvas-tab-btn" data-panel="market" aria-selected="false" type="button">Market</button>
+    <button class="canvas-tab-btn" data-panel="print" aria-selected="false" type="button">Print (Phomemo)</button>
+  </nav>
+
+  <!-- PANEL 1: COMPONENTS -->
+  <div id="panel-components" class="canvas-panel" data-active="true">
+    <div class="preview-grid">
+      <!-- ESCAPARATE DE JERARQUÍA TIPOGRÁFICA CANÓNICA -->
+      <section class="preview-card preview-card--12">
+        <h2>Escala Tipográfica & Superficie Operativa</h2>
+        <div style="border-bottom:var(--rule-hairline);padding-bottom:var(--space-2);margin-bottom:var(--space-2)">
+          <div style="font:var(--t-label);color:var(--text-metadata)">DISPLAY-01 · PORTADA & TÍTULO SUPREMO</div>
+          <div style="font:var(--t-display-01);letter-spacing:var(--tracking-display);line-height:var(--leading-solid);margin:2px 0">Setas de la Peña</div>
+          <div style="font:var(--t-label);color:var(--text-metadata);margin-top:var(--space-1)">DISPLAY-02 · APERTURA DE SECCIÓN</div>
+          <div style="font:var(--t-display-02);letter-spacing:var(--tracking-display);line-height:var(--leading-tight);color:var(--brand-accent)">Finca Agroecológica Tenjo</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--space-3);margin-bottom:var(--space-2)">
+          <div>
+            <div style="font:var(--t-label);color:var(--text-metadata)">HEADING-01 · CABECERA PRINCIPAL</div>
+            <h1 style="font:var(--t-heading-01);letter-spacing:var(--tracking-tight);margin:2px 0 0">Control de Inoculación</h1>
+          </div>
+          <div>
+            <div style="font:var(--t-label);color:var(--text-metadata)">HEADING-02 · TÍTULO DE PANEL</div>
+            <h2 style="font:var(--t-heading-02);letter-spacing:var(--tracking-tight);margin:2px 0 0;text-transform:none">Monitoreo y Telemetría</h2>
+          </div>
+          <div>
+            <div style="font:var(--t-label);color:var(--text-metadata)">HEADING-03 · SUB-ENCABEZADO</div>
+            <h3 style="font:var(--t-heading-03);margin:2px 0 0">Protocolo de Fructificación</h3>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--space-3);padding-top:var(--space-2);border-top:var(--rule-hairline)">
+          <div>
+            <div style="font:var(--t-label);color:var(--text-metadata)">BODY · TEXTO DE LECTURA (16px MIN)</div>
+            <p style="font:var(--t-body);letter-spacing:var(--tracking-normal);line-height:var(--leading-normal);margin:4px 0">Sustrato a base de aserrín de roble y salvado de trigo orgánico formulado en Tenjo a 2.580 msnm. Parámetros de humedad y CO₂ verificados contra literatura canónica (Li 2024).</p>
+            <div style="font:var(--t-small);color:var(--text-secondary);margin-top:4px">SMALL · Texto secundario y notas de procedimiento.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font:var(--t-label);color:var(--text-metadata)">DATA / LABEL / MICRO</div>
+            <div style="font:var(--t-data)">T: 19.2°C · HR: 88% · CO₂: 742 PPM</div>
+            <div style="font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase">CAMPO OPERATIVO: LOTE-SHI-2026</div>
+            <div style="font:var(--t-micro);letter-spacing:var(--tracking-micro);text-transform:uppercase;color:var(--text-metadata)">METADATA: CALIBRACIÓN ACTIVA SHT45</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACCIONES & BOTONES -->
+      <section class="preview-card preview-card--6">
+        <h2>Acciones & Botones</h2>
+        <div class="preview-actions">
+          <button class="sdp-btn sdp-btn--primary sdp-btn--field">Registrar inspección</button>
+          <button class="sdp-btn sdp-btn--secondary sdp-btn--field">Mover lote</button>
+          <button class="sdp-btn sdp-btn--accent sdp-btn--field">Acento</button>
+          <button class="sdp-btn sdp-btn--danger sdp-btn--field">Descartar</button>
+          <button class="sdp-btn sdp-btn--secondary sdp-btn--field" disabled>Bloqueado</button>
+        </div>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Provenance Badges</h2>
+        <div class="preview-actions" id="provenance-preview-host">
+          <span class="sdp-provenance" data-provenance="measured">MEASURED · SHT45 · 3 MIN</span>
+          <span class="sdp-provenance" data-provenance="calculated">CALCULATED · EB</span>
+          <span class="sdp-provenance" data-provenance="manual">MANUAL · OPERARIO</span>
+          <span class="sdp-provenance" data-provenance="estimated">ESTIMATED · MODELO</span>
+        </div>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Dominio · Cuarentena & Sincronización</h2>
+        <article class="sdp-lote sdp-lote--quarantine" style="border: 2px var(--status-quarantine-border-style, dashed) var(--status-warning-marker); padding: var(--space-2); background: var(--status-warning-bg); margin-bottom: var(--space-2)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="sdp-badge sdp-badge--quarantine" style="font:var(--t-label);letter-spacing:var(--tracking-label);padding:2px 6px;border:1px var(--status-quarantine-border-style, dashed) var(--status-warning-marker);color:var(--status-warning-text);background:var(--surface-page)">CUARENTENA PREVENTIVA</span>
+            <span class="sdp-sync" data-sync="error" style="font:var(--t-label);color:var(--status-error);font-weight:var(--weight-bold)">✕ ERROR SINCRO</span>
+          </div>
+          <div style="font:var(--t-data);margin-top:var(--space-1);color:var(--status-warning-text)">LOTE L26-ORE-008 · AISLAMIENTO BIOLÓGICO</div>
+        </article>
+        <div style="display:flex;gap:var(--space-1);flex-wrap:wrap">
+          <span class="sdp-sync sdp-badge" data-sync="synced" style="font:var(--t-label);padding:4px 8px;border:var(--rule-hairline);background:var(--surface-page)">✓ SINCRONIZADO</span>
+          <span class="sdp-sync sdp-badge" data-sync="pending" style="font:var(--t-label);padding:4px 8px;border:var(--rule-hairline);background:var(--surface-page)">◌ PENDIENTE</span>
+          <span class="sdp-sync sdp-badge" data-sync="error" style="font:var(--t-label);padding:4px 8px;border:var(--rule-hairline);background:var(--surface-page)">✕ ERROR HUB</span>
+          <span class="sdp-sync sdp-badge" data-sync="conflict" style="font:var(--t-label);padding:4px 8px;border:var(--rule-hairline);background:var(--surface-page)">⚡ CONFLICTO</span>
+        </div>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Lote Operativo</h2>
+        <article class="sdp-lote sdp-lote--ok">
+          <div class="sdp-lote__body">
+            <div><p class="species-name">Shiitake</p><div class="latin">Lentinula edodes</div></div>
+            <div class="sdp-lote__id">SHI-260714-03</div>
+            <div class="sdp-lote__status"><div class="sdp-lote__bar"><span style="width:72%"></span></div><span class="sdp-lote__state">Incubación · día 17</span></div>
+            <div class="sdp-lote__meta">
+              <div><span class="sdp-lote__mk">Sala</span><span class="sdp-lote__mv">INC-02</span></div>
+              <div><span class="sdp-lote__mk">Bolsas</span><span class="sdp-lote__mv">48 / 50</span></div>
+              <div><span class="sdp-lote__mk">Siguiente</span><span class="sdp-lote__mv">Inspección</span></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Reading</h2>
+        <div class="preview-stack">
+          <div class="sdp-reading sdp-reading--ok">
+            <div class="sdp-reading__label">Temperatura</div>
+            <div class="sdp-reading__value">19.2 <span class="sdp-reading__unit">°C</span></div>
+            <div class="sdp-reading__target">TARGET 18–21 °C</div>
+            <div class="sdp-reading__meta"><span class="sdp-provenance" data-provenance="measured">MEASURED · SHT45</span><time>3 MIN</time></div>
+          </div>
+          <div class="sdp-reading sdp-reading--warn">
+            <div class="sdp-reading__label">CO₂</div>
+            <div class="sdp-reading__value">1,240 <span class="sdp-reading__unit">ppm</span></div>
+            <div class="sdp-reading__target">TARGET &lt; 900 ppm · ALTO</div>
+            <div class="sdp-reading__meta"><span class="sdp-provenance" data-provenance="measured">MEASURED · SCD30</span><time>2 MIN</time></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Tareas</h2>
+        <div class="preview-stack">
+          <div class="sdp-task sdp-task--critical"><div class="sdp-task__body"><div class="sdp-task__title">CO₂ fuera de banda · FRU-01</div><div class="sdp-task__meta">1,240 ppm · TARGET &lt;900</div></div><div class="sdp-task__due">ATENCIÓN</div></div>
+          <div class="sdp-task sdp-task--now"><div class="sdp-task__body"><div class="sdp-task__title">Inspección de colonización · SHI-03</div><div class="sdp-task__meta">INC-02 · DÍA 17</div></div><div class="sdp-task__due">AHORA</div></div>
+          <div class="sdp-task sdp-task--later"><div class="sdp-task__body"><div class="sdp-task__title">Mover HER-11 a fructificación</div><div class="sdp-task__meta">Programado · 14:00</div></div><div class="sdp-task__due">DESPUÉS</div></div>
+        </div>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Sala & Telemetría</h2>
+        <div class="preview-stack">
+          <div style="display:flex;justify-content:space-between;align-items:end;border-bottom:var(--rule-heavy);padding-bottom:var(--space-1)">
+            <div><div class="lab-kicker">Fructificación</div><div class="species-name">FRU-01</div></div>
+            <span class="sdp-provenance" data-provenance="measured">LIVE · 2 MIN</span>
+          </div>
+          <div class="room-grid">
+            <div class="sdp-reading sdp-reading--ok"><div class="sdp-reading__label">Temp</div><div class="sdp-reading__value">21.2 <span class="sdp-reading__unit">°C</span></div><div class="sdp-reading__target">18–22</div></div>
+            <div class="sdp-reading sdp-reading--ok"><div class="sdp-reading__label">HR</div><div class="sdp-reading__value">92 <span class="sdp-reading__unit">%</span></div><div class="sdp-reading__target">90–95</div></div>
+            <div class="sdp-reading sdp-reading--warn"><div class="sdp-reading__label">CO₂</div><div class="sdp-reading__value">980 <span class="sdp-reading__unit">ppm</span></div><div class="sdp-reading__target">&lt;900 · ALTO</div></div>
+          </div>
+          <div class="sdp-task sdp-task--now"><div class="sdp-task__body"><div class="sdp-task__title">Ventilación manual</div><div class="sdp-task__meta">Nebulización ON · Ventilación 65%</div></div><div class="sdp-task__due">ACTIVA</div></div>
+        </div>
+      </section>
+
+      <section class="preview-card preview-card--12">
+        <h2>Hoy · miniatura operativa</h2>
+        <div class="mini-hoy">
+          <div class="sdp-band sdp-band--atencion">
+            <div class="lab-kicker">Banda 1 · Atención</div>
+            <div class="sdp-task sdp-task--critical" style="margin-top:var(--space-1)">
+              <div class="sdp-task__body"><div class="sdp-task__title">FRU-01 · CO₂ alto</div><div class="sdp-task__meta">1,240 ppm · 47 min fuera de banda</div></div>
+              <button class="sdp-btn sdp-btn--primary sdp-btn--field">Resolver</button>
+            </div>
+          </div>
+          <div class="sdp-band sdp-band--ahora">
+            <div class="lab-kicker">Banda 2 · Ahora</div>
+            <div class="sdp-task sdp-task--now" style="margin-top:var(--space-1)">
+              <div class="sdp-task__body"><div class="sdp-task__title">SHI-03 · Inspección</div><div class="sdp-task__meta">Incubación · día 17</div></div>
+              <button class="sdp-btn sdp-btn--primary sdp-btn--field">Registrar</button>
+            </div>
+          </div>
+          <div class="sdp-band sdp-band--despues">
+            <div class="lab-kicker">Banda 3 · Después</div>
+            <div class="sdp-task sdp-task--later" style="margin-top:var(--space-1)">
+              <div class="sdp-task__body"><div class="sdp-task__title">HER-11 · Mover a fructificación</div><div class="sdp-task__meta">14:00</div></div>
+              <button class="sdp-btn sdp-btn--secondary sdp-btn--field">Abrir</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- PANEL 2: AGRONOMY -->
+  <div id="panel-agronomy" class="canvas-panel" data-active="false">
+    <div class="preview-grid">
+      <section class="preview-card preview-card--6">
+        <h2>Ficha de Formulación Agronómica</h2>
+        <div class="species-name">Pleurotus eryngii</div>
+        <div class="latin">Sustrato suplementado en bloque (Li 2024 / ADR-0006)</div>
+
+        <div class="agronomy-gauge">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <strong style="font-family:var(--font-mono);font-size:var(--size-data)">Relación C:N (Base Seca)</strong>
+            <span class="sdp-provenance" data-provenance="calculated">CALCULATED · RECETA R-ERY-04</span>
+          </div>
+          <div class="gauge-bar" title="Objetivo: 25 a 40 (Ideal 28)">
+            <div class="gauge-target-zone" style="left:25%;width:25%"></div>
+            <div class="gauge-needle" style="left:28%"></div>
+          </div>
+          <div class="gauge-labels"><span>10:1</span><span>25:1 (Opt)</span><span>28:1 (Ideal)</span><span>40:1 (Max)</span><span>60:1</span></div>
+        </div>
+
+        <table class="agronomy-meta-table">
+          <tr><td>Relación C:N Calculada</td><td><strong>28.4 : 1</strong></td><td><span class="sdp-provenance" data-provenance="calculated">CALCULATED</span></td></tr>
+          <tr><td>Objetivo Agronómico</td><td><strong>25–40 : 1 (Ideal 28)</strong></td><td><span class="sdp-provenance" data-provenance="target">TARGET · LIT</span></td></tr>
+          <tr><td>Humedad proyectada mezcla</td><td><strong>65.2 %</strong></td><td><span class="sdp-provenance" data-provenance="calculated">CALCULATED</span></td></tr>
+          <tr><td>Humedad objetivo especie</td><td><strong>63–68 % (Ideal 65%)</strong></td><td><span class="sdp-provenance" data-provenance="target">TARGET · LIT</span></td></tr>
+          <tr><td>Contenido Nitrógeno N%</td><td><strong>1.52 %</strong></td><td><span class="sdp-provenance" data-provenance="measured">MEASURED</span></td></tr>
+          <tr><td>Eficiencia Biológica (BE) proyectada</td><td><strong>92 %</strong></td><td><span class="sdp-provenance" data-provenance="estimated">ESTIMATED</span></td></tr>
+        </table>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Perito · Auditoría de Sustrato</h2>
+        <div class="preview-stack">
+          <div class="sdp-reading sdp-reading--ok">
+            <div class="sdp-reading__label">Aporte de Suplemento (Salvado Trigo)</div>
+            <div class="sdp-reading__value">18.5 <span class="sdp-reading__unit">%</span></div>
+            <div class="sdp-reading__target">LÍMITE MÁXIMO &lt; 55% (Li 2024)</div>
+            <div class="sdp-reading__meta"><span class="sdp-provenance" data-provenance="calculated">CALCULATED</span><span>DENTRO DE BANDA</span></div>
+          </div>
+          <div class="sdp-reading sdp-reading--ok">
+            <div class="sdp-reading__label">Inhibición Micelial por Exceso N</div>
+            <div class="sdp-reading__value">0 <span class="sdp-reading__unit">riesgo</span></div>
+            <div class="sdp-reading__target">N &lt; 1.8% BASE SECA</div>
+            <div class="sdp-reading__meta"><span class="sdp-provenance" data-provenance="calculated">CALCULATED</span><span>SEGURO</span></div>
+          </div>
+          <div class="sdp-task sdp-task--now">
+            <div class="sdp-task__body">
+              <div class="sdp-task__title">Esterilización requerida · F0 ≥ 12</div>
+              <div class="sdp-task__meta">Tenjo 2.580 msnm · 121°C · 90 min autoclave</div>
+            </div>
+            <div class="sdp-task__due">ESTÁNDAR</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- PANEL 3: MARKET -->
+  <div id="panel-market" class="canvas-panel" data-active="false">
+    <div class="preview-grid">
+      <section class="preview-card preview-card--6">
+        <h2>Dossier Organoléptico de Cata</h2>
+        <div class="species-name">Melena de León</div>
+        <div class="latin">Hericium erinaceus · Cepa HEL-02</div>
+        <div style="margin:var(--space-2) 0;font-size:var(--size-small);color:var(--text-secondary);line-height:1.5">
+          Cultivado sobre roble blanco y salvado orgánico a 2.580 metros en Tenjo. Notas complejas que recuerdan a crustáceos dulces (langosta/cangrejo) con matices herbales.
+        </div>
+        <table class="agronomy-meta-table">
+          <tr><td>Perfil Aromático</td><td>Fresco, amaderado, sutilmente dulce</td></tr>
+          <tr><td>Textura en Salteado</td><td>Carnosidad tierna, alta retención hídrica</td></tr>
+          <tr><td>Maridaje Recomendado</td><td>Mantequilla avellanada, hierbas finas, pasta fresca</td></tr>
+          <tr><td>Estado Culinario</td><td>Primera selección para alta cocina</td></tr>
+        </table>
+      </section>
+
+      <section class="preview-card preview-card--6">
+        <h2>Trazabilidad & Sello de Origen</h2>
+        <div class="preview-stack">
+          <div class="sdp-reading sdp-reading--ok">
+            <div class="sdp-reading__label">Lote Cosechado</div>
+            <div class="sdp-reading__value" style="font-size:18px">HER-260801-02</div>
+            <div class="sdp-reading__target">TENJO, CUNDINAMARCA · 2.580 MSNM</div>
+            <div class="sdp-reading__meta"><span class="sdp-provenance" data-provenance="measured">CERTIFICADO</span><time>20 SEP 2026</time></div>
+          </div>
+          <div class="sdp-task sdp-task--now">
+            <div class="sdp-task__body">
+              <div class="sdp-task__title">Verificación Pública Descentralizada</div>
+              <div class="sdp-task__meta">Hash: 0x9e8a4d...7f12 · Trazabilidad verificable por cliente</div>
+            </div>
+            <div class="sdp-task__due">VÁLIDO</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- PANEL 4: PRINT (PHOMEMO M110) -->
+  <div id="panel-print" class="canvas-panel" data-active="false">
+    <div class="phomemo-stage">
+      <div class="phomemo-toolbar">
+        <div style="display:flex;gap:var(--space-1);align-items:center">
+          <strong style="font-family:var(--font-mono);font-size:var(--size-data)">Phomemo M110</strong>
+          <span style="font-size:var(--size-micro);color:var(--text-metadata)">203 DPI · Térmica Directa</span>
+        </div>
+        <div style="display:flex;gap:var(--space-1);align-items:center">
+          <label for="phomemo-size-select" style="font-size:11px;font-family:var(--font-mono)">Formato:</label>
+          <select id="phomemo-size-select" style="min-height:32px;font-size:11px">
+            <option value="40x30">40 × 30 mm (Bolsa / Inóculo)</option>
+            <option value="50x30">50 × 30 mm (Comercial / Lote)</option>
+          </select>
+          <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-family:var(--font-mono);cursor:pointer;margin-left:8px">
+            <input id="phomemo-onebit-toggle" type="checkbox"> 1-Bit Print Preview (Sin grises)
+          </label>
+        </div>
+      </div>
+
+      <!-- Controles dinámicos de contenido térmico -->
+      <div class="phomemo-inputs" style="display:flex;flex-wrap:wrap;gap:var(--space-1);padding:var(--space-1);background:var(--bg-surface);border:1px solid var(--border-hairline);margin-bottom:var(--space-2)">
+        <div class="lab-field" style="margin:0;flex:1;min-width:140px">
+          <label for="phomemo-input-species" style="font-size:10px">Especie</label>
+          <select id="phomemo-input-species" style="min-height:28px;font-size:11px">
+            <option value="Shiitake|Lentinula edodes">Shiitake · Lentinula edodes</option>
+            <option value="Melena de León|Hericium erinaceus">Melena de León · Hericium erinaceus</option>
+            <option value="Orellana|Pleurotus ostreatus">Orellana · Pleurotus ostreatus</option>
+            <option value="Reishi|Ganoderma lingzhi">Reishi · Ganoderma lingzhi</option>
+          </select>
+        </div>
+        <div class="lab-field" style="margin:0;flex:1;min-width:110px">
+          <label for="phomemo-input-lot" style="font-size:10px">Código Lote</label>
+          <input id="phomemo-input-lot" type="text" value="SHI-260714-03" style="min-height:28px;font-size:11px">
+        </div>
+        <div class="lab-field" style="margin:0;flex:1;min-width:130px">
+          <label for="phomemo-input-sub" style="font-size:10px">Ubicación / Fila</label>
+          <input id="phomemo-input-sub" type="text" value="SALA INC-02 · BOLSA 48" style="min-height:28px;font-size:11px">
+        </div>
+        <div class="lab-field" style="margin:0;flex:1;min-width:70px">
+          <label for="phomemo-input-gen" style="font-size:10px">Etapa</label>
+          <input id="phomemo-input-gen" type="text" value="F1" style="min-height:28px;font-size:11px">
+        </div>
+      </div>
+
+      <!-- Contenedor de etiqueta física -->
+      <div id="phomemo-container" class="phomemo-label-container" data-size="40x30" data-onebit="false">
+        <div class="phomemo-label">
+          <div class="phomemo-label-header">
+            <div>
+              <div class="phomemo-brand">Setas de la Peña</div>
+              <div class="phomemo-species">Shiitake</div>
+              <div class="phomemo-latin">Lentinula edodes</div>
+            </div>
+            <div style="text-align:right">
+              <span style="font-family:var(--font-mono);font-size:9px;border:1px solid #000;padding:1px 3px">F1</span>
+            </div>
+          </div>
+
+          <div class="phomemo-mid">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase">Lote Canónico</div>
+              <div class="phomemo-lot">SHI-260714-03</div>
+              <div style="font-family:var(--font-mono);font-size:9px;margin-top:2px">SALA INC-02 · BOLSA 48</div>
+            </div>
+            <div id="phomemo-qr-box" class="phomemo-qr"></div>
+          </div>
+
+          <div class="phomemo-footer">
+            <span>COSECHA: 20 SEP 2026</span>
+            <span>TENJO · 2.580M</span>
+            <span>OP: SP</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);max-width:55ch;text-align:center">
+        La vista 1-bit simula el cabezal térmico físico: solo blanco o negro puro. Cualquier texto &lt;9px o línea fina puede empastarse en papel térmico.
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+var primitiveOrder=[["paper-100","PAPER · ground"],["paper-50","PAPER · elevated"],["paper-200","PAPER · recessed"],["ink-900","INK · primary"],["ink-700","INK · secondary"],["ink-500","INK · metadata"],["moss-900","MOSS · deep"],["moss-700","MOSS · primary"],["moss-500","MOSS · soft"],["coral-500","CORAL · accent"],["coral-700","CORAL · text/action"],["slate-500","SLATE · technical"],["sand-500","SAND · fill"],["bark-700","BARK · inverse"],["warning","OCHRE · warning"],["warning-text","OCHRE · warning text"],["rule-500","RULE · mineral border"]];
+var semanticRoles=[["brand","primary"],["brand","accent"],["brand","accent-text"],["action","primary"],["action","accent"],["action","danger"],["status","ok"],["status","warning"],["status","warning-text"],["status","warning-marker"],["text","primary"],["text","secondary"],["text","metadata"]];
+
+var state={
+  canonicalPrimitives:null, canonicalSemantic:null, canonicalTypography:null, canonicalSpacing:null, canonicalDomain:null,
+  primitives:null, semantic:null, typography:null, spacing:null, domain:null,
+  spacingScaleFactor:1.0, selectedDirHandle:null
+};
+
+var root=document.documentElement, canvas=document.getElementById("lab-canvas");
+function el(id){return document.getElementById(id)}
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function semCss(group,key){if(group==="status"&&key.indexOf("warning")===0)return "--status-warn"+key.slice("warning".length);if(group==="action"&&key==="focus-ring")return "--focus-ring";return "--"+group+"-"+key}
+function refKey(ref){var m=String(ref||"").match(/^\{color\.(?:primitive|derived)\.([^}]+)\}$/);return m?m[1]:null}
+function hexRgb(hex){var h=hex.replace("#","");if(h.length===3)h=h.split("").map(function(c){return c+c}).join("");return[0,2,4].map(function(i){return parseInt(h.slice(i,i+2),16)})}
+function rgbHex(a){return"#"+a.map(function(v){return Math.round(v).toString(16).padStart(2,"0")}).join("").toUpperCase()}
+function mix(a,b,n){var x=hexRgb(a),y=hexRgb(b);return rgbHex(x.map(function(v,i){return v*n+y[i]*(1-n)}))}
+function lum(hex){var c=hexRgb(hex).map(function(v){v/=255;return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return.2126*c[0]+.7152*c[1]+.0722*c[2]}
+function ratio(a,b){var x=lum(a),y=lum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+function pval(k){return(state.primitives.color.primitive[k]||state.primitives.color.derived[k]).value}
+function node(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+
+function recomputeDerived(){
+  var p=pval("paper-50"),d=state.primitives.color.derived;
+  d["moss-tint"].value=mix(pval("moss-700"),p,.12);
+  d["coral-tint"].value=mix(pval("coral-500"),p,.10);
+  d["warning-tint"].value=mix(pval("warning"),p,.12);
+  d["bark-tint"].value=mix(pval("bark-700"),p,.09);
+  Object.keys(d).forEach(function(k){root.style.setProperty("--"+k,d[k].value)});
+}
+
+function applyPrimitives(rederive){
+  Object.keys(state.primitives.color.primitive).forEach(function(k){root.style.setProperty("--"+k,state.primitives.color.primitive[k].value)});
+  if(rederive){recomputeDerived()}else{Object.keys(state.primitives.color.derived).forEach(function(k){root.style.setProperty("--"+k,state.primitives.color.derived[k].value)})}
+}
+
+function applySemantic(){
+  Object.keys(state.semantic.semantic).forEach(function(g){
+    Object.keys(state.semantic.semantic[g]).forEach(function(k){
+      var r=refKey(state.semantic.semantic[g][k].value);
+      if(r)root.style.setProperty(semCss(g,k),"var(--"+r+")");
+    });
+  });
+}
+
+function applyTypographyLive(){
+  var sc=state.typography.scale;
+  Object.keys(sc).forEach(function(role){
+    if(sc[role].size) root.style.setProperty("--size-"+role, sc[role].size);
+  });
+  if(sc["micro"]){
+    root.style.setProperty("--size-micro", sc["micro"].size);
+    root.style.setProperty("--size-micro-screen", sc["micro"].size);
+    if(sc["micro-screen"]) sc["micro-screen"].size = sc["micro"].size;
+  }
+  if(sc["display-01"]) root.style.setProperty("--leading-solid", String(sc["display-01"].leading));
+  if(sc["display-02"]) root.style.setProperty("--leading-tight", String(sc["display-02"].leading));
+  if(sc["body"]) root.style.setProperty("--leading-normal", String(sc["body"].leading));
+  if(sc["heading-03"]) root.style.setProperty("--leading-snug", String(sc["heading-03"].leading));
+  if(sc["data"]) root.style.setProperty("--leading-data", String(sc["data"].leading));
+
+  // Tracking mapping
+  if(sc["display-01"] && sc["display-01"].tracking) root.style.setProperty("--tracking-display", sc["display-01"].tracking);
+  if(sc["heading-01"] && sc["heading-01"].tracking) root.style.setProperty("--tracking-tight", sc["heading-01"].tracking);
+  if(sc["body"] && sc["body"].tracking) root.style.setProperty("--tracking-normal", sc["body"].tracking);
+  if(sc["label"] && sc["label"].tracking) root.style.setProperty("--tracking-label", sc["label"].tracking);
+  if(sc["micro"] && sc["micro"].tracking) root.style.setProperty("--tracking-micro", sc["micro"].tracking);
+
+  // Dynamic --t-* shorthand composition
+  var weightNameByValue = { "100":"thin", "300":"light", "400":"regular", "500":"medium", "600":"semibold", "700":"bold", "900":"black" };
+  var leadingTokenForRole = {
+    "display-01":"solid", "display-02":"tight", "heading-01":"tight", "heading-02":"tight",
+    "heading-03":"snug", "species":"tight", "latin":"snug", "body":"normal",
+    "small":"normal", "data":"data", "label":"tight", "micro":"tight", "lot-code-print":"tight"
+  };
+  var familyVar = { editorial:"--font-editorial", sans:"--font-sans", mono:"--font-mono" };
+
+  var allRoles = ["display-01","display-02","heading-01","heading-02","heading-03","species","latin","body","small","data","label","micro","lot-code-print"];
+  allRoles.forEach(function(role){
+    var v = sc[role];
+    if(!v) return;
+    var wn = weightNameByValue[String(v.weight)] || "regular";
+    var st = v.style ? v.style + " " : "";
+    var lToken = leadingTokenForRole[role] ? "var(--leading-" + leadingTokenForRole[role] + ")" : String(v.leading);
+    var fam = familyVar[v.family] || "--font-sans";
+    root.style.setProperty("--t-" + role, st + "var(--weight-" + wn + ") var(--size-" + role + ")/" + lToken + " var(" + fam + ")");
+  });
+
+  updateTypeSpecimen();
+}
+
+function updateTypeSpecimen(){
+  var out = el("type-specimen-output");
+  var roleSel = el("type-specimen-role");
+  var textInp = el("type-specimen-input");
+  if(!out || !roleSel || !textInp) return;
+  var role = roleSel.value;
+  var item = state.typography.scale[role];
+  if(!item) return;
+
+  var trackingMap = {
+    "display-01": "var(--tracking-display)",
+    "display-02": "var(--tracking-display)",
+    "heading-01": "var(--tracking-tight)",
+    "heading-02": "var(--tracking-tight)",
+    "heading-03": "0",
+    "species": "var(--tracking-tight)",
+    "latin": "0",
+    "body": "var(--tracking-normal)",
+    "small": "0",
+    "data": "0",
+    "label": "var(--tracking-label)",
+    "micro": "var(--tracking-micro)"
+  };
+
+  out.style.font = "var(--t-" + role + ")";
+  out.style.letterSpacing = trackingMap[role] || "normal";
+  out.style.textTransform = (item.case === "uppercase") ? "uppercase" : "none";
+  out.textContent = textInp.value || "Setas de la Peña";
+}
+
+function applySpacingLive(){
+  var sp=state.spacing;
+  var f=state.spacingScaleFactor;
+  Object.keys(sp.scale).forEach(function(k){
+    var raw=parseFloat(sp.scale[k]);
+    if(Number.isFinite(raw)) root.style.setProperty("--space-"+k,(raw*f).toFixed(2)+"px");
+  });
+  if(sp.structure){
+    if(sp.structure.tapTargetMin) root.style.setProperty("--tap-target-min", sp.structure.tapTargetMin);
+    if(sp.structure.radius){
+      root.style.setProperty("--radius-none", sp.structure.radius.none||"0");
+      root.style.setProperty("--radius-sm", sp.structure.radius.sm||"0");
+    }
+  }
+  if(sp.grid && sp.grid.modes){
+    Object.keys(sp.grid.modes).forEach(function(m){
+      root.style.setProperty("--gutter-"+m, sp.grid.modes[m].gutter);
+      root.style.setProperty("--margin-"+m, sp.grid.modes[m].pageMargin);
+    });
+    var curMode = (el("canvas-mode-select") ? el("canvas-mode-select").value : "field") || "field";
+    var gm = sp.grid.modes[curMode] || sp.grid.modes.field;
+    if(gm){
+      root.style.setProperty("--gutter", gm.gutter);
+      root.style.setProperty("--page-margin", gm.pageMargin);
+    }
+  }
+}
+
+function applyDomainLive(){
+  var p=state.domain.domain&&state.domain.domain.provenance;
+  if(p){
+    document.querySelectorAll(".sdp-provenance").forEach(function(el){
+      var prov=el.dataset.provenance;
+      if(p[prov]&&p[prov].symbol){
+        var text=el.textContent.replace(/^[●◆◇△◎⬡✓◌✕⚡~ƒ!\s]+/, "");
+        el.textContent=p[prov].symbol+" "+text;
+      }
+    });
+    Object.keys(p).forEach(function(k){
+      root.style.setProperty("--provenance-"+k+"-symbol", '"'+p[k].symbol+'"');
+    });
+  }
+  var s=state.domain.domain&&state.domain.domain.sync;
+  if(s){
+    document.querySelectorAll(".sdp-sync").forEach(function(el){
+      var syncKey=el.dataset.sync;
+      if(s[syncKey]&&s[syncKey].symbol){
+        var text=el.textContent.replace(/^[●◆◇△◎⬡✓◌✕⚡~ƒ!\s]+/, "");
+        el.textContent=s[syncKey].symbol+" "+text;
+      }
+    });
+    Object.keys(s).forEach(function(k){
+      root.style.setProperty("--sync-"+k+"-symbol", '"'+s[k].symbol+'"');
+    });
+  }
+  var q=state.domain.domain&&state.domain.domain.status&&state.domain.domain.status.quarantine;
+  if(q&&q.treatment){
+    root.style.setProperty("--status-quarantine-border-style", q.treatment);
+    document.querySelectorAll(".sdp-lote--quarantine, .sdp-badge--quarantine").forEach(function(el){
+      el.style.borderStyle = q.treatment;
+    });
+  }
+}
+
+/* RENDERIZADORES DE CONTROLES */
+function renderPrimitives(){
+  var host=el("primitive-controls"); host.innerHTML="";
+  primitiveOrder.forEach(function(item){
+    var k=item[0], label=item[1], spec=state.primitives.color.primitive[k];
+    if(!spec)return;
+    var row=node("div","token-row"), lab=node("label");
+    lab.htmlFor="color-"+k;
+    lab.appendChild(node("span","token-name",label));
+    lab.appendChild(node("span","token-meta","--"+k));
+    var cc=node("div","color-control");
+    var color=node("input"); color.type="color"; color.id="color-"+k; color.value=spec.value; color.dataset.token=k;
+    var hex=node("input","hex"); hex.value=spec.value; hex.dataset.hex=k; hex.setAttribute("aria-label","Hex "+k);
+    cc.appendChild(color); cc.appendChild(hex);
+    row.appendChild(lab); row.appendChild(cc);
+    host.appendChild(row);
+    color.addEventListener("input",function(){setPrimitive(k,color.value)});
+    hex.addEventListener("change",function(){var v=hex.value.trim();if(!/^#[0-9a-fA-F]{6}$/.test(v)){hex.value=pval(k);return}setPrimitive(k,v.toUpperCase())});
+  });
+}
+
+function refs(){
+  var a=[];
+  Object.keys(state.primitives.color.primitive).forEach(function(k){a.push("{color.primitive."+k+"}")});
+  Object.keys(state.primitives.color.derived).forEach(function(k){a.push("{color.derived."+k+"}")});
+  return a;
+}
+
+function renderSemantic(){
+  var host=el("semantic-controls"); host.innerHTML=""; var all=refs();
+  semanticRoles.forEach(function(item){
+    var g=item[0],k=item[1],spec=state.semantic.semantic[g]&&state.semantic.semantic[g][k];
+    if(!spec)return;
+    var row=node("div","semantic-row"), lab=node("label"), code=node("code",null,g+"."+k), sel=node("select");
+    lab.appendChild(code); sel.dataset.group=g; sel.dataset.key=k;
+    all.forEach(function(ref){
+      var o=node("option",null,ref.replace("{color.","").replace("}",""));
+      o.value=ref; if(ref===spec.value)o.selected=true; sel.appendChild(o);
+    });
+    row.appendChild(lab); row.appendChild(sel); host.appendChild(row);
+    sel.addEventListener("change",function(){
+      state.semantic.semantic[g][k].value=sel.value; applySemantic(); onTokenModified();
+    });
+  });
+}
+
+function renderTypographyControls(){
+  var host=el("typography-scale-controls"); host.innerHTML="";
+  var roles=["display-01","display-02","heading-01","heading-02","heading-03","species","latin","body","small","data","label","micro"];
+  roles.forEach(function(r){
+    var item=state.typography.scale[r]; if(!item)return;
+    var f=node("div","lab-field");
+    var row=node("div","lab-range-line");
+    var lab=node("label",null,r+" · tamaño");
+    var inp=node("input"); inp.type="range"; inp.min="9"; inp.max="72"; inp.value=parseInt(item.size,10);
+    var out=node("output",null,item.size);
+    inp.addEventListener("input",function(){
+      item.size=inp.value+"px"; out.textContent=item.size; applyTypographyLive(); onTokenModified();
+    });
+    row.appendChild(inp); row.appendChild(out); f.appendChild(lab); f.appendChild(row); host.appendChild(f);
+  });
+
+  var weightHost=el("typography-weight-controls");
+  if(weightHost){
+    weightHost.innerHTML="";
+    var wRoles=["heading-01","species","body","data","label"];
+    var availableWeights=[
+      {label:"300 · Light", val:300},
+      {label:"400 · Regular", val:400},
+      {label:"500 · Medium", val:500},
+      {label:"600 · Semibold", val:600},
+      {label:"700 · Bold", val:700},
+      {label:"900 · Black", val:900}
+    ];
+    wRoles.forEach(function(r){
+      var item=state.typography.scale[r]; if(!item)return;
+      var f=node("div","lab-field");
+      var lab=node("label",null,r+" · peso");
+      var sel=node("select");
+      availableWeights.forEach(function(w){
+        var o=node("option",null,w.label);
+        o.value=w.val;
+        if(item.weight===w.val) o.selected=true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change",function(){
+        item.weight=parseInt(sel.value,10);
+        applyTypographyLive();
+        onTokenModified();
+      });
+      f.appendChild(lab); f.appendChild(sel); weightHost.appendChild(f);
+    });
+  }
+
+  var leadHost=el("typography-leading-controls"); leadHost.innerHTML="";
+  ["display-01","display-02","heading-03","body","data"].forEach(function(r){
+    var item=state.typography.scale[r]; if(!item)return;
+    var f=node("div","lab-field");
+    var row=node("div","lab-range-line");
+    var lab=node("label",null,r+" · interlineado");
+    var inp=node("input"); inp.type="range"; inp.min="0.9"; inp.max="1.8"; inp.step="0.05"; inp.value=item.leading;
+    var out=node("output",null,Number(item.leading).toFixed(2));
+    inp.addEventListener("input",function(){
+      item.leading=parseFloat(inp.value); out.textContent=Number(item.leading).toFixed(2); applyTypographyLive(); onTokenModified();
+    });
+    row.appendChild(inp); row.appendChild(out); f.appendChild(lab); f.appendChild(row); leadHost.appendChild(f);
+  });
+
+  var trackHost=el("typography-tracking-controls"); trackHost.innerHTML="";
+  ["display-01","heading-01","body","label","micro"].forEach(function(r){
+    var item=state.typography.scale[r]; if(!item)return;
+    var f=node("div","lab-field");
+    var row=node("div","lab-range-line");
+    var lab=node("label",null,r+" · tracking");
+    var current=parseFloat(item.tracking)||0;
+    var inp=node("input"); inp.type="range"; inp.min="-0.05"; inp.max="0.30"; inp.step="0.01"; inp.value=current;
+    var out=node("output",null,item.tracking);
+    inp.addEventListener("input",function(){
+      item.tracking=inp.value+"em"; out.textContent=item.tracking;
+      applyTypographyLive();
+      onTokenModified();
+    });
+    row.appendChild(inp); row.appendChild(out); f.appendChild(lab); f.appendChild(row); trackHost.appendChild(f);
+  });
+  updateTypeSpecimen();
+}
+
+function renderSpacingControls(){
+  var modesHost=el("spacing-grid-modes"); modesHost.innerHTML="";
+  var modes=state.spacing.grid&&state.spacing.grid.modes;
+  if(modes){
+    Object.keys(modes).forEach(function(m){
+      var f=node("div","lab-field");
+      var lab=node("label",null,"Modo "+m.toUpperCase()+" (Gutter / Margin)");
+      var box=node("div","lab-range-line");
+      var sel=node("select");
+      [["12px","16px"],["24px","32px"],["32px","64px"]].forEach(function(p){
+        var o=node("option",null,"Gutter: "+p[0]+" · Margin: "+p[1]);
+        o.value=p[0]+"|"+p[1];
+        if(modes[m].gutter===p[0]&&modes[m].pageMargin===p[1]) o.selected=true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change",function(){
+        var parts=sel.value.split("|");
+        modes[m].gutter=parts[0]; modes[m].pageMargin=parts[1];
+        applySpacingLive();
+        onTokenModified();
+      });
+      box.appendChild(sel); f.appendChild(lab); f.appendChild(box); modesHost.appendChild(f);
+    });
+  }
+}
+
+function renderDomainControls(){
+  var provHost=el("domain-provenance-controls"); provHost.innerHTML="";
+  var provs=state.domain.domain&&state.domain.domain.provenance;
+  if(provs){
+    Object.keys(provs).forEach(function(k){
+      var f=node("div","lab-field");
+      var lab=node("label",null,provs[k].label+" ("+k+")");
+      var sel=node("select");
+      ["●","◆","◇","△","◎","⬡","◌","~","ƒ"].forEach(function(s){
+        var o=node("option",null,"Símbolo: "+s);
+        o.value=s; if(s===provs[k].symbol) o.selected=true; sel.appendChild(o);
+      });
+      sel.addEventListener("change",function(){
+        provs[k].symbol=sel.value; applyDomainLive(); onTokenModified();
+      });
+      f.appendChild(lab); f.appendChild(sel); provHost.appendChild(f);
+    });
+  }
+
+  var syncHost=el("domain-sync-controls"); syncHost.innerHTML="";
+  var syncs=state.domain.domain&&state.domain.domain.sync;
+  if(syncs){
+    Object.keys(syncs).forEach(function(k){
+      var f=node("div","lab-field");
+      var lab=node("label",null,syncs[k].label+" ("+k+")");
+      var sel=node("select");
+      ["✓","◌","✕","⚡","●","!"].forEach(function(s){
+        var o=node("option",null,"Símbolo: "+s);
+        o.value=s; if(s===syncs[k].symbol) o.selected=true; sel.appendChild(o);
+      });
+      sel.addEventListener("change",function(){
+        syncs[k].symbol=sel.value; applyDomainLive(); onTokenModified();
+      });
+      f.appendChild(lab); f.appendChild(sel); syncHost.appendChild(f);
+    });
+  }
+
+  var qSelect=el("domain-quarantine-treatment");
+  if(qSelect){
+    var q=state.domain.domain&&state.domain.domain.status&&state.domain.domain.status.quarantine;
+    if(q&&q.treatment) qSelect.value=q.treatment;
+    qSelect.onchange=function(){
+      if(!state.domain.domain.status) state.domain.domain.status={};
+      if(!state.domain.domain.status.quarantine) state.domain.domain.status.quarantine={};
+      state.domain.domain.status.quarantine.treatment=this.value;
+      applyDomainLive();
+      onTokenModified();
+    };
+  }
+}
+
+function setPrimitive(k,v){
+  state.primitives.color.primitive[k].value=v.toUpperCase();
+  root.style.setProperty("--"+k,v);
+  recomputeDerived();
+  var c=document.querySelector("[data-token='"+k+"']"), h=document.querySelector("[data-hex='"+k+"']");
+  if(c)c.value=v; if(h)h.value=v.toUpperCase();
+  updateContrast(); onTokenModified();
+}
+
+function semanticHex(g,k){
+  var spec=state.semantic.semantic[g]&&state.semantic.semantic[g][k], rk=spec&&refKey(spec.value);
+  return rk?pval(rk):null;
+}
+
+function updateContrast(){
+  var pairs=[
+    ["TEXT PRIMARY / PAGE",semanticHex("text","primary"),semanticHex("surface","page"),4.5],
+    ["TEXT METADATA / PAGE",semanticHex("text","metadata"),semanticHex("surface","page"),4.5],
+    ["INVERSE / ACTION PRIMARY",semanticHex("text","inverse"),semanticHex("action","primary"),4.5],
+    ["ACTION ACCENT TEXT / ACCENT",semanticHex("action","accent-text"),semanticHex("action","accent"),4.5],
+    ["WARNING TEXT / PAGE",semanticHex("status","warning-text"),semanticHex("surface","page"),4.5],
+    ["ERROR / PAGE",semanticHex("status","error"),semanticHex("surface","page"),4.5]
+  ];
+  var host=el("contrast-grid"); host.innerHTML="";
+  var allPass=true;
+  pairs.forEach(function(p){
+    if(!p[1]||!p[2])return;
+    var r=ratio(p[1],p[2]), pass=r>=p[3];
+    if(!pass) allPass=false;
+    host.appendChild(node("span",null,p[0]));
+    var st=node("strong",null,r.toFixed(2)+":1 "+(pass?"PASS":"FAIL"));
+    st.dataset.pass=String(pass); host.appendChild(st);
+  });
+  return allPass;
+}
+
+/* DIFF INSPECTOR & REVERT */
+function computeDetailedDiff(){
+  var diffs=[];
+  // primitives
+  Object.keys(state.primitives.color.primitive).forEach(function(k){
+    var a=state.canonicalPrimitives.color.primitive[k].value, b=state.primitives.color.primitive[k].value;
+    if(a!==b) diffs.push({group:"colors",path:"primitive."+k,canonical:a,working:b,revert:function(){state.primitives.color.primitive[k].value=a;setPrimitive(k,a)}});
+  });
+  // semantic
+  Object.keys(state.semantic.semantic).forEach(function(g){
+    Object.keys(state.semantic.semantic[g]).forEach(function(k){
+      var a=state.canonicalSemantic.semantic[g][k]&&state.canonicalSemantic.semantic[g][k].value, b=state.semantic.semantic[g][k].value;
+      if(a!==b) diffs.push({group:"colors",path:"semantic."+g+"."+k,canonical:a,working:b,revert:function(){state.semantic.semantic[g][k].value=a;applySemantic();renderSemantic();onTokenModified()}});
+    });
+  });
+  // typography
+  Object.keys(state.typography.scale).forEach(function(r){
+    var ca=state.canonicalTypography.scale[r], wa=state.typography.scale[r];
+    if(!ca||!wa)return;
+    if(ca.size!==wa.size) diffs.push({group:"type",path:"typography.scale."+r+".size",canonical:ca.size,working:wa.size,revert:function(){wa.size=ca.size;applyTypographyLive();renderTypographyControls();onTokenModified()}});
+    if(ca.leading!==wa.leading) diffs.push({group:"type",path:"typography.scale."+r+".leading",canonical:String(ca.leading),working:String(wa.leading),revert:function(){wa.leading=ca.leading;applyTypographyLive();renderTypographyControls();onTokenModified()}});
+    if(ca.tracking!==wa.tracking) diffs.push({group:"type",path:"typography.scale."+r+".tracking",canonical:ca.tracking,working:wa.tracking,revert:function(){wa.tracking=ca.tracking;applyTypographyLive();renderTypographyControls();onTokenModified()}});
+  });
+  // spacing
+  if(state.canonicalSpacing.structure&&state.spacing.structure){
+    var cs=state.canonicalSpacing.structure, ws=state.spacing.structure;
+    if(cs.tapTargetMin!==ws.tapTargetMin) diffs.push({group:"spacing",path:"spacing.structure.tapTargetMin",canonical:cs.tapTargetMin,working:ws.tapTargetMin,revert:function(){ws.tapTargetMin=cs.tapTargetMin;applySpacingLive();onTokenModified()}});
+  }
+  // domain
+  if(state.canonicalDomain.domain&&state.domain.domain){
+    var cd=state.canonicalDomain.domain.provenance, wd=state.domain.domain.provenance;
+    if(cd&&wd){
+      Object.keys(cd).forEach(function(k){
+        if(cd[k].symbol!==wd[k].symbol) diffs.push({group:"domain",path:"domain.provenance."+k+".symbol",canonical:cd[k].symbol,working:wd[k].symbol,revert:function(){wd[k].symbol=cd[k].symbol;applyDomainLive();renderDomainControls();onTokenModified()}});
+      });
+    }
+  }
+  return diffs;
+}
+
+function renderDiffTable(){
+  var diffs=computeDetailedDiff();
+  var filter=el("diff-filter").value;
+  var filtered=diffs.filter(function(d){
+    if(filter==="all")return true;
+    return d.group===filter;
+  });
+  var tbody=el("diff-tbody"); tbody.innerHTML="";
+  if(!filtered.length){
+    var tr=node("tr"); var td=node("td",null,"Sin diferencias respecto al canónico."); td.colSpan=4; td.style.color="var(--text-metadata)";
+    tr.appendChild(td); tbody.appendChild(tr); return;
+  }
+  filtered.forEach(function(item){
+    var tr=node("tr");
+    tr.appendChild(node("td",null,item.path));
+    tr.appendChild(node("td",null,item.canonical));
+    tr.appendChild(node("td",null,item.working));
+    var act=node("td");
+    var btn=node("button","revert-btn","Revertir");
+    btn.type="button";
+    btn.addEventListener("click",function(){item.revert()});
+    act.appendChild(btn); tr.appendChild(act);
+    tbody.appendChild(tr);
+  });
+}
+
+/* PRE-FLIGHT GATES */
+function runPreflightGates(){
+  var gates=[];
+  // 1. JSON valid
+  var jsonOk=true;
+  try{
+    JSON.stringify(buildPrimitivesExport()); JSON.stringify(buildSemanticExport());
+    JSON.stringify(buildTypographyExport()); JSON.stringify(buildSpacingExport()); JSON.stringify(buildDomainExport());
+  }catch(e){jsonOk=false}
+  gates.push({name:"JSON valid",pass:jsonOk});
+
+  // 2. Semantic refs resolve
+  var refsOk=true;
+  Object.keys(state.semantic.semantic).forEach(function(g){
+    Object.keys(state.semantic.semantic[g]).forEach(function(k){
+      var r=refKey(state.semantic.semantic[g][k].value);
+      if(!r||!pval(r)) refsOk=false;
+    });
+  });
+  gates.push({name:"semantic refs resolve",pass:refsOk});
+
+  // 3. Body >= 16px
+  var bodySize=parseInt(state.typography.scale.body.size,10);
+  gates.push({name:"body >= 16px",pass:bodySize>=16});
+
+  // 4. Screen metadata >= 11px
+  var microSize=parseInt(state.typography.scale.micro.size,10);
+  gates.push({name:"screen metadata >= 11px",pass:microSize>=11});
+
+  // 5. FIELD target >= 44px
+  var tapMin=parseInt(state.spacing.structure.tapTargetMin,10);
+  gates.push({name:"FIELD target >= 44px",pass:tapMin>=44});
+
+  // 6. Contrast sanctioned pairs
+  var contrastOk=updateContrast();
+  gates.push({name:"contrast sanctioned pairs",pass:contrastOk});
+
+  // 7. Unknown keys preserved
+  var keysPreserved=(
+    Object.keys(state.canonicalTypography).every(function(k){return k in state.typography})&&
+    Object.keys(state.canonicalSpacing).every(function(k){return k in state.spacing})&&
+    Object.keys(state.canonicalDomain).every(function(k){return k in state.domain})
+  );
+  gates.push({name:"unknown keys preserved",pass:keysPreserved});
+
+  // 8. Canonical repo selected
+  var repoSelected=Boolean(state.selectedDirHandle);
+  gates.push({name:"canonical repo selected",pass:repoSelected});
+
+  var host=el("preflight-gates"); host.innerHTML="";
+  var allPass=true;
+  gates.forEach(function(g){
+    if(!g.pass) allPass=false;
+    var row=node("div","gate-item"); row.dataset.pass=String(g.pass);
+    row.appendChild(node("span",null,g.name));
+    row.appendChild(node("span",null,g.pass?"PASS":"FAIL"));
+    host.appendChild(row);
+  });
+  el("apply-repo-btn").disabled=!allPass;
+  return allPass;
+}
+
+function onTokenModified(){
+  var diffs=computeDetailedDiff();
+  var count=diffs.length;
+  var badge=el("canonical-status");
+  if(count===0){
+    badge.textContent="CANONICAL (BASELINE)"; badge.dataset.canonical="true";
+  }else{
+    badge.textContent="NOT CANONICAL · "+count+" TOKEN"+(count===1?"":"S")+" MOD."; badge.dataset.canonical="false";
+  }
+  renderDiffTable();
+  updateExportDisplay();
+  runPreflightGates();
+}
+
+/* EXPORT BUILDERS NORMALIZADOS */
+function buildPrimitivesExport(){return clone(state.primitives)}
+function buildSemanticExport(){return clone(state.semantic)}
+function buildTypographyExport(){return clone(state.typography)}
+function buildSpacingExport(){return clone(state.spacing)}
+function buildDomainExport(){return clone(state.domain)}
+
+window.CriterioThemeLab={
+  buildPrimitivesExport:buildPrimitivesExport,
+  buildSemanticExport:buildSemanticExport,
+  buildTypographyExport:buildTypographyExport,
+  buildSpacingExport:buildSpacingExport,
+  buildDomainExport:buildDomainExport
+};
+
+function updateExportDisplay(){
+  var view=el("export-json-view").value;
+  var data=view==="primitives"?buildPrimitivesExport():
+           view==="semantic"?buildSemanticExport():
+           view==="typography"?buildTypographyExport():
+           view==="spacing"?buildSpacingExport():buildDomainExport();
+  el("export-json-display").textContent=JSON.stringify(data,null,2);
+}
+
+function download(name,v){
+  var blob=new Blob([JSON.stringify(v,null,2)+"\n"],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url)},500);
+}
+
+/* FILE SYSTEM ACCESS API — APLICAR DIRECTO AL REPO */
+async function applyToRepo(){
+  el("lab-action-status").textContent="Verificando compuertas pre-flight...";
+  if(!runPreflightGates()){
+    el("lab-action-status").textContent="BLOQUEADO: Una o más compuertas pre-flight fallaron.";
+    return;
+  }
+  try{
+    var dirHandle=state.selectedDirHandle;
+    if(!dirHandle){
+      el("lab-action-status").textContent="Selecciona la carpeta 08_brand/ds-2026/tokens en tu repositorio...";
+      dirHandle=await window.showDirectoryPicker();
+      // Verificación de seguridad: debe contener primitives.json o ser el repo
+      var isTokensDir=false;
+      try{ await dirHandle.getFileHandle("primitives.json"); isTokensDir=true; }catch(e){}
+      if(!isTokensDir){
+        throw new Error("Carpeta no válida. Debes seleccionar '08_brand/ds-2026/tokens'.");
+      }
+      state.selectedDirHandle=dirHandle;
+      runPreflightGates();
+    }
+
+    var files=[
+      ["primitives.json",buildPrimitivesExport()],
+      ["semantic.json",buildSemanticExport()],
+      ["typography.json",buildTypographyExport()],
+      ["spacing.json",buildSpacingExport()],
+      ["domain.json",buildDomainExport()]
+    ];
+    for(const [name,content] of files){
+      var fh=await dirHandle.getFileHandle(name,{create:true});
+      var writable=await fh.createWritable();
+      await writable.write(JSON.stringify(content,null,2)+"\n");
+      await writable.close();
+    }
+    el("lab-action-status").textContent="¡Éxito! 5 archivos canónicos guardados en el repo.";
+    var cmdBox=el("command-helper");
+    cmdBox.style.display="block";
+    cmdBox.innerHTML="<strong>Siguiente paso para sincronizar Setas OS:</strong><br><code>node 08_brand/ds-2026/scripts/build-tokens.mjs && node 08_brand/ds-2026/scripts/sync-consumers.mjs</code>";
+  }catch(err){
+    el("lab-action-status").textContent="Error al aplicar al repo: "+err.message;
+    console.error(err);
+  }
+}
+
+/* PHOMEMO M110 QR & SIMULATOR */
+function renderPhomemoQR(code){
+  var lot = code || (el("phomemo-input-lot") ? el("phomemo-input-lot").value.trim() : "SHI-260714-03") || "SHI-260714-03";
+  var box=el("phomemo-qr-box"); if(!box)return;
+  box.innerHTML="";
+  if(window.QRMini&&typeof window.QRMini.matrix==="function"){
+    var mat=window.QRMini.matrix("https://setasdelapena.com/t/"+encodeURIComponent(lot));
+    var size=mat.length, s=Math.floor(64/size);
+    var svg='<svg width="'+(size*s)+'" height="'+(size*s)+'" viewBox="0 0 '+(size*s)+' '+(size*s)+'" xmlns="http://www.w3.org/2000/svg">';
+    for(var r=0;r<size;r++){
+      for(var c=0;c<size;c++){
+        if(mat[r][c]) svg+='<rect x="'+(c*s)+'" y="'+(r*s)+'" width="'+s+'" height="'+s+'" fill="#000000"/>';
+      }
+    }
+    svg+='</svg>';
+    box.innerHTML=svg;
+  }else{
+    box.innerHTML='<div style="width:48px;height:48px;border:2px solid #000;display:flex;align-items:center;justify-content:center;font-size:9px">QR</div>';
+  }
+}
+
+/* PRESETS / WORKING COPIES */
+function applyPreset(name){
+  state.primitives=clone(state.canonicalPrimitives);
+  state.semantic=clone(state.canonicalSemantic);
+  state.typography=clone(state.canonicalTypography);
+  state.spacing=clone(state.canonicalSpacing);
+  state.domain=clone(state.canonicalDomain);
+  state.spacingScaleFactor=1.0;
+
+  if(name==="field-contrast"){
+    state.primitives.color.primitive["ink-900"].value="#120F0C";
+    state.primitives.color.primitive["ink-500"].value="#594A3D";
+    state.primitives.color.primitive["moss-700"].value="#243226";
+    state.primitives.color.primitive["coral-700"].value="#773326";
+    state.primitives.color.primitive["warning-text"].value="#72531B";
+    state.spacing.structure.tapTargetMin="48px";
+  }else if(name==="warm-botanical"){
+    state.primitives.color.primitive["paper-100"].value="#F4EFE2";
+    state.primitives.color.primitive["paper-50"].value="#FBF8EF";
+    state.primitives.color.primitive["paper-200"].value="#E8DFCE";
+    state.primitives.color.primitive["moss-700"].value="#354331";
+    state.primitives.color.primitive["bark-700"].value="#604934";
+  }else if(name==="dark-chamber"){
+    state.primitives.color.primitive["paper-100"].value="#141716";
+    state.primitives.color.primitive["paper-50"].value="#1D2220";
+    state.primitives.color.primitive["paper-200"].value="#0C0E0D";
+    state.primitives.color.primitive["ink-900"].value="#E8EAE6";
+    state.primitives.color.primitive["ink-500"].value="#8E9993";
+    state.primitives.color.primitive["rule-500"].value="#2E3732";
+    state.primitives.color.primitive["moss-700"].value="#4E7C58";
+    state.primitives.color.primitive["coral-700"].value="#D95C48";
+    state.primitives.color.primitive["bark-700"].value="#A68363";
+    state.primitives.color.primitive["warning-text"].value="#D6A340";
+  }
+  applyPrimitives(name!=="canonical");
+  applySemantic();
+  applyTypographyLive();
+  applySpacingLive();
+  applyDomainLive();
+  renderPrimitives();
+  renderSemantic();
+  renderTypographyControls();
+  renderSpacingControls();
+  renderDomainControls();
+  onTokenModified();
+}
+
+/* INIT & TABS */
+function setupTabs(){
+  // Left subpanels
+  document.querySelectorAll(".lab-tab-btn").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll(".lab-tab-btn").forEach(function(x){x.setAttribute("aria-selected","false")});
+      document.querySelectorAll(".lab-subpanel").forEach(function(x){x.dataset.active="false"});
+      b.setAttribute("aria-selected","true");
+      var sub=el("subpanel-"+b.dataset.subpanel); if(sub) sub.dataset.active="true";
+    });
+  });
+
+  // Canvas panels
+  document.querySelectorAll(".canvas-tab-btn").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll(".canvas-tab-btn").forEach(function(x){x.setAttribute("aria-selected","false")});
+      document.querySelectorAll(".canvas-panel").forEach(function(x){x.dataset.active="false"});
+      b.setAttribute("aria-selected","true");
+      var pan=el("panel-"+b.dataset.panel); if(pan) pan.dataset.active="true";
+      var t=b.dataset.panel==="components"?"Operations & Cockpit":
+            b.dataset.panel==="agronomy"?"Agronomy & Formulator":
+            b.dataset.panel==="market"?"Culinary Market & Traceability":"Phomemo M110 Physical Simulator";
+      el("canvas-main-title").textContent=t;
+    });
+  });
+
+  // Mode select
+  el("canvas-mode-select").addEventListener("change",function(){
+    canvas.dataset.mode=this.value; el("mode-chip").textContent=this.value.toUpperCase();
+    applySpacingLive();
+  });
+
+  // Phomemo controls
+  el("phomemo-size-select").addEventListener("change",function(){
+    el("phomemo-container").dataset.size=this.value;
+  });
+  el("phomemo-onebit-toggle").addEventListener("change",function(){
+    el("phomemo-container").dataset.onebit=String(this.checked);
+  });
+  function updatePhomemoDynamic(){
+    var spVal = (el("phomemo-input-species").value||"Shiitake|Lentinula edodes").split("|");
+    var common = spVal[0], latin = spVal[1];
+    var lot = el("phomemo-input-lot").value.trim() || "L26-SHT-014";
+    var sub = el("phomemo-input-sub").value.trim() || "SALA INC-02 · BOLSA 48";
+    var gen = el("phomemo-input-gen").value.trim() || "F1";
+
+    var spEl = document.querySelector(".phomemo-species");
+    if(spEl) spEl.textContent = common;
+    var latEl = document.querySelector(".phomemo-latin");
+    if(latEl) latEl.textContent = latin;
+    var lotEl = document.querySelector(".phomemo-lot");
+    if(lotEl) lotEl.textContent = lot;
+    var subEl = document.querySelector(".phomemo-mid div:first-child div:last-child");
+    if(subEl) subEl.textContent = sub;
+    var genEl = document.querySelector(".phomemo-label-header span");
+    if(genEl) genEl.textContent = gen;
+    renderPhomemoQR(lot);
+  }
+  if(el("phomemo-input-species")){
+    el("phomemo-input-species").addEventListener("change", updatePhomemoDynamic);
+    el("phomemo-input-lot").addEventListener("input", updatePhomemoDynamic);
+    el("phomemo-input-sub").addEventListener("input", updatePhomemoDynamic);
+    el("phomemo-input-gen").addEventListener("input", updatePhomemoDynamic);
+  }
+
+  // Type Specimen live tester
+  if(el("type-specimen-role")){
+    el("type-specimen-role").addEventListener("change", updateTypeSpecimen);
+    el("type-specimen-input").addEventListener("input", updateTypeSpecimen);
+  }
+
+  // Spacing and Type dominance
+  el("spacing-tap-target").addEventListener("change",function(){
+    state.spacing.structure.tapTargetMin=this.value; applySpacingLive(); onTokenModified();
+  });
+  el("spacing-radius").addEventListener("change",function(){
+    state.spacing.structure.radius.sm=this.value; applySpacingLive(); onTokenModified();
+  });
+  el("spacing-rule").addEventListener("change",function(){
+    var w=Number(this.value);
+    root.style.setProperty("--rule-width",w+"px");
+    root.style.setProperty("--rule-heavy-width",(w+1)+"px");
+    root.style.setProperty("--rule-hairline",w+"px solid var(--border-hairline)");
+    root.style.setProperty("--rule-frame",w+"px solid var(--border-hairline)");
+    root.style.setProperty("--rule-heavy",(w+1)+"px solid var(--border-heavy)");
+    onTokenModified();
+  });
+  el("spacing-scale-factor").addEventListener("input",function(){
+    state.spacingScaleFactor=Number(this.value);
+    el("spacing-scale-output").value=state.spacingScaleFactor.toFixed(2)+"×";
+    applySpacingLive(); onTokenModified();
+  });
+  el("type-dominance").addEventListener("change",function(){
+    root.style.removeProperty("--font-sans"); root.style.removeProperty("--font-editorial");
+    if(this.value==="plex") root.style.setProperty("--font-editorial","var(--font-sans)");
+    else if(this.value==="gaya") root.style.setProperty("--font-sans","var(--font-editorial)");
+    applyTypographyLive();
+    onTokenModified();
+  });
+
+  // Actions
+  el("preset-select").addEventListener("change",function(){applyPreset(this.value)});
+  el("apply-preset-btn").addEventListener("click",function(){applyPreset(el("preset-select").value)});
+  el("revert-all-btn").addEventListener("click",function(){applyPreset("canonical")});
+  el("diff-filter").addEventListener("change",renderDiffTable);
+  el("export-json-view").addEventListener("change",updateExportDisplay);
+
+  el("apply-repo-btn").addEventListener("click",applyToRepo);
+  el("copy-active-json-btn").addEventListener("click",function(){
+    var txt=el("export-json-display").textContent;
+    navigator.clipboard.writeText(txt).then(function(){
+      el("lab-action-status").textContent="JSON copiado al portapapeles.";
+    });
+  });
+  el("download-bundle-btn").addEventListener("click",function(){
+    download("primitives.json",buildPrimitivesExport());
+    setTimeout(function(){download("semantic.json",buildSemanticExport())},100);
+    setTimeout(function(){download("typography.json",buildTypographyExport())},200);
+    setTimeout(function(){download("spacing.json",buildSpacingExport())},300);
+    setTimeout(function(){download("domain.json",buildDomainExport())},400);
+    el("lab-action-status").textContent="5 archivos descargados.";
+  });
+}
+
+function init(){
+  setupTabs();
+  Promise.all([
+    fetch("ds-2026/tokens/primitives.json",{cache:"no-store"}),
+    fetch("ds-2026/tokens/semantic.json",{cache:"no-store"}),
+    fetch("ds-2026/tokens/typography.json",{cache:"no-store"}),
+    fetch("ds-2026/tokens/spacing.json",{cache:"no-store"}),
+    fetch("ds-2026/tokens/domain.json",{cache:"no-store"})
+  ]).then(function(rs){
+    for(var i=0;i<rs.length;i++){ if(!rs[i].ok) throw new Error("No se pudo cargar "+rs[i].url); }
+    return Promise.all(rs.map(function(r){return r.json()}));
+  }).then(function(v){
+    state.canonicalPrimitives=v[0]; state.primitives=clone(v[0]);
+    state.canonicalSemantic=v[1]; state.semantic=clone(v[1]);
+    state.canonicalTypography=v[2]; state.typography=clone(v[2]);
+    state.canonicalSpacing=v[3]; state.spacing=clone(v[3]);
+    state.canonicalDomain=v[4]; state.domain=clone(v[4]);
+
+    renderPrimitives();
+    renderSemantic();
+    renderTypographyControls();
+    renderSpacingControls();
+    renderDomainControls();
+
+    applyPrimitives(false);
+    applySemantic();
+    applyTypographyLive();
+    applySpacingLive();
+    applyDomainLive();
+
+    renderPhomemoQR();
+    onTokenModified();
+    el("lab-action-status").textContent="5 fuentes canónicas cargadas con éxito.";
+  }).catch(function(err){
+    console.error(err);
+    el("lab-action-status").textContent="ERROR: "+err.message;
+  });
+}
+
+init();
+})();
+</script>
+</body>
+</html>
