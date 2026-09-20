@@ -1,86 +1,122 @@
-# Criterio Theme Lab
+# Criterio Theme Lab — Entorno Oficial de Authoring DS-2026
 
-Internal development surface for DS-2026 · Criterio Edition.
+Entorno visual integral de diseño, autoría y verificación de **DS-2026 · Criterio Edition**. Permite experimentar interactivamente con todos los tokens canónicos del sistema, previsualizar componentes operacionales, simular etiquetas físicas térmicas y aplicar cambios validados directamente al repositorio.
 
-## Open locally
+## Apertura Local
 
-From `field-os-simulador/setas-os/`:
+Desde `field-os-simulador/setas-os/`:
 
 ```bash
 npm run theme-lab
 ```
 
-Then open:
+Abre en tu navegador:
 
 ```text
 http://localhost:4173/theme-lab.html
 ```
 
-The Theme Lab is intentionally **not linked into production navigation**. It is a developer/design tool, not an operational Setas OS destination.
+> **Nota:** El Theme Lab está intencionalmente fuera de la navegación productiva de Setas OS. Es una herramienta de diseño y authoring, no un módulo del cockpit operacional.
 
-## What it edits
+---
 
-### Exportable color contracts
+## 1. Los 5 Editores Canónicos de Tokens
 
-The Lab loads the packaged copies of:
+El Theme Lab carga, edita y exporta las 5 fuentes canónicas sin pérdida de claves no reconocidas:
 
-- `ds-2026/tokens/primitives.json`
-- `ds-2026/tokens/semantic.json`
+1. **`primitives.json`**:
+   - Pigmentos minerales absolutos (`paper-100`, `paper-50`, `paper-200`, `ink-900`, `ink-700`, `ink-500`, `moss-900`, `moss-700`, `moss-500`, `coral-500`, `coral-700`, `slate-500`, `sand-500`, `bark-700`, `warning`, `warning-text`, `rule-500`).
+   - Lavados derivados (`moss-tint`, `coral-tint`, `warning-tint`, `bark-tint`). Se recalculan reactivamente al modificar un pigmento primitivo, pero se preservan intactos si no se editan.
+2. **`semantic.json`**:
+   - Mappings de roles funcionales: `brand.*`, `action.*`, `status.*`, `text.*`, `border.*`, `surface.*`.
+3. **`typography.json`**:
+   - Escala tipográfica completa: `display-01`, `display-02`, `heading-01` a `03`, `species`, `latin`, `body`, `small`, `data`, `label`, `micro`.
+   - Controles de pesos tipográficos (`weights`: 300 Light a 900 Black) para roles principales.
+   - Controles de interlineado (`leading`), espaciado entre caracteres (`tracking`) y dominancia de familia tipográfica (`Gaya` editorial vs `IBM Plex`).
+   - Probador de tipografía en vivo interactivo con selector de rol y muestra editable.
+4. **`spacing.json`**:
+   - Escala base 8px (`space-half` a `space-9`).
+   - Suelo táctil de campo (`tapTargetMin`: 44px estándar vs 48px con guantes).
+   - Geometría de reglas (1px hairline / 2px heavy) y micro-radios (0px vs 2px).
+   - Gutters y márgenes por modo de superficie (`field`, `control`, `culinary`, `archive`).
+5. **`domain.json`**:
+   - Símbolos de procedencia de datos (`●` medido, `◆` calculado, `◇` estimado, `△` manual, `◎` target).
+   - Símbolos de estado de sincronización (`✓`, `◌`, `✕`, `⚡`).
+   - Tratamiento y severidad de cuarentena (`dashed`, `solid`, `double`).
 
-The packaged copies are distribution artifacts of the canonical sources in:
+---
 
-- `08_brand/ds-2026/tokens/primitives.json`
-- `08_brand/ds-2026/tokens/semantic.json`
+## 2. Working Copies & Diff Inspector
 
-Color changes update CSS variables live and can be copied/downloaded as normalized JSON.
+- **Indicador de Estado**: Muestra `CANONICAL (BASELINE)` cuando no hay modificaciones, o `NOT CANONICAL · N TOKENS MODIFICADOS` cuando se alteran valores.
+- **Variaciones de Trabajo**:
+  - `Criterio Canónico`: Restablece exactamente a los archivos base sin drift.
+  - `Alto Contraste Campo`: Variación orientada a legibilidad bajo luz solar directa en invernaderos.
+  - `Cálido Botánico`: Exploración con mayor presencia de tonos tierra y papel crema.
+  - `Cámara Oscura / Low-Glare`: Paleta mineral oscura de baja emisión lumínica para cuartos de incubación o cosechas nocturnas (4 AM) sin deslumbrar al operario.
+- **Diff Inspector Granular**:
+  - Tabla comparativa `CANONICAL` vs `WORKING`.
+  - Filtros por categoría: *Todos*, *Colores*, *Tipografía*, *Espaciado*, *Dominio*.
+  - Botón individual **[Revertir]** por cada token modificado.
 
-Derived washes are recalculated only after an edit or non-canonical preset. Loading or resetting preserves the exact canonical derived values.
+---
 
-### Preview-only controls
+## 3. Compuertas Pre-Flight (Integrity Gates)
 
-Spacing scale, border geometry, radius and dominant typography are visual experiments only.
+Antes de permitir aplicar los cambios al repositorio, el sistema valida 8 compuertas duras:
+1. `JSON valid`: Todos los objetos serializan a JSON válido.
+2. `semantic refs resolve`: Toda referencia `{color.primitive.*}` apunta a un pigmento existente.
+3. `body >= 16px`: El cuerpo de texto no baja de 16px (suelo de lectura canónico).
+4. `screen metadata >= 11px`: Los metadatos en pantalla respetan el suelo de 11px.
+5. `FIELD target >= 44px`: Los controles en modo campo garantizan accesibilidad táctil.
+6. `contrast sanctioned pairs`: Los pares críticos de texto y acción cumplen WCAG AA (≥ 4.5:1).
+7. `unknown keys preserved`: Se verifica que ninguna clave o metadata ajena al formulario haya sido eliminada.
+8. `canonical repo selected`: Se verifica que la carpeta de destino sea `08_brand/ds-2026/tokens`.
 
-Their canonical sources are:
+---
 
-- `spacing.json`
-- `typography.json`
+## 4. Simulador Físico Phomemo M110
 
-The Theme Lab does not write those values into `primitives.json` or `semantic.json`.
+En la pestaña **Print (Phomemo)**:
+- **Editor dinámico en vivo**: Permite alternar la especie (*Shiitake*, *Melena de León*, *Orellana*, *Reishi*), editar el código de lote, la ubicación/fila y la generación para ver en tiempo real cómo quiebra el texto y cómo se re-renderiza el código QR vectorial.
+- **Formatos físicos exactos**:
+  - **40 × 30 mm** (Etiquetas de bolsa, inóculo y ensayo).
+  - **50 × 30 mm** (Etiquetas comerciales y de despacho).
+- **Modo 1-Bit Térmico**:
+  - Simulación de impresión directa sin escala de grises (blanco o negro puro, sin antialiasing).
+  - Permite verificar si códigos QR, líneas finas o tipografía pierden contraste físico en la impresora térmica de 203 DPI.
+- **Código QR Dinámico**: Generado mediante `qr-mini.js` con el enlace de trazabilidad pública del lote.
 
-## Component canvas
+---
 
-The canvas deliberately uses real DS-2026 APIs:
+## 5. Canvas Agronómico & Culinario
 
-- `.sdp-btn`
-- `.sdp-lote`
-- `.sdp-reading`
-- `.sdp-provenance[data-provenance]`
-- `.sdp-task`
-- `.sdp-band`
+- **Ficha de Formulación**:
+  - Barra de relación **C:N** con indicación de zona óptima (25:1 a 40:1, ideal 28:1).
+  - Humedad proyectada de mezcla (65.2%).
+  - Eficiencia Biológica estimada (BE: 92%).
+  - Contenido de nitrógeno N% (1.52%).
+  - Clasificación explícita de procedencia (`CALCULATED`, `TARGET`, `MEASURED`, `ESTIMATED`).
+- **Dossier Organoléptico de Cata**:
+  - Ficha sensorial para chefs y mercado culinario con notas de cata, perfil de textura y maridajes recomendados.
 
-Do not add parallel `.os-*` visual component APIs to the Theme Lab.
+---
 
-## Applying an exported theme
+## 6. Guardado Seguro al Repo
 
-1. Copy the exported values into the canonical files under `08_brand/ds-2026/tokens/`.
-2. Run:
+El botón **[Aplicar JSON al Repo]**:
+1. Utiliza la **File System Access API** del navegador (`window.showDirectoryPicker()`).
+2. Requiere seleccionar la carpeta canónica `08_brand/ds-2026/tokens`.
+3. Escribe **únicamente** los 5 archivos JSON canónicos (`primitives.json`, `semantic.json`, `typography.json`, `spacing.json`, `domain.json`).
+4. **Nunca** escribe directamente en los artefactos distribuidos (`setas-os/ds-2026/`).
+
+### Paso posterior a la aplicación:
+
+Tras guardar los archivos, ejecuta en tu terminal:
 
 ```bash
 node 08_brand/ds-2026/scripts/build-tokens.mjs
 node 08_brand/ds-2026/scripts/sync-consumers.mjs
-```
-
-3. Validate:
-
-```bash
-node 08_brand/ds-2026/scripts/build-tokens.mjs --check
 node 08_brand/ds-2026/scripts/visual-contract.mjs
-cd field-os-simulador/setas-os
-npm test
+cd field-os-simulador/setas-os && node build.js && npm test
 ```
-
-## Contrast
-
-The contrast panel evaluates the current semantic mappings rather than fixed pigments. It checks critical text/action combinations against a 4.5:1 threshold and updates immediately when primitive colors or semantic references change.
-
-A green preview is not permission to bypass the repository contrast audit. The canonical audit remains authoritative.
