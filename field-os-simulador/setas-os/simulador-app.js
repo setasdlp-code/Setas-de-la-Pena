@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 8606b912fb48ab28f44277228bd831cd664861a741eaa34663a7b53300c1174b
+// source-hash: 678a1cfe84b7fde3c9581da6676d78e2bb1dd911f901e8510a374f6e75c9c72f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -3901,7 +3901,6 @@ function SimuladorShell(props) {
   const [flash, setFlash] = useState(false);
   const [saveSyncErr, setSaveSyncErr] = useState("");
   const [loteSyncErr, setLoteSyncErr] = useState("");
-  const [bitSyncErr, setBitSyncErr] = React.useState("");
   const [cmpRecipe, setCmpRecipe] = useState([]);
   const [cmpKey, setCmpKey] = useState("p_ostreatus_gris");
   const [tab, setTab] = useState(() => {
@@ -4553,11 +4552,8 @@ function SimuladorShell(props) {
       } catch (e) {
         bitQuotaWarn();
       }
-      if (window.SetasBitacoraDB) {
-        for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
-          window.SetasBitacoraDB.actualizarBolsa(bId, updatedBag).catch(() => {
-          });
-        }
+      for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
+        encolarSync({ type: "actualizarBolsa", key: "bolsa:" + bId, args: [bId, updatedBag] });
       }
       const sheetApi = window.SetasBatchSheet;
       if (sheetApi && activeLot) {
@@ -4579,10 +4575,7 @@ function SimuladorShell(props) {
           localStorage.setItem("sdp_bit_lotes", JSON.stringify(updLotes));
         } catch (e) {
         }
-        if (window.SetasBitacoraDB?.actualizarLote) {
-          window.SetasBitacoraDB.actualizarLote(activeLot.id, { lifecycleEvents: nextLog }).catch(() => {
-          });
-        }
+        encolarSync({ type: "actualizarLote", key: "lote:" + activeLot.id, args: [activeLot.id, { lifecycleEvents: nextLog }] });
       }
       playSweepBeep(1040, 120);
       triggerHaptic([50, 60]);
@@ -4825,6 +4818,10 @@ function SimuladorShell(props) {
   qrLotesRef.current = bitLotes;
   const [bitBolsas, setBitBolsas] = useState([]);
   const [bitCosechas, setBitCosechas] = useState([]);
+  const [bitTasks, setBitTasks] = useState([]);
+  const [syncQueue, setSyncQueue] = React.useState([]);
+  const [showDayClose, setShowDayClose] = useState(false);
+  const [dayCloseNote, setDayCloseNote] = useState(null);
   const [bitTab, setBitTab] = useState("bit_dash");
   const [bitActiveLoteId, setBitActiveLoteId] = useState(null);
   const applyBitTab = (raw, hasActiveLote = !!bitActiveLoteId) => {
@@ -5147,14 +5144,61 @@ function SimuladorShell(props) {
       const bl = localStorage.getItem("sdp_bit_lotes");
       const bb = localStorage.getItem("sdp_bit_bolsas");
       const bc = localStorage.getItem("sdp_bit_cosechas");
+      const bt = localStorage.getItem("sdp_bit_tasks");
       if (bl) setBitLotes(JSON.parse(bl));
       if (bb) setBitBolsas(JSON.parse(bb));
       if (bc) setBitCosechas(JSON.parse(bc));
+      if (bt) setBitTasks(JSON.parse(bt));
+      const sq = localStorage.getItem("sdp_sync_queue");
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      if (sq && syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     } catch (e) {
       setNoticeDlg({ title: "No se pudo cargar la Bitácora", msg: "Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes." });
     } finally {
       setBitLotesLoaded(true);
     }
+  }, []);
+  const syncQueueRef = React.useRef(syncQueue);
+  useEffect(() => {
+    syncQueueRef.current = syncQueue;
+  }, [syncQueue]);
+  useEffect(() => {
+    let cancelled = false;
+    const drainAll = async () => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const bitacoraDb = typeof window !== "undefined" ? window.SetasBitacoraDB : null;
+      if (!syncQueueApi || !bitacoraDb) return;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      while (!cancelled) {
+        const op = syncQueueApi.nextPending(syncQueueRef.current, Date.now());
+        if (!op) break;
+        const fn = bitacoraDb[op.type];
+        let updatedQueue;
+        try {
+          if (typeof fn !== "function") throw new Error("Operación desconocida para SetasBitacoraDB: " + op.type);
+          await fn(...op.args);
+          updatedQueue = syncQueueApi.markSynced(syncQueueRef.current, op.id);
+        } catch (err) {
+          updatedQueue = syncQueueApi.markFailed(syncQueueRef.current, op.id, err, Date.now());
+        }
+        if (cancelled) return;
+        syncQueueRef.current = updatedQueue;
+        setSyncQueue(updatedQueue);
+        try {
+          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
+        } catch (e) {
+        }
+      }
+    };
+    drainAll();
+    const intervalId = setInterval(drainAll, 15e3);
+    const onOnline = () => drainAll();
+    window.addEventListener("online", onOnline);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+      window.removeEventListener("online", onOnline);
+    };
   }, []);
   useEffect(() => {
     if (!bitLotesLoaded || initialDeepLinkHandled.current) return;
@@ -5245,6 +5289,36 @@ function SimuladorShell(props) {
     }
     ;
   }, []);
+  const taskEngine = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+  React.useEffect(() => {
+    if (bitTasks.length > 0) return;
+    if (!taskEngine) return;
+    const activos = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    if (!activos.length) return;
+    const ahora = Date.now();
+    const seeded = activos.flatMap((lote) => {
+      const toState = lote.lifecycleState || loteLifecycleState(lote);
+      try {
+        return taskEngine.tasksFromTransition({ batchId: lote.id, toState, at: lote.createdAt || new Date(ahora).toISOString(), nowMs: ahora });
+      } catch (e) {
+        return [];
+      }
+    });
+    if (seeded.length) mergeIntoTasks(seeded);
+  }, [bitTasks.length, bitLotes.length]);
+  const buildTaskIndex = (activeLotes) => {
+    const index = { batches: {}, rooms: ROOMS_CONFIG };
+    activeLotes.forEach((lote) => {
+      const isQuarantine = lote.estado === "cuarentena" || lote.lifecycleState === "quarantine";
+      index.batches[lote.id] = {
+        code: lote.codigo,
+        species: lote.especie,
+        stateLabel: isQuarantine ? "Lote en Cuarentena · Revisión Fitosanitaria" : lifecycleLabel[loteLifecycleState(lote)] || lote.estado,
+        room: lote.sala || lote.ubicacion || null
+      };
+    });
+    return index;
+  };
   const saveR = () => {
     const nm = saveName.trim();
     if (!nm || !recipe.length || !balanced || !hasPickedSpecies) return;
@@ -5837,16 +5911,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
         }
         return upd;
       });
-      if (window.SetasBitacoraDB) {
-        (async () => {
-          try {
-            await window.SetasBitacoraDB.guardarLote(lote);
-            await window.SetasBitacoraDB.guardarBolsas(bolsas);
-          } catch (e) {
-            console.warn("Error respaldando lote en Firestore:", e);
-          }
-        })();
-      }
+      encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
+      encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
       setLoteBatchConfirm(null);
       setLoteSyncErr("");
       setEjecutandoLote(false);
@@ -6115,16 +6181,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
         }
         return upd;
       });
-      if (window.SetasBitacoraDB) {
-        (async () => {
-          try {
-            await window.SetasBitacoraDB.guardarLote(lote);
-            await window.SetasBitacoraDB.guardarBolsas(bolsas);
-          } catch (e) {
-            console.warn("Error respaldando lote en Firestore:", e);
-          }
-        })();
-      }
+      encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
+      encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
       window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter((b) => b.loteId === lote.id)).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
       setShowProdLaunchModal(false);
       if (f.printQr) {
@@ -6160,6 +6218,29 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
   });
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
+  const encolarSync = ({ type, key, args }) => {
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    if (!syncQueueApi) {
+      console.warn("SetasSyncQueue no disponible — el cambio no quedó en cola de sincronización.");
+      return;
+    }
+    setSyncQueue((prev) => {
+      let next;
+      try {
+        const op = syncQueueApi.createOperation({ type, key, args });
+        next = syncQueueApi.enqueue(prev, op);
+      } catch (err) {
+        setNoticeDlg({ title: "No se pudo encolar el cambio", msg: "El cambio no se pudo poner en la cola de sincronización (" + (err.message || "error desconocido") + "). Revisa los cambios pendientes antes de seguir trabajando." });
+        return prev;
+      }
+      try {
+        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return next;
+    });
+  };
   const crearBitLote = (form) => {
     const lote = { ...form, id: "BIT_" + Date.now(), createdAt: (/* @__PURE__ */ new Date()).toISOString() };
     const nb = Number(form.numBolsas);
@@ -6173,23 +6254,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
     }
     setBitLotes([lote, ...bitLotes]);
     setBitBolsas([...bitBolsas, ...bolsas]);
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        const results = await Promise.allSettled([
-          window.SetasBitacoraDB.guardarLote(lote),
-          window.SetasBitacoraDB.guardarBolsas(bolsas)
-        ]);
-        const failed = results.find((r) => r.status === "rejected");
-        if (failed) {
-          const err = failed.reason;
-          setBitSyncErr("No se sincronizó con el servidor: " + (err?.message || err?.code || "error desconocido"));
-        } else {
-          setBitSyncErr("");
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
+    encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
     window.SetasPublicTraceDB?.publicarLote(lote, [], bolsas).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     return lote.id;
   };
@@ -6203,18 +6269,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.actualizarLote(loteId, fields);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "actualizarLote", key: "lote:" + loteId, args: [loteId, fields] });
     const loteActual = bitLotes.find((l) => l.id === loteId);
     if (loteActual?.codigo) {
       const cos = bitCosechas.filter((c) => c.loteId === loteId);
@@ -6241,18 +6296,40 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.actualizarBolsa(bolsaId, fields);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
+    encolarSync({ type: "actualizarBolsa", key: "bolsa:" + bolsaId, args: [bolsaId, fields] });
+  };
+  const mergeIntoTasks = (nuevasTareas = []) => {
+    if (!nuevasTareas.length) return;
+    const taskEngineApi = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    if (!taskEngineApi) return;
+    setBitTasks((prev) => {
+      const upd = taskEngineApi.mergeTasks(prev, nuevasTareas);
+      try {
+        localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+  };
+  const completeBitTasks = (taskIds = [], eventId) => {
+    if (!taskIds.length || !eventId) return;
+    const taskEngineApi = typeof window !== "undefined" ? window.SetasTaskEngine : null;
+    if (!taskEngineApi) return;
+    setBitTasks((prev) => {
+      let upd = prev;
+      taskIds.forEach((taskId) => {
+        if (upd.some((t) => t.id === taskId && t.status === "pending")) {
+          upd = taskEngineApi.completeTask(upd, taskId, eventId);
         }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+      });
+      try {
+        localStorage.setItem("sdp_bit_tasks", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
   };
   const addBitCosecha = (cosecha) => {
     const e = { ...cosecha, id: cosecha.id || "COS_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) };
@@ -6263,18 +6340,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       return false;
     }
     setBitCosechas([...bitCosechas, e]);
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarCosecha(e);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "guardarCosecha", key: "cosecha:" + e.id, args: [e] });
     const loteCosecha = bitLotes.find((l) => l.id === e.loteId);
     if (loteCosecha?.codigo) {
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo, e).catch((err) => console.warn("No se publicó la cosecha en la ficha pública:", err));
@@ -6290,18 +6356,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.eliminarCosecha(id);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "eliminarCosecha", key: "cosecha:" + id, args: [id] });
   };
   const deleteBitLote = (loteId) => {
     const doDelete = () => {
@@ -6335,18 +6390,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         setBitActiveLoteId(null);
         goBitTab("bit_dash");
       }
-      if (window.SetasBitacoraDB) {
-        (async () => {
-          try {
-            await window.SetasBitacoraDB.eliminarLoteCascade(loteId, bolsaIds, cosechaIds);
-            setBitSyncErr("");
-          } catch (err) {
-            setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-          }
-        })();
-      } else {
-        console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-      }
+      encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
     };
     setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });
   };
@@ -7048,6 +7092,23 @@ BATCH (${numBags}×${kgBag} kg):
       return null;
     }
   };
+  const closeTaskFromCheckbox = (row) => {
+    const lote = bitLotes.find((l) => l.id === row.objectId);
+    if (!lote || !batchSheetApi || !taskEngine) return;
+    try {
+      const log = batchSheetApi.appendBatchEvent(lote.lifecycleEvents || [], {
+        batchId: lote.id,
+        action: "note",
+        operatorId: lote.operador || "operador-local",
+        payload: { nota: `Tarea cerrada manualmente desde Hoy: ${row.what}`, taskId: row.taskId }
+      });
+      const evento = log[log.length - 1];
+      updateBitLote(lote.id, { lifecycleEvents: log });
+      completeBitTasks([row.taskId], evento.id);
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo cerrar la tarea", msg: err.message });
+    }
+  };
   const reportarEventoCultivo = async (tipo, selectedLote, bag, nota = "", eventOverride = null) => {
     const lote = qrLotesRef.current.find((l) => l.id === selectedLote?.id);
     const qrEvents = window.SetasFieldQrEvents;
@@ -7218,17 +7279,38 @@ BATCH (${numBags}×${kgBag} kg):
   const commitSheetAction = (sheet, lote, action, payload = {}) => {
     if (!batchSheetApi || !sheet) return false;
     try {
-      const result = batchSheetApi.applyAction({
-        sheet,
-        action,
+      const bolsasDelLote = bitBolsas.filter((b) => b.loteId === lote.id);
+      const consequences = batchSheetApi.actionConsequences(sheet, action, payload, {
+        role: operatorRole,
         operatorId: lote.operador || "operador-local",
-        payload,
-        log: lote.lifecycleEvents || [],
-        role: operatorRole
+        at: (/* @__PURE__ */ new Date()).toISOString(),
+        bolsas: bolsasDelLote
       });
-      updateBitLote(lote.id, { lifecycleEvents: result.log });
-      if (result.transitioned) {
-        enqueueFieldTransition(lote, sheet.state, result.state);
+      const applied = batchSheetApi.applyConsequences(sheet, consequences, { log: lote.lifecycleEvents || [] });
+      updateBitLote(lote.id, { lifecycleEvents: applied.log, ...applied.batchPatch || {} });
+      (applied.bagUpdates || []).forEach((u) => updateBitBolsa(u.bagId, u.fields));
+      if (consequences.transition) {
+        enqueueFieldTransition(lote, sheet.state, consequences.transition);
+      }
+      if (consequences.transition && taskEngine) {
+        const sopTasks = taskEngine.tasksFromTransition({
+          batchId: lote.id,
+          toState: consequences.transition,
+          at: (/* @__PURE__ */ new Date()).toISOString()
+        });
+        mergeIntoTasks(sopTasks);
+      }
+      if ((applied.followUps || []).length && taskEngine) {
+        const followUpTasks = taskEngine.tasksFromFollowUps(applied.followUps, {
+          objectId: lote.id,
+          objectType: "batch",
+          at: (/* @__PURE__ */ new Date()).toISOString()
+        });
+        mergeIntoTasks(followUpTasks);
+      }
+      if ((consequences.completes || []).length) {
+        const eventId = (applied.log[applied.log.length - 1] || {}).id || consequences.event.id;
+        completeBitTasks(consequences.completes, eventId);
       }
       return true;
     } catch (err) {
@@ -7336,36 +7418,6 @@ BATCH (${numBags}×${kgBag} kg):
       /* @__PURE__ */ React.createElement("div", { className: "today-climate-card__prov" }, anyLive ? `${completeFresh ? liveAgeLabel(live.ageMs) : "lectura parcial o vencida"} · ${(sample.sources || []).join(" + ") || "en vivo"}` : "sin telemetría conectada · sin lectura")
     );
   }));
-  const TodayV2 = () => {
-    const now = Date.now();
-    const source = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado)).map((lote, index) => {
-      const stats = calcLoteStats(lote.id);
-      const isQuarantine = lote.estado === "cuarentena" || lote.lifecycleState === "quarantine";
-      const contaminated = stats && stats.contPct > 0 || isQuarantine;
-      const inoculated = Date.parse(lote.fechaInoculacion || "");
-      const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((now - inoculated) / 864e5)) : 0;
-      return {
-        id: lote.id,
-        lote,
-        severity: stats && stats.contPct >= 20 || isQuarantine ? "critical" : void 0,
-        blocked: contaminated && !!stats && stats.contPct < 20 || isQuarantine,
-        dueAt: !contaminated && age >= 14 ? new Date(now - (index + 1) * 36e5).toISOString() : new Date(now + (index + 1) * 36e5).toISOString(),
-        title: isQuarantine ? "Lote en Cuarentena · Revisión Fitosanitaria" : contaminated ? "Revisar contaminación" : lote.estado === "fructificacion" ? "Registrar cosecha" : "Inspeccionar colonización",
-        why: isQuarantine ? `Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}` : `${lote.especie || "Lote"} · ${lifecycleLabel[loteLifecycleState(lote)] || lote.estado} · día ${age}`
-      };
-    });
-    const queue = workflow ? workflow.buildTodayQueue(source, now) : source;
-    const groups = [["critical", "Crítico"], ["overdue", "Vencido"], ["now", "Ahora"], ["blocked", "Bloqueos"], ["later", "Después"], ["context", "Contexto"]];
-    return /* @__PURE__ */ React.createElement("section", { className: "os-today-v2", "data-testid": "ux-v2-today" }, /* @__PURE__ */ React.createElement("div", { className: "os-page-kicker" }, "Operación · turno actual"), /* @__PURE__ */ React.createElement("h1", { className: "os-page-title" }, "Hoy"), /* @__PURE__ */ React.createElement("button", { className: "os-scan-target", type: "button", onClick: () => {
-      const firstActive = bitLotes.find((l) => !["completado", "descartado"].includes(l.estado));
-      setQrSelectedLoteId(bitActiveLoteId || firstActive?.id || bitLotes[0]?.id || "");
-      setShowQrSheet(true);
-    } }, "Escanear lote o registrar evento"), queue.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "os-v2-empty" }, "No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado."), groups.map(([bucket, label]) => {
-      const rows = queue.filter((item) => item.bucket === bucket);
-      if (!rows.length) return null;
-      return /* @__PURE__ */ React.createElement("section", { className: "os-today-group", key: bucket }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, label), /* @__PURE__ */ React.createElement("span", null, rows.length)), rows.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, className: "os-task-row " + (bucket === "critical" ? "os-alert-row--critical" : "") }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-task-row__title" }, item.title), /* @__PURE__ */ React.createElement("div", { className: "os-task-row__meta" }, item.lote.codigo, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openBatchDetail(item.id) }, "Abrir lote"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(item.id) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }))))));
-    }));
-  };
   const BatchDetailV2 = ({ lote }) => {
     const stats = calcLoteStats(lote.id);
     const sheet = buildSheetFor(lote);
@@ -7414,7 +7466,19 @@ BATCH (${numBags}×${kgBag} kg):
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope("all");
       setShowThermalModal(true);
-    } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 14, style: { marginRight: 6 } }), " Imprimir Etiquetas Térmicas (50×30 / 40×30)")), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (bitSyncErr ? "os-sync-state--error" : "os-sync-state--synced") }, bitSyncErr ? "Sin sincronizar" : "Sincronizado"))));
+    } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 14, style: { marginRight: 6 } }), " Imprimir Etiquetas Térmicas (50×30 / 40×30)")), (() => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+      const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+      return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (st.stuck > 0 ? "os-sync-state--error" : st.pending > 0 ? "os-sync-state--pending" : "os-sync-state--synced") }, label), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+        const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+        setSyncQueue(next);
+        try {
+          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+        } catch (e) {
+        }
+      } }, "Reintentar"));
+    })())));
   };
   const BatchDetailMobile = ({ lote, isModal = false }) => {
     const sheet = buildSheetFor(lote);
@@ -7461,7 +7525,19 @@ BATCH (${numBags}×${kgBag} kg):
     const loteBadge = isException ? "quarantine" : hasExceptions || hasReadingAlert ? "warn" : "ok";
     const events = sheet ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, type: e.title, time: e.at, desc: e.meta, kind: e.provenance })) : [];
     const batchBolsas = (bitBolsas || []).filter((b) => b.loteId === lote.id);
-    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-mobile", "data-testid": "ux-v2-batch-detail-mobile", "data-batch-state": state }, !isModal && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--secondary sdp-btn--field", onClick: () => goBitTab("bit_dash", true), style: { gap: 6 } }, "← Volver a lotes")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-metadata)" } }, "Lote"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__id", style: { fontSize: 18 } }, sheet ? sheet.code : lote.codigo)), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", className: `sdp-sync sdp-sync--${bitSyncErr ? "error" : "synced"}` }, bitSyncErr ? "Sin sincronizar" : "Sincronizado")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-editorial)", fontWeight: 700, fontSize: 20, color: "var(--text-primary)", marginTop: 4 } }, (sheet ? sheet.species : lote.especie) || "Especie sin registrar", (sheet ? sheet.speciesScientific : lote.especieCientifico) && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("i", { style: { fontWeight: 400, fontSize: 14, color: "var(--text-secondary)" } }, sheet ? sheet.speciesScientific : lote.especieCientifico))), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__status", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge sdp-badge--${loteBadge}` }, stateLabel, sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : "")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__meta", style: { gridTemplateColumns: "1fr 1fr", marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Sala"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, roomName || "Sin asignar")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Bolsas activas"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || "—"}`)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Receta"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ""}` : "Sin vincular")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Spawn"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : "Sin vincular"))))), hasExceptions && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks-mobile", style: { marginTop: 14, borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 14 } }, "Excepciones"), isException && /* @__PURE__ */ React.createElement("div", { className: "sdp-badge sdp-badge--quarantine", style: { marginBottom: 8 } }, stateLabel, " · ", state === "quarantine" ? "Sospecha de contaminación" : "Lifecycle detenido"), sheet && sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: `anom-${i}`, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, a.severity === "critical" ? "Crítico" : "Atención")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, a.detail))), sheet && sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: b.code, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, "Bloqueo")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, b.detail))), actions.some((a) => a.action === "inspection" || a.action === "contamination") && /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-mobile", "data-testid": "ux-v2-batch-detail-mobile", "data-batch-state": state }, !isModal && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--secondary sdp-btn--field", onClick: () => goBitTab("bit_dash", true), style: { gap: 6 } }, "← Volver a lotes")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-metadata)" } }, "Lote"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__id", style: { fontSize: 18 } }, sheet ? sheet.code : lote.codigo)), (() => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+      const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+      return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", className: `sdp-sync sdp-sync--${st.stuck > 0 ? "error" : st.pending > 0 ? "pending" : "synced"}` }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+        const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+        setSyncQueue(next);
+        try {
+          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+        } catch (e) {
+        }
+      }, style: { marginLeft: 6 } }, "Reintentar"));
+    })()), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-editorial)", fontWeight: 700, fontSize: 20, color: "var(--text-primary)", marginTop: 4 } }, (sheet ? sheet.species : lote.especie) || "Especie sin registrar", (sheet ? sheet.speciesScientific : lote.especieCientifico) && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("i", { style: { fontWeight: 400, fontSize: 14, color: "var(--text-secondary)" } }, sheet ? sheet.speciesScientific : lote.especieCientifico))), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__status", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge sdp-badge--${loteBadge}` }, stateLabel, sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : "")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__meta", style: { gridTemplateColumns: "1fr 1fr", marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Sala"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, roomName || "Sin asignar")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Bolsas activas"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || "—"}`)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Receta"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ""}` : "Sin vincular")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Spawn"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : "Sin vincular"))))), hasExceptions && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks-mobile", style: { marginTop: 14, borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 14 } }, "Excepciones"), isException && /* @__PURE__ */ React.createElement("div", { className: "sdp-badge sdp-badge--quarantine", style: { marginBottom: 8 } }, stateLabel, " · ", state === "quarantine" ? "Sospecha de contaminación" : "Lifecycle detenido"), sheet && sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: `anom-${i}`, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, a.severity === "critical" ? "Crítico" : "Atención")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, a.detail))), sheet && sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: b.code, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, "Bloqueo")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, b.detail))), actions.some((a) => a.action === "inspection" || a.action === "contamination") && /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -8258,7 +8334,19 @@ BATCH (${numBags}×${kgBag} kg):
     },
     /* @__PURE__ */ React.createElement(AppIcon, { name: "tag", size: 12, style: { marginRight: 4 } }),
     " Canastilla"
-  ), publicSyncStatus?.running && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)", marginLeft: 6, alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "clock", size: 12 }), " Sincronizando..."), bitActiveLoteId && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: "auto", alignSelf: "center", paddingRight: 4 } }, bitLotes.find((lt) => lt.id === bitActiveLoteId)?.codigo), bitSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", marginLeft: 8, alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 4 }, title: bitSyncErr }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "#C53030" }), " sin sincronizar"))), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  ), publicSyncStatus?.running && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-700)", marginLeft: 6, alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "clock", size: 12 }), " Sincronizando..."), bitActiveLoteId && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: "auto", alignSelf: "center", paddingRight: 4 } }, bitLotes.find((lt) => lt.id === bitActiveLoteId)?.codigo), (() => {
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+    const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+    return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "#C53030" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+      const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+      setSyncQueue(next);
+      try {
+        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+      } catch (e) {
+      }
+    } }, "Reintentar"));
+  })())), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setBitNuevoForm((p) => Object.keys(p).length ? p : buildBitNuevoForm());
     setShowBitNuevo(true);
   }, className: "inv-btn inv-btn-pri" }, "+ Nueva prueba"))), bitLotes.length > 0 && (() => {
@@ -8325,7 +8413,8 @@ BATCH (${numBags}×${kgBag} kg):
     if (!lote) return null;
     const bolsas = bitBolsas.filter((b) => b.loteId === bitActiveLoteId);
     const stats = calcLoteStats(bitActiveLoteId);
-    const EB = { "": { c: "var(--ink-500)", l: "Sin evaluar" }, sana: { c: "var(--moss-700)", l: "Sana" }, contaminada: { c: "var(--coral-700)", l: "Contaminada" }, dudosa: { c: "var(--ochre-500)", l: "Dudosa" }, descartada: { c: "var(--ink-400)", l: "Descartada" } };
+    const bagStateLabels = batchSheetApi && batchSheetApi.BAG_STATE_LABELS || {};
+    const EB = { "": { c: "var(--ink-500)", l: "Sin evaluar" }, sana: { c: "var(--moss-700)", l: "Sana" }, contaminada: { c: "var(--coral-700)", l: "Contaminada" }, dudosa: { c: "var(--ochre-500)", l: "Dudosa" }, aislada: { c: "var(--slate-500)", l: bagStateLabels.aislada || "Aislada" }, descartada: { c: "var(--ink-400)", l: "Descartada" } };
     return /* @__PURE__ */ React.createElement("div", { className: "panel", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, lote.codigo), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: 17, color: "var(--ink-900)" } }, lote.especie), lote.especieCientifico && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sci)", fontStyle: "italic", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, lote.especieCientifico)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -8486,23 +8575,7 @@ BATCH (${numBags}×${kgBag} kg):
     const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
     const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const operationalNow = Date.now();
-    const operationalSource = activeLotes.map((lote, index) => {
-      const stats = calcLoteStats(lote.id);
-      const isQuarantine = lote.estado === "cuarentena" || lote.lifecycleState === "quarantine";
-      const contaminated = stats && stats.contPct > 0 || isQuarantine;
-      const inoculated = Date.parse(lote.fechaInoculacion || "");
-      const age = Number.isFinite(inoculated) ? Math.max(0, Math.floor((operationalNow - inoculated) / 864e5)) : 0;
-      return {
-        id: lote.id,
-        lote,
-        severity: stats && stats.contPct >= 20 || isQuarantine ? "critical" : void 0,
-        blocked: contaminated && !!stats && stats.contPct < 20 || isQuarantine,
-        dueAt: !contaminated && age >= 14 ? new Date(operationalNow - (index + 1) * 36e5).toISOString() : new Date(operationalNow + (index + 1) * 36e5).toISOString(),
-        title: isQuarantine ? "Lote en Cuarentena · Revisión Fitosanitaria" : contaminated ? "Revisar contaminación" : lote.estado === "fructificacion" ? "Registrar cosecha" : "Inspeccionar colonización",
-        why: isQuarantine ? `Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}` : `${lote.especie || "Lote"} · ${lifecycleLabel[loteLifecycleState(lote)] || lote.estado} · día ${age}`
-      };
-    });
-    const operationalQueue = workflow ? workflow.buildTodayQueue(operationalSource, operationalNow) : operationalSource;
+    const operationalQueue = taskEngine ? taskEngine.buildTodayFromTasks(bitTasks, buildTaskIndex(activeLotes), operationalNow) : [];
     const criticalTaskCount = operationalQueue.filter((item) => item.bucket === "critical").length;
     const overdueTaskCount = operationalQueue.filter((item) => item.bucket === "overdue").length;
     const blockedTaskCount = operationalQueue.filter((item) => item.bucket === "blocked").length;
@@ -8519,10 +8592,26 @@ BATCH (${numBags}×${kgBag} kg):
       camaras = [];
     }
     let tasksHoy = [], recentActivity = [];
-    try {
-      tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
-    } catch (e) {
-      tasksHoy = [];
+    const motorRows = operationalQueue.map((row) => ({
+      key: row.taskId,
+      title: row.what,
+      id: row.where,
+      why: row.why,
+      action: row.action,
+      prio: row.priority === "critical" || row.priority === "high" ? "alta" : row.priority === "normal" ? "media" : "baja",
+      done: false,
+      objectId: row.objectId,
+      objectType: row.objectType,
+      fromEngine: true
+    }));
+    if (motorRows.length) {
+      tasksHoy = motorRows;
+    } else {
+      try {
+        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
+      } catch (e) {
+        tasksHoy = [];
+      }
     }
     try {
       recentActivity = JSON.parse(props.recentActivityJson || "[]");
@@ -8551,7 +8640,7 @@ BATCH (${numBags}×${kgBag} kg):
     ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), className: "home-registro-chip", style: { cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "6px 12px", minHeight: 44, minWidth: 44 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: m.color || "var(--ink-0)" } }, m.value)))), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--accent-terracotta)", flexShrink: 0, whiteSpace: "nowrap" } }, "Ver registro completo →")), /* @__PURE__ */ React.createElement("div", { className: "home-live-telemetry", style: { marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveAlertsSection, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null)), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "SCD30 · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
       setInvTab("compra");
       goTab("inventario");
-    }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center" } }, "Registrar Compra +")), criticalLots.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, criticalLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, className: "sdp-task sdp-task--critical", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-error)", border: "1px solid var(--status-error)", padding: "1px 5px" } }, item.bucket === "critical" ? "Crítico" : "Bloqueo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.title)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.lote?.codigo, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => openBatchDetail(item.id) }, "Abrir lote →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(item.id) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))) : liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", padding: "4px 0" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--status-ok)" }), " Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal."))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--ahora", "aria-label": "Banda 2: Ahora Turno en Curso", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-ok,#2E3B2F)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-ok,#2E3B2F)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-ok,#2E3B2F)" } }, "Banda 2 · Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Acciones directas ≥ 44px")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, nowLots.length + tasksHoy.filter((t) => !t.done).length, " pendiente", nowLots.length + tasksHoy.filter((t) => !t.done).length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "home-quick-actions-strip", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 14 } }, [
+    }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center" } }, "Registrar Compra +")), criticalLots.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, criticalLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--critical", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-error)", border: "1px solid var(--status-error)", padding: "1px 5px" } }, item.bucket === "critical" ? "Crítico" : "Bloqueo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Abrir lote →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))) : liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", padding: "4px 0" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--status-ok)" }), " Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal."))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--ahora", "aria-label": "Banda 2: Ahora Turno en Curso", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-ok,#2E3B2F)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-ok,#2E3B2F)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-ok,#2E3B2F)" } }, "Banda 2 · Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Acciones directas ≥ 44px")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, nowLots.length + tasksHoy.filter((t) => !t.done).length, " pendiente", nowLots.length + tasksHoy.filter((t) => !t.done).length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "home-quick-actions-strip", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 14 } }, [
       { label: props.sessionLabel || "Iniciar jornada", sub: props.sessionSub || "Registro de campo", icon: IconFlame, onClick: () => {
         const hasActiveSession = props.hasActiveSession === true || props.hasActiveSession === "true";
         if (hasActiveSession) props.onContinueSession && props.onContinueSession();
@@ -8588,16 +8677,55 @@ BATCH (${numBags}×${kgBag} kg):
         /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: accent || "var(--ink-0)", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.label), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)", marginTop: 2, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, btn.sub)),
         /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: accent || "var(--ink-2)", fontWeight: 700 } }, "→")
       );
-    })), nowLots.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 } }, nowLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, className: "sdp-task sdp-task--now", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-ok)", border: "1px solid var(--status-ok)", padding: "1px 5px" } }, item.bucket === "overdue" ? "Vencido" : "Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.title)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.lote?.codigo, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field sdp-btn--primary", type: "button", onClick: () => openBatchDetail(item.id) }, "Ejecutar transición →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => openThermalForLote(item.id) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 } }, "Checklist del Turno · ", tasksHoy.filter((t) => !t.done).length, " pendientes"), tasksHoy.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px", color: "var(--ink-2)", fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", border: "1px dashed var(--line-0)", borderRadius: 0 } }, "Sin tareas pendientes por ahora.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, className: "sdp-task", style: { display: "flex", alignItems: "center", gap: 4, padding: "4px 12px 4px 4px", border: "1px solid var(--line-0)", borderRadius: 0, opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
+    })), nowLots.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 } }, nowLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--now", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-ok)", border: "1px solid var(--status-ok)", padding: "1px 5px" } }, item.bucket === "overdue" ? "Vencido" : "Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field sdp-btn--primary", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ejecutar transición →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 } }, "Checklist del Turno · ", /* @__PURE__ */ React.createElement("span", { "data-testid": "cockpit-task-count" }, (() => {
+      const n = tasksHoy.filter((t) => !t.done).length;
+      return `${n} pendiente${n === 1 ? "" : "s"}`;
+    })())), tasksHoy.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px", color: "var(--ink-2)", fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", border: "1px dashed var(--line-0)", borderRadius: 0 } }, "Sin tareas pendientes por ahora.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, className: "sdp-task", style: { display: "flex", alignItems: "center", gap: 4, padding: "4px 12px 4px 4px", border: "1px solid var(--line-0)", borderRadius: 0, opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => props.onTaskToggle && props.onTaskToggle(t.key),
+        onClick: () => t.fromEngine ? closeTaskFromCheckbox(t) : props.onTaskToggle && props.onTaskToggle(t.key),
         "aria-pressed": t.done,
-        "aria-label": "Marcar tarea",
-        style: { cursor: "pointer", flexShrink: 0, minWidth: 44, minHeight: 44, width: 44, height: 44, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
+        "aria-label": `Marcar tarea: ${t.title}`,
+        style: { cursor: "pointer", flexShrink: 0, width: 48, height: 48, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
       },
       /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 0, border: `1.5px solid ${t.done ? "var(--accent-olive)" : "var(--line-0)"}`, background: t.done ? "var(--accent-olive)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)" } }, t.done ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--paper-0)" }) : "")
-    ), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, minHeight: 44, textAlign: "left", background: "none", border: "none", padding: "4px 0", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title", style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-0)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__meta", style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why)), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__status", style: { flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 0 } }, t.prio)))))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.id, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.title)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.lote?.codigo, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => openBatchDetail(item.id) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), /* @__PURE__ */ React.createElement("div", { style: {
+    ), /* @__PURE__ */ React.createElement("button", { "data-testid": "cockpit-task-row", onClick: () => t.fromEngine && t.objectType === "batch" ? openBatchDetail(t.objectId) : props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, minHeight: 44, textAlign: "left", background: "none", border: "none", padding: "4px 0", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title", style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-0)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__meta", style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why), t.action && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--accent-terracotta)" } }, t.action, " →")), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__status", style: { flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 0 } }, t.prio))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" } }, (() => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+      const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+      return /* @__PURE__ */ React.createElement(
+        "span",
+        {
+          "data-testid": "sync-indicator",
+          role: "status",
+          "aria-live": "polite",
+          "aria-atomic": "true",
+          style: { display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "var(--coral-700)" : st.pending > 0 ? "var(--ochre-700)" : "var(--ink-2)" }
+        },
+        /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { width: 8, height: 8, borderRadius: 0, display: "inline-block", background: st.stuck > 0 ? "var(--coral-700)" : st.pending > 0 ? "var(--ochre-500)" : "var(--moss-700)" } }),
+        label,
+        st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+          const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+          setSyncQueue(next);
+          try {
+            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+          } catch (e) {
+          }
+        }, style: { cursor: "pointer", minHeight: 48, padding: "0 14px", background: "var(--paper-0)", color: "var(--coral-700)", border: "1px solid var(--coral-700)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Reintentar")
+      );
+    })(), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "open-day-close",
+        onClick: () => {
+          setDayCloseNote(null);
+          setShowDayClose(true);
+        },
+        style: { cursor: "pointer", minHeight: 40, padding: "0 16px", background: "var(--paper-0)", color: "var(--ink-0)", border: "1px solid var(--line-0)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" }
+      },
+      "Cerrar jornada"
+    ))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: 0,
@@ -10014,7 +10142,56 @@ Click para ver análisis completo`
       className: "inv-btn inv-btn-pri"
     },
     "Guardar cosecha"
-  ))), showFieldActionModal && (() => {
+  ))), showDayClose && (() => {
+    const dayCloseApi = typeof window !== "undefined" ? window.SetasDayClose : null;
+    if (!dayCloseApi) return null;
+    const now = Date.now();
+    const activeLotes = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    const shiftStartMs = new Date(new Date(now).toDateString()).getTime();
+    const allEvents = bitLotes.flatMap((l) => l.lifecycleEvents || []);
+    const sheets = activeLotes.map((l) => buildSheetFor(l)).filter(Boolean);
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    const syncStats = syncQueueApi ? syncQueueApi.stats(syncQueue, now) : { pending: 0, stuck: 0 };
+    const pendingSyncCount = syncStats.pending + syncStats.stuck;
+    const report = dayCloseApi.buildDayCloseReport({
+      events: allEvents,
+      tasks: bitTasks,
+      sheets,
+      pendingSyncCount,
+      shiftStartMs,
+      nowMs: now,
+      operatorId: null
+    });
+    return /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => {
+      setShowDayClose(false);
+      setDayCloseNote(null);
+    }, label: "Cerrar jornada", dialogStyle: { width: 560, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 100px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--ink-2)" } }, "Cierre de jornada"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", margin: "2px 0 12px" } }, "Reporte del turno"), /* @__PURE__ */ React.createElement("div", { "data-testid": "day-close-report", style: { display: "flex", flexDirection: "column", gap: 4, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("div", null, "Eventos registrados: ", report.eventsLogged), /* @__PURE__ */ React.createElement("div", null, "Tareas completadas: ", report.tasksCompleted), /* @__PURE__ */ React.createElement("div", null, "Tareas pendientes: ", report.tasksPending, " (", report.tasksOverdue, " vencidas)"), /* @__PURE__ */ React.createElement("div", null, "Incidentes abiertos: ", report.openIncidents.length), /* @__PURE__ */ React.createElement("div", null, "Trabajo de mañana: ", report.tomorrow.length, " tipo(s)"), /* @__PURE__ */ React.createElement("div", null, "Cambios sin sincronizar: ", report.pendingSync)), report.openIncidents.length > 0 && /* @__PURE__ */ React.createElement("ul", { style: { marginTop: 10, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)" } }, report.openIncidents.map((inc, i) => /* @__PURE__ */ React.createElement("li", { key: i }, inc.label, " · ", inc.detail))), !report.readyToClose && /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "day-close-blockers", style: { marginTop: 10, color: "var(--coral-700)" } }, /* @__PURE__ */ React.createElement("strong", null, "No se puede cerrar todavía:"), /* @__PURE__ */ React.createElement("ul", null, report.blockers.map((b, i) => /* @__PURE__ */ React.createElement("li", { key: i }, b)))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        style: { marginTop: 14, cursor: report.readyToClose ? "pointer" : "not-allowed", opacity: report.readyToClose ? 1 : 0.5, minHeight: 44, padding: "0 18px", background: "var(--accent-olive)", color: "var(--paper-0)", border: "none", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" },
+        disabled: !report.readyToClose,
+        onClick: () => {
+          try {
+            const closed = dayCloseApi.closeDay(report, { operatorId: null, at: now });
+            setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
+          } catch (err) {
+            setNoticeDlg({ title: "No se pudo cerrar el turno", msg: err.message });
+          }
+        }
+      },
+      "Confirmar cierre"
+    ), dayCloseNote && /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        readOnly: true,
+        value: dayCloseNote,
+        "data-testid": "day-close-handoff-note",
+        onClick: (e) => e.target.select(),
+        style: { width: "100%", minHeight: 220, marginTop: 12, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" }
+      }
+    ));
+  })(), showFieldActionModal && (() => {
     const activeBatches = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
     const currentLote = bitLotes.find((l) => l.id === (qrSelectedLoteId || bitActiveLoteId)) || activeBatches[0] || bitLotes[0];
     const isAdmin = props.isAdmin === true || props.isAdmin === "true";
