@@ -139,16 +139,42 @@ Precondición de todo lo demás. Barato y desbloquea el resto.
 
 Criterio de salida cumplido: **994 pass / 0 fail en 4,96 s.**
 
-#### Fase 1 — Corpus de verdad de campo (bloqueante para tocar el modelo)
+#### Fase 1 — Corpus de verdad de campo — 🟡 MAQUINARIA LISTA, FALTAN DATOS (2026-09-20)
 
-No es trabajo de agente: es trabajo de finca con asistencia de agente.
+La parte de ingeniería está hecha y verificada. Lo que falta es un export de Bitácora,
+que es trabajo de finca, no de agente.
 
-1. Agente extrae de Bitácora/Firestore los lotes con `ebReal` registrado y genera
-   `ground-truth-fixtures.json` con el esquema de `.example.json` (`sKey`, `recipe`, `ebReal`).
-2. Reporta n por especie. **Con n<10 por especie no se calibra nada** — se documenta el
-   hueco y se instrumenta la captura (`OPERATOR_CAPTURE_TASK.md` ya existe).
-3. Se activa `perito-regression-report.js` en CI con umbrales iniciales derivados del
-   propio corpus (no inventados), y `--baseline=origin/main`.
+Hecho:
+
+1. ✅ `build-ground-truth-corpus.js` + 13 tests. Convierte un export de Bitácora
+   (y opcionalmente pruebas del Recetario) en `ground-truth-fixtures.json`.
+   **No define elegibilidad**: delega en `historical-calibration.js`
+   (`bitacoraObservations` → `batchOutcome` → `assessHistory`), el contrato de
+   `HISTORY_ELIGIBILITY.md`. Una prueba compara el conjunto resultante contra el del
+   módulo canónico, para que nadie reimplemente el filtro aquí.
+2. ✅ Deduplicación entre fuentes: un lote registrado en Bitácora y guardado también
+   como prueba cuenta una vez; dos EB contradictorias para el mismo lote excluyen ambas.
+3. ✅ `--min-per-species` (10 por defecto) advierte sin bloquear: con n baja la compuerta
+   detecta roturas pero no autoriza a afirmar mejoras.
+4. ✅ CI: paso condicional con el secret `GROUND_TRUTH_CORPUS`. Sin secret emite un
+   `::notice` diciendo que el cambio no fue validado contra campo — no se salta en silencio.
+5. ✅ El corpus está en `.gitignore`: el repositorio es **público** y el corpus trae
+   rendimientos y costos reales de la finca.
+6. ✅ Documentado en [`ground-truth-corpus.md`](./ground-truth-corpus.md).
+
+**Cadena verificada de extremo a extremo** con un export sintético de 12 lotes:
+corpus generado → `perito-regression-report.js` → `meanAbsErrorEB 12.129`, exit 0.
+Perturbando `eb_baseline` de `p_ostreatus_gris` de 90→70, la compuerta reporta
+`+11.054` y sale con **exit 2**. Detecta la regresión que los 1007 tests unitarios
+no ven.
+
+Pendiente (requiere a Sebastián):
+
+- Export de Bitácora/Firestore con los lotes cerrados que tengan `ebReal`.
+- Correr `npm run corpus -- --bitacora=<export>` y ver el n por especie.
+- Cargar el resultado como secret `GROUND_TRUTH_CORPUS`.
+- Si n < 10 por especie: instrumentar la captura antes de calibrar
+  (`OPERATOR_CAPTURE_TASK.md` ya existe).
 
 **Regla dura, a partir de aquí: ningún PR que toque `analyze()`, `scoring.js` o
 `perito-scenarios.js` entra sin salida verde de `perito-regression-report.js`.**

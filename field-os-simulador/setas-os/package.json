@@ -7,6 +7,8 @@
     "test": "npm run test:unit && npm run test:gates",
     "test:unit": "node --test $(ls *.test.js | grep -v '^paso1-criterio-gate')",
     "test:gates": "node --test paso1-criterio-gate.test.js",
+    "corpus": "node build-ground-truth-corpus.js",
+    "perito:regression": "node perito-regression-report.js",
     "preview": "python3 -m http.server 4173",
     "lhci": "lhci autorun --config=./lighthouserc.cjs",
     "test:rules": "firebase emulators:exec --only firestore --project setas-os-rules-test \"mocha test/firestore.rules.test.js\"",
