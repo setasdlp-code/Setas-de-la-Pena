@@ -53,6 +53,11 @@
       "stroke": "1.5px",
       "fill": "none"
     },
-    "printCodeXHeight": "3mm"
+    "printCodeXHeight": "3mm",
+    "rule": {
+      "hairline": "1px",
+      "heavy": "2px",
+      "frame": "1px"
+    }
   }
 }

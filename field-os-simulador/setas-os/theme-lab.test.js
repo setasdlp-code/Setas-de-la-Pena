@@ -122,3 +122,66 @@ test('theme lab integrates safe File System Access API targeting canonical token
 test('package exposes an explicit local Theme Lab preview command', () => {
   assert.equal(pkg.scripts['theme-lab'], 'python3 -m http.server 4173');
 });
+
+
+test('theme lab implements click-to-edit inspect mode with overlay, sidebar and keyboard controls', () => {
+  assert.match(lab, /id="inspect-toggle"/);
+  assert.match(lab, /data-subpanel="inspector"/);
+  assert.match(lab, /id="subpanel-inspector"/);
+  assert.match(lab, /id="inspect-overlay-box"/);
+  assert.match(lab, /id="inspect-tooltip"/);
+  assert.match(lab, /function inspectToggle\(/);
+  assert.match(lab, /function inspectSelect\(/);
+  assert.match(lab, /e\.altKey&&e\.key\.toLowerCase\(\)==="i"/);
+  assert.match(lab, /e\.key==="Escape"/);
+});
+
+test('inspector resolves nearest canonical component and never invents tokens for unknown nodes', () => {
+  assert.match(lab, /function inspectResolve\(/);
+  assert.match(lab, /function inspectNearest\(/);
+  assert.match(lab, /computedOnly:true/);
+  assert.match(lab, /Sin ruta canónica conocida/);
+  assert.match(lab, /classList\.contains\("sdp-btn--primary"\)/);
+  assert.match(lab, /classList\.contains\("sdp-reading__value"\)/);
+  assert.match(lab, /classList\.contains\("sdp-provenance"\)/);
+  assert.match(lab, /classList\.contains\("sdp-lote"\)/);
+  assert.match(lab, /classList\.contains\("sdp-task"\)/);
+});
+
+test('inspector edits semantic, typography, spacing and domain working copies', () => {
+  assert.match(lab, /function inspectMakeSemantic\(/);
+  assert.match(lab, /function inspectRenderType\(/);
+  assert.match(lab, /function inspectRenderSpacing\(/);
+  assert.match(lab, /function inspectRenderDomain\(/);
+  assert.match(lab, /onTokenModified\(\)/);
+  assert.match(lab, /applyTypographyLive\(\)/);
+  assert.match(lab, /applySpacingLive\(\)/);
+  assert.match(lab, /applyDomainLive\(\)/);
+});
+
+test('inspector can jump from selected element to canonical sidebar token controls', () => {
+  assert.match(lab, /function inspectFocusPath\(/);
+  assert.match(lab, /data-token-path/);
+  assert.match(lab, /Ir a Token en Sidebar/);
+  assert.match(lab, /inspect-token-flash/);
+});
+
+test('rule geometry is canonical spacing data and is compiled instead of preview-only CSS', () => {
+  const canonicalSpacing = JSON.parse(fs.readFileSync(path.join(ROOT, '..', '..', '08_brand', 'ds-2026', 'tokens', 'spacing.json'), 'utf8'));
+  assert.deepEqual(canonicalSpacing.structure.rule, { hairline: '1px', heavy: '2px', frame: '1px' });
+  assert.match(lab, /spacing\.structure\.rule/);
+  assert.match(lab, /state\.spacing\.structure\.rule\.hairline/);
+});
+
+test('Theme Lab pre-flight covers operative typography, field cells and rule geometry', () => {
+  assert.match(lab, /operative data >= 13px/);
+  assert.match(lab, /label >= 11px/);
+  assert.match(lab, /FIELD cell >= 48px/);
+  assert.match(lab, /rule geometry 1–5px/);
+});
+
+test('embedded Theme Lab JavaScript parses after Inspector integration', () => {
+  const match = lab.match(/<script>([\s\S]*)<\/script>\s*<\/body>/);
+  assert.ok(match, 'embedded script found');
+  assert.doesNotThrow(() => new Function(match[1]));
+});

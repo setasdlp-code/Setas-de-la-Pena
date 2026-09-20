@@ -11,7 +11,7 @@
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
-  border: 1px solid var(--border-heavy);
+  border: var(--rule-hairline);
   background: var(--surface-page);
   color: var(--text-primary);
   user-select: none;
@@ -41,9 +41,9 @@
 .sdp-btn--accent:hover { background: var(--action-accent-hover); text-decoration: underline; }
 
 .sdp-btn--field {
-  min-height: 48px;
+  min-height: var(--field-cell-min-height);
   padding: 0 var(--space-4);
-  font-size: 13px;
+  font-size: var(--size-data);
 }
 
 .sdp-btn:disabled, .sdp-btn--disabled {
