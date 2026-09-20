@@ -57,6 +57,15 @@ else
   fi
 fi
 
+# MCP: los servidores se autoinstalan vía mcp/run_server.sh, pero el venv está
+# en .gitignore — en un checkout nuevo el primer arranque tarda ~10 s. Decir en
+# qué estado está evita interpretar esa demora (o un fallo) como "no hay MCP".
+if [ -x "$ROOT/.venv/bin/python" ]; then
+  echo "mcp:     setas · setas-bridge (venv listo)"
+elif [ -f "$ROOT/mcp/run_server.sh" ]; then
+  echo "mcp:     venv ausente — se crea solo en el primer arranque (~10 s)"
+fi
+
 echo "tests:   npm run test:unit (~5 s, sin navegador) · npm run test:gates (Playwright)"
 echo "──────────────────────────────────────────────────────────"
 exit 0
