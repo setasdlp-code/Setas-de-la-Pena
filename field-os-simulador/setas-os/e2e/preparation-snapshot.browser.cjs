@@ -2,6 +2,7 @@
 // Local integration harness: real React, scoring and native adapter; no Firebase
 // account or production writes. Run: node e2e/preparation-snapshot.browser.cjs
 const fs=require('node:fs');
+const os=require('node:os');
 const path=require('node:path');
 const http=require('node:http');
 const assert=require('node:assert/strict');
@@ -48,7 +49,7 @@ const root=path.resolve(__dirname,'..');
   await expect(sheet).toContainText('estimación catálogo');await expect(sheet).toContainText('medido');
   // Invalid moisture must leave the editing control available and suppress launch/print.
   await input.fill('93');await expect(input).toBeVisible();await expect(sheet).toHaveCount(0);
-  await expect(page.getByRole('button',{name:'⚡ Ejecutar lote',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:/Ejecutar lote/})).toBeDisabled();
   await input.fill('20');await expect(sheet).toBeVisible();
   // Print the same revision in an isolated popup; browser print is stubbed.
   await page.evaluate(()=>{const originalOpen=window.open;window.open=function(...args){const p=originalOpen.apply(window,args);if(p)p.print=()=>{};return p;};});
@@ -56,15 +57,15 @@ const root=path.resolve(__dirname,'..');
   await expect(popup.locator('.prod-sheet')).toHaveAttribute('data-preparation-revision',measured.revision);
   await expect(popup.locator('.prod-sheet')).toContainText(measured.totals.waterToAddKg.toFixed(4));await popup.close();
   // Editing batch state behind an open modal must invalidate its snapshot.
-  await page.getByRole('button',{name:'⚡ Ejecutar lote',exact:true}).click();await expect(page.getByRole('dialog',{name:'Ejecutar lote',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:/Ejecutar lote/}).click();await expect(page.getByRole('dialog',{name:'Ejecutar lote',exact:true})).toBeVisible();
   await page.evaluate(()=>{const el=document.getElementById('prod-bags');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,'12');el.dispatchEvent(new Event('input',{bubbles:true}));});
   await expect(page.getByRole('dialog',{name:'Ejecutar lote',exact:true})).toHaveCount(0);
   await expect.poll(async()=> (await spec())?.target.bags).toBe(12);
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes'))),[]);
   await page.setViewportSize({width:390,height:844});await expect(input).toBeVisible();
   assert.ok(await page.locator('[aria-label="Humedad de preparación"]').evaluate(el=>el.scrollWidth<=el.clientWidth),'moisture controls fit mobile');
-  await page.screenshot({path:'/private/tmp/preparation-mobile.png',fullPage:true});
-  const accepted=await spec();await page.getByRole('button',{name:'⚡ Ejecutar lote',exact:true}).click();
+  await page.screenshot({path:path.join(os.tmpdir(),'preparation-mobile.png'),fullPage:true});
+  const accepted=await spec();await page.getByRole('button',{name:/Ejecutar lote/}).click();
   const dialog=page.getByRole('dialog',{name:'Ejecutar lote',exact:true});await expect(dialog).toContainText(accepted.revision);
   assert.ok(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth),'confirmation fits mobile');
   await dialog.getByRole('button',{name:'Confirmar y descontar'}).click();
@@ -75,12 +76,12 @@ const root=path.resolve(__dirname,'..');
   assert.equal(inventory.find(l=>l.ingredienteId==='paja_trigo').cantidadKgDisponible,100-accepted.items[0].inventoryKg);
   // Formulador consumes those same inputs/overrides and invalidates its own launcher.
   await navigate('formular');await page.setViewportSize({width:1280,height:900});
-  await page.getByRole('button',{name:'🚀 Lanzar Lote',exact:true}).click();
-  await expect(page.getByRole('button',{name:'🚀 Confirmar y Lanzar Producción',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:/Lanzar Lote/}).click();
+  await expect(page.getByRole('button',{name:/Confirmar y Lanzar/})).toBeVisible();
   await page.evaluate(()=>window.SetasFormulatorAPI.applyRecipe([{id:'paja_trigo',p:70},{id:'salvado_trigo',p:30}]));
-  await expect(page.getByRole('button',{name:'🚀 Confirmar y Lanzar Producción',exact:true})).toHaveCount(0);
-  await page.getByRole('button',{name:'🚀 Lanzar Lote',exact:true}).click();const second=await spec();
-  await page.getByRole('button',{name:'🚀 Confirmar y Lanzar Producción',exact:true}).click();
+  await expect(page.getByRole('button',{name:/Confirmar y Lanzar/})).toHaveCount(0);
+  await page.getByRole('button',{name:/Lanzar Lote/}).click();const second=await spec();
+  await page.getByRole('button',{name:/Confirmar y Lanzar/}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes')).length)).toBe(2);
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes'))[0].preparation),second);
   assert.deepEqual(errors,[]);

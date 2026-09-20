@@ -80,12 +80,79 @@
     metadata: Object.freeze({}),
   });
 
+  const createFieldEventV2 = ({
+    entityType = 'container',
+    entityId,
+    batchId,
+    eventType = 'state_transition',
+    from = null,
+    to = null,
+    expectedEntityRevision = null,
+    expectedBatchRevision = null,
+    operatorId,
+    occurredAt,
+    source = 'mobile_qr',
+    reasonCode = null,
+    notes = null,
+    payload = {},
+    evidenceIds = [],
+    metadata = {},
+  } = {}) => {
+    if (!entityId) throw new Error('invalid_envelope: entityId es requerido en v2');
+    if (!batchId) throw new Error('invalid_envelope: batchId es requerido en v2');
+    if (!eventType) throw new Error('invalid_envelope: eventType es requerido en v2');
+
+    return Object.freeze({
+      schemaVersion: 2,
+      id: generateEventId(),
+      entityType,
+      entityId,
+      batchId,
+      eventType,
+      expectedEntityRevision,
+      expectedBatchRevision,
+      occurredAt: canonicalizeTimestamp(occurredAt || new Date().toISOString()),
+      operatorId,
+      source,
+      payload: Object.freeze({
+        from,
+        to,
+        reasonCode,
+        notes,
+        ...payload,
+      }),
+      evidenceIds: Object.freeze([...(evidenceIds || [])]),
+      attachmentIds: Object.freeze([]),
+      metadata: Object.freeze({ ...metadata }),
+    });
+  };
+
   const contentEquals = (submitted, stored) => {
     const normalize = (obj) => {
       const { receipt, ...eventOnly } = obj;
+      const v = eventOnly.schemaVersion ?? 1;
+      if (v === 2) {
+        return JSON.stringify({
+          id: eventOnly.id,
+          schemaVersion: 2,
+          entityType: eventOnly.entityType || 'container',
+          entityId: eventOnly.entityId,
+          batchId: eventOnly.batchId,
+          eventType: eventOnly.eventType,
+          expectedEntityRevision: eventOnly.expectedEntityRevision ?? null,
+          expectedBatchRevision: eventOnly.expectedBatchRevision ?? null,
+          occurredAt: canonicalizeTimestamp(eventOnly.occurredAt),
+          operatorId: eventOnly.operatorId,
+          source: eventOnly.source,
+          payload: eventOnly.payload,
+          evidenceIds: eventOnly.evidenceIds ?? [],
+          attachmentIds: eventOnly.attachmentIds ?? [],
+          metadata: eventOnly.metadata ?? {},
+        });
+      }
       return JSON.stringify({
         id: eventOnly.id,
-        schemaVersion: eventOnly.schemaVersion ?? 1,
+        schemaVersion: 1,
         type: eventOnly.type,
         batchId: eventOnly.batchId,
         expectedBatchRevision: eventOnly.expectedBatchRevision ?? null,
@@ -135,6 +202,7 @@
     transitionClass,
     generateEventId,
     createFieldEvent,
+    createFieldEventV2,
     canonicalizeTimestamp,
     contentEquals,
     validateTransition,

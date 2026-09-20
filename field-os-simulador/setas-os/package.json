@@ -5,6 +5,9 @@
   "scripts": {
     "build": "node build.js",
     "test": "node --test *.test.js",
+    "test:browser": "node e2e/field-qr-capture.browser.cjs && node e2e/history-eligibility.browser.cjs && node e2e/operator-capture.browser.cjs && node e2e/perito-readiness.browser.cjs && node e2e/preparation-snapshot.browser.cjs",
+    "test:e2e": "npx playwright test --config playwright.config.cjs",
+    "test:gate:pr": "node build.test.js && npm test && npm run test:browser",
     "preview": "python3 -m http.server 4173",
     "lhci": "lhci autorun --config=./lighthouserc.cjs",
     "test:rules": "firebase emulators:exec --only firestore --project setas-os-rules-test \"mocha test/firestore.rules.test.js\"",

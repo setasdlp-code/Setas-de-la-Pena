@@ -256,4 +256,84 @@ test('FieldEventQueue', async (t) => {
     assert.ok(recoveredIds.includes('evt_rec_1'));
     assert.ok(!recoveredIds.includes('evt_rec_2'));
   });
+
+  await t.test('should allow concurrent reservations for different containers of the same batch in v2', async () => {
+    const eventA = {
+      id: 'evt_c_1',
+      schemaVersion: 2,
+      entityType: 'container',
+      entityId: 'BAG-101',
+      batchId: 'lote_shared',
+      payload: { from: 'incubation', to: 'fruiting' },
+      operatorId: 'op_1',
+    };
+    const queueEntryA = {
+      eventId: 'evt_c_1',
+      accountId: 'acct_1',
+      status: 'pending',
+    };
+
+    const eventB = {
+      id: 'evt_c_2',
+      schemaVersion: 2,
+      entityType: 'container',
+      entityId: 'BAG-102',
+      batchId: 'lote_shared',
+      payload: { from: 'incubation', to: 'fruiting' },
+      operatorId: 'op_1',
+    };
+    const queueEntryB = {
+      eventId: 'evt_c_2',
+      accountId: 'acct_1',
+      status: 'pending',
+    };
+
+    // Both should succeed without collision despite sharing the same batchId
+    await persistFieldEvent(db, eventA, queueEntryA, 'acct_1');
+    await persistFieldEvent(db, eventB, queueEntryB, 'acct_1');
+
+    const resA = await getReservation(db, 'acct_1', 'BAG-101');
+    const resB = await getReservation(db, 'acct_1', 'BAG-102');
+    assert.equal(resA.eventId, 'evt_c_1');
+    assert.equal(resB.eventId, 'evt_c_2');
+  });
+
+  await t.test('should prevent duplicate reservation for the same container in v2', async () => {
+    const event1 = {
+      id: 'evt_c_dup_1',
+      schemaVersion: 2,
+      entityType: 'container',
+      entityId: 'BAG-103',
+      batchId: 'lote_shared',
+      payload: { from: 'incubation', to: 'fruiting' },
+      operatorId: 'op_1',
+    };
+    const queueEntry1 = {
+      eventId: 'evt_c_dup_1',
+      accountId: 'acct_1',
+      status: 'pending',
+    };
+
+    await persistFieldEvent(db, event1, queueEntry1, 'acct_1');
+
+    const event2 = {
+      id: 'evt_c_dup_2',
+      schemaVersion: 2,
+      entityType: 'container',
+      entityId: 'BAG-103',
+      batchId: 'lote_shared',
+      payload: { from: 'incubation', to: 'quarantine' },
+      operatorId: 'op_1',
+    };
+    const queueEntry2 = {
+      eventId: 'evt_c_dup_2',
+      accountId: 'acct_1',
+      status: 'pending',
+    };
+
+    await assert.rejects(
+      () => persistFieldEvent(db, event2, queueEntry2, 'acct_1'),
+      /batch_already_has_pending_transition/
+    );
+  });
 });

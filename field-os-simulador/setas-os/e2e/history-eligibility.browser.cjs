@@ -2,6 +2,7 @@
 // Isolated localhost + fresh browser storage, external requests blocked.
 // Real React, native adapter, scoring and persistence; no Firebase credentials.
 const fs=require('node:fs');
+const os=require('node:os');
 const path=require('node:path');
 const http=require('node:http');
 const assert=require('node:assert/strict');
@@ -62,7 +63,7 @@ const root=path.resolve(__dirname,'..');
    await expect(summary).toContainText('EB ausente o inválida: 2');
    await expect(summary).toContainText('registro duplicado: 1');
    assert.ok(await summary.evaluate(el=>el.scrollWidth<=el.clientWidth),'history summary overflow');
-   await summary.screenshot({path:`/private/tmp/history-eligibility-${width}.png`});
+   await summary.screenshot({path:path.join(os.tmpdir(),`history-eligibility-${width}.png`)});
    // Reuse the existing final-EB action through the visible recipe card.
    await page.goto(`${base}?view=catalogo`);
    const card=page.locator('[data-recipe-id="missing"]');

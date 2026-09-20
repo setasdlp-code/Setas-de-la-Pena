@@ -78,26 +78,38 @@
     if (!Array.isArray(event.attachmentIds) || event.attachmentIds.length !== 0) {
       throw new Error('invalid_envelope: attachmentIds debe estar vacío en v1');
     }
-    return Object.freeze({ schemaVersion: SCHEMA_VERSION, accountId, event });
+    const schemaVersion = event.schemaVersion === 2 ? 2 : SCHEMA_VERSION;
+    return Object.freeze({ schemaVersion, accountId, event });
   };
 
   /**
    * Verifica que un recibo del servidor esté completo antes de confiar en él.
    * Un recibo parcial es peor que ninguno: el cliente marcaría el evento como
-   * confirmado sin poder reconciliar la revisión del lote.
+   * confirmado sin poder reconciliar la revisión del lote o contenedor.
    */
   const validateReceipt = (receipt) => {
     if (!receipt || typeof receipt !== 'object') {
       throw new Error('incomplete_event_record: recibo ausente');
     }
-    for (const field of RECEIPT_FIELDS) {
+    for (const field of ['eventId', 'acceptedAt', 'serverEventPath']) {
       if (receipt[field] === undefined || receipt[field] === null || receipt[field] === '') {
         throw new Error(`incomplete_event_record: falta "${field}" en el recibo`);
       }
     }
-    const rev = receipt.batchRevisionAfter;
-    if (!Number.isInteger(rev) || rev <= 0) {
-      throw new Error('incomplete_event_record: batchRevisionAfter debe ser un entero positivo');
+    if (receipt.batchRevisionAfter === undefined && receipt.entityRevisionAfter === undefined) {
+      throw new Error('incomplete_event_record: falta "batchRevisionAfter" en el recibo');
+    }
+    if (receipt.batchRevisionAfter !== undefined && receipt.batchRevisionAfter !== null) {
+      const rev = receipt.batchRevisionAfter;
+      if (!Number.isInteger(rev) || rev <= 0) {
+        throw new Error('incomplete_event_record: batchRevisionAfter debe ser un entero positivo');
+      }
+    }
+    if (receipt.entityRevisionAfter !== undefined && receipt.entityRevisionAfter !== null) {
+      const rev = receipt.entityRevisionAfter;
+      if (!Number.isInteger(rev) || rev <= 0) {
+        throw new Error('incomplete_event_record: entityRevisionAfter debe ser un entero positivo');
+      }
     }
     return true;
   };

@@ -12,6 +12,11 @@
     return globalThis.SetasTelemetry;
   };
 
+  const getSensorHealth = () => {
+    if (typeof module !== 'undefined' && module.exports) return require('./sensor-health.js');
+    return globalThis.SetasSensorHealth;
+  };
+
   const getHistory = () => typeof module !== 'undefined' && module.exports ? require('./historical-calibration.js') : globalThis.SetasHistoricalCalibration;
 
   const toKg = (value, unit) => {
@@ -71,10 +76,18 @@
     const hasHarvest = !!stats && stats.totalFresco > 0;
     const hasTraceability = !!recipeSnapshot && ingredientLots.length > 0;
 
+    const sensorHealthModule = getSensorHealth();
+    const telemetryHealth = sensorHealthModule
+      ? sensorHealthModule.summarizeCycleTelemetryHealth(cycleReadings, { startAt: cycle.startAt, endAt: cycle.endAt })
+      : null;
+
     // Un solo ciclo nunca recibe confianza alta por sí mismo: es evidencia
     // operacional observacional, no un experimento causal replicado.
+    // Además, un ciclo con telemetría degradada se degrada a confianza 'low'.
     const completenessScore = [hasHarvest, bolsas.length > 0, completeEnvironmentMetrics >= 2, hasTraceability].filter(Boolean).length;
-    const confidence = completenessScore >= 3 ? 'medium' : 'low';
+    const baseConfidence = completenessScore >= 3 ? 'medium' : 'low';
+    const isDegradedTelemetry = telemetryHealth && telemetryHealth.reliabilityGrade === 'LOW';
+    const confidence = isDegradedTelemetry ? 'low' : baseConfidence;
 
     return {
       schema: 'setas.cycle-evidence.v1',
@@ -108,13 +121,17 @@
       } : null,
       flushes,
       environment,
+      telemetryHealth,
       telemetrySummary: {
         totalReadings: cycleReadings.length,
         metricsWithValidData: completeEnvironmentMetrics,
+        reliabilityGrade: telemetryHealth?.reliabilityGrade || 'NONE',
       },
       provenance: {
         biological: 'measured_calculated_from_bitacora',
-        environment: cycleReadings.length ? 'measured' : 'missing',
+        environment: !cycleReadings.length ? 'missing'
+          : isDegradedTelemetry ? 'degraded'
+          : 'measured',
         recipe: recipeSnapshot ? 'snapshot' : 'missing',
         ingredients: ingredientLots.length ? 'lot_traceable' : 'missing',
       },

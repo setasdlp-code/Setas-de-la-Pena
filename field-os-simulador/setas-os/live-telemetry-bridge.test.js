@@ -442,3 +442,27 @@ test('el puente vive sin transportes: el webhook manual del Hub IoT sigue funcio
   assert.equal(bridge.getSample('cloudlab_844').temperature_c, 18.4);
   bridge.stop();
 });
+
+test('getHealthReport expone la salud determinística de la sala en vivo', () => {
+  const clock = makeClock();
+  const bridge = createLiveTelemetryBridge({ transports: [], factories: {}, clock: clock.now });
+  bridge.start();
+  bridge.ingest({
+    room_id: 'martha_01',
+    device_id: 'sht45_01',
+    temperature_c: 18.0,
+    rh_pct: 92.0,
+    observed_at: new Date(clock.now() - 5000).toISOString(),
+  }, { source: 'manual' });
+
+  const health = bridge.getHealthReport('martha_01');
+  assert.ok(health);
+  assert.equal(health.roomId, 'martha_01');
+  assert.equal(health.metrics.temperature_c.status, 'healthy');
+  assert.equal(health.overallStatus, 'healthy');
+
+  const snap = bridge.getSnapshot();
+  assert.ok(snap.rooms.martha_01.health);
+  assert.equal(snap.rooms.martha_01.health.overallStatus, 'healthy');
+  bridge.stop();
+});
