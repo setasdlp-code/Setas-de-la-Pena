@@ -108,6 +108,28 @@ button,input,select{font:inherit}
 .gauge-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:var(--size-micro-screen);color:var(--text-secondary)}
 .agronomy-meta-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:var(--size-micro-screen);margin-top:var(--space-2)}
 .agronomy-meta-table td{padding:4px 6px;border-bottom:var(--rule-hairline)}
+/* Inspector Mode & Drawer */
+#lab-canvas.is-inspecting{cursor:crosshair!important}
+#lab-canvas.is-inspecting *:not(.canvas-top):not(.canvas-top *):not(.canvas-tabs):not(.canvas-tabs *):not(.inspector-drawer):not(.inspector-drawer *){cursor:crosshair!important}
+.inspector-hover-outline{outline:2px dashed var(--action-primary)!important;outline-offset:2px}
+.inspector-selected{outline:2px solid var(--action-primary)!important;outline-offset:3px;box-shadow:0 0 0 4px var(--focus-ring,rgba(46,79,39,0.28))!important}
+.inspector-hover-badge{position:fixed;pointer-events:none;z-index:10000;background:var(--surface-panel,#252825);color:var(--text-primary,#ffffff);border:var(--rule-hairline,1px solid #555);font-family:var(--font-mono,monospace);font-size:10px;padding:3px 6px;border-radius:var(--radius-sm,0px);box-shadow:0 2px 8px rgba(0,0,0,0.25);display:none;white-space:nowrap}
+.inspector-drawer{position:fixed;top:0;right:0;bottom:0;width:390px;max-width:95vw;background:var(--surface-panel);border-left:var(--rule-heavy);box-shadow:-6px 0 24px rgba(0,0,0,0.18);display:flex;flex-direction:column;z-index:9999;transform:translateX(100%);transition:transform 0.22s cubic-bezier(0.16,1,0.3,1)}
+.inspector-drawer[data-open="true"]{transform:translateX(0)}
+.inspector-drawer-header{padding:var(--space-2) var(--space-3);border-bottom:var(--rule-heavy);display:flex;justify-content:space-between;align-items:center;background:var(--surface-recessed)}
+.inspector-drawer-body{flex:1;overflow-y:auto;padding:var(--space-2) var(--space-3);display:flex;flex-direction:column;gap:var(--space-2)}
+.inspector-breadcrumbs{padding:var(--space-1) var(--space-3);background:var(--surface-page);border-bottom:var(--rule-hairline);font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-height:28px}
+.inspector-crumb{cursor:pointer;padding:1px 5px;border:var(--rule-hairline);background:var(--surface-panel);border-radius:var(--radius-sm,0);font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);transition:all 0.1s ease}
+.inspector-crumb:hover,.inspector-crumb.is-active{background:var(--action-primary);color:var(--text-inverse);border-color:var(--action-primary)}
+.inspector-card{border:var(--rule-hairline);background:var(--surface-page);padding:var(--space-2);border-radius:var(--radius-sm,0)}
+.inspector-card h3{margin:0 0 var(--space-1);font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center}
+.inspector-row{display:flex;justify-content:space-between;align-items:center;gap:var(--space-1);margin-top:var(--space-1)}
+.inspector-label{font-family:var(--font-mono);font-size:10px;color:var(--text-metadata);text-transform:uppercase}
+.inspector-badge{font-family:var(--font-mono);font-size:9px;padding:2px 5px;border:var(--rule-hairline);background:var(--surface-recessed);border-radius:var(--radius-sm,0)}
+.inspector-radio-group{display:flex;gap:var(--space-1);margin:var(--space-1) 0;font-family:var(--font-mono);font-size:10px}
+.inspector-radio-group label{display:inline-flex;align-items:center;gap:3px;cursor:pointer}
+.flash-highlight{animation:flashRing 1.5s ease-out}
+@keyframes flashRing{0%{outline:3px solid var(--action-primary);background-color:var(--moss-tint,#e0ebd8)}100%{outline:0 solid transparent}}
 @media(max-width:1000px){.lab-shell{grid-template-columns:1fr}.lab-controls{position:relative;height:auto;border-right:0;border-bottom:var(--rule-heavy)}.preview-card--6{grid-column:1/-1}}
 @media(max-width:620px){.lab-controls,.lab-canvas{padding:var(--space-2)}.token-row{grid-template-columns:1fr}.color-control{justify-content:space-between}.canvas-top{flex-direction:column}.room-grid{grid-template-columns:1fr}}
 </style>
@@ -333,7 +355,13 @@ button,input,select{font:inherit}
       <p>Vista simultánea de componentes canónicos en tiempo real.</p>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-half)">
-      <div id="mode-chip" class="mode-chip">FIELD</div>
+      <div style="display:flex;align-items:center;gap:var(--space-1)">
+        <button id="btn-inspector-toggle" class="sdp-btn sdp-btn--secondary" type="button" aria-pressed="false" title="Activar modo inspección para seleccionar y editar cualquier elemento" style="min-height:32px;padding:0 10px;font-size:11px;display:inline-flex;align-items:center;gap:6px">
+          <span style="font-size:14px;line-height:1">⌖</span>
+          <span id="inspector-toggle-label">Inspeccionar</span>
+        </button>
+        <div id="mode-chip" class="mode-chip">FIELD</div>
+      </div>
       <div class="lab-field" style="margin:0">
         <select id="canvas-mode-select" style="min-height:32px;font-size:11px;padding:0 4px">
           <option value="field">field</option>
@@ -698,9 +726,30 @@ button,input,select{font:inherit}
         La vista 1-bit simula el cabezal térmico físico: solo blanco o negro puro. Cualquier texto &lt;9px o línea fina puede empastarse en papel térmico.
       </div>
     </div>
-  </div>
 </main>
 </div>
+
+<!-- Inspector Floating Hover Badge -->
+<div id="inspector-hover-badge" class="inspector-hover-badge"></div>
+
+<!-- Inspector Slide-in Drawer -->
+<aside id="inspector-drawer" class="inspector-drawer" aria-label="Inspector de Elemento" data-open="false">
+  <header class="inspector-drawer-header">
+    <div>
+      <div class="lab-kicker">Inspector Interactivo</div>
+      <div id="inspector-element-title" style="font-family:var(--font-mono);font-size:12px;font-weight:bold;color:var(--text-primary)">Selecciona un elemento</div>
+    </div>
+    <button id="inspector-close-btn" class="sdp-btn sdp-btn--subtle" type="button" style="padding:4px 8px;min-height:auto" title="Cerrar inspector">✕</button>
+  </header>
+  <div class="inspector-breadcrumbs" id="inspector-breadcrumbs">
+    <span style="color:var(--text-metadata)">Haz clic en un componente para inspeccionar sus tokens.</span>
+  </div>
+  <div class="inspector-drawer-body" id="inspector-drawer-body">
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);text-align:center;padding:var(--space-4) 0">
+      Activa el modo ⌖ Inspeccionar y haz clic en cualquier botón, tarjeta, lectura, lote o texto del canvas para configurar sus tokens y estilos al máximo.
+    </div>
+  </div>
+</aside>
 
 <script>
 (function(){
@@ -1284,7 +1333,13 @@ window.CriterioThemeLab={
   buildSemanticExport:buildSemanticExport,
   buildTypographyExport:buildTypographyExport,
   buildSpacingExport:buildSpacingExport,
-  buildDomainExport:buildDomainExport
+  buildDomainExport:buildDomainExport,
+  toggleInspector:function(enable){return toggleInspector(enable)},
+  selectElement:function(target){return selectElement(target)},
+  closeInspectorDrawer:function(){return closeInspectorDrawer()},
+  resolveElementTokens:function(target){return resolveElementTokens(target)},
+  isInspecting:function(){return isInspecting},
+  getSelectedElement:function(){return selectedEl}
 };
 
 function updateExportDisplay(){
@@ -1366,6 +1421,796 @@ function renderPhomemoQR(code){
   }else{
     box.innerHTML='<div style="width:48px;height:48px;border:2px solid #000;display:flex;align-items:center;justify-content:center;font-size:9px">QR</div>';
   }
+}
+
+/* ==========================================================================
+   INSPECTOR INTERACTIVO (CLICK-TO-EDIT & CONFIGURACIÓN AL MÁXIMO)
+   ========================================================================== */
+
+var isInspecting = false;
+var hoveredEl = null;
+var selectedEl = null;
+var hoverBadge = null;
+
+function colorToHex(col){
+  if(!col || col === "transparent" || col === "rgba(0, 0, 0, 0)") return "";
+  if(col.charAt(0) === "#"){
+    if(col.length === 4) return ("#" + col[1]+col[1]+col[2]+col[2]+col[3]+col[3]).toUpperCase();
+    return col.toUpperCase();
+  }
+  var m = col.match(/\d+/g);
+  if(!m || m.length < 3) return "";
+  var r = parseInt(m[0], 10).toString(16).padStart(2, "0");
+  var g = parseInt(m[1], 10).toString(16).padStart(2, "0");
+  var b = parseInt(m[2], 10).toString(16).padStart(2, "0");
+  return ("#" + r + g + b).toUpperCase();
+}
+
+function resolveElementTokens(target){
+  if(!target || !target.tagName) return null;
+  var tag = target.tagName.toLowerCase();
+  var cls = Array.from(target.classList || []).filter(function(c){
+    return c !== "inspector-hover-outline" && c !== "inspector-selected";
+  });
+  var comp = window.getComputedStyle(target);
+
+  // 1. Identify Component Type & Label
+  var compName = "Elemento genérico";
+  if(target.classList.contains("sdp-btn--primary")) compName = "Botón Primario (Acción)";
+  else if(target.classList.contains("sdp-btn--secondary")) compName = "Botón Secundario (Panel)";
+  else if(target.classList.contains("sdp-btn--subtle")) compName = "Botón Sutil (Plano)";
+  else if(target.classList.contains("preview-card")) compName = "Tarjeta Operativa (Surface Card)";
+  else if(target.classList.contains("sdp-lote")) compName = "Lote Operativo";
+  else if(target.classList.contains("sdp-reading")) compName = "Lectura Sensor / Telemetría";
+  else if(target.classList.contains("sdp-task")) compName = "Ficha de Tarea";
+  else if(target.classList.contains("sdp-badge")) compName = "Badge / Estado";
+  else if(target.classList.contains("sdp-provenance")) compName = "Badge de Provenance Canónica";
+  else if(target.classList.contains("sdp-sync")) compName = "Indicador de Sincronización";
+  else if(target.classList.contains("mode-chip")) compName = "Indicador de Modo de Superficie";
+  else if(target.classList.contains("species-name")) compName = "Nombre de Especie";
+  else if(target.classList.contains("latin")) compName = "Nombre Científico en Latín";
+  else if(target.classList.contains("phomemo-label-container")) compName = "Etiqueta Térmica Phomemo";
+  else if(tag === "h1") compName = "Encabezado Nivel 1";
+  else if(tag === "h2") compName = "Encabezado Nivel 2";
+  else if(tag === "h3") compName = "Encabezado Nivel 3";
+  else if(tag === "p") compName = "Párrafo de Texto";
+  else if(tag === "label") compName = "Etiqueta de Formulario / Métrica";
+
+  // 2. Identify Background Token & Group
+  var bgToken = "--surface-panel";
+  var bgGroup = "surface";
+  var bgKey = "panel";
+  if(target.classList.contains("sdp-btn--primary") || (target.classList.contains("canvas-tab-btn") && target.getAttribute("aria-selected")==="true")){
+    bgToken = "--action-primary"; bgGroup = "action"; bgKey = "primary";
+  } else if(target.classList.contains("sdp-btn--subtle")){
+    bgToken = "transparent"; bgGroup = null; bgKey = null;
+  } else if(target.classList.contains("preview-card") || target.classList.contains("sdp-lote") || target.classList.contains("sdp-reading") || target.classList.contains("sdp-task")){
+    bgToken = "--surface-panel"; bgGroup = "surface"; bgKey = "panel";
+  }
+
+  // 3. Identify Text Token
+  var textToken = "--text-primary";
+  var textGroup = "text";
+  var textKey = "primary";
+  if(target.classList.contains("sdp-btn--primary") || (target.classList.contains("canvas-tab-btn") && target.getAttribute("aria-selected")==="true")){
+    textToken = "--text-inverse"; textKey = "inverse";
+  } else if(target.classList.contains("latin") || tag === "p" || target.classList.contains("sdp-btn--subtle")){
+    textToken = "--text-secondary"; textKey = "secondary";
+  } else if(target.classList.contains("token-meta") || target.classList.contains("sdp-metric-label") || tag === "label" || target.classList.contains("lab-kicker")){
+    textToken = "--text-metadata"; textKey = "metadata";
+  }
+
+  // 4. Identify Typography Role
+  var typoRole = "body";
+  if(target.dataset && target.dataset.role) typoRole = target.dataset.role;
+  else if(tag === "h1" || target.classList.contains("canvas-top h1")) typoRole = "heading-01";
+  else if(tag === "h2") typoRole = "heading-02";
+  else if(tag === "h3") typoRole = "heading-03";
+  else if(target.classList.contains("species-name")) typoRole = "species";
+  else if(target.classList.contains("latin")) typoRole = "latin";
+  else if(target.classList.contains("sdp-metric-value") || target.classList.contains("sdp-lote-code") || target.classList.contains("phomemo-lot")) typoRole = "data";
+  else if(tag === "label" || target.classList.contains("lab-kicker") || target.classList.contains("sdp-metric-label") || target.classList.contains("sdp-btn")) typoRole = "label";
+  else if(tag === "small" || target.classList.contains("token-meta") || target.classList.contains("inspector-badge")) typoRole = "micro";
+
+  return {
+    tag: tag,
+    classes: cls,
+    componentName: compName,
+    bgToken: bgToken,
+    bgGroup: bgGroup,
+    bgKey: bgKey,
+    textToken: textToken,
+    textGroup: textGroup,
+    textKey: textKey,
+    typoRole: typoRole,
+    computed: {
+      backgroundColor: comp.backgroundColor,
+      color: comp.color,
+      fontFamily: comp.fontFamily,
+      fontSize: comp.fontSize,
+      fontWeight: comp.fontWeight,
+      lineHeight: comp.lineHeight,
+      letterSpacing: comp.letterSpacing,
+      borderRadius: comp.borderRadius,
+      borderWidth: comp.borderTopWidth,
+      borderStyle: comp.borderTopStyle,
+      borderColor: comp.borderTopColor,
+      padding: comp.padding,
+      paddingTop: comp.paddingTop,
+      paddingRight: comp.paddingRight,
+      paddingBottom: comp.paddingBottom,
+      paddingLeft: comp.paddingLeft,
+      marginTop: comp.marginTop,
+      marginRight: comp.marginRight,
+      marginBottom: comp.marginBottom,
+      marginLeft: comp.marginLeft
+    }
+  };
+}
+
+function updateHoverBadge(target, e){
+  if(!hoverBadge) return;
+  var info = resolveElementTokens(target);
+  if(!info) return;
+  var clsStr = info.classes.length ? "." + info.classes.slice(0, 2).join(".") : "";
+  var tokenBadge = info.bgToken !== "transparent" ? info.bgToken : info.textToken;
+  hoverBadge.textContent = "<" + info.tag + clsStr + "> · " + tokenBadge + " / " + info.typoRole;
+  hoverBadge.style.display = "block";
+  positionHoverBadge(e);
+}
+
+function positionHoverBadge(e){
+  if(!hoverBadge || hoverBadge.style.display === "none") return;
+  var x = e.clientX + 14;
+  var y = e.clientY + 14;
+  if(x + 280 > window.innerWidth) x = e.clientX - 260;
+  if(y + 30 > window.innerHeight) y = e.clientY - 30;
+  hoverBadge.style.left = Math.max(8, x) + "px";
+  hoverBadge.style.top = Math.max(8, y) + "px";
+}
+
+function toggleInspector(enable){
+  isInspecting = Boolean(enable);
+  var btn = el("btn-inspector-toggle");
+  var label = el("inspector-toggle-label");
+  if(isInspecting){
+    canvas.classList.add("is-inspecting");
+    if(btn){
+      btn.classList.remove("sdp-btn--secondary");
+      btn.classList.add("sdp-btn--primary");
+      btn.setAttribute("aria-pressed", "true");
+    }
+    if(label) label.textContent = "Inspeccionando...";
+    el("lab-action-status").textContent = "Modo inspección activo: haz clic en cualquier elemento del canvas para configurarlo al máximo.";
+  } else {
+    canvas.classList.remove("is-inspecting");
+    if(btn){
+      btn.classList.remove("sdp-btn--primary");
+      btn.classList.add("sdp-btn--secondary");
+      btn.setAttribute("aria-pressed", "false");
+    }
+    if(label) label.textContent = "Inspeccionar";
+    if(hoveredEl){
+      hoveredEl.classList.remove("inspector-hover-outline");
+      hoveredEl = null;
+    }
+    if(hoverBadge) hoverBadge.style.display = "none";
+  }
+}
+
+function closeInspectorDrawer(){
+  var drawer = el("inspector-drawer");
+  if(drawer) drawer.dataset.open = "false";
+  if(selectedEl){
+    selectedEl.classList.remove("inspector-selected");
+    selectedEl = null;
+  }
+  var title = el("inspector-element-title");
+  if(title) title.textContent = "Selecciona un elemento";
+  var breadcrumbs = el("inspector-breadcrumbs");
+  if(breadcrumbs) breadcrumbs.innerHTML = '<span style="color:var(--text-metadata)">Haz clic en un componente para inspeccionar sus tokens.</span>';
+}
+
+function selectElement(target){
+  if(!target || target === canvas || target.closest("#canvas-top") || target.closest("#inspector-drawer")) return;
+  if(selectedEl) selectedEl.classList.remove("inspector-selected");
+  selectedEl = target;
+  selectedEl.classList.add("inspector-selected");
+  if(hoveredEl){
+    hoveredEl.classList.remove("inspector-hover-outline");
+    hoveredEl = null;
+  }
+  if(hoverBadge) hoverBadge.style.display = "none";
+  var drawer = el("inspector-drawer");
+  if(drawer) drawer.dataset.open = "true";
+  renderInspectorDrawer(selectedEl);
+}
+
+function flashSidebarToken(tabName, selector){
+  var tabBtn = document.querySelector('.lab-tab-btn[data-subpanel="' + tabName + '"]');
+  if(tabBtn) tabBtn.click();
+  setTimeout(function(){
+    var targetInput = document.querySelector(selector);
+    if(targetInput){
+      var container = targetInput.closest(".token-row") || targetInput.closest(".semantic-row") || targetInput.closest(".lab-field") || targetInput;
+      container.scrollIntoView({ behavior: "smooth", block: "center" });
+      container.classList.add("flash-highlight");
+      setTimeout(function(){ container.classList.remove("flash-highlight"); }, 1600);
+    }
+  }, 100);
+}
+
+function renderInspectorDrawer(target){
+  var body = el("inspector-drawer-body");
+  var breadcrumbsHost = el("inspector-breadcrumbs");
+  var titleEl = el("inspector-element-title");
+  if(!body || !target) return;
+
+  var info = resolveElementTokens(target);
+  if(!info) return;
+
+  // Title
+  var clsLabel = info.classes.length ? "." + info.classes.join(".") : "";
+  titleEl.textContent = "<" + info.tag + clsLabel + "> · " + info.componentName;
+
+  // Breadcrumbs
+  breadcrumbsHost.innerHTML = "";
+  var pathNodes = [];
+  var curr = target;
+  while(curr && curr !== canvas && curr !== document.body){
+    pathNodes.unshift(curr);
+    curr = curr.parentElement;
+  }
+  pathNodes.forEach(function(nodeItem, idx){
+    var isLast = idx === pathNodes.length - 1;
+    var btn = node("button", "inspector-crumb" + (isLast ? " is-active" : ""));
+    btn.type = "button";
+    var cName = nodeItem.className ? "." + nodeItem.className.split(" ")[0].replace("inspector-selected","").replace("inspector-hover-outline","").trim() : "";
+    btn.textContent = nodeItem.tagName.toLowerCase() + cName;
+    btn.title = "Seleccionar <" + nodeItem.tagName.toLowerCase() + ">";
+    btn.addEventListener("click", function(){ selectElement(nodeItem); });
+    breadcrumbsHost.appendChild(btn);
+    if(!isLast){
+      var sep = node("span", null, "›");
+      sep.style.color = "var(--text-metadata)";
+      sep.style.fontSize = "9px";
+      breadcrumbsHost.appendChild(sep);
+    }
+  });
+
+  body.innerHTML = "";
+
+  // Helper values
+  var compBgHex = colorToHex(info.computed.backgroundColor) || "#FFFFFF";
+  var compTextHex = colorToHex(info.computed.color) || "#1A1A1A";
+  var currentRadiusPx = parseInt(info.computed.borderRadius, 10) || 0;
+  var currentBorderWidthPx = parseInt(info.computed.borderWidth, 10) || 1;
+  var currentBorderHex = colorToHex(info.computed.borderColor) || "#D4D0C5";
+  var currentPaddingY = parseInt(info.computed.paddingTop, 10) || 0;
+  var currentPaddingX = parseInt(info.computed.paddingLeft, 10) || 0;
+  var currentMarginY = parseInt(info.computed.marginTop, 10) || 0;
+
+  // --- SECCIÓN 1: SUPERFICIE & COLOR DE FONDO ---
+  var cardSurface = node("div", "inspector-card");
+  var hSurface = node("h3");
+  hSurface.innerHTML = '<span>Superficie & Fondo</span> <span class="inspector-badge">' + (info.bgToken || "custom") + '</span>';
+  cardSurface.appendChild(hSurface);
+
+  var scopeRowSurface = node("div", "inspector-radio-group");
+  scopeRowSurface.innerHTML = '<label><input type="radio" name="insp-surface-scope" value="global" checked> Modificar Token Global</label><label><input type="radio" name="insp-surface-scope" value="local"> Solo este elemento</label>';
+  cardSurface.appendChild(scopeRowSurface);
+
+  var colorRowBg = node("div", "inspector-row");
+  colorRowBg.innerHTML = '<span class="inspector-label">Color de fondo:</span><div class="color-control"><input type="color" id="insp-bg-color" value="' + compBgHex + '"><input type="text" class="hex" id="insp-bg-hex" value="' + compBgHex + '"></div>';
+  cardSurface.appendChild(colorRowBg);
+
+  var contrastReadout = node("div", "inspector-row");
+  var initialRatio = ratio(compTextHex, compBgHex);
+  var passAA = initialRatio >= 4.5;
+  contrastReadout.innerHTML = '<span class="inspector-label">Contraste vs Texto:</span><span id="insp-contrast-badge" class="inspector-badge" data-pass="' + passAA + '" style="color:' + (passAA?'var(--status-ok)':'var(--status-error)') + '">' + initialRatio.toFixed(1) + ':1 (' + (passAA ? 'Pasa AA/AAA' : 'Falla AA') + ')</span>';
+  cardSurface.appendChild(contrastReadout);
+
+  body.appendChild(cardSurface);
+
+  function onSurfaceColorChange(hexVal){
+    var mode = scopeRowSurface.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.backgroundColor = hexVal;
+    } else {
+      if(info.bgGroup && info.bgKey && state.semantic.semantic[info.bgGroup] && state.semantic.semantic[info.bgGroup][info.bgKey]){
+        var rk = refKey(state.semantic.semantic[info.bgGroup][info.bgKey].value);
+        if(rk && state.primitives.color.primitive[rk]){
+          setPrimitive(rk, hexVal);
+        } else {
+          root.style.setProperty(info.bgToken, hexVal);
+        }
+      } else {
+        root.style.setProperty(info.bgToken, hexVal);
+      }
+      onTokenModified();
+    }
+    var newTextHex = colorToHex(window.getComputedStyle(target).color) || compTextHex;
+    var newRatio = ratio(newTextHex, hexVal);
+    var pass = newRatio >= 4.5;
+    var badge = el("insp-contrast-badge");
+    if(badge){
+      badge.textContent = newRatio.toFixed(1) + ":1 (" + (pass ? "Pasa AA/AAA" : "Falla AA") + ")";
+      badge.style.color = pass ? "var(--status-ok)" : "var(--status-error)";
+    }
+  }
+  var inpBgColor = cardSurface.querySelector("#insp-bg-color");
+  var inpBgHex = cardSurface.querySelector("#insp-bg-hex");
+  inpBgColor.addEventListener("input", function(){
+    inpBgHex.value = inpBgColor.value.toUpperCase();
+    onSurfaceColorChange(inpBgColor.value);
+  });
+  inpBgHex.addEventListener("change", function(){
+    var v = inpBgHex.value.trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(v)) { inpBgHex.value = inpBgColor.value; return; }
+    inpBgColor.value = v;
+    onSurfaceColorChange(v);
+  });
+
+  // --- SECCIÓN 2: TIPOGRAFÍA & TEXTO ---
+  var cardTypo = node("div", "inspector-card");
+  var hTypo = node("h3");
+  hTypo.innerHTML = '<span>Tipografía & Texto</span> <span class="inspector-badge">Rol: ' + info.typoRole + '</span>';
+  cardTypo.appendChild(hTypo);
+
+  var scopeRowTypo = node("div", "inspector-radio-group");
+  scopeRowTypo.innerHTML = '<label><input type="radio" name="insp-typo-scope" value="global" checked> Modificar Rol Global</label><label><input type="radio" name="insp-typo-scope" value="local"> Solo este elemento</label>';
+  cardTypo.appendChild(scopeRowTypo);
+
+  var colorRowText = node("div", "inspector-row");
+  colorRowText.innerHTML = '<span class="inspector-label">Color de texto:</span><div class="color-control"><input type="color" id="insp-text-color" value="' + compTextHex + '"><input type="text" class="hex" id="insp-text-hex" value="' + compTextHex + '"></div>';
+  cardTypo.appendChild(colorRowText);
+
+  var typoRoleRow = node("div", "inspector-row");
+  typoRoleRow.innerHTML = '<span class="inspector-label">Rol tipográfico:</span><select id="insp-typo-role" style="min-height:28px;font-size:11px;max-width:180px">' +
+    ["display-01","display-02","heading-01","heading-02","heading-03","species","latin","body","small","data","label","micro","lot-code-print"].map(function(r){
+      return '<option value="' + r + '" ' + (r===info.typoRole?'selected':'') + '>' + r + '</option>';
+    }).join("") + '</select>';
+  cardTypo.appendChild(typoRoleRow);
+
+  var typoItem = state.typography.scale[info.typoRole] || {};
+  var currentFontSizePx = parseInt(typoItem.size || info.computed.fontSize, 10) || 14;
+  var sizeRow = node("div", "lab-field");
+  sizeRow.style.margin = "var(--space-1) 0 0";
+  sizeRow.innerHTML = '<label style="font-size:10px">Tamaño de fuente</label><div class="lab-range-line"><input type="range" id="insp-font-size-slider" min="9" max="64" value="' + currentFontSizePx + '"><output id="insp-font-size-out">' + currentFontSizePx + 'px</output></div>';
+  cardTypo.appendChild(sizeRow);
+
+  var currentWeightVal = parseInt(typoItem.weight || info.computed.fontWeight, 10) || 400;
+  var weightRow = node("div", "inspector-row");
+  weightRow.innerHTML = '<span class="inspector-label">Peso tipográfico:</span><select id="insp-font-weight" style="min-height:28px;font-size:11px;max-width:140px">' +
+    '<option value="300" ' + (currentWeightVal===300?'selected':'') + '>300 · Light</option>' +
+    '<option value="400" ' + (currentWeightVal===400?'selected':'') + '>400 · Regular</option>' +
+    '<option value="500" ' + (currentWeightVal===500?'selected':'') + '>500 · Medium</option>' +
+    '<option value="600" ' + (currentWeightVal===600?'selected':'') + '>600 · Semibold</option>' +
+    '<option value="700" ' + (currentWeightVal===700?'selected':'') + '>700 · Bold</option>' +
+    '<option value="900" ' + (currentWeightVal===900?'selected':'') + '>900 · Black</option>' +
+  '</select>';
+  cardTypo.appendChild(weightRow);
+
+  var currentFamilyVal = typoItem.family || "sans";
+  var familyRow = node("div", "inspector-row");
+  familyRow.innerHTML = '<span class="inspector-label">Familia de fuente:</span><select id="insp-font-family" style="min-height:28px;font-size:11px;max-width:140px">' +
+    '<option value="sans" ' + (currentFamilyVal==='sans'?'selected':'') + '>IBM Plex Sans</option>' +
+    '<option value="editorial" ' + (currentFamilyVal==='editorial'?'selected':'') + '>Editorial / Fraunces</option>' +
+    '<option value="mono" ' + (currentFamilyVal==='mono'?'selected':'') + '>IBM Plex Mono</option>' +
+  '</select>';
+  cardTypo.appendChild(familyRow);
+
+  var currentLeadingVal = typoItem.leading ? parseFloat(typoItem.leading) : 1.35;
+  var leadingRow = node("div", "lab-field");
+  leadingRow.style.margin = "var(--space-1) 0 0";
+  leadingRow.innerHTML = '<label style="font-size:10px">Interlineado (Leading)</label><div class="lab-range-line"><input type="range" id="insp-leading-slider" min="0.9" max="2.0" step="0.05" value="' + currentLeadingVal + '"><output id="insp-leading-out">' + currentLeadingVal.toFixed(2) + '</output></div>';
+  cardTypo.appendChild(leadingRow);
+
+  var currentTrackingVal = parseFloat(typoItem.tracking || info.computed.letterSpacing) || 0;
+  var trackingRow = node("div", "lab-field");
+  trackingRow.style.margin = "var(--space-1) 0 0";
+  trackingRow.innerHTML = '<label style="font-size:10px">Tracking / Letter-spacing</label><div class="lab-range-line"><input type="range" id="insp-tracking-slider" min="-0.05" max="0.30" step="0.01" value="' + currentTrackingVal + '"><output id="insp-tracking-out">' + currentTrackingVal.toFixed(2) + 'em</output></div>';
+  cardTypo.appendChild(trackingRow);
+
+  var transformRow = node("div", "inspector-row");
+  transformRow.innerHTML = '<span class="inspector-label">Transformación:</span><div style="display:flex;gap:4px"><button type="button" class="sdp-btn sdp-btn--secondary" id="insp-case-none" style="padding:2px 8px;font-size:10px;min-height:auto">Normal</button><button type="button" class="sdp-btn sdp-btn--secondary" id="insp-case-upper" style="padding:2px 8px;font-size:10px;min-height:auto">MAYÚSCULAS</button></div>';
+  cardTypo.appendChild(transformRow);
+
+  body.appendChild(cardTypo);
+
+  var inpTextColor = cardTypo.querySelector("#insp-text-color");
+  var inpTextHex = cardTypo.querySelector("#insp-text-hex");
+  function onTextColorChange(hexVal){
+    var mode = scopeRowTypo.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.color = hexVal;
+    } else {
+      if(info.textGroup && info.textKey && state.semantic.semantic[info.textGroup] && state.semantic.semantic[info.textGroup][info.textKey]){
+        var rk = refKey(state.semantic.semantic[info.textGroup][info.textKey].value);
+        if(rk && state.primitives.color.primitive[rk]){
+          setPrimitive(rk, hexVal);
+        } else {
+          root.style.setProperty(info.textToken, hexVal);
+        }
+      } else {
+        root.style.setProperty(info.textToken, hexVal);
+      }
+      onTokenModified();
+    }
+  }
+  inpTextColor.addEventListener("input", function(){
+    inpTextHex.value = inpTextColor.value.toUpperCase();
+    onTextColorChange(inpTextColor.value);
+  });
+  inpTextHex.addEventListener("change", function(){
+    var v = inpTextHex.value.trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(v)) { inpTextHex.value = inpTextColor.value; return; }
+    inpTextColor.value = v;
+    onTextColorChange(v);
+  });
+
+  var roleSel = cardTypo.querySelector("#insp-typo-role");
+  roleSel.addEventListener("change", function(){
+    var r = roleSel.value;
+    info.typoRole = r;
+    target.style.font = "var(--t-" + r + ")";
+    renderInspectorDrawer(target);
+  });
+
+  var sizeSlider = cardTypo.querySelector("#insp-font-size-slider");
+  var sizeOut = cardTypo.querySelector("#insp-font-size-out");
+  sizeSlider.addEventListener("input", function(){
+    var sz = sizeSlider.value + "px";
+    sizeOut.textContent = sz;
+    var mode = scopeRowTypo.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.fontSize = sz;
+    } else {
+      if(state.typography.scale[info.typoRole]){
+        state.typography.scale[info.typoRole].size = sz;
+        applyTypographyLive();
+        renderTypographyControls();
+        onTokenModified();
+      }
+    }
+  });
+
+  var weightSel = cardTypo.querySelector("#insp-font-weight");
+  weightSel.addEventListener("change", function(){
+    var w = parseInt(weightSel.value, 10);
+    var mode = scopeRowTypo.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.fontWeight = w;
+    } else {
+      if(state.typography.scale[info.typoRole]){
+        state.typography.scale[info.typoRole].weight = w;
+        applyTypographyLive();
+        renderTypographyControls();
+        onTokenModified();
+      }
+    }
+  });
+
+  var familySel = cardTypo.querySelector("#insp-font-family");
+  familySel.addEventListener("change", function(){
+    var f = familySel.value;
+    var mode = scopeRowTypo.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.fontFamily = f === "editorial" ? "var(--font-editorial)" : f === "mono" ? "var(--font-mono)" : "var(--font-sans)";
+    } else {
+      if(state.typography.scale[info.typoRole]){
+        state.typography.scale[info.typoRole].family = f;
+        applyTypographyLive();
+        renderTypographyControls();
+        onTokenModified();
+      }
+    }
+  });
+
+  var leadSlider = cardTypo.querySelector("#insp-leading-slider");
+  var leadOut = cardTypo.querySelector("#insp-leading-out");
+  leadSlider.addEventListener("input", function(){
+    var ld = parseFloat(leadSlider.value);
+    leadOut.textContent = ld.toFixed(2);
+    var mode = scopeRowTypo.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.lineHeight = ld;
+    } else {
+      if(state.typography.scale[info.typoRole]){
+        state.typography.scale[info.typoRole].leading = ld;
+        applyTypographyLive();
+        renderTypographyControls();
+        onTokenModified();
+      }
+    }
+  });
+
+  var trackSlider = cardTypo.querySelector("#insp-tracking-slider");
+  var trackOut = cardTypo.querySelector("#insp-tracking-out");
+  trackSlider.addEventListener("input", function(){
+    var tr = parseFloat(trackSlider.value);
+    trackOut.textContent = tr.toFixed(2) + "em";
+    var mode = scopeRowTypo.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.letterSpacing = tr + "em";
+    } else {
+      if(state.typography.scale[info.typoRole]){
+        state.typography.scale[info.typoRole].tracking = tr + "em";
+        applyTypographyLive();
+        renderTypographyControls();
+        onTokenModified();
+      }
+    }
+  });
+
+  cardTypo.querySelector("#insp-case-none").addEventListener("click", function(){
+    target.style.textTransform = "none";
+  });
+  cardTypo.querySelector("#insp-case-upper").addEventListener("click", function(){
+    target.style.textTransform = "uppercase";
+  });
+
+  // --- SECCIÓN 3: BORDES & ESQUINAS ---
+  var cardBorder = node("div", "inspector-card");
+  var hBorder = node("h3");
+  hBorder.innerHTML = '<span>Bordes & Esquinas</span> <span class="inspector-badge">--radius-sm / --rule-width</span>';
+  cardBorder.appendChild(hBorder);
+
+  var scopeRowBorder = node("div", "inspector-radio-group");
+  scopeRowBorder.innerHTML = '<label><input type="radio" name="insp-border-scope" value="global" checked> Modificar Tokens Globales</label><label><input type="radio" name="insp-border-scope" value="local"> Solo este elemento</label>';
+  cardBorder.appendChild(scopeRowBorder);
+
+  var colorRowBorder = node("div", "inspector-row");
+  colorRowBorder.innerHTML = '<span class="inspector-label">Color de borde:</span><div class="color-control"><input type="color" id="insp-border-color" value="' + currentBorderHex + '"><input type="text" class="hex" id="insp-border-hex" value="' + currentBorderHex + '"></div>';
+  cardBorder.appendChild(colorRowBorder);
+
+  var borderWidthRow = node("div", "lab-field");
+  borderWidthRow.style.margin = "var(--space-1) 0 0";
+  borderWidthRow.innerHTML = '<label style="font-size:10px">Grosor de borde (Rule width)</label><div class="lab-range-line"><input type="range" id="insp-border-width-slider" min="0" max="6" value="' + currentBorderWidthPx + '"><output id="insp-border-width-out">' + currentBorderWidthPx + 'px</output></div>';
+  cardBorder.appendChild(borderWidthRow);
+
+  var borderStyleRow = node("div", "inspector-row");
+  borderStyleRow.innerHTML = '<span class="inspector-label">Estilo de borde:</span><select id="insp-border-style" style="min-height:28px;font-size:11px;max-width:140px">' +
+    '<option value="solid" selected>Solid (Continuo)</option>' +
+    '<option value="dashed">Dashed (Discontinuo)</option>' +
+    '<option value="dotted">Dotted (Punteado)</option>' +
+    '<option value="none">None (Sin borde)</option>' +
+  '</select>';
+  cardBorder.appendChild(borderStyleRow);
+
+  var radiusRow = node("div", "lab-field");
+  radiusRow.style.margin = "var(--space-1) 0 0";
+  radiusRow.innerHTML = '<label style="font-size:10px">Radio de esquina (Border radius)</label><div class="lab-range-line"><input type="range" id="insp-radius-slider" min="0" max="24" value="' + currentRadiusPx + '"><output id="insp-radius-out">' + currentRadiusPx + 'px</output></div>' +
+    '<div style="display:flex;gap:4px;margin-top:4px">' +
+      '<button type="button" class="sdp-btn sdp-btn--secondary insp-rad-btn" data-r="0px" style="padding:2px 6px;font-size:9px;min-height:auto">0px (Puro)</button>' +
+      '<button type="button" class="sdp-btn sdp-btn--secondary insp-rad-btn" data-r="2px" style="padding:2px 6px;font-size:9px;min-height:auto">2px (Técnico)</button>' +
+      '<button type="button" class="sdp-btn sdp-btn--secondary insp-rad-btn" data-r="4px" style="padding:2px 6px;font-size:9px;min-height:auto">4px (Canónico)</button>' +
+      '<button type="button" class="sdp-btn sdp-btn--secondary insp-rad-btn" data-r="8px" style="padding:2px 6px;font-size:9px;min-height:auto">8px (Amigable)</button>' +
+    '</div>';
+  cardBorder.appendChild(radiusRow);
+
+  body.appendChild(cardBorder);
+
+  var inpBorderColor = cardBorder.querySelector("#insp-border-color");
+  var inpBorderHex = cardBorder.querySelector("#insp-border-hex");
+  function onBorderColorChange(hexVal){
+    var mode = scopeRowBorder.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.borderColor = hexVal;
+    } else {
+      setPrimitive("rule-500", hexVal);
+      root.style.setProperty("--border-hairline", hexVal);
+      root.style.setProperty("--border-subtle", hexVal);
+      onTokenModified();
+    }
+  }
+  inpBorderColor.addEventListener("input", function(){
+    inpBorderHex.value = inpBorderColor.value.toUpperCase();
+    onBorderColorChange(inpBorderColor.value);
+  });
+  inpBorderHex.addEventListener("change", function(){
+    var v = inpBorderHex.value.trim();
+    if(!/^#[0-9a-fA-F]{6}$/.test(v)) { inpBorderHex.value = inpBorderColor.value; return; }
+    inpBorderColor.value = v;
+    onBorderColorChange(v);
+  });
+
+  var borderSlider = cardBorder.querySelector("#insp-border-width-slider");
+  var borderOut = cardBorder.querySelector("#insp-border-width-out");
+  borderSlider.addEventListener("input", function(){
+    var w = borderSlider.value + "px";
+    borderOut.textContent = w;
+    var mode = scopeRowBorder.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.borderWidth = w;
+    } else {
+      var n = Number(borderSlider.value);
+      root.style.setProperty("--rule-width", n + "px");
+      root.style.setProperty("--rule-heavy-width", (n + 1) + "px");
+      root.style.setProperty("--rule-hairline", n + "px solid var(--border-hairline)");
+      root.style.setProperty("--rule-frame", n + "px solid var(--border-hairline)");
+      root.style.setProperty("--rule-heavy", (n + 1) + "px solid var(--border-heavy)");
+      var spRule = el("spacing-rule");
+      if(spRule) spRule.value = n;
+      onTokenModified();
+    }
+  });
+
+  var bStyleSel = cardBorder.querySelector("#insp-border-style");
+  bStyleSel.addEventListener("change", function(){
+    target.style.borderStyle = bStyleSel.value;
+  });
+
+  var radSlider = cardBorder.querySelector("#insp-radius-slider");
+  var radOut = cardBorder.querySelector("#insp-radius-out");
+  function applyRadiusValue(rStr){
+    radOut.textContent = rStr;
+    radSlider.value = parseInt(rStr, 10) || 0;
+    var mode = scopeRowBorder.querySelector('input:checked').value;
+    if(mode === "local"){
+      target.style.borderRadius = rStr;
+    } else {
+      state.spacing.structure.radius.sm = rStr;
+      applySpacingLive();
+      var spRad = el("spacing-radius");
+      if(spRad) spRad.value = rStr;
+      onTokenModified();
+    }
+  }
+  radSlider.addEventListener("input", function(){
+    applyRadiusValue(radSlider.value + "px");
+  });
+  cardBorder.querySelectorAll(".insp-rad-btn").forEach(function(b){
+    b.addEventListener("click", function(){
+      applyRadiusValue(b.dataset.r);
+    });
+  });
+
+  // --- SECCIÓN 4: ESPACIADO (PADDING & MARGEN) ---
+  var cardSpacing = node("div", "inspector-card");
+  var hSpacing = node("h3");
+  hSpacing.innerHTML = '<span>Espaciado & Relleno</span> <span class="inspector-badge">Padding & Margin</span>';
+  cardSpacing.appendChild(hSpacing);
+
+  var padRowY = node("div", "lab-field");
+  padRowY.style.margin = "var(--space-1) 0 0";
+  padRowY.innerHTML = '<label style="font-size:10px">Relleno Vertical (Padding Y)</label><div class="lab-range-line"><input type="range" id="insp-pad-y" min="0" max="48" value="' + currentPaddingY + '"><output id="insp-pad-y-out">' + currentPaddingY + 'px</output></div>';
+  cardSpacing.appendChild(padRowY);
+
+  var padRowX = node("div", "lab-field");
+  padRowX.style.margin = "var(--space-1) 0 0";
+  padRowX.innerHTML = '<label style="font-size:10px">Relleno Horizontal (Padding X)</label><div class="lab-range-line"><input type="range" id="insp-pad-x" min="0" max="48" value="' + currentPaddingX + '"><output id="insp-pad-x-out">' + currentPaddingX + 'px</output></div>';
+  cardSpacing.appendChild(padRowX);
+
+  var marRowY = node("div", "lab-field");
+  marRowY.style.margin = "var(--space-1) 0 0";
+  marRowY.innerHTML = '<label style="font-size:10px">Margen Vertical (Margin Y)</label><div class="lab-range-line"><input type="range" id="insp-mar-y" min="0" max="48" value="' + currentMarginY + '"><output id="insp-mar-y-out">' + currentMarginY + 'px</output></div>';
+  cardSpacing.appendChild(marRowY);
+
+  body.appendChild(cardSpacing);
+
+  var inpPadY = cardSpacing.querySelector("#insp-pad-y");
+  var inpPadYOut = cardSpacing.querySelector("#insp-pad-y-out");
+  inpPadY.addEventListener("input", function(){
+    target.style.paddingTop = inpPadY.value + "px";
+    target.style.paddingBottom = inpPadY.value + "px";
+    inpPadYOut.textContent = inpPadY.value + "px";
+  });
+  var inpPadX = cardSpacing.querySelector("#insp-pad-x");
+  var inpPadXOut = cardSpacing.querySelector("#insp-pad-x-out");
+  inpPadX.addEventListener("input", function(){
+    target.style.paddingLeft = inpPadX.value + "px";
+    target.style.paddingRight = inpPadX.value + "px";
+    inpPadXOut.textContent = inpPadX.value + "px";
+  });
+  var inpMarY = cardSpacing.querySelector("#insp-mar-y");
+  var inpMarYOut = cardSpacing.querySelector("#insp-mar-y-out");
+  inpMarY.addEventListener("input", function(){
+    target.style.marginTop = inpMarY.value + "px";
+    target.style.marginBottom = inpMarY.value + "px";
+    inpMarYOut.textContent = inpMarY.value + "px";
+  });
+
+  // --- SECCIÓN 5: ACCIONES RÁPIDAS & NAVEGACIÓN ---
+  var cardActions = node("div", "inspector-card");
+  var hActions = node("h3", null, "Acciones Rápidas");
+  cardActions.appendChild(hActions);
+
+  var actGrid = node("div", "lab-actions");
+  actGrid.innerHTML = '<button type="button" class="lab-btn" id="insp-copy-css-btn">📋 Copiar CSS</button><button type="button" class="lab-btn" id="insp-goto-token-btn">🔍 Ir al Token</button><button type="button" class="lab-btn wide" id="insp-reset-local-btn">↺ Restablecer estilos inline</button>';
+  cardActions.appendChild(actGrid);
+  body.appendChild(cardActions);
+
+  cardActions.querySelector("#insp-copy-css-btn").addEventListener("click", function(){
+    var sel = info.tag + (info.classes.length ? "." + info.classes.join(".") : "");
+    var css = sel + " {\n";
+    if(info.bgToken && info.bgToken !== "transparent") css += "  background-color: var(" + info.bgToken + ");\n";
+    if(info.textToken) css += "  color: var(" + info.textToken + ");\n";
+    css += "  font: var(--t-" + info.typoRole + ");\n";
+    css += "  border-radius: var(--radius-sm);\n";
+    css += "  border-width: var(--rule-width);\n";
+    if(target.getAttribute("style")) css += "  /* inline: " + target.getAttribute("style") + " */\n";
+    css += "}";
+    navigator.clipboard.writeText(css).then(function(){
+      el("lab-action-status").textContent = "CSS de <" + sel + "> copiado al portapapeles.";
+    });
+  });
+
+  cardActions.querySelector("#insp-goto-token-btn").addEventListener("click", function(){
+    if(info.bgGroup && info.bgKey){
+      var spec = state.semantic.semantic[info.bgGroup] && state.semantic.semantic[info.bgGroup][info.bgKey];
+      var rk = spec && refKey(spec.value);
+      if(rk){
+        flashSidebarToken("primitives", "#color-" + rk);
+      } else {
+        flashSidebarToken("semantic", 'select[data-group="' + info.bgGroup + '"][data-key="' + info.bgKey + '"]');
+      }
+    } else {
+      flashSidebarToken("typography", "#insp-font-size-slider");
+    }
+  });
+
+  cardActions.querySelector("#insp-reset-local-btn").addEventListener("click", function(){
+    target.removeAttribute("style");
+    el("lab-action-status").textContent = "Estilos inline eliminados para el elemento.";
+    renderInspectorDrawer(target);
+  });
+}
+
+function setupInspector(){
+  hoverBadge = el("inspector-hover-badge");
+  var toggleBtn = el("btn-inspector-toggle");
+  if(toggleBtn){
+    toggleBtn.addEventListener("click", function(){
+      toggleInspector(!isInspecting);
+    });
+  }
+  var closeBtn = el("inspector-close-btn");
+  if(closeBtn){
+    closeBtn.addEventListener("click", closeInspectorDrawer);
+  }
+
+  canvas.addEventListener("mouseover", function(e){
+    if(!isInspecting) return;
+    var target = e.target;
+    if(target.closest("#canvas-top") || target.closest("#inspector-drawer") || target.closest(".canvas-tabs") || target === canvas) return;
+    if(hoveredEl && hoveredEl !== target){
+      hoveredEl.classList.remove("inspector-hover-outline");
+    }
+    hoveredEl = target;
+    hoveredEl.classList.add("inspector-hover-outline");
+    updateHoverBadge(target, e);
+  });
+
+  canvas.addEventListener("mousemove", function(e){
+    if(!isInspecting || !hoveredEl) return;
+    positionHoverBadge(e);
+  });
+
+  canvas.addEventListener("mouseout", function(e){
+    if(!isInspecting) return;
+    if(hoveredEl){
+      hoveredEl.classList.remove("inspector-hover-outline");
+      hoveredEl = null;
+    }
+    if(hoverBadge) hoverBadge.style.display = "none";
+  });
+
+  canvas.addEventListener("click", function(e){
+    if(!isInspecting) return;
+    var target = e.target;
+    if(target.closest("#canvas-top") || target.closest("#inspector-drawer") || target.closest(".canvas-tabs")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    selectElement(target);
+  }, true);
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){
+      closeInspectorDrawer();
+      if(isInspecting) toggleInspector(false);
+    }
+  });
 }
 
 /* PRESETS / WORKING COPIES */
@@ -1541,6 +2386,7 @@ function setupTabs(){
 
 function init(){
   setupTabs();
+  setupInspector();
   Promise.all([
     fetch("ds-2026/tokens/primitives.json",{cache:"no-store"}),
     fetch("ds-2026/tokens/semantic.json",{cache:"no-store"}),

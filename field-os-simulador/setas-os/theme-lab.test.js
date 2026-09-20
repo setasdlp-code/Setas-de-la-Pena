@@ -122,3 +122,20 @@ test('theme lab integrates safe File System Access API targeting canonical token
 test('package exposes an explicit local Theme Lab preview command', () => {
   assert.equal(pkg.scripts['theme-lab'], 'python3 -m http.server 4173');
 });
+
+test('theme lab integrates click-to-edit inspector mode with contextual drawer and direct token editing', () => {
+  assert.match(lab, /id="btn-inspector-toggle"/);
+  assert.match(lab, /id="inspector-drawer"/);
+  assert.match(lab, /id="inspector-hover-badge"/);
+  assert.match(lab, /id="inspector-breadcrumbs"/);
+  assert.match(lab, /id="inspector-drawer-body"/);
+  assert.match(lab, /resolveElementTokens/);
+  assert.match(lab, /renderInspectorDrawer/);
+  assert.match(lab, /toggleInspector/);
+  assert.match(lab, /selectElement/);
+  assert.match(lab, /closeInspectorDrawer/);
+  assert.match(lab, /flashSidebarToken/);
+  assert.match(lab, /is-inspecting/);
+  assert.match(lab, /inspector-selected/);
+  assert.match(lab, /inspector-hover-outline/);
+});
