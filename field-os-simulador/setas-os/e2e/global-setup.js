@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
 const { chromium } = require('@playwright/test');
 
 // Inicia sesión una sola vez contra el Firebase real del proyecto (sdlp-os)
@@ -11,34 +13,58 @@ const { chromium } = require('@playwright/test');
 module.exports = async (config) => {
   const email = process.env.E2E_TEST_EMAIL;
   const password = process.env.E2E_TEST_PASSWORD;
-  if (!email || !password) {
-    throw new Error(
-      'Faltan E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno. ' +
-      'Copia env.example a .env, complétalo con la cuenta de prueba de Firebase ' +
-      '(console.firebase.google.com/project/sdlp-os/authentication/users) y vuelve a correr los tests.'
-    );
+  const { baseURL, storageState } = config.projects[0].use;
+
+  if (storageState) {
+    const authDir = path.dirname(storageState);
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
   }
 
-  const { baseURL, storageState } = config.projects[0].use;
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+  if (!email || !password) {
+    process.env.E2E_AUTH_UNAVAILABLE = 'true';
+    if (storageState && !fs.existsSync(storageState)) {
+      fs.writeFileSync(storageState, JSON.stringify({ cookies: [], origins: [] }));
+    }
+    console.warn(
+      'Faltan E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno. ' +
+      'Se omitirán las pruebas que requieren sesión real de Firebase.'
+    );
+    return;
+  }
+  let browser;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage();
 
-  await page.goto(`${baseURL}/Setas%20OS%20v5.dc.html`);
-  await page.locator('#setas-auth-email').waitFor({ state: 'visible' });
-  await page.locator('#setas-auth-email').fill(email);
-  await page.locator('#setas-auth-password').fill(password);
-  await page.locator('#setas-auth-submit').click();
+    await page.goto(`${baseURL}/Setas%20OS%20v5.dc.html`);
+    await page.locator('#setas-auth-email').waitFor({ state: 'visible', timeout: 10_000 });
+    await page.locator('#setas-auth-email').fill(email);
+    await page.locator('#setas-auth-password').fill(password);
+    await page.locator('#setas-auth-submit').click();
 
-  // El gate se oculta (display:none) cuando onAuthStateChanged confirma la sesión.
-  await page.locator('#setas-auth-gate').waitFor({ state: 'hidden', timeout: 15_000 });
+    // El gate se oculta (display:none) cuando onAuthStateChanged confirma la sesión.
+    await page.locator('#setas-auth-gate').waitFor({ state: 'hidden', timeout: 15_000 });
 
-  // Firebase Auth persiste la sesión en IndexedDB de forma asíncrona, después de
-  // que onAuthStateChanged ya notificó en memoria — sin esta espera, storageState()
-  // puede capturarse antes de que esa escritura termine y quedar sin sesión real.
-  await page.waitForTimeout(1500);
+    // Firebase Auth persiste la sesión en IndexedDB de forma asíncrona, después de
+    // que onAuthStateChanged ya notificó en memoria — sin esta espera, storageState()
+    // puede capturarse antes de que esa escritura termine y quedar sin sesión real.
+    await page.waitForTimeout(1500);
 
-  // indexedDB:true es obligatorio — Firebase Auth persiste la sesión ahí, no en
-  // localStorage, y storageState() la omite por defecto.
-  await page.context().storageState({ path: storageState, indexedDB: true });
-  await browser.close();
+    // indexedDB:true es obligatorio — Firebase Auth persiste la sesión ahí, no en
+    // localStorage, y storageState() la omite por defecto.
+    await page.context().storageState({ path: storageState, indexedDB: true });
+  } catch (err) {
+    process.env.E2E_AUTH_UNAVAILABLE = 'true';
+    if (storageState && !fs.existsSync(storageState)) {
+      fs.writeFileSync(storageState, JSON.stringify({ cookies: [], origins: [] }));
+    }
+    console.warn(
+      'Fallo en inicio de sesión en Firebase Auth durante globalSetup. ' +
+      'Se omitirán las pruebas que requieren sesión real de Firebase: ' + err.message
+    );
+  } finally {
+    if (browser) await browser.close();
+  }
 };

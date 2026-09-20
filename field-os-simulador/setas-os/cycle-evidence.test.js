@@ -40,6 +40,25 @@ test('CycleEvidence reutiliza Bitácora y solo agrega telemetría del ciclo corr
   assert.equal(ev.telemetrySummary.totalReadings, 2);
   assert.equal(ev.environment.temperature_c.mean, 18);
   assert.equal(ev.confidence, 'medium');
+  assert.ok(ev.telemetryHealth);
+  assert.equal(ev.telemetryHealth.reliabilityGrade, 'HIGH');
+});
+
+test('CycleEvidence con telemetría degradada degrada la confianza a low y documenta procedencia', () => {
+  const degradedTelemetry = [
+    { room_id: 'ROOM_1', device_id: 'S1', metric: 'temperature_c', value: 18, observed_at: '2026-08-24T09:00:00-05:00', quality: 'valid' },
+    { room_id: 'ROOM_1', device_id: 'S1', metric: 'temperature_c', value: 120, observed_at: '2026-08-24T09:30:00-05:00', quality: 'quarantined' },
+    { room_id: 'ROOM_1', device_id: 'S1', metric: 'temperature_c', value: 130, observed_at: '2026-08-24T10:00:00-05:00', quality: 'quarantined' },
+  ];
+  const ev = buildCycleEvidence({
+    cycle, lote, bolsas, cosechas, telemetry: degradedTelemetry,
+    recipeSnapshot: { id: 'R1', versionId: 'R1v2' },
+    ingredientLots: [{ ingredientId: 'aserrin_roble', inventoryLotId: 'INV_1' }],
+    recordedAt: '2026-08-24T21:00:00-05:00',
+  });
+  assert.equal(ev.confidence, 'low');
+  assert.equal(ev.telemetryHealth.reliabilityGrade, 'LOW');
+  assert.equal(ev.provenance.environment, 'degraded');
 });
 
 test('harvestByFlush consolida registros por flush sin inventar peso comercial', () => {
