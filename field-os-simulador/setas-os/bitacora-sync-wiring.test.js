@@ -47,89 +47,87 @@ test('auth-gate carga db y bitacora-sync solo después de inicializar el runtime
   assert.equal(html.includes('<script type="module" src="firebase/bitacora-sync.js">'), false, 'bitacora-sync.js no debe descargarse antes del login');
 });
 
-test('crearBitLote respalda el lote y sus bolsas nuevas en Firestore', () => {
+// ── Cableado de escritura: de fire-and-forget a cola durable ─────────────
+//
+// Estas pruebas guardaban que los 6 mutadores llegasen a Firestore y que ningún
+// fallo quedase en silencio. Esa intención se mantiene intacta; lo que cambió es
+// el mecanismo. Antes cada mutador lanzaba la llamada y, si fallaba, escribía un
+// mensaje en `bitSyncErr` y nadie reintentaba nunca: un registro hecho sin señal
+// se perdía para el servidor. Ahora cada mutador encola la operación y el
+// drenador la reintenta hasta que entra. Por eso las aserciones pasan de
+// comprobar la llamada directa a comprobar el encolado.
+
+const TIPOS_Y_SITIOS = [
+  ['crearBitLote', 'const crearBitLote=', 'guardarLote'],
+  ['crearBitLote (bolsas)', 'const crearBitLote=', 'guardarBolsas'],
+  ['updateBitLote', 'const updateBitLote=', 'actualizarLote'],
+  ['updateBitBolsa', 'const updateBitBolsa=', 'actualizarBolsa'],
+  ['addBitCosecha', 'const addBitCosecha=', 'guardarCosecha'],
+  ['deleteBitCosecha', 'const deleteBitCosecha=', 'eliminarCosecha'],
+  ['deleteBitLote', 'const deleteBitLote=', 'eliminarLoteCascade'],
+];
+
+test('cada mutador de Bitácora encola su operación en vez de dispararla y olvidarla', () => {
   const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const crearBitLote=');
-  const end = jsx.indexOf('const updateBitLote=');
-  const body = jsx.slice(start, end);
-  assert.match(body, /SetasBitacoraDB\.guardarLote\(lote\)/);
-  assert.match(body, /SetasBitacoraDB\.guardarBolsas\(bolsas\)/);
+  TIPOS_Y_SITIOS.forEach(([nombre, ancla, tipo]) => {
+    const start = jsx.indexOf(ancla);
+    assert.ok(start > -1, `no se encontró ${ancla}`);
+    const body = jsx.slice(start, start + 2600);
+    assert.match(body, new RegExp(`encolarSync\\(\\{\\s*type:\\s*'${tipo}'`),
+      `${nombre} debe encolar una operación ${tipo}`);
+  });
 });
 
-test('updateBitLote respalda los cambios del lote en Firestore', () => {
+test('los 7 tipos encolados existen como funciones reales de bitacora-sync.js', () => {
+  // El mismo acoplamiento que ya rompimos una vez entre módulos escritos en
+  // paralelo: si alguien renombra una función de respaldo, esto debe fallar.
   const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const updateBitLote=');
-  const end = jsx.indexOf('const updateBitBolsa=');
-  assert.match(jsx.slice(start, end), /SetasBitacoraDB\.actualizarLote\(loteId,\s*fields\)/);
+  const src = read('firebase/bitacora-sync.js');
+  const tipos = [...jsx.matchAll(/encolarSync\(\{\s*type:\s*'([a-zA-Z]+)'/g)].map(m => m[1]);
+  assert.ok(tipos.length >= 7, `se esperaban al menos 7 encolados, hubo ${tipos.length}`);
+  [...new Set(tipos)].forEach(tipo => {
+    assert.match(src, new RegExp(`export async function ${tipo}\\(`), `${tipo} no existe en bitacora-sync.js`);
+  });
 });
 
-test('updateBitBolsa respalda los cambios de la bolsa en Firestore', () => {
+test('ya no queda ninguna escritura fire-and-forget que pierda el cambio al fallar', () => {
   const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const updateBitBolsa=');
-  const end = jsx.indexOf('const addBitCosecha=');
-  assert.match(jsx.slice(start, end), /SetasBitacoraDB\.actualizarBolsa\(bolsaId,\s*fields\)/);
+  // El patrón viejo: llamar y, al fallar, sólo dejar un mensaje. Nadie
+  // reintentaba, así que el cambio se perdía para el servidor en silencio.
+  assert.doesNotMatch(jsx, /catch\(err\)\{\s*setBitSyncErr\(/,
+    'una escritura que sólo anota el error y no reintenta vuelve a perder trabajo');
+  assert.doesNotMatch(jsx, /await window\.SetasBitacoraDB\.(actualizarLote|actualizarBolsa|guardarCosecha|eliminarCosecha)\(/,
+    'las escrituras de Bitácora deben pasar por la cola, no llamarse directamente');
 });
 
-test('addBitCosecha respalda la cosecha nueva en Firestore con el mismo id local', () => {
+test('el drenador reintenta hasta que el cambio entra, y limpia al desmontar', () => {
   const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const addBitCosecha=');
-  const end = jsx.indexOf('const deleteBitCosecha=');
-  const body = jsx.slice(start, end);
-  assert.match(body, /const e=\{\.\.\.cosecha,id:'COS_'\+Date\.now\(\)\}/, 'el fixture del cuerpo cambió — revisar antes de continuar');
-  assert.match(body, /SetasBitacoraDB\.guardarCosecha\(e\)/);
+  assert.match(jsx, /nextPending\(/, 'el drenador debe pedir la siguiente operación pendiente');
+  assert.match(jsx, /markSynced\(/, 'una operación que entra sale de la cola');
+  assert.match(jsx, /markFailed\(/, 'una operación que falla se reintenta con retroceso');
+  assert.match(jsx, /addEventListener\('online'/, 'debe drenar cuando vuelve la red');
+  assert.match(jsx, /clearInterval\(/, 'no puede quedar un intervalo vivo al desmontar');
 });
 
-test('deleteBitCosecha elimina la cosecha también en Firestore', () => {
+test('la cola sobrevive a recargar el navegador', () => {
   const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const deleteBitCosecha=');
-  const end = jsx.indexOf('const deleteBitLote=');
-  assert.match(jsx.slice(start, end), /SetasBitacoraDB\.eliminarCosecha\(id\)/);
+  // El caso real: el operario cierra la app en la sala y la reabre en la
+  // oficina. Una cola que sólo vive en memoria pierde justo lo que protege.
+  assert.match(jsx, /sdp_sync_queue/, 'la cola debe persistirse');
+  assert.match(jsx, /localStorage\.getItem\('sdp_sync_queue'\)/, 'y rehidratarse al arrancar');
 });
 
-test('deleteBitLote elimina el lote, sus bolsas y sus cosechas también en Firestore', () => {
+test('el operario ve siempre si queda algo sin sincronizar', () => {
   const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const deleteBitLote=');
-  assert.ok(start > -1, 'no se encontró deleteBitLote');
-  // deleteBitLote es una función corta (~8 líneas); una ventana fija de 1200
-  // caracteres cubre su cuerpo completo sin depender de encontrar el nombre
-  // exacto de la siguiente función declarada después en el archivo.
-  const body = jsx.slice(start, start + 1200);
-  assert.match(body, /SetasBitacoraDB\.eliminarLoteCascade\(loteId,\s*bolsaIds,\s*cosechaIds\)/);
-});
-
-test('bitSyncErr existe como estado y se renderiza como aviso no bloqueante', () => {
-  const jsx = read('simulador-app.jsx');
-  assert.match(jsx, /const \[bitSyncErr,setBitSyncErr\]=React\.useState\(''\)/);
-  assert.match(jsx, /\{bitSyncErr&&<span[^>]*title=\{bitSyncErr\}/);
-});
-
-test('los 6 mutadores de Bitácora surfacean el fallo vía setBitSyncErr (no dejan el error en silencio)', () => {
-  const jsx = read('simulador-app.jsx');
-  // 5 sitios usan try/catch(err){setBitSyncErr(...)} de una sola llamada
-  // await. crearBitLote es distinto desde el fix de allSettled: dos
-  // llamadas independientes, sin catch — el fallo se detecta revisando
-  // results.find(r=>r.status==='rejected') y de ahí llama a setBitSyncErr.
-  const catchCalls = jsx.match(/catch\(err\)\{\s*setBitSyncErr\(/g) || [];
-  assert.equal(catchCalls.length, 5, `se esperaban 5 sitios con catch(err){setBitSyncErr(, hubo ${catchCalls.length}`);
-  const start = jsx.indexOf('const crearBitLote=');
-  const end = jsx.indexOf('const updateBitLote=');
-  const crearBitLoteBody = jsx.slice(start, end);
-  assert.match(crearBitLoteBody, /status==='rejected'/, 'crearBitLote debe detectar el fallo entre las promesas de allSettled');
-  assert.match(crearBitLoteBody, /setBitSyncErr\(/, 'crearBitLote debe surfacear el fallo detectado');
+  assert.match(jsx, /describeForOperator\(/, 'el indicador sale del módulo, no de un texto inventado');
+  assert.match(jsx, /data-testid="sync-indicator"/);
+  assert.match(jsx, /aria-live="polite"/, 'el cambio de estado debe anunciarse');
 });
 
 test('bitacora-sync.js nunca importa ni llama una API de lectura de Firestore (invariante de un solo sentido)', () => {
   const src = read('firebase/bitacora-sync.js');
   assert.doesNotMatch(src, /\b(getDoc|getDocs|onSnapshot|query|collection|where|orderBy)\s*\(/);
 });
-
-test('los 6 sitios de cableado en simulador-app.jsx conservan el guard if(window.SetasBitacoraDB)', () => {
-  const jsx = read('simulador-app.jsx');
-  const guards = jsx.match(/if\(window\.SetasBitacoraDB\)\{/g) || [];
-  assert.equal(guards.length, 6, `se esperaban 6 guards if(window.SetasBitacoraDB){, hubo ${guards.length}`);
-});
-
-// ── Hallazgos menores de la revisión final, ahora corregidos ──────────
 
 test('guardarBolsas y eliminarLoteCascade usan writeBatch, no N escrituras independientes', () => {
   const src = read('firebase/bitacora-sync.js');
@@ -141,19 +139,3 @@ test('guardarBolsas y eliminarLoteCascade usan writeBatch, no N escrituras indep
   assert.match(src.slice(cascadeStart), /writeBatch\(db\)/, 'eliminarLoteCascade debe usar writeBatch');
 });
 
-test('crearBitLote intenta guardar la receta y las bolsas de forma independiente (allSettled, no await secuencial)', () => {
-  const jsx = read('simulador-app.jsx');
-  const start = jsx.indexOf('const crearBitLote=');
-  const end = jsx.indexOf('const updateBitLote=');
-  const body = jsx.slice(start, end);
-  assert.match(body, /Promise\.allSettled\(/, 'un fallo en guardarLote no debe impedir el intento de guardarBolsas');
-  assert.doesNotMatch(body, /await window\.SetasBitacoraDB\.guardarLote\(lote\);\s*\n\s*await window\.SetasBitacoraDB\.guardarBolsas/, 'no debe quedar el await secuencial anterior');
-});
-
-test('los 6 sitios de cableado avisan por consola si SetasBitacoraDB no está disponible', () => {
-  const jsx = read('simulador-app.jsx');
-  // Ventana amplia: el sitio de crearBitLote es más largo que los otros 5
-  // (usa Promise.allSettled con un comentario explicativo).
-  const warns = jsx.match(/if\(window\.SetasBitacoraDB\)\{[\s\S]{0,900}?\}else\{console\.warn\(/g) || [];
-  assert.equal(warns.length, 6, `se esperaban 6 sitios con aviso por consola, hubo ${warns.length}`);
-});

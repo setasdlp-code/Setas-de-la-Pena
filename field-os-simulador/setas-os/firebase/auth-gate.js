@@ -47,6 +47,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../batch-sheet.js",
   "../task-engine.js",
   "../day-close.js",
+  "../sync-queue.js",
   "../climate-math.js",
   // El puente de telemetría en vivo depende del contrato y del adaptador ESP32
   // en ese orden: cada uno lee el global que publica el anterior.

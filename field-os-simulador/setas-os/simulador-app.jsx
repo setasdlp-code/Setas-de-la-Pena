@@ -4275,7 +4275,11 @@ function SimuladorShell(props){
   const [flash,setFlash]=useState(false);
   const [saveSyncErr,setSaveSyncErr]=useState('');
   const [loteSyncErr,setLoteSyncErr]=useState('');
-  const [bitSyncErr,setBitSyncErr]=React.useState('');
+  // Cola de sincronización de la Bitácora (SetasSyncQueue): persiste en
+  // localStorage bajo 'sdp_sync_queue' via serialize/deserialize para que
+  // sobreviva a un recargue del navegador — una cola que no sobrevive a eso
+  // no sirve para el caso (sala sin señal) que este módulo existe para cubrir.
+  const [syncQueue,setSyncQueue]=React.useState([]);
   const [showDayClose,setShowDayClose]=useState(false);
   const [dayCloseNote,setDayCloseNote]=useState(null);
   const [cmpRecipe,setCmpRecipe]=useState([]);
@@ -4942,9 +4946,67 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     try{
       const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
       if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const sq=localStorage.getItem('sdp_sync_queue');
+      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+      if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     }catch(e){
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
     }
+  },[]);
+
+  // Ref con el valor más reciente de syncQueue para que el drenador (abajo)
+  // pueda leerlo dentro de un bucle async sin esperar a que React vuelva a
+  // renderizar entre una operación y la siguiente.
+  const syncQueueRef=React.useRef(syncQueue);
+  useEffect(()=>{ syncQueueRef.current=syncQueue; },[syncQueue]);
+
+  // ── Drenador de la cola de sincronización de Bitácora (SetasSyncQueue).
+  // Hook de nivel superior: se llama siempre, en el mismo orden, nunca desde
+  // dentro de una IIFE de render ni detrás de un return condicional.
+  useEffect(()=>{
+    let cancelled=false; // ignora resultados tardíos si el efecto se desmonta
+
+    const drainAll=async()=>{
+      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+      const bitacoraDb=typeof window!=='undefined'?window.SetasBitacoraDB:null;
+      // Sin el módulo de cola, sin el backend de Firestore, o sin red: la
+      // cola simplemente espera — es justo lo que debe pasar.
+      if(!syncQueueApi||!bitacoraDb) return;
+      if(typeof navigator!=='undefined'&&navigator.onLine===false) return;
+      // Se procesa de a una operación por vez, siempre esperando (await) el
+      // resultado antes de tomar la siguiente: el orden de la cola importa
+      // (FIFO), y mandar varias en paralelo podría hacer que la llamada de
+      // un cambio viejo llegue a Firestore después que la de uno más nuevo
+      // sobre el mismo lote/bolsa/cosecha, pisándolo.
+      while(!cancelled){
+        const op=syncQueueApi.nextPending(syncQueueRef.current,Date.now());
+        if(!op) break;
+        const fn=bitacoraDb[op.type];
+        let updatedQueue;
+        try{
+          if(typeof fn!=='function') throw new Error('Operación desconocida para SetasBitacoraDB: '+op.type);
+          await fn(...op.args);
+          updatedQueue=syncQueueApi.markSynced(syncQueueRef.current,op.id);
+        }catch(err){
+          updatedQueue=syncQueueApi.markFailed(syncQueueRef.current,op.id,err,Date.now());
+        }
+        if(cancelled) return;
+        syncQueueRef.current=updatedQueue;
+        setSyncQueue(updatedQueue);
+        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
+      }
+    };
+
+    drainAll();
+    const intervalId=setInterval(drainAll,15000);
+    const onOnline=()=>drainAll();
+    window.addEventListener('online',onOnline);
+
+    return ()=>{
+      cancelled=true;
+      clearInterval(intervalId);
+      window.removeEventListener('online',onOnline);
+    };
   },[]);
 
   // ── v4: sincronizar pantry con stock
@@ -5671,16 +5733,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return upd;
     });
 
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
-        } catch (e) {
-          console.warn('Error respaldando lote en Firestore:', e);
-        }
-      })();
-    }
+    encolarSync({ type: 'guardarLote', key: 'lote:' + lote.id, args: [lote] });
+    encolarSync({ type: 'guardarBolsas', key: 'lote:' + lote.id + ':bolsas', args: [bolsas] });
     window.SetasPublicTraceDB?.publicarLote(lote).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
 
     // 3. Cerrar modal y proceder
@@ -5701,42 +5755,46 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
+  // Encola una operación de bitácora en vez de dispararla y olvidarla: el
+  // guardado local y la confirmación de la interfaz ya ocurrieron antes de
+  // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
+  // sincronización con Firestore se reintente cuando haya red, en vez de
+  // perderse en silencio si falla o si la sala no tiene señal.
+  const encolarSync=({type,key,args})=>{
+    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    if(!syncQueueApi){console.warn('SetasSyncQueue no disponible — el cambio no quedó en cola de sincronización.');return;}
+    setSyncQueue(prev=>{
+      let next;
+      try{
+        const op=syncQueueApi.createOperation({type,key,args});
+        next=syncQueueApi.enqueue(prev,op);
+      }catch(err){
+        // La cola llena (o una operación inválida) nunca se descarta en
+        // silencio: el operario tiene que enterarse de que este cambio no
+        // quedó protegido.
+        setNoticeDlg({title:'No se pudo encolar el cambio',msg:'El cambio no se pudo poner en la cola de sincronización ('+(err.message||'error desconocido')+'). Revisa los cambios pendientes antes de seguir trabajando.'});
+        return prev;
+      }
+      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
+      return next;
+    });
+  };
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
     const nb=parseInt(form.numBolsas)||1;const ts=Date.now();
     const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:'sana',col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo||1.5,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
     setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        // allSettled, no await secuencial: un fallo en guardarLote no debe
-        // impedir el intento de guardarBolsas — son documentos distintos,
-        // y encadenarlos con await hacía que un solo error dejara las
-        // bolsas del lote sin ningún intento de respaldo.
-        const results=await Promise.allSettled([
-          window.SetasBitacoraDB.guardarLote(lote),
-          window.SetasBitacoraDB.guardarBolsas(bolsas),
-        ]);
-        const failed=results.find(r=>r.status==='rejected');
-        if(failed){
-          const err=failed.reason;
-          setBitSyncErr('No se sincronizó con el servidor: '+(err?.message||err?.code||'error desconocido'));
-        }else{
-          setBitSyncErr('');
-        }
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    // Se encolan por separado (no en un solo allSettled): son documentos
+    // distintos y cada uno debe reintentarse de forma independiente si falla.
+    encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
+    encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
     window.SetasPublicTraceDB?.publicarLote(lote).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
     setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
       window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
@@ -5753,12 +5811,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
     }
     setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'actualizarBolsa',key:'bolsa:'+bolsaId,args:[bolsaId,fields]});
   };
   // Fusiona tareas nuevas con las existentes vía SetasTaskEngine.mergeTasks (la
   // idempotencia la da el motor por id determinista: no se reimplementa aquí)
@@ -5793,12 +5846,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:'COS_'+Date.now()};
     setBitCosechas(prev=>{const upd=[...prev,e];try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(err){bitQuotaWarn();}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'guardarCosecha',key:'cosecha:'+e.id,args:[e]});
     const loteCosecha=bitLotes.find(l=>l.id===e.loteId);
     if(loteCosecha?.codigo){
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
@@ -5806,12 +5854,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.eliminarCosecha(id);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
   };
   const deleteBitLote=(loteId)=>{
     const doDelete=()=>{
@@ -5821,12 +5864,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
       if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
-      if(window.SetasBitacoraDB){
-        (async()=>{
-          try{await window.SetasBitacoraDB.eliminarLoteCascade(loteId,bolsaIds,cosechaIds);setBitSyncErr('');}
-          catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-        })();
-      }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+      encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
@@ -7075,7 +7113,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
               🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)
             </button>
           </div>
-          <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
+          {(()=>{
+            const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+            const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+            const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+            return <div data-testid="sync-indicator" style={{display:'flex',alignItems:'center',gap:8}}>
+              <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(st.stuck>0?'os-sync-state--error':(st.pending>0?'os-sync-state--pending':'os-sync-state--synced'))}>{label}</span>
+              {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
+                const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                setSyncQueue(next);
+                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+              }}>Reintentar</button>}
+            </div>;
+          })()}
         </aside>
       </div>
     </article>;
@@ -8191,7 +8241,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </button>
                 )}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
-                {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center'}} title={bitSyncErr}>⚠ sin sincronizar</span>}
+                {(()=>{
+                  const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                  const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                  const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                  return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'#C53030':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
+                    {label}
+                    {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
+                      const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                      setSyncQueue(next);
+                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                    }}>Reintentar</button>}
+                  </span>;
+                })()}
               </div>
             </div>
 
@@ -8847,7 +8909,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {/* Cierre de jornada: cierra el turno y entrega contexto al
                         relevo, para que lo ocurrido no se reconstruya después
                         desde memoria o WhatsApp. */}
-                    <div style={{marginTop:12,display:'flex',justifyContent:'flex-end'}}>
+                    {/* El estado de sincronización va en la pantalla de inicio, no
+                        sólo en el detalle del lote: el operario tiene que poder ver
+                        desde donde trabaja si algo quedó sin subir, sin navegar a
+                        buscarlo. Es la mitad visible de la cola. */}
+                    <div style={{marginTop:12,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                      {(()=>{
+                        const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                        const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                        const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                        return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true"
+                          style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
+                          <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
+                          {label}
+                          {st.stuck>0&&<button type="button" onClick={()=>{
+                            const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                            setSyncQueue(next);
+                            try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                          }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
+                        </span>;
+                      })()}
                       <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
                         style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
                         Cerrar jornada
@@ -12013,11 +12094,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const shiftStartMs=new Date(new Date(now).toDateString()).getTime();
           const allEvents=bitLotes.flatMap(l=>l.lifecycleEvents||[]);
           const sheets=activeLotes.map(l=>buildSheetFor(l)).filter(Boolean);
-          // bitSyncErr hoy es un mensaje (string) o '', no un contador real de
-          // cambios sin sincronizar: se traduce a 1/0 como aproximación explícita.
-          // Hasta que exista una cola de sincronización de verdad, el cierre
-          // puede decir que hay trabajo sin subir, pero no cuánto.
-          const pendingSyncCount=bitSyncErr?1:0;
+          const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+          const syncStats=syncQueueApi?syncQueueApi.stats(syncQueue,now):{pending:0,stuck:0};
+          const pendingSyncCount=syncStats.pending+syncStats.stuck;
           const report=dayCloseApi.buildDayCloseReport({
             events:allEvents,tasks:bitTasks,sheets,pendingSyncCount,
             shiftStartMs,nowMs:now,operatorId:null,

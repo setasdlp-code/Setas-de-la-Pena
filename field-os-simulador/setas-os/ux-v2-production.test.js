@@ -71,6 +71,20 @@ test('la casilla de tarea cumple el objetivo tactil de campo y el contador cuent
   assert.match(source, /pendiente\$\{n===1\?'':'s'\}/);
 });
 
+test('el estado de sincronización se ve desde la pantalla de inicio', () => {
+  // Un arnés que montó la app de verdad mostró que el indicador sólo existía en
+  // el detalle del lote y en Bitácora: el operario en Hoy no podía saber si algo
+  // había quedado sin subir sin navegar a buscarlo. La mitad visible de la cola
+  // tiene que estar donde se trabaja.
+  const cockpitStart = source.indexOf('<div className="home-cockpit">');
+  const cockpit = source.slice(cockpitStart, cockpitStart + 40000);
+  assert.match(cockpit, /data-testid="sync-indicator"/);
+  assert.match(cockpit, /describeForOperator\(st\)/);
+  assert.match(cockpit, /role="status" aria-live="polite"/);
+  // El botón de desatascar también es una acción de campo: >=48px.
+  assert.match(cockpit, /retryStuck\(syncQueue,Date\.now\(\)\)[\s\S]{0,260}minHeight:48/);
+});
+
 test('marcar una tarea en el cockpit registra el evento que la cierra', () => {
   // El contrato del motor es que una tarea sólo se cierra con el evento que la
   // cumple. La casilla no puede saltárselo: registra un evento manual y cierra
@@ -108,6 +122,67 @@ test('bag state selector includes the aislada state from BAG_STATE_LABELS', () =
 
 test('task-engine and day-close ship behind the auth gate alongside batch-sheet', () => {
   assert.match(authGate, /"\.\.\/batch-sheet\.js",[\s\S]*"\.\.\/task-engine\.js",[\s\S]*"\.\.\/day-close\.js"/);
+});
+
+test('the sync queue ships behind the auth gate alongside the other bitácora modules', () => {
+  assert.match(authGate, /"\.\.\/day-close\.js",\s*\n\s*"\.\.\/sync-queue\.js"/);
+});
+
+test('bitácora writes are enqueued through SetasSyncQueue instead of fired and forgotten', () => {
+  // El patrón viejo — await window.SetasBitacoraDB.X(...) dentro de un
+  // try/catch que sólo actualizaba bitSyncErr — ya no debe existir en
+  // ninguna de las escrituras de la bitácora.
+  assert.doesNotMatch(source, /await window\.SetasBitacoraDB\.actualizarBolsa/);
+  assert.doesNotMatch(source, /await window\.SetasBitacoraDB\.actualizarLote/);
+  assert.doesNotMatch(source, /await window\.SetasBitacoraDB\.guardarCosecha/);
+  assert.doesNotMatch(source, /await window\.SetasBitacoraDB\.eliminarCosecha/);
+  assert.doesNotMatch(source, /await window\.SetasBitacoraDB\.eliminarLoteCascade/);
+  assert.doesNotMatch(source, /setBitSyncErr/, 'bitSyncErr era el mecanismo viejo (sin cola ni reintento): no debe quedar rastro');
+
+  // El helper único que sí encola, y las claves que identifican cada objeto.
+  assert.match(source, /const encolarSync=\(\{type,key,args\}\)=>/);
+  assert.match(source, /syncQueueApi\.createOperation\(\{type,key,args\}\)/);
+  assert.match(source, /syncQueueApi\.enqueue\(prev,op\)/);
+  assert.match(source, /encolarSync\(\{type:'actualizarLote',key:'lote:'\+loteId,args:\[loteId,fields\]\}\)/);
+  assert.match(source, /encolarSync\(\{type:'actualizarBolsa',key:'bolsa:'\+bolsaId,args:\[bolsaId,fields\]\}\)/);
+  assert.match(source, /encolarSync\(\{type:'guardarCosecha',key:'cosecha:'\+e\.id,args:\[e\]\}\)/);
+  assert.match(source, /encolarSync\(\{type:'eliminarCosecha',key:'cosecha:'\+id,args:\[id\]\}\)/);
+  assert.match(source, /encolarSync\(\{type:'eliminarLoteCascade',key:'lote:'\+loteId,args:\[loteId,bolsaIds,cosechaIds\]\}\)/);
+
+  // Cola llena (u operación inválida): el operario se entera, nunca se
+  // descarta en silencio.
+  assert.match(source, /setNoticeDlg\(\{title:'No se pudo encolar el cambio'/);
+});
+
+test('la cola de sincronización se rehidrata desde localStorage junto con la bitácora', () => {
+  const loadStart = source.indexOf("const bl=localStorage.getItem('sdp_bit_lotes')");
+  assert.ok(loadStart > -1);
+  const loadBlock = source.slice(loadStart, loadStart + 600);
+  assert.match(loadBlock, /localStorage\.getItem\('sdp_sync_queue'\)/);
+  assert.match(loadBlock, /syncQueueApi\.deserialize\(sq\)/);
+});
+
+test('el drenador de la cola de sincronización es un hook de nivel superior con limpieza', () => {
+  assert.match(source, /const drainAll=async\(\)=>\{/);
+  assert.match(source, /syncQueueApi\.nextPending\(syncQueueRef\.current,Date\.now\(\)\)/);
+  assert.match(source, /syncQueueApi\.markSynced\(syncQueueRef\.current,op\.id\)/);
+  assert.match(source, /syncQueueApi\.markFailed\(syncQueueRef\.current,op\.id,err,Date\.now\(\)\)/);
+  assert.match(source, /setInterval\(drainAll,15000\)/);
+  assert.match(source, /window\.addEventListener\('online',onOnline\)/);
+  assert.match(source, /cancelled=true;\s*\n\s*clearInterval\(intervalId\);\s*\n\s*window\.removeEventListener\('online',onOnline\);/);
+  assert.match(source, /navigator\.onLine===false/);
+});
+
+test('el indicador de sincronización usa describeForOperator y ofrece reintentar los atascados', () => {
+  const matches = source.match(/data-testid="sync-indicator"/g) || [];
+  assert.ok(matches.length >= 2, 'debe existir en el detalle del lote y en la Bitácora');
+  assert.match(source, /syncQueueApi\.describeForOperator\(st\)/);
+  assert.match(source, /syncQueueApi\.retryStuck\(syncQueue,Date\.now\(\)\)/);
+});
+
+test('el cierre de jornada usa el conteo real de la cola de sincronización, ya no el booleano bitSyncErr', () => {
+  assert.doesNotMatch(source, /const pendingSyncCount=bitSyncErr\?1:0;/);
+  assert.match(source, /const pendingSyncCount=syncStats\.pending\+syncStats\.stuck;/);
 });
 
 test('production Hoy uses the operational cockpit without a duplicate UX v2 section above it', () => {

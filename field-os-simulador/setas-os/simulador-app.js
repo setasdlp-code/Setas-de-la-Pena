@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 96f252e615b09812a003c96df18ce735aa6834ca0c9d3559f89df449071a27e3
+// source-hash: e772675dc2e79fad8822f745a060d232dcd76c19f4b96cf451d06d47e2a3282d
 const { useState, useMemo, useEffect, useRef } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2971,7 +2971,7 @@ function SimuladorShell(props) {
   const [flash, setFlash] = useState(false);
   const [saveSyncErr, setSaveSyncErr] = useState("");
   const [loteSyncErr, setLoteSyncErr] = useState("");
-  const [bitSyncErr, setBitSyncErr] = React.useState("");
+  const [syncQueue, setSyncQueue] = React.useState([]);
   const [showDayClose, setShowDayClose] = useState(false);
   const [dayCloseNote, setDayCloseNote] = useState(null);
   const [cmpRecipe, setCmpRecipe] = useState([]);
@@ -3659,9 +3659,54 @@ function SimuladorShell(props) {
       if (bb) setBitBolsas(JSON.parse(bb));
       if (bc) setBitCosechas(JSON.parse(bc));
       if (bt) setBitTasks(JSON.parse(bt));
+      const sq = localStorage.getItem("sdp_sync_queue");
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      if (sq && syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     } catch (e) {
       setNoticeDlg({ title: "No se pudo cargar la Bitácora", msg: "Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes." });
     }
+  }, []);
+  const syncQueueRef = React.useRef(syncQueue);
+  useEffect(() => {
+    syncQueueRef.current = syncQueue;
+  }, [syncQueue]);
+  useEffect(() => {
+    let cancelled = false;
+    const drainAll = async () => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const bitacoraDb = typeof window !== "undefined" ? window.SetasBitacoraDB : null;
+      if (!syncQueueApi || !bitacoraDb) return;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      while (!cancelled) {
+        const op = syncQueueApi.nextPending(syncQueueRef.current, Date.now());
+        if (!op) break;
+        const fn = bitacoraDb[op.type];
+        let updatedQueue;
+        try {
+          if (typeof fn !== "function") throw new Error("Operación desconocida para SetasBitacoraDB: " + op.type);
+          await fn(...op.args);
+          updatedQueue = syncQueueApi.markSynced(syncQueueRef.current, op.id);
+        } catch (err) {
+          updatedQueue = syncQueueApi.markFailed(syncQueueRef.current, op.id, err, Date.now());
+        }
+        if (cancelled) return;
+        syncQueueRef.current = updatedQueue;
+        setSyncQueue(updatedQueue);
+        try {
+          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(updatedQueue));
+        } catch (e) {
+        }
+      }
+    };
+    drainAll();
+    const intervalId = setInterval(drainAll, 15e3);
+    const onOnline = () => drainAll();
+    window.addEventListener("online", onOnline);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+      window.removeEventListener("online", onOnline);
+    };
   }, []);
   useEffect(() => {
     if (!invLotes.length) return;
@@ -4429,16 +4474,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarLote(lote);
-          await window.SetasBitacoraDB.guardarBolsas(bolsas);
-        } catch (e) {
-          console.warn("Error respaldando lote en Firestore:", e);
-        }
-      })();
-    }
+    encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
+    encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
     window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     setShowProdLaunchModal(false);
     if (printQr) {
@@ -4454,6 +4491,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
     });
   };
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
+  const encolarSync = ({ type, key, args }) => {
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    if (!syncQueueApi) {
+      console.warn("SetasSyncQueue no disponible — el cambio no quedó en cola de sincronización.");
+      return;
+    }
+    setSyncQueue((prev) => {
+      let next;
+      try {
+        const op = syncQueueApi.createOperation({ type, key, args });
+        next = syncQueueApi.enqueue(prev, op);
+      } catch (err) {
+        setNoticeDlg({ title: "No se pudo encolar el cambio", msg: "El cambio no se pudo poner en la cola de sincronización (" + (err.message || "error desconocido") + "). Revisa los cambios pendientes antes de seguir trabajando." });
+        return prev;
+      }
+      try {
+        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return next;
+    });
+  };
   const crearBitLote = (form) => {
     const lote = { ...form, id: "BIT_" + Date.now(), createdAt: (/* @__PURE__ */ new Date()).toISOString() };
     const nb = parseInt(form.numBolsas) || 1;
@@ -4477,23 +4537,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        const results = await Promise.allSettled([
-          window.SetasBitacoraDB.guardarLote(lote),
-          window.SetasBitacoraDB.guardarBolsas(bolsas)
-        ]);
-        const failed = results.find((r) => r.status === "rejected");
-        if (failed) {
-          const err = failed.reason;
-          setBitSyncErr("No se sincronizó con el servidor: " + (err?.message || err?.code || "error desconocido"));
-        } else {
-          setBitSyncErr("");
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
+    encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
     window.SetasPublicTraceDB?.publicarLote(lote).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     return lote.id;
   };
@@ -4507,18 +4552,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.actualizarLote(loteId, fields);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "actualizarLote", key: "lote:" + loteId, args: [loteId, fields] });
     const loteActual = bitLotes.find((l) => l.id === loteId);
     if (loteActual?.codigo) {
       window.SetasPublicTraceDB?.publicarLote({ ...loteActual, ...fields }).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
@@ -4543,18 +4577,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.actualizarBolsa(bolsaId, fields);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "actualizarBolsa", key: "bolsa:" + bolsaId, args: [bolsaId, fields] });
   };
   const mergeIntoTasks = (nuevasTareas = []) => {
     if (!nuevasTareas.length) return;
@@ -4600,18 +4623,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.guardarCosecha(e);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "guardarCosecha", key: "cosecha:" + e.id, args: [e] });
     const loteCosecha = bitLotes.find((l) => l.id === e.loteId);
     if (loteCosecha?.codigo) {
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo, e).catch((err) => console.warn("No se publicó la cosecha en la ficha pública:", err));
@@ -4626,18 +4638,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return upd;
     });
-    if (window.SetasBitacoraDB) {
-      (async () => {
-        try {
-          await window.SetasBitacoraDB.eliminarCosecha(id);
-          setBitSyncErr("");
-        } catch (err) {
-          setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-        }
-      })();
-    } else {
-      console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-    }
+    encolarSync({ type: "eliminarCosecha", key: "cosecha:" + id, args: [id] });
   };
   const deleteBitLote = (loteId) => {
     const doDelete = () => {
@@ -4671,18 +4672,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setBitActiveLoteId(null);
         goBitTab("bit_dash");
       }
-      if (window.SetasBitacoraDB) {
-        (async () => {
-          try {
-            await window.SetasBitacoraDB.eliminarLoteCascade(loteId, bolsaIds, cosechaIds);
-            setBitSyncErr("");
-          } catch (err) {
-            setBitSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-          }
-        })();
-      } else {
-        console.warn("SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.");
-      }
+      encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
     };
     setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });
   };
@@ -5476,7 +5466,19 @@ BATCH (${numBags}×${kgBag} kg):
       setThermalBagEnd(lote.numBolsas || 12);
       setThermalScope("all");
       setShowThermalModal(true);
-    } }, "🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)")), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (bitSyncErr ? "os-sync-state--error" : "os-sync-state--synced") }, bitSyncErr ? "Sin sincronizar" : "Sincronizado"))));
+    } }, "🏷 Imprimir Etiquetas Térmicas (50×30 / 60×40)")), (() => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+      const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+      return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (st.stuck > 0 ? "os-sync-state--error" : st.pending > 0 ? "os-sync-state--pending" : "os-sync-state--synced") }, label), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+        const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+        setSyncQueue(next);
+        try {
+          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+        } catch (e) {
+        }
+      } }, "Reintentar"));
+    })())));
   };
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== "undefined" ? window.SetasClimate : null;
@@ -6101,7 +6103,19 @@ BATCH (${numBags}×${kgBag} kg):
       style: { display: "flex", alignItems: "center", gap: 4 }
     },
     "🖨 Etiquetas"
-  ), bitActiveLoteId && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: "auto", alignSelf: "center", paddingRight: 4 } }, bitLotes.find((lt) => lt.id === bitActiveLoteId)?.codigo), bitSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", marginLeft: 8, alignSelf: "center" }, title: bitSyncErr }, "⚠ sin sincronizar"))), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  ), bitActiveLoteId && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginLeft: "auto", alignSelf: "center", paddingRight: 4 } }, bitLotes.find((lt) => lt.id === bitActiveLoteId)?.codigo), (() => {
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+    const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+    return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "#C53030" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+      const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+      setSyncQueue(next);
+      try {
+        localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+      } catch (e) {
+      }
+    } }, "Reintentar"));
+  })())), bitTab === "bit_dash" && /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Lotes experimentales ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", bitLotes.length, ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("grid"), style: { padding: "6px 12px", background: bitDashView === "grid" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "grid" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "⊞ Cuadrícula"), /* @__PURE__ */ React.createElement("button", { onClick: () => setBitDashView("tabla"), style: { padding: "6px 12px", background: bitDashView === "tabla" ? "var(--ink-900)" : "var(--paper-50)", color: bitDashView === "tabla" ? "var(--paper-0)" : "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", cursor: "pointer", transition: "background-color .12s,border-color .12s,color .12s,transform .12s" } }, "≡ Tabla"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setBitNuevoForm(buildBitNuevoForm());
     setShowBitNuevo(true);
   }, className: "inv-btn inv-btn-pri" }, "+ Nueva prueba"))), bitLotes.length > 0 && (() => {
@@ -6436,7 +6450,31 @@ BATCH (${numBags}×${kgBag} kg):
         style: { cursor: "pointer", flexShrink: 0, width: 48, height: 48, display: "grid", placeItems: "center", padding: 0, background: "none", border: "none" }
       },
       /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: 0, border: `1.5px solid ${t.done ? "var(--accent-olive)" : "var(--line-0)"}`, background: t.done ? "var(--accent-olive)" : "transparent", display: "grid", placeItems: "center", color: "var(--paper-0)", fontSize: 11 } }, t.done ? "✓" : "")
-    ), /* @__PURE__ */ React.createElement("button", { "data-testid": "cockpit-task-row", onClick: () => t.fromEngine && t.objectType === "batch" ? openBatchDetail(t.objectId) : props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-0)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why), t.action && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--accent-terracotta)" } }, t.action, " →")), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 0 } }, t.prio))), tasksHoy.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", paddingTop: 2 } }, "+", tasksHoy.length - 5, " tarea", tasksHoy.length - 5 === 1 ? "" : "s", " más")), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("button", { "data-testid": "cockpit-task-row", onClick: () => t.fromEngine && t.objectType === "batch" ? openBatchDetail(t.objectId) : props.onTaskGo && props.onTaskGo(t.key), style: { cursor: "pointer", flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", padding: 0, display: "flex", flexDirection: "column", gap: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-0)", textDecoration: t.done ? "line-through" : "none" } }, t.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, t.id), " · ", t.why), t.action && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: "var(--accent-terracotta)" } }, t.action, " →")), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)", color: prioColor(t.prio), border: `1px solid ${prioColor(t.prio)}`, padding: "2px 7px", borderRadius: 0 } }, t.prio))), tasksHoy.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", paddingTop: 2 } }, "+", tasksHoy.length - 5, " tarea", tasksHoy.length - 5 === 1 ? "" : "s", " más")), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" } }, (() => {
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
+      const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
+      return /* @__PURE__ */ React.createElement(
+        "span",
+        {
+          "data-testid": "sync-indicator",
+          role: "status",
+          "aria-live": "polite",
+          "aria-atomic": "true",
+          style: { display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "var(--coral-700)" : st.pending > 0 ? "var(--ochre-700)" : "var(--ink-2)" }
+        },
+        /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { width: 8, height: 8, borderRadius: 0, display: "inline-block", background: st.stuck > 0 ? "var(--coral-700)" : st.pending > 0 ? "var(--ochre-500)" : "var(--moss-700)" } }),
+        label,
+        st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+          const next = syncQueueApi.retryStuck(syncQueue, Date.now());
+          setSyncQueue(next);
+          try {
+            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
+          } catch (e) {
+          }
+        }, style: { cursor: "pointer", minHeight: 48, padding: "0 14px", background: "var(--paper-0)", color: "var(--coral-700)", border: "1px solid var(--coral-700)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" } }, "Reintentar")
+      );
+    })(), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -7681,7 +7719,9 @@ Click para ver análisis completo`
     const shiftStartMs = new Date(new Date(now).toDateString()).getTime();
     const allEvents = bitLotes.flatMap((l) => l.lifecycleEvents || []);
     const sheets = activeLotes.map((l) => buildSheetFor(l)).filter(Boolean);
-    const pendingSyncCount = bitSyncErr ? 1 : 0;
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    const syncStats = syncQueueApi ? syncQueueApi.stats(syncQueue, now) : { pending: 0, stuck: 0 };
+    const pendingSyncCount = syncStats.pending + syncStats.stuck;
     const report = dayCloseApi.buildDayCloseReport({
       events: allEvents,
       tasks: bitTasks,
