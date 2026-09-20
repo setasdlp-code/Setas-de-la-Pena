@@ -120,3 +120,75 @@ node 08_brand/ds-2026/scripts/sync-consumers.mjs
 node 08_brand/ds-2026/scripts/visual-contract.mjs
 cd field-os-simulador/setas-os && node build.js && npm test
 ```
+
+
+## Click-to-Edit Inspector
+
+The canvas includes a token-aware Inspect Mode inspired by Figma Inspect / DevTools.
+
+Activate it with **⌖ Inspeccionar** or `Alt + I`. Press `Escape` to cancel and clear the selection.
+
+While Inspect Mode is active:
+
+- hover draws a non-destructive reticle around the nearest canonical component;
+- click selects the nearest known DS component rather than an incidental nested span/icon;
+- the **Inspector** sidebar opens automatically;
+- computed font, colour, surface, border, padding and minimum size are shown;
+- known components expose only token paths that actually govern them;
+- unresolved nodes are **computed-only** and never receive invented JSON paths.
+
+Examples:
+
+- `.sdp-btn--primary` → semantic action/text mappings, canonical FIELD height, rule/radius and the typography sources it consumes;
+- `.species-name` / `.sdp-species__common` → species typography and text semantic role;
+- `.sdp-reading__value` → primary text + the canonical size source actually consumed;
+- `.sdp-provenance[data-provenance]` → surface/text/border mappings + provenance domain symbol/label;
+- `.sdp-sync[data-sync]` → sync-domain symbol/label;
+- lot/task/band/panel roots → their surface/border/geometry contracts.
+
+When CSS still contains a literal rather than a canonical token, the Inspector reports it as **tokenization debt** instead of pretending the property is editable through a JSON token.
+
+### Direct editing
+
+Inspector changes mutate the same five working copies used by the global Theme Lab:
+
+- `primitives.json`
+- `semantic.json`
+- `typography.json`
+- `spacing.json`
+- `domain.json`
+
+Every edit therefore appears in the Diff Inspector, can be reverted, exported and — if pre-flight passes — written through File System Access.
+
+**Ir a Token en Sidebar** switches to the relevant global editor and highlights the corresponding canonical control when one exists.
+
+### Canonical geometry
+
+Rule thickness is now first-class spacing data:
+
+```json
+"rule": {
+  "hairline": "1px",
+  "heavy": "2px",
+  "frame": "1px"
+}
+```
+
+`build-tokens.mjs` compiles these values into `--rule-hairline`, `--rule-heavy` and `--rule-frame`.
+
+FIELD action height and action/provenance borders were also bound to canonical tokens without changing their baseline appearance, so Inspector edits affect the real components rather than Theme Lab-only overrides.
+
+### Inspector safety
+
+The repository write gate additionally protects:
+
+- body ≥ 16px;
+- operative data ≥ 13px;
+- label / screen metadata ≥ 11px;
+- touch target ≥ 44px;
+- FIELD cell ≥ 48px;
+- rule geometry within the supported range;
+- semantic references resolve;
+- critical semantic contrast remains AA.
+
+Selecting a repository folder remains a permission step and is informational until the user invokes **Aplicar JSON al Repo**; it does not disable the button before the folder picker can be opened.
