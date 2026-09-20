@@ -7154,8 +7154,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const preparedBatch=useMemo(()=>preparation?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice,300,preparation):null,[preparation,recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
   const bd=showBatch?preparedBatch:null;
   const validatePreparation=()=>{
+    const fields=[['prod-bags',prodBags,{required:true,min:1,integer:true}],['prod-kg',prodKg,{required:true,min:0.1}],['prod-h',prodH,{required:true,min:55,max:75}],...Object.entries(prodMoist).map(([id,v])=>['ingredient-moisture-'+id,v,{min:0,max:92}])];
+    const first=fields.find(([,value,rules])=>SetasBitacora.captureError(value,rules));
+    if(first){const el=document.getElementById(first[0]);el?.focus();el?.dispatchEvent(new FocusEvent('focusout',{bubbles:true}));return false;}
     if(preparation)return true;
-    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult.error});return false;
+    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult?.error});return false;
   };
   const prodRows=useMemo(()=>preparation?preparation.items.map(item=>({
     g:prodIngs.find(g=>g.id===item.ingredientId),r:recipe.find(r=>r.id===item.ingredientId),
@@ -9562,7 +9565,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // columna, progressive disclosure, sin grids ni tablas horizontales.
   // Responde en orden: qué lote es · en qué estado está · hay algo mal ·
   // qué debo hacer ahora · qué condiciones tiene · qué ha pasado.
-  const BatchDetailMobile = ({ lote }) => {
+  const BatchDetailMobile = ({ lote, isModal = false }) => {
     const sheet = buildSheetFor(lote);
     const state = sheet ? sheet.state : loteLifecycleState(lote);
     const stateLabel = sheet ? sheet.stateLabel : (lifecycleLabel[state] || state);
@@ -9616,9 +9619,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const events = sheet
       ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, type: e.title, time: e.at, desc: e.meta, kind: e.provenance }))
       : [];
+    const batchBolsas = (bitBolsas || []).filter(b => b.loteId === lote.id);
 
     return (
       <article className="os-batch-detail-mobile" data-testid="ux-v2-batch-detail-mobile" data-batch-state={state}>
+        {!isModal && (
+          <div style={{ marginBottom: 12 }}>
+            <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" onClick={() => goBitTab('bit_dash', true)} style={{ gap: 6 }}>
+              ← Volver a lotes
+            </button>
+          </div>
+        )}
         <div className="sdp-lote" data-testid="active-lote" data-lote-id={lote.id}>
           <div className="sdp-lote__body">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -9730,6 +9741,60 @@ body{margin:0;padding:20px 24px;background:#fff;}
           )}
         </section>
 
+        {batchBolsas.length > 0 && (
+          <section style={{ marginTop: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 8px' }}>
+              <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: 0 }}>
+                Bolsas ({batchBolsas.length})
+              </h2>
+              <button
+                type="button"
+                className="inv-table-link"
+                onClick={() => goBitTab('bit_bolsas', true)}
+                style={{ fontSize: 11 }}
+              >
+                Ver en tabla →
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {batchBolsas.map(bolsa => {
+                const cosBolsa = bitCosechas.filter(c => c.bolsaId === bolsa.id);
+                const totalBolsa = cosBolsa.reduce((s, c) => s + (c.pesoFresco || 0), 0);
+                return (
+                  <div key={bolsa.id} className="sdp-task" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px' }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13 }}>{bolsa.codigo || bolsa.id}</div>
+                      <div style={{ font: 'var(--t-small)', color: 'var(--text-secondary)' }}>
+                        {bolsa.estado || 'sana'} · {totalBolsa > 0 ? (totalBolsa / 1000).toFixed(3) + ' kg' : '0 kg'}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="sdp-btn sdp-btn--secondary sdp-btn--field"
+                      aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo || bolsa.id}`}
+                      onClick={() => {
+                        openHarvestCapture({
+                          bolsaId: bolsa.id,
+                          loteId: lote.id,
+                          codigo: bolsa.codigo || bolsa.id,
+                          flush: cosBolsa.length + 1,
+                          fecha: new Date().toISOString().split('T')[0],
+                          pesoFresco: '',
+                          calidad: '',
+                          observaciones: ''
+                        });
+                        setShowBitCosecha(true);
+                      }}
+                    >
+                      + Cosecha
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
           {events.length === 0 ? (
@@ -9751,15 +9816,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         <section style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-hairline)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {secondaryActions.map(a => (
-            <button key={a.action} type="button" className="sdp-btn sdp-btn--secondary" disabled={Boolean(a.blockedBy)}
+            <button key={a.action} type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" disabled={Boolean(a.blockedBy)}
               title={a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : undefined}
               onClick={() => runBatchAction(a.action, lote, sheet)}>{a.label}</button>
           ))}
-          <button type="button" className="sdp-btn sdp-btn--secondary" data-testid="btn-field-action-sheet-mobile"
+          <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" data-testid="btn-field-action-sheet-mobile"
             onClick={() => { setQrSelectedLoteId(lote.id); setShowFieldActionModal(true); }}>
             Hoja de acción (QR)
           </button>
-          <button type="button" className="sdp-btn sdp-btn--secondary" onClick={() => setPublicTraceModalLoteId(lote.id)}>
+          <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" onClick={() => setPublicTraceModalLoteId(lote.id)}>
             Ver ficha pública QR
           </button>
         </section>
@@ -9778,7 +9843,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}><AppIcon name="close" size={12} /></button>
         </div>
-        {isMobileViewport ? <BatchDetailMobile lote={lote} /> : <BatchDetailV2 lote={lote} />}
+        {isMobileViewport ? <BatchDetailMobile lote={lote} isModal={true} /> : <BatchDetailV2 lote={lote} />}
       </AccessibleModal>
     );
   };
@@ -11066,7 +11131,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
                         <div key={lote.id} data-lote-id={lote.id} className="panel sdp-lote" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
-                          onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
+                          onClick={()=>{setBitActiveLoteId(lote.id);goBitTab(isMobileViewport ? 'bit_ficha' : 'bit_bolsas',true);}}
                           onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--ink-900)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.transform='';}}
                         >
@@ -11109,7 +11174,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th style={{textAlign:'right'}}>Acciones</th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas"><AppIcon name="print" size={12} /></button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}><AppIcon name="close" size={12} /></button></div></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab(isMobileViewport ? 'bit_ficha' : 'bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas"><AppIcon name="print" size={12} /></button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}><AppIcon name="close" size={12} /></button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -11877,7 +11942,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       key={lt.id}
                                       data-lote-id={lt.id}
                                       aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
-                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab(isMobileViewport ? 'bit_ficha' : 'bit_bolsas',true);}}
                                       className={`sdp-lote home-lote-card ${critical?'sdp-lote--error':contaminated?'sdp-lote--warn':'sdp-lote--ok'}`}
                                       style={{
                                         display:'flex',flexDirection:'column',gap:4,
@@ -14966,7 +15031,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,240px),1fr))',gap:12}}>
                 {recipe.map(r=>{const g=effectiveINGS.find(g=>g.id===r.id);return <label key={r.id} htmlFor={`ingredient-moisture-${r.id}`}>
                   {g?.name||r.id} · catálogo: {g?.moisture??'sin dato'}%
-                  <CaptureInput id={`ingredient-moisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
+                  <CaptureInput id={`ingredient-moisture-${r.id}`} name={`ingredientMoisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
                 </label>;})}
               </div>
               {!prepValid&&<p role="alert">{preparationResult.error}</p>}
