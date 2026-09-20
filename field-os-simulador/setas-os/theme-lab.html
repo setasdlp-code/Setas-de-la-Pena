@@ -1182,42 +1182,38 @@ function updateContrast(){
 }
 
 /* DIFF INSPECTOR & REVERT */
+function tokenDocMap(){return{
+  primitives:{canonical:state.canonicalPrimitives,working:state.primitives,group:"colors"},
+  semantic:{canonical:state.canonicalSemantic,working:state.semantic,group:"colors"},
+  typography:{canonical:state.canonicalTypography,working:state.typography,group:"type"},
+  spacing:{canonical:state.canonicalSpacing,working:state.spacing,group:"spacing"},
+  domain:{canonical:state.canonicalDomain,working:state.domain,group:"domain"}
+}}
+function setPathValue(rootObj,pathParts,value){var obj=rootObj;for(var i=0;i<pathParts.length-1;i++){if(!obj[pathParts[i]])obj[pathParts[i]]={};obj=obj[pathParts[i]]}obj[pathParts[pathParts.length-1]]=clone(value)}
+function refreshAfterTokenChange(doc){
+  if(doc==="primitives"){applyPrimitives(false);renderPrimitives()}
+  else if(doc==="semantic"){applySemantic();renderSemantic()}
+  else if(doc==="typography"){applyTypographyLive();renderTypographyControls()}
+  else if(doc==="spacing"){applySpacingLive();renderSpacingControls()}
+  else if(doc==="domain"){applyDomainLive();renderDomainControls()}
+}
 function computeDetailedDiff(){
-  var diffs=[];
-  // primitives
-  Object.keys(state.primitives.color.primitive).forEach(function(k){
-    var a=state.canonicalPrimitives.color.primitive[k].value, b=state.primitives.color.primitive[k].value;
-    if(a!==b) diffs.push({group:"colors",path:"primitive."+k,canonical:a,working:b,revert:function(){state.primitives.color.primitive[k].value=a;setPrimitive(k,a)}});
-  });
-  // semantic
-  Object.keys(state.semantic.semantic).forEach(function(g){
-    Object.keys(state.semantic.semantic[g]).forEach(function(k){
-      var a=state.canonicalSemantic.semantic[g][k]&&state.canonicalSemantic.semantic[g][k].value, b=state.semantic.semantic[g][k].value;
-      if(a!==b) diffs.push({group:"colors",path:"semantic."+g+"."+k,canonical:a,working:b,revert:function(){state.semantic.semantic[g][k].value=a;applySemantic();renderSemantic();onTokenModified()}});
-    });
-  });
-  // typography
-  Object.keys(state.typography.scale).forEach(function(r){
-    var ca=state.canonicalTypography.scale[r], wa=state.typography.scale[r];
-    if(!ca||!wa)return;
-    if(ca.size!==wa.size) diffs.push({group:"type",path:"typography.scale."+r+".size",canonical:ca.size,working:wa.size,revert:function(){wa.size=ca.size;applyTypographyLive();renderTypographyControls();onTokenModified()}});
-    if(ca.leading!==wa.leading) diffs.push({group:"type",path:"typography.scale."+r+".leading",canonical:String(ca.leading),working:String(wa.leading),revert:function(){wa.leading=ca.leading;applyTypographyLive();renderTypographyControls();onTokenModified()}});
-    if(ca.tracking!==wa.tracking) diffs.push({group:"type",path:"typography.scale."+r+".tracking",canonical:ca.tracking,working:wa.tracking,revert:function(){wa.tracking=ca.tracking;applyTypographyLive();renderTypographyControls();onTokenModified()}});
-  });
-  // spacing
-  if(state.canonicalSpacing.structure&&state.spacing.structure){
-    var cs=state.canonicalSpacing.structure, ws=state.spacing.structure;
-    if(cs.tapTargetMin!==ws.tapTargetMin) diffs.push({group:"spacing",path:"spacing.structure.tapTargetMin",canonical:cs.tapTargetMin,working:ws.tapTargetMin,revert:function(){ws.tapTargetMin=cs.tapTargetMin;applySpacingLive();onTokenModified()}});
-  }
-  // domain
-  if(state.canonicalDomain.domain&&state.domain.domain){
-    var cd=state.canonicalDomain.domain.provenance, wd=state.domain.domain.provenance;
-    if(cd&&wd){
-      Object.keys(cd).forEach(function(k){
-        if(cd[k].symbol!==wd[k].symbol) diffs.push({group:"domain",path:"domain.provenance."+k+".symbol",canonical:cd[k].symbol,working:wd[k].symbol,revert:function(){wd[k].symbol=cd[k].symbol;applyDomainLive();renderDomainControls();onTokenModified()}});
-      });
+  var diffs=[],docs=tokenDocMap();
+  function walk(docName,a,b,parts){
+    if(a===b)return;
+    var aObj=a&&typeof a==="object"&&!Array.isArray(a), bObj=b&&typeof b==="object"&&!Array.isArray(b);
+    if(aObj&&bObj){
+      var keys={};Object.keys(a).concat(Object.keys(b)).forEach(function(k){keys[k]=true});
+      Object.keys(keys).forEach(function(k){walk(docName,a[k],b[k],parts.concat(k))});
+      return;
     }
+    var path=docName+"."+parts.join("."), meta=docs[docName];
+    diffs.push({
+      group:meta.group,path:path,canonical:JSON.stringify(a),working:JSON.stringify(b),
+      revert:function(){setPathValue(meta.working,parts,a);refreshAfterTokenChange(docName);onTokenModified()}
+    });
   }
+  Object.keys(docs).forEach(function(doc){walk(doc,docs[doc].canonical,docs[doc].working,[])});
   return diffs;
 }
 
@@ -1272,13 +1268,23 @@ function runPreflightGates(){
   var bodySize=parseInt(state.typography.scale.body.size,10);
   gates.push({name:"body >= 16px",pass:bodySize>=16});
 
-  // 4. Screen metadata >= 11px
-  var microSize=parseInt(state.typography.scale.micro.size,10);
+  // 4. Operative + metadata typography floors
+  var dataSize=parseInt(state.typography.scale.data.size,10);
+  var labelSize=parseInt(state.typography.scale.label.size,10);
+  var microSize=parseInt((state.typography.scale["micro-screen"]||state.typography.scale.micro).size,10);
+  gates.push({name:"operative data >= 13px",pass:dataSize>=13});
+  gates.push({name:"label >= 11px",pass:labelSize>=11});
   gates.push({name:"screen metadata >= 11px",pass:microSize>=11});
 
-  // 5. FIELD target >= 44px
+  // 5. FIELD interaction floors
   var tapMin=parseInt(state.spacing.structure.tapTargetMin,10);
+  var fieldMin=parseInt(state.spacing.structure.fieldCellMinHeight,10);
   gates.push({name:"FIELD target >= 44px",pass:tapMin>=44});
+  gates.push({name:"FIELD cell >= 48px",pass:fieldMin>=48});
+
+  // 5b. Rule geometry
+  var rule=state.spacing.structure.rule||{}, ruleOk=["hairline","heavy","frame"].every(function(k){var n=parseInt(rule[k],10);return Number.isFinite(n)&&n>=1&&n<=5});
+  gates.push({name:"rule geometry 1–5px",pass:ruleOk});
 
   // 6. Contrast sanctioned pairs
   var contrastOk=updateContrast();
@@ -1294,12 +1300,12 @@ function runPreflightGates(){
 
   // 8. Canonical repo selected
   var repoSelected=Boolean(state.selectedDirHandle);
-  gates.push({name:"canonical repo selected",pass:repoSelected});
+  gates.push({name:"canonical repo selected",pass:repoSelected,blocking:false});
 
   var host=el("preflight-gates"); host.innerHTML="";
   var allPass=true;
   gates.forEach(function(g){
-    if(!g.pass) allPass=false;
+    if(!g.pass&&g.blocking!==false) allPass=false;
     var row=node("div","gate-item"); row.dataset.pass=String(g.pass);
     row.appendChild(node("span",null,g.name));
     row.appendChild(node("span",null,g.pass?"PASS":"FAIL"));
@@ -1335,7 +1341,9 @@ window.CriterioThemeLab={
   buildSemanticExport:buildSemanticExport,
   buildTypographyExport:buildTypographyExport,
   buildSpacingExport:buildSpacingExport,
-  buildDomainExport:buildDomainExport
+  buildDomainExport:buildDomainExport,
+  computeDetailedDiff:computeDetailedDiff,
+  runPreflightGates:runPreflightGates
 };
 
 function updateExportDisplay(){
