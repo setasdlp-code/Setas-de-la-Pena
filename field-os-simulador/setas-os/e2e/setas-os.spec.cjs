@@ -206,7 +206,7 @@ test.describe('desktop navigation contract', () => {
     await openApp(page);
     await workspaceButton(page, 'formular').click();
     await contextTab(page, 'Formular').click();
-    await page.getByRole('button', { name: 'Paleta completa', exact: true }).click();
+    await page.getByRole('button', { name: /Catálogo|Paleta completa/ }).first().click();
 
     const list = page.locator('#bl-ingredientes .ing-list');
     await expect(list).toBeVisible();
