@@ -44,7 +44,7 @@
     mix_prepared: ['start_thermal_treatment', 'note', 'discard'],
     thermal_treatment: ['complete_thermal_treatment', 'note', 'report_problem'],
     cooling: ['inoculate', 'note', 'report_problem'],
-    inoculated: ['move', 'inspection', 'contamination', 'note'],
+    inoculated: ['move', 'inspection', 'contamination', 'note', 'advance_stage'],
     incubation: ['inspection', 'move', 'contamination', 'note', 'advance_stage'],
     maturation: ['inspection', 'move', 'contamination', 'note', 'advance_stage'],
     induction: ['inspection', 'move', 'contamination', 'note', 'advance_stage'],

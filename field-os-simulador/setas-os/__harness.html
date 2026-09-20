@@ -69,9 +69,18 @@ window.SetasFirebase = {
 <script src="qr-mini.js"></script><script src="bridge-protocol.js"></script>
 <script src="navigation-state.js"></script><script src="setas-os-workflow.js"></script>
 <script src="climate-sparkline.js"></script><script src="support.js"></script>
+<script src="trace-identity.js"></script>
+<script src="public-trace-dto.js"></script>
+<script src="recipe-recommender.js"></script>
 <script src="substrate-catalog.js"></script><script src="substrate-analysis.js"></script><script src="substrate-diagnosis.js"></script>
-<script src="recipe-recommender.js"></script><script src="scoring.js"></script>
-<script src="bitacora-model.js"></script><script src="climate-math.js"></script>
+<script src="scoring.js"></script>
+<script src="bitacora-model.js"></script>
+<script src="batch-sheet.js"></script><script src="task-engine.js"></script>
+<script src="day-close.js"></script><script src="sync-queue.js"></script>
+<script src="sweep-journal.js"></script>
+<script src="contamination-workflow.js"></script>
+<script src="field-qr-events.js"></script>
+<script src="climate-math.js"></script>
 <script src="telemetry-contract.js"></script><script src="esp32-telemetry-adapter.js"></script>
 <script src="anomaly-thresholds.js"></script><script src="live-telemetry-bridge.js"></script>
 <script src="flush-forecast-engine.js"></script><script src="sterilization-kinetics.js"></script>
@@ -84,6 +93,7 @@ window.SetasFirebase = {
 <script src="field-events-model.js"></script><script src="field-event-reconcile.js"></script>
 <script src="field-event-sync.js"></script><script src="field-event-account.js"></script>
 <script src="field-qr-resolve.js"></script><script src="field-action-sheet.js"></script>
+<script src="field-qr-events.js"></script>
 <script src="field-event-mock-transport.js"></script><script src="field-event-callable-transport.js"></script>
 <!-- El banco no tiene sesión de Firebase, así que no puede obtener un token para
      el callable real. Se pide el simulacro explícitamente: la hoja lo rotulará
@@ -91,11 +101,157 @@ window.SetasFirebase = {
 <script>window.__setasFieldMockSync = true;</script>
 <script src="simulador-app.js"></script>
 <script>
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.SimuladorApp, {
-  hoyPreviewEventos: 0, hoyPreviewBe: 0, hoyPreviewHoras: 0,
-  hoyPreviewAnomalias: 0, hoyPreviewAnomaliasColor: 'var(--ink-muted)',
-  hoyPreviewSalidas: 0, tasksOpenCount: 0, tasksHoyJson: '[]',
-  recentActivityJson: '[]', hasHandoff: false, hasActiveSession: false
-}));
+function HarnessApp() {
+  var initialTab = (function() {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      return p.get('view') || 'home';
+    } catch(e) { return 'home'; }
+  })();
+  var tabState = React.useState(initialTab);
+  var tab = tabState[0];
+  var setTab = tabState[1];
+
+  var tabNonceState = React.useState(0);
+  var tabNonce = tabNonceState[0];
+  var setTabNonce = tabNonceState[1];
+
+  var bitSubtabState = React.useState('bit_dash');
+  var bitSubtab = bitSubtabState[0];
+  var setBitSubtab = bitSubtabState[1];
+
+  var bitSubtabNonceState = React.useState(0);
+  var bitSubtabNonce = bitSubtabNonceState[0];
+  var setBitSubtabNonce = bitSubtabNonceState[1];
+
+  var scanNonceState = React.useState(0);
+  var scanNonce = scanNonceState[0];
+  var setScanNonce = scanNonceState[1];
+
+  var mobileMoreState = React.useState(false);
+  var mobileMoreOpen = mobileMoreState[0];
+  var setMobileMoreOpen = mobileMoreState[1];
+
+  var mobileDest = (tab === 'home') ? 'hoy'
+    : (tab === 'bitacora') ? 'lotes'
+    : (tab === 'clima') ? 'salas'
+    : 'mas';
+
+  var goMobileHoy = function() { setMobileMoreOpen(false); setTab('home'); setTabNonce(function(n) { return n + 1; }); };
+  var goMobileLotes = function() { setMobileMoreOpen(false); setTab('bitacora'); setTabNonce(function(n) { return n + 1; }); setBitSubtab('bit_dash'); setBitSubtabNonce(function(n) { return n + 1; }); };
+  var goMobileScan = function() { setMobileMoreOpen(false); setScanNonce(function(n) { return n + 1; }); };
+  var goMobileSalas = function() { setMobileMoreOpen(false); setTab('clima'); setTabNonce(function(n) { return n + 1; }); };
+  var toggleMobileMore = function() { setMobileMoreOpen(function(o) { return !o; }); };
+
+  var moreItems = [
+    { key: 'formular', label: 'Formular receta', go: function() { setMobileMoreOpen(false); setTab('formular'); setTabNonce(function(n) { return n + 1; }); } },
+    { key: 'produccion', label: 'Preparar mezcla', go: function() { setMobileMoreOpen(false); setTab('produccion'); setTabNonce(function(n) { return n + 1; }); } },
+    { key: 'inventario', label: 'Bodega', go: function() { setMobileMoreOpen(false); setTab('inventario'); setTabNonce(function(n) { return n + 1; }); } },
+    { key: 'bitacora', label: 'Bitácora', go: function() { setMobileMoreOpen(false); setTab('bitacora'); setTabNonce(function(n) { return n + 1; }); setBitSubtab('bit_dash'); setBitSubtabNonce(function(n) { return n + 1; }); } },
+    { key: 'clima', label: 'Salas', go: function() { setMobileMoreOpen(false); setTab('clima'); setTabNonce(function(n) { return n + 1; }); } }
+  ];
+
+  return React.createElement(React.Fragment, null,
+    React.createElement(window.SimuladorApp, {
+      tab: tab,
+      tabNonce: tabNonce,
+      bitSubtab: bitSubtab,
+      bitSubtabNonce: bitSubtabNonce,
+      scanNonce: scanNonce,
+      onTabChange: setTab,
+      onBitSubtabChange: setBitSubtab,
+      hoyPreviewEventos: 0, hoyPreviewBe: 0, hoyPreviewHoras: 0,
+      hoyPreviewAnomalias: 0, hoyPreviewAnomaliasColor: 'var(--ink-muted)',
+      hoyPreviewSalidas: 0, tasksOpenCount: 0, tasksHoyJson: '[]',
+      recentActivityJson: '[]', hasHandoff: false, hasActiveSession: false
+    }),
+    React.createElement('nav', { className: 'app-rail-mobile', 'aria-label': 'Navegación principal' },
+      React.createElement('button', {
+        className: 'rail-mobile-btn ' + (mobileDest === 'hoy' ? 'on' : ''),
+        'data-dest': 'hoy',
+        onClick: goMobileHoy,
+        'aria-current': mobileDest === 'hoy' ? 'page' : undefined
+      },
+        React.createElement('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.7' },
+          React.createElement('circle', { cx: '12', cy: '12', r: '9' }),
+          React.createElement('path', { d: 'M12 7v5l3.5 2' })
+        ),
+        React.createElement('span', null, 'Hoy')
+      ),
+      React.createElement('button', {
+        className: 'rail-mobile-btn ' + (mobileDest === 'lotes' ? 'on' : ''),
+        'data-dest': 'lotes',
+        onClick: goMobileLotes,
+        'aria-current': mobileDest === 'lotes' ? 'page' : undefined
+      },
+        React.createElement('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.7' },
+          React.createElement('path', { d: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z' }),
+          React.createElement('path', { d: 'M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12' })
+        ),
+        React.createElement('span', null, 'Lotes')
+      ),
+      React.createElement('button', {
+        className: 'rail-mobile-btn rail-mobile-btn--scan',
+        'data-dest': 'scan',
+        onClick: goMobileScan,
+        'aria-label': 'Escanear código QR'
+      },
+        React.createElement('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.9' },
+          React.createElement('path', { d: 'M4 8V5a1 1 0 0 1 1-1h3' }),
+          React.createElement('path', { d: 'M4 16v3a1 1 0 0 0 1 1h3' }),
+          React.createElement('path', { d: 'M20 8V5a1 1 0 0 0-1-1h-3' }),
+          React.createElement('path', { d: 'M20 16v3a1 1 0 0 1-1 1h-3' }),
+          React.createElement('line', { x1: '4', y1: '12', x2: '20', y2: '12' })
+        ),
+        React.createElement('span', null, 'Escanear')
+      ),
+      React.createElement('button', {
+        className: 'rail-mobile-btn ' + (mobileDest === 'salas' ? 'on' : ''),
+        'data-dest': 'salas',
+        onClick: goMobileSalas,
+        'aria-current': mobileDest === 'salas' ? 'page' : undefined
+      },
+        React.createElement('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.7' },
+          React.createElement('path', { d: 'M4 18v-5M10 18V6M16 18v-9M22 18V3' }),
+          React.createElement('path', { d: 'M2 21h20' })
+        ),
+        React.createElement('span', null, 'Salas')
+      ),
+      React.createElement('button', {
+        className: 'rail-mobile-btn ' + (mobileDest === 'mas' ? 'on' : ''),
+        'data-dest': 'mas',
+        onClick: toggleMobileMore,
+        'aria-expanded': mobileMoreOpen,
+        'aria-haspopup': 'true',
+        'aria-controls': 'mobile-more-panel',
+        'aria-current': mobileDest === 'mas' ? 'page' : undefined
+      },
+        React.createElement('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '1.7' },
+          React.createElement('circle', { cx: '5', cy: '12', r: '1.6' }),
+          React.createElement('circle', { cx: '12', cy: '12', r: '1.6' }),
+          React.createElement('circle', { cx: '19', cy: '12', r: '1.6' })
+        ),
+        React.createElement('span', null, 'Más')
+      )
+    ),
+    mobileMoreOpen ? React.createElement('div', {
+      className: 'rail-flyout mobile-more-flyout',
+      id: 'mobile-more-panel',
+      role: 'group',
+      'aria-label': 'Más secciones'
+    },
+      moreItems.map(function(item) {
+        return React.createElement('button', {
+          key: item.key,
+          className: 'rail-flyout-item ' + (tab === item.key ? 'on' : ''),
+          onClick: item.go,
+          'data-dest': item.key,
+          'aria-current': tab === item.key ? 'page' : undefined
+        }, item.label);
+      })
+    ) : null
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(HarnessApp));
 </script>
 </body></html>

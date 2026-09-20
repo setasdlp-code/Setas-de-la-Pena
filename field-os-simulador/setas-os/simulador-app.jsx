@@ -5334,7 +5334,6 @@ function SimuladorShell(props){
   const [flash,setFlash]=useState(false);
   const [saveSyncErr,setSaveSyncErr]=useState('');
   const [loteSyncErr,setLoteSyncErr]=useState('');
-  const [bitSyncErr,setBitSyncErr]=React.useState('');
   const [cmpRecipe,setCmpRecipe]=useState([]);
   const [cmpKey,setCmpKey]=useState('p_ostreatus_gris');
   const [tab,setTab]=useState(()=>{
@@ -6058,10 +6057,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         bitQuotaWarn();
       }
 
-      if (window.SetasBitacoraDB) {
-        for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
-          window.SetasBitacoraDB.actualizarBolsa(bId, updatedBag).catch(() => {});
-        }
+      for (const [bId, updatedBag] of opResult.appliedMap.entries()) {
+        encolarSync({type:'actualizarBolsa',key:'bolsa:'+bId,args:[bId,updatedBag]});
       }
 
       const sheetApi = window.SetasBatchSheet;
@@ -6083,9 +6080,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         try {
           localStorage.setItem('sdp_bit_lotes', JSON.stringify(updLotes));
         } catch (e) {}
-        if (window.SetasBitacoraDB?.actualizarLote) {
-          window.SetasBitacoraDB.actualizarLote(activeLot.id, { lifecycleEvents: nextLog }).catch(() => {});
-        }
+        encolarSync({type:'actualizarLote',key:'lote:'+activeLot.id,args:[activeLot.id,{lifecycleEvents:nextLog}]});
       }
 
       playSweepBeep(1040, 120);
@@ -6339,6 +6334,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   qrLotesRef.current=bitLotes;
   const [bitBolsas,setBitBolsas]=useState([]);
   const [bitCosechas,setBitCosechas]=useState([]);
+  // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
+  // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
+  const [bitTasks,setBitTasks]=useState([]);
+  // Cola de sincronización de la Bitácora (SetasSyncQueue): persiste en
+  // localStorage bajo 'sdp_sync_queue' via serialize/deserialize para que
+  // sobreviva a un recargue del navegador — una cola que no sobrevive a eso
+  // no sirve para el caso (sala sin señal) que este módulo existe para cubrir.
+  const [syncQueue,setSyncQueue]=React.useState([]);
+  const [showDayClose,setShowDayClose]=useState(false);
+  const [dayCloseNote,setDayCloseNote]=useState(null);
   const [bitTab,setBitTab]=useState('bit_dash');
   const [bitActiveLoteId,setBitActiveLoteId]=useState(null);
   const applyBitTab=(raw,hasActiveLote=!!bitActiveLoteId)=>{
@@ -6609,13 +6614,71 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
     try{
-      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');
-      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));
+      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
+      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const sq=localStorage.getItem('sdp_sync_queue');
+      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+      if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     }catch(e){
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
     }finally{
       setBitLotesLoaded(true);
     }
+  },[]);
+
+  // Ref con el valor más reciente de syncQueue para que el drenador (abajo)
+  // pueda leerlo dentro de un bucle async sin esperar a que React vuelva a
+  // renderizar entre una operación y la siguiente.
+  const syncQueueRef=React.useRef(syncQueue);
+  useEffect(()=>{ syncQueueRef.current=syncQueue; },[syncQueue]);
+
+  // ── Drenador de la cola de sincronización de Bitácora (SetasSyncQueue).
+  // Hook de nivel superior: se llama siempre, en el mismo orden, nunca desde
+  // dentro de una IIFE de render ni detrás de un return condicional.
+  useEffect(()=>{
+    let cancelled=false; // ignora resultados tardíos si el efecto se desmonta
+
+    const drainAll=async()=>{
+      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+      const bitacoraDb=typeof window!=='undefined'?window.SetasBitacoraDB:null;
+      // Sin el módulo de cola, sin el backend de Firestore, o sin red: la
+      // cola simplemente espera — es justo lo que debe pasar.
+      if(!syncQueueApi||!bitacoraDb) return;
+      if(typeof navigator!=='undefined'&&navigator.onLine===false) return;
+      // Se procesa de a una operación por vez, siempre esperando (await) el
+      // resultado antes de tomar la siguiente: el orden de la cola importa
+      // (FIFO), y mandar varias en paralelo podría hacer que la llamada de
+      // un cambio viejo llegue a Firestore después que la de uno más nuevo
+      // sobre el mismo lote/bolsa/cosecha, pisándolo.
+      while(!cancelled){
+        const op=syncQueueApi.nextPending(syncQueueRef.current,Date.now());
+        if(!op) break;
+        const fn=bitacoraDb[op.type];
+        let updatedQueue;
+        try{
+          if(typeof fn!=='function') throw new Error('Operación desconocida para SetasBitacoraDB: '+op.type);
+          await fn(...op.args);
+          updatedQueue=syncQueueApi.markSynced(syncQueueRef.current,op.id);
+        }catch(err){
+          updatedQueue=syncQueueApi.markFailed(syncQueueRef.current,op.id,err,Date.now());
+        }
+        if(cancelled) return;
+        syncQueueRef.current=updatedQueue;
+        setSyncQueue(updatedQueue);
+        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
+      }
+    };
+
+    drainAll();
+    const intervalId=setInterval(drainAll,15000);
+    const onOnline=()=>drainAll();
+    window.addEventListener('online',onOnline);
+
+    return ()=>{
+      cancelled=true;
+      clearInterval(intervalId);
+      window.removeEventListener('online',onOnline);
+    };
   },[]);
 
   // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
@@ -6688,6 +6751,51 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   useEffect(()=>{try{const s=localStorage.getItem('setas_prices_v1');if(s) setPriceOverrides(JSON.parse(s));}catch(e){};},[]);
   useEffect(()=>{try{const s=localStorage.getItem('sdp_alertas');if(s) setAlertaConfig(JSON.parse(s));}catch(e){};},[]);
   useEffect(()=>{try{const s=localStorage.getItem('sdp_prov_override');if(s) setProvOverride(JSON.parse(s));}catch(e){};},[]);
+
+  // ── Cola de trabajo del turno, derivada del motor de tareas ───────────────
+  // Vive aquí y no dentro del cockpit porque el cockpit se pinta desde una IIFE
+  // dentro del render: un hook ahí violaría las reglas de React. Lo que el
+  // operario ve al entrar es el cockpit, así que la cola tiene que llegarle a él.
+  const taskEngine=typeof window!=='undefined'?window.SetasTaskEngine:null;
+
+  // Siembra única: la cola sale de bitTasks, pero todo usuario actual tiene
+  // lotes sin ninguna tarea persistida todavía. Si bitTasks está vacío y hay
+  // lotes activos, se derivan tareas SOP del estado vigente de cada uno y se
+  // persisten una sola vez — después de eso manda el motor.
+  React.useEffect(()=>{
+    if(bitTasks.length>0) return;
+    if(!taskEngine) return;
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    if(!activos.length) return;
+    const ahora=Date.now();
+    const seeded=activos.flatMap(lote=>{
+      const toState=lote.lifecycleState||loteLifecycleState(lote);
+      try{
+        return taskEngine.tasksFromTransition({batchId:lote.id,toState,at:lote.createdAt||new Date(ahora).toISOString(),nowMs:ahora});
+      }catch(e){ return []; }
+    });
+    if(seeded.length) mergeIntoTasks(seeded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[bitTasks.length,bitLotes.length]);
+
+  /** Índice de objetos para que la cola resuelva código de lote y sala, no ids crudos. */
+  const buildTaskIndex=(activeLotes)=>{
+    const index={batches:{},rooms:ROOMS_CONFIG};
+    activeLotes.forEach(lote=>{
+      // Un lote en cuarentena es un caso de bioseguridad, no un paso más del
+      // ciclo: su stateLabel lo dice explícito para que cualquier tarea que lo
+      // señale (por objectId) se lea como alerta de bioseguridad y no como una
+      // transición de rutina más.
+      const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
+      index.batches[lote.id]={
+        code:lote.codigo,
+        species:lote.especie,
+        stateLabel:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':(lifecycleLabel[loteLifecycleState(lote)]||lote.estado),
+        room:lote.sala||lote.ubicacion||null,
+      };
+    });
+    return index;
+  };
 
   const saveR=()=>{
     const nm=saveName.trim();if(!nm||!recipe.length||!balanced||!hasPickedSpecies) return;
@@ -6876,8 +6984,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const preparedBatch=useMemo(()=>preparation?calcBatch(recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice,300,preparation):null,[preparation,recipe,numBags,kgBag,hObj,spawnCost,prodIngs,an?.dynSpawn,tr,an?.eb,sKey,vegPrice]);
   const bd=showBatch?preparedBatch:null;
   const validatePreparation=()=>{
+    const fields=[['prod-bags',prodBags,{required:true,min:1,integer:true}],['prod-kg',prodKg,{required:true,min:0.1}],['prod-h',prodH,{required:true,min:55,max:75}],...Object.entries(prodMoist).map(([id,v])=>['ingredient-moisture-'+id,v,{min:0,max:92}])];
+    const first=fields.find(([,value,rules])=>SetasBitacora.captureError(value,rules));
+    if(first){const el=document.getElementById(first[0]);el?.focus();el?.dispatchEvent(new FocusEvent('focusout',{bubbles:true}));return false;}
     if(preparation)return true;
-    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult.error});return false;
+    setNoticeDlg({title:'Preparación incompleta',msg:preparationResult?.error});return false;
   };
   const prodRows=useMemo(()=>preparation?preparation.items.map(item=>({
     g:prodIngs.find(g=>g.id===item.ingredientId),r:recipe.find(r=>r.id===item.ingredientId),
@@ -7233,16 +7344,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       refrescarCodigoTrasEjecutar.current=true;
       setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
       setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-      if (window.SetasBitacoraDB) {
-        (async () => {
-          try {
-            await window.SetasBitacoraDB.guardarLote(lote);
-            await window.SetasBitacoraDB.guardarBolsas(bolsas);
-          } catch (e) {
-            console.warn('Error respaldando lote en Firestore:', e);
-          }
-        })();
-      }
+      encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
+      encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
 
       setLoteBatchConfirm(null);
       setLoteSyncErr('');
@@ -7534,16 +7637,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
         return upd;
       });
 
-      if (window.SetasBitacoraDB) {
-        (async () => {
-          try {
-            await window.SetasBitacoraDB.guardarLote(lote);
-            await window.SetasBitacoraDB.guardarBolsas(bolsas);
-          } catch (e) {
-            console.warn('Error respaldando lote en Firestore:', e);
-          }
-        })();
-      }
+      encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
+      encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
       window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter(b => b.loteId === lote.id)).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
 
       // 3. Cerrar modal y proceder
@@ -7592,42 +7687,46 @@ body{margin:0;padding:20px 24px;background:#fff;}
   });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
+  // Encola una operación de bitácora en vez de dispararla y olvidarla: el
+  // guardado local y la confirmación de la interfaz ya ocurrieron antes de
+  // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
+  // sincronización con Firestore se reintente cuando haya red, en vez de
+  // perderse en silencio si falla o si la sala no tiene señal.
+  const encolarSync=({type,key,args})=>{
+    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    if(!syncQueueApi){console.warn('SetasSyncQueue no disponible — el cambio no quedó en cola de sincronización.');return;}
+    setSyncQueue(prev=>{
+      let next;
+      try{
+        const op=syncQueueApi.createOperation({type,key,args});
+        next=syncQueueApi.enqueue(prev,op);
+      }catch(err){
+        // La cola llena (o una operación inválida) nunca se descarta en
+        // silencio: el operario tiene que enterarse de que este cambio no
+        // quedó protegido.
+        setNoticeDlg({title:'No se pudo encolar el cambio',msg:'El cambio no se pudo poner en la cola de sincronización ('+(err.message||'error desconocido')+'). Revisa los cambios pendientes antes de seguir trabajando.'});
+        return prev;
+      }
+      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
+      return next;
+    });
+  };
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
     const nb=Number(form.numBolsas);const ts=Date.now();
     const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:null,col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
     try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_lotes',[lote,...bitLotes]],['sdp_bit_bolsas',[...bitBolsas,...bolsas]]]);}catch(e){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return null;}
     setBitLotes([lote,...bitLotes]);setBitBolsas([...bitBolsas,...bolsas]);
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        // allSettled, no await secuencial: un fallo en guardarLote no debe
-        // impedir el intento de guardarBolsas — son documentos distintos,
-        // y encadenarlos con await hacía que un solo error dejara las
-        // bolsas del lote sin ningún intento de respaldo.
-        const results=await Promise.allSettled([
-          window.SetasBitacoraDB.guardarLote(lote),
-          window.SetasBitacoraDB.guardarBolsas(bolsas),
-        ]);
-        const failed=results.find(r=>r.status==='rejected');
-        if(failed){
-          const err=failed.reason;
-          setBitSyncErr('No se sincronizó con el servidor: '+(err?.message||err?.code||'error desconocido'));
-        }else{
-          setBitSyncErr('');
-        }
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    // Se encolan por separado (no en un solo allSettled): son documentos
+    // distintos y cada uno debe reintentarse de forma independiente si falla.
+    encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
+    encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
     window.SetasPublicTraceDB?.publicarLote(lote, [], bolsas).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
     setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.actualizarLote(loteId,fields);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
     if(loteActual?.codigo){
       const cos=bitCosechas.filter(c=>c.loteId===loteId);
@@ -7646,23 +7745,43 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
     }
     setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.actualizarBolsa(bolsaId,fields);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'actualizarBolsa',key:'bolsa:'+bolsaId,args:[bolsaId,fields]});
+  };
+  // Fusiona tareas nuevas con las existentes vía SetasTaskEngine.mergeTasks (la
+  // idempotencia la da el motor por id determinista: no se reimplementa aquí)
+  // y persiste con el mismo patrón try/catch + bitQuotaWarn que bitLotes/bitBolsas.
+  const mergeIntoTasks=(nuevasTareas=[])=>{
+    if(!nuevasTareas.length) return;
+    const taskEngineApi=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    if(!taskEngineApi) return;
+    setBitTasks(prev=>{
+      const upd=taskEngineApi.mergeTasks(prev,nuevasTareas);
+      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      return upd;
+    });
+  };
+  // Cierra tareas (consequences.completes) vía SetasTaskEngine.completeTask,
+  // vinculándolas al evento que las cumplió, y persiste igual que mergeIntoTasks.
+  const completeBitTasks=(taskIds=[],eventId)=>{
+    if(!taskIds.length||!eventId) return;
+    const taskEngineApi=typeof window!=='undefined'?window.SetasTaskEngine:null;
+    if(!taskEngineApi) return;
+    setBitTasks(prev=>{
+      let upd=prev;
+      taskIds.forEach(taskId=>{
+        if(upd.some(t=>t.id===taskId&&t.status==='pending')){
+          upd=taskEngineApi.completeTask(upd,taskId,eventId);
+        }
+      });
+      try{localStorage.setItem('sdp_bit_tasks',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      return upd;
+    });
   };
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
     try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
     setBitCosechas([...bitCosechas,e]);
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.guardarCosecha(e);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'guardarCosecha',key:'cosecha:'+e.id,args:[e]});
     const loteCosecha=bitLotes.find(l=>l.id===e.loteId);
     if(loteCosecha?.codigo){
       window.SetasPublicTraceDB?.publicarCosecha(loteCosecha.codigo,e).catch(err=>console.warn('No se publicó la cosecha en la ficha pública:',err));
@@ -7671,12 +7790,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const deleteBitCosecha=(id)=>{
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-    if(window.SetasBitacoraDB){
-      (async()=>{
-        try{await window.SetasBitacoraDB.eliminarCosecha(id);setBitSyncErr('');}
-        catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-      })();
-    }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+    encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
   };
   const deleteBitLote=(loteId)=>{
     const doDelete=()=>{
@@ -7686,12 +7800,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
       if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
-      if(window.SetasBitacoraDB){
-        (async()=>{
-          try{await window.SetasBitacoraDB.eliminarLoteCascade(loteId,bolsaIds,cosechaIds);setBitSyncErr('');}
-          catch(err){setBitSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));}
-        })();
-      }else{console.warn('SetasBitacoraDB no disponible — Bitácora no se respaldó en Firestore.');}
+      encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };
@@ -8632,6 +8741,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }catch(e){ return null; }
   };
 
+  // Cerrar una tarea desde la casilla del cockpit. El contrato del motor es que
+  // una tarea sólo se cierra con el evento que la cumple, nunca "a mano": por eso
+  // la casilla registra antes un evento manual explícito en el lote y cierra la
+  // tarea con el id de ESE evento. Así la bitácora conserva quién cerró qué.
+  const closeTaskFromCheckbox=(row)=>{
+    const lote=bitLotes.find(l=>l.id===row.objectId);
+    if(!lote||!batchSheetApi||!taskEngine) return;
+    try{
+      const log=batchSheetApi.appendBatchEvent(lote.lifecycleEvents||[],{
+        batchId:lote.id,
+        action:'note',
+        operatorId:lote.operador||'operador-local',
+        payload:{nota:`Tarea cerrada manualmente desde Hoy: ${row.what}`,taskId:row.taskId},
+      });
+      const evento=log[log.length-1];
+      updateBitLote(lote.id,{lifecycleEvents:log});
+      completeBitTasks([row.taskId],evento.id);
+    }catch(err){
+      setNoticeDlg({title:'No se pudo cerrar la tarea',msg:err.message});
+    }
+  };
+
   // Complete observations are saved locally first, then both server writes
   // are acknowledged. Harvest/contamination open their structured capture;
   // cancelling those forms must never create a placeholder event.
@@ -8822,22 +8953,57 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
+  // Registra la acción elegida en la ficha vía la cascada real: declara TODAS
+  // las consecuencias con actionConsequences (evento, cambios de bolsa, parche
+  // del lote, transición y follow-ups) y las aplica de una sola vez con
+  // applyConsequences, en vez de encadenar llamadas sueltas a mano.
   const commitSheetAction=(sheet,lote,action,payload={})=>{
     if(!batchSheetApi||!sheet) return false;
     try{
-      const result=batchSheetApi.applyAction({
-        sheet,action,operatorId:lote.operador||'operador-local',
-        payload,log:lote.lifecycleEvents||[],role:operatorRole,
+      const bolsasDelLote=bitBolsas.filter(b=>b.loteId===lote.id);
+      const consequences=batchSheetApi.actionConsequences(sheet,action,payload,{
+        role:operatorRole,operatorId:lote.operador||'operador-local',
+        at:new Date().toISOString(),bolsas:bolsasDelLote,
       });
+      const applied=batchSheetApi.applyConsequences(sheet,consequences,{log:lote.lifecycleEvents||[]});
+
       // El estado canónico lo escribe acceptFieldEvent, no el cliente: las reglas
       // protegen lifecycleState y revision precisamente para que dos operarios
       // sin señal no puedan avanzar el mismo lote sin que ninguna escritura vea
-      // a la otra. Aquí sólo se persiste la bitácora local y se encola la
-      // transición; el estado cambia cuando el servidor la acepta.
-      updateBitLote(lote.id,{lifecycleEvents:result.log});
-      if(result.transitioned){
-        enqueueFieldTransition(lote,sheet.state,result.state);
+      // a la otra. Aquí sólo se persiste la bitácora local (log + batchPatch de
+      // bolsas) y, si hubo transición, se encola vía el Field Event Queue como
+      // antes — el estado cambia cuando el servidor la acepta.
+      updateBitLote(lote.id,{lifecycleEvents:applied.log,...(applied.batchPatch||{})});
+
+      // Aplicar bagUpdates: aquí es donde una bolsa pasa a 'aislada', etc.
+      (applied.bagUpdates||[]).forEach(u=>updateBitBolsa(u.bagId,u.fields));
+
+      if(consequences.transition){
+        enqueueFieldTransition(lote,sheet.state,consequences.transition);
       }
+
+      // Si hubo transición, generar las tareas SOP del nuevo estado.
+      if(consequences.transition&&taskEngine){
+        const sopTasks=taskEngine.tasksFromTransition({
+          batchId:lote.id,toState:consequences.transition,at:new Date().toISOString(),
+        });
+        mergeIntoTasks(sopTasks);
+      }
+
+      // Convertir followUps en tareas reales.
+      if((applied.followUps||[]).length&&taskEngine){
+        const followUpTasks=taskEngine.tasksFromFollowUps(applied.followUps,{
+          objectId:lote.id,objectType:'batch',at:new Date().toISOString(),
+        });
+        mergeIntoTasks(followUpTasks);
+      }
+
+      // Cerrar las tareas que la acción cumple.
+      if((consequences.completes||[]).length){
+        const eventId=(applied.log[applied.log.length-1]||{}).id||consequences.event.id;
+        completeBitTasks(consequences.completes,eventId);
+      }
+
       return true;
     }catch(err){
       setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
@@ -9011,42 +9177,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
   );
 
-  const TodayV2=()=>{
-    const now=Date.now();
-    const source=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado)).map((lote,index)=>{
-      const stats=calcLoteStats(lote.id);
-      const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
-      const contaminated=(stats&&stats.contPct>0)||isQuarantine;
-      const inoculated=Date.parse(lote.fechaInoculacion||'');
-      const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((now-inoculated)/86400000)):0;
-      return {id:lote.id,lote,severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,blocked:(contaminated&&!!stats&&stats.contPct<20)||isQuarantine,
-        dueAt:!contaminated&&age>=14?new Date(now-(index+1)*3600000).toISOString():new Date(now+(index+1)*3600000).toISOString(),
-        title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
-        why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[loteLifecycleState(lote)]||lote.estado} · día ${age}`};
-    });
-    const queue=workflow?workflow.buildTodayQueue(source,now):source;
-    const groups=[['critical','Crítico'],['overdue','Vencido'],['now','Ahora'],['blocked','Bloqueos'],['later','Después'],['context','Contexto']];
-    return <section className="os-today-v2" data-testid="ux-v2-today">
-      <div className="os-page-kicker">Operación · turno actual</div><h1 className="os-page-title">Hoy</h1>
-      <button className="os-scan-target" type="button" onClick={()=>{
-        const firstActive=bitLotes.find(l=>!['completado','descartado'].includes(l.estado));
-        setQrSelectedLoteId(bitActiveLoteId||firstActive?.id||bitLotes[0]?.id||'');
-        setShowQrSheet(true);
-      }}>Escanear lote o registrar evento</button>
-
-      {queue.length===0&&<div className="os-v2-empty">No hay excepciones ni trabajo pendiente. Los lotes nuevos aparecerán aquí según su estado.</div>}
-      {groups.map(([bucket,label])=>{const rows=queue.filter(item=>item.bucket===bucket);if(!rows.length)return null;return <section className="os-today-group" key={bucket}>
-        <div className="os-section-head"><h2>{label}</h2><span>{rows.length}</span></div>
-        {rows.map(item=><div key={item.id} className={'os-task-row '+(bucket==='critical'?'os-alert-row--critical':'')}>
-          <span className="os-task-marker" aria-hidden="true"></span><div><div className="os-task-row__title">{item.title}</div><div className="os-task-row__meta">{item.lote.codigo} · {item.why}</div></div>
-          <div style={{display:'flex',gap:6,alignItems:'center'}}>
-            <button className="os-action" type="button" onClick={()=>openBatchDetail(item.id)}>Abrir lote</button>
-            <button className="os-action" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}><AppIcon name="print" size={13} /></button>
-          </div>
-        </div>)}
-      </section>;})}
-    </section>;
-  };
+  // TodayV2 (la pantalla "Hoy" con buckets crítico/vencido/ahora) nunca se
+  // montaba en ningún return: era exactamente el mismo cálculo de vencimientos
+  // fabricados que el cockpit real ya no usa (ver operationalQueue arriba,
+  // ahora derivado de taskEngine.buildTodayFromTasks). Un arnés que monta la
+  // app de verdad lo confirmó: se elimina en vez de dejarlo como código muerto.
   const BatchDetailV2=({lote})=>{
     const stats=calcLoteStats(lote.id);
     const sheet=buildSheetFor(lote);
@@ -9271,7 +9406,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <AppIcon name="print" size={14} style={{marginRight:6}} /> Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
-          <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(bitSyncErr?'os-sync-state--error':'os-sync-state--synced')}>{bitSyncErr?'Sin sincronizar':'Sincronizado'}</span>
+          {(()=>{
+            const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+            const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+            const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+            return <div data-testid="sync-indicator" style={{display:'flex',alignItems:'center',gap:8}}>
+              <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(st.stuck>0?'os-sync-state--error':(st.pending>0?'os-sync-state--pending':'os-sync-state--synced'))}>{label}</span>
+              {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
+                const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                setSyncQueue(next);
+                try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+              }}>Reintentar</button>}
+            </div>;
+          })()}
         </aside>
       </div>
     </article>;
@@ -9284,7 +9431,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // columna, progressive disclosure, sin grids ni tablas horizontales.
   // Responde en orden: qué lote es · en qué estado está · hay algo mal ·
   // qué debo hacer ahora · qué condiciones tiene · qué ha pasado.
-  const BatchDetailMobile = ({ lote }) => {
+  const BatchDetailMobile = ({ lote, isModal = false }) => {
     const sheet = buildSheetFor(lote);
     const state = sheet ? sheet.state : loteLifecycleState(lote);
     const stateLabel = sheet ? sheet.stateLabel : (lifecycleLabel[state] || state);
@@ -9338,9 +9485,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const events = sheet
       ? sheet.timeline.map((e, i) => ({ id: e.eventId || e.bagId || e.cosechaId || `${e.type}-${i}`, type: e.title, time: e.at, desc: e.meta, kind: e.provenance }))
       : [];
+    const batchBolsas = (bitBolsas || []).filter(b => b.loteId === lote.id);
 
     return (
       <article className="os-batch-detail-mobile" data-testid="ux-v2-batch-detail-mobile" data-batch-state={state}>
+        {!isModal && (
+          <div style={{ marginBottom: 12 }}>
+            <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" onClick={() => goBitTab('bit_dash', true)} style={{ gap: 6 }}>
+              ← Volver a lotes
+            </button>
+          </div>
+        )}
         <div className="sdp-lote" data-testid="active-lote" data-lote-id={lote.id}>
           <div className="sdp-lote__body">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -9348,7 +9503,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)' }}>Lote</div>
                 <div className="sdp-lote__id" style={{ fontSize: 18 }}>{sheet ? sheet.code : lote.codigo}</div>
               </div>
-              <span role="status" aria-live="polite" className={`sdp-sync sdp-sync--${bitSyncErr ? 'error' : 'synced'}`}>{bitSyncErr ? 'Sin sincronizar' : 'Sincronizado'}</span>
+              {(()=>{
+                const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" className={`sdp-sync sdp-sync--${st.stuck>0?'error':(st.pending>0?'pending':'synced')}`}>
+                  {label}
+                  {st.stuck>0&&<button type="button" onClick={()=>{
+                    const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                    setSyncQueue(next);
+                    try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                  }} style={{marginLeft:6}}>Reintentar</button>}
+                </span>;
+              })()}
             </div>
             <div style={{ fontFamily: 'var(--font-editorial)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', marginTop: 4 }}>
               {(sheet ? sheet.species : lote.especie) || 'Especie sin registrar'}
@@ -9452,6 +9619,60 @@ body{margin:0;padding:20px 24px;background:#fff;}
           )}
         </section>
 
+        {batchBolsas.length > 0 && (
+          <section style={{ marginTop: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 8px' }}>
+              <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: 0 }}>
+                Bolsas ({batchBolsas.length})
+              </h2>
+              <button
+                type="button"
+                className="inv-table-link"
+                onClick={() => goBitTab('bit_bolsas', true)}
+                style={{ fontSize: 11 }}
+              >
+                Ver en tabla →
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {batchBolsas.map(bolsa => {
+                const cosBolsa = bitCosechas.filter(c => c.bolsaId === bolsa.id);
+                const totalBolsa = cosBolsa.reduce((s, c) => s + (c.pesoFresco || 0), 0);
+                return (
+                  <div key={bolsa.id} className="sdp-task" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px' }}>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13 }}>{bolsa.codigo || bolsa.id}</div>
+                      <div style={{ font: 'var(--t-small)', color: 'var(--text-secondary)' }}>
+                        {bolsa.estado || 'sana'} · {totalBolsa > 0 ? (totalBolsa / 1000).toFixed(3) + ' kg' : '0 kg'}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="sdp-btn sdp-btn--secondary sdp-btn--field"
+                      aria-label={`Registrar cosecha para la bolsa ${bolsa.codigo || bolsa.id}`}
+                      onClick={() => {
+                        openHarvestCapture({
+                          bolsaId: bolsa.id,
+                          loteId: lote.id,
+                          codigo: bolsa.codigo || bolsa.id,
+                          flush: cosBolsa.length + 1,
+                          fecha: new Date().toISOString().split('T')[0],
+                          pesoFresco: '',
+                          calidad: '',
+                          observaciones: ''
+                        });
+                        setShowBitCosecha(true);
+                      }}
+                    >
+                      + Cosecha
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section style={{ marginTop: 14 }}>
           <h2 style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-metadata)', margin: '0 0 8px' }}>Historial</h2>
           {events.length === 0 ? (
@@ -9473,15 +9694,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         <section style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-hairline)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {secondaryActions.map(a => (
-            <button key={a.action} type="button" className="sdp-btn sdp-btn--secondary" disabled={Boolean(a.blockedBy)}
+            <button key={a.action} type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" disabled={Boolean(a.blockedBy)}
               title={a.blockedBy ? `Bloqueado por: ${a.blockedBy}` : undefined}
               onClick={() => runBatchAction(a.action, lote, sheet)}>{a.label}</button>
           ))}
-          <button type="button" className="sdp-btn sdp-btn--secondary" data-testid="btn-field-action-sheet-mobile"
+          <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" data-testid="btn-field-action-sheet-mobile"
             onClick={() => { setQrSelectedLoteId(lote.id); setShowFieldActionModal(true); }}>
             Hoja de acción (QR)
           </button>
-          <button type="button" className="sdp-btn sdp-btn--secondary" onClick={() => setPublicTraceModalLoteId(lote.id)}>
+          <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" onClick={() => setPublicTraceModalLoteId(lote.id)}>
             Ver ficha pública QR
           </button>
         </section>
@@ -9500,7 +9721,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <button type="button" className="modal-icon-close" aria-label="Cerrar ficha canónica" onClick={onClose}><AppIcon name="close" size={12} /></button>
         </div>
-        {isMobileViewport ? <BatchDetailMobile lote={lote} /> : <BatchDetailV2 lote={lote} />}
+        {isMobileViewport ? <BatchDetailMobile lote={lote} isModal={true} /> : <BatchDetailV2 lote={lote} />}
       </AccessibleModal>
     );
   };
@@ -10765,7 +10986,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </button>
                 {publicSyncStatus?.running&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginLeft:6,alignSelf:'center',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="clock" size={12} /> Sincronizando...</span>}
                 {bitActiveLoteId&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginLeft:'auto',alignSelf:'center',paddingRight:4}}>{bitLotes.find(lt=>lt.id===bitActiveLoteId)?.codigo}</span>}
-                {bitSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',marginLeft:8,alignSelf:'center',display:'inline-flex',alignItems:'center',gap:4}} title={bitSyncErr}><AppIcon name="alert" size={12} color="#C53030" /> sin sincronizar</span>}
+                {(()=>{
+                  const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                  const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                  const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                  return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'#C53030':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
+                    {label}
+                    {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
+                      const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                      setSyncQueue(next);
+                      try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                    }}>Reintentar</button>}
+                  </span>;
+                })()}
               </div>
             </div>
 
@@ -10788,7 +11021,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const EC={incubacion:'var(--ochre-500)',fructificacion:'var(--moss-500)',completado:'var(--coral-700)',descartado:'var(--ink-400)'};
                       return(
                         <div key={lote.id} data-lote-id={lote.id} className="panel sdp-lote" style={{padding:0,overflow:'hidden',cursor:'pointer',margin:0,transition:'border-color .18s,transform .18s'}}
-                          onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}}
+                          onClick={()=>{setBitActiveLoteId(lote.id);goBitTab(isMobileViewport ? 'bit_ficha' : 'bit_bolsas',true);}}
                           onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--ink-900)';e.currentTarget.style.transform='translateY(-2px)';}}
                           onMouseLeave={e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.transform='';}}
                         >
@@ -10831,7 +11064,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="inv-section">
                     <table className="inv-table">
                       <thead><tr><th>Código</th><th>Especie</th><th>Fecha inoc.</th><th>Bolsas</th><th>BE</th><th>Contam.</th><th>Cosecha</th><th>Score</th><th>Estado</th><th>Veredicto</th><th style={{textAlign:'right'}}>Acciones</th></tr></thead>
-                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab('bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas"><AppIcon name="print" size={12} /></button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}><AppIcon name="close" size={12} /></button></div></td></tr>);})}</tbody>
+                      <tbody>{bitLotes.map(lote=>{const stats=calcLoteStats(lote.id);const score=stats?calcLoteScore(stats):null;return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",whiteSpace:'nowrap'}}><button type="button" className="inv-table-link" onClick={()=>{setBitActiveLoteId(lote.id);goBitTab(isMobileViewport ? 'bit_ficha' : 'bit_bolsas',true);}} aria-label={`Abrir lote ${lote.codigo}`}>{lote.codigo}</button></td><td style={{fontFamily:'var(--font-body)',fontWeight:700}}>{lote.especie}</td><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>{lote.fechaInoculacion}</td><td>{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:lote.numBolsas}</td><td style={{color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)',fontWeight:700}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{color:stats?.contPct>20?'var(--coral-700)':'inherit'}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td>{stats?.totalFresco?stats.totalFresco.toFixed(2)+' kg':'0 kg'}</td><td>{score!==null?score+'/100':'—'}</td><td><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--paper-300)'}}>{lote.estado}</span></td><td>{lote.veredicto?<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 6px',borderRadius:8,background:'var(--moss-200)',color:'var(--moss-700)'}}>{lote.veredicto}</span>:'—'}</td><td><div style={{display:'flex',gap:4,justifyContent:'flex-end'}}><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>openThermalForLote(lote.id)} title="Imprimir etiquetas térmicas"><AppIcon name="print" size={12} /></button><button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>requireAdmin(deleteBitLote)(lote.id)} aria-label={"Eliminar lote "+lote.codigo}><AppIcon name="close" size={12} /></button></div></td></tr>);})}</tbody>
                     </table>
                   </div>
                 )}
@@ -10842,7 +11075,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const lote=bitLotes.find(lt=>lt.id===bitActiveLoteId);if(!lote) return null;
               const bolsas=bitBolsas.filter(b=>b.loteId===bitActiveLoteId);
               const stats=calcLoteStats(bitActiveLoteId);
-              const EB={'':{c:'var(--ink-500)',l:'Sin evaluar'},sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
+              // 'aislada' viene de BAG_STATE_LABELS (batch-sheet.js): separa "bajo
+              // observación" de la contaminación confirmada, con un color propio
+              // (nunca el rojo de 'contaminada').
+              const bagStateLabels=(batchSheetApi&&batchSheetApi.BAG_STATE_LABELS)||{};
+              const EB={'':{c:'var(--ink-500)',l:'Sin evaluar'},sana:{c:'var(--moss-700)',l:'Sana'},contaminada:{c:'var(--coral-700)',l:'Contaminada'},dudosa:{c:'var(--ochre-500)',l:'Dudosa'},aislada:{c:'var(--slate-500)',l:bagStateLabels.aislada||'Aislada'},descartada:{c:'var(--ink-400)',l:'Descartada'}};
               return(
                 <div className="panel" data-testid="active-lote" data-lote-id={lote.id}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12,flexWrap:'wrap',gap:8}}>
@@ -11161,23 +11398,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
           const activeLotes = bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const operationalNow = Date.now();
-          const operationalSource = activeLotes.map((lote,index)=>{
-            const stats=calcLoteStats(lote.id);
-            const isQuarantine=lote.estado==='cuarentena'||lote.lifecycleState==='quarantine';
-            const contaminated=(stats&&stats.contPct>0)||isQuarantine;
-            const inoculated=Date.parse(lote.fechaInoculacion||'');
-            const age=Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):0;
-            return {
-              id:lote.id,
-              lote,
-              severity:(stats&&stats.contPct>=20)||isQuarantine?'critical':undefined,
-              blocked:(contaminated&&!!stats&&stats.contPct<20)||isQuarantine,
-              dueAt:!contaminated&&age>=14?new Date(operationalNow-(index+1)*3600000).toISOString():new Date(operationalNow+(index+1)*3600000).toISOString(),
-              title:isQuarantine?'Lote en Cuarentena · Revisión Fitosanitaria':contaminated?'Revisar contaminación':lote.estado==='fructificacion'?'Registrar cosecha':'Inspeccionar colonización',
-              why:isQuarantine?`Alerta Bioseguridad · ${lote.codigo} en Cuarentena · ${lote.especie}`:`${lote.especie||'Lote'} · ${lifecycleLabel[loteLifecycleState(lote)]||lote.estado} · día ${age}`
-            };
-          });
-          const operationalQueue=workflow?workflow.buildTodayQueue(operationalSource,operationalNow):operationalSource;
+          // La cola sale del motor de tareas: cada fila es una Tarea real con su
+          // propio vencimiento. Antes se derivaba al vuelo de los lotes con
+          // fechas fabricadas a partir del índice del array, así que los
+          // contadores de "por resolver" y "pendientes" que veía el operario
+          // salían de plazos inventados.
+          const operationalQueue = taskEngine
+            ? taskEngine.buildTodayFromTasks(bitTasks,buildTaskIndex(activeLotes),operationalNow)
+            : [];
           const criticalTaskCount=operationalQueue.filter(item=>item.bucket==='critical').length;
           const overdueTaskCount=operationalQueue.filter(item=>item.bucket==='overdue').length;
           const blockedTaskCount=operationalQueue.filter(item=>item.bucket==='blocked').length;
@@ -11188,6 +11416,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
             :(overdueTaskCount>0||incidentCount>0)
               ?{label:`${overdueTaskCount+incidentCount} por resolver`,color:'color-mix(in oklab, var(--ochre-700) 70%, black)',bg:'color-mix(in oklab, var(--ochre-500) 12%, var(--paper-0))'}
               :{label:'Operación estable',color:'color-mix(in oklab, var(--moss-700) 75%, black)',bg:'color-mix(in oklab, var(--moss-700) 10%, var(--paper-0))'};
+          // Las bandas del rail leen directamente las filas del motor: taskId
+          // como key, where/what/why ya resueltos contra el índice de lotes, y
+          // objectId/objectType para poder abrir el lote o imprimir su etiqueta.
           const criticalLots=operationalQueue.filter(item=>item.bucket==='critical'||item.bucket==='blocked');
           const nowLots=operationalQueue.filter(item=>item.bucket==='overdue'||item.bucket==='now');
           const laterLots=operationalQueue.filter(item=>item.bucket==='later'||item.bucket==='context');
@@ -11196,9 +11427,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
           let camaras=[];
           try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
-          // Tareas de hoy y Actividad reciente
+          // Tareas de hoy y Actividad reciente.
+          // La lista visible se mapea desde la cola del motor a la forma que este
+          // markup ya espera, sin rediseñarlo. Si el motor no está cargado o aún
+          // no hay tareas, se conserva la fuente del shell para no dejar la
+          // pantalla vacía por un fallo de carga.
           let tasksHoy=[], recentActivity=[];
-          try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; }
+          const motorRows=operationalQueue.map(row=>({
+            key:row.taskId,
+            title:row.what,
+            id:row.where,
+            why:row.why,
+            action:row.action,
+            prio:row.priority==='critical'||row.priority==='high'?'alta':(row.priority==='normal'?'media':'baja'),
+            done:false,
+            objectId:row.objectId,
+            objectType:row.objectType,
+            fromEngine:true,
+          }));
+          if(motorRows.length){ tasksHoy=motorRows; }
+          else { try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; } }
           try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
           const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
@@ -11342,21 +11590,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {criticalLots.length > 0 ? (
                     <div style={{display:'flex',flexDirection:'column',gap:8}}>
                       {criticalLots.map(item => (
-                        <div key={item.id} className="sdp-task sdp-task--critical" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                        <div key={item.taskId} className="sdp-task sdp-task--critical" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
                           <div className="sdp-task__body">
                             <div style={{display:'flex',alignItems:'center',gap:8}}>
                               <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-error)',border:'1px solid var(--status-error)',padding:'1px 5px'}}>
                                 {item.bucket === 'critical' ? 'Crítico' : 'Bloqueo'}
                               </span>
-                              <span className="sdp-task__title">{item.title}</span>
+                              <span className="sdp-task__title">{item.what}</span>
                             </div>
-                            <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
                           </div>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>openBatchDetail(item.id)}>
+                            <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
                               Abrir lote →
                             </button>
-                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
                               <AppIcon name="print" size={15} />
                             </button>
                           </div>
@@ -11437,21 +11685,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {nowLots.length > 0 && (
                     <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
                       {nowLots.map(item => (
-                        <div key={item.id} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                        <div key={item.taskId} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
                           <div className="sdp-task__body">
                             <div style={{display:'flex',alignItems:'center',gap:8}}>
                               <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
                                 {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
                               </span>
-                              <span className="sdp-task__title">{item.title}</span>
+                              <span className="sdp-task__title">{item.what}</span>
                             </div>
-                            <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
                           </div>
                           <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>openBatchDetail(item.id)}>
+                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
                               Ejecutar transición →
                             </button>
-                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>openThermalForLote(item.id)}>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
                               <AppIcon name="print" size={15} />
                             </button>
                           </div>
@@ -11463,7 +11711,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* Tareas del día (checklist de turno) */}
                   <div>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:8}}>
-                      Checklist del Turno · {tasksHoy.filter(t=>!t.done).length} pendientes
+                      {/* El contador tiene que contar LO QUE SE VE, no una prop
+                          suelta que puede no coincidir con la lista del motor. */}
+                      Checklist del Turno · <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
                     </div>
                     {tasksHoy.length === 0 ? (
                       <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
@@ -11473,19 +11723,50 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{display:'flex',flexDirection:'column',gap:6}}>
                         {tasksHoy.map(t => (
                           <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
-                            <button onClick={()=>props.onTaskToggle&&props.onTaskToggle(t.key)} aria-pressed={t.done} aria-label="Marcar tarea"
-                              style={{cursor:'pointer',flexShrink:0,minWidth:44,minHeight:44,width:44,height:44,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                            {/* 48×48: es una acción de campo y se toca con guantes
+                                (estándar del proyecto, MOBILE_A11Y_REVIEW). */}
+                            <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label={`Marcar tarea: ${t.title}`}
+                              style={{cursor:'pointer',flexShrink:0,width:48,height:48,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
                               <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)'}}>{t.done ? <AppIcon name="check" size={12} color="var(--paper-0)" /> : ''}</span>
                             </button>
-                            <button onClick={()=>props.onTaskGo&&props.onTaskGo(t.key)} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
+                            <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
                               <span className="sdp-task__title" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
                               <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
                             </button>
                             <span className="sdp-task__status" style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
                       </div>
                     )}
+                  </div>
+
+                  {/* El estado de sincronización va en la pantalla de inicio, no
+                      sólo en el detalle del lote: el operario tiene que poder ver
+                      desde donde trabaja si algo quedó sin subir, sin navegar a
+                      buscarlo. Es la mitad visible de la cola. Junto a él, el
+                      cierre de jornada, para que lo ocurrido no se reconstruya
+                      después desde memoria o WhatsApp. */}
+                  <div style={{marginTop:12,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                    {(()=>{
+                      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                      const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                      const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                      return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true"
+                        style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
+                        <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
+                        {label}
+                        {st.stuck>0&&<button type="button" onClick={()=>{
+                          const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                          setSyncQueue(next);
+                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                        }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
+                      </span>;
+                    })()}
+                    <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
+                      style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                      Cerrar jornada
+                    </button>
                   </div>
                 </section>
 
@@ -11510,15 +11791,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ) : (
                     <div style={{display:'flex',flexDirection:'column',gap:8}}>
                       {laterLots.slice(0, 5).map(item => (
-                        <div key={item.id} className="sdp-task sdp-task--later" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                        <div key={item.taskId} className="sdp-task sdp-task--later" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
                           <div className="sdp-task__body">
                             <div style={{display:'flex',alignItems:'center',gap:8}}>
                               <span className="sdp-task__due">DESPUÉS</span>
-                              <span className="sdp-task__title">{item.title}</span>
+                              <span className="sdp-task__title">{item.what}</span>
                             </div>
-                            <div className="sdp-task__meta">{item.lote?.codigo} · {item.why}</div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
                           </div>
-                          <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>openBatchDetail(item.id)}>
+                          <button className="sdp-btn sdp-btn--field" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
                             Ver lote →
                           </button>
                         </div>
@@ -11599,7 +11880,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       key={lt.id}
                                       data-lote-id={lt.id}
                                       aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
-                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_bolsas',true);}}
+                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab(isMobileViewport ? 'bit_ficha' : 'bit_bolsas',true);}}
                                       className={`sdp-lote home-lote-card ${critical?'sdp-lote--error':contaminated?'sdp-lote--warn':'sdp-lote--ok'}`}
                                       style={{
                                         display:'flex',flexDirection:'column',gap:4,
@@ -14688,7 +14969,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,240px),1fr))',gap:12}}>
                 {recipe.map(r=>{const g=effectiveINGS.find(g=>g.id===r.id);return <label key={r.id} htmlFor={`ingredient-moisture-${r.id}`}>
                   {g?.name||r.id} · catálogo: {g?.moisture??'sin dato'}%
-                  <CaptureInput id={`ingredient-moisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
+                  <CaptureInput id={`ingredient-moisture-${r.id}`} name={`ingredientMoisture-${r.id}`} rules={{min:0,max:92}} placeholder={g?.moisture!=null?String(g.moisture):''} aria-label={`Humedad real de ${g?.name||r.id}, porcentaje`} type="number" min="0" max="92" step="0.1" value={prodMoist[r.id]??''} onChange={e=>setProdMoist(prev=>({...prev,[r.id]:e.target.value}))} style={{display:'block',width:'100%'}}/>
                 </label>;})}
               </div>
               {!prepValid&&<p role="alert">{preparationResult.error}</p>}
@@ -15144,6 +15425,52 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
           </AccessibleModal>
         )}
+        {/* MODAL DE CIERRE DE JORNADA — vive en el árbol principal, junto a los
+            demás modales, para que se renderice desde cualquier pantalla. */}
+        {showDayClose&&(()=>{
+          const dayCloseApi=typeof window!=='undefined'?window.SetasDayClose:null;
+          if(!dayCloseApi) return null;
+          const now=Date.now();
+          const activeLotes=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+          const shiftStartMs=new Date(new Date(now).toDateString()).getTime();
+          const allEvents=bitLotes.flatMap(l=>l.lifecycleEvents||[]);
+          const sheets=activeLotes.map(l=>buildSheetFor(l)).filter(Boolean);
+          const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+          const syncStats=syncQueueApi?syncQueueApi.stats(syncQueue,now):{pending:0,stuck:0};
+          const pendingSyncCount=syncStats.pending+syncStats.stuck;
+          const report=dayCloseApi.buildDayCloseReport({
+            events:allEvents,tasks:bitTasks,sheets,pendingSyncCount,
+            shiftStartMs,nowMs:now,operatorId:null,
+          });
+          return <AccessibleModal onClose={()=>{setShowDayClose(false);setDayCloseNote(null);}} label="Cerrar jornada" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-2)'}}>Cierre de jornada</div>
+            <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',margin:'2px 0 12px'}}>Reporte del turno</h2>
+            <div data-testid="day-close-report" style={{display:'flex',flexDirection:'column',gap:4,fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>
+              <div>Eventos registrados: {report.eventsLogged}</div>
+              <div>Tareas completadas: {report.tasksCompleted}</div>
+              <div>Tareas pendientes: {report.tasksPending} ({report.tasksOverdue} vencidas)</div>
+              <div>Incidentes abiertos: {report.openIncidents.length}</div>
+              <div>Trabajo de mañana: {report.tomorrow.length} tipo(s)</div>
+              <div>Cambios sin sincronizar: {report.pendingSync}</div>
+            </div>
+            {report.openIncidents.length>0&&<ul style={{marginTop:10,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)'}}>
+              {report.openIncidents.map((inc,i)=><li key={i}>{inc.label} · {inc.detail}</li>)}
+            </ul>}
+            {!report.readyToClose&&<div role="alert" data-testid="day-close-blockers" style={{marginTop:10,color:'var(--coral-700)'}}>
+              <strong>No se puede cerrar todavía:</strong>
+              <ul>{report.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul>
+            </div>}
+            <button type="button" style={{marginTop:14,cursor:report.readyToClose?'pointer':'not-allowed',opacity:report.readyToClose?1:0.5,minHeight:44,padding:'0 18px',background:'var(--accent-olive)',color:'var(--paper-0)',border:'none',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}
+              disabled={!report.readyToClose} onClick={()=>{
+                try{
+                  const closed=dayCloseApi.closeDay(report,{operatorId:null,at:now});
+                  setDayCloseNote(dayCloseApi.buildHandoffNote(closed.report));
+                }catch(err){setNoticeDlg({title:'No se pudo cerrar el turno',msg:err.message});}
+              }}>Confirmar cierre</button>
+            {dayCloseNote&&<textarea readOnly value={dayCloseNote} data-testid="day-close-handoff-note"
+              onClick={e=>e.target.select()} style={{width:'100%',minHeight:220,marginTop:12,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}/>}
+          </AccessibleModal>;
+        })()}
         {/* HOJA DE ACCIÓN DE CAMPO (MODAL DE TRANSICIÓN OFFLINE QR) */}
         {showFieldActionModal && (()=>{
           const activeBatches = bitLotes.filter(l => !['completado', 'descartado'].includes(l.estado));
