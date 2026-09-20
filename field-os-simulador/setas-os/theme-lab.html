@@ -108,6 +108,29 @@ button,input,select{font:inherit}
 .gauge-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:var(--size-micro-screen);color:var(--text-secondary)}
 .agronomy-meta-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:var(--size-micro-screen);margin-top:var(--space-2)}
 .agronomy-meta-table td{padding:4px 6px;border-bottom:var(--rule-hairline)}
+
+.inspect-toggle{min-height:44px;border:var(--rule-hairline);background:var(--surface-panel);color:var(--text-primary);padding:0 var(--space-2);font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;cursor:pointer}
+.inspect-toggle[aria-pressed=true]{background:var(--action-primary);color:var(--text-inverse);border-color:var(--action-primary)}
+.canvas-tools{display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-half)}
+.inspector-empty{font-size:var(--size-small);color:var(--text-secondary);border-left:3px solid var(--status-warning-marker);padding-left:var(--space-1)}
+.inspector-head{display:grid;gap:4px;margin-bottom:var(--space-2)}
+.inspector-title{margin:0;font:var(--t-heading-03)}
+.inspector-path{font-family:var(--font-mono);font-size:var(--size-micro-screen);color:var(--text-metadata);word-break:break-all}
+.inspector-computed{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;font-family:var(--font-mono);font-size:var(--size-micro-screen);padding:var(--space-1);background:var(--surface-recessed);border:var(--rule-hairline)}
+.inspector-section{border-top:var(--rule-hairline);padding-top:var(--space-2);margin-top:var(--space-2)}
+.inspector-section h3{margin:0 0 var(--space-1);font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase}
+.inspector-control{display:grid;gap:6px;margin-bottom:var(--space-1)}
+.inspector-control label{font-family:var(--font-mono);font-size:var(--size-micro-screen);color:var(--text-secondary)}
+.inspector-control select,.inspector-control input[type=number],.inspector-control input[type=text]{width:100%;min-height:44px;border:var(--rule-hairline);background:var(--surface-page);color:var(--text-primary);padding:0 8px}
+.inspector-inline{display:grid;grid-template-columns:1fr auto;gap:var(--space-1);align-items:center}
+.inspector-swatch{width:44px;height:44px;border:var(--rule-hairline);padding:2px;background:var(--surface-panel)}
+.inspector-debt{border-left:3px solid var(--status-warning-marker);padding-left:var(--space-1);font-size:var(--size-small);color:var(--text-secondary)}
+.inspect-overlay{position:fixed;z-index:9998;pointer-events:none;display:none;border:2px solid var(--action-primary)}
+.inspect-overlay[data-active=true]{border-color:var(--action-accent)}
+.inspect-tooltip{position:fixed;z-index:9999;pointer-events:none;display:none;background:var(--ink-900);color:var(--paper-50);padding:5px 7px;font-family:var(--font-mono);font-size:11px;line-height:1.25;max-width:360px}
+[data-inspect-selected=true]{outline:2px solid var(--action-accent)!important;outline-offset:2px}
+.lab-canvas.inspecting,.lab-canvas.inspecting *{cursor:crosshair!important}
+.inspect-token-flash{outline:2px solid var(--action-accent)!important;outline-offset:3px}
 @media(max-width:1000px){.lab-shell{grid-template-columns:1fr}.lab-controls{position:relative;height:auto;border-right:0;border-bottom:var(--rule-heavy)}.preview-card--6{grid-column:1/-1}}
 @media(max-width:620px){.lab-controls,.lab-canvas{padding:var(--space-2)}.token-row{grid-template-columns:1fr}.color-control{justify-content:space-between}.canvas-top{flex-direction:column}.room-grid{grid-template-columns:1fr}}
 </style>
@@ -126,6 +149,7 @@ button,input,select{font:inherit}
       <button class="lab-tab-btn" data-subpanel="type" aria-selected="false" type="button">Tipografía</button>
       <button class="lab-tab-btn" data-subpanel="spacing" aria-selected="false" type="button">Espaciado</button>
       <button class="lab-tab-btn" data-subpanel="domain" aria-selected="false" type="button">Dominio</button>
+      <button class="lab-tab-btn" data-subpanel="inspector" aria-selected="false" type="button">Inspector</button>
       <button class="lab-tab-btn" data-subpanel="export" aria-selected="false" type="button">Export / Diff</button>
     </nav>
   </header>
@@ -255,6 +279,18 @@ button,input,select{font:inherit}
     </section>
   </div>
 
+  <!-- CLICK-TO-EDIT INSPECTOR -->
+  <div id="subpanel-inspector" class="lab-subpanel" data-active="false">
+    <section class="lab-section">
+      <div class="inspector-head">
+        <div class="lab-kicker">Click-to-Edit</div>
+        <h2 id="inspector-title" class="inspector-title">Ningún elemento seleccionado</h2>
+        <div id="inspector-path" class="inspector-path"></div>
+      </div>
+      <div id="inspector-body"><p class="inspector-empty">Activa <strong>⌖ Inspeccionar</strong> y haz clic sobre cualquier elemento del canvas. Los componentes conocidos se enlazan a sus tokens canónicos; los desconocidos muestran solo estilo computado.</p></div>
+    </section>
+  </div>
+
   <!-- EXPORT / DIFF / GATES -->
   <div id="subpanel-export" class="lab-subpanel" data-active="false">
     <section class="lab-section">
@@ -332,7 +368,8 @@ button,input,select{font:inherit}
       <h1 id="canvas-main-title">Operations & Cockpit</h1>
       <p>Vista simultánea de componentes canónicos en tiempo real.</p>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-half)">
+    <div class="canvas-tools">
+      <button id="inspect-toggle" class="inspect-toggle" type="button" aria-pressed="false">⌖ Inspeccionar</button>
       <div id="mode-chip" class="mode-chip">FIELD</div>
       <div class="lab-field" style="margin:0">
         <select id="canvas-mode-select" style="min-height:32px;font-size:11px;padding:0 4px">
@@ -701,6 +738,8 @@ button,input,select{font:inherit}
   </div>
 </main>
 </div>
+<div id="inspect-overlay-box" class="inspect-overlay" aria-hidden="true"></div>
+<div id="inspect-tooltip" class="inspect-tooltip" aria-hidden="true"></div>
 
 <script>
 (function(){
@@ -711,7 +750,8 @@ var semanticRoles=[["brand","primary"],["brand","accent"],["brand","accent-text"
 var state={
   canonicalPrimitives:null, canonicalSemantic:null, canonicalTypography:null, canonicalSpacing:null, canonicalDomain:null,
   primitives:null, semantic:null, typography:null, spacing:null, domain:null,
-  spacingScaleFactor:1.0, selectedDirHandle:null
+  spacingScaleFactor:1.0, selectedDirHandle:null,
+  inspectMode:false, selectedElement:null, selectedResolution:null
 };
 
 var root=document.documentElement, canvas=document.getElementById("lab-canvas");
