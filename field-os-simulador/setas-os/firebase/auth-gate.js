@@ -57,6 +57,7 @@ const PROTECTED_APP_SCRIPTS = [
   // en ese orden: cada uno lee el global que publica el anterior.
   "../telemetry-contract.js",
   "../esp32-telemetry-adapter.js",
+  "../sensor-health.js",
   "../anomaly-thresholds.js",
   "../live-telemetry-bridge.js",
   "../flush-forecast-engine.js",

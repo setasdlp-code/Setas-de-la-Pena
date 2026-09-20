@@ -5,6 +5,9 @@ const { test, expect } = require('@playwright/test');
 const APP = '/Setas%20OS%20v5.dc.html';
 
 async function openApp(page, init = null) {
+  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
+    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
+  }
   if (init) await page.addInitScript(init);
   await page.goto(APP);
   // No usar waitForLoadState('networkidle') aquí: Firebase Auth/Firestore

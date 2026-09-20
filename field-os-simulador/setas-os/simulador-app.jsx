@@ -9231,6 +9231,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
+  const enqueueContainerFieldTransition=async(bolsa,lote,from,to,reasonCode=null,notes=null)=>{
+    const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
+    const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
+      ? window.SetasFirebase.auth.currentUser.uid : null;
+    if(!SHEET||!uid||!SHEET.confirmContainerTransition) return;
+    try{
+      const db=await getFieldDb();
+      const res=await SHEET.confirmContainerTransition({
+        db,container:bolsa,batch:lote,from,to,accountId:uid,operatorId:uid,
+        operatorRole:await getFieldOperatorRole(),
+        expectedEntityRevision:Number.isInteger(bolsa?.revision)?bolsa.revision:0,
+        expectedBatchRevision:Number.isInteger(lote?.revision)?lote.revision:0,
+        confirmed:true,
+        reasonCode,
+        notes,
+      });
+      await runFieldSync(db,uid,res.event.id,()=>{});
+    }catch(err){
+      console.warn('[FieldEventV2] Container transition notice:', err.message);
+    }
+  };
+
   // Registra la acción elegida en la ficha vía la cascada real: declara TODAS
   // las consecuencias con actionConsequences (evento, cambios de bolsa, parche
   // del lote, transición y follow-ups) y las aplica de una sola vez con
@@ -9255,6 +9277,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
       // Aplicar bagUpdates: aquí es donde una bolsa pasa a 'aislada', etc.
       (applied.bagUpdates||[]).forEach(u=>updateBitBolsa(u.bagId,u.fields));
+      (applied.bagUpdates||[]).forEach(u=>{
+        const bolsa=bolsasDelLote.find(b=>b.id===u.bagId);
+        if(bolsa&&u.fields&&u.fields.estado&&u.fields.estado!==bolsa.estado){
+          enqueueContainerFieldTransition(bolsa,lote,bolsa.estado||'inoculated',u.fields.estado);
+        }
+      });
 
       if(consequences.transition){
         enqueueFieldTransition(lote,sheet.state,consequences.transition);
@@ -9449,6 +9477,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ? `${completeFresh ? liveAgeLabel(live.ageMs) : 'lectura parcial o vencida'} · ${(sample.sources||[]).join(' + ')||'en vivo'}`
                   : 'sin telemetría conectada · sin lectura'}
               </div>
+              {live && live.health && live.health.overallStatus !== 'offline' && (
+                <div className="today-climate-card__health" style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',fontSize:10.5,fontFamily:'var(--font-mono)',marginTop:4,padding:'3px 6px',background:'var(--paper-1)',borderRadius:'var(--r-xs,2px)',border:'1px solid var(--border-hairline)'}}>
+                  <span style={{fontWeight:700,color:live.health.overallStatus==='healthy'?'var(--status-success,#2e7d32)':live.health.overallStatus==='stale'?'var(--ink-2,#6b6759)':'var(--accent-terracotta,#a85c32)'}}>
+                    {live.health.overallStatus==='healthy'?'● Confiable':`▲ ${live.health.overallStatus.toUpperCase()}`}
+                  </span>
+                  {live.health.metrics && Object.entries(live.health.metrics).filter(([_,m])=>m.value!=null).map(([mKey,m])=>(
+                    <span key={mKey} style={{color:'var(--ink-2)'}}>
+                      {mKey==='temperature_c'?'T':mKey==='rh_pct'?'HR':mKey==='co2_ppm'?'CO₂':mKey}: {m.description}
+                    </span>
+                  ))}
+                </div>
+              )}
             </button>
           );
         })}
@@ -10546,6 +10586,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-2)',marginTop:2}}>
               Nodo IoT: <code>{room.device}</code> · Sensores: {room.sensors} · Altitud: {room.altitude}
             </div>
+            {roomLive && roomLive.health && (
+              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)',marginTop:4}}>
+                <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-success,#2e7d32)':roomLive.health.overallStatus==='stale'?'var(--ink-2,#6b6759)':'var(--accent-terracotta,#a85c32)'}}>
+                  SALUD: {roomLive.health.overallStatus.toUpperCase()}
+                </span>
+                {roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d])=>(
+                  <span key={devId}>
+                    {devId}: <strong style={{color:d.status==='healthy'?'var(--status-success,#2e7d32)':'var(--ink-1)'}}>{d.status.toUpperCase()}</strong>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>

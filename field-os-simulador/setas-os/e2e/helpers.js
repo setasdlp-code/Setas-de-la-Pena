@@ -1,9 +1,14 @@
 'use strict';
 
+const { test } = require('@playwright/test');
+
 const APP_PATH = '/Setas%20OS%20v5.dc.html';
 
 /** @param {import('@playwright/test').Page} page */
 async function openApp(page) {
+  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
+    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
+  }
   await page.goto(APP_PATH);
   // No esperar 'networkidle': Firebase Auth y Firestore mantienen conexiones
   // long-lived (listeners, long-polling), así que la red nunca queda inactiva y

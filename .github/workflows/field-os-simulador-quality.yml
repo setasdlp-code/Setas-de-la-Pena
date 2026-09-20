@@ -10,6 +10,7 @@ on:
     paths:
       - "field-os-simulador/setas-os/**"
       - ".github/workflows/field-os-simulador-quality.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,6 +21,7 @@ concurrency:
 
 jobs:
   quality:
+    name: Certificación de Calidad Setas OS
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,27 +32,66 @@ jobs:
         with:
           # Historial completo: perito-evidence-display.test.js compara
           # scoring.js/perito-scenarios.js contra main (invariante ADR-0004).
-          # Con el checkout superficial por defecto ese ref no existe en un
-          # pull_request y el guard falla por falta de referencia, no por
-          # una violacion real.
           fetch-depth: 0
-      - name: Setup Node
+
+      - name: Preflight — Git diff check
+        run: git diff --check
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      # El cuaderno de campo persiste en IndexedDB, que Node no trae, así que las
-      # pruebas de esa capa necesitan fake-indexeddb. La suite dejó de ser sólo
-      # built-ins; sin instalar dependencias los siete archivos que la ejercitan
-      # fallan por módulo ausente, no por una regresión real.
+
+      - name: Setup Java (Firestore emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Install dependencies
         run: npm ci
-      # Paso 1 Quality Gate measures real computed FIELD targets and performs a
-      # genuine offline reload in headless Chromium. Browser installation is
-      # explicit so CI certifies the same runtime contract as local Playwright.
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      # simulador-app.jsx DOES have a build step (node build.js -> esbuild), but
-      # CI never runs it — build.test.js verifies the committed bundle's
-      # source-hash matches the source, so a stale bundle fails here instead.
-      - name: Run quality gate
-        run: npm run test
+
+      - name: Gate 1 — Source & Bundle Consistency
+        run: node build.test.js
+
+      - name: Gate 2 — Logic & Unit Tests
+        run: npm test
+
+      - name: Gate 3 — Server, Rules & Functions Emulator
+        run: |
+          npm run functions:sync
+          npx firebase emulators:exec --only firestore --project sdlp-os-ci "node --test tests/rules/*.test.js tests/functions/*.test.js"
+
+      - name: Gate 4 — Browser Critical & Offline Integration
+        run: npm run test:browser
+
+      - name: Gate 5 — Full Playwright E2E Matrix
+        env:
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+        run: npm run test:e2e
+
+      - name: Release Status Check (Post-merge audit)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SDLP_OS }}
+        run: |
+          if [ -z "$SA" ]; then
+            {
+              echo "## ⚠️ RELEASE STATUS: DEPLOYMENT_INCOMPLETE"
+              echo ""
+              echo "Todos los quality gates de código, emuladores y pruebas pasaron exitosamente,"
+              echo "pero falta la credencial \`FIREBASE_SERVICE_ACCOUNT_SDLP_OS\` para el despliegue automático."
+              echo "El commit en \`main\` no debe considerarse desplegado en producción hasta realizar el despliegue manual:"
+              echo ""
+              echo '```bash'
+              echo 'cd field-os-simulador/setas-os'
+              echo 'npx firebase deploy --only firestore:rules --project sdlp-os'
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ✅ RELEASE STATUS: VERIFIED & READY" >> "$GITHUB_STEP_SUMMARY"
+          fi

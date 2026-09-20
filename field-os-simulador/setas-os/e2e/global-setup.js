@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
 const { chromium } = require('@playwright/test');
 
 // Inicia sesión una sola vez contra el Firebase real del proyecto (sdlp-os)
@@ -11,15 +13,26 @@ const { chromium } = require('@playwright/test');
 module.exports = async (config) => {
   const email = process.env.E2E_TEST_EMAIL;
   const password = process.env.E2E_TEST_PASSWORD;
-  if (!email || !password) {
-    throw new Error(
-      'Faltan E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno. ' +
-      'Copia env.example a .env, complétalo con la cuenta de prueba de Firebase ' +
-      '(console.firebase.google.com/project/sdlp-os/authentication/users) y vuelve a correr los tests.'
-    );
+  const { baseURL, storageState } = config.projects[0].use;
+
+  if (storageState) {
+    const authDir = path.dirname(storageState);
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
   }
 
-  const { baseURL, storageState } = config.projects[0].use;
+  if (!email || !password) {
+    process.env.E2E_AUTH_UNAVAILABLE = 'true';
+    if (storageState && !fs.existsSync(storageState)) {
+      fs.writeFileSync(storageState, JSON.stringify({ cookies: [], origins: [] }));
+    }
+    console.warn(
+      'Faltan E2E_TEST_EMAIL / E2E_TEST_PASSWORD en el entorno. ' +
+      'Se omitirán las pruebas que requieren sesión real de Firebase.'
+    );
+    return;
+  }
   const browser = await chromium.launch();
   const page = await browser.newPage();
 

@@ -17,6 +17,9 @@ const { test, expect } = require('@playwright/test');
 const APP = '/Setas%20OS%20v5.dc.html';
 
 async function openApp(page) {
+  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
+    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
+  }
   await page.goto(APP);
   // Nunca 'networkidle': Firebase mantiene conexiones long-lived (ver e2e/helpers.js).
   await page.locator('#setas-auth-gate').waitFor({ state: 'hidden', timeout: 25000 });

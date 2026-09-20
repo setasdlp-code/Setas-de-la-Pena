@@ -23,13 +23,15 @@
   /**
    * @returns {Promise<{applied: boolean, reason: string}>}
    */
-  const reconcileReceipt = (db, { accountId, eventId, batchId, receipt }) => {
+  const reconcileReceipt = (db, { accountId, eventId, batchId, entityId, receipt }) => {
     if (!accountId || !eventId || !batchId) {
       return Promise.reject(new Error('reconcileReceipt requiere accountId, eventId y batchId'));
     }
     if (!receipt || !Number.isInteger(receipt.batchRevisionAfter)) {
       return Promise.reject(new Error('incomplete_event_record: recibo sin batchRevisionAfter entero'));
     }
+
+    const targetEntityId = entityId || batchId;
 
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORES, 'readwrite');
@@ -53,7 +55,7 @@
           return;
         }
 
-        const resReq = reservations.get(`${accountId}:${batchId}`);
+        const resReq = reservations.get(`${accountId}:${targetEntityId}`);
         resReq.onerror = () => reject(resReq.error);
         resReq.onsuccess = () => {
           const reservation = resReq.result;
@@ -83,7 +85,7 @@
                 updatedAt: receipt.acceptedAt,
               });
             }
-            if (reservation) reservations.delete(`${accountId}:${batchId}`);
+            if (reservation) reservations.delete(`${accountId}:${targetEntityId}`);
             outcome = { applied: true, reason: APPLIED };
           };
         };

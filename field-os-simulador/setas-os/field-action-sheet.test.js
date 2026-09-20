@@ -10,6 +10,7 @@ require('fake-indexeddb/auto');
 const {
   buildActionSheetModel,
   confirmTransition,
+  confirmContainerTransition,
   DEFAULT_INITIAL_STATE,
 } = require('./field-action-sheet.js');
 const { initializeQueue, releaseReservation } = require('./field-event-queue.js');
@@ -198,6 +199,33 @@ test('confirmTransition para una transición no autorizada lanza unauthorized_ac
     });
     assert.equal(count, 0, `El almacén ${storeName} no debe tener registros tras acción no autorizada`);
   }
+
+  db.close();
+});
+
+test('confirmContainerTransition persiste un FieldEvent v2 de contenedor con reserva propia', async () => {
+  const dbName = `test_c_transition_${Date.now()}_${Math.random()}`;
+  const db = await initializeQueue(dbName);
+
+  const res = await confirmContainerTransition({
+    db,
+    container: { id: 'BAG-200', revision: 0, estado: 'activo' },
+    batch: { id: 'L-200', revision: 2 },
+    from: 'inoculated',
+    to: 'incubation',
+    accountId: 'acc_1',
+    operatorId: 'op_1',
+    operatorRole: 'operario',
+    confirmed: true,
+  });
+
+  assert.equal(res.event.schemaVersion, 2);
+  assert.equal(res.event.entityType, 'container');
+  assert.equal(res.event.entityId, 'BAG-200');
+  assert.equal(res.event.batchId, 'L-200');
+  assert.equal(res.event.expectedEntityRevision, 0);
+  assert.equal(res.event.expectedBatchRevision, 2);
+  assert.equal(res.queueEntry.status, 'pending');
 
   db.close();
 });

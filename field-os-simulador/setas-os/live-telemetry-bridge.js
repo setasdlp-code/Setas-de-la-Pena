@@ -55,6 +55,10 @@
     ? require('./climate-math.js')
     : (typeof globalThis !== 'undefined' ? globalThis.SetasClimate : null);
 
+  const sensorHealth = isNode
+    ? require('./sensor-health.js')
+    : (typeof globalThis !== 'undefined' ? globalThis.SetasSensorHealth : null);
+
   // Tenjo, Cundinamarca — 2.600 msnm. Presión nominal usada cuando el nodo no
   // reporta barómetro propio. Ver TENJO_NOMINAL_PRESSURE_HPA en climate-math.
   const TENJO_ALTITUDE_M = 2600;
@@ -573,6 +577,20 @@
       };
     };
 
+    const getHealthReport = (roomId) => {
+      if (!sensorHealth) return null;
+      const entry = roomsState.get(roomId);
+      const readings = entry ? Object.values(entry.latest) : [];
+      return sensorHealth.evaluateRoomSensorHealth({
+        roomId,
+        readings,
+        devices: {},
+        transports: getStatus().transports,
+        now: clock(),
+        config: { freshMs },
+      });
+    };
+
     /** Instantánea completa para el render: métricas, series y frescura por sala. */
     const getSnapshot = ({ buckets = 24 } = {}) => {
       const at = clock();
@@ -596,6 +614,7 @@
         rooms[roomId] = {
           id: roomId,
           sample: getSample(roomId),
+          health: getHealthReport(roomId),
           ageMs: entry.lastUpdateAt != null ? at - entry.lastUpdateAt : null,
           series: SERIES_METRICS.reduce((acc, m) => {
             acc[m] = entry.series[m].downsample(buckets);
@@ -627,6 +646,7 @@
       stop,
       ingest,
       getStatus,
+      getHealthReport,
       getSnapshot,
       getSample,
       getSeries,

@@ -14,6 +14,9 @@ const { test, expect } = require('@playwright/test');
 const APP = '/Setas%20OS%20v5.dc.html';
 
 test('la aplicación arranca en frío sin conexión', async ({ page, context }) => {
+  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
+    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
+  }
   test.setTimeout(90_000);
 
   // Primera visita con señal: es cuando el service worker se instala y la caché
@@ -53,6 +56,9 @@ test('la aplicación arranca en frío sin conexión', async ({ page, context }) 
 });
 
 test('el service worker no intercepta las peticiones a Firebase', async ({ page }) => {
+  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
+    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
+  }
   // Cachear una respuesta de Firestore o de la función de aceptación serviría
   // estado viejo como si fuera actual — peor que no tener conexión.
   await page.goto(APP);

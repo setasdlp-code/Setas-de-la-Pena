@@ -42,9 +42,12 @@
     const settle = async (event, entry, status, extra = {}) => {
       await putEntry(db, { ...entry, status, ...extra });
       // Todo desenlace terminal suelta la reserva, con el guard puesto: si el
-      // operario ya creó un evento nuevo para este lote, esta liberación no le
+      // operario ya creó un evento nuevo para este lote o contenedor, esta liberación no le
       // corresponde y no debe quitársela.
-      await queue.releaseReservation(db, accountId, event.batchId, event.id);
+      const targetEntityId = (event && event.schemaVersion === 2 && event.entityType === 'container' && event.entityId)
+        ? event.entityId
+        : event.batchId;
+      await queue.releaseReservation(db, accountId, targetEntityId, event.id);
     };
 
     const deliver = async ({ event, queueEntry }) => {
@@ -80,8 +83,11 @@
       }
 
       contracts.validateReceipt(receipt);
+      const targetEntityId = (event && event.schemaVersion === 2 && event.entityType === 'container' && event.entityId)
+        ? event.entityId
+        : event.batchId;
       const outcome = await reconcile.reconcileReceipt(db, {
-        accountId, eventId: event.id, batchId: event.batchId, receipt,
+        accountId, eventId: event.id, batchId: event.batchId, entityId: targetEntityId, receipt,
       });
       return { eventId: event.id, status: 'confirmed', reconciled: outcome.reason };
     };

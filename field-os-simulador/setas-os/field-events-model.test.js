@@ -7,6 +7,7 @@ const fs = require('node:fs');
 
 const {
   createFieldEvent,
+  createFieldEventV2,
   contentEquals,
   canonicalizeTimestamp,
   validateTransition,
@@ -194,4 +195,55 @@ test('prototype keys are rejected as unknown roles, not treated as permissions',
       `"${role}" no debería resolverse contra Object.prototype`
     );
   }
+});
+
+// --- FieldEvent v2 --------------------------------------------------------
+
+test('createFieldEventV2 creates container event with schemaVersion 2', () => {
+  const event = createFieldEventV2({
+    entityType: 'container',
+    entityId: 'BAG-001',
+    batchId: 'lote_123',
+    eventType: 'state_transition',
+    from: 'incubation',
+    to: 'fruiting',
+    expectedEntityRevision: 1,
+    expectedBatchRevision: 4,
+    operatorId: 'op_1',
+    occurredAt: '2026-09-20T14:00:00Z',
+  });
+
+  assert.equal(event.schemaVersion, 2);
+  assert.equal(event.entityType, 'container');
+  assert.equal(event.entityId, 'BAG-001');
+  assert.equal(event.batchId, 'lote_123');
+  assert.equal(event.expectedEntityRevision, 1);
+  assert.equal(event.expectedBatchRevision, 4);
+  assert.match(event.id, /^evt_[0-9a-f-]{36}$/);
+  assert.ok(Object.isFrozen(event));
+  assert.ok(Object.isFrozen(event.payload));
+});
+
+test('createFieldEventV2 rejects missing entityId or batchId', () => {
+  assert.throws(() => createFieldEventV2({ batchId: 'l1' }), /invalid_envelope/);
+  assert.throws(() => createFieldEventV2({ entityId: 'c1' }), /invalid_envelope/);
+});
+
+test('contentEquals correctly compares v2 events', () => {
+  const a = createFieldEventV2({
+    entityType: 'container',
+    entityId: 'BAG-001',
+    batchId: 'lote_123',
+    eventType: 'state_transition',
+    from: 'incubation',
+    to: 'fruiting',
+    expectedEntityRevision: 1,
+    operatorId: 'op_1',
+    occurredAt: '2026-09-20T14:00:00Z',
+  });
+  const b = { ...a, occurredAt: '2026-09-20T14:00:00.000Z' };
+  assert.equal(contentEquals(a, b), true);
+
+  const c = { ...a, entityId: 'BAG-002' };
+  assert.equal(contentEquals(a, c), false);
 });
