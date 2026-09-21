@@ -31,10 +31,39 @@ function sliceDeclaration(name) {
   return SRC.slice(start, i).replace(/;?\s*$/, ';');
 }
 
+// Nombres que ya NO viven en el JSX: se extrajeron a módulos propios y se
+// require()n de verdad, en vez de re-parsearse. Cada uno que se mueve aquí es
+// una porción del monolito que dejó de necesitar este hack.
+//
+// Los tests no se enteran: piden 'INGS' igual que antes y reciben el mismo
+// objeto — pero ahora es EL objeto de producción, no una copia evaluada aparte.
+const MODULES = [
+  { path: '../substrate-catalog.js', names: ['SPP', 'INGS', 'CATS', 'PRESETS'] },
+  { path: '../substrate-analysis.js', names: ['analyze', 'EB_PENALTY_BALANCE_BAND'] },
+  { path: '../substrate-diagnosis.js', names: ['diagnose'] },
+];
+
+const fromModules = {};
+for (const mod of MODULES) {
+  const api = require(path.join(__dirname, mod.path));
+  for (const name of mod.names) {
+    if (!(name in api)) throw new Error(`${mod.path} ya no exporta ${name}`);
+    fromModules[name] = api[name];
+  }
+}
+
 function extractConsts(names) {
-  const body = names.map(sliceDeclaration).join('\n') + `\nreturn { ${names.join(', ')} };`;
+  const sliced = names.filter((n) => !(n in fromModules));
+  const resolved = names.filter((n) => n in fromModules);
+
+  // Las declaraciones que siguen en el JSX pueden referirse a las que ya se
+  // extrajeron (p. ej. `calcBatch(...,ings=INGS,...)`), así que los módulos se
+  // inyectan como parámetros del Function en vez de re-declararse.
+  const body = sliced.map(sliceDeclaration).join('\n')
+    + `\nreturn { ${[...sliced, ...resolved].join(', ')} };`;
+  const injected = Object.keys(fromModules);
   // eslint-disable-next-line no-new-func
-  return new Function(body)();
+  return new Function(...injected, body)(...injected.map((n) => fromModules[n]));
 }
 
 module.exports = { extractConsts };

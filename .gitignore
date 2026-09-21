@@ -71,6 +71,17 @@ __pycache__/
 venv/
 
 # ─────────────────────────────────────────────
+# Datos de producción de la finca — repo público
+# ─────────────────────────────────────────────
+# El corpus de ground truth trae rendimientos reales por lote (receta + EB
+# medido) y de ahí se derivan productividad y costos. Este repositorio es
+# público: el corpus se construye localmente con
+# `node build-ground-truth-corpus.js` y nunca se commitea. El .example.json sí
+# está versionado — es el esquema, con datos inventados.
+field-os-simulador/setas-os/ground-truth-fixtures.json
+**/bitacora-export*.json
+
+# ─────────────────────────────────────────────
 # Redundant archive (source lives in knowledge_base/)
 # ─────────────────────────────────────────────
 knowledge_base.zip

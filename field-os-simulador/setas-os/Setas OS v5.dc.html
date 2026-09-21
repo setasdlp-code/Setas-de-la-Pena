@@ -2131,7 +2131,7 @@ const spCode = k => (SPECIES.find(s=>s.key===k)||{code:'--'}).code;
 // Parámetros por especie (species.yaml). T en °C, HR en %, CO2 ppm, BE %.
 const KB_SPP = {
   pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,130], cycle:[28,40] },
-  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[10,21], incT:[22,27], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50] },
+  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[10,21], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50] },
   hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[18,24], incT:[21,24], hr:[90,97], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
   lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150] },
   ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:2000, fae:[4,6], be:[13,40], cycle:[90,180] },

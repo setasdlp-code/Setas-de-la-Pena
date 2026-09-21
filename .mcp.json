@@ -2,13 +2,13 @@
   "mcpServers": {
     "setas": {
       "type": "stdio",
-      "command": "${CLAUDE_PROJECT_DIR:-.}/.venv/bin/python",
-      "args": ["${CLAUDE_PROJECT_DIR:-.}/mcp/setas_mcp.py"]
+      "command": "sh",
+      "args": ["${CLAUDE_PROJECT_DIR}/mcp/run_server.sh", "setas_mcp.py"]
     },
     "setas-bridge": {
       "type": "stdio",
-      "command": "${CLAUDE_PROJECT_DIR:-.}/.venv/bin/python",
-      "args": ["${CLAUDE_PROJECT_DIR:-.}/mcp/setas_bridge_mcp.py"]
+      "command": "sh",
+      "args": ["${CLAUDE_PROJECT_DIR}/mcp/run_server.sh", "setas_bridge_mcp.py"]
     }
   }
 }

@@ -53,7 +53,6 @@ jobs:
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-
       - name: Gate 1 — Source & Bundle Consistency
         run: node build.test.js
 
@@ -73,6 +72,23 @@ jobs:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: npm run test:e2e
+
+      # Compuerta empírica: ¿el cambio predice mejor o peor el EB real?
+      # El corpus trae rendimientos de la finca y este repositorio es público,
+      # así que no está versionado: se inyecta como secret (GROUND_TRUTH_CORPUS,
+      # el JSON completo). Sin secret el paso no se salta en silencio — dice que
+      # el cambio no fue validado contra campo, que es información, no ruido.
+      - name: Perito regression against field evidence
+        env:
+          GROUND_TRUTH_CORPUS: ${{ secrets.GROUND_TRUTH_CORPUS }}
+        run: |
+          if [ -z "$GROUND_TRUTH_CORPUS" ]; then
+            echo "::notice title=Sin corpus de campo::No hay GROUND_TRUTH_CORPUS configurado. Los cambios a analyze()/scoring.js/perito-scenarios.js NO fueron validados contra lotes reales — solo contra tests sintéticos."
+            exit 0
+          fi
+          printf '%s' "$GROUND_TRUTH_CORPUS" > ground-truth-fixtures.json
+          node perito-regression-report.js --baseline=origin/${{ github.base_ref || 'main' }}
+        continue-on-error: false
 
       - name: Release Status Check (Post-merge audit)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

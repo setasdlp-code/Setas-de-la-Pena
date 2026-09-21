@@ -43,6 +43,11 @@ const PROTECTED_APP_SCRIPTS = [
   "../trace-identity.js",
   "../public-trace-dto.js",
   "../recipe-recommender.js",
+  // Base científica y modelo agronómico. El análisis lee el catálogo al
+  // cargarse, así que el orden entre estos dos importa.
+  "../substrate-catalog.js",
+  "../substrate-analysis.js",
+  "../substrate-diagnosis.js",
   "../scoring.js",
   "../bitacora-model.js",
   // La ficha canónica del lote lee SetasBitacora y SetasOSWorkflow en cada

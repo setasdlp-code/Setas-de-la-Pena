@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: b8125364d5293b5b463fdea6b0cab77c58493cfa6732dd433cc5b6058c5b5da2
+// source-hash: 731213f5caa384a46180dd215c977e4bf6ea2dbdc785e73e2c25026abea530cc
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -776,168 +776,11 @@ const SPP_HR = { p_ostreatus_gris: "88–95%", p_ostreatus_blanco: "88–95%", p
 const SPP_CODE = { p_ostreatus_gris: "SDP-001", p_ostreatus_blanco: "SDP-002", p_djamor_rosa: "SDP-003", p_eryngii: "SDP-004", shiitake: "SDP-005", lions_mane: "SDP-006", reishi: "SDP-007", enoki: "SDP-008", nameko: "SDP-009" };
 const PUBLIC_TRACE_BASE_URL = "https://setasdlp-code.github.io/Setas-de-la-Pena/public/trace.html";
 const BANDS = { p_ostreatus_gris: "oklch(50% 0.12 25)", p_ostreatus_blanco: "oklch(55% 0.10 28)", p_djamor_rosa: "oklch(48% 0.13 20)", p_eryngii: "oklch(45% 0.09 265)", shiitake: "var(--accent-olive)", lions_mane: "oklch(52% 0.11 35)", reishi: "oklch(42% 0.10 10)", enoki: "oklch(43% 0.08 260)", nameko: "oklch(46% 0.09 95)" };
-const SPP = {
-  p_ostreatus_gris: { name: "Orellana Gris", scientific: "Pleurotus ostreatus", cn_optimal: { min: 25, max: 50, ideal: 35 }, n_optimal: { min: 0.8, max: 2, ideal: 1.4 }, ph_optimal: { min: 6, max: 7.5 }, moisture: { ideal: 65 }, eb_baseline: 90, eb_optimal: 130, supplementation_max: 20, spawn_rate: 8, notes: "La más fácil de cultivar. Tolera amplio rango de C:N. Ideal clima Sabana.", temp_fruit: "12–22°C" },
-  p_ostreatus_blanco: { name: "Orellana Blanca", scientific: "Pleurotus florida", cn_optimal: { min: 25, max: 45, ideal: 30 }, n_optimal: { min: 1, max: 2, ideal: 1.5 }, ph_optimal: { min: 6, max: 7 }, moisture: { ideal: 65 }, eb_baseline: 80, eb_optimal: 120, supplementation_max: 18, spawn_rate: 8, notes: "Tallos blancos premium.", temp_fruit: "14–20°C" },
-  p_djamor_rosa: { name: "Orellana Rosa", scientific: "Pleurotus djamor", cn_optimal: { min: 30, max: 50, ideal: 40 }, n_optimal: { min: 0.8, max: 1.8, ideal: 1.2 }, ph_optimal: { min: 5.5, max: 6.5 }, moisture: { ideal: 67 }, eb_baseline: 70, eb_optimal: 110, supplementation_max: 15, spawn_rate: 7, notes: "TERMÓFILA. Aborta primordios bajo 15°C.", temp_fruit: "20–28°C" },
-  p_eryngii: { name: "Seta de Cardo", scientific: "Pleurotus eryngii", cn_optimal: { min: 40, max: 65, ideal: 50 }, n_optimal: { min: 0.8, max: 1.6, ideal: 1.2 }, ph_optimal: { min: 5.5, max: 7 }, moisture: { ideal: 63 }, eb_baseline: 60, eb_optimal: 90, supplementation_max: 25, spawn_rate: 5, notes: "PREMIUM. Requiere esterilización. C:N 25–40 en bolsa suplementada esterilizada (Li 2024). Precio 2–3× orellana.", temp_fruit: "12–18°C" },
-  shiitake: { name: "Shiitake", scientific: "Lentinula edodes", cn_optimal: { min: 35, max: 70, ideal: 50 }, n_optimal: { min: 0.6, max: 1.2, ideal: 0.9 }, ph_optimal: { min: 5, max: 6 }, moisture: { ideal: 60 }, eb_baseline: 50, eb_optimal: 100, supplementation_max: 20, spawn_rate: 5, notes: "Ciclo largo 90–120 d. REQUIERE ESTERILIZACIÓN.", temp_fruit: "12–18°C" },
-  lions_mane: { name: "Melena de León", scientific: "Hericium erinaceus", cn_optimal: { min: 25, max: 48, ideal: 33 }, n_optimal: { min: 1, max: 2, ideal: 1.5 }, ph_optimal: { min: 5, max: 6.5 }, moisture: { ideal: 65 }, eb_baseline: 50, eb_optimal: 160, supplementation_max: 25, spawn_rate: 5, notes: "MEDICINAL premium. Master Mix (madera dura + cascarilla de soya 50:50) = sustrato óptimo, EB 150–180%. Evitar eucalipto.", temp_fruit: "15–20°C" },
-  reishi: { name: "Reishi", scientific: "Ganoderma lucidum", cn_optimal: { min: 35, max: 65, ideal: 50 }, n_optimal: { min: 0.7, max: 1.2, ideal: 0.9 }, ph_optimal: { min: 4.5, max: 6 }, moisture: { ideal: 60 }, eb_baseline: 30, eb_optimal: 60, supplementation_max: 15, spawn_rate: 5, notes: "MEDICINAL. Ciclo 4–6 meses.", temp_fruit: "20–26°C" },
-  enoki: { name: "Enoki", scientific: "Flammulina velutipes", cn_optimal: { min: 25, max: 40, ideal: 27 }, n_optimal: { min: 1.2, max: 2.5, ideal: 1.8 }, ph_optimal: { min: 5, max: 7 }, moisture: { ideal: 65 }, eb_baseline: 60, eb_optimal: 90, supplementation_max: 30, spawn_rate: 10, notes: "CRIÓFILOS: 5–12°C. EB óptima 90% en cond. artesanales (120% requiere refrigeración activa <12°C). Ideal Tenjo en invierno.", temp_fruit: "5–12°C" },
-  nameko: { name: "Nameko", scientific: "Pholiota nameko", cn_optimal: { min: 30, max: 50, ideal: 40 }, n_optimal: { min: 0.8, max: 1.5, ideal: 1.1 }, ph_optimal: { min: 5, max: 6.5 }, moisture: { ideal: 65 }, eb_baseline: 40, eb_optimal: 100, supplementation_max: 20, spawn_rate: 5, notes: "Gelatinoso, precio alto gourmet. EB hasta 100% en roble+salvado optimizado (Stamets 2000).", temp_fruit: "10–18°C" }
-};
-const INGS = [
-  // cra=Capacidad Retención Agua 0-5 | ph=pH propio | dig=digestibilidad 1-10 (celulosa accesible/lignina)
-  // === BASE CARBONO ===
-  { id: "paja_trigo", name: "Paja de trigo", cat: "base", cn: 90, n: 0.5, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Carbono"], cost: 2500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "Comparte cn/n/c con paja_cebada — a diferencia de otros grupos de valores idénticos hallados en el peritaje, este caso es agronómicamente plausible: paja de trigo y de cebada son cereales de paja muy similares en composición. No se trató como placeholder sin verificar." },
-  { id: "paja_cebada", name: "Paja de cebada", cat: "base", cn: 90, n: 0.5, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Carbono"], cost: 2400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "Ver nota en paja_trigo — mismo cn/n/c, plausible por similitud agronómica entre ambos cereales de paja." },
-  { id: "paja_avena", name: "Paja de avena", cat: "base", cn: 75, n: 0.6, c: 45, moisture: 12, cra: 4.5, ph: 6.5, dig: 8, role: "base_carbono", tags: ["Base", "Cereales"], cost: 2200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"] },
-  { id: "paja_arroz", name: "Paja de arroz", cat: "base", cn: 65, n: 0.7, c: 46, moisture: 12, cra: 2.5, ph: 6.8, dig: 4, role: "base_carbono", tags: ["Base", "Cereales"], cost: 1800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "nameko", "enoki"] },
-  { id: "bagazo_caña", name: "Bagazo de caña fresco", cat: "base", cn: 60, n: 0.7, c: 42, moisture: 55, cra: 4, ph: 5.5, dig: 7, role: "base_carbono", tags: ["Base", "Local", "Fresco 50–60% H₂O"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "shiitake"], notes: "Compatibilidad con shiitake verificada en literatura: bagazo+salvado de trigo+aserrín en mezcla optimizada (Frontiers in Microbiology 2024, PMC11151849)." },
-  { id: "aserrin_roble", name: "Aserrín de roble", cat: "base", cn: 500, n: 0.1, c: 50, moisture: 12, cra: 3, ph: 4.5, dig: 2, role: "base_carbono", tags: ["Base", "Madera dura"], cost: 2500, cs: ["shiitake", "lions_mane", "reishi", "nameko"] },
-  { id: "aserrin_caucho", name: "Aserrín de caucho (Hevea brasiliensis)", cat: "base", cn: 65, n: 0.75, c: 49, moisture: 12, cra: 3, ph: 5.8, dig: 5, role: "base_carbono", tags: ["Base", "Madera", "No disponible en Tenjo — requiere transporte desde zonas cálidas (Meta/Caquetá)"], cost: 9e3, cs: ["lions_mane"], notes: "C:N=65.48 verificado en Nature Sci Rep 2023 (doi:10.1038/s41598-023-40601-y) — rinde mejor que aserrín de bambú (C:N=33.44) para Hericium erinaceus. %N y %C estimados a partir del C:N reportado (no medidos directamente en la fuente). El caucho no se cultiva en la Sabana de Bogotá (2600msnm, clima frío) — este insumo requeriría transporte desde plantaciones en clima cálido colombiano; costo estimado incluye ese transporte, sin cotización real de proveedor." },
-  { id: "aserrin_eucalipto", name: "Aserrín de eucalipto", cat: "base", cn: 350, n: 0.15, c: 50, moisture: 12, cra: 3, ph: 5, dig: 3, role: "base_carbono", tags: ["Base", "Madera", "Aceites: rinde menos que madera dura"], cost: 2e3, cs: ["p_ostreatus_gris", "shiitake"] },
-  { id: "aserrin_pino", name: "Aserrín de pino fresco (requiere pretratamiento)", cat: "base", cn: 600, n: 0.08, c: 50, moisture: 12, cra: 2.5, ph: 4.5, dig: 1, role: "base_carbono", tags: ["NO usar fresco", "Terpenos inhibitorios", "Exige lavado/compostaje 3–4 m"], cost: 1500, cs: [], notes: "Terpenos y resinas abortan el micelio de Pleurotus/Hericium de inmediato. PROHIBIDO en fresco: requiere compostaje térmico prolongado (3–4 meses) o lavado químico parametrizado antes de cualquier uso. Para producción real usar la variante compostada." },
-  { id: "aserrin_pino_compostado", name: "Aserrín pino compostado (3–4 m)", cat: "base", cn: 200, n: 0.2, c: 40, moisture: 15, cra: 3, ph: 5.5, dig: 4, role: "base_carbono", tags: ["Base", "Gratis"], cost: 2200, cs: ["p_ostreatus_gris", "shiitake", "lions_mane"] },
-  { id: "aserrin_alamo", name: "Aserrín de álamo/sauce (Sabana)", cat: "base", cn: 200, n: 0.2, c: 45, moisture: 12, cra: 3.5, ph: 5.5, dig: 4, role: "base_carbono", tags: ["Base", "Madera", "Sabana", "Fácil conseguir"], cost: 1800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "lions_mane", "shiitake", "reishi", "nameko", "enoki"] },
-  { id: "cascarilla_arroz", name: "Cascarilla de arroz", cat: "base", cn: 80, n: 0.5, c: 40, moisture: 10, cra: 1.5, ph: 6.8, dig: 3, role: "aireador", tags: ["Aireador", "Local"], cost: 960, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"], notes: "Precio $960/kg — Lombricultura de Tenjo, bulto de 50 kg a $48.000 (ago. 2026). Corregido desde $4.000/kg (fuente no verificada).", provenance: { version: 1, sources: { tenjo_2026_08: { type: "supplier_quote", label: "Lombricultura de Tenjo — bulto 50kg", organization: "Lombricultura de Tenjo", location: "Tenjo, Cundinamarca", observedAt: "2026-08-01" } }, claims: [{ fields: ["cost"], sourceIds: ["tenjo_2026_08"], confidence: "high", method: "reported", verifiedAt: "2026-08-17" }] } },
-  { id: "tamo_trigo", name: "Tamo de trigo", cat: "base", cn: 100, n: 0.4, c: 40, moisture: 10, cra: 2, ph: 6.8, dig: 5, role: "aireador", tags: ["Aireador", "Carbono"], cost: 1600, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "cascarilla_coco", name: "Fibra de coco", cat: "base", cn: 93, n: 0.5, c: 47, moisture: 13, cra: 3, ph: 6, dig: 3, role: "aireador", tags: ["Aireador", "Tropical"], cost: 9500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "lions_mane"], notes: "Ficha técnica del usuario: N 0.4–0.6%, C 45–48%, C:N 75–110:1, celulosa 20–30%, hemicelulosa 15–20%, lignina 40–50%, cenizas 2–6%, pH 5.5–6.5, CE 1.5–3.0 mS/cm (alto K⁺/Na⁺ residual — sin lavar), humedad 10–15%. dig bajado de 4→3 por la lignina alta (40–50%) frente a la turba de coco buferizada. Precio $9.500/kg — Lombricultura de Tenjo, presentación 4 kg a $38.000 (ago. 2026); corregido desde $8.500/kg." },
-  { id: "turba_coco_buferizada", name: "Turba de coco buferizada", cat: "base", cn: 75, n: 0.6, c: 46, moisture: 11, cra: 4, ph: 6.5, dig: 4, role: "aireador", tags: ["Aireador", "Tropical", "Buferizada"], cost: 5e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "lions_mane"], notes: "Ficha técnica del usuario: N 0.5–0.7% (incremento leve por remanente de Ca(NO₃)₂), C 44–47%, C:N 65–85:1, celulosa 15–25%, hemicelulosa 10–18%, lignina 35–45%, cenizas 4–8% (intercambio catiónico Ca²⁺/Mg²⁺), pH 6.2–6.8, CE <0.5–0.8 mS/cm (sales lavadas y estabilizadas — mucho más baja que la fibra de coco sin procesar), humedad 10–12%. CRA más alta (4) que fibra de coco por el buferizado; dig levemente mejor (4) por su procesamiento. Precio $5.000/kg — BioEspacio (Bogotá), 1 kg (ago. 2026); otra presentación de 5 kg da $7.600/kg. Corregido desde $8.500/kg (que era una estimación por analogía, ya marcada como no confirmada)." },
-  { id: "tusa_maiz", name: "Tuza de maíz (Tusa / Zuro)", cat: "base", cn: 70, n: 0.7, c: 45, moisture: 15, cra: 3, ph: 6.5, dig: 6, role: "base_carbono", tags: ["Base", "Local", "Tuza", "Tusa", "Zuro", "Maíz"], cost: 1500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "Excelente sustrato base rico en hemicelulosa (C:N 70:1). Muy abundante en la Sabana de Bogotá y Cundinamarca." },
-  { id: "rastrojo_maiz", name: "Rastrojo de maíz", cat: "base", cn: 60, n: 0.6, c: 45, moisture: 15, cra: 3.5, ph: 6.5, dig: 6, role: "base_carbono", tags: ["Base", "Local"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_eryngii", "nameko"], notes: "Compatibilidad con P. eryngii (sustituye aserrín/bagazo en 10.5–42%, Horticulturae 2023, doi:10.3390/horticulturae9030319) y con Pholiota microspora/nameko (mezclado con aserrín de álamo, PMC9060681) verificada en literatura revisada por pares." },
-  { id: "kikuyo", name: "Kikuyo seco", cat: "base", cn: 25, n: 1.8, c: 45, moisture: 12, cra: 4, ph: 6.5, dig: 8, role: "base_carbono", tags: ["Local", "Sabana", "Valor sin diferenciar — ver peritaje"], cost: 1400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "C:N/%N/%C idénticos a paja de soya, estiércol equino y rastrojo de fríjol — 4 materiales botánica/agronómicamente distintos con la misma ficha, sospecha de placeholder copiado sin diferenciar. No se encontró cifra de reemplazo verificada; pendiente de análisis propio." },
-  { id: "hojarasca", name: "Hojarasca de bosque", cat: "base", cn: 50, n: 0.9, c: 45, moisture: 20, cra: 3.5, ph: 5.8, dig: 5, role: "base_carbono", tags: ["Local"], cost: 200, notes: "Costo $200/kg por recolección y cernido — no es un insumo gratuito real (estaba en $0, favoreciéndolo frente a bases con costo de mercado).", cs: ["p_ostreatus_gris", "p_ostreatus_blanco"] },
-  { id: "retamo_espinoso", name: "Retamo espinoso", cat: "base", cn: 32, n: 1.5, c: 47, moisture: 11, cra: 3, ph: 6, dig: 5, role: "base_carbono", tags: ["Base", "Local", "Tenjo"], cost: 400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"], notes: "Ficha técnica del usuario: N 1.4–1.6%, C 46–48%, C:N 30–34:1, celulosa 45–47.5%, hemicelulosa 21–22.5%, lignina 23–24.5%, cenizas 3.5–4.5%, pH 5.8–6.2, humedad 10–12%. Digestibilidad y compatibilidad de especies estimadas por analogía con arbustos leñosos similares (no verificadas en ensayo) — confirmar con prueba piloto antes de escalar. Costo $400/kg procesado (recolección + molienda) — evita distorsión del optimizador de costos al no tratarlo como insumo gratuito." },
-  { id: "guadua", name: "Guadua astillada", cat: "base", cn: 120, n: 0.35, c: 42, moisture: 15, cra: 3, ph: 6, dig: 4, role: "base_carbono", tags: ["Base", "Bambú"], cost: 2500, cs: ["p_ostreatus_gris", "shiitake", "lions_mane"] },
-  { id: "heno_pangola", name: "Heno de pangola", cat: "base", cn: 60, n: 0.8, c: 48, moisture: 12, cra: 4, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Local"], cost: 6500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "chips_poda_urbana", name: "Chips poda urbana (sauce/fresno)", cat: "base", cn: 150, n: 0.3, c: 45, moisture: 15, cra: 3, ph: 6.2, dig: 5, role: "base_carbono", tags: ["Base", "Tenjo"], cost: 300, notes: "Costo $300/kg procesado (recolección + astillado de poda urbana) — insumo no es gratuito, incluye alistamiento.", cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "shiitake", "lions_mane"] },
-  // === CELULÓSICOS / PAPEL ===
-  { id: "carton_corrugado", name: "Cartón corrugado troceado", cat: "base", cn: 350, n: 0.13, c: 45, moisture: 8, cra: 3.5, ph: 7, dig: 9, role: "base_carbono", tags: ["Base", "Gratis", "Celulosa"], cost: 800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "shiitake", "lions_mane"] },
-  { id: "carton_huevo", name: "Cartón de huevo", cat: "base", cn: 150, n: 0.28, c: 42, moisture: 8, cra: 4, ph: 7, dig: 8, role: "base_carbono", tags: ["Base", "Gratis", "Aireador"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "papel_periodico", name: "Papel periódico / kraft", cat: "base", cn: 170, n: 0.25, c: 43, moisture: 6, cra: 2.5, ph: 7, dig: 8, role: "base_carbono", tags: ["Base", "Celulosa"], cost: 1500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"] },
-  { id: "pulpa_papel", name: "Pulpa de papel (residuo industrial)", cat: "base", cn: 200, n: 0.2, c: 44, moisture: 50, cra: 4, ph: 7, dig: 9, role: "base_carbono", tags: ["Base", "Celulosa", "Industrial"], cost: 1800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "lions_mane"] },
-  // === FIBRAS LOCALES ===
-  { id: "fique_cabuya", name: "Fique / cabuya (fibra)", cat: "base", cn: 80, n: 0.55, c: 44, moisture: 12, cra: 3.5, ph: 6.3, dig: 5, role: "base_carbono", tags: ["Base", "Local", "Colombia"], cost: 4500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "tallo_girasol", name: "Tallo de girasol triturado", cat: "base", cn: 55, n: 0.8, c: 44, moisture: 12, cra: 3.5, ph: 6.5, dig: 7, role: "base_carbono", tags: ["Base", "Sabana"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"] },
-  { id: "paja_soya", name: "Paja / rastrojo de soya", cat: "base", cn: 25, n: 1.8, c: 45, moisture: 12, cra: 3.5, ph: 6.5, dig: 7, role: "suplemento_medio", tags: ["Base", "N medio", "Leguminosa", "Valor sin diferenciar — ver peritaje"], cost: 500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_eryngii"], notes: "C:N/%N/%C idénticos a kikuyo, estiércol equino y rastrojo de fríjol — ver nota en kikuyo." },
-  { id: "fibra_palma", name: "Fibra de palma de aceite", cat: "base", cn: 70, n: 0.7, c: 49, moisture: 18, cra: 3, ph: 5.8, dig: 4, role: "base_carbono", tags: ["Base", "Industrial"], cost: 1800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"] },
-  // === TROPICALES ===
-  { id: "pseudotallo_platano", name: "Pseudotallo plátano", cat: "trop", cn: 42, n: 1.1, c: 46, moisture: 85, cra: 5, ph: 6.2, dig: 8, role: "base_carbono", tags: ["Tropical", "EB alto"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "cascara_platano", name: "Cáscara de plátano", cat: "trop", cn: 30, n: 1.5, c: 45, moisture: 12, cra: 3.5, ph: 5.8, dig: 7, role: "suplemento_medio", tags: ["Tropical", "N medio", "Valor sin diferenciar — ver peritaje"], cost: 1500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"], notes: "C:N/%N/%C idénticos a cascarilla de quinua — materiales sin relación botánica, sospecha de placeholder copiado. No se encontró cifra de reemplazo verificada." },
-  { id: "hoja_platano", name: "Hoja de plátano seca", cat: "trop", cn: 35, n: 1.3, c: 46, moisture: 12, cra: 3.5, ph: 6, dig: 7, role: "base_carbono", tags: ["Tropical", "Local", "Valor sin diferenciar — ver peritaje"], cost: 2500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"], notes: "C:N/%N/%C idénticos a cáscara de cacao — materiales sin relación botánica, sospecha de placeholder copiado. No se encontró cifra de reemplazo verificada." },
-  { id: "cascara_aguacate", name: "Cáscara de aguacate", cat: "trop", cn: 45, n: 1, c: 45, moisture: 15, cra: 2.5, ph: 5.5, dig: 4, role: "base_carbono", tags: ["Tropical", "Valor sin diferenciar — ver peritaje"], cost: 1400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "C:N/%N/%C idénticos a tallo de rosa y residuo de clavel — 3 materiales sin relación botánica, sospecha de placeholder copiado. No se encontró cifra de reemplazo verificada." },
-  { id: "bagazo_lulo", name: "Bagazo de lulo/mora", cat: "trop", cn: 22, n: 2, c: 44, moisture: 70, cra: 4, ph: 4.5, dig: 8, role: "suplemento_medio", tags: ["Tropical", "N medio", "Gratis"], cost: 1500, cs: ["p_ostreatus_gris", "p_djamor_rosa"] },
-  { id: "cascara_cacao", name: "Cáscara de cacao", cat: "local", cn: 35, n: 1.3, c: 46, moisture: 10, cra: 3, ph: 5.5, dig: 6, role: "suplemento_medio", tags: ["Local", "Colombia", "N medio", "Valor sin diferenciar — ver peritaje"], cost: 3500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "C:N/%N/%C idénticos a hoja de plátano seca — ver nota en hoja_platano." },
-  { id: "pulpa_cacao", name: "Pulpa / mucílago de cacao", cat: "trop", cn: 18, n: 2.5, c: 45, moisture: 80, cra: 4, ph: 4, dig: 9, role: "suplemento_n", tags: ["Tropical", "N alto", "Colombia", "Valor sin diferenciar — ver peritaje"], cost: 4500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"], notes: "C:N/%N/%C idénticos a sustrato agotado de champiñón (SMS) — materiales sin relación, sospecha de placeholder copiado. No se encontró cifra de reemplazo verificada." },
-  // === CAFÉ ===
-  { id: "borra_cafe", name: "Borra de café (SCG)", cat: "cafe", cn: 22, n: 2, c: 47, moisture: 68, cra: 4, ph: 6, dig: 5, role: "suplemento_n", tags: ["Café", "N alto", "Gratis/Muy bajo", "Humedad 65–72%"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "shiitake", "nameko"] },
-  { id: "cascara_cafe", name: "Cáscara de café", cat: "cafe", cn: 32, n: 1.4, c: 45, moisture: 12, cra: 3, ph: 5.8, dig: 5, role: "suplemento_medio", tags: ["Café", "N medio"], cost: 3e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "pulpa_cafe", name: "Pulpa de café", cat: "cafe", cn: 25, n: 2.5, c: 45, moisture: 70, cra: 4, ph: 5.5, dig: 6, role: "suplemento_n", tags: ["Café", "N alto"], cost: 2500, cs: ["p_ostreatus_gris", "p_djamor_rosa"], notes: "Literatura reporta C:N=18.1–21.0 para pulpa de café YA COMPOSTADA con estiércol de cabra (ve.scielo.org S1316-33612009000200004) — no para pulpa fresca sola. El compostaje reduce el C:N a medida que se respira carbono, así que la pulpa fresca (lo que describe este insumo) probablemente tenga un C:N igual o mayor a esa cifra de compost terminado — el valor actual (25) es consistente con esa lectura, no contradictorio. No se ajustó." },
-  // === SUPLEMENTOS N ===
-  { id: "salvado_trigo", name: "Salvado de trigo", cat: "sup", cn: 16, n: 2.8, c: 45, moisture: 12, cra: 3, ph: 6.2, dig: 8, role: "suplemento_n", tags: ["N alto", "Estándar"], cost: 5e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "shiitake", "lions_mane", "reishi", "nameko"], notes: "Precio $5.000/kg — Mercado Libre Colombia, presentación 5 kg a $25.000 (ago. 2026); uno de los mejor alineados del catálogo. Corregido desde $5.200/kg.", provenance: { version: 1, sources: { ml_2026_08: { type: "supplier_quote", label: "Mercado Libre Colombia — presentación 5kg", observedAt: "2026-08-01" } }, claims: [{ fields: ["cost"], sourceIds: ["ml_2026_08"], confidence: "high", method: "reported", verifiedAt: "2026-08-17" }] } },
-  { id: "salvado_arroz", name: "Salvado de arroz", cat: "sup", cn: 18, n: 2.2, c: 47, moisture: 12, cra: 2.5, ph: 6.5, dig: 7, role: "suplemento_n", tags: ["N alto"], cost: 4200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "shiitake", "lions_mane"] },
-  { id: "salvado_maiz", name: "Salvado de maíz", cat: "sup", cn: 20, n: 2.2, c: 44, moisture: 12, cra: 2.5, ph: 6.3, dig: 7, role: "suplemento_n", tags: ["N alto", "Local"], cost: 3800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "shiitake"] },
-  { id: "cascarilla_soya", name: "Cascarilla de soya/soja (hull)", cat: "sup", cn: 17, n: 2.8, c: 47, moisture: 10, cra: 2.5, ph: 6.8, dig: 7, role: "suplemento_n", tags: ["N muy alto", "Leguminosa"], cost: 5800, cs: ["shiitake", "lions_mane", "reishi", "p_eryngii", "p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "enoki", "nameko"] },
-  { id: "harina_soya", name: "Harina de soya tostada", cat: "sup", cn: 8, n: 7, c: 52, moisture: 8, cra: 2, ph: 6.5, dig: 8, role: "suplemento_n", tags: ["N muy alto"], cost: 8500, cs: ["p_eryngii", "shiitake", "lions_mane"] },
-  { id: "afrecho_cerveceria", name: "Afrecho de cervecería (spent grain)", cat: "sup", cn: 11, n: 4.2, c: 46, moisture: 75, cra: 4.5, ph: 5.5, dig: 7, role: "suplemento_n", tags: ["N muy alto"], cost: 1125, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "shiitake", "lions_mane", "nameko", "enoki"], notes: 'Precio $1.125/kg — Frescorgánico, bulto 40 kg a $45.000, pedido mínimo 10 bultos (ago. 2026); desde 3 toneladas baja a ≈$1.013/kg. Tag "Gratis" retirado — no es insumo sin costo, corregido desde $2.500/kg.' },
-  { id: "cascarilla_quinua", name: "Cascarilla de quinua", cat: "sup", cn: 30, n: 1.5, c: 45, moisture: 10, cra: 2, ph: 6.5, dig: 6, role: "suplemento_medio", tags: ["N medio", "Boyacá", "Valor sin diferenciar — ver peritaje"], cost: 4500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: "C:N/%N/%C idénticos a cáscara de plátano — ver nota en cascara_platano." },
-  { id: "torta_girasol", name: "Torta de girasol", cat: "sup", cn: 7, n: 5, c: 45, moisture: 10, cra: 2, ph: 6.2, dig: 7, role: "suplemento_n", tags: ["N muy alto"], cost: 4800, cs: ["p_eryngii", "shiitake", "lions_mane", "reishi"] },
-  // === ESTIÉRCOL ===
-  { id: "gallinaza", name: "Gallinaza compostada", cat: "est", cn: 10, n: 3.5, c: 35, moisture: 20, cra: 2.5, ph: 7.5, dig: 8, role: "suplemento_n", tags: ["N alto"], cost: 1700, cs: ["p_ostreatus_gris"], notes: "Precio $1.700/kg — Viveros de Colombia, Bogotá, gallinaza compostada en bulto (ago. 2026). Corregido desde $2.500/kg." },
-  { id: "estiercol_equino", name: "Estiércol equino puro", cat: "est", cn: 25, n: 1.8, c: 45, moisture: 30, cra: 3, ph: 7.5, dig: 7, role: "suplemento_n", tags: ["Local", "Tenjo", "Valor sin diferenciar — ver peritaje"], cost: 1800, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "C:N/%N/%C idénticos a kikuyo, paja de soya y rastrojo de fríjol — ver nota en kikuyo. La literatura reporta C:N de estiércol muy variable (5–25:1) según especie animal y cama, así que un valor puntual no es descabellado, pero coincidir EXACTO con tres materiales vegetales distintos sí es sospechoso." },
-  // === LOCALES SABANA ===
-  { id: "capacho_uchuva", name: "Capacho de uchuva", cat: "local", cn: 40, n: 1.1, c: 44, moisture: 14, cra: 2.5, ph: 6, dig: 6, role: "suplemento_medio", tags: ["Local", "Tenjo", "Gratis", "Valor sin diferenciar — ver peritaje"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: 'Parece describir el mismo residuo físico que cascara_uchuva ("Cáscara de Uchuva (capacho)") pero con cn/n/c y costo distintos ($1.200 vs $500/kg) sin una diferencia de procesamiento documentada que lo justifique — revisar si deberían fusionarse en un solo insumo. Etiqueta "Gratis" tampoco verificada como costo puesto en granja.' },
-  { id: "cascara_arveja", name: "Cáscara de arveja", cat: "local", cn: 35, n: 1.3, c: 45, moisture: 12, cra: 3, ph: 6.3, dig: 6, role: "suplemento_medio", tags: ["Local", "Cundinamarca"], cost: 1400, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"] },
-  { id: "tallo_rosa", name: "Tallo de rosa molido", cat: "local", cn: 45, n: 1, c: 45, moisture: 15, cra: 3.5, ph: 6.5, dig: 5, role: "base_carbono", tags: ["Local", "Floricultura", "Valor sin diferenciar — ver peritaje"], cost: 1500, cs: ["p_ostreatus_gris"], notes: "C:N/%N/%C idénticos a cáscara de aguacate y residuo de clavel — ver nota en cascara_aguacate." },
-  { id: "follaje_crisantemo", name: "Follaje de crisantemo", cat: "local", cn: 40, n: 1.2, c: 45, moisture: 18, cra: 3.5, ph: 6.5, dig: 6, role: "base_carbono", tags: ["Local", "Floricultura"], cost: 1200, cs: ["p_ostreatus_gris"] },
-  { id: "residuo_clavel", name: "Residuo de clavel (Madrid/Facatativá)", cat: "local", cn: 45, n: 1, c: 45, moisture: 18, cra: 4.5, ph: 6.5, dig: 5, role: "base_carbono", tags: ["Local", "Floricultura", "Gratis", "Valor sin diferenciar — ver peritaje"], cost: 1e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "C:N/%N/%C idénticos a cáscara de aguacate y tallo de rosa — ver nota en cascara_aguacate." },
-  { id: "rastrojo_papa", name: "Rastrojo de papa (Villapinzón)", cat: "local", cn: 35, n: 1.2, c: 42, moisture: 12, cra: 3, ph: 6.3, dig: 7, role: "suplemento_medio", tags: ["Local", "Cundinamarca"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "rastrojo_frijol", name: "Rastrojo de fríjol", cat: "local", cn: 25, n: 1.8, c: 45, moisture: 12, cra: 3, ph: 6.5, dig: 7, role: "suplemento_medio", tags: ["Local", "N medio", "Valor sin diferenciar — ver peritaje"], cost: 1600, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "C:N/%N/%C idénticos a kikuyo, paja de soya y estiércol equino — ver nota en kikuyo." },
-  { id: "cascara_maní", name: "Cáscara de maní", cat: "local", cn: 28, n: 1.6, c: 45, moisture: 8, cra: 2, ph: 6.3, dig: 6, role: "suplemento_medio", tags: ["N medio", "Leguminosa"], cost: 300, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"] },
-  { id: "cascara_papa", name: "Cáscara de papa", cat: "local", cn: 15, n: 3, c: 45, moisture: 80, cra: 4, ph: 6, dig: 8, role: "suplemento_n", tags: ["Local", "N alto", "Gratis"], cost: 1500, cs: ["p_ostreatus_gris"] },
-  // === ECONOMÍA CIRCULAR ===
-  { id: "sms", name: "Sustrato agotado (SMS)", cat: "circ", cn: 18, n: 2.5, c: 45, moisture: 70, cra: 4, ph: 6.5, dig: 6, role: "suplemento_medio", tags: ["Circular", "N alto", "Valor sin diferenciar — ver peritaje"], cost: 0, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"], notes: "C:N/%N/%C idénticos a pulpa de cacao — ver nota en pulpa_cacao. Costo $0: investigación de precios confirma que es defendible SOLO si el SMS se genera en la misma granja (subproducto propio del ciclo de cultivo) — registrar aparte el costo de manejo/transporte/almacenamiento por separado en vez de inflar el costo de adquisición del material." },
-  { id: "lombricompost", name: "Lombricompost", cat: "circ", cn: 12, n: 3, c: 36, moisture: 35, cra: 3.5, ph: 7, dig: 8, role: "suplemento_n", tags: ["N alto", "Microflora"], cost: 680, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "Precio $680/kg — Lombricultura de Tenjo, humus sólido a $680.000/tonelada con lona reciclada (ago. 2026). Corregido desde $5.000/kg.", provenance: { version: 1, sources: { tenjo_2026_08: { type: "supplier_quote", label: "Lombricultura de Tenjo — humus sólido, tonelada con lona reciclada", organization: "Lombricultura de Tenjo", location: "Tenjo, Cundinamarca", observedAt: "2026-08-01" } }, claims: [{ fields: ["cost"], sourceIds: ["tenjo_2026_08"], confidence: "high", method: "reported", verifiedAt: "2026-08-17" }] } },
-  { id: "compost_maduro", name: "Compost maduro (>3 meses)", cat: "circ", cn: 15, n: 2.8, c: 42, moisture: 35, cra: 3.5, ph: 7, dig: 8, role: "suplemento_n", tags: ["N alto", "Estable"], cost: 798, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"], notes: "Precio $798/kg — Tumatera (Bogotá/Sabana), bulto 50 kg a $39.900 (ago. 2026); la fuente no confirma explícitamente madurez >3 meses. Corregido desde $2.500/kg." },
-  // === ADITIVOS ===
-  { id: "carbonato_calcio", name: "Carbonato de calcio", cat: "adit", cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 9.5, dig: 0, role: "aditivo_ph", tags: ["pH", "Mineral"], cost: 3e3, cs: Object.keys(SPP) },
-  { id: "yeso", name: "Yeso agrícola", cat: "adit", cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 7, dig: 0, role: "aditivo_estructura", tags: ["Estructura", "Ca"], cost: 1482, cs: Object.keys(SPP), notes: "Precio $1.482/kg — Yesoplant, bulto 50 kg a $74.100 (ago. 2026). Corregido desde $2.200/kg." },
-  { id: "sulfato_magnesio", name: "Sulfato de magnesio", cat: "adit", cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 7, dig: 0, role: "aditivo_micronutriente", tags: ["Mg", "Cofactor"], cost: 1e4, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "shiitake", "lions_mane"] },
-  { id: "melaza", name: "Melaza", cat: "adit", cn: 30, n: 0.5, c: 38, moisture: 25, cra: 1, ph: 5.5, dig: 9, role: "aditivo_arrancador", tags: ["Arrancador"], cost: 6500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco"] },
-  { id: "ceniza_vegetal", name: "Ceniza vegetal", cat: "adit", cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 11, dig: 0, role: "aditivo_ph", tags: ["pH", "K", "Gratis"], cost: 3e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "zeolita", name: "Zeolita natural", cat: "adit", cn: 0, n: 0, c: 0, moisture: 0, cra: 5, ph: 7.2, dig: 0, role: "aditivo_estructura", tags: ["Estructura", "Retención"], cost: 3708, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_eryngii", "shiitake", "lions_mane"], notes: "Precio $3.708/kg — La Leñería (Bogotá), bulto 25 kg a $92.700 (ago. 2026). Corregido desde $8.500/kg." },
-  { id: "tiamina", name: "Tiamina (Vit B1)", cat: "adit", cn: 0, n: 0, c: 0, moisture: 0, cra: 0, ph: 7, dig: 0, role: "aditivo_micronutriente", tags: ["Vitamina", "Cofactor"], cost: 12e4, cs: Object.keys(SPP) },
-  // === NUEVOS INGREDIENTES v21.5 ===
-  { id: "harina_alfalfa", name: "Harina de Alfalfa", cat: "sup", cn: 14, n: 2.5, c: 35, moisture: 8, cra: 3.2, ph: 7.2, dig: 7, role: "suplemento_n", tags: ["Proteína", "Leguminosa", "Bioestimulante"], cost: 8e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "lions_mane", "enoki", "nameko", "p_djamor_rosa"] },
-  { id: "cascarilla_huevo_molida", name: "Cascarilla de Huevo Molida", cat: "adit", cn: 0, n: 0, c: 0, moisture: 2, cra: 0.8, ph: 8.8, dig: 0, role: "aditivo_ph", tags: ["Calcio", "Lento", "Biodegradable"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "shiitake", "lions_mane", "reishi", "enoki", "nameko"] },
-  { id: "polvo_hueso", name: "Polvo de Hueso", cat: "sup", cn: 11, n: 2.5, c: 28, moisture: 3, cra: 1.2, ph: 7, dig: 2, role: "suplemento_n", tags: ["Fósforo", "Lento", "Premium"], cost: 8500, cs: ["p_eryngii", "shiitake", "lions_mane", "reishi", "nameko"] },
-  { id: "corteza_molida", name: "Corteza de Árbol Molida", cat: "base", cn: 160, n: 0.3, c: 48, moisture: 25, cra: 2.1, ph: 6.5, dig: 3, role: "base_carbono", tags: ["Estructura", "Lento", "Shiitake"], cost: 1400, cs: ["shiitake", "lions_mane", "reishi"] },
-  { id: "harina_trigo", name: "Harina de Trigo Integral", cat: "sup", cn: 12, n: 2.8, c: 40, moisture: 10, cra: 2.5, ph: 6.5, dig: 6, role: "suplemento_n", tags: ["Proteína", "Gluten", "Bioestimulante"], cost: 1200, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "nameko"] },
-  { id: "harina_maiz", name: "Harina de Maíz (Afrecho)", cat: "sup", cn: 8, n: 3.2, c: 36, moisture: 12, cra: 3, ph: 6.8, dig: 7, role: "suplemento_n", tags: ["Proteína", "Local", "Económico"], cost: 1e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii", "lions_mane", "enoki"], notes: "El nombre mezcla dos productos distintos: harina de maíz (Mercado Libre Colombia, 12,5 kg a $59.400 = ~$4.752/kg, ago. 2026) y afrecho de maíz (subproducto grueso, más barato, sin cotización propia encontrada). No se ajustó el costo porque no está claro cuál de los dos describen realmente cn/n/c — separar en dos insumos o aclarar cuál es antes de corregir el precio." },
-  { id: "harina_pescado", name: "Harina de Pescado Deshidratada", cat: "sup", cn: 4, n: 9.5, c: 38, moisture: 6, cra: 0.8, ph: 6.5, dig: 2, role: "suplemento_n", tags: ["Proteína Pura", "Premium", "Olor fuerte", "Autoclave obligatorio"], cost: 14e3, cs: ["p_ostreatus_gris", "enoki"], notes: "Uso experimental. Olor fuerte atrae ácaros/Sciaridae. Solo autoclave. Máx 3%." },
-  { id: "salvado_avena", name: "Salvado de Avena", cat: "sup", cn: 15, n: 2.6, c: 39, moisture: 10, cra: 3.5, ph: 6.6, dig: 8, role: "suplemento_n", tags: ["Fibra", "N medio", "Local", "Requiere control sanitario"], cost: 7500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "enoki", "nameko", "lions_mane", "shiitake"] },
-  { id: "cascarilla_girasol", name: "Cascarilla de Girasol", cat: "sup", cn: 25, n: 1.8, c: 42, moisture: 12, cra: 3.2, ph: 6.5, dig: 5, role: "suplemento_medio", tags: ["Fibra", "Aireador", "Económico"], cost: 3500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "lions_mane", "enoki"] },
-  { id: "algas_marinas", name: "Algas Marinas Molidas", cat: "adit", cn: 13, n: 1.5, c: 20, moisture: 12, cra: 2.2, ph: 7.8, dig: 2, role: "aditivo_micronutriente", tags: ["Bioácidos", "Yodo", "Premium"], cost: 18e3, cs: ["lions_mane", "nameko", "p_ostreatus_blanco"] },
-  { id: "estierc_gallina_deshid", name: "Estiércol de Gallina Deshidratado", cat: "est", cn: 7, n: 3.5, c: 25, moisture: 8, cra: 3.8, ph: 7.5, dig: 6, role: "suplemento_n", tags: ["Balanceado", "Local", "Rápido"], cost: 300, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "enoki", "nameko"], notes: 'Precio $300/kg — Croper, gallinaza de jaula seca, El Rosal (Cundinamarca), bulto 40 kg, escala 1–25 bultos (ago. 2026); baja a $250/kg en 26–100 bultos y $200/kg sobre 100. Fuente local pero no confirma "deshidratado" industrial (es "seca y empacada"). Corregido desde $2.200/kg.' },
-  { id: "vermicompost", name: "Vermicompost", cat: "circ", cn: 15, n: 1.8, c: 27, moisture: 35, cra: 4.2, ph: 6.9, dig: 8, role: "suplemento_medio", tags: ["Microbios", "Bioestimulante"], cost: 680, cs: ["lions_mane", "p_ostreatus_blanco", "nameko", "p_eryngii"], notes: 'Precio $680/kg — mismo referente de humus/lombricompost de Lombricultura de Tenjo ($680.000/t, ago. 2026); "vermicompost", "humus de lombriz" y "lombricompost" son la misma clase de producto en el mercado local. Corregido desde $6.000/kg (tag "Premium" quitado, no se sostiene frente al precio mayorista real).' },
-  /* ── NUEVOS v3.1 — Investigación Sabana de Bogotá 2026 ──────────────── */
-  { id: "pulpa_alfalfa", name: "Pulpa de Alfalfa (fresca/henificada)", cat: "local", cn: 11, n: 3, c: 33, moisture: 72, cra: 4.8, ph: 6.9, dig: 9, role: "suplemento_n", tags: ["EB 166%", "Sabana", "N Alto", "Nuevo"], cost: 4e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "lions_mane", "nameko"], notes: 'El nombre mezcla dos estados de humedad muy distintos ("fresca/henificada") con costos y logística distintos; "pulpa de alfalfa" no aparece como categoría comercial estandarizada en Colombia (se investigó por separado harina de alfalfa, que sí es distinta). moisture:72 sugiere que este registro describe la forma fresca — separar en dos insumos (fresca vs. henificada) antes de ajustar el costo.' },
-  { id: "cascara_uchuva", name: "Cáscara de Uchuva (capacho)", cat: "local", cn: 30, n: 1.2, c: 35, moisture: 10, cra: 3.5, ph: 6.1, dig: 5, role: "base_carbono", tags: ["EB 76%", "Cundinamarca", "Validado CO", "Nuevo", "Valor sin diferenciar — ver peritaje"], cost: 500, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa", "p_eryngii"], notes: 'El nombre entre paréntesis ("capacho") coincide con capacho_uchuva, que tiene cn/n/c y costo distintos ($500 vs $1.200/kg) sin diferencia de procesamiento documentada — probable duplicado del mismo residuo físico bajo dos IDs. Revisar si deberían fusionarse.' },
-  { id: "tallo_floricultura", name: "Tallo de Rosa / Clavel (Sabana)", cat: "local", cn: 48, n: 0.9, c: 42, moisture: 80, cra: 3, ph: 6.3, dig: 4, role: "base_carbono", tags: ["Sin estudiar", "Sabana 85%", "Potencial alto", "Nuevo"], cost: 200, notes: 'Costo $200/kg procesado (recolección + alistamiento de tallos de floricultura) — evita subestimar el costo real frente a residuo "gratis".', cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "p_djamor_rosa"] },
-  { id: "raices_hidroponicas", name: "Raíces Hidropónicas + SMS", cat: "circ", cn: 14, n: 2.1, c: 29, moisture: 88, cra: 3.8, ph: 6.5, dig: 7, role: "suplemento_n", tags: ["EB 61%", "Economía Circular", "Nuevo"], cost: 1800, cs: ["p_ostreatus_blanco", "lions_mane", "nameko", "p_eryngii"], notes: "El nombre indica que es una mezcla propia (raíces hidropónicas + SMS), no una materia prima con mercado independiente — no existe un producto comercial estandarizado con esta denominación. El costo debería derivarse de sus componentes en vez de cotizarse como insumo único; $1.800/kg no está validado contra mercado." },
-  { id: "hemp_hurds", name: "Hemp Hurds (cáñamo industrial)", cat: "sup", cn: 70, n: 0.5, c: 47, moisture: 10, cra: 4, ph: 6.8, dig: 3, role: "base_carbono", tags: ["Mejor Pleurotus EU", "Aireador", "Premium", "Nuevo"], cost: 28e3, cs: ["p_ostreatus_gris", "p_ostreatus_blanco", "lions_mane", "shiitake"] }
-];
-const CATS = { all: "Todos", base_carbono: "Carbono", suplemento_n: "N alto", suplemento_medio: "N medio", aireador: "Aireación", aditivo: "Correctores" };
-const PRESETS = {
-  /* ── RECETAS PRINCIPALES — Proporciones validadas contra C:N objetivo ── */
-  // Orellana Gris: C:N ideal 35. Calc: paja_trigo(c45,n0.5)×60 + salvado(c45,n2.8)×28 + borra(c47,n2.0)×7 → C:N≈35.0 ✓
-  "orellana_gris_basica": { name: "Orellana Gris — Estándar Sabana (C:N≈35)", s: "p_ostreatus_gris", i: [{ id: "paja_trigo", p: 60 }, { id: "salvado_trigo", p: 28 }, { id: "borra_cafe", p: 7 }, { id: "carbonato_calcio", p: 3 }, { id: "yeso", p: 2 }] },
-  // Económico: paja_cebada(c45,n0.5)×50 + salvado×20 + borra×15 + cascarilla×7 → C:N≈36 ✓
-  "orellana_gris_economico": { name: "Orellana Gris — Económico Cero (C:N≈36)", s: "p_ostreatus_gris", i: [{ id: "paja_cebada", p: 50 }, { id: "salvado_trigo", p: 20 }, { id: "borra_cafe", p: 15 }, { id: "cascarilla_arroz", p: 7 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 3 }] },
-  // Orellana Blanca: C:N ideal 30. paja×55 + afrecho(c42,n3.5)×15 + salvado×15 + borra×8 → C:N≈30.1 ✓
-  "orellana_blanca_premium": { name: "Orellana Blanca — Afrecho Premium (C:N≈30)", s: "p_ostreatus_blanco", i: [{ id: "paja_trigo", p: 55 }, { id: "afrecho_cerveceria", p: 15 }, { id: "salvado_trigo", p: 15 }, { id: "borra_cafe", p: 8 }, { id: "carbonato_calcio", p: 4 }, { id: "yeso", p: 3 }] },
-  // Eryngii: C:N ideal 30. paja×40 + roble(c50,n0.1)×15 + afrecho×20 + salvado×17 → C:N≈29 ✓ (requiere autoclave)
-  "eringii_tecnico": { name: "Seta de Cardo — Técnico Autoclave (C:N≈29)", s: "p_eryngii", i: [{ id: "paja_trigo", p: 40 }, { id: "aserrin_roble", p: 15 }, { id: "afrecho_cerveceria", p: 20 }, { id: "salvado_trigo", p: 17 }, { id: "polvo_hueso", p: 3 }, { id: "carbonato_calcio", p: 3 }, { id: "yeso", p: 2 }] },
-  // Shiitake: C:N ideal 50. roble×62 + guadua(c42,n0.35)×8 + salvado×20 + cascarilla_soya×5 → C:N≈54 ✓
-  "shiitake_clasico": { name: "Shiitake — Tradicional Asiático (C:N≈50)", s: "shiitake", i: [{ id: "aserrin_roble", p: 62 }, { id: "guadua", p: 8 }, { id: "salvado_trigo", p: 20 }, { id: "cascarilla_soya", p: 5 }, { id: "polvo_hueso", p: 3 }, { id: "carbonato_calcio", p: 2 }] },
-  // Lions Mane: C:N ideal 40. roble×60 + afrecho×12 + salvado×12 + cascarilla_soya×8 → C:N≈39 ✓
-  "melena_leon_bioest": { name: "Melena de León — Master Enriquecido (C:N≈39)", s: "lions_mane", i: [{ id: "aserrin_roble", p: 60 }, { id: "afrecho_cerveceria", p: 12 }, { id: "salvado_trigo", p: 12 }, { id: "cascarilla_soya", p: 8 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 3 }] },
-  // Reishi: C:N ideal 50. roble×55 + corteza(c48,n0.3)×15 + cascarilla_soya×12 + salvado×12 → C:N≈50 ✓
-  "reishi_especialista": { name: "Reishi — Ultra Especialista (C:N≈50, 4–6 meses)", s: "reishi", i: [{ id: "aserrin_roble", p: 55 }, { id: "corteza_molida", p: 15 }, { id: "cascarilla_soya", p: 12 }, { id: "salvado_trigo", p: 12 }, { id: "carbonato_calcio", p: 4 }, { id: "yeso", p: 2 }] },
-  // Enoki: C:N ideal 27. paja_arroz×35 + pino_comp×15 + afrecho×22 + salvado×15 + cascarilla×5 → C:N≈27 ✓ (5–12°C)
-  // Enoki: paja_arroz×35 + alamo(c45,n0.2)×15 + afrecho×22 + salvado×15 → C:N≈27 ✓ | alamo cs incluye enoki ✓
-  "enoki_comercial": { name: "Enoki — Comercial Frío 5–12°C (C:N≈27)", s: "enoki", i: [{ id: "paja_arroz", p: 35 }, { id: "aserrin_alamo", p: 15 }, { id: "afrecho_cerveceria", p: 22 }, { id: "salvado_trigo", p: 15 }, { id: "cascarilla_arroz", p: 5 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 3 }] },
-  // Nameko: C:N ideal 40. roble×45 + paja_arroz×20 + afrecho×15 + salvado×10 + borra×5 → C:N≈41 ✓
-  "nameko_balanceado": { name: "Nameko — Umami Balanceado (C:N≈41)", s: "nameko", i: [{ id: "aserrin_roble", p: 45 }, { id: "paja_arroz", p: 20 }, { id: "afrecho_cerveceria", p: 15 }, { id: "salvado_trigo", p: 10 }, { id: "borra_cafe", p: 5 }, { id: "carbonato_calcio", p: 3 }, { id: "yeso", p: 2 }] },
-  // Orellana Rosa: C:N ideal 40. bagazo_caña(c42,n0.7)×50 + paja_arroz×20 + borra×10 + salvado×12 → C:N≈39 ✓
-  "orellana_rosa_calida": { name: "Orellana Rosa — Cálida Caña+Arroz (C:N≈39)", s: "p_djamor_rosa", i: [{ id: "bagazo_caña", p: 50 }, { id: "paja_arroz", p: 20 }, { id: "borra_cafe", p: 10 }, { id: "salvado_trigo", p: 12 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 3 }] },
-  /* ── Presets Sabana de Bogotá 2026 — ingredientes locales validados ── */
-  // Alfalfa: paja_trigo×68 + pulpa_alfalfa(c33,n3.0)×17 + afrecho×8 → C:N≈35 ✓ | EB referenciado 166%
-  "alfalfa_eb166": { name: "Pulpa de Alfalfa — Máximo EB (C:N≈35)", s: "p_ostreatus_gris", i: [{ id: "paja_trigo", p: 68 }, { id: "pulpa_alfalfa", p: 17 }, { id: "afrecho_cerveceria", p: 8 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 2 }] },
-  // Uchuva: cascara_uchuva(c35,n1.2)×50 + paja_trigo×28 + borra×5 + salvado×10 → C:N≈33 ✓ (validado Colombia)
-  "uchuva_local": { name: "Uchuva Cundinamarca — Validado CO (C:N≈33)", s: "p_ostreatus_gris", i: [{ id: "cascara_uchuva", p: 50 }, { id: "paja_trigo", p: 28 }, { id: "borra_cafe", p: 5 }, { id: "salvado_trigo", p: 10 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 2 }] },
-  // Floricultura: tallo_floricultura(c42,n0.9)×50 + paja_arroz×25 + afrecho×15 + borra×5 → C:N≈33 ✓ (exploración)
-  "floricultura_exploracion": { name: "Tallo de Floricultura — Exploración (C:N≈33)", s: "p_ostreatus_blanco", i: [{ id: "tallo_floricultura", p: 50 }, { id: "paja_arroz", p: 25 }, { id: "afrecho_cerveceria", p: 15 }, { id: "borra_cafe", p: 5 }, { id: "carbonato_calcio", p: 3 }, { id: "yeso", p: 2 }] },
-  // Tuza de maíz: tusa_maiz(c45,n0.7)×60 + salvado(c45,n2.8)×25 + borra(c47,n2.0)×8 → C:N≈35.2 ✓
-  "tuza_maiz_sabana": { name: "Tuza de Maíz — Estándar Sabana (C:N≈35)", s: "p_ostreatus_gris", i: [{ id: "tusa_maiz", p: 60 }, { id: "salvado_trigo", p: 25 }, { id: "borra_cafe", p: 8 }, { id: "carbonato_calcio", p: 4 }, { id: "yeso", p: 3 }] },
-  // Circular: chips_poda×35 + raices_hidrop×15 + roble×25 + cascarilla_soya×8 + salvado×10 → C:N≈39 ✓
-  "circular_hidroponico": { name: "Circular Hidropónico — Economía Circular (C:N≈39)", s: "lions_mane", i: [{ id: "chips_poda_urbana", p: 35 }, { id: "raices_hidroponicas", p: 15 }, { id: "aserrin_roble", p: 25 }, { id: "cascarilla_soya", p: 8 }, { id: "salvado_trigo", p: 10 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 2 }] },
-  /* ── Bodega Tenjo 2026 — formuladas con inventario propio (sin afrecho de cervecería) ── */
-  "bodega_gris": { name: "⬡ Bodega — Orellana Gris (C:N≈33, solo inventario)", s: "p_ostreatus_gris", i: [{ id: "bagazo_caña", p: 50 }, { id: "salvado_trigo", p: 20 }, { id: "borra_cafe", p: 13 }, { id: "cascarilla_arroz", p: 11 }, { id: "carbonato_calcio", p: 4 }, { id: "sulfato_magnesio", p: 2 }] },
-  "bodega_rosa": { name: "⬡ Bodega — Orellana Rosa (C:N≈42, solo inventario)", s: "p_djamor_rosa", i: [{ id: "bagazo_caña", p: 60 }, { id: "cascarilla_arroz", p: 10 }, { id: "borra_cafe", p: 9 }, { id: "cascara_cafe", p: 8 }, { id: "salvado_trigo", p: 7 }, { id: "carbonato_calcio", p: 4 }, { id: "sulfato_magnesio", p: 2 }] },
-  "bodega_blanca": { name: "⬡ Bodega — Orellana Blanca (C:N≈31, esterilizar: suplemento alto)", s: "p_ostreatus_blanco", i: [{ id: "bagazo_caña", p: 50 }, { id: "salvado_trigo", p: 24 }, { id: "borra_cafe", p: 13 }, { id: "cascarilla_arroz", p: 8 }, { id: "carbonato_calcio", p: 3 }, { id: "sulfato_magnesio", p: 2 }] },
-  "bodega_blanca_maiz": { name: "⬡ Bodega+ — Blanca con harina de maíz (C:N≈28, $600/kg N)", s: "p_ostreatus_blanco", i: [{ id: "bagazo_caña", p: 50 }, { id: "harina_maiz", p: 16 }, { id: "salvado_trigo", p: 12 }, { id: "borra_cafe", p: 8 }, { id: "cascarilla_arroz", p: 8 }, { id: "carbonato_calcio", p: 4 }, { id: "sulfato_magnesio", p: 2 }] },
-  "bodega_melena_mastermix": { name: "⬡ Melena — Master’s Mix roble+soya (C:N≈30, literatura 150–180% EB)", s: "lions_mane", i: [{ id: "aserrin_roble", p: 55 }, { id: "cascarilla_soya", p: 30 }, { id: "salvado_trigo", p: 10 }, { id: "carbonato_calcio", p: 3 }, { id: "sulfato_magnesio", p: 2 }] },
-  /* ── Presets clásicos (compatibilidad) ── */
-  kk1c: { name: "KK-1c (Sabana clásico)", s: "p_ostreatus_gris", i: [{ id: "kikuyo", p: 43 }, { id: "aserrin_eucalipto", p: 28 }, { id: "cascarilla_arroz", p: 8 }, { id: "salvado_trigo", p: 8 }, { id: "yeso", p: 2 }, { id: "carbonato_calcio", p: 1 }] },
-  paja: { name: "Paja + Salvado (básico)", s: "p_ostreatus_gris", i: [{ id: "paja_trigo", p: 80 }, { id: "salvado_trigo", p: 18 }, { id: "yeso", p: 1 }, { id: "carbonato_calcio", p: 1 }] },
-  master: { name: "Master's Mix (Stamets)", s: "lions_mane", i: [{ id: "aserrin_roble", p: 50 }, { id: "cascarilla_soya", p: 50 }] },
-  cafe: { name: "Café + Uchuva (circular)", s: "p_ostreatus_gris", i: [{ id: "paja_trigo", p: 45 }, { id: "borra_cafe", p: 25 }, { id: "capacho_uchuva", p: 20 }, { id: "salvado_trigo", p: 7 }, { id: "yeso", p: 2 }, { id: "carbonato_calcio", p: 1 }] },
-  platano: { name: "Plátano + Salvado", s: "p_djamor_rosa", i: [{ id: "pseudotallo_platano", p: 55 }, { id: "cascara_platano", p: 20 }, { id: "salvado_trigo", p: 15 }, { id: "carbonato_calcio", p: 5 }, { id: "yeso", p: 3 }, { id: "melaza", p: 2 }] },
-  hojarasca: { name: "Hojarasca UNAL", s: "p_ostreatus_gris", i: [{ id: "kikuyo", p: 50 }, { id: "hojarasca", p: 30 }, { id: "rastrojo_frijol", p: 10 }, { id: "carbonato_calcio", p: 7 }, { id: "yeso", p: 3 }] }
-};
+const SetasSubstrateCatalogApi = typeof SetasSubstrateCatalog !== "undefined" ? SetasSubstrateCatalog : typeof require !== "undefined" ? require("./substrate-catalog.js") : null;
+const SPP = SetasSubstrateCatalogApi.SPP;
+const INGS = SetasSubstrateCatalogApi.INGS;
+const CATS = SetasSubstrateCatalogApi.CATS;
+const PRESETS = SetasSubstrateCatalogApi.PRESETS;
 const BAG_TYPES = [
   {
     id: "bolsa_20x50",
@@ -999,93 +842,9 @@ const SppSvg = ({ sKey, c }) => {
   };
   return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 70 90", width: "66", height: "79", style: { display: "block", overflow: "visible" } }, m[sKey] || m.p_ostreatus_gris);
 };
-const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
-const analyze = (recipe, sKey, ings = INGS, spp = SPP) => {
-  if (!recipe.length) return null;
-  const tot = recipe.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
-  if (!tot) return null;
-  let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, suppP = 0, suppMedP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
-  const DENSOS = ["aserrin_roble", "aserrin_eucalipto", "aserrin_pino", "aserrin_pino_compostado", "borra_cafe", "afrecho_cerveceria", "chips_poda_urbana", "guadua", "carton_corrugado", "pulpa_papel"];
-  recipe.forEach((r) => {
-    const g = ings.find((i) => i.id === r.id);
-    if (!g) return;
-    const p = parseFloat(r.p) || 0;
-    const esAditivoSeco = g.role === "aditivo_ph" || g.role === "aditivo_estructura";
-    if (g.cn > 0 && !esAditivoSeco) {
-      wC += g.c * p;
-      wN += g.n * p;
-      nP += p;
-    }
-    wPh += g.ph * p;
-    wDig += g.dig * p;
-    wCra += g.cra * p;
-    if (g.role === "suplemento_n") suppP += p;
-    if (g.role === "suplemento_medio") suppMedP += p;
-    if (g.role === "base_carbono") baseP += p;
-    if (["aditivo_ph", "aditivo_estructura", "aditivo_micronutriente"].includes(g.role)) addP += p;
-    if (g.role === "aireador") airP += p;
-    if (g.cat === "cafe") cafeP += p;
-    if (g.cat === "est") manP += p;
-    if (DENSOS.includes(g.id)) densaP += p;
-    if (sKey && !g.cs.includes(sKey) && g.cn > 0) incompat.push(g.name);
-  });
-  const avgN = nP ? wN / nP : 0, cn = avgN > 0 ? (nP ? wC / nP : 0) / avgN : 0;
-  const avgPh = tot ? wPh / tot : 7;
-  const avgDig = tot ? wDig / tot : 5;
-  const avgCra = tot ? wCra / tot : 3;
-  const suppTotalP = suppP + suppMedP;
-  const suppEffectiveP = suppP + suppMedP * 0.6;
-  const cost = recipe.reduce((s, r) => {
-    const g = ings.find((i) => i.id === r.id);
-    if (!g) return s;
-    const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
-    return s + g.cost / (1 - m) * (parseFloat(r.p) || 0) / 100;
-  }, 0);
-  const sp = spp[sKey];
-  let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
-  if (sp) {
-    const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - sp.cn_optimal.ideal) / ((sp.cn_optimal.max - sp.cn_optimal.min) / 2), 1.5));
-    const nF = Math.max(0, 1 - Math.pow(Math.abs(avgN - sp.n_optimal.ideal) / ((sp.n_optimal.max - sp.n_optimal.min) / 2), 1.5));
-    eb = sp.eb_baseline + (sp.eb_optimal - sp.eb_baseline) * (cF * 0.6 + nF * 0.4);
-    const needsAutoclave = suppEffectiveP > sp.supplementation_max;
-    const nThresh = needsAutoclave ? sp.n_optimal.max * 1.2 : sp.n_optimal.max * 1.15;
-    if (avgN > nThresh && !needsAutoclave) {
-      trichoderma = true;
-      eb *= 0.45;
-    } else if (avgN > nThresh && needsAutoclave) {
-      eb *= 0.8;
-    } else if (needsAutoclave) eb *= 0.85;
-    if (incompat.length) eb *= 0.9;
-    if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
-    var phF = 1;
-    if (sp.ph_optimal) {
-      if (avgPh < sp.ph_optimal.min) phF = Math.max(0.7, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
-      else if (avgPh > sp.ph_optimal.max) phF = Math.max(0.8, 1 - (avgPh - sp.ph_optimal.max) * 0.1);
-    }
-    var aerF = 1;
-    if (densaP > 60 && airP < 10) aerF = 0.85;
-    else if (densaP > 40 && airP < 8) aerF = 0.93;
-    const isLigninSpp = ["shiitake", "reishi"].includes(sKey);
-    var digF = isLigninSpp ? 1 : avgDig >= 6 ? 1 : Math.max(0.85, 1 - (6 - avgDig) * 0.03);
-    eb = eb * phF * aerF * digF;
-    var ebMods = { phF, aerF, digF };
-    var ebCvVal = 0.18;
-    if (ebMods.phF < 0.95) ebCvVal += 0.05;
-    if (ebMods.aerF < 0.95) ebCvVal += 0.05;
-    if (ebMods.digF < 0.95) ebCvVal += 0.04;
-    if (incompat.length) ebCvVal += 0.08;
-    if (suppEffectiveP > sp.supplementation_max) ebCvVal += 0.1;
-    if (trichoderma) ebCvVal = 0.5;
-    ebCvVal = Math.min(trichoderma ? 0.5 : 0.4, ebCvVal);
-    var ebLow = Math.round(eb * (1 - ebCvVal));
-    var ebHigh = Math.round(eb * (1 + ebCvVal));
-    var ebIndex = Math.round(Math.max(0, Math.min(100, (eb - sp.eb_baseline) / Math.max(1, sp.eb_optimal - sp.eb_baseline) * 100)));
-    dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppEffectiveP / 5));
-  }
-  const eucPct = recipe.reduce((s, r) => r.id === "aserrin_eucalipto" ? s + (parseFloat(r.p) || 0) : s, 0);
-  const pescPct = recipe.reduce((s, r) => r.id === "harina_pescado" ? s + (parseFloat(r.p) || 0) : s, 0);
-  return { tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, suppMedP, suppTotalP, suppEffectiveP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct, ebLow: typeof ebLow !== "undefined" ? ebLow : Math.round(eb), ebHigh: typeof ebHigh !== "undefined" ? ebHigh : Math.round(eb), ebIndex: typeof ebIndex !== "undefined" ? ebIndex : 0, ebMods: typeof ebMods !== "undefined" ? ebMods : null };
-};
+const SetasSubstrateAnalysisApi = typeof SetasSubstrateAnalysis !== "undefined" ? SetasSubstrateAnalysis : typeof require !== "undefined" ? require("./substrate-analysis.js") : null;
+const EB_PENALTY_BALANCE_BAND = SetasSubstrateAnalysisApi.EB_PENALTY_BALANCE_BAND;
+const analyze = SetasSubstrateAnalysisApi.analyze;
 if (typeof window !== "undefined") {
   window.INGS = INGS;
   window.SPP = SPP;
@@ -1105,59 +864,8 @@ const massBalanceMsg = (a) => {
   if (Math.abs(d) <= MASS_BALANCE_TOL) return `Balance de masa: ${a.tot.toFixed(1)}% = 100% (OK)`;
   return d < 0 ? `Balance de masa: ${a.tot.toFixed(1)}% − 100% = ${d.toFixed(1)} pp · faltan ${Math.abs(d).toFixed(1)}%` : `Balance de masa: ${a.tot.toFixed(1)}% − 100% = +${d.toFixed(1)} pp · sobran ${d.toFixed(1)}%`;
 };
-const diagnose = (a, sKey) => {
-  if (!a) return { main: "Selecciona ingredientes para comenzar.", sugs: [] };
-  const { tot, cn, avgN, suppP, baseP, addP, cafeP, airP, densaP, incompat, eb, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct } = a;
-  const s = [];
-  if (tot < 95) s.push({ t: "error", i: "!", tx: `Total ${tot.toFixed(1)}% — necesitas ${(100 - tot).toFixed(1)}% más.` });
-  else if (tot > 105) s.push({ t: "error", i: "!", tx: `Total ${tot.toFixed(1)}% — reduce ${(tot - 100).toFixed(1)}%.` });
-  if (sp) {
-    if (cn < sp.cn_optimal.min) s.push({ t: "warning", i: "↓", tx: `C:N bajo (${cn.toFixed(1)}:1). Agrega base carbono. Objetivo ${sp.cn_optimal.min}–${sp.cn_optimal.max}:1.` });
-    else if (cn > sp.cn_optimal.max) s.push({ t: "warning", i: "↑", tx: `C:N alto (${cn.toFixed(1)}:1). Agrega salvado o café.` });
-    else s.push({ t: "success", i: "", tx: `C:N óptimo (${cn.toFixed(1)}:1) para ${sp.name}.` });
-    if (trichoderma) s.push({ t: "error", i: "!", tx: `COLAPSO TRICHODERMA: N=${avgN.toFixed(2)}% supera umbral crítico sin autoclave. EB cae ~85%. Opciones: reducir N, usar autoclave 121°C×90min, spawn ${dynSpawn}%+.` });
-    else if (avgN < sp.n_optimal.min) s.push({ t: "warning", i: "↓", tx: `Nitrógeno bajo (${avgN.toFixed(2)}%). Aumenta salvado o borra de café.` });
-    else if (avgN > sp.n_optimal.max) s.push({ t: "warning", i: "↑", tx: `Nitrógeno elevado (${avgN.toFixed(2)}%). Riesgo moderado. Spawn ajustado: ${dynSpawn}%.` });
-    else s.push({ t: "success", i: "", tx: `Nitrógeno óptimo (${avgN.toFixed(2)}%). Spawn dinámico: ${dynSpawn}%.` });
-    if (suppP > sp.supplementation_max) s.push({ t: "error", i: "!", tx: `Suplementación ${suppP.toFixed(0)}% excede ${sp.supplementation_max}%. REQUIERE AUTOCLAVE 121°C×90min. Spawn: ${dynSpawn}%.` });
-    if (sp.ph_optimal) {
-      if (avgPh < sp.ph_optimal.min) s.push({ t: "error", i: "", tx: `pH estimado ${avgPh.toFixed(1)} — demasiado ácido para ${sp.name} (óptimo ${sp.ph_optimal.min}–${sp.ph_optimal.max}). Agrega carbonato de calcio o ceniza vegetal.` });
-      else if (avgPh > sp.ph_optimal.max) s.push({ t: "warning", i: "", tx: `pH estimado ${avgPh.toFixed(1)} — ligeramente alcalino para ${sp.name} (óptimo ${sp.ph_optimal.min}–${sp.ph_optimal.max}). Reduce cal/yeso o agrega borra de café/aserrín.` });
-      else s.push({ t: "success", i: "", tx: `pH estimado ${avgPh.toFixed(1)} — dentro del rango óptimo para ${sp.name} (${sp.ph_optimal.min}–${sp.ph_optimal.max}).` });
-    }
-  }
-  if (baseP < 50) s.push({ t: "warning", i: "↓", tx: `Base carbono baja (${baseP.toFixed(0)}%). Mínimo 50%.` });
-  if (addP < 2) s.push({ t: "warning", i: "!", tx: `Sin minerales. Agrega 2–4% carbonato/yeso.` });
-  if (cafeP > 30) s.push({ t: "error", i: "!", tx: `Borra café ${cafeP.toFixed(0)}% — compactación. Máx 30%.` });
-  if (eucPct > 20) s.push({ t: "warning", i: "!", tx: `Aserín de eucalipto ${eucPct.toFixed(0)}% — aceites esenciales (cineol, terpineol) reducen colonización 20–35%. Máximo recomendado: 20%.` });
-  if (pescPct > 3) s.push({ t: "error", i: "!", tx: `Harina de pescado ${pescPct.toFixed(0)}% supera el 3% — riesgo elevado de ácaros y Sciaridae por olor. Reducir a ≤3% o eliminar.` });
-  else if (cafeP > 0) s.push({ t: "success", i: "", tx: `Café en proporción saludable (${cafeP.toFixed(0)}%).` });
-  if (densaP > 60 && airP < 10) s.push({ t: "error", i: "", tx: `Riesgo anaerobiosis: ${densaP.toFixed(0)}% material denso + solo ${airP.toFixed(0)}% aireador. Agrega 10–15% cascarilla de arroz o tamo.` });
-  else if (densaP > 40 && airP < 8) s.push({ t: "warning", i: "", tx: `Estructura densa (${densaP.toFixed(0)}% fino, ${airP.toFixed(0)}% aireador). Agrega 8–10% cascarilla.` });
-  else s.push({ t: "success", i: "", tx: `Buena aireación (${airP.toFixed(0)}% aireador). O₂ adecuado.` });
-  const digLbl = avgDig >= 8 ? "Alta — colonización rápida (7–14 días)" : avgDig >= 5 ? "Media — colonización estándar (14–21 días)" : "Baja — sustrato lignificado (21–35+ días). Considera pretratamiento o esporas de Shiitake/Reishi.";
-  s.push({ t: avgDig >= 8 ? "success" : avgDig >= 5 ? "warning" : "warning", i: "", tx: `Digestibilidad ${avgDig.toFixed(1)}/10 — ${digLbl}` });
-  const craLbl = avgCra >= 4 ? "Alta — reduce agua de hidratación ~10%" : avgCra <= 2 ? "Baja — hidratar bien, revisar punto de campo" : null;
-  if (craLbl) s.push({ t: "warning", i: "", tx: `CRA ${avgCra.toFixed(1)}/5 — ${craLbl}` });
-  const moistLbl = SetasSpeciesTargetsApi?.targetSourceLabel(sp?.targets, "moisture");
-  const moistNote = moistLbl === "Objetivo heredado" ? " (valor heredado sin verificar)" : moistLbl === "Objetivo genérico" ? " (objetivo genérico)" : "";
-  s.push({ t: "success", i: "△", tx: `Tenjo 2.580 msnm: humedad objetivo ${sp?.moisture?.ideal ?? "—"}%${moistNote}. Pasteurización sin presión: +25% tiempo. CWLP: pH≥12.` });
-  if (incompat.length) s.push({ t: "warning", i: "!", tx: `No ideales para ${sp?.name}: ${incompat.join(", ")}.` });
-  if (a.ebMods) {
-    const m = a.ebMods, pen = [];
-    if (m.phF < 1) pen.push(`pH −${Math.round((1 - m.phF) * 100)}%`);
-    if (m.aerF < 1) pen.push(`aireación −${Math.round((1 - m.aerF) * 100)}%`);
-    if (m.digF < 1) pen.push(`digestibilidad −${Math.round((1 - m.digF) * 100)}%`);
-    if (pen.length) s.push({ t: "warning", i: "-", tx: `EB ajustada por: ${pen.join(", ")}. Corrige estos factores para acercarte al EB máximo de la especie.` });
-  }
-  let main = "";
-  if (s.filter((x) => x.t === "error").length) main = "Problemas críticos. Revisar antes de continuar.";
-  else if (s.filter((x) => x.t === "warning").length > 2) main = "Receta funcional con margen de optimización.";
-  else if (eb > 100) main = "Receta excelente — eficiencia biológica esperada superior al promedio.";
-  else if (eb > 80) main = "Receta satisfactoria para producción estándar.";
-  else main = "Receta funcional. Revisar sugerencias.";
-  return { main, sugs: s };
-};
+const SetasSubstrateDiagnosisApi = typeof SetasSubstrateDiagnosis !== "undefined" ? SetasSubstrateDiagnosis : typeof require !== "undefined" ? require("./substrate-diagnosis.js") : null;
+const diagnose = SetasSubstrateDiagnosisApi.diagnose;
 const {
   setPctProportional,
   solveTargetPct,
