@@ -7,6 +7,7 @@
 }
 .sdp-table td { font: var(--t-data); color: var(--text-primary); padding: var(--space-1); border-bottom: var(--rule-hairline); }
 .sdp-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.sdp-table th.num { text-align: right; }
 .sdp-table td.name { font: var(--t-small); }
 .sdp-table td.name i { font-family: var(--font-editorial); font-size: var(--size-small); }
 .sdp-table tbody tr:nth-child(even) { background: var(--surface-panel); }

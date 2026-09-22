@@ -33,12 +33,14 @@
 }
 .sdp-btn--secondary:hover { background: var(--action-secondary-hover); }
 
+/* Accent is outlined: coral signs the action without reading as an alarm.
+   A filled coral button is reserved for .sdp-btn--danger. */
 .sdp-btn--accent {
-  background: var(--action-accent);
+  background: var(--action-secondary);
   border-color: var(--action-accent);
   color: var(--action-accent-text);
 }
-.sdp-btn--accent:hover { background: var(--action-accent-hover); text-decoration: underline; }
+.sdp-btn--accent:hover { background: var(--brand-accent-tint); text-decoration: underline; }
 
 .sdp-btn--field {
   min-height: var(--field-cell-min-height);

@@ -13,10 +13,10 @@
 /* Status bar */
 .sdp-lote__status { display: flex; align-items: center; gap: var(--space-1); }
 .sdp-lote__bar { height: 4px; flex: 1; background: var(--surface-recessed); }
-.sdp-lote__bar span { display: block; height: 100%; background: var(--status-ok); }
+.sdp-lote__bar span { display: block; height: 100%; background: var(--status-ok-marker); }
 .sdp-lote__state { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .sdp-lote--ok    .sdp-lote__state { color: var(--status-ok); }
-.sdp-lote--ok    .sdp-lote__bar span { background: var(--status-ok); }
+.sdp-lote--ok    .sdp-lote__bar span { background: var(--status-ok-marker); }
 .sdp-lote--warn  .sdp-lote__state { color: var(--status-warn-text); }
 .sdp-lote--warn  .sdp-lote__bar span { background: var(--status-warn-marker); }
 .sdp-lote--error .sdp-lote__state { color: var(--status-error); }

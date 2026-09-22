@@ -14,7 +14,7 @@
 }
 
 .sdp-sync-chip--synced {
-  border-left: 4px solid var(--status-ok);
+  border-left: 4px solid var(--status-ok-marker);
   color: var(--status-ok);
 }
 
