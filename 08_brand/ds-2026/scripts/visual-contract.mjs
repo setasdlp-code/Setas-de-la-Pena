@@ -358,6 +358,16 @@ check('public bundle contract is non-nested', () => {
   }
 });
 
+// Gate 16: The legacy components.css facade carries every component module index.css does.
+// It had silently dropped provenance, reading, capture, sync and archive.
+check('components.css facade covers every index.css component module', () => {
+  const mods = (css, re) => new Set([...css.matchAll(re)].map(m => m[1].replace(/^shared\/action\.css$/, 'shared/actions.css')));
+  const index = mods(fs.readFileSync(path.join(DS_ROOT, 'index.css'), 'utf8'), /@import\s+["']components\/((?:shared|operations|market)\/[\w-]+\.css)["']/g);
+  const facade = mods(fs.readFileSync(path.join(DS_ROOT, 'components/components.css'), 'utf8'), /@import\s+["']\.\/((?:shared|operations|market)\/[\w-]+\.css)["']/g);
+  const missing = [...index].filter(m => !facade.has(m));
+  if (missing.length) throw new Error('components/components.css is missing: ' + missing.join(', '));
+});
+
 console.log(`\nResults: ${passedChecks}/${totalChecks} gates passed (${failedChecks} failed).`);
 if (failedChecks > 0) {
   process.exit(1);

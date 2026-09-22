@@ -1,7 +1,7 @@
 /* DS-2026 · Operations: SOP & Task Checklist */
 .sdp-sop { background: var(--surface-page); display: grid; gap: var(--space-3); }
 .sdp-sop__hd { border-bottom: var(--rule-heavy); padding-bottom: var(--space-2); display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3); }
-.sdp-sop__step { border: var(--rule-frame); padding: var(--space-2); display: grid; grid-template-columns: 40px 1fr; gap: var(--space-2); }
+.sdp-sop__step { border: var(--rule-frame); padding: var(--space-2); display: grid; grid-template-columns: var(--step-index) 1fr; gap: var(--space-2); }
 .sdp-sop__n { font: var(--t-data); font-size: var(--size-heading-02); color: var(--text-metadata); line-height: 1; }
 .sdp-sop__st { font: var(--t-heading-03); margin-bottom: var(--space-half); }
 .sdp-sop__sb { font: var(--t-small); color: var(--text-primary); }
@@ -16,15 +16,15 @@
   min-height: var(--field-cell-min-height);
   gap: var(--space-2);
 }
-.sdp-task--overdue { border-left: 4px solid var(--status-error); }
-.sdp-task--now     { border-left: 4px solid var(--status-ok-marker); }
-.sdp-task--critical{ border-left: 4px solid var(--status-error); background: var(--surface-panel); }
-.sdp-task--later   { border-left: 4px solid var(--text-secondary); }
+.sdp-task--overdue { border-left: var(--bar-height) solid var(--status-error); }
+.sdp-task--now     { border-left: var(--bar-height) solid var(--status-ok-marker); }
+.sdp-task--critical{ border-left: var(--bar-height) solid var(--status-error); background: var(--surface-panel); }
+.sdp-task--later   { border-left: var(--bar-height) solid var(--text-secondary); }
 
 .sdp-task__body { flex: 1; min-width: 0; }
-.sdp-task__title { font-family: var(--font-sans); font-size: 14px; font-weight: var(--weight-semibold); color: var(--text-primary); }
-.sdp-task__meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.sdp-task__due { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: bold; }
+.sdp-task__title { font-family: var(--font-sans); font-size: var(--size-small); font-weight: var(--weight-semibold); color: var(--text-primary); }
+.sdp-task__meta { font-family: var(--font-mono); font-size: var(--size-data); color: var(--text-secondary); margin-top: 2px; }
+.sdp-task__due { font-family: var(--font-mono); font-size: var(--size-label); text-transform: uppercase; color: var(--text-secondary); font-weight: var(--weight-bold); }
 .sdp-task--overdue .sdp-task__due,
 .sdp-task--critical .sdp-task__due { color: var(--status-error); }
 
@@ -34,7 +34,7 @@
 .sdp-band {
   background: var(--surface-page);
   border: var(--rule-frame);
-  border-left: 5px solid var(--border-heavy);
+  border-left: var(--band-rule) solid var(--border-heavy);
   padding: var(--space-2);
 }
 .sdp-band + .sdp-band { margin-top: var(--space-3); }

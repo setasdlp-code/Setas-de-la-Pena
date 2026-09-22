@@ -15,7 +15,7 @@ table, td, th, .t-data, .t-label, .t-micro, [data-numeric] { font-variant-numeri
 a {
   color: var(--text-primary);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: var(--rule-offset);
   text-decoration-thickness: 1px;
 }
 a:hover { color: var(--moss); }

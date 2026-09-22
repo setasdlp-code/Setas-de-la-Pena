@@ -58,6 +58,20 @@
       "hairline": "1px",
       "heavy": "2px",
       "frame": "1px"
+    },
+    "component": {
+      "barHeight": "4px",
+      "markerWidth": "3px",
+      "bandRule": "5px",
+      "signFrame": "3px",
+      "dataLg": "28px",
+      "dataXl": "36px",
+      "ingredient": "64px",
+      "stepIndex": "40px",
+      "stepIndexSm": "28px",
+      "plateHeight": "148px",
+      "ruleOffset": "3px",
+      "description": "Fixed component measurements. Consumed as CSS variables; never repeat these literals in components/."
     }
   }
 }

@@ -2,20 +2,26 @@
    DS-2026 · Components Layer [STABLE LEGACY ENTRYPOINT]
    Maintained for backwards compatibility with Setas OS and existing consumers.
    Delegates to modular components in shared/, operations/, and market/.
+   Same module set and order as index.css (minus tokens/core, which base.css loads).
    ═══════════════════════════════════════════════════════════════ */
-@import "./shared/metadata.css";
-@import "./shared/species.css";
-@import "./shared/figure.css";
 @import "./shared/status.css";
+@import "./shared/metadata.css";
+@import "./shared/provenance.css";
 @import "./shared/action.css";
+@import "./shared/reading.css";
 @import "./shared/forms.css";
+@import "./shared/figure.css";
+@import "./shared/species.css";
 
 @import "./operations/lot.css";
-@import "./operations/event.css";
-@import "./operations/task.css";
 @import "./operations/room.css";
+@import "./operations/task.css";
+@import "./operations/event.css";
 @import "./operations/inventory.css";
 @import "./operations/telemetry.css";
+@import "./operations/capture.css";
+@import "./operations/sync.css";
 
 @import "./market/packaging.css";
 @import "./market/traceability.css";
+@import "./market/archive.css";
