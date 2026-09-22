@@ -291,10 +291,16 @@ escritos y se conservan tal cual. `perito-regression` deja de ser inerte en la F
   "que arregle el perito".
 - **`claude plugin eval`**: los skills nuevos deben tener suite de eval — un skill que
   no dispara cuando debe es un skill que no existe.
-- **MCP `setas`**: los dos servidores (`setas`, `setas-bridge`) **fallan al arrancar**
-  (`ENOENT: ${CLAUDE_PROJECT_DIR}/.venv/bin/python`). Falta el venv o la variable no se
-  expande. Arreglarlo da a los agentes acceso directo a `knowledge_base/` sin grep — es
-  ahorro de contexto directo y es prerrequisito barato del agente D.
+- **MCP `setas`**: resuelto. Eran las dos causas que esta nota planteaba como
+  alternativas, en secuencia. Primero faltaba el venv (`.venv/` está en .gitignore, así
+  que en cada checkout nuevo el intérprete no existía) — lo arregla `mcp/run_server.sh`,
+  que lo crea e instala `mcp/requirements.txt` de forma idempotente. Después quedó el
+  segundo: `${CLAUDE_PROJECT_DIR}` **no se expande en `args` de `.mcp.json`** —la
+  sustitución existe para los hooks de `.claude/settings.json`, no para la config MCP—,
+  así que `sh` recibía la ruta literal y salía de inmediato (`CONNECTION_CLOSED`). La
+  config usa ahora la ruta relativa `mcp/run_server.sh`, que es como resolvía antes de
+  introducir el lanzador. Verificado: ambos servidores responden un `initialize`
+  JSON-RPC válido con el comando exacto del config.
 
 ### 3.3 Lo que NO hay que agregar
 
