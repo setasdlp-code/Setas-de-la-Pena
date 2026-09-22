@@ -59,7 +59,11 @@ before(async () => {
     server.listen(0, '127.0.0.1', resolve);
   });
   baseUrl = `http://127.0.0.1:${server.address().port}`;
-  browser = await chromium.launch({ headless: true });
+  // Mismo escape que paso1-criterio-gate.test.js: donde hay un Chromium
+  // preinstalado de otra versión que la fijada por Playwright, el build fijado
+  // no existe y el gate falla por entorno, no por contrato.
+  const executablePath = process.env.SETAS_CHROMIUM_EXECUTABLE || undefined;
+  browser = await chromium.launch({ headless: true, executablePath });
 });
 
 after(async () => {
