@@ -127,7 +127,9 @@ if (px("label") or 0) < 11: type_errors.append("label must be >= 11px")
 if (px("data") or 0) < 13: type_errors.append("data must be >= 13px")
 if (px("body") or 0) < 16: type_errors.append("body must be >= 16px")
 if "lot-code-print" not in scale: type_errors.append("lot-code-print role is required")
-if scale.get("micro-print", {}).get("use", "").lower().find("lot code") >= 0:
+# Only a sentence that permits lot codes is a violation; "Never use for … lot code" is the rule itself.
+_mp_use = scale.get("micro-print", {}).get("use", "").lower()
+if any("lot code" in s and "never" not in s for s in re.split(r"[.;]", _mp_use)):
     type_errors.append("micro-print must not be used for lot codes")
 print(f"9 · typography          {len(type_errors)} invariant violation(s)")
 fails += type_errors
