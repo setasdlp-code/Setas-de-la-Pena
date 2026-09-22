@@ -184,7 +184,7 @@
         "value": "{color.primitive.paper-50}"
       },
       "borderHairline": {
-        "value": "{color.primitive.ink-500}"
+        "value": "{color.primitive.rule-500}"
       },
       "borderHeavy": {
         "value": "{color.primitive.ink-900}"

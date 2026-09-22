@@ -54,7 +54,7 @@
   --text-secondary: var(--ink-700);
   --text-metadata: var(--ink-500);
   --text-inverse: var(--paper-50);
-  --border-hairline: var(--ink-500);
+  --border-hairline: var(--rule-500);
   --border-heavy: var(--ink-900);
   --border-strong: var(--ink-900);
   --brand-primary: var(--moss-700);

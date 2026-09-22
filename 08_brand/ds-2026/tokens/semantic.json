@@ -34,8 +34,8 @@
     },
     "border": {
       "hairline": {
-        "value": "{color.primitive.ink-500}",
-        "description": "1px hairline border, specimen frames, subtle table rules."
+        "value": "{color.primitive.rule-500}",
+        "description": "1px hairline border, specimen frames, subtle table rules. Rule 500 (3.22:1 graphic): ink 500 sat too close to secondary text and boxed cards in."
       },
       "heavy": {
         "value": "{color.primitive.ink-900}",
