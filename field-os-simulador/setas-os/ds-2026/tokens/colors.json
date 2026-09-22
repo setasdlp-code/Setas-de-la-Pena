@@ -184,7 +184,7 @@
         "value": "{color.primitive.paper-50}"
       },
       "borderHairline": {
-        "value": "{color.primitive.ink-500}"
+        "value": "{color.primitive.rule-500}"
       },
       "borderHeavy": {
         "value": "{color.primitive.ink-900}"
@@ -209,6 +209,9 @@
       },
       "statusOk": {
         "value": "{color.primitive.moss-700}"
+      },
+      "statusOkMarker": {
+        "value": "{color.primitive.moss-500}"
       },
       "statusWarning": {
         "value": "{color.primitive.warning}"
@@ -247,7 +250,7 @@
         "value": "{color.primitive.coral-700}"
       },
       "actionAccentText": {
-        "value": "{color.primitive.paper-50}"
+        "value": "{color.primitive.coral-700}"
       },
       "actionDanger": {
         "value": "{color.primitive.coral-700}"

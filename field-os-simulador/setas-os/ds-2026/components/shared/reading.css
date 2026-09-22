@@ -8,7 +8,7 @@
   flex-direction: column;
   gap: var(--space-half);
   padding-left: var(--space-1);
-  border-left: 3px solid var(--reading-state);
+  border-left: 3px solid var(--reading-marker, var(--reading-state));
 }
 
 .sdp-reading__label {
@@ -58,7 +58,7 @@
   letter-spacing: var(--tracking-micro);
 }
 
-.sdp-reading--ok    { --reading-state: var(--status-ok); }
+.sdp-reading--ok    { --reading-state: var(--status-ok); --reading-marker: var(--status-ok-marker); }
 .sdp-reading--warn  { --reading-state: var(--status-warn-marker); }
 .sdp-reading--error { --reading-state: var(--status-error); }
 .sdp-reading--stale {

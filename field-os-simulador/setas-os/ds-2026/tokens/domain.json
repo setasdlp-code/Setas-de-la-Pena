@@ -7,42 +7,49 @@
     "provenance": {
       "measured": {
         "symbol": "●",
+        "mark": "<circle cx='6' cy='6' r='4.5'/>",
         "label": "MEASURED",
         "description": "Direct sensor or instrument measurement (e.g. SCD30 CO2 sensor, physical scale).",
         "labelKey": "provenance.measured"
       },
       "calculated": {
         "symbol": "◆",
+        "mark": "<path d='M6 1 11 6 6 11 1 6Z'/>",
         "label": "CALCULATED",
         "description": "Derived mathematically from measured inputs (e.g. biological efficiency, dry matter).",
         "labelKey": "provenance.calculated"
       },
       "estimated": {
         "symbol": "◇",
+        "mark": "<path d='M6 1.75 10.25 6 6 10.25 1.75 6Z' fill='none' stroke='%23000' stroke-width='1.5'/>",
         "label": "ESTIMATED",
         "description": "Interpolated or estimated parameter (e.g. projected flush yield date).",
         "labelKey": "provenance.estimated"
       },
       "target": {
         "symbol": "◎",
+        "mark": "<circle cx='6' cy='6' r='4.25' fill='none' stroke='%23000' stroke-width='1.5'/><circle cx='6' cy='6' r='1.75'/>",
         "label": "TARGET",
         "description": "Set-point or recipe target (e.g. optimal 18.5°C room setpoint).",
         "labelKey": "provenance.target"
       },
       "manual": {
         "symbol": "△",
+        "mark": "<path d='M6 1.9 10.6 10.1H1.4Z' fill='none' stroke='%23000' stroke-width='1.5'/>",
         "label": "MANUAL",
         "description": "Manually entered operator measurement or field observation.",
         "labelKey": "provenance.manual"
       },
       "simulated": {
         "symbol": "⬡",
+        "mark": "<path d='M6 1.4 9.98 3.7V8.3L6 10.6 2.02 8.3V3.7Z' fill='none' stroke='%23000' stroke-width='1.5'/>",
         "label": "SIMULATED",
         "description": "Model-simulated or perito projection.",
         "labelKey": "provenance.simulated"
       },
       "pending": {
         "symbol": "◌",
+        "mark": "<circle cx='6' cy='6' r='4.25' fill='none' stroke='%23000' stroke-width='1.5' stroke-dasharray='1.6 1.74'/>",
         "label": "PENDING",
         "description": "Measurement awaiting sensor response or operator verification.",
         "labelKey": "provenance.pending"
@@ -51,24 +58,28 @@
     "sync": {
       "synced": {
         "symbol": "✓",
+        "mark": "<path d='M2 6.5 4.75 9.25 10 3' fill='none' stroke='%23000' stroke-width='1.75'/>",
         "label": "SINCRONIZADO",
         "state": "normal",
         "labelKey": "sync.synced"
       },
       "pending": {
         "symbol": "◌",
+        "mark": "<circle cx='6' cy='6' r='4.25' fill='none' stroke='%23000' stroke-width='1.5' stroke-dasharray='1.6 1.74'/>",
         "label": "PENDIENTE DE SINCRONIZACIÓN",
         "state": "working",
         "labelKey": "sync.pending"
       },
       "error": {
         "symbol": "✕",
+        "mark": "<path d='M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5' fill='none' stroke='%23000' stroke-width='1.75'/>",
         "label": "ERROR DE SINCRONIZACIÓN",
         "state": "error",
         "labelKey": "sync.error"
       },
       "offline": {
         "symbol": "⚡",
+        "mark": "<path d='M7 .75 2.5 7H6L5 11.25 9.5 5H6Z'/>",
         "label": "SIN CONEXIÓN · GUARDADO LOCALMENTE",
         "state": "offline",
         "labelKey": "sync.offline"
@@ -84,5 +95,9 @@
         "labelKey": "status.quarantine"
       }
     }
+  },
+  "markGrid": {
+    "viewBox": "0 0 12 12",
+    "description": "`mark` is the SVG body drawn by CSS (mask + currentColor) so every device renders the same shape. `symbol` stays for plain-text contexts: CSV, logs, thermal fallback."
   }
 }

@@ -1,17 +1,18 @@
 /* DS-2026 · Shared Status & Alerts */
 .sdp-alert {
   display: flex; align-items: flex-start; gap: var(--space-2);
-  border-left: 4px solid var(--status-ok);
+  border-left: 4px solid var(--status-ok-marker);
   background: var(--status-ok-bg);
   padding: var(--space-2);
 }
 .sdp-alert__icon { flex: none; width: 20px; height: 20px; }
 .sdp-alert__icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: var(--pictogram-stroke); }
+.sdp-alert__icon svg * { vector-effect: non-scaling-stroke; }
 .sdp-alert__body { display: grid; gap: var(--space-half); }
 .sdp-alert__label { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .sdp-alert__msg { font: var(--t-small); color: var(--text-primary); }
 
-.sdp-alert--ok    { border-left-color: var(--status-ok);    background: var(--status-ok-bg); }
+.sdp-alert--ok    { border-left-color: var(--status-ok-marker);    background: var(--status-ok-bg); }
 .sdp-alert--ok    .sdp-alert__label, .sdp-alert--ok .sdp-alert__icon { color: var(--status-ok); }
 
 .sdp-alert--warn  { border-left-color: var(--status-warn-marker);  background: var(--status-warn-bg); }
@@ -49,3 +50,18 @@
 .sdp-sync--pending { color: var(--status-warn-text); }
 .sdp-sync--error   { color: var(--status-error); }
 .sdp-sync--offline { color: var(--text-metadata); }
+
+/* Sync marks: SVG mask + currentColor (see provenance.css). */
+:is(.sdp-sync, .sdp-sync-chip):is(.sdp-sync--synced, .sdp-sync--pending, .sdp-sync--error, .sdp-sync--offline, .sdp-sync-chip--synced, .sdp-sync-chip--pending, .sdp-sync-chip--offline)::before {
+  content: "";
+  flex: none;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask: var(--sync-mark) center / contain no-repeat;
+          mask: var(--sync-mark) center / contain no-repeat;
+}
+.sdp-sync--synced,  .sdp-sync-chip--synced  { --sync-mark: var(--sync-synced-mark); }
+.sdp-sync--pending, .sdp-sync-chip--pending { --sync-mark: var(--sync-pending-mark); }
+.sdp-sync--error                            { --sync-mark: var(--sync-error-mark); }
+.sdp-sync--offline, .sdp-sync-chip--offline { --sync-mark: var(--sync-offline-mark); }

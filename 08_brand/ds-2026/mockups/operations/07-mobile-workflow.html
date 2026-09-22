@@ -59,16 +59,16 @@
 
     <!-- Sync status indicators demo banner -->
     <div style="max-width: 390px; width: 100%; margin-bottom: 12px; display: flex; justify-content: space-between;">
-      <span class="sdp-badge sdp-badge--ok">✓ Sincronizado</span>
-      <span class="sdp-badge sdp-badge--warn">◌ 2 pendientes</span>
-      <span class="sdp-badge sdp-badge--err">✕ Sin conexión</span>
+      <span class="sdp-sync-chip sdp-sync-chip--synced">Sincronizado</span>
+      <span class="sdp-sync-chip sdp-sync-chip--pending">2 pendientes</span>
+      <span class="sdp-sync-chip sdp-sync-chip--offline">Sin conexión</span>
     </div>
 
     <div class="mobile-frame">
       <!-- Status bar -->
       <div class="mobile-statusbar">
         <span class="t-micro" style="font-weight: bold;">Setas OS · Campo</span>
-        <span class="sdp-sync-chip sdp-sync-chip--pending">◌ Sin conexión · 2 pendientes</span>
+        <span class="sdp-sync-chip sdp-sync-chip--pending">Sin conexión · 2 pendientes</span>
       </div>
 
       <!-- App Header -->
@@ -113,7 +113,7 @@
         <div class="workflow-step workflow-step--active">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="t-micro" style="color: var(--brand-accent-text); font-weight: bold;">Paso 3 · Registrar acción</span>
-            <span class="sdp-provenance">● Manual</span>
+            <span class="sdp-provenance" data-provenance="manual">Manual</span>
           </div>
 
           <form style="margin-top: 10px;" onsubmit="return false;">
