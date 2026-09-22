@@ -1,7 +1,7 @@
 /* DS-2026 · Shared Status & Alerts */
 .sdp-alert {
   display: flex; align-items: flex-start; gap: var(--space-2);
-  border-left: 4px solid var(--status-ok-marker);
+  border-left: var(--bar-height) solid var(--status-ok-marker);
   background: var(--status-ok-bg);
   padding: var(--space-2);
 }
@@ -26,7 +26,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-half);
-  padding: 2px 6px;
+  padding: var(--space-half) var(--space-1);
   font: var(--t-label);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;

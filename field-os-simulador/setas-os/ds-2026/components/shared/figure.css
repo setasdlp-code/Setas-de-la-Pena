@@ -23,11 +23,11 @@
 .sdp-fig--cultivation .sdp-fig__frame { aspect-ratio: 3 / 2; }
 
 /* B.4 Ingredient photo — small cropped square, used inline in recipes */
-.sdp-fig--ingredient  .sdp-fig__frame { aspect-ratio: 1 / 1; width: 64px; }
+.sdp-fig--ingredient  .sdp-fig__frame { aspect-ratio: 1 / 1; width: var(--ingredient-size); }
 .sdp-fig--ingredient  .sdp-fig__cap   { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; }
 
 /* B.5 Diagram — technical drawing, 16:9, ink on paper, never photographic */
 .sdp-fig--diagram     .sdp-fig__frame { aspect-ratio: 16 / 9; background: var(--surface-page); padding: var(--space-2); }
 
 /* Specimen frame: the hairline double-rule reserved for plates */
-.frame-specimen { border: var(--rule-frame); outline: 1px solid var(--rule); outline-offset: 3px; }
+.frame-specimen { border: var(--rule-frame); outline: 1px solid var(--rule); outline-offset: var(--rule-offset); }

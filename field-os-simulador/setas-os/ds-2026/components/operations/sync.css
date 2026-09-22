@@ -2,29 +2,29 @@
 .sdp-sync-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
   font-family: var(--font-mono);
   font-size: var(--size-micro-screen);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  padding: 4px 8px;
+  padding: var(--space-half) var(--space-1);
   border: 1px solid var(--border-heavy);
   background: var(--surface-panel);
   color: var(--text-primary);
 }
 
 .sdp-sync-chip--synced {
-  border-left: 4px solid var(--status-ok-marker);
+  border-left: var(--bar-height) solid var(--status-ok-marker);
   color: var(--status-ok);
 }
 
 .sdp-sync-chip--pending {
-  border-left: 4px solid var(--status-warn-marker);
+  border-left: var(--bar-height) solid var(--status-warn-marker);
   color: var(--status-warn-text);
 }
 
 .sdp-sync-chip--offline {
-  border-left: 4px solid var(--status-error);
+  border-left: var(--bar-height) solid var(--status-error);
   color: var(--status-error);
 }
 
@@ -35,7 +35,7 @@
   padding: var(--space-2) var(--space-3);
   background: var(--surface-panel);
   border: 1px dashed var(--status-warn-marker);
-  font-size: 13px;
+  font-size: var(--size-data);
   color: var(--text-primary);
 }
 

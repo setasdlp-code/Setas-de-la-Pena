@@ -12,8 +12,8 @@
   color: var(--text-secondary);
   background: var(--surface-panel);
   border: var(--rule-hairline);
-  border-left: 3px solid var(--provenance-marker, var(--border-hairline));
-  padding: 2px 6px;
+  border-left: var(--marker-width) solid var(--provenance-marker, var(--border-hairline));
+  padding: var(--space-half) var(--space-1);
 }
 
 /* The mark is an SVG mask filled with currentColor, never a font glyph:

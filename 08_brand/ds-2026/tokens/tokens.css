@@ -172,6 +172,19 @@
   --pictogram-grid: 48;
   --pictogram-stroke: 1.5px;
 
+  /* Component measurements (spacing.json → structure.component) */
+  --bar-height: 4px;
+  --marker-width: 3px;
+  --band-rule: 5px;
+  --sign-frame: 3px;
+  --size-data-lg: 28px;
+  --size-data-xl: 36px;
+  --ingredient-size: 64px;
+  --step-index: 40px;
+  --step-index-sm: 28px;
+  --plate-height: 148px;
+  --rule-offset: 3px;
+
   /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */
   --provenance-measured-symbol: "●";
   --provenance-calculated-symbol: "◆";
