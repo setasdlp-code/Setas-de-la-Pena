@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: f3f9817f9814f191b99f881141331eaee089955daffb67ae890db25f585dfcde
+// source-hash: 7f78640e321d261862306f03cf77ab927bcb2c016a2c25197d363e59336b3be3
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -2744,6 +2744,9 @@ const precioPonderado = (ingredienteId, lotes) => {
   if (!totalKg) return null;
   return active.reduce((s, l) => s + l.precioPorKgCOP * l.cantidadKgDisponible, 0) / totalKg;
 };
+if (typeof globalThis !== "undefined" && !globalThis.SetasInventario) {
+  globalThis.SetasInventario = { stockActual, precioPonderado };
+}
 const realCostPerKgSeco = (recipe, invLotes, ings) => {
   if (!recipe || !recipe.length) return null;
   let known = false;
@@ -4649,6 +4652,7 @@ function SimuladorShell(props) {
   const [invLotes, setInvLotes] = useState([]);
   const [peritoInventoryLoaded, setPeritoInventoryLoaded] = useState(false);
   const [invMovimientos, setInvMovimientos] = useState([]);
+  const [invReservas, setInvReservas] = useState([]);
   const [invTab, setInvTab] = useState("stock");
   const [stockAlertsExpanded, setStockAlertsExpanded] = useState(false);
   const [formularMode, setFormularMode] = useState("auto");
@@ -4871,6 +4875,19 @@ function SimuladorShell(props) {
       if (bb) setBitBolsas(JSON.parse(bb));
       if (bc) setBitCosechas(JSON.parse(bc));
       if (bt) setBitTasks(JSON.parse(bt));
+      const ir = localStorage.getItem("sdp_inv_reservas");
+      if (ir) {
+        const parsedReservas = JSON.parse(ir);
+        const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+        const vigentes = ledgerApi ? ledgerApi.expireDue(parsedReservas, Date.now()) : parsedReservas;
+        setInvReservas(vigentes);
+        if (ledgerApi && JSON.stringify(vigentes) !== JSON.stringify(parsedReservas)) {
+          try {
+            localStorage.setItem("sdp_inv_reservas", JSON.stringify(vigentes));
+          } catch (e) {
+          }
+        }
+      }
       const sq = localStorage.getItem("sdp_sync_queue");
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       if (sq && syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
@@ -5658,18 +5675,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       console.error("Error en operación protegida por conGuardaEjecucion:", e);
     }
   };
-  const confirmarEjecucion = conGuardaEjecucion(() => {
-    if (!loteBatchConfirm) {
-      ejecutarLoteInFlight.current = false;
-      setEjecutandoLote(false);
-      return;
-    }
-    if (loteBatchConfirm.launchRevision !== launchRevision || !SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation, preparation)) {
-      setLoteBatchConfirm(null);
-      ejecutarLoteInFlight.current = false;
-      setEjecutandoLote(false);
-      return;
-    }
+  const runEjecucionLote = () => {
     const { preview, plan, loteNum, fecha } = loteBatchConfirm;
     let consumoRegistrado = false;
     try {
@@ -5740,6 +5746,37 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
       }
     }
+  };
+  const confirmarEjecucion = conGuardaEjecucion(() => {
+    if (!loteBatchConfirm) {
+      ejecutarLoteInFlight.current = false;
+      setEjecutandoLote(false);
+      return;
+    }
+    if (loteBatchConfirm.launchRevision !== launchRevision || !SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation, preparation)) {
+      setLoteBatchConfirm(null);
+      ejecutarLoteInFlight.current = false;
+      setEjecutandoLote(false);
+      return;
+    }
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    const check = ledgerApi ? ledgerApi.checkPlan(loteBatchConfirm.plan, { lots: invLotes, ledger: invReservas, incoming: [], nowMs: Date.now() }) : null;
+    if (check && !check.ok) {
+      ejecutarLoteInFlight.current = false;
+      setEjecutandoLote(false);
+      setConfirmDlg({
+        title: "Insumo comprometido con otro lote",
+        msg: check.mensaje + " Puedes confirmar de todas formas si sabes que llega a tiempo.",
+        confirmLabel: "Confirmar y descontar",
+        onConfirm: () => {
+          ejecutarLoteInFlight.current = true;
+          setEjecutandoLote(true);
+          runEjecucionLote();
+        }
+      });
+      return;
+    }
+    runEjecucionLote();
   });
   const SPP_CODE2 = { p_ostreatus_gris: "OST", p_ostreatus_blanco: "OBL", p_djamor_rosa: "ROS", p_eryngii: "ERY", shiitake: "SHI", lions_mane: "MEL", reishi: "REI", enoki: "ENO", nameko: "NAM" };
   const sugerirCodigoLote = (key) => {
@@ -5942,19 +5979,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
       console.error("Error en operación protegida por conGuardaLanzamiento:", e);
     }
   };
-  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
-    if (!prodLaunchForm) {
-      launchInFlight.current = false;
-      setLaunching(false);
-      return;
-    }
+  const runLanzamientoProduccion = () => {
     const f = prodLaunchForm;
-    if (f.launchRevision !== launchRevision || !SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation, preparation)) {
-      setShowProdLaunchModal(false);
-      launchInFlight.current = false;
-      setLaunching(false);
-      return;
-    }
     let consumoRegistrado = false;
     try {
       const now = Date.now();
@@ -6019,6 +6045,38 @@ ${errors.slice(0, 5).join("\n")}` : "");
         });
       }
     }
+  };
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      return;
+    }
+    const f = prodLaunchForm;
+    if (f.launchRevision !== launchRevision || !SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation, preparation)) {
+      setShowProdLaunchModal(false);
+      launchInFlight.current = false;
+      setLaunching(false);
+      return;
+    }
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    const check = ledgerApi ? ledgerApi.checkPlan(f.plan, { lots: invLotes, ledger: invReservas, incoming: [], nowMs: Date.now() }) : null;
+    if (check && !check.ok) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      setConfirmDlg({
+        title: "Insumo comprometido con otro lote",
+        msg: check.mensaje + " Puedes confirmar de todas formas si sabes que llega a tiempo.",
+        confirmLabel: "Confirmar y descontar",
+        onConfirm: () => {
+          launchInFlight.current = true;
+          setLaunching(true);
+          runLanzamientoProduccion();
+        }
+      });
+      return;
+    }
+    runLanzamientoProduccion();
   });
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
   const encolarSync = ({ type, key, args }) => {
@@ -6063,6 +6121,20 @@ ${errors.slice(0, 5).join("\n")}` : "");
     return lote.id;
   };
   const updateBitLote = (loteId, fields) => {
+    if (fields.estado === "descartado") {
+      const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+      const loteEraDescartado = bitLotes.find((l) => l.id === loteId)?.estado === "descartado";
+      if (ledgerApi && !loteEraDescartado) {
+        setInvReservas((prev) => {
+          const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción descartado", at: (/* @__PURE__ */ new Date()).toISOString() });
+          try {
+            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+          } catch (e) {
+          }
+          return upd;
+        });
+      }
+    }
     setBitLotes((prev) => {
       const upd = prev.map((l) => l.id === loteId ? { ...l, ...fields } : l);
       try {
@@ -6171,6 +6243,17 @@ ${errors.slice(0, 5).join("\n")}` : "");
       const lote = bitLotes.find((l) => l.id === loteId);
       const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
       const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
+      const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+      if (ledgerApi) {
+        setInvReservas((prev) => {
+          const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() });
+          try {
+            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+          } catch (e) {
+          }
+          return upd;
+        });
+      }
       setBitLotes((prev) => {
         const upd = prev.filter((l) => l.id !== loteId);
         try {
@@ -6320,10 +6403,36 @@ ${errors.slice(0, 5).join("\n")}` : "");
     })();
     return st.inFlight;
   }, []);
+  const mergeReservas = (nuevas = []) => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi || !nuevas.length) return;
+    setInvReservas((prev) => {
+      const upd = ledgerApi.addReservations(prev, nuevas);
+      try {
+        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+  };
   const registrarConsumo = ({ loteId, codigo, plan, fecha, nota }) => {
     const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });
     const { queue, added } = SetasInventoryConsumptionApi.enqueue(readInvOps(), op);
     if (!added) return false;
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (ledgerApi) {
+      const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+      const reservas = ledgerApi.reservationsForPlan(plan, { batchId: loteId, at: nowIso });
+      setInvReservas((prev) => {
+        let upd = ledgerApi.addReservations(prev, reservas);
+        upd = reservas.reduce((acc, r) => ledgerApi.consume(acc, r.id, { eventId: op.opId, at: nowIso }), upd);
+        try {
+          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+        } catch (e) {
+        }
+        return upd;
+      });
+    }
     const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
     setInvLotes((prev) => {
       const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
@@ -6698,8 +6807,11 @@ BATCH (${numBags}×${kgBag} kg):
     invLotes.filter((l) => l.activo).forEach((l) => {
       aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId] || 0) + (Number(l.cantidadKgDisponible) || 0);
     });
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    const availabilityFor = (ingId) => ledgerApi ? ledgerApi.availability(ingId, { lots: invLotes, ledger: invReservas, incoming: [], nowMs: Date.now() }) : null;
     const criticalStockItems = INGS.map((ing) => {
-      const stockKg = aggregatedStock[ing.id] || 0;
+      const av = availabilityFor(ing.id);
+      const stockKg = av ? av.disponible : aggregatedStock[ing.id] || 0;
       const threshold = lowStockThresholds[ing.type] || 5;
       return { ing, stockKg, threshold, isLow: stockKg < threshold };
     }).filter((item) => item.isLow);
@@ -6708,18 +6820,22 @@ BATCH (${numBags}×${kgBag} kg):
     const rows = ingIds.map((id) => {
       const g = INGS.find((i) => i.id === id);
       const stock = stockActual(id, invLotes);
+      const av = availabilityFor(id);
+      const disponible = av ? av.disponible : stock;
+      const reservado = av ? av.reservado : 0;
+      const sobrereservado = av?.sobrereservado || 0;
       const pp = precioPonderado(id, invLotes);
       const alertaMin = alertaConfig[id] ?? 2;
       const alertaAm = alertaMin * 2.5;
-      const dotColor = stock < alertaMin ? "var(--coral-500)" : stock < alertaAm ? "var(--ochre-500,#A07828)" : "var(--accent-olive)";
+      const dotColor = disponible < alertaMin ? "var(--coral-500)" : disponible < alertaAm ? "var(--ochre-500,#A07828)" : "var(--accent-olive)";
       const provId = provOverride[id] || invProveedores.find((p) => p.id === invCompras.find((c) => c.id === invLotes.filter((l) => l.activo && l.ingredienteId === id).sort((a, b) => new Date(b.fechaIngreso) - new Date(a.fechaIngreso))[0]?.compraId)?.proveedorId)?.id || "";
       const prov = invProveedores.find((p) => p.id === provId);
-      return { id, name: g?.name || id, stock, pp, prov, dotColor, alertaMin, provId };
-    }).sort((a, b) => b.stock - a.stock);
+      return { id, name: g?.name || id, stock, disponible, reservado, sobrereservado, pp, prov, dotColor, alertaMin, provId };
+    }).sort((a, b) => b.disponible - a.disponible);
     const INP = { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", border: "1px solid var(--coral-500)", borderRadius: "var(--r-xs)", padding: "4px 6px", background: "var(--paper-50)", color: "var(--ink-900)", outline: "none", width: "100%", boxSizing: "border-box" };
     return /* @__PURE__ */ React.createElement("div", null, criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setInvTab("compra"), style: { background: "none", border: "none", color: "color-mix(in oklab, var(--coral-700) 70%, black)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, (stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0, 4)).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)"))), criticalStockItems.length > 4 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "stock-alert-toggle", "aria-expanded": stockAlertsExpanded, onClick: () => setStockAlertsExpanded((v) => !v) }, stockAlertsExpanded ? "Ocultar alertas" : "Ver las " + (criticalStockItems.length - 4) + " alertas restantes")), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table inventory-stock-table sdp-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Ingrediente"), /* @__PURE__ */ React.createElement("th", null, "Stock (kg)"), /* @__PURE__ */ React.createElement("th", null, "Precio / kg"), /* @__PURE__ */ React.createElement("th", null, "Proveedor"), /* @__PURE__ */ React.createElement("th", null, "Alerta mín. (kg)"), /* @__PURE__ */ React.createElement("th", null, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 80 } }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Acciones")))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((r) => {
       const isEditing = editingRowId === r.id;
-      return /* @__PURE__ */ React.createElement("tr", { key: r.id, style: { background: isEditing ? "var(--paper-200)" : "" } }, /* @__PURE__ */ React.createElement("td", { "data-label": "Ingrediente", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", minWidth: 160 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockIngredient-${r.id}`, "aria-label": `Ingrediente de la fila ${r.name}`, value: editingRowData.ingredienteNuevoId || r.id, onChange: (e) => setEditingRowData((p) => ({ ...p, ingredienteNuevoId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, INGS.sort((a, b) => a.name.localeCompare(b.name, "es")).map((i) => /* @__PURE__ */ React.createElement("option", { key: i.id, value: i.id }, i.name))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "stock-dot", style: { background: r.dotColor } }), r.name)), /* @__PURE__ */ React.createElement("td", { "data-label": "Stock", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 600, color: r.dotColor, minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
+      return /* @__PURE__ */ React.createElement("tr", { key: r.id, style: { background: isEditing ? "var(--paper-200)" : "" } }, /* @__PURE__ */ React.createElement("td", { "data-label": "Ingrediente", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", minWidth: 160 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockIngredient-${r.id}`, "aria-label": `Ingrediente de la fila ${r.name}`, value: editingRowData.ingredienteNuevoId || r.id, onChange: (e) => setEditingRowData((p) => ({ ...p, ingredienteNuevoId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, INGS.sort((a, b) => a.name.localeCompare(b.name, "es")).map((i) => /* @__PURE__ */ React.createElement("option", { key: i.id, value: i.id }, i.name))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "stock-dot", style: { background: r.dotColor } }), r.name)), /* @__PURE__ */ React.createElement("td", { "data-label": "Físico", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 600, minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
         "input",
         {
           name: `stockKg-${r.id}`,
@@ -6761,7 +6877,7 @@ BATCH (${numBags}×${kgBag} kg):
           style: INP,
           placeholder: "kg"
         }
-      ) : /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, r.alertaMin, " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, r.stock < r.alertaMin ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--error", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, "Crítico") : r.stock < r.alertaMin * 2.5 ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--warn", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "Bajo") : /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "OK")), /* @__PURE__ */ React.createElement("td", { "data-label": "Acciones" }, isEditing ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", onClick: () => saveRowEdit(r.id), title: "Guardar", "aria-label": `Guardar cambios de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => setEditingRowId(null), title: "Cancelar", "aria-label": `Cancelar edición de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement(
+      ) : /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, r.alertaMin, " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, r.disponible < r.alertaMin ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--error", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, "Crítico") : r.disponible < r.alertaMin * 2.5 ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--warn", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "Bajo") : /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "OK")), /* @__PURE__ */ React.createElement("td", { "data-label": "Acciones" }, isEditing ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", onClick: () => saveRowEdit(r.id), title: "Guardar", "aria-label": `Guardar cambios de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => setEditingRowId(null), title: "Cancelar", "aria-label": `Cancelar edición de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement(
         "button",
         {
           className: "inv-btn inv-btn-sec inv-btn-sm",
@@ -8417,8 +8533,10 @@ BATCH (${numBags}×${kgBag} kg):
     invLotes.filter((l) => l.activo).forEach((l) => {
       aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId] || 0) + (Number(l.cantidadKgDisponible) || 0);
     });
+    const homeLedgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
     const criticalStockItems = INGS.map((ing) => {
-      const stockKg = aggregatedStock[ing.id] || 0;
+      const av = homeLedgerApi ? homeLedgerApi.availability(ing.id, { lots: invLotes, ledger: invReservas, incoming: [], nowMs: Date.now() }) : null;
+      const stockKg = av ? av.disponible : aggregatedStock[ing.id] || 0;
       const threshold = lowStockThresholds[ing.type] || 5;
       return { ing, stockKg, threshold, isLow: stockKg < threshold };
     }).filter((item) => item.isLow);

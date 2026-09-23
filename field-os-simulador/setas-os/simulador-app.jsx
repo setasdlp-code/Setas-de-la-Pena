@@ -4323,6 +4323,18 @@ const precioPonderado=(ingredienteId,lotes)=>{
   if(!totalKg) return null;
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
 };
+// inventory-ledger.js (SetasInventoryLedger.availability) necesita
+// SetasInventario.stockActual para calcular el físico — no se carga
+// inventario.js por script aparte (colisionaría con el stockActual/
+// precioPonderado de arriba, ya duplicados a propósito por la nota de
+// arriba), así que este mismo bundle expone el global que ese módulo
+// externo espera, con el mismo cálculo. Se hace aquí (escribiendo hacia
+// afuera desde dentro de este runtime) y no al revés — el problema que
+// describe la nota de arriba es leer un global ajeno desde acá, no
+// publicar uno propio.
+if(typeof globalThis!=='undefined'&&!globalThis.SetasInventario){
+  globalThis.SetasInventario={stockActual,precioPonderado};
+}
 
 // Costo real de bodega en COP/kg de mezcla SECA (I6): los precios de lote son
 // por kg tal cual se recibe, así que se pasan a base seca con la misma cuenta y
@@ -6450,6 +6462,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invLotes,setInvLotes]=useState([]);
   const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
+  // Libro de reservas de inventario (inventory-ledger.js): compromisos de
+  // kilos por lote de producción, aparte de invLotes (lo físico). Ver
+  // mergeReservas más abajo para la única forma de escribir aquí.
+  const [invReservas,setInvReservas]=useState([]);
   const [invTab,setInvTab]=useState('stock');
   const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
   const [formularMode,setFormularMode]=useState('auto');
@@ -6651,6 +6667,18 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     try{
       const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
       if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const ir=localStorage.getItem('sdp_inv_reservas');
+      if(ir){
+        const parsedReservas=JSON.parse(ir);
+        // Una reserva vencida no puede seguir bloqueando kilos: se limpia
+        // ya al rehidratar, no solo cuando alguien vuelve a evaluar un plan.
+        const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+        const vigentes=ledgerApi?ledgerApi.expireDue(parsedReservas,Date.now()):parsedReservas;
+        setInvReservas(vigentes);
+        if(ledgerApi&&JSON.stringify(vigentes)!==JSON.stringify(parsedReservas)){
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
+        }
+      }
       const sq=localStorage.getItem('sdp_sync_queue');
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
       if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
@@ -7419,11 +7447,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
-  const confirmarEjecucion=conGuardaEjecucion(()=>{
-    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
-    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
-      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
-    }
+  // Cuerpo real de "Confirmar y descontar" (Formulador → Ejecutar Lote), separado
+  // de confirmarEjecucion para poder llamarlo tanto directo (plan sin faltantes)
+  // como desde el "sí, de todas formas" del aviso de disponibilidad (ver abajo),
+  // sin volver a evaluar el plan una segunda vez.
+  const runEjecucionLote=()=>{
     const{preview,plan,loteNum,fecha}=loteBatchConfirm;
     let consumoRegistrado=false;
     try{
@@ -7491,6 +7519,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
       }
     }
+  };
+  const confirmarEjecucion=conGuardaEjecucion(()=>{
+    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
+      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
+    }
+    // Aviso de disponibilidad real (físico − reservado de otros lotes) contra
+    // el plan, justo antes de comprometer bodega. NO bloquea: el operador
+    // puede saber que el proveedor llega mañana y decidir seguir — el libro
+    // de reservas sólo evita que nadie se entere de que iba corto, no decide
+    // por él. Si no hay faltantes, se ejecuta directo, igual que antes.
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    const check=ledgerApi?ledgerApi.checkPlan(loteBatchConfirm.plan,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
+    if(check&&!check.ok){
+      ejecutarLoteInFlight.current=false;setEjecutandoLote(false);
+      setConfirmDlg({
+        title:'Insumo comprometido con otro lote',
+        msg:check.mensaje+' Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        confirmLabel:'Confirmar y descontar',
+        onConfirm:()=>{ejecutarLoteInFlight.current=true;setEjecutandoLote(true);runEjecucionLote();}
+      });
+      return;
+    }
+    runEjecucionLote();
   });
   // ── Bitácora helpers ──
   // Código SDP-{fecha}-{especie}-R{n}: misma nomenclatura en Bitácora (nuevo
@@ -7716,12 +7768,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
-  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
-    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
+  // Cuerpo real de "Lanzar producción" (Producción → Lanzar Lote), separado de
+  // ejecutarLanzamientoProduccion por la misma razón que runEjecucionLote:
+  // se llama directo cuando el plan no tiene faltantes, o desde el "de todas
+  // formas" del aviso de disponibilidad, sin volver a evaluar el plan.
+  const runLanzamientoProduccion = () => {
     const f = prodLaunchForm;
-    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
-      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
-    }
     let consumoRegistrado = false;
     try {
       const now = Date.now();
@@ -7788,6 +7840,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
       }
     }
+  };
+
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
+    const f = prodLaunchForm;
+    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
+      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
+    }
+    // Mismo aviso no-bloqueante que runEjecucionLote/confirmarEjecucion, para
+    // el otro camino de lanzamiento (Producción → Lanzar Lote).
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    const check=ledgerApi?ledgerApi.checkPlan(f.plan,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
+    if(check&&!check.ok){
+      launchInFlight.current=false;setLaunching(false);
+      setConfirmDlg({
+        title:'Insumo comprometido con otro lote',
+        msg:check.mensaje+' Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        confirmLabel:'Confirmar y descontar',
+        onConfirm:()=>{launchInFlight.current=true;setLaunching(true);runLanzamientoProduccion();}
+      });
+      return;
+    }
+    runLanzamientoProduccion();
   });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
@@ -7829,6 +7904,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
+    // Punto único por el que un lote pasa a 'descartado' (el selector manual
+    // de estado y el flujo de bioseguridad convergen aquí): libera de una vez
+    // sus reservas held, o un lote abandonado bloquearía kilos para siempre.
+    if(fields.estado==='descartado'){
+      const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+      const loteEraDescartado=bitLotes.find(l=>l.id===loteId)?.estado==='descartado';
+      if(ledgerApi&&!loteEraDescartado){
+        setInvReservas(prev=>{
+          const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción descartado',at:new Date().toISOString()});
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          return upd;
+        });
+      }
+    }
     setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
@@ -7913,6 +8002,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const lote=bitLotes.find(l=>l.id===loteId);
       const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
       const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
+      // Eliminar el lote es más definitivo que descartarlo — igual libera sus
+      // reservas held, o un lote borrado seguiría bloqueando kilos.
+      const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+      if(ledgerApi){
+        setInvReservas(prev=>{
+          const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          return upd;
+        });
+      }
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
@@ -8010,10 +8109,38 @@ body{margin:0;padding:20px 24px;background:#fff;}
     })();
     return st.inFlight;
   },[]);
+  // Única forma de escribir en invReservas: fusiona vía SetasInventoryLedger
+  // (que decide si una reserva ya resuelta se reabre o no) y persiste, igual
+  // que el resto de los setters de Bodega/Bitácora en este archivo.
+  const mergeReservas=(nuevas=[])=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||!nuevas.length) return;
+    setInvReservas(prev=>{
+      const upd=ledgerApi.addReservations(prev,nuevas);
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+  };
   const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
     if(!added) return false;   // this lote was already discounted: never apply twice
+    // Libro de reservas: en este flujo "confirmar" y "descontar" son el mismo
+    // clic, así que la reserva de este lote (reservationsForPlan) se crea y se
+    // marca consumida en el mismo paso, con op.opId como eventId — el mismo id
+    // idempotente por loteId que ya identifica esta operación de consumo, así
+    // que una reserva sólo queda consumida con la prueba de qué evento la cerró.
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(ledgerApi){
+      const nowIso=new Date().toISOString();
+      const reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso});
+      setInvReservas(prev=>{
+        let upd=ledgerApi.addReservations(prev,reservas);
+        upd=reservas.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
+        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        return upd;
+      });
+    }
     // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
     // distintos lanzados muy seguido) deben componerse sobre el prev más
     // reciente, no sobre el invLotes/invMovimientos capturado por closure
@@ -8345,8 +8472,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     invLotes.filter(l=>l.activo).forEach(l=>{
                       aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
                     });
+                    // Las alertas comparan contra DISPONIBLE (físico − reservado), no
+                    // contra el físico: es el único número con el que se decide si hay
+                    // que comprar — el físico puede alcanzar y estar ya comprometido
+                    // por otro lote de producción.
+                    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+                    const availabilityFor=(ingId)=>ledgerApi?ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
                     const criticalStockItems = INGS.map(ing=>{
-                      const stockKg = aggregatedStock[ing.id]||0;
+                      const av=availabilityFor(ing.id);
+                      const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
                       const threshold = lowStockThresholds[ing.type]||5;
                       return { ing, stockKg, threshold, isLow: stockKg < threshold };
                     }).filter(item=>item.isLow);
@@ -8386,14 +8520,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const rows=ingIds.map(id=>{
                       const g=INGS.find(i=>i.id===id);
                       const stock=stockActual(id,invLotes);
+                      const av=availabilityFor(id);
+                      const disponible=av?av.disponible:stock;
+                      const reservado=av?av.reservado:0;
+                      const sobrereservado=av?.sobrereservado||0;
                       const pp=precioPonderado(id,invLotes);
                       const alertaMin=alertaConfig[id]??2;
                       const alertaAm=alertaMin*2.5;
-                      const dotColor=stock<alertaMin?'var(--coral-500)':stock<alertaAm?'var(--ochre-500,#A07828)':'var(--accent-olive)';
+                      // El estado (punto, badge) se decide contra DISPONIBLE, no contra el
+                      // físico: es el único número con el que se puede comprometer bodega.
+                      const dotColor=disponible<alertaMin?'var(--coral-500)':disponible<alertaAm?'var(--ochre-500,#A07828)':'var(--accent-olive)';
                       const provId=provOverride[id]||(invProveedores.find(p=>p.id===invCompras.find(c=>c.id===invLotes.filter(l=>l.activo&&l.ingredienteId===id).sort((a,b)=>new Date(b.fechaIngreso)-new Date(a.fechaIngreso))[0]?.compraId)?.proveedorId)?.id)||'';
                       const prov=invProveedores.find(p=>p.id===provId);
-                      return{id,name:g?.name||id,stock,pp,prov,dotColor,alertaMin,provId};
-                    }).sort((a,b)=>b.stock-a.stock);
+                      return{id,name:g?.name||id,stock,disponible,reservado,sobrereservado,pp,prov,dotColor,alertaMin,provId};
+                    }).sort((a,b)=>b.disponible-a.disponible);
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
                       <div>
@@ -8422,6 +8562,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <thead>
                               <tr>
                                 <th>Ingrediente</th>
+                                {/* Una sola columna de stock. El libro de reservas
+                                    (inventory-ledger.js) ya calcula reservado y
+                                    disponible, pero hoy confirmar un lanzamiento
+                                    descuenta en el mismo clic: una reserva nace y se
+                                    consume a la vez, así que "Reservado" sería siempre
+                                    cero. Un cero permanente engaña más que no mostrar
+                                    nada. Las columnas llegan cuando planificar y
+                                    preparar se separen (planned → mix_prepared). */}
                                 <th>Stock (kg)</th>
                                 <th>Precio / kg</th>
                                 <th>Proveedor</th>
@@ -8445,8 +8593,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <><span className="stock-dot" style={{background:r.dotColor}}/>{r.name}</>
                                       )}
                                     </td>
-                                    {/* STOCK */}
-                                    <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                    {/* FÍSICO — lo que hay en bodega, editable */}
+                                    <td data-label="Físico" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,minWidth:90}}>
                                       {isEditing?(
                                         <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
                                           value={editingRowData.stock}
@@ -8495,11 +8643,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
                                       )}
                                     </td>
-                                    {/* ESTADO */}
+                                    {/* ESTADO — contra DISPONIBLE, no contra el físico: es el número con
+                                        el que se decide si hace falta comprar. */}
                                     <td data-label="Estado">
-                                      {r.stock<r.alertaMin
+                                      {r.disponible<r.alertaMin
                                         ?<span className="sdp-badge sdp-badge--error" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
-                                        :r.stock<r.alertaMin*2.5
+                                        :r.disponible<r.alertaMin*2.5
                                           ?<span className="sdp-badge sdp-badge--warn" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
                                           :<span className="sdp-badge sdp-badge--ok" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                     </td>
@@ -11570,8 +11719,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
           invLotes.filter(l=>l.activo).forEach(l=>{
             aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
           });
+          // Contra DISPONIBLE (físico − reservado), no contra el físico — mismo
+          // criterio que la tabla de Bodega: el físico puede alcanzar y estar
+          // ya comprometido por otro lote de producción confirmado.
+          const homeLedgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
           const criticalStockItems = INGS.map(ing=>{
-            const stockKg = aggregatedStock[ing.id]||0;
+            const av=homeLedgerApi?homeLedgerApi.availability(ing.id,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
+            const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
             const threshold = lowStockThresholds[ing.type]||5;
             return { ing, stockKg, threshold, isLow: stockKg < threshold };
           }).filter(item=>item.isLow);
