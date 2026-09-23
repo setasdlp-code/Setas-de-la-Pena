@@ -85,6 +85,37 @@ test('el estado de sincronización se ve desde la pantalla de inicio', () => {
   assert.match(cockpit, /retryStuck\(syncQueue,Date\.now\(\)\)[\s\S]{0,260}minHeight:48/);
 });
 
+test('el ciclo de vida de recetas está cableado: no se edita una aprobada, se versiona', () => {
+  // La regla que hace útil el versionado: editar en sitio una receta aprobada
+  // dejaría a los lotes ya producidos con ella sin poder compararse. `loadR`
+  // consulta assertEditable y, si lanza, abre el diálogo de versión nueva en
+  // vez de cargarla — la fricción es deliberada.
+  assert.match(source, /lifecycle\.assertEditable\(e\)/);
+  assert.match(source, /catch\(err\)\{ setNewVersionFor\(e\); return; \}/);
+  assert.match(source, /const NewRecipeVersionModal=/);
+  assert.match(source, /newVersionFor&&<NewRecipeVersionModal/);
+  assert.match(source, /lifecycle\.newVersionFrom\(newVersionFor/);
+
+  // Las recetas que ya existen se marcan `legacy`, no `draft` ni `approved`.
+  assert.match(source, /lifecycle\.migrateLegacyRecipe\(r\)/);
+
+  // El rol de autorización tiene una sola procedencia (client-invariants).
+  assert.match(source, /role:fieldOperatorRole/);
+  assert.doesNotMatch(source, /role:props\.isAdmin\?'direccion'/);
+
+  // Una receta en ensayo no puede leerse igual que una aprobada (§9).
+  assert.match(source, /data-testid="recipe-lifecycle-badge"/);
+  assert.match(source, /RECIPE_LIFECYCLE_COLOR=\{/);
+  assert.match(source, /data-testid=\{`recipe-promote-\$\{to\}`\}/);
+
+  // El lote guarda el snapshot y la ficha lo muestra; los lotes anteriores al
+  // versionado conservan lo de siempre y no reciben una versión inventada.
+  assert.match(source, /recipeSnapshot:\(\(\)=>\{/);
+  assert.match(source, /lc\.buildProductionSnapshot\(/);
+  assert.match(source, /data-testid="batch-recipe-label"/);
+  assert.match(source, /lc\.describeSnapshot\(lote\.recipeSnapshot\)/);
+});
+
 test('marcar una tarea en el cockpit registra el evento que la cierra', () => {
   // El contrato del motor es que una tarea sólo se cierra con el evento que la
   // cumple. La casilla no puede saltárselo: registra un evento manual y cierra

@@ -1788,6 +1788,18 @@ const PERITO_STATUS={
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
+// Color del estado del CICLO DE VIDA de la receta (recipe-lifecycle.js), no
+// confundir con PERITO_STATUS de arriba: eso es viabilidad técnica, esto es
+// autorización de producción. Una receta en ensayo nunca debe leerse igual
+// que una aprobada (SETAS_OS_UX_ARCHITECTURE_V2.md §9) — de ahí que cada
+// estado tenga su propio color, tomado de la paleta de tokens existente.
+const RECIPE_LIFECYCLE_COLOR={
+  draft:'var(--ink-500)',
+  trial:'var(--ochre-500)',
+  approved:'var(--moss-700)',
+  retired:'var(--coral-700)',
+  legacy:'var(--ink-400)',
+};
 const FORM_ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
 const FORM_ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
 const peritoMainLimiter=(opt,an)=>{
@@ -3443,6 +3455,28 @@ const NoticeModal=({dlg,onClose})=>{
       </div>
     </div>
   </div>
+  );
+};
+
+// Se abre en vez de dejar editar una receta 'approved'/'retired' directamente
+// (recipe-lifecycle.js assertEditable). La fricción es deliberada — cambiar
+// una receta en producción tiene que notarse — así que no hay "editar de
+// todos modos", solo "crear la versión siguiente".
+const NewRecipeVersionModal=({recipe,onClose,onConfirm})=>{
+  const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+  const identity=lifecycle?lifecycle.recipeIdentity(recipe):{recipeId:recipe.recipeId||recipe.name,version:recipe.version||1};
+  const label=lifecycle?(lifecycle.LIFECYCLE_LABELS[recipe.status]||recipe.status):recipe.status;
+  return(
+    <AccessibleModal onClose={onClose} label="Receta aprobada — crear versión nueva" dialogStyle={{width:'min(460px, calc(100vw - 24px))',boxSizing:'border-box'}}>
+      <div className="inv-modal-title">Receta aprobada</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>
+        «{recipe.name}» está <b>{label}</b> ({identity.recipeId} v{identity.version}) y no se puede editar directamente: cambiarla en sitio haría que los lotes ya producidos con ella dejen de poder compararse honestamente. Crea la versión siguiente a partir de ella — nace en borrador, y esta versión aprobada sigue intacta para los lotes que ya la usan.
+      </div>
+      <div className="inv-modal-actions">
+        <button onClick={onClose} className="inv-btn inv-btn-sec" style={{minHeight:44}}>Cancelar</button>
+        <button onClick={onConfirm} className="inv-btn inv-btn-pri" style={{minHeight:44}}>Crear versión {identity.version+1}</button>
+      </div>
+    </AccessibleModal>
   );
 };
 
@@ -6324,6 +6358,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
   const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
+  const [versionDlg,setVersionDlg]=useState(null); // {recipe} — recetario: receta 'approved'/'retired' cargada, ofrece crear versión nueva en vez de editar
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
@@ -6483,12 +6518,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -6746,7 +6781,23 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setPantryIds(inStockIds);
   },[invLotes]);
 
-  useEffect(()=>{try{const s=localStorage.getItem('setas_v6');if(s) setSaved(JSON.parse(s));}catch(e){};},[]);
+  // Las recetas guardadas nacieron sin estado ni versión. `migrateLegacyRecipe`
+  // las marca `legacy` ("Sin versionar") en vez de inventarles un `draft` —que
+  // diría que no se han usado, y se usan— o un `approved` —que fabricaría una
+  // autorización que nadie dio—. Es idempotente y se persiste una sola vez.
+  useEffect(()=>{
+    try{
+      const s=localStorage.getItem('setas_v6');
+      if(!s) return;
+      const crudas=JSON.parse(s);
+      const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+      if(!lifecycle){ setSaved(crudas); return; }
+      const migradas=crudas.map(r=>lifecycle.migrateLegacyRecipe(r));
+      setSaved(migradas);
+      const cambio=migradas.some((r,i)=>r!==crudas[i]);
+      if(cambio){ try{localStorage.setItem('setas_v6',JSON.stringify(migradas));}catch(e2){} }
+    }catch(e){}
+  },[]);
   useEffect(()=>{ if(props.onSavedChange) props.onSavedChange(saved); },[saved]);
   useEffect(()=>{try{const s=localStorage.getItem('setas_prices_v1');if(s) setPriceOverrides(JSON.parse(s));}catch(e){};},[]);
   useEffect(()=>{try{const s=localStorage.getItem('sdp_alertas');if(s) setAlertaConfig(JSON.parse(s));}catch(e){};},[]);
@@ -6859,9 +6910,53 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
-    if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
+    const apply=(receta=e)=>{setSKey(receta.sKey);setRecipe(receta.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
+    // Una receta aprobada (o retirada) no se edita en sitio: editarla dejaría a
+    // los lotes ya producidos con ella sin poder compararse honestamente. El
+    // diálogo ofrece el único camino válido, crear la versión siguiente.
+    const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+    if(lifecycle){
+      try{ lifecycle.assertEditable(e); }
+      catch(err){ setNewVersionFor(e); return; }
+    }
+    if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:()=>apply()});return;}
     apply();
+  };
+  // Crea la versión siguiente de una receta aprobada, la guarda en borrador y la
+  // carga para editar. La aprobada queda intacta para los lotes que ya la usan.
+  const [newVersionFor,setNewVersionFor]=useState(null);
+  const confirmNewRecipeVersion=()=>{
+    const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+    if(!lifecycle||!newVersionFor) return;
+    try{
+      const nueva=lifecycle.newVersionFrom(newVersionFor,{},{actor:fieldOperatorRole,at:new Date().toISOString()});
+      const u=[{...nueva,id:Date.now()},...saved];
+      setSaved(u);
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      setNewVersionFor(null);
+      setSKey(nueva.sKey);setRecipe(nueva.recipe);setLockedIds([]);
+      openBuilderSubTab('formular');goTab('formular');
+      setNoticeDlg({title:`Versión ${nueva.version} creada`,msg:`«${nueva.name}» v${nueva.version} nace en borrador y ya está cargada para editar. La versión aprobada anterior queda intacta.`});
+    }catch(err){ setNewVersionFor(null); setNoticeDlg({title:'No se pudo crear la versión',msg:err.message}); }
+  };
+  // Promueve una receta por el ciclo de vida. `promote` valida transición y rol:
+  // aprobar y retirar exigen dirección, y su error se muestra en vez de tragarse.
+  const promoteRecipe=(receta,toState)=>{
+    const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+    if(!lifecycle) return;
+    try{
+      const actualizada=lifecycle.promote(receta,toState,{
+        actor:props.operatorName||'operador-local',
+        // El rol tiene una sola procedencia: getFieldOperatorRole(), que lee
+        // usuarios/{uid}.rol de la sesión. props.isAdmin es el selector del
+        // encabezado y no es autorización (client-invariants.test.js lo exige).
+        role:fieldOperatorRole,
+        at:new Date().toISOString(),
+      });
+      const u=saved.map(s=>s.id===receta.id?{...actualizada,id:receta.id}:s);
+      setSaved(u);
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+    }catch(err){ setNoticeDlg({title:'No se pudo cambiar el estado',msg:err.message}); }
   };
   // Protección de UI: solo evita el clic accidental de un operador de campo en
   // una acción destructiva e irreversible — no es seguridad real (toda la app
@@ -7439,6 +7534,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'incubacion',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
+      // El snapshot congela lo que este lote debe seguir diciendo aunque la
+      // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
+      recipeSnapshot:(()=>{
+        const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+        if(!lc||!recipe.length||!balanced) return null;
+        const base=saved.find(r=>r.name===saveName)||{name:saveName||'Receta activa',sKey,recipe:[...recipe],status:'legacy',version:1};
+        try{ return lc.buildProductionSnapshot({...base,sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),cost:Math.round(an.cost)},{at:new Date().toISOString()}); }
+        catch(e){ return null; }
+      })(),
     };
   };
 
@@ -9249,7 +9353,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <span>{sheet?`Sala ${sheet.room?sheet.room.name:'sin asignar'}`:(lote.sala||'Sala sin asignar')}</span>
           <span>{sheet?`${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas`:`${lote.numBolsas} bolsas`}</span>
           <span>Inoculación {lote.fechaInoculacion}</span>
-          <span>{sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular')}</span>
+          {/* Si el lote guardó snapshot de producción, la ficha muestra lo que
+              de verdad se usó —código, versión y estado— aunque la receta haya
+              cambiado después. Los lotes anteriores al versionado no tienen
+              snapshot y conservan lo de siempre: no se les inventa una versión. */}
+          <span data-testid="batch-recipe-label">{(()=>{
+            const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+            if(lc&&lote.recipeSnapshot){ try{ return lc.describeSnapshot(lote.recipeSnapshot); }catch(e){} }
+            return sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular');
+          })()}</span>
           <span>{sheet&&sheet.spawnLot&&sheet.spawnLot.id?`Semilla ${sheet.spawnLot.id}`:'Semilla sin vincular'}</span>
           {sheet&&sheet.consumedInventory.length>0&&<span>{sheet.consumedInventory.length} lote(s) de insumo</span>}
           {sheet&&<span title="Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos">Trazabilidad {sheet.completenessPct}%</span>}
@@ -13738,7 +13850,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
                         <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:'var(--z-sticky)'}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                            {e.name}
+                            {/* Una receta en ensayo no puede leerse igual que una
+                                aprobada (SETAS_OS_UX_ARCHITECTURE_V2.md §9): el
+                                estado del ciclo de vida va junto al nombre, con
+                                su propio color, no escondido entre las métricas. */}
+                            {e.status&&(()=>{
+                              const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+                              const label=lc?(lc.LIFECYCLE_LABELS[e.status]||e.status):e.status;
+                              const color=RECIPE_LIFECYCLE_COLOR[e.status]||'var(--ink-500)';
+                              const ident=lc?lc.recipeIdentity(e):{version:e.version||1};
+                              return <span data-testid="recipe-lifecycle-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color,border:`1px solid ${color}`,padding:'1px 7px',borderRadius:0}}>{label} · v{ident.version}</span>;
+                            })()}
+                          </div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
@@ -13752,6 +13877,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
                             <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
                             <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
+                            {/* Promoción por el ciclo de vida. `promote` valida la
+                                transición y el rol, así que aquí sólo se ofrece lo
+                                que el estado admite; aprobar y retirar los rechaza
+                                el módulo si no es dirección. */}
+                            {(()=>{
+                              const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+                              if(!lc||!e.status) return null;
+                              const destinos=[['trial','A ensayo'],['approved','Aprobar'],['retired','Retirar']]
+                                .filter(([to])=>lc.canTransition(e.status,to));
+                              return destinos.map(([to,label])=>(
+                                <button key={to} data-testid={`recipe-promote-${to}`} onClick={()=>promoteRecipe(e,to)}
+                                  style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:RECIPE_LIFECYCLE_COLOR[to],border:`1px solid ${RECIPE_LIFECYCLE_COLOR[to]}`,borderRadius:'var(--r-xs)',cursor:'pointer'}}>{label}</button>
+                              ));
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -15297,7 +15436,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='labExtraction'&&<LabExtraction/>}
 
         {confirmDlg&&<ConfirmModal dlg={confirmDlg} onClose={()=>setConfirmDlg(null)}/>}
+        {newVersionFor&&<NewRecipeVersionModal recipe={newVersionFor} onClose={()=>setNewVersionFor(null)} onConfirm={confirmNewRecipeVersion}/>}
         {promptDlg&&<PromptModal dlg={promptDlg} onClose={()=>setPromptDlg(null)}/>}
+        {versionDlg&&<NewRecipeVersionModal recipe={versionDlg.recipe} onClose={()=>setVersionDlg(null)} onConfirm={()=>confirmNewRecipeVersion(versionDlg.recipe)}/>}
         {noticeDlg&&<NoticeModal dlg={noticeDlg} onClose={()=>setNoticeDlg(null)}/>}
 
         {/* MODAL EJECUTAR LOTE */}

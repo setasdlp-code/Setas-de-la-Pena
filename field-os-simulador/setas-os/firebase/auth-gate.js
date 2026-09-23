@@ -73,6 +73,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../historical-calibration.js",
   "../species-targets.js",
   "../recipe-version.js",
+  "../recipe-lifecycle.js",
   "../launch-plan.js",
   "../inventory-consumption.js",
   "../recipe-optimizer.js",
