@@ -1314,6 +1314,16 @@ function runPreflightGates(){
   var bodySize=parseInt(state.typography.scale.body.size,10);
   gates.push({name:"body >= 16px",pass:bodySize>=16});
 
+  // 3b. Font faces must exist in the vendored family contract
+  var facesOk=true;
+  Object.keys(state.typography.scale).forEach(function(role){
+    var item=state.typography.scale[role];
+    if(!item||!item.family)return;
+    var meta=typographyFamilyMeta(item.family),style=item.style||"normal";
+    if(meta.weights.indexOf(Number(item.weight))<0||meta.styles.indexOf(style)<0) facesOk=false;
+  });
+  gates.push({name:"font faces supported",pass:facesOk});
+
   // 4. Operative + metadata typography floors
   var dataSize=parseInt(state.typography.scale.data.size,10);
   var labelSize=parseInt(state.typography.scale.label.size,10);
@@ -1640,8 +1650,8 @@ function inspectRenderType(host,cfg,target){
   var sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Tipografía"));
   if(cfg.size&&state.typography.scale[cfg.size])inspectMakeNumber(sec,"Tamaño","typography.scale."+cfg.size+".size",parseFloat(state.typography.scale[cfg.size].size),9,72,1,function(v){state.typography.scale[cfg.size].size=v+"px";applyTypographyLive();onTokenModified();inspectRender(target)});
   if(cfg.weight&&state.typography.scale[cfg.weight]){
-    var spec=state.typography.scale[cfg.weight],row=node("div","inspector-control"),lab=node("label",null,"Peso · typography.scale."+cfg.weight+".weight"),sel=node("select");
-    [300,400,500,600,700,900].forEach(function(w){var o=node("option",null,String(w));o.value=w;if(spec.weight===w)o.selected=true;sel.appendChild(o)});
+    var spec=state.typography.scale[cfg.weight],meta=typographyFamilyMeta(spec.family),row=node("div","inspector-control"),lab=node("label",null,"Peso · typography.scale."+cfg.weight+".weight"),sel=node("select");
+    meta.weights.forEach(function(w){var name=(meta.weightNames&&meta.weightNames[String(w)])||String(w),o=node("option",null,w+" · "+name);o.value=w;if(spec.weight===w)o.selected=true;sel.appendChild(o)});
     sel.addEventListener("change",function(){spec.weight=Number(sel.value);applyTypographyLive();onTokenModified();inspectRender(target)});row.appendChild(lab);row.appendChild(sel);sec.appendChild(row);
   }
   if(cfg.leading&&state.typography.scale[cfg.leading])inspectMakeNumber(sec,"Interlineado","typography.scale."+cfg.leading+".leading",state.typography.scale[cfg.leading].leading,.9,2,.05,function(v){state.typography.scale[cfg.leading].leading=Number(v);applyTypographyLive();onTokenModified();inspectRender(target)});
@@ -1651,8 +1661,14 @@ function inspectRenderType(host,cfg,target){
   }
   if(cfg.family&&state.typography.scale[cfg.family]){
     var fs=state.typography.scale[cfg.family],fr=node("div","inspector-control"),fl=node("label",null,"Familia · typography.scale."+cfg.family+".family"),fsel=node("select");
-    ["editorial","sans","mono"].forEach(function(v){var o=node("option",null,v);o.value=v;if(fs.family===v)o.selected=true;fsel.appendChild(o)});
-    fsel.addEventListener("change",function(){fs.family=fsel.value;applyTypographyLive();onTokenModified();inspectRender(target)});fr.appendChild(fl);fr.appendChild(fsel);sec.appendChild(fr);
+    [["editorial","Gaya Patched"],["sans","IBM Plex Sans"],["mono","IBM Plex Mono"]].forEach(function(pair){var o=node("option",null,pair[1]);o.value=pair[0];if(fs.family===pair[0])o.selected=true;fsel.appendChild(o)});
+    fsel.addEventListener("change",function(){fs.family=fsel.value;normalizeTypographyFace(fs);applyTypographyLive();onTokenModified();inspectRender(target)});fr.appendChild(fl);fr.appendChild(fsel);sec.appendChild(fr);
+
+    var styleMeta=typographyFamilyMeta(fs.family),sr=node("div","inspector-control"),sl=node("label",null,"Estilo · typography.scale."+cfg.family+".style"),ssel=node("select"),current=fs.style||"normal";
+    styleMeta.styles.forEach(function(v){var o=node("option",null,v==="italic"?"Italic":"Normal");o.value=v;if(v===current)o.selected=true;ssel.appendChild(o)});
+    ssel.disabled=styleMeta.styles.length<2;
+    ssel.addEventListener("change",function(){if(ssel.value==="normal")delete fs.style;else fs.style=ssel.value;applyTypographyLive();onTokenModified();inspectRender(target)});
+    sr.appendChild(sl);sr.appendChild(ssel);sec.appendChild(sr);
   }
   host.appendChild(sec);
 }
