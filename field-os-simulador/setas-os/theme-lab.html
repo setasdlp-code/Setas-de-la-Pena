@@ -183,6 +183,10 @@ button,input,select{font:inherit}
     <section class="lab-section">
       <h2>Gaya Patched · 12 Faces Reales</h2>
       <p class="lab-note">Thin, Light, Regular, Medium, Bold y Black; cada peso en Normal e Italic. No se sintetiza Semibold 600 para Gaya.</p>
+      <div class="lab-actions" style="margin-bottom:var(--space-2)">
+        <button id="gaya-all-italic" class="lab-btn" type="button">Aplicar Italic a roles Gaya</button>
+        <button id="gaya-all-normal" class="lab-btn" type="button">Aplicar Normal a roles Gaya</button>
+      </div>
       <div id="gaya-face-matrix" class="gaya-face-grid"></div>
     </section>
     <section class="lab-section">
@@ -1804,6 +1808,22 @@ function setupTabs(){
     el("phomemo-input-sub").addEventListener("input", updatePhomemoDynamic);
     el("phomemo-input-gen").addEventListener("input", updatePhomemoDynamic);
   }
+
+  // Gaya Patched bulk style helpers — preserve each role's real weight.
+  el("gaya-all-italic").addEventListener("click",function(){
+    Object.keys(state.typography.scale).forEach(function(role){
+      var item=state.typography.scale[role];
+      if(item&&item.family==="editorial"){normalizeTypographyFace(item);item.style="italic"}
+    });
+    applyTypographyLive();renderTypographyControls();onTokenModified();
+  });
+  el("gaya-all-normal").addEventListener("click",function(){
+    Object.keys(state.typography.scale).forEach(function(role){
+      var item=state.typography.scale[role];
+      if(item&&item.family==="editorial") delete item.style;
+    });
+    applyTypographyLive();renderTypographyControls();onTokenModified();
+  });
 
   // Type Specimen live tester
   if(el("type-specimen-role")){
