@@ -7893,11 +7893,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return true;
   };
   const deleteBitCosecha=(id)=>{
+    // Antes de borrarla del estado hay que capturar loteId/flush: sin esto,
+    // la cosecha desaparecía de Bitácora pero seguía viva en la ficha
+    // pública para siempre — nadie más va a volver a pedir su borrado.
+    const cosecha=bitCosechas.find(c=>c.id===id);
+    const lote=cosecha&&bitLotes.find(l=>l.id===cosecha.loteId);
     setBitCosechas(prev=>{const upd=prev.filter(c=>c.id!==id);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
     encolarSync({type:'eliminarCosecha',key:'cosecha:'+id,args:[id]});
+    // La cola de sync (arriba) es solo bitacora_* — la ficha pública
+    // (public_lotes) es una colección aparte que nadie más limpia: sin
+    // esto, el QR de una etiqueta ya impresa seguía mostrando una cosecha
+    // que ya no existe en Bitácora.
+    if(lote?.codigo){
+      window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo,id).catch(err=>console.warn('No se pudo quitar la cosecha de la ficha pública:',err));
+    }
   };
   const deleteBitLote=(loteId)=>{
     const doDelete=()=>{
+      const lote=bitLotes.find(l=>l.id===loteId);
       const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
       const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
@@ -7905,6 +7918,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
       if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
       encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
+      // eliminarLoteCascade (arriba) es solo bitacora_* — la ficha pública
+      // (public_lotes) es una colección aparte que nadie más limpia: sin
+      // esto, el QR de una etiqueta ya impresa seguía resolviendo al lote
+      // borrado indefinidamente. deleteDoc del lote no borra su subcolección
+      // "cosechas" sola, por eso cada cosecha se borra explícitamente aquí.
+      if(lote?.codigo){
+        cosechaIds.forEach(cid=>{
+          window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo,cid).catch(err=>console.warn('No se pudo quitar una cosecha de la ficha pública:',err));
+        });
+        window.SetasPublicTraceDB?.eliminarLote(lote.codigo).catch(err=>console.warn('No se pudo quitar la ficha pública del lote:',err));
+      }
     };
     setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
   };

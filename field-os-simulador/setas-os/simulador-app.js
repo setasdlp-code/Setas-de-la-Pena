@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: ba80b4dc74b1a2db527f63c8c1fde650c6c989790b1c09b976bac0714080c125
+// source-hash: f3f9817f9814f191b99f881141331eaee089955daffb67ae890db25f585dfcde
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -6151,6 +6151,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
     return true;
   };
   const deleteBitCosecha = (id) => {
+    const cosecha = bitCosechas.find((c) => c.id === id);
+    const lote = cosecha && bitLotes.find((l) => l.id === cosecha.loteId);
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.id !== id);
       try {
@@ -6160,9 +6162,13 @@ ${errors.slice(0, 5).join("\n")}` : "");
       return upd;
     });
     encolarSync({ type: "eliminarCosecha", key: "cosecha:" + id, args: [id] });
+    if (lote?.codigo) {
+      window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, id).catch((err) => console.warn("No se pudo quitar la cosecha de la ficha pública:", err));
+    }
   };
   const deleteBitLote = (loteId) => {
     const doDelete = () => {
+      const lote = bitLotes.find((l) => l.id === loteId);
       const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
       const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
       setBitLotes((prev) => {
@@ -6194,6 +6200,12 @@ ${errors.slice(0, 5).join("\n")}` : "");
         goBitTab("bit_dash");
       }
       encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
+      if (lote?.codigo) {
+        cosechaIds.forEach((cid) => {
+          window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, cid).catch((err) => console.warn("No se pudo quitar una cosecha de la ficha pública:", err));
+        });
+        window.SetasPublicTraceDB?.eliminarLote(lote.codigo).catch((err) => console.warn("No se pudo quitar la ficha pública del lote:", err));
+      }
     };
     setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });
   };
