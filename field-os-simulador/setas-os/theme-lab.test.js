@@ -245,3 +245,23 @@ test('pre-flight rejects synthesized or unsupported typography faces', () => {
   assert.match(lab, /meta\.weights\.indexOf\(Number\(item\.weight\)\)<0/);
   assert.match(lab, /meta\.styles\.indexOf\(style\)<0/);
 });
+
+
+test('Theme Lab shows an explicit Gaya Patched Italic direct selector with all six real weights', () => {
+  assert.match(lab, /Gaya Patched · Selector Directo/);
+  assert.match(lab, /id="gaya-direct-role"/);
+  assert.match(lab, /id="gaya-direct-style"/);
+  assert.match(lab, /<option value="italic">Gaya Patched Italic<\/option>/);
+  assert.match(lab, /id="gaya-direct-weight"/);
+  for (const weight of ['100', '300', '400', '500', '700', '900']) {
+    assert.match(lab, new RegExp('<option value="' + weight + '">'));
+  }
+  assert.doesNotMatch(lab, /<option value="600">600 · Semibold<\/option>/);
+  assert.match(lab, /id="gaya-direct-apply"/);
+  assert.match(lab, /function applyGayaDirectSelection\(/);
+});
+
+test('Theme Lab dominance menu exposes Gaya Patched Italic explicitly', () => {
+  assert.match(lab, /<option value="gaya-italic">Gaya Patched Italic Dominant<\/option>/);
+  assert.match(lab, /this\.value==="gaya-italic"/);
+});
