@@ -8,6 +8,9 @@ const path = require('node:path');
 const ROOT = __dirname;
 const lab = fs.readFileSync(path.join(ROOT, 'theme-lab.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+const typography = JSON.parse(fs.readFileSync(path.join(ROOT, 'ds-2026', 'tokens', 'typography.json'), 'utf8'));
+const fontsCss = fs.readFileSync(path.join(ROOT, 'ds-2026', 'tokens', 'fonts.css'), 'utf8');
+
 
 test('theme lab consumes only the canonical DS-2026 operations public bundle', () => {
   assert.match(lab, /<link rel="stylesheet" href="ds-2026\/operations\.css">/);
@@ -184,4 +187,61 @@ test('embedded Theme Lab JavaScript parses after Inspector integration', () => {
   const match = lab.match(/<script>([\s\S]*)<\/script>\s*<\/body>/);
   assert.ok(match, 'embedded script found');
   assert.doesNotThrow(() => new Function(match[1]));
+});
+
+
+test('Gaya Patched exposes all six real weights with matching italic faces', () => {
+  assert.deepEqual(typography.families.editorial.weights, [100, 300, 400, 500, 700, 900]);
+  assert.deepEqual(typography.families.editorial.styles, ['normal', 'italic']);
+  assert.equal(typography.families.editorial.weights.includes(600), false, 'Gaya has no vendored Semibold 600 face');
+
+  const faces = [
+    ['Thin', 100],
+    ['Light', 300],
+    ['Regular', 400],
+    ['Medium', 500],
+    ['Bold', 700],
+    ['Black', 900],
+  ];
+  for (const [name, weight] of faces) {
+    const normalFile = 'GayaPatched-' + name + '.otf';
+    const italicFile = name === 'Regular' ? 'GayaPatched-Italic.otf' : 'GayaPatched-' + name + 'Italic.otf';
+    assert.ok(fs.existsSync(path.join(ROOT, 'ds-2026', 'assets', 'fonts', normalFile)), normalFile + ' exists');
+    assert.ok(fs.existsSync(path.join(ROOT, 'ds-2026', 'assets', 'fonts', italicFile)), italicFile + ' exists');
+    assert.match(fontsCss, new RegExp(normalFile.replace('.', '\\.')));
+    assert.match(fontsCss, new RegExp(italicFile.replace('.', '\\.')));
+    assert.match(fontsCss, new RegExp('font-weight:' + weight + ';\\s*font-style:italic'));
+  }
+});
+
+test('Theme Lab exposes Gaya Patched Normal/Italic per role and the 12-face matrix', () => {
+  assert.match(lab, /id="typography-family-style-controls"/);
+  assert.match(lab, /Gaya Patched · 12 Faces Reales/);
+  assert.match(lab, /id="gaya-face-matrix"/);
+  assert.match(lab, /function typographyFamilyMeta\(/);
+  assert.match(lab, /styles:\["normal","italic"\]/);
+  assert.match(lab, /weights:\[100,300,400,500,700,900\]/);
+  assert.match(lab, /Gaya Patched/);
+  assert.match(lab, /Italic/);
+});
+
+test('Theme Lab can apply Gaya Italic to every editorial role without changing its real weight', () => {
+  assert.match(lab, /id="gaya-all-italic"/);
+  assert.match(lab, /id="gaya-all-normal"/);
+  assert.match(lab, /item&&item\.family==="editorial"/);
+  assert.match(lab, /item\.style="italic"/);
+  assert.match(lab, /delete item\.style/);
+});
+
+test('Inspector uses family-aware Gaya weights and exposes style as a canonical typography property', () => {
+  assert.match(lab, /typographyFamilyMeta\(spec\.family\)/);
+  assert.match(lab, /Estilo · typography\.scale\./);
+  assert.match(lab, /normalizeTypographyFace\(fs\)/);
+  assert.match(lab, /ssel\.value==="normal"/);
+});
+
+test('pre-flight rejects synthesized or unsupported typography faces', () => {
+  assert.match(lab, /font faces supported/);
+  assert.match(lab, /meta\.weights\.indexOf\(Number\(item\.weight\)\)<0/);
+  assert.match(lab, /meta\.styles\.indexOf\(style\)<0/);
 });
