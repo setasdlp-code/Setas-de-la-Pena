@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: ab1ca2c09bdf2de9f29e244786764e9267922296bbabd90d504b93381cdd181d
+// source-hash: 7893f7a18e17a6efc955aa0051085c3bf904d98098edfff521799fb9232e7976
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -5051,6 +5051,15 @@ function SimuladorShell(props) {
         eb: an ? an.eb : null,
         cost: an ? Math.round(an.cost) : null,
         score: opt.score
+      }).then((docRef) => {
+        setSaved((prev) => {
+          const upd = prev.map((r) => r.id === e.id ? { ...r, firestoreId: docRef.id } : r);
+          try {
+            localStorage.setItem("setas_v6", JSON.stringify(upd));
+          } catch (e3) {
+          }
+          return upd;
+        });
       }).catch((err) => setSaveSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido")));
     }
   };
@@ -5128,11 +5137,15 @@ function SimuladorShell(props) {
   };
   const delR = (id) => {
     setConfirmDlg({ title: "Eliminar receta", msg: "¿Eliminar esta receta guardada? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: () => {
+      const receta = saved.find((r) => r.id === id);
       const u = saved.filter((r) => r.id !== id);
       setSaved(u);
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
       } catch (e) {
+      }
+      if (receta?.firestoreId && window.SetasDB?.deleteReceta) {
+        window.SetasDB.deleteReceta(receta.firestoreId).catch((err) => console.warn("No se pudo borrar la receta en Firestore:", err));
       }
     } });
   };
@@ -6271,6 +6284,11 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setShowProvModal(false);
   };
   const eliminarProveedor = (id) => {
+    const tieneCompras = invCompras.some((c) => c.proveedorId === id);
+    if (tieneCompras) {
+      setNoticeDlg({ title: "No se puede eliminar", msg: "Este proveedor tiene compras registradas en el historial — no se puede eliminar sin perder la trazabilidad de esas compras." });
+      return;
+    }
     setConfirmDlg({ title: "Eliminar proveedor", msg: "¿Eliminar este proveedor? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: () => saveProveedores(invProveedores.filter((p) => p.id !== id)) });
   };
   const addCmpItem = () => setCmpItems((prev) => [...prev, { uid: Date.now(), ingId: "", kg: "", precio: "" }]);
@@ -6739,7 +6757,7 @@ BATCH (${numBags}×${kgBag} kg):
       return /* @__PURE__ */ React.createElement("div", { key: mes, className: "inv-month-group" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-month-head", "aria-expanded": !collapsed, onClick: () => setCollapsedMonths((prev) => ({ ...prev, [mes]: !prev[mes] })) }, /* @__PURE__ */ React.createElement("span", { className: "inv-month-label" }, label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-month-total" }, "$", totalMes.toLocaleString("es-CO"), " COP"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, collapsed ? "▸" : "▾"))), !collapsed && /* @__PURE__ */ React.createElement("table", { className: "inv-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Fecha"), /* @__PURE__ */ React.createElement("th", null, "Proveedor"), /* @__PURE__ */ React.createElement("th", null, "Ítems"), /* @__PURE__ */ React.createElement("th", null, "Total COP"), /* @__PURE__ */ React.createElement("th", null, "Fuente"))), /* @__PURE__ */ React.createElement("tbody", null, cmpras.map((c) => {
         const prov = invProveedores.find((p) => p.id === c.proveedorId);
         const tot = c.items.reduce((s, it) => s + (it.kg || 0) * (it.precio || 0), 0);
-        return /* @__PURE__ */ React.createElement("tr", { key: c.id }, /* @__PURE__ */ React.createElement("td", null, c.fecha), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" } }, prov?.nombre || c.proveedorId), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3 } }, c.items.map((it, i) => {
+        return /* @__PURE__ */ React.createElement("tr", { key: c.id }, /* @__PURE__ */ React.createElement("td", null, c.fecha), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" } }, prov?.nombre || "Proveedor eliminado"), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3 } }, c.items.map((it, i) => {
           const g = INGS.find((x) => x.id === it.ingredienteId);
           return /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "1px 5px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", color: "var(--ink-500)", borderRadius: 2 } }, g?.name || it.ingredienteId, " ", it.kg, "kg");
         }))), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--ink-900)" } }, "$", tot.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, c.fuenteCaptura));
