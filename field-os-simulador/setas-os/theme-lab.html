@@ -30,6 +30,11 @@ button,input,select{font:inherit}
 .lab-section{border-top:var(--rule-hairline);padding-top:var(--space-2);margin-top:var(--space-2)}
 .lab-section h2,.preview-card h2{margin:0 0 var(--space-1);font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--text-secondary)}
 .token-grid,.semantic-list,.preview-stack,.mini-hoy,.spec-grid{display:grid;gap:var(--space-1)}
+.gaya-face-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-1)}
+.gaya-face-sample{border:var(--rule-hairline);background:var(--surface-page);padding:var(--space-2);min-width:0}
+.gaya-face-meta{font-family:var(--font-mono);font-size:var(--size-micro-screen);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--text-metadata);margin-bottom:var(--space-half)}
+.gaya-face-text{font-family:'Gaya Patched','Gaya',Georgia,serif;font-size:28px;line-height:1.05;word-break:break-word}
+
 .token-row{display:grid;grid-template-columns:1fr auto;gap:var(--space-1);align-items:center;min-height:44px}
 .token-name{display:block;font-family:var(--font-mono);font-size:var(--size-data)}
 .token-meta{display:block;margin-top:2px;font-size:var(--size-micro);color:var(--text-metadata)}
@@ -168,8 +173,21 @@ button,input,select{font:inherit}
       <div id="typography-scale-controls" class="spec-grid"></div>
     </section>
     <section class="lab-section">
+      <h2>Familia & Estilo</h2>
+      <div id="typography-family-style-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
       <h2>Pesos Tipográficos</h2>
       <div id="typography-weight-controls" class="spec-grid"></div>
+    </section>
+    <section class="lab-section">
+      <h2>Gaya Patched · 12 Faces Reales</h2>
+      <p class="lab-note">Thin, Light, Regular, Medium, Bold y Black; cada peso en Normal e Italic. No se sintetiza Semibold 600 para Gaya.</p>
+      <div class="lab-actions" style="margin-bottom:var(--space-2)">
+        <button id="gaya-all-italic" class="lab-btn" type="button">Aplicar Italic a roles Gaya</button>
+        <button id="gaya-all-normal" class="lab-btn" type="button">Aplicar Normal a roles Gaya</button>
+      </div>
+      <div id="gaya-face-matrix" class="gaya-face-grid"></div>
     </section>
     <section class="lab-section">
       <h2>Interlineado (Leading)</h2>
@@ -984,84 +1002,116 @@ function renderSemantic(){
   });
 }
 
+function typographyFamilyMeta(family){
+  var meta=state.typography.families&&state.typography.families[family]||{};
+  var defaults={
+    editorial:{styles:["normal","italic"],weights:[100,300,400,500,700,900],weightNames:{"100":"Thin","300":"Light","400":"Regular","500":"Medium","700":"Bold","900":"Black"}},
+    sans:{styles:["normal"],weights:[300,400,500,600,700],weightNames:{"300":"Light","400":"Regular","500":"Medium","600":"Semibold","700":"Bold"}},
+    mono:{styles:["normal"],weights:[400,500,600],weightNames:{"400":"Regular","500":"Medium","600":"Semibold"}}
+  };
+  var d=defaults[family]||defaults.sans;
+  return{
+    styles:Array.isArray(meta.styles)?meta.styles:d.styles,
+    weights:Array.isArray(meta.weights)?meta.weights:d.weights,
+    weightNames:meta.weightNames||d.weightNames
+  };
+}
+function nearestTypographyWeight(family,current){
+  var ws=typographyFamilyMeta(family).weights.slice();
+  if(ws.indexOf(Number(current))>=0)return Number(current);
+  return ws.reduce(function(best,w){return Math.abs(w-current)<Math.abs(best-current)?w:best},ws[0]);
+}
+function normalizeTypographyFace(item){
+  var meta=typographyFamilyMeta(item.family);
+  item.weight=nearestTypographyWeight(item.family,item.weight);
+  var style=item.style||"normal";
+  if(meta.styles.indexOf(style)<0) style=meta.styles[0]||"normal";
+  if(style==="normal") delete item.style; else item.style=style;
+}
+function renderGayaFaceMatrix(){
+  var host=el("gaya-face-matrix");if(!host)return;host.innerHTML="";
+  var meta=typographyFamilyMeta("editorial");
+  meta.weights.forEach(function(weight){
+    ["normal","italic"].forEach(function(style){
+      var card=node("div","gaya-face-sample");
+      var name=(meta.weightNames&&meta.weightNames[String(weight)])||String(weight);
+      card.appendChild(node("div","gaya-face-meta",name+" "+weight+" · "+(style==="italic"?"Italic":"Normal")));
+      var sample=node("div","gaya-face-text","Setas de la Peña · Lentinula edodes");
+      sample.style.fontWeight=String(weight);sample.style.fontStyle=style;
+      card.appendChild(sample);host.appendChild(card);
+    });
+  });
+}
 function renderTypographyControls(){
   var host=el("typography-scale-controls"); host.innerHTML="";
   var roles=["display-01","display-02","heading-01","heading-02","heading-03","species","latin","body","small","data","label","micro"];
   roles.forEach(function(r){
     var item=state.typography.scale[r]; if(!item)return;
-    var f=node("div","lab-field");
-    var row=node("div","lab-range-line");
-    var lab=node("label",null,r+" · tamaño");
-    var inp=node("input"); inp.type="range"; inp.min="9"; inp.max="72"; inp.value=parseInt(item.size,10); inp.dataset.tokenPath="typography.scale."+r+".size";
+    normalizeTypographyFace(item);
+    var f=node("div","lab-field"),row=node("div","lab-range-line"),lab=node("label",null,r+" · tamaño");
+    var inp=node("input");inp.type="range";inp.min="9";inp.max="72";inp.value=parseInt(item.size,10);inp.dataset.tokenPath="typography.scale."+r+".size";
     var out=node("output",null,item.size);
-    inp.addEventListener("input",function(){
-      item.size=inp.value+"px"; out.textContent=item.size; applyTypographyLive(); onTokenModified();
-    });
-    row.appendChild(inp); row.appendChild(out); f.appendChild(lab); f.appendChild(row); host.appendChild(f);
+    inp.addEventListener("input",function(){item.size=inp.value+"px";out.textContent=item.size;applyTypographyLive();onTokenModified()});
+    row.appendChild(inp);row.appendChild(out);f.appendChild(lab);f.appendChild(row);host.appendChild(f);
   });
+
+  var faceHost=el("typography-family-style-controls");
+  if(faceHost){
+    faceHost.innerHTML="";
+    roles.forEach(function(r){
+      var item=state.typography.scale[r];if(!item)return;
+      var f=node("div","lab-field"),lab=node("label",null,r+" · familia / estilo"),row=node("div","lab-range-line");
+      var family=node("select");family.dataset.tokenPath="typography.scale."+r+".family";
+      [["editorial","Gaya Patched"],["sans","IBM Plex Sans"],["mono","IBM Plex Mono"]].forEach(function(pair){var o=node("option",null,pair[1]);o.value=pair[0];if(item.family===pair[0])o.selected=true;family.appendChild(o)});
+      var style=node("select");style.dataset.tokenPath="typography.scale."+r+".style";
+      function refreshStyles(){
+        style.innerHTML="";var meta=typographyFamilyMeta(item.family),current=item.style||"normal";
+        meta.styles.forEach(function(v){var o=node("option",null,v==="italic"?"Italic":"Normal");o.value=v;if(v===current)o.selected=true;style.appendChild(o)});
+        style.disabled=meta.styles.length<2;
+      }
+      family.addEventListener("change",function(){item.family=family.value;normalizeTypographyFace(item);refreshStyles();renderTypographyControls();applyTypographyLive();onTokenModified()});
+      style.addEventListener("change",function(){if(style.value==="normal")delete item.style;else item.style=style.value;applyTypographyLive();onTokenModified();updateTypeSpecimen()});
+      refreshStyles();row.appendChild(family);row.appendChild(style);f.appendChild(lab);f.appendChild(row);faceHost.appendChild(f);
+    });
+  }
 
   var weightHost=el("typography-weight-controls");
   if(weightHost){
     weightHost.innerHTML="";
-    var wRoles=["heading-01","species","body","data","label"];
-    var availableWeights=[
-      {label:"300 · Light", val:300},
-      {label:"400 · Regular", val:400},
-      {label:"500 · Medium", val:500},
-      {label:"600 · Semibold", val:600},
-      {label:"700 · Bold", val:700},
-      {label:"900 · Black", val:900}
-    ];
-    wRoles.forEach(function(r){
-      var item=state.typography.scale[r]; if(!item)return;
-      var f=node("div","lab-field");
-      var lab=node("label",null,r+" · peso");
-      var sel=node("select"); sel.dataset.tokenPath="typography.scale."+r+".weight";
-      availableWeights.forEach(function(w){
-        var o=node("option",null,w.label);
-        o.value=w.val;
-        if(item.weight===w.val) o.selected=true;
-        sel.appendChild(o);
+    roles.forEach(function(r){
+      var item=state.typography.scale[r];if(!item)return;
+      var f=node("div","lab-field"),lab=node("label",null,r+" · peso"),sel=node("select");
+      sel.dataset.tokenPath="typography.scale."+r+".weight";
+      var meta=typographyFamilyMeta(item.family);
+      meta.weights.forEach(function(w){
+        var label=(meta.weightNames&&meta.weightNames[String(w)])||String(w),o=node("option",null,w+" · "+label);
+        o.value=w;if(item.weight===w)o.selected=true;sel.appendChild(o);
       });
-      sel.addEventListener("change",function(){
-        item.weight=parseInt(sel.value,10);
-        applyTypographyLive();
-        onTokenModified();
-      });
-      f.appendChild(lab); f.appendChild(sel); weightHost.appendChild(f);
+      sel.addEventListener("change",function(){item.weight=parseInt(sel.value,10);applyTypographyLive();onTokenModified()});
+      f.appendChild(lab);f.appendChild(sel);weightHost.appendChild(f);
     });
   }
 
-  var leadHost=el("typography-leading-controls"); leadHost.innerHTML="";
+  var leadHost=el("typography-leading-controls");leadHost.innerHTML="";
   ["display-01","display-02","heading-03","body","data"].forEach(function(r){
-    var item=state.typography.scale[r]; if(!item)return;
-    var f=node("div","lab-field");
-    var row=node("div","lab-range-line");
-    var lab=node("label",null,r+" · interlineado");
-    var inp=node("input"); inp.type="range"; inp.min="0.9"; inp.max="1.8"; inp.step="0.05"; inp.value=item.leading; inp.dataset.tokenPath="typography.scale."+r+".leading";
+    var item=state.typography.scale[r];if(!item)return;
+    var f=node("div","lab-field"),row=node("div","lab-range-line"),lab=node("label",null,r+" · interlineado");
+    var inp=node("input");inp.type="range";inp.min="0.9";inp.max="1.8";inp.step="0.05";inp.value=item.leading;inp.dataset.tokenPath="typography.scale."+r+".leading";
     var out=node("output",null,Number(item.leading).toFixed(2));
-    inp.addEventListener("input",function(){
-      item.leading=parseFloat(inp.value); out.textContent=Number(item.leading).toFixed(2); applyTypographyLive(); onTokenModified();
-    });
-    row.appendChild(inp); row.appendChild(out); f.appendChild(lab); f.appendChild(row); leadHost.appendChild(f);
+    inp.addEventListener("input",function(){item.leading=parseFloat(inp.value);out.textContent=Number(item.leading).toFixed(2);applyTypographyLive();onTokenModified()});
+    row.appendChild(inp);row.appendChild(out);f.appendChild(lab);f.appendChild(row);leadHost.appendChild(f);
   });
 
-  var trackHost=el("typography-tracking-controls"); trackHost.innerHTML="";
+  var trackHost=el("typography-tracking-controls");trackHost.innerHTML="";
   ["display-01","heading-01","body","label","micro"].forEach(function(r){
-    var item=state.typography.scale[r]; if(!item)return;
-    var f=node("div","lab-field");
-    var row=node("div","lab-range-line");
-    var lab=node("label",null,r+" · tracking");
-    var current=parseFloat(item.tracking)||0;
-    var inp=node("input"); inp.type="range"; inp.min="-0.05"; inp.max="0.30"; inp.step="0.01"; inp.value=current; inp.dataset.tokenPath="typography.scale."+r+".tracking";
+    var item=state.typography.scale[r];if(!item)return;
+    var f=node("div","lab-field"),row=node("div","lab-range-line"),lab=node("label",null,r+" · tracking"),current=parseFloat(item.tracking)||0;
+    var inp=node("input");inp.type="range";inp.min="-0.05";inp.max="0.30";inp.step="0.01";inp.value=current;inp.dataset.tokenPath="typography.scale."+r+".tracking";
     var out=node("output",null,item.tracking);
-    inp.addEventListener("input",function(){
-      item.tracking=inp.value+"em"; out.textContent=item.tracking;
-      applyTypographyLive();
-      onTokenModified();
-    });
-    row.appendChild(inp); row.appendChild(out); f.appendChild(lab); f.appendChild(row); trackHost.appendChild(f);
+    inp.addEventListener("input",function(){item.tracking=inp.value+"em";out.textContent=item.tracking;applyTypographyLive();onTokenModified()});
+    row.appendChild(inp);row.appendChild(out);f.appendChild(lab);f.appendChild(row);trackHost.appendChild(f);
   });
+  renderGayaFaceMatrix();
   updateTypeSpecimen();
 }
 
@@ -1267,6 +1317,16 @@ function runPreflightGates(){
   // 3. Body >= 16px
   var bodySize=parseInt(state.typography.scale.body.size,10);
   gates.push({name:"body >= 16px",pass:bodySize>=16});
+
+  // 3b. Font faces must exist in the vendored family contract
+  var facesOk=true;
+  Object.keys(state.typography.scale).forEach(function(role){
+    var item=state.typography.scale[role];
+    if(!item||!item.family)return;
+    var meta=typographyFamilyMeta(item.family),style=item.style||"normal";
+    if(meta.weights.indexOf(Number(item.weight))<0||meta.styles.indexOf(style)<0) facesOk=false;
+  });
+  gates.push({name:"font faces supported",pass:facesOk});
 
   // 4. Operative + metadata typography floors
   var dataSize=parseInt(state.typography.scale.data.size,10);
@@ -1594,8 +1654,8 @@ function inspectRenderType(host,cfg,target){
   var sec=node("section","inspector-section");sec.appendChild(node("h3",null,"Tipografía"));
   if(cfg.size&&state.typography.scale[cfg.size])inspectMakeNumber(sec,"Tamaño","typography.scale."+cfg.size+".size",parseFloat(state.typography.scale[cfg.size].size),9,72,1,function(v){state.typography.scale[cfg.size].size=v+"px";applyTypographyLive();onTokenModified();inspectRender(target)});
   if(cfg.weight&&state.typography.scale[cfg.weight]){
-    var spec=state.typography.scale[cfg.weight],row=node("div","inspector-control"),lab=node("label",null,"Peso · typography.scale."+cfg.weight+".weight"),sel=node("select");
-    [300,400,500,600,700,900].forEach(function(w){var o=node("option",null,String(w));o.value=w;if(spec.weight===w)o.selected=true;sel.appendChild(o)});
+    var spec=state.typography.scale[cfg.weight],meta=typographyFamilyMeta(spec.family),row=node("div","inspector-control"),lab=node("label",null,"Peso · typography.scale."+cfg.weight+".weight"),sel=node("select");
+    meta.weights.forEach(function(w){var name=(meta.weightNames&&meta.weightNames[String(w)])||String(w),o=node("option",null,w+" · "+name);o.value=w;if(spec.weight===w)o.selected=true;sel.appendChild(o)});
     sel.addEventListener("change",function(){spec.weight=Number(sel.value);applyTypographyLive();onTokenModified();inspectRender(target)});row.appendChild(lab);row.appendChild(sel);sec.appendChild(row);
   }
   if(cfg.leading&&state.typography.scale[cfg.leading])inspectMakeNumber(sec,"Interlineado","typography.scale."+cfg.leading+".leading",state.typography.scale[cfg.leading].leading,.9,2,.05,function(v){state.typography.scale[cfg.leading].leading=Number(v);applyTypographyLive();onTokenModified();inspectRender(target)});
@@ -1605,8 +1665,14 @@ function inspectRenderType(host,cfg,target){
   }
   if(cfg.family&&state.typography.scale[cfg.family]){
     var fs=state.typography.scale[cfg.family],fr=node("div","inspector-control"),fl=node("label",null,"Familia · typography.scale."+cfg.family+".family"),fsel=node("select");
-    ["editorial","sans","mono"].forEach(function(v){var o=node("option",null,v);o.value=v;if(fs.family===v)o.selected=true;fsel.appendChild(o)});
-    fsel.addEventListener("change",function(){fs.family=fsel.value;applyTypographyLive();onTokenModified();inspectRender(target)});fr.appendChild(fl);fr.appendChild(fsel);sec.appendChild(fr);
+    [["editorial","Gaya Patched"],["sans","IBM Plex Sans"],["mono","IBM Plex Mono"]].forEach(function(pair){var o=node("option",null,pair[1]);o.value=pair[0];if(fs.family===pair[0])o.selected=true;fsel.appendChild(o)});
+    fsel.addEventListener("change",function(){fs.family=fsel.value;normalizeTypographyFace(fs);applyTypographyLive();onTokenModified();inspectRender(target)});fr.appendChild(fl);fr.appendChild(fsel);sec.appendChild(fr);
+
+    var styleMeta=typographyFamilyMeta(fs.family),sr=node("div","inspector-control"),sl=node("label",null,"Estilo · typography.scale."+cfg.family+".style"),ssel=node("select"),current=fs.style||"normal";
+    styleMeta.styles.forEach(function(v){var o=node("option",null,v==="italic"?"Italic":"Normal");o.value=v;if(v===current)o.selected=true;ssel.appendChild(o)});
+    ssel.disabled=styleMeta.styles.length<2;
+    ssel.addEventListener("change",function(){if(ssel.value==="normal")delete fs.style;else fs.style=ssel.value;applyTypographyLive();onTokenModified();inspectRender(target)});
+    sr.appendChild(sl);sr.appendChild(ssel);sec.appendChild(sr);
   }
   host.appendChild(sec);
 }
@@ -1742,6 +1808,22 @@ function setupTabs(){
     el("phomemo-input-sub").addEventListener("input", updatePhomemoDynamic);
     el("phomemo-input-gen").addEventListener("input", updatePhomemoDynamic);
   }
+
+  // Gaya Patched bulk style helpers — preserve each role's real weight.
+  el("gaya-all-italic").addEventListener("click",function(){
+    Object.keys(state.typography.scale).forEach(function(role){
+      var item=state.typography.scale[role];
+      if(item&&item.family==="editorial"){normalizeTypographyFace(item);item.style="italic"}
+    });
+    applyTypographyLive();renderTypographyControls();onTokenModified();
+  });
+  el("gaya-all-normal").addEventListener("click",function(){
+    Object.keys(state.typography.scale).forEach(function(role){
+      var item=state.typography.scale[role];
+      if(item&&item.family==="editorial") delete item.style;
+    });
+    applyTypographyLive();renderTypographyControls();onTokenModified();
+  });
 
   // Type Specimen live tester
   if(el("type-specimen-role")){
