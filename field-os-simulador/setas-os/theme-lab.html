@@ -180,6 +180,38 @@ button,input,select{font:inherit}
       <h2>Pesos Tipográficos</h2>
       <div id="typography-weight-controls" class="spec-grid"></div>
     </section>
+    <section class="lab-section" id="gaya-direct-section">
+      <h2>Gaya Patched · Selector Directo</h2>
+      <p class="lab-note">Selecciona explícitamente Gaya Patched Normal o Gaya Patched Italic y uno de sus seis pesos reales.</p>
+      <div class="lab-field">
+        <label for="gaya-direct-role">Rol tipográfico</label>
+        <select id="gaya-direct-role"></select>
+      </div>
+      <div class="lab-field">
+        <label for="gaya-direct-style">Variante</label>
+        <select id="gaya-direct-style">
+          <option value="normal">Gaya Patched Normal</option>
+          <option value="italic">Gaya Patched Italic</option>
+        </select>
+      </div>
+      <div class="lab-field">
+        <label for="gaya-direct-weight">Peso</label>
+        <select id="gaya-direct-weight">
+          <option value="100">100 · Thin</option>
+          <option value="300">300 · Light</option>
+          <option value="400">400 · Regular</option>
+          <option value="500">500 · Medium</option>
+          <option value="700">700 · Bold</option>
+          <option value="900">900 · Black</option>
+        </select>
+      </div>
+      <div id="gaya-direct-preview" class="gaya-face-sample" style="margin-bottom:var(--space-1)">
+        <div class="gaya-face-meta">GAYA PATCHED ITALIC · 700 BOLD</div>
+        <div class="gaya-face-text" style="font-style:italic;font-weight:700">Setas de la Peña · Lentinula edodes</div>
+      </div>
+      <button id="gaya-direct-apply" class="lab-btn primary" type="button">Aplicar al rol</button>
+    </section>
+
     <section class="lab-section">
       <h2>Gaya Patched · 12 Faces Reales</h2>
       <p class="lab-note">Thin, Light, Regular, Medium, Bold y Black; cada peso en Normal e Italic. No se sintetiza Semibold 600 para Gaya.</p>
@@ -227,6 +259,7 @@ button,input,select{font:inherit}
           <option value="canonical">Canónica (Gaya editorial / Plex UI & Mono)</option>
           <option value="plex">Plex Dominant (IBM Plex Sans en títulos)</option>
           <option value="gaya">Gaya Dominant (Gaya en componentes)</option>
+          <option value="gaya-italic">Gaya Patched Italic Dominant</option>
         </select>
       </div>
     </section>
@@ -1042,6 +1075,49 @@ function renderGayaFaceMatrix(){
     });
   });
 }
+function gayaDirectRoles(){
+  return ["display-01","display-02","heading-01","heading-02","heading-03","species","latin","body","small","data","label","micro"];
+}
+function updateGayaDirectPreview(){
+  var roleSel=el("gaya-direct-role"),styleSel=el("gaya-direct-style"),weightSel=el("gaya-direct-weight"),preview=el("gaya-direct-preview");
+  if(!roleSel||!styleSel||!weightSel||!preview)return;
+  var weight=Number(weightSel.value),style=styleSel.value,name=(typographyFamilyMeta("editorial").weightNames||{})[String(weight)]||String(weight);
+  var meta=preview.querySelector(".gaya-face-meta"),txt=preview.querySelector(".gaya-face-text");
+  if(meta)meta.textContent="GAYA PATCHED "+(style==="italic"?"ITALIC":"NORMAL")+" · "+weight+" "+name.toUpperCase();
+  if(txt){txt.style.fontFamily="'Gaya Patched','Gaya',Georgia,serif";txt.style.fontStyle=style;txt.style.fontWeight=String(weight)}
+}
+function syncGayaDirectControls(){
+  var roleSel=el("gaya-direct-role"),styleSel=el("gaya-direct-style"),weightSel=el("gaya-direct-weight");
+  if(!roleSel||!styleSel||!weightSel||!state.typography)return;
+  var currentRole=roleSel.value;
+  if(!roleSel.options.length){
+    gayaDirectRoles().forEach(function(role){
+      if(!state.typography.scale[role])return;
+      var o=node("option",null,role);o.value=role;roleSel.appendChild(o);
+    });
+    roleSel.value=state.typography.scale.species?"species":roleSel.options[0].value;
+  }else if(currentRole){roleSel.value=currentRole}
+  var item=state.typography.scale[roleSel.value];
+  if(item){
+    styleSel.value=item.family==="editorial"?(item.style||"normal"):"italic";
+    var w=nearestTypographyWeight("editorial",item.weight);
+    weightSel.value=String(w);
+  }
+  updateGayaDirectPreview();
+}
+function applyGayaDirectSelection(){
+  var role=el("gaya-direct-role").value,item=state.typography.scale[role];
+  if(!item)return;
+  item.family="editorial";
+  item.weight=Number(el("gaya-direct-weight").value);
+  if(el("gaya-direct-style").value==="italic")item.style="italic";else delete item.style;
+  normalizeTypographyFace(item);
+  applyTypographyLive();
+  renderTypographyControls();
+  syncGayaDirectControls();
+  onTokenModified();
+  el("lab-action-status").textContent=role+" → Gaya Patched "+(item.style==="italic"?"Italic ":"Normal ")+item.weight+".";
+}
 function renderTypographyControls(){
   var host=el("typography-scale-controls"); host.innerHTML="";
   var roles=["display-01","display-02","heading-01","heading-02","heading-03","species","latin","body","small","data","label","micro"];
@@ -1112,6 +1188,7 @@ function renderTypographyControls(){
     row.appendChild(inp);row.appendChild(out);f.appendChild(lab);f.appendChild(row);trackHost.appendChild(f);
   });
   renderGayaFaceMatrix();
+  syncGayaDirectControls();
   updateTypeSpecimen();
 }
 
@@ -1809,6 +1886,12 @@ function setupTabs(){
     el("phomemo-input-gen").addEventListener("input", updatePhomemoDynamic);
   }
 
+  // Direct, visible Gaya selector.
+  el("gaya-direct-role").addEventListener("change",syncGayaDirectControls);
+  el("gaya-direct-style").addEventListener("change",updateGayaDirectPreview);
+  el("gaya-direct-weight").addEventListener("change",updateGayaDirectPreview);
+  el("gaya-direct-apply").addEventListener("click",applyGayaDirectSelection);
+
   // Gaya Patched bulk style helpers — preserve each role's real weight.
   el("gaya-all-italic").addEventListener("click",function(){
     Object.keys(state.typography.scale).forEach(function(role){
@@ -1856,6 +1939,13 @@ function setupTabs(){
     root.style.removeProperty("--font-sans"); root.style.removeProperty("--font-editorial");
     if(this.value==="plex") root.style.setProperty("--font-editorial","var(--font-sans)");
     else if(this.value==="gaya") root.style.setProperty("--font-sans","var(--font-editorial)");
+    else if(this.value==="gaya-italic"){
+      Object.keys(state.typography.scale).forEach(function(role){
+        var item=state.typography.scale[role];
+        if(item&&item.family==="editorial"){normalizeTypographyFace(item);item.style="italic"}
+      });
+      renderTypographyControls();
+    }
     applyTypographyLive();
     onTokenModified();
   });
