@@ -6805,10 +6805,19 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setSaveName('');setFlash(true);setSaveSyncErr('');setTimeout(()=>setFlash(false),1500);
     // Escritura en Firestore en segundo plano — localStorage ya guardó al instante,
     // así que un fallo de red no bloquea al operador; solo se avisa si no sincronizó.
+    // El docRef.id que devuelve Firestore se guarda en el registro local (firestoreId):
+    // sin esto, delR no tiene forma de saber qué documento borrar en recetas/ y el
+    // registro queda huérfano ahí para siempre.
     if(window.SetasDB){
       window.SetasDB.saveReceta({
         nombre:nm, sKey, ingredientes:recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})),
         cn:an?an.cn:null, eb:an?an.eb:null, cost:an?Math.round(an.cost):null, score:opt.score,
+      }).then(docRef=>{
+        setSaved(prev=>{
+          const upd=prev.map(r=>r.id===e.id?{...r,firestoreId:docRef.id}:r);
+          try{localStorage.setItem('setas_v6',JSON.stringify(upd));}catch(e3){}
+          return upd;
+        });
       }).catch(err=>setSaveSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido')));
     }
   };
@@ -6873,7 +6882,17 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     fn(...args);
   };
   const delR=id=>{
-    setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}}});
+    setConfirmDlg({title:'Eliminar receta',msg:'¿Eliminar esta receta guardada? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{
+      const receta=saved.find(r=>r.id===id);
+      const u=saved.filter(r=>r.id!==id);setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      // Sin esto el documento en recetas/ (Firestore) queda huérfano para
+      // siempre: no hay UI ni proceso que lo purgue — igual que el bug de
+      // Bitácora con public_lotes/. Si la receta se guardó antes de este fix
+      // (sin firestoreId todavía), no hay nada que borrar del lado remoto.
+      if(receta?.firestoreId&&window.SetasDB?.deleteReceta){
+        window.SetasDB.deleteReceta(receta.firestoreId).catch(err=>console.warn('No se pudo borrar la receta en Firestore:',err));
+      }
+    }});
   };
   // Registra el EB real observado tras cosechar un lote de una prueba guardada.
   // Antes cada análisis del Perito/Formulador era puramente teórico (fórmulas
@@ -7944,6 +7963,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
 
   const eliminarProveedor=id=>{
+    // Las compras referencian al proveedor por id (proveedorId) y nunca se
+    // borran — si se deja eliminar un proveedor con compras asociadas, esas
+    // compras quedan con un proveedorId colgante para siempre: el historial
+    // de compras y el panel de stock dejan de mostrar el nombre del
+    // proveedor (caen al id crudo, o el sugerido de recompra desaparece sin
+    // aviso). Más seguro bloquear el borrado que dejar la referencia rota.
+    const tieneCompras=invCompras.some(c=>c.proveedorId===id);
+    if(tieneCompras){
+      setNoticeDlg({title:'No se puede eliminar',msg:'Este proveedor tiene compras registradas en el historial — no se puede eliminar sin perder la trazabilidad de esas compras.'});
+      return;
+    }
     setConfirmDlg({title:'Eliminar proveedor',msg:'¿Eliminar este proveedor? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>saveProveedores(invProveedores.filter(p=>p.id!==id))});
   };
 
@@ -8625,7 +8655,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     return(
                                       <tr key={c.id}>
                                         <td>{c.fecha}</td>
-                                        <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-sm)"}}>{prov?.nombre||c.proveedorId}</td>
+                                        <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-sm)"}}>{prov?.nombre||'Proveedor eliminado'}</td>
                                         <td>
                                           <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
                                             {c.items.map((it,i)=>{

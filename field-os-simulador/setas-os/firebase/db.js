@@ -8,7 +8,7 @@
 import { db } from "./firebase-init.js";
 import {
   collection, addDoc, getDocs, query, where, orderBy,
-  runTransaction, doc, serverTimestamp, updateDoc, setDoc,
+  runTransaction, doc, serverTimestamp, updateDoc, setDoc, deleteDoc,
 } from "../vendor/firebase/firebase-firestore.js";
 
 // Misma tolerancia que MASS_BALANCE_TOL en simulador.html — duplicada a propósito:
@@ -42,6 +42,14 @@ export async function saveReceta(receta) {
 export async function listRecetas() {
   const snap = await getDocs(query(collection(db, "recetas"), orderBy("createdAt", "desc")));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// El id que hay que borrar aquí es el que Firestore asignó en el addDoc de
+// saveReceta (guardado en el registro local como firestoreId) — nunca el id
+// local (Date.now()) que usa la UI para distinguir filas.
+export async function deleteReceta(firestoreId) {
+  if (!firestoreId) return;
+  return deleteDoc(doc(db, "recetas", firestoreId));
 }
 
 // ── Lotes de producción — snapshot congelado de la receta ────────────────
@@ -133,7 +141,7 @@ export async function actualizarIncidencia(id, campos) {
 // así que no puede hacer `import` de este archivo — se expone en window para
 // que ese script pueda llamarlo, igual que firebase-init.js hace con window.SetasFirebase.
 window.SetasDB = {
-  computeTot, isMassBalanced, saveReceta, listRecetas,
+  computeTot, isMassBalanced, saveReceta, listRecetas, deleteReceta,
   crearLoteProduccion, guardarConsumoInventario,
   guardarRoomCycle, guardarTelemetry, guardarTelemetryBatch, guardarCycleEvidence, listCycleEvidence,
   registrarIncidencia, actualizarIncidencia,
