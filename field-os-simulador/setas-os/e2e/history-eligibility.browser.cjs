@@ -20,7 +20,7 @@ const root=path.resolve(__dirname,'..');
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  let browser;
  try{
-  browser=await chromium.launch();
+  browser=await chromium.launch({executablePath:process.env.SETAS_CHROMIUM_EXECUTABLE||undefined});
   for(const width of [1280,390]){
    const context=await browser.newContext({viewport:{width,height:900}});
    const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));

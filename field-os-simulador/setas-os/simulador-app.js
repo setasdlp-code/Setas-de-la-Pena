@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 037b91036c624f1b219c2f8edd79a05edabfef781be9d376fdb6d407f3147afc
+// source-hash: 4de730cddb2c4a47d4f5e110c4a5ae865ffeb0f782f478f4694a6bfea9378748
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4567,6 +4567,7 @@ function SimuladorShell(props) {
   const [bitBolsas, setBitBolsas] = useState([]);
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTasks, setBitTasks] = useState([]);
+  const [roomEvents, setRoomEvents] = useState([]);
   const [syncQueue, setSyncQueue] = React.useState([]);
   const [showDayClose, setShowDayClose] = useState(false);
   const [dayCloseNote, setDayCloseNote] = useState(null);
@@ -4898,6 +4899,8 @@ function SimuladorShell(props) {
       if (bb) setBitBolsas(JSON.parse(bb));
       if (bc) setBitCosechas(JSON.parse(bc));
       if (bt) setBitTasks(JSON.parse(bt));
+      const bre = localStorage.getItem("sdp_room_events");
+      if (bre) setRoomEvents(JSON.parse(bre));
       const ir = localStorage.getItem("sdp_inv_reservas");
       if (ir) {
         const parsedReservas = JSON.parse(ir);
@@ -5782,14 +5785,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setEjecutandoLote(false);
       return;
     }
-    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
-    const check = ledgerApi ? ledgerApi.checkPlan(loteBatchConfirm.plan, { lots: invLotes, ledger: invReservas, incoming: [], nowMs: Date.now() }) : null;
-    if (check && !check.ok) {
+    const comprometido = faltantePorReservaDeOtroLote(loteBatchConfirm.plan);
+    if (comprometido) {
       ejecutarLoteInFlight.current = false;
       setEjecutandoLote(false);
       setConfirmDlg({
         title: "Insumo comprometido con otro lote",
-        msg: check.mensaje + " Puedes confirmar de todas formas si sabes que llega a tiempo.",
+        msg: comprometido + ". Puedes confirmar de todas formas si sabes que llega a tiempo.",
         confirmLabel: "Confirmar y descontar",
         onConfirm: () => {
           ejecutarLoteInFlight.current = true;
@@ -6069,6 +6071,29 @@ ${errors.slice(0, 5).join("\n")}` : "");
       }
     }
   };
+  const faltantePorReservaDeOtroLote = (plan) => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi || !plan) return null;
+    const nowMs = Date.now();
+    const ctx = { lots: invLotes, ledger: invReservas, incoming: [], nowMs };
+    let check = null;
+    try {
+      check = ledgerApi.checkPlan(plan, ctx);
+    } catch (e) {
+      return null;
+    }
+    if (!check || check.ok) return null;
+    const porReserva = (check.lines || []).filter((l) => {
+      if (!(l.faltante > 0)) return false;
+      try {
+        return ledgerApi.availability(l.ingredienteId, ctx).fisico >= l.necesario;
+      } catch (e) {
+        return false;
+      }
+    });
+    if (!porReserva.length) return null;
+    return porReserva.map((l) => `Faltan ${l.faltante} ${l.unidad} de ${l.ingredienteId} por estar comprometidos con otro lote`).join(" · ");
+  };
   const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
     if (!prodLaunchForm) {
       launchInFlight.current = false;
@@ -6082,14 +6107,13 @@ ${errors.slice(0, 5).join("\n")}` : "");
       setLaunching(false);
       return;
     }
-    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
-    const check = ledgerApi ? ledgerApi.checkPlan(f.plan, { lots: invLotes, ledger: invReservas, incoming: [], nowMs: Date.now() }) : null;
-    if (check && !check.ok) {
+    const comprometido = faltantePorReservaDeOtroLote(f.plan);
+    if (comprometido) {
       launchInFlight.current = false;
       setLaunching(false);
       setConfirmDlg({
         title: "Insumo comprometido con otro lote",
-        msg: check.mensaje + " Puedes confirmar de todas formas si sabes que llega a tiempo.",
+        msg: comprometido + ". Puedes confirmar de todas formas si sabes que llega a tiempo.",
         confirmLabel: "Confirmar y descontar",
         onConfirm: () => {
           launchInFlight.current = true;
@@ -6229,6 +6253,49 @@ ${errors.slice(0, 5).join("\n")}` : "");
       return upd;
     });
   };
+  const roomEventId = (roomId, type, at) => `${roomId}-${type}-${at}`;
+  const pushRoomEvents = (nuevosEventos = []) => {
+    if (!nuevosEventos.length) return;
+    setRoomEvents((prev) => {
+      const upd = [...prev, ...nuevosEventos];
+      try {
+        localStorage.setItem("sdp_room_events", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+  };
+  useEffect(() => {
+    const roomStateApi = typeof window !== "undefined" ? window.SetasRoomState : null;
+    if (!roomStateApi) return;
+    const nowMs = Date.now();
+    const atIso = new Date(nowMs).toISOString();
+    const nuevos = [];
+    Object.values(ROOMS_CONFIG).forEach((room) => {
+      let ocupada = false;
+      try {
+        ocupada = roomStateApi.buildRoomState({
+          room,
+          lotes: bitLotes,
+          bolsas: bitBolsas,
+          events: roomEvents,
+          telemetry: null,
+          nowMs
+        }).batchCount > 0;
+      } catch (e) {
+        return;
+      }
+      const ultimaOcupacion = roomEvents.filter((e) => e && e.roomId === room.id && (e.type === "room_emptied" || e.type === "room_occupied")).sort((a, b) => (Date.parse(a.at) || 0) - (Date.parse(b.at) || 0)).slice(-1)[0] || null;
+      const ultimoTipo = ultimaOcupacion ? ultimaOcupacion.type : null;
+      if (ocupada && ultimoTipo !== "room_occupied") {
+        nuevos.push({ id: roomEventId(room.id, "room_occupied", atIso), roomId: room.id, type: "room_occupied", at: atIso, operatorId: "derivado" });
+      } else if (!ocupada && ultimoTipo === "room_occupied") {
+        nuevos.push({ id: roomEventId(room.id, "room_emptied", atIso), roomId: room.id, type: "room_emptied", at: atIso, operatorId: "derivado" });
+      }
+    });
+    if (nuevos.length) pushRoomEvents(nuevos);
+  }, [bitLotes, bitBolsas, roomEvents]);
   const addBitCosecha = (cosecha) => {
     const e = { ...cosecha, id: cosecha.id || "COS_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) };
     try {
@@ -7653,6 +7720,24 @@ BATCH (${numBags}×${kgBag} kg):
   if (typeof window !== "undefined") window.BatchSheetModal = BatchSheetModal;
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== "undefined" ? window.SetasClimate : null;
+    const roomStateApi = typeof window !== "undefined" ? window.SetasRoomState : null;
+    const roomBoardNowMs = Date.now();
+    const roomBoardTelemetry = {};
+    Object.keys(liveTelemetry.snapshot && liveTelemetry.snapshot.rooms || {}).forEach((roomId) => {
+      const sample = liveTelemetry.snapshot.rooms[roomId].sample || {};
+      roomBoardTelemetry[roomId] = {
+        latest: { temperature_c: sample.temperature_c, rh_pct: sample.rh_pct, co2_ppm: sample.co2_ppm },
+        lastUpdateAt: sample.lastUpdateAt
+      };
+    });
+    const roomBoard = roomStateApi ? roomStateApi.buildRoomBoard({
+      rooms: Object.values(ROOMS_CONFIG),
+      lotes: bitLotes,
+      bolsas: bitBolsas,
+      events: roomEvents,
+      telemetry: roomBoardTelemetry,
+      nowMs: roomBoardNowMs
+    }) : [];
     let cameras = [];
     try {
       cameras = JSON.parse(props.hoyCamarasJson || "[]");
@@ -8038,7 +8123,56 @@ BATCH (${numBags}×${kgBag} kg):
     const tempPoints = climateMath ? climateMath.generateSvgPolyline(tempSeries, null, { width: 500, height: 120, padding: 8, yMin: 12, yMax: 24 }) : "";
     const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : "";
     const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : "";
-    return /* @__PURE__ */ React.createElement("div", { className: "climate-dashboard", "data-testid": "climate-dashboard" }, /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
+    const ROOM_ALERT_SEVERITY_CLASS = { critical: "critico", warning: "alarma", info: "aviso" };
+    return /* @__PURE__ */ React.createElement("div", { className: "climate-dashboard", "data-testid": "climate-dashboard" }, roomBoard.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "data-testid": "room-board", "aria-labelledby": "room-board-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Estado en vivo"), /* @__PURE__ */ React.createElement("h2", { id: "room-board-title" }, "Tablero de salas"))), /* @__PURE__ */ React.createElement("div", { className: "climate-module-grid" }, roomBoard.map((rs) => {
+      const isSelected = rs.roomId === selectedClimateRoom;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: rs.roomId,
+          "data-testid": "room-card",
+          "data-room-id": rs.roomId,
+          "data-room-status": rs.status,
+          role: "button",
+          tabIndex: 0,
+          "aria-pressed": isSelected,
+          "aria-label": `Sala ${rs.name}, ${rs.statusLabel}`,
+          onClick: () => setSelectedClimateRoom(rs.roomId),
+          onKeyDown: (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setSelectedClimateRoom(rs.roomId);
+            }
+          },
+          className: `climate-module-card ${isSelected ? "on" : ""}`,
+          style: { minHeight: 48, cursor: "pointer" }
+        },
+        /* @__PURE__ */ React.createElement("span", { className: "climate-module-top" }, /* @__PURE__ */ React.createElement("span", null, rs.name), /* @__PURE__ */ React.createElement("b", null, rs.statusLabel)),
+        /* @__PURE__ */ React.createElement("span", { className: "climate-module-meta" }, rs.batchCount, " lote", rs.batchCount === 1 ? "" : "s", " · ", rs.bagsActive, " bolsa", rs.bagsActive === 1 ? "" : "s", " activa", rs.bagsActive === 1 ? "" : "s", rs.bagsIsolated > 0 ? ` · ${rs.bagsIsolated} bolsa${rs.bagsIsolated === 1 ? "" : "s"} aislada${rs.bagsIsolated === 1 ? "" : "s"}` : ""),
+        rs.dominantStageLabel && /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, "Etapa dominante: ", rs.dominantStageLabel),
+        rs.environmentFreshness === "none" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert", "data-testid": "room-card-env-freshness", "data-freshness": "none" }, "Sin lecturas ambientales"),
+        rs.environmentFreshness !== "none" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-readings" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "Temp."), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(rs.environment.temperature_c) ? `${rs.environment.temperature_c}°` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "HR"), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(rs.environment.rh_pct) ? `${rs.environment.rh_pct}%` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "CO₂"), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(rs.environment.co2_ppm) ? rs.environment.co2_ppm : "—"))),
+        rs.environmentFreshness === "live" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches", "data-testid": "room-card-env-freshness", "data-freshness": "live" }, "Lectura en vivo"),
+        rs.environmentFreshness === "stale" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert", "data-testid": "room-card-env-freshness", "data-freshness": "stale" }, "Lectura vieja · ", liveAgeLabel(rs.environmentAgeMin * 6e4)),
+        rs.alerts.filter((a) => a.code !== "sin_telemetria" && a.code !== "telemetria_vieja").length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, marginTop: 10 } }, rs.alerts.filter((a) => a.code !== "sin_telemetria" && a.code !== "telemetria_vieja").map((a) => /* @__PURE__ */ React.createElement("div", { key: a.code, className: `os-live-alert os-live-alert--${ROOM_ALERT_SEVERITY_CLASS[a.severity] || "aviso"}`, "data-severity": a.severity, style: { padding: "6px 8px" } }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.detail))))),
+        rs.nextAction && /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, rs.nextAction.label, rs.nextAction.reason && !rs.alerts.some((a) => a.detail === rs.nextAction.reason) ? ` · ${rs.nextAction.reason}` : ""),
+        rs.nextAction && rs.nextAction.action === "sanitize_room" && /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "inv-btn inv-btn-sec",
+            style: { marginTop: 10, minHeight: 44, width: "100%" },
+            onClick: (e) => {
+              e.stopPropagation();
+              const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+              const sanitizeOperatorId = props.operatorKey || typeof window !== "undefined" && window.__setasOperatorKey || "operador-local";
+              pushRoomEvents([{ id: roomEventId(rs.roomId, "room_sanitized", nowIso), roomId: rs.roomId, type: "room_sanitized", at: nowIso, operatorId: sanitizeOperatorId }]);
+            }
+          },
+          "Sanitizar sala"
+        )
+      );
+    }))), /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",

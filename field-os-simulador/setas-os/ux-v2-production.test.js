@@ -491,20 +491,27 @@ test('mergeReservas fusiona vía addReservations y persiste en sdp_inv_reservas'
   assert.match(block, /localStorage\.setItem\('sdp_inv_reservas',JSON\.stringify\(upd\)\)/);
 });
 
-test('confirmarEjecucion y ejecutarLanzamientoProduccion avisan con checkPlan pero no bloquean el lanzamiento', () => {
-  // Ambos flujos evalúan el plan contra el disponible (físico - reservado)
-  // antes de comprometer bodega.
-  assert.match(source, /const check=ledgerApi\?ledgerApi\.checkPlan\(loteBatchConfirm\.plan,\{lots:invLotes,ledger:invReservas,incoming:\[\],nowMs:Date\.now\(\)\}\):null;/);
-  assert.match(source, /const check=ledgerApi\?ledgerApi\.checkPlan\(f\.plan,\{lots:invLotes,ledger:invReservas,incoming:\[\],nowMs:Date\.now\(\)\}\):null;/);
-  // No bloquean: si hay faltantes, se avisa con setConfirmDlg (el usuario
-  // puede seguir), nunca se corta el flujo en silencio.
+test('los dos flujos de lanzamiento sólo preguntan por el insumo comprometido, no por el que ya falta en bodega', () => {
+  // El modal de lanzamiento ya declara el faltante contra el stock físico
+  // ("se descontará lo disponible y el faltante quedará a 0"). Cuando el libro
+  // de reservas repetía esa misma pregunta, un solo clic en "Confirmar y
+  // descontar" dejaba de lanzar el lote: aparecía un segundo diálogo idéntico.
+  // Lo detectó e2e/preparation-snapshot.browser.cjs montando la app de verdad;
+  // esto ancla el criterio para que no vuelva.
+  assert.match(source, /const faltantePorReservaDeOtroLote=\(plan\)=>\{/);
+  const helper = source.slice(source.indexOf('const faltantePorReservaDeOtroLote'), source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento'));
+  // Sólo cuenta como aviso el faltante que el físico SÍ cubría: si no hay
+  // kilos, eso no es una reserva de otro lote, es bodega vacía y ya está dicho.
+  assert.match(helper, /availability\(l\.ingredienteId,ctx\)\.fisico>=l\.necesario/);
+
+  // Y sigue sin bloquear: se avisa con setConfirmDlg y el operario puede seguir.
   const confirmBlock = source.slice(source.indexOf('const confirmarEjecucion=conGuardaEjecucion'), source.indexOf('const confirmarEjecucion=conGuardaEjecucion') + 1600);
-  assert.match(confirmBlock, /if\(check&&!check\.ok\)\{/);
-  assert.match(confirmBlock, /setConfirmDlg\(\{/);
+  assert.match(confirmBlock, /const comprometido=faltantePorReservaDeOtroLote\(loteBatchConfirm\.plan\);/);
+  assert.match(confirmBlock, /if\(comprometido\)\{/);
   assert.match(confirmBlock, /confirmLabel:'Confirmar y descontar'/);
   assert.match(confirmBlock, /onConfirm:\(\)=>\{ejecutarLoteInFlight\.current=true;setEjecutandoLote\(true\);runEjecucionLote\(\);\}/);
   const launchBlock = source.slice(source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento'), source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento') + 1300);
-  assert.match(launchBlock, /if\(check&&!check\.ok\)\{/);
+  assert.match(launchBlock, /const comprometido=faltantePorReservaDeOtroLote\(f\.plan\);/);
   assert.match(launchBlock, /onConfirm:\(\)=>\{launchInFlight\.current=true;setLaunching\(true\);runLanzamientoProduccion\(\);\}/);
 });
 

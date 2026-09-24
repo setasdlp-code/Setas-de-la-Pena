@@ -6418,6 +6418,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
   const [bitTasks,setBitTasks]=useState([]);
+  // Eventos de sala (sanitizar/vaciar/ocupar) para SetasRoomState.buildRoomBoard.
+  // Misma mecánica de persistencia que bitTasks: localStorage bajo
+  // 'sdp_room_events', carga en el mismo try/catch de la Bitácora, guarda con
+  // el mismo patrón try/catch + bitQuotaWarn.
+  const [roomEvents,setRoomEvents]=useState([]);
   // Cola de sincronización de la Bitácora (SetasSyncQueue): persiste en
   // localStorage bajo 'sdp_sync_queue' via serialize/deserialize para que
   // sobreviva a un recargue del navegador — una cola que no sobrevive a eso
@@ -6701,6 +6706,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     try{
       const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
       if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const bre=localStorage.getItem('sdp_room_events');
+      if(bre) setRoomEvents(JSON.parse(bre));
       const ir=localStorage.getItem('sdp_inv_reservas');
       if(ir){
         const parsedReservas=JSON.parse(ir);
@@ -7559,18 +7566,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
       setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
     }
-    // Aviso de disponibilidad real (físico − reservado de otros lotes) contra
-    // el plan, justo antes de comprometer bodega. NO bloquea: el operador
-    // puede saber que el proveedor llega mañana y decidir seguir — el libro
-    // de reservas sólo evita que nadie se entere de que iba corto, no decide
-    // por él. Si no hay faltantes, se ejecuta directo, igual que antes.
-    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-    const check=ledgerApi?ledgerApi.checkPlan(loteBatchConfirm.plan,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
-    if(check&&!check.ok){
+    // Aviso de insumo comprometido con otro lote, justo antes de tocar bodega.
+    // NO bloquea: el operador puede saber que el otro lote no va a salir y
+    // decidir seguir — el libro de reservas evita que nadie se entere de que
+    // iba corto, no decide por él.
+    const comprometido=faltantePorReservaDeOtroLote(loteBatchConfirm.plan);
+    if(comprometido){
       ejecutarLoteInFlight.current=false;setEjecutandoLote(false);
       setConfirmDlg({
         title:'Insumo comprometido con otro lote',
-        msg:check.mensaje+' Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
         confirmLabel:'Confirmar y descontar',
         onConfirm:()=>{ejecutarLoteInFlight.current=true;setEjecutandoLote(true);runEjecucionLote();}
       });
@@ -7876,21 +7881,46 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
+  // El modal de lanzamiento YA avisa de lo que falta contra el stock físico
+  // ("se descontará lo disponible y el faltante quedará a 0"). Volver a
+  // preguntar lo mismo convierte una confirmación en dos y enseña al operario
+  // a pasar de largo por los avisos — que es justo lo contrario de lo que un
+  // aviso sirve. Lo que el libro de reservas añade, y el modal no puede saber,
+  // es el faltante que NO es por falta de kilos sino porque los kilos están
+  // comprometidos con otro lote. Sólo eso se pregunta aquí.
+  const faltantePorReservaDeOtroLote=(plan)=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||!plan) return null;
+    const nowMs=Date.now();
+    const ctx={lots:invLotes,ledger:invReservas,incoming:[],nowMs};
+    let check=null;
+    try{ check=ledgerApi.checkPlan(plan,ctx); }catch(e){ return null; }
+    if(!check||check.ok) return null;
+    const porReserva=(check.lines||[]).filter(l=>{
+      if(!(l.faltante>0)) return false;
+      try{ return ledgerApi.availability(l.ingredienteId,ctx).fisico>=l.necesario; }
+      catch(e){ return false; }
+    });
+    if(!porReserva.length) return null;
+    return porReserva
+      .map(l=>`Faltan ${l.faltante} ${l.unidad} de ${l.ingredienteId} por estar comprometidos con otro lote`)
+      .join(' · ');
+  };
+
   const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
     if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
     const f = prodLaunchForm;
     if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
       setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
     }
-    // Mismo aviso no-bloqueante que runEjecucionLote/confirmarEjecucion, para
-    // el otro camino de lanzamiento (Producción → Lanzar Lote).
-    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-    const check=ledgerApi?ledgerApi.checkPlan(f.plan,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
-    if(check&&!check.ok){
+    // Mismo aviso no-bloqueante que confirmarEjecucion, para el otro camino de
+    // lanzamiento (Producción → Lanzar Lote).
+    const comprometido=faltantePorReservaDeOtroLote(f.plan);
+    if(comprometido){
       launchInFlight.current=false;setLaunching(false);
       setConfirmDlg({
         title:'Insumo comprometido con otro lote',
-        msg:check.mensaje+' Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
         confirmLabel:'Confirmar y descontar',
         onConfirm:()=>{launchInFlight.current=true;setLaunching(true);runLanzamientoProduccion();}
       });
@@ -8004,6 +8034,59 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return upd;
     });
   };
+  // Id determinista para un evento de sala — mismo criterio que deriveTaskId
+  // en task-engine.js (objeto+tipo+momento), para que dos llamadas con los
+  // mismos datos produzcan el mismo id en vez de duplicar el evento.
+  const roomEventId=(roomId,type,at)=>`${roomId}-${type}-${at}`;
+  // Añade eventos de sala y persiste igual que mergeIntoTasks/completeBitTasks
+  // (mismo patrón try/catch + bitQuotaWarn, misma clave localStorage).
+  const pushRoomEvents=(nuevosEventos=[])=>{
+    if(!nuevosEventos.length) return;
+    setRoomEvents(prev=>{
+      const upd=[...prev,...nuevosEventos];
+      try{localStorage.setItem('sdp_room_events',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      return upd;
+    });
+  };
+  // La ocupación de una sala no se declara: se observa. Emitir el evento
+  // dentro de la acción sería declarar un cambio que el cliente no persiste —
+  // el estado canónico del lote lo escribe el servidor (acceptFieldEvent), así
+  // que al cerrar o descartar el último lote de una sala éste sigue contando
+  // como presente hasta que llega la confirmación: el tablero diría "ocupada"
+  // mientras el evento guardado dice "vacía". Derivarlo aquí, del mismo
+  // bitLotes que alimenta el tablero, hace imposible esa contradicción y se
+  // corrige solo cuando el servidor confirma.
+  //
+  // Sólo se escribe lo que se ha observado: una sala se da por vaciada
+  // únicamente si antes se la vio ocupada. Sin historia previa no se inventa
+  // un `room_emptied`, porque esa fecha arrancaría el reloj de sanitización de
+  // una sala que nunca se usó.
+  useEffect(()=>{
+    const roomStateApi=typeof window!=='undefined'?window.SetasRoomState:null;
+    if(!roomStateApi) return;
+    const nowMs=Date.now();
+    const atIso=new Date(nowMs).toISOString();
+    const nuevos=[];
+    Object.values(ROOMS_CONFIG).forEach(room=>{
+      let ocupada=false;
+      try{
+        ocupada=roomStateApi.buildRoomState({
+          room,lotes:bitLotes,bolsas:bitBolsas,events:roomEvents,telemetry:null,nowMs,
+        }).batchCount>0;
+      }catch(e){ return; }
+      const ultimaOcupacion=roomEvents
+        .filter(e=>e&&e.roomId===room.id&&(e.type==='room_emptied'||e.type==='room_occupied'))
+        .sort((a,b)=>(Date.parse(a.at)||0)-(Date.parse(b.at)||0))
+        .slice(-1)[0]||null;
+      const ultimoTipo=ultimaOcupacion?ultimaOcupacion.type:null;
+      if(ocupada&&ultimoTipo!=='room_occupied'){
+        nuevos.push({id:roomEventId(room.id,'room_occupied',atIso),roomId:room.id,type:'room_occupied',at:atIso,operatorId:'derivado'});
+      }else if(!ocupada&&ultimoTipo==='room_occupied'){
+        nuevos.push({id:roomEventId(room.id,'room_emptied',atIso),roomId:room.id,type:'room_emptied',at:atIso,operatorId:'derivado'});
+      }
+    });
+    if(nuevos.length) pushRoomEvents(nuevos);
+  },[bitLotes,bitBolsas,roomEvents]);
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
     try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
@@ -9343,6 +9426,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         completeBitTasks(consequences.completes,eventId);
       }
 
+
       return true;
     }catch(err){
       setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
@@ -10120,6 +10204,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
   if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
+    // Tablero de salas: toda la proyección (ocupación, ambiente, alertas,
+    // próxima acción) la calcula SetasRoomState.buildRoomBoard — aquí sólo se
+    // adapta la telemetría en vivo a la forma que ese módulo espera y se
+    // pinta lo que devuelve, sin repetir ninguno de sus cálculos.
+    const roomStateApi = typeof window !== 'undefined' ? window.SetasRoomState : null;
+    const roomBoardNowMs = Date.now();
+    const roomBoardTelemetry = {};
+    Object.keys((liveTelemetry.snapshot && liveTelemetry.snapshot.rooms) || {}).forEach(roomId => {
+      const sample = liveTelemetry.snapshot.rooms[roomId].sample || {};
+      roomBoardTelemetry[roomId] = {
+        latest: { temperature_c: sample.temperature_c, rh_pct: sample.rh_pct, co2_ppm: sample.co2_ppm },
+        lastUpdateAt: sample.lastUpdateAt,
+      };
+    });
+    const roomBoard = roomStateApi ? roomStateApi.buildRoomBoard({
+      rooms: Object.values(ROOMS_CONFIG), lotes: bitLotes, bolsas: bitBolsas,
+      events: roomEvents, telemetry: roomBoardTelemetry, nowMs: roomBoardNowMs,
+    }) : [];
     let cameras=[];
     try{ cameras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ cameras=[]; }
     const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
@@ -10578,8 +10680,107 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : '';
     const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : '';
 
+    // Severidad de room-state.js ('critical'|'warning'|'info') → vocabulario
+    // ya usado por .os-live-alert en este archivo ('critico'|'alarma'|'aviso').
+    const ROOM_ALERT_SEVERITY_CLASS = { critical: 'critico', warning: 'alarma', info: 'aviso' };
     return (
       <div className="climate-dashboard" data-testid="climate-dashboard">
+        {roomBoard.length > 0 && (
+          <section className="climate-overview" data-testid="room-board" aria-labelledby="room-board-title">
+            <div className="climate-section-head">
+              <div>
+                <span className="climate-eyebrow">Estado en vivo</span>
+                <h2 id="room-board-title">Tablero de salas</h2>
+              </div>
+            </div>
+            <div className="climate-module-grid">
+              {roomBoard.map(rs => {
+                const isSelected = rs.roomId === selectedClimateRoom;
+                return (
+                  <div
+                    key={rs.roomId}
+                    data-testid="room-card"
+                    data-room-id={rs.roomId}
+                    data-room-status={rs.status}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    aria-label={`Sala ${rs.name}, ${rs.statusLabel}`}
+                    onClick={() => setSelectedClimateRoom(rs.roomId)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedClimateRoom(rs.roomId); } }}
+                    className={`climate-module-card ${isSelected ? 'on' : ''}`}
+                    style={{ minHeight: 48, cursor: 'pointer' }}
+                  >
+                    <span className="climate-module-top">
+                      <span>{rs.name}</span>
+                      <b>{rs.statusLabel}</b>
+                    </span>
+                    <span className="climate-module-meta">
+                      {rs.batchCount} lote{rs.batchCount === 1 ? '' : 's'} · {rs.bagsActive} bolsa{rs.bagsActive === 1 ? '' : 's'} activa{rs.bagsActive === 1 ? '' : 's'}
+                      {rs.bagsIsolated > 0 ? ` · ${rs.bagsIsolated} bolsa${rs.bagsIsolated === 1 ? '' : 's'} aislada${rs.bagsIsolated === 1 ? '' : 's'}` : ''}
+                    </span>
+                    {rs.dominantStageLabel && (
+                      <span className="climate-module-batches">Etapa dominante: {rs.dominantStageLabel}</span>
+                    )}
+                    {rs.environmentFreshness === 'none' && (
+                      <span className="climate-module-alert" data-testid="room-card-env-freshness" data-freshness="none">Sin lecturas ambientales</span>
+                    )}
+                    {rs.environmentFreshness !== 'none' && (
+                      <span className="climate-module-readings">
+                        <span><small>Temp.</small><strong>{Number.isFinite(rs.environment.temperature_c) ? `${rs.environment.temperature_c}°` : '—'}</strong></span>
+                        <span><small>HR</small><strong>{Number.isFinite(rs.environment.rh_pct) ? `${rs.environment.rh_pct}%` : '—'}</strong></span>
+                        <span><small>CO₂</small><strong>{Number.isFinite(rs.environment.co2_ppm) ? rs.environment.co2_ppm : '—'}</strong></span>
+                      </span>
+                    )}
+                    {rs.environmentFreshness === 'live' && (
+                      <span className="climate-module-batches" data-testid="room-card-env-freshness" data-freshness="live">Lectura en vivo</span>
+                    )}
+                    {rs.environmentFreshness === 'stale' && (
+                      <span className="climate-module-alert" data-testid="room-card-env-freshness" data-freshness="stale">Lectura vieja · {liveAgeLabel(rs.environmentAgeMin * 60000)}</span>
+                    )}
+                    {/* La tarjeta dice cada cosa UNA vez: la frescura ya tiene su
+                        propia línea pegada a las lecturas, así que sus dos alertas
+                        no se repiten aquí. Un dato dicho tres veces en una tarjeta
+                        de campo se lee igual que si no estuviera. */}
+                    {rs.alerts.filter(a => a.code !== 'sin_telemetria' && a.code !== 'telemetria_vieja').length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 10 }}>
+                        {rs.alerts.filter(a => a.code !== 'sin_telemetria' && a.code !== 'telemetria_vieja').map(a => (
+                          <div key={a.code} className={`os-live-alert os-live-alert--${ROOM_ALERT_SEVERITY_CLASS[a.severity] || 'aviso'}`} data-severity={a.severity} style={{ padding: '6px 8px' }}>
+                            <span className="os-live-alert__dot" aria-hidden="true"></span>
+                            <div className="os-live-alert__body">
+                              <div className="os-live-alert__meta">{a.detail}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {rs.nextAction && (
+                      <span className="climate-module-batches">{rs.nextAction.label}{rs.nextAction.reason && !rs.alerts.some(a => a.detail === rs.nextAction.reason) ? ` · ${rs.nextAction.reason}` : ''}</span>
+                    )}
+                    {rs.nextAction && rs.nextAction.action === 'sanitize_room' && (
+                      <button
+                        type="button"
+                        className="inv-btn inv-btn-sec"
+                        style={{ marginTop: 10, minHeight: 44, width: '100%' }}
+                        onClick={e => {
+                          // Sanitizar es la ÚNICA acción de sala que se declara a mano —
+                          // el resto (vaciarse/ocuparse) se deriva de mover/cerrar/descartar
+                          // el último lote (ver commitSheetAction).
+                          e.stopPropagation();
+                          const nowIso = new Date().toISOString();
+                          const sanitizeOperatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operador-local';
+                          pushRoomEvents([{ id: roomEventId(rs.roomId, 'room_sanitized', nowIso), roomId: rs.roomId, type: 'room_sanitized', at: nowIso, operatorId: sanitizeOperatorId }]);
+                        }}
+                      >
+                        Sanitizar sala
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
             <div>
