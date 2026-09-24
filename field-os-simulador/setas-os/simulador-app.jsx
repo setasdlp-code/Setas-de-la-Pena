@@ -2825,7 +2825,7 @@ const generateCurlPayload = ({ roomId = 'martha_01', temp = 18.2, rh = 89.5, co2
   }'`;
 };
 
-const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg) => {
+const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, firestoreEnabled = true) => {
   try {
     const data = JSON.parse(rawJson);
     const roomId = data.room_id || data.roomId || 'martha_01';
@@ -2847,8 +2847,10 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     if (typeof setSelectedClimateRoom === 'function') {
       setSelectedClimateRoom(roomId);
     }
-    // Sincronización en la nube hacia Firestore
-    if (typeof window !== 'undefined' && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === 'function') {
+    // Sincronización en la nube hacia Firestore — respeta el toggle "Firestore"
+    // de la pestaña Conexión: si el operario lo desmarcó, la lectura de prueba
+    // no debe filtrarse a telemetria_lecturas/telemetria_salas de producción.
+    if (firestoreEnabled && typeof window !== 'undefined' && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === 'function') {
       window.SetasFirebase.pushClimateReading({
         roomId,
         temperature_c: temp,
@@ -3180,7 +3182,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 type="button"
                 className="btn btn--primary"
                 onClick={() => {
-                  const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg);
+                  const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, connFirestore);
                   setWebhookFeedback(res);
                 }}
               >

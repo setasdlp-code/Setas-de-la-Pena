@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 7893f7a18e17a6efc955aa0051085c3bf904d98098edfff521799fb9232e7976
+// source-hash: 5d8d13327199f096b326cda2c0cb96b899bbb0d7ec1a0e9f3c2b0ce6e1e105ca
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -1899,7 +1899,7 @@ const generateCurlPayload = ({ roomId = "martha_01", temp = 18.2, rh = 89.5, co2
     "substrate_temperature_c": ${subTemp}
   }'`;
 };
-const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg) => {
+const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, firestoreEnabled = true) => {
   try {
     const data = JSON.parse(rawJson);
     const roomId = data.room_id || data.roomId || "martha_01";
@@ -1920,7 +1920,7 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     if (typeof setSelectedClimateRoom === "function") {
       setSelectedClimateRoom(roomId);
     }
-    if (typeof window !== "undefined" && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === "function") {
+    if (firestoreEnabled && typeof window !== "undefined" && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === "function") {
       window.SetasFirebase.pushClimateReading({
         roomId,
         temperature_c: temp,
@@ -2084,7 +2084,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         type: "button",
         className: "btn btn--primary",
         onClick: () => {
-          const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg);
+          const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, connFirestore);
           setWebhookFeedback(res);
         }
       },
