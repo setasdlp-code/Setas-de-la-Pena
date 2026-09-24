@@ -620,3 +620,55 @@ test('resolveScan verifica entregas históricas (CAN-<lote>-F<flush>) contra lot
   assert.equal(nonexistent.reason, 'historical_batch_not_found');
   assert.equal(nonexistent.batchId, null);
 });
+
+test('un lote en fructificación se puede finalizar desde la ficha, sin destino explícito', () => {
+  const sheet = { batchId: 'LOTE_1', state: 'fruiting', blocks: [] };
+  const acciones = sheetApi.contextualActions(sheet, { role: 'operario' });
+  const cerrar = acciones.find(a => a.action === 'close_batch');
+
+  // La acción terminal está entre las 3-5 que ve el operario, no escondida
+  // detrás de un formulario genérico.
+  assert.ok(cerrar, `close_batch ausente en ${acciones.map(a => a.action).join(', ')}`);
+  assert.equal(cerrar.label, 'Finalizar lote');
+  assert.deepEqual(cerrar.requires, []);
+  assert.equal(cerrar.transitionsTo, 'closed');
+
+  // Y la cascada la lleva a 'closed' de una sola vez, sin targetState.
+  const consecuencias = sheetApi.actionConsequences(sheet, 'close_batch', {}, {
+    operatorId: 'op-1', at: '2026-09-24T12:00:00.000Z',
+  });
+  assert.equal(consecuencias.transition, 'closed');
+  const aplicado = sheetApi.applyConsequences(sheet, consecuencias, { log: [] });
+  assert.equal(aplicado.state, 'closed');
+  assert.equal(sheetApi.verifyEventChain(aplicado.log).valid, true);
+
+  // Desde descanso también: es el otro estado desde el que un lote termina.
+  const descanso = { batchId: 'LOTE_1', state: 'resting', blocks: [] };
+  assert.ok(sheetApi.contextualActions(descanso, { role: 'operario' })
+    .some(a => a.action === 'close_batch'));
+
+  // Un lote cerrado ya no ofrece acciones de campo: 'closed' no transiciona.
+  const cerrado = { batchId: 'LOTE_1', state: 'closed', blocks: [] };
+  assert.equal(sheetApi.contextualActions(cerrado, { role: 'operario' })
+    .some(a => a.action === 'close_batch'), false);
+});
+
+test('advance_stage acepta un destino explícito cuando hay varios válidos, e ignora los inválidos', () => {
+  const sheet = { batchId: 'LOTE_1', state: 'incubation', blocks: [] };
+
+  // Por defecto, el primer destino de DEFAULT_TRANSITIONS.
+  assert.equal(
+    sheetApi.actionConsequences(sheet, 'advance_stage', {}, { operatorId: 'op-1' }).transition,
+    'maturation');
+
+  // Con targetState válido, ese destino — incubación puede saltar a fructificación.
+  assert.equal(
+    sheetApi.actionConsequences(sheet, 'advance_stage', { targetState: 'fruiting' }, { operatorId: 'op-1' }).transition,
+    'fruiting');
+
+  // Con targetState inválido no se cuela: manda el destino por defecto y la
+  // máquina de estados sigue siendo la única autoridad.
+  assert.equal(
+    sheetApi.actionConsequences(sheet, 'advance_stage', { targetState: 'closed' }, { operatorId: 'op-1' }).transition,
+    'maturation');
+});

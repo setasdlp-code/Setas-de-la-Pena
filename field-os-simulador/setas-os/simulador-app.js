@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 7f78640e321d261862306f03cf77ab927bcb2c016a2c25197d363e59336b3be3
+// source-hash: 04a4e37926ba60f227365dd815f4c5e5eadc1c56da4edb60d24f035ef010a4e9
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -6967,7 +6967,7 @@ BATCH (${numBags}×${kgBag} kg):
   const contaminationWorkflow = typeof window !== "undefined" ? window.SetasContaminationWorkflow : null;
   const lifecycleLabel = { incubation: "Incubación", fruiting: "Fructificación", closed: "Cerrado", discarded: "Descartado", quarantine: "Cuarentena" };
   const lifecycleColor = { incubation: "var(--status-info)", fruiting: "var(--status-active)", closed: "var(--status-archived)", discarded: "var(--status-error)", quarantine: "var(--accent-terracotta, #B24C27)" };
-  const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close: "Cerrar lote", discard: "Descartar lote" };
+  const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close_batch: "Finalizar lote", close: "Cerrar lote", discard: "Descartar lote" };
   const openBatchDetail = (id) => {
     setBitActiveLoteId(id);
     goTab("bitacora");
@@ -7301,6 +7301,20 @@ BATCH (${numBags}×${kgBag} kg):
         updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
         enqueueFieldTransition(lote, from, to);
       }
+      return;
+    }
+    if (action === "close_batch") {
+      const activeSheet = sheet || buildSheetFor(lote);
+      const enPie = bitBolsas.filter((b) => b.loteId === lote.id && b.estado === "sana").length;
+      setConfirmDlg({
+        title: "Finalizar lote",
+        msg: `¿Cerrar ${lote.codigo || lote.id}? El lote queda cerrado y no admite más acciones de campo.` + (enPie > 0 ? ` Quedan ${enPie} bolsa${enPie === 1 ? "" : "s"} sana${enPie === 1 ? "" : "s"} sin cosechar.` : ""),
+        danger: enPie > 0,
+        confirmLabel: "Finalizar",
+        onConfirm: () => {
+          if (activeSheet) commitSheetAction(activeSheet, lote, "close_batch");
+        }
+      });
       return;
     }
     if (action === "close") {

@@ -8975,7 +8975,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
   const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
   const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
-  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote',discard:'Descartar lote'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close_batch:'Finalizar lote',close:'Cerrar lote',discard:'Descartar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
   const openContaminationTriage=(loteId)=>{
     const l=bitLotes.find(x=>x.id===loteId)||bitLotes[0];
@@ -9336,6 +9336,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
         updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
         enqueueFieldTransition(lote,from,to);
       }
+      return;
+    }
+    if(action==='close_batch'){
+      // Cerrar es terminal: 'closed' no tiene transiciones de salida. Se
+      // confirma con las bolsas que aún están en pie a la vista, porque
+      // finalizar con bolsas sanas sin cosechar suele ser un error de dedo.
+      const activeSheet=sheet||buildSheetFor(lote);
+      const enPie=bitBolsas.filter(b=>b.loteId===lote.id&&b.estado==='sana').length;
+      setConfirmDlg({
+        title:'Finalizar lote',
+        msg:`¿Cerrar ${lote.codigo||lote.id}? El lote queda cerrado y no admite más acciones de campo.`+(enPie>0?` Quedan ${enPie} bolsa${enPie===1?'':'s'} sana${enPie===1?'':'s'} sin cosechar.`:''),
+        danger:enPie>0,
+        confirmLabel:'Finalizar',
+        onConfirm:()=>{ if(activeSheet) commitSheetAction(activeSheet,lote,'close_batch'); },
+      });
       return;
     }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}

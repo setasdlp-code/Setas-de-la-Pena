@@ -124,6 +124,7 @@
     riego: { label: 'Riego', requires: [] },
     harvest: { label: 'Registrar cosecha', requires: ['pesoFresco', 'flush'] },
     advance_stage: { label: 'Avanzar etapa', requires: [] },
+    close_batch: { label: 'Finalizar lote', requires: [], transitionsTo: 'closed' },
     report_problem: { label: 'Reportar problema', requires: ['observacion'] },
     discard: { label: 'Descartar lote', requires: ['motivo'], transitionsTo: 'discarded' },
   });
@@ -142,8 +143,8 @@
     incubation: ['colonization', 'contamination', 'photo', 'move', 'advance_stage'],
     maturation: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
     induction: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
-    fruiting: ['harvest', 'inspection', 'contamination', 'photo', 'advance_stage'],
-    resting: ['inspection', 'contamination', 'photo', 'advance_stage'],
+    fruiting: ['harvest', 'inspection', 'contamination', 'advance_stage', 'close_batch'],
+    resting: ['advance_stage', 'close_batch', 'inspection', 'contamination', 'photo'],
     quarantine: ['contamination', 'inspection', 'photo', 'discard', 'advance_stage'],
     closed: ['note', 'photo'],
     discarded: ['note', 'photo'],
@@ -152,7 +153,13 @@
 
   // `colonization` y `photo` son capturas específicas de campo que se apoyan en
   // los permisos de `inspection` y `note` de la máquina de estados.
-  const ACTION_PERMISSION_BASE = Object.freeze({ colonization: 'inspection', photo: 'note' });
+  const ACTION_PERMISSION_BASE = Object.freeze({
+    colonization: 'inspection',
+    photo: 'note',
+    // Finalizar es la última transición del ciclo, así que se apoya en el
+    // permiso de avance: quien puede mover el lote de etapa puede cerrarlo.
+    close_batch: 'advance_stage',
+  });
 
   const MAX_CONTEXTUAL_ACTIONS = 5;
 
@@ -940,6 +947,12 @@
       return targets.find(t => workflow.isTerminalState(t)) || null;
     };
 
+    const explicitAdvanceTransition = () => {
+      const target = payload.targetState || null;
+      if (!workflow || !target) return null;
+      return workflow.canTransition(sheet.state, target) ? target : null;
+    };
+
     const firstValidAdvanceTransition = () => {
       if (!workflow) return null;
       const target = (workflow.DEFAULT_TRANSITIONS[sheet.state] || [])[0] || null;
@@ -997,7 +1010,13 @@
     } else if (action === 'move') {
       batchPatch = { sala: payload.salaDestinoId };
     } else if (action === 'advance_stage') {
-      transition = firstValidAdvanceTransition();
+      // `firstValidAdvanceTransition` sólo propone el primer destino de la
+      // máquina de estados, que desde fructificación es 'resting'. Cuando hay
+      // varios destinos válidos (fructificación → descanso o cerrado,
+      // incubación → maduración, inducción o fructificación) la captura puede
+      // declarar cuál con `payload.targetState`; si no es válido se ignora y
+      // manda el destino por defecto.
+      transition = explicitAdvanceTransition() || firstValidAdvanceTransition();
     } else if (ACTION_CATALOG[action] && ACTION_CATALOG[action].transitionsTo) {
       // Comportamiento por defecto: cualquier acción del catálogo que declare
       // `transitionsTo` (prepare_mix, start_thermal_treatment,
