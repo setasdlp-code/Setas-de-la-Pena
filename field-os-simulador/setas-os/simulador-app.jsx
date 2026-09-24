@@ -3443,6 +3443,39 @@ const PromptModal=({dlg,onClose})=>{
     </div>
   );
 };
+// Mover un lote de sala es una operación física: hay que declarar A DÓNDE.
+// Antes esta acción sólo cambiaba la sala seleccionada del panel de clima y
+// navegaba allí, sin dejar rastro — el lote aparecía en otra sala sin que
+// nadie pudiera decir cuándo ni quién lo movió. El destino se elige entre las
+// salas reales, con botones de 48 px porque se pulsa con guantes.
+const MoveRoomModal=({dlg,onClose})=>{
+  const dialogRef=useDialogA11y(onClose);
+  const destinos=dlg.rooms.filter(r=>r.id!==dlg.currentRoomId);
+  return(
+  <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label="Mover lote de sala" data-testid="move-room-modal" style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
+      <div className="inv-modal-title">Mover {dlg.loteCodigo}</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14,lineHeight:1.5}}>
+        Ahora en <strong>{dlg.currentRoomName||'sala sin asignar'}</strong>. ¿A qué sala pasa?
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:18}}>
+        {destinos.length===0&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>No hay otra sala configurada.</div>}
+        {destinos.map(r=>(
+          <button key={r.id} type="button" className="inv-btn inv-btn-sec" data-room-id={r.id}
+            style={{minHeight:48,textAlign:'left',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px'}}
+            onClick={()=>{dlg.onSelect(r.id);onClose();}}>
+            <span style={{fontWeight:600}}>{r.name}</span>
+            {r.spec&&<span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{r.spec}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="inv-modal-actions">
+        <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  );
+};
 const NoticeModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
@@ -6369,6 +6402,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [checkedSteps,setCheckedSteps]=useCaptureDraft('checkedSteps',{});
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
   const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
+  const [moveDlg,setMoveDlg]=useState(null); // {loteCodigo,currentRoomId,currentRoomName,rooms,onSelect} — destino de un traslado de sala
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
   const [versionDlg,setVersionDlg]=useState(null); // {recipe} — recetario: receta 'approved'/'retired' cargada, ofrece crear versión nueva en vez de editar
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
@@ -6534,12 +6568,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||moveDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,moveDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -9364,7 +9398,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return;
     }
-    if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
+    if(action==='move'){
+      const activeSheet=sheet||buildSheetFor(lote);
+      const actualId=lote.sala||lote.ubicacion||'';
+      setMoveDlg({
+        loteCodigo:lote.codigo||lote.id,
+        currentRoomId:actualId,
+        currentRoomName:(ROOMS_CONFIG[actualId]||{}).name||actualId,
+        rooms:Object.values(ROOMS_CONFIG),
+        onSelect:(salaDestinoId)=>{
+          // La cascada escribe el evento inmutable y el parche `sala` del lote;
+          // seguir el lote hasta el panel de clima de su nueva sala es
+          // consecuencia de haberlo movido, no el movimiento en sí.
+          if(activeSheet&&commitSheetAction(activeSheet,lote,'move',{salaDestinoId})){
+            setSelectedClimateRoom(salaDestinoId);
+          }
+        },
+      });
+      return;
+    }
     // Inspección, colonización y evidencia fotográfica se capturan sobre la
     // bolsa, que es donde viven el %, la fecha y la foto.
     if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
@@ -15629,6 +15681,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='labExtraction'&&<LabExtraction/>}
 
         {confirmDlg&&<ConfirmModal dlg={confirmDlg} onClose={()=>setConfirmDlg(null)}/>}
+        {moveDlg&&<MoveRoomModal dlg={moveDlg} onClose={()=>setMoveDlg(null)}/>}
         {newVersionFor&&<NewRecipeVersionModal recipe={newVersionFor} onClose={()=>setNewVersionFor(null)} onConfirm={confirmNewRecipeVersion}/>}
         {promptDlg&&<PromptModal dlg={promptDlg} onClose={()=>setPromptDlg(null)}/>}
         {versionDlg&&<NewRecipeVersionModal recipe={versionDlg.recipe} onClose={()=>setVersionDlg(null)} onConfirm={()=>confirmNewRecipeVersion(versionDlg.recipe)}/>}
