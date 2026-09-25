@@ -9146,6 +9146,85 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
   useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
   const operatorRole=fieldOperatorRole;
+  // El Perito vivía SÓLO en el Formulador: sabía más que nadie de recetas y no
+  // decía nada cuando el operario estaba frente al lote con el problema. Esto
+  // es la puerta que faltaba, y es sólo una puerta: no puntúa, no ordena y no
+  // propone recetas — ADR-0004 deja la evidencia de producción como contexto,
+  // nunca como entrada del ranking.
+  //
+  // El análisis de la receta del lote se rehace con los catálogos base (INGS/SPP)
+  // y NO con effectiveINGS/effectiveSPP, que llevan los ajustes de la receta
+  // abierta ahora mismo en el Formulador: mezclar el estado de la sesión con la
+  // receta congelada de un lote pasado daría un diagnóstico de otra receta.
+  const peritoContextFor=(lote,sheet)=>{
+    const api=typeof window!=='undefined'?window.SetasPeritoContext:null;
+    if(!api||!sheet||!lote) return null;
+    const snapshot=lote.recipeSnapshot||null;
+    let restrictive=null;
+    let cnRecalculado=null;
+    if(snapshot&&snapshot.sKey&&Array.isArray(snapshot.ingredients)&&snapshot.ingredients.length){
+      try{
+        const receta=snapshot.ingredients.map(i=>({id:i.id,p:i.pct}));
+        const an=analyze(receta,snapshot.sKey,INGS,SPP);
+        cnRecalculado=an&&Number.isFinite(an.cn)?an.cn:null;
+        const sp=SPP[snapshot.sKey];
+        if(an&&sp&&typeof engineCalcRestrictiveFactor==='function'){
+          restrictive=engineCalcRestrictiveFactor(an,sp,{treatment:snapshot.tratamientoTermico||null});
+        }
+      }catch(e){ restrictive=null; }
+    }
+    let history=null;
+    if(snapshot&&snapshot.sKey){
+      try{
+        const receta=(snapshot.ingredients||[]).map(i=>({id:i.id,p:i.pct}));
+        const h=historicalEB(snapshot.sKey,histRows,receta);
+        if(h&&h.n>0&&h.avg!=null) history={n:h.n,avg:h.avg,similarity:h.similarity};
+      }catch(e){ history=null; }
+    }
+    let ctx=null;
+    try{ ctx=api.explainBatch({sheet,snapshot,restrictive,history,nowMs:Date.now()}); }catch(e){ return null; }
+    // El reanálisis usa el catálogo de insumos de HOY, no el del día en que se
+    // produjo. Si el C:N congelado y el recalculado se separan, el catálogo se
+    // movió desde entonces: eso es un dato del operario, no algo que esconder.
+    const derivaCatalogo=(snapshot&&Number.isFinite(snapshot.cn)&&cnRecalculado!=null&&Math.abs(snapshot.cn-cnRecalculado)>0.5)
+      ? `El C:N guardado con el lote era ${Number(snapshot.cn).toFixed(1)}:1 y con el catálogo de hoy da ${cnRecalculado.toFixed(1)}:1 — el catálogo de insumos cambió desde que se produjo.`
+      : null;
+    return {...ctx,derivaCatalogo};
+  };
+
+  const PeritoContextPanel=({lote,sheet,onAction})=>{
+    const ctx=peritoContextFor(lote,sheet);
+    if(!ctx) return null;
+    return (
+      <section className="os-detail-panel" data-testid="perito-context" data-available={ctx.available?'true':'false'}>
+        <h2>Contexto del Perito</h2>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-900)',marginBottom:8}}>{ctx.headline}</div>
+        {ctx.findings.length>0&&(
+          <ul style={{listStyle:'none',padding:0,margin:'0 0 10px',display:'flex',flexDirection:'column',gap:6}}>
+            {ctx.findings.map((f,i)=>(
+              <li key={`${f.code}-${i}`} data-finding={f.code} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',lineHeight:1.45,borderLeft:'2px solid var(--paper-300)',paddingLeft:8}}>
+                {f.text}
+              </li>
+            ))}
+          </ul>
+        )}
+        {ctx.derivaCatalogo&&(
+          <div data-testid="perito-context-deriva" className="os-provenance-notice os-provenance-notice--estimated" style={{marginBottom:10}}>{ctx.derivaCatalogo}</div>
+        )}
+        {/* Se reutiliza sdp-btn--field, la clase con la que ya están hechos los
+            demás botones de acción de esta ficha: es la que cumple el objetivo
+            táctil del proyecto para pulsar con guantes dentro del cuarto. Con
+            .os-action el botón se quedaba en 44 px. */}
+        {ctx.question&&(
+          <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" data-testid="perito-context-question"
+            style={{width:'100%',fontWeight:600}}
+            onClick={()=>onAction&&onAction(ctx.question.action)}>{ctx.question.text}</button>
+        )}
+        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:10,lineHeight:1.4}}>{ctx.disclaimer}</div>
+      </section>
+    );
+  };
+
   const buildSheetFor=(lote)=>{
     if(!batchSheetApi||!lote) return null;
     const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
@@ -9717,6 +9796,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           {sheet&&<span title="Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos">Trazabilidad {sheet.completenessPct}%</span>}
         </div>
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{(sheet&&sheet.nextAction&&sheet.nextAction.label)||actionLabel[actions[0]&&actions[0].action]||'Sin acciones pendientes'}</span></div></header>
+      <PeritoContextPanel lote={lote} sheet={sheet} onAction={a=>runBatchAction(a,lote,sheet)} />
       {sheet&&(sheet.blocks.length>0||sheet.anomalies.length>0)&&(
         <section className="os-detail-panel" data-testid="batch-blocks" style={{marginBottom:12}}>
           <h2>Bloqueos y anomalías</h2>
@@ -10208,6 +10288,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             Ver ficha pública QR
           </button>
         </section>
+        <PeritoContextPanel lote={lote} sheet={sheet} onAction={a=>runBatchAction(a,lote,sheet)} />
       </article>
     );
   };
