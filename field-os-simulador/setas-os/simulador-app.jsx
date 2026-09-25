@@ -7888,6 +7888,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // aviso sirve. Lo que el libro de reservas añade, y el modal no puede saber,
   // es el faltante que NO es por falta de kilos sino porque los kilos están
   // comprometidos con otro lote. Sólo eso se pregunta aquí.
+  // Los kg requeridos de cada insumo se calculan A PARTIR de su humedad. Cuando
+  // esa humedad es la del catálogo y no una medición del lote, los kg también
+  // son una estimación — y el operario está a punto de pesar sustrato real y
+  // descontar bodega contra ellos. La preparación ya lo sabe por insumo
+  // (moisture.source); esto lo dice donde se decide.
+  const procedenciaHumedades=(preparation)=>{
+    const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+    const items=(preparation&&preparation.items)||[];
+    if(!prov||!items.length) return null;
+    const estimados=[];
+    let medidos=0;
+    items.forEach(it=>{
+      const d=prov.describe({vocabulary:'moisture',value:it.moisture&&it.moisture.source});
+      if(!d) return;
+      if(d.kind===prov.KINDS.measured) medidos+=1;
+      else estimados.push(it.name||it.ingredientId);
+    });
+    const total=medidos+estimados.length;
+    if(!total) return null;
+    if(!estimados.length) return {estimados,medidos,total,texto:`Humedad medida en los ${total} insumos de esta preparación.`};
+    return {
+      estimados,medidos,total,
+      texto:`Humedad: ${medidos} de ${total} medidos. ${estimados.join(', ')} usa${estimados.length===1?'':'n'} la estimación del catálogo, así que los kg requeridos de es${estimados.length===1?'e insumo':'os insumos'} también lo son.`,
+    };
+  };
+
   const faltantePorReservaDeOtroLote=(plan)=>{
     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
     if(!ledgerApi||!plan) return null;
@@ -15802,7 +15828,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
-                    {rows.map((x,i)=>{const id=x.r.id;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
+                    {/* La procedencia sale de preparation.items[i].moisture.source,
+                        que es el campo canónico, y no de releer el control de
+                        entrada: dos formas de deducir el mismo hecho acaban
+                        discrepando y aquí se imprime para pesar en la mesa. */}
+                    {rows.map((x,i)=>{const id=x.r.id;
+                      const provApi=typeof window!=='undefined'?window.SetasProvenance:null;
+                      const src=preparation.items[i]&&preparation.items[i].moisture&&preparation.items[i].moisture.source;
+                      const dProv=provApi?provApi.describe({vocabulary:'moisture',value:src}):null;
+                      const ov=dProv?dProv.kind===provApi.KINDS.measured:(prodMoist[id]!=null&&prodMoist[id]!=='');return(
                       <tr key={i}>
                         <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · medido</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
@@ -15928,6 +15962,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Ejecutar lote — confirmar descuento de inventario</div>
               <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
+              {(()=>{const h=procedenciaHumedades(loteBatchConfirm.plan.preparation);
+                return h?<div data-testid="confirm-humedad-procedencia" className={'os-provenance-notice'+(h.estimados.length?' os-provenance-notice--estimated':'')} style={{marginBottom:14}}>{h.texto}</div>:null;})()}
               <div className="inv-modal-table-wrap">
                 <table style={{width:'100%',minWidth:340,borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:0}}>
                   <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px',whiteSpace:'nowrap'}}>{h}</th>))}</tr></thead>
@@ -17172,6 +17208,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span className="prod-launch-stat-val">{f.humedad}%</span>
                   </div>
                 </div>
+                {(()=>{const h=procedenciaHumedades(f.plan&&f.plan.preparation);
+                  return h?<div data-testid="launch-humedad-procedencia" className={'os-provenance-notice'+(h.estimados.length?' os-provenance-notice--estimated':'')} style={{marginBottom:12}}>{h.texto}</div>:null;})()}
 
                 <p>{f.plan.preparation.revision} · agua {f.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {f.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
                 {/* Desglose de Insumos y Descuento en Bodega */}

@@ -5943,6 +5943,28 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin-top: 2px;
 }
 
+/* La franja del formulador usa una nota de 8 px, que es correcta como pie de
+   dato pero ilegible en un modal que el operario debe leer ANTES de descontar
+   bodega. Ahí la procedencia se lee al tamaño del resto del texto, y si algún
+   insumo va con estimación de catálogo toma el mismo tono de aviso que el
+   resto de advertencias del modal. */
+.sim-root .os-provenance-notice {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--ink-700);
+  border-left: 2px solid var(--paper-300);
+  padding: 4px 0 4px 8px;
+}
+
+.sim-root .os-provenance-notice--estimated {
+  color: var(--coral-700);
+  border-left-color: var(--coral-700);
+  background: color-mix(in oklab, var(--coral-100) 45%, var(--paper-50));
+  padding: 6px 8px;
+}
+
 .sim-root .os-provenance-line::before {
   content: '·';
   font-weight: bold;
