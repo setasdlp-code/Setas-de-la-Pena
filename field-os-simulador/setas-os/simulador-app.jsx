@@ -13196,6 +13196,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
 
+          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
+              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
+              teórico o de uno mezclado con el historial real de la finca, y
+              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
+              procedencia. Una etiqueta fija que no sigue al dato es peor que
+              no tener etiqueta: afirma algo que puede ser falso. */}
           {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
           {recipe.length>0&&(
             <section className="form-summary-strip" aria-label="Resumen de receta activa">
@@ -13217,22 +13223,50 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="form-summary-cell">
                 <span className="form-summary-k">C:N</span>
                 <span className="form-summary-v">{an?.cn!=null?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                <span className="os-provenance-line">Calculado</span>
+                <span className="os-provenance-line" title="Derivado de los porcentajes de la receta y del catálogo de insumos">Calculado</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Humedad objetivo</span>
                 <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line">{[SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">BE estimada</span>
                 <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
-                <span className="os-provenance-line">Hipótesis</span>
+                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  if(!prov) return 'Estimado';
+                  // El número que se muestra pasa por blendEBWithHistory, así que
+                  // la etiqueta tiene que decir si de verdad entró historial de la
+                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
+                  // le sirve a nadie para decidir. No se pinta ningún nivel de
+                  // confianza aquí porque la banda de predicción la calcula
+                  // scoring.js y no está en alcance en esta franja — inventarle un
+                  // nivel sería exactamente el defecto que esto viene a corregir.
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
+                  if(!d) return 'Estimado';
+                  const muestra=conHistorial
+                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
+                    : '';
+                  return `${d.label} · ${d.detail}${muestra}`;
+                })()}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line">COP / kg seco</span>
+                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-costo">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  // El valor de esta celda es an.cost, que es SIEMPRE el precio de
+                  // catálogo. El costo real ponderado de los lotes en bodega se
+                  // calcula aparte (realCostPerKg) y no es lo que se muestra aquí,
+                  // así que la línea lo dice y, cuando los dos se separan, enseña
+                  // el de bodega en vez de dejar creer que el de arriba lo es.
+                  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
+                  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
+                  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an?.cost||0))>=20;
+                  return hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base;
+                })()}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>

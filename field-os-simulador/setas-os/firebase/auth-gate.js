@@ -78,6 +78,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../inventory-consumption.js",
   "../inventory-ledger.js",
   "../room-state.js",
+  "../provenance.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
   // Cuaderno de campo offline. setas-os-workflow.js llega después, en

@@ -7,7 +7,7 @@
     "test": "npm run test:unit && npm run test:gates",
     "test:unit": "node --test $(ls *.test.js | grep -v -- '-criterio-gate')",
     "test:gates": "node --test paso1-criterio-gate.test.js mobile-criterio-gate.test.js",
-    "test:browser": "node e2e/field-qr-capture.browser.cjs && node e2e/history-eligibility.browser.cjs && node e2e/operator-capture.browser.cjs && node e2e/perito-readiness.browser.cjs && node e2e/preparation-snapshot.browser.cjs && node e2e/room-move.browser.cjs && node e2e/room-board.browser.cjs",
+    "test:browser": "node e2e/field-qr-capture.browser.cjs && node e2e/history-eligibility.browser.cjs && node e2e/operator-capture.browser.cjs && node e2e/perito-readiness.browser.cjs && node e2e/preparation-snapshot.browser.cjs && node e2e/room-move.browser.cjs && node e2e/room-board.browser.cjs && node e2e/provenance-lines.browser.cjs",
     "test:e2e": "npx playwright test --config playwright.config.cjs",
     "test:gate:pr": "node build.test.js && npm test && npm run test:browser",
     "corpus": "node build-ground-truth-corpus.js",
