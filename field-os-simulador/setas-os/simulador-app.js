@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5d8d13327199f096b326cda2c0cb96b899bbb0d7ec1a0e9f3c2b0ce6e1e105ca
+// source-hash: 7c28af16bdedcdd5ab17e8b8b89e022e6121d8742dd9a89e5e150fa747980248
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -9981,7 +9981,7 @@ Click para ver análisis completo`
         operatorId,
         accountId,
         onTransitionConfirmed: (batchId, nextState) => {
-          setBitLotes((prev) => prev.map((l) => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+          updateBitLote(batchId, { estado: nextState, workflowState: nextState });
         }
       }
     );

@@ -15598,7 +15598,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               operatorId={operatorId}
               accountId={accountId}
               onTransitionConfirmed={(batchId, nextState) => {
-                setBitLotes(prev => prev.map(l => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+                updateBitLote(batchId, { estado: nextState, workflowState: nextState });
               }}
             />
           );
