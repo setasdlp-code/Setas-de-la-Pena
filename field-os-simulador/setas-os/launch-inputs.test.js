@@ -50,18 +50,23 @@ test('launchSpawn: sin tasa de spawn no hay ítem', () => {
 
 // ── m2: el aviso de éxito no afirma que todo se descontó si hubo faltantes. ──
 const X2 = extractConsts(['launchDiscountSummary']);
-test('launchDiscountSummary: sin faltantes afirma el descuento completo', () => {
-  assert.equal(X2.launchDiscountSummary({ shortfalls: [] }), 'Las materias primas fueron descontadas de Bodega.');
-  assert.equal(X2.launchDiscountSummary(null), 'Las materias primas fueron descontadas de Bodega.');
+// Planificar RESERVA; el descuento ocurre al registrar "Preparar mezcla". Este
+// resumen afirmaba "fueron descontadas de Bodega" en un punto del flujo en que
+// el stock sigue entero: decirle al operario que ya descontó le hace creer que
+// puede contar con esos kilos gastados cuando todavía están ahí.
+test('launchDiscountSummary: sin faltantes dice que quedaron reservadas, no descontadas', () => {
+  const esperado = 'Las materias primas quedaron reservadas en Bodega; se descontarán al registrar la mezcla.';
+  assert.equal(X2.launchDiscountSummary({ shortfalls: [] }), esperado);
+  assert.equal(X2.launchDiscountSummary(null), esperado);
 });
-test('launchDiscountSummary: con faltantes dice que se descontó lo disponible y lista lo que faltó', () => {
+test('launchDiscountSummary: con faltantes dice que se reservó lo disponible y lista lo que faltó', () => {
   const plan = { shortfalls: [
     { ingredientId: 'salvado_trigo', missing: 1.25, unidad: 'kg' },
     { ingredientId: 'bolsa_pp_plana', missing: 3, unidad: 'ud' },
   ] };
   const ings = [{ id: 'salvado_trigo', name: 'Salvado de trigo' }];
   assert.equal(X2.launchDiscountSummary(plan, ings),
-    'Se descontó lo disponible; faltaron: Salvado de trigo (1.25 kg), bolsa_pp_plana (3 ud).');
+    'Se reservó lo disponible; faltaron: Salvado de trigo (1.25 kg), bolsa_pp_plana (3 ud).');
 });
 
 // ── m3: el borde del input "Humedad obj." se evalúa contra el rango resuelto. ──

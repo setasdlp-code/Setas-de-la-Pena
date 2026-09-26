@@ -49,8 +49,8 @@ const RECETA=[{id:'paja_trigo',p:80},{id:'salvado_trigo',p:20}];
   await page.locator('#prod-h').fill('60');
 
   const abrirConfirmacion=async()=>{
-   await page.getByRole('button',{name:/Ejecutar lote/}).click();
-   const dlg=page.getByRole('dialog',{name:'Ejecutar lote',exact:true});
+   await page.getByRole('button',{name:/Planificar lote/}).click();
+   const dlg=page.getByRole('dialog',{name:'Planificar lote',exact:true});
    await expect(dlg).toBeVisible();
    return dlg;
   };

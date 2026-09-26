@@ -4583,11 +4583,14 @@ const launchSpawn=(bags,kgPerBag,dynSpawn)=>dynSpawn?{ingredientId:'spawn_grano'
 // Humedad dentro del objetivo (m3): rango resuelto de la especie cuando trae
 // min y max; si no (heredado solo con ideal), el umbral histórico ≥67%.
 const moistureInTargetRange=(h,m)=>(m?.min!=null&&m?.max!=null)?(h>=m.min&&h<=m.max):h>=67;
+// Planificar RESERVA; el descuento ocurre al registrar "Preparar mezcla". Este
+// resumen decía "fueron descontadas de Bodega", que ya no es verdad en este
+// punto del flujo: el stock sigue entero y los kilos sólo están comprometidos.
 const launchDiscountSummary=(plan,ings=[])=>{
   const sf=plan?.shortfalls||[];
-  if(!sf.length) return 'Las materias primas fueron descontadas de Bodega.';
+  if(!sf.length) return 'Las materias primas quedaron reservadas en Bodega; se descontarán al registrar la mezcla.';
   const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
-  return `Se descontó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
+  return `Se reservó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
 };
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
@@ -7519,8 +7522,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
     try{
       const now=Date.now();
       const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
-      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now});
-      const registered=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,nota:`Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}`});
+      // El lote NACE planificado y sus insumos quedan reservados, no
+      // descontados: la bodega se toca al registrar "Preparar mezcla", que es
+      // cuando el sustrato se pesa de verdad.
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
+      const registered=reservarInsumos({loteId:lote.id,plan});
       if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
       consumoRegistrado=true;
 
@@ -7560,15 +7566,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }catch(e){
       console.error('Error al ejecutar lote:',e);
       if(consumoRegistrado){
-        // Caso 2: el consumo de bodega YA quedó registrado (idempotente, por
+        // Caso 2: la RESERVA de insumos ya quedó registrada (idempotente, por
         // loteId) antes de que algo más fallara. Reintentar acuñaría un loteId
-        // nuevo y descontaría el inventario una segunda vez, así que la guarda
-        // NO se libera aquí — solo se reabre al volver a llamar ejecutarLote.
+        // nuevo y comprometería los kilos una segunda vez, así que la guarda NO
+        // se libera aquí — solo se reabre al volver a llamar ejecutarLote. La
+        // bodega no se ha tocado todavía: eso pasa al preparar la mezcla.
         setLoteBatchConfirm(null);
         setEjecutandoLote(false);
         setNoticeDlg({
-          title:'Lote ejecutado con errores',
-          msg:`El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
+          title:'Lote planificado con errores',
+          msg:`Los insumos de ${loteNum} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
         });
       }else{
         // Caso 1: nada se registró todavía — es seguro reintentar. Se libera
@@ -7597,7 +7604,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setConfirmDlg({
         title:'Insumo comprometido con otro lote',
         msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
-        confirmLabel:'Confirmar y descontar',
+        confirmLabel:'Confirmar y reservar',
         onConfirm:()=>{ejecutarLoteInFlight.current=true;setEjecutandoLote(true);runEjecucionLote();}
       });
       return;
@@ -7837,8 +7844,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     let consumoRegistrado = false;
     try {
       const now = Date.now();
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+      // Mismo criterio que el otro camino: planificar reserva, preparar descuenta.
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
+      const registered = reservarInsumos({ loteId: lote.id, plan: f.plan });
       if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
       consumoRegistrado = true;
 
@@ -7871,23 +7879,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
 
       setNoticeDlg({
-        title: 'Producción de Lote Lanzada',
+        title: 'Lote planificado',
         msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
       });
     } catch (e) {
       console.error('Error al lanzar producción de lote:', e);
       if (consumoRegistrado) {
-        // Caso 2: el consumo de bodega YA quedó registrado (idempotente,
+        // Caso 2: la RESERVA de insumos ya quedó registrada (idempotente,
         // por loteId) antes de que algo más fallara. Reintentar acuñaría
-        // un loteId nuevo y descontaría el inventario una segunda vez, así
+        // un loteId nuevo y comprometería los kilos una segunda vez, así
         // que la guarda NO se libera aquí — solo se reabre al abrir un
         // nuevo lanzamiento (openProdLauncher). Se cierra el modal porque
-        // no hay nada seguro que reintentar desde él.
+        // no hay nada seguro que reintentar desde él. La bodega sigue
+        // intacta: eso pasa al preparar la mezcla.
         setShowProdLaunchModal(false);
         setLaunching(false);
         setNoticeDlg({
-          title: 'Lote lanzado con errores',
-          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
+          title: 'Lote planificado con errores',
+          msg: `Los insumos de ${f.codigo} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
         });
       } else {
         // Caso 1: nada se registró todavía — es seguro reintentar. Se
@@ -7968,7 +7977,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setConfirmDlg({
         title:'Insumo comprometido con otro lote',
         msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
-        confirmLabel:'Confirmar y descontar',
+        confirmLabel:'Confirmar y reservar',
         onConfirm:()=>{launchInFlight.current=true;setLaunching(true);runLanzamientoProduccion();}
       });
       return;
@@ -8285,22 +8294,55 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return upd;
     });
   };
+  // Planificar un lote RESERVA sus insumos y no mueve un gramo de bodega. Es la
+  // mitad que faltaba: antes "confirmar" y "descontar" eran el mismo clic, así
+  // que una reserva nacía y moría en el mismo instante y "Reservado" siempre
+  // valía cero. Ahora la reserva vive desde que se planifica hasta que se
+  // prepara la mezcla, que es cuando el sustrato se pesa de verdad.
+  const reservarInsumos=({loteId,plan,at=null})=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||!plan||!loteId) return false;
+    const nowIso=at||new Date().toISOString();
+    let reservas;
+    try{ reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso}); }
+    catch(e){ return false; }
+    if(!reservas.length) return false;
+    setInvReservas(prev=>{
+      // Idempotente por lote: replanificar el mismo lote no duplica kilos
+      // comprometidos. Las reservas ya consumidas no se tocan — son historia.
+      const yaTiene=prev.some(r=>r&&r.batchId===loteId&&r.status==='held');
+      if(yaTiene) return prev;
+      const upd=ledgerApi.addReservations(prev,reservas);
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+    return true;
+  };
+
   const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
     if(!added) return false;   // this lote was already discounted: never apply twice
-    // Libro de reservas: en este flujo "confirmar" y "descontar" son el mismo
-    // clic, así que la reserva de este lote (reservationsForPlan) se crea y se
-    // marca consumida en el mismo paso, con op.opId como eventId — el mismo id
-    // idempotente por loteId que ya identifica esta operación de consumo, así
-    // que una reserva sólo queda consumida con la prueba de qué evento la cerró.
+    // Libro de reservas: este paso CIERRA las reservas que dejó la
+    // planificación, con op.opId como eventId — el mismo id idempotente por
+    // loteId que identifica esta operación de consumo, así que una reserva sólo
+    // queda consumida con la prueba de qué evento la cerró. Un lote que llegó
+    // aquí sin haber pasado por planificación (los anteriores a este cambio, o
+    // uno creado a mano) no tiene reservas que cerrar: se crean y se consumen
+    // en el acto, que es lo que hacía antes todo el mundo.
     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
     if(ledgerApi){
       const nowIso=new Date().toISOString();
-      const reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso});
       setInvReservas(prev=>{
-        let upd=ledgerApi.addReservations(prev,reservas);
-        upd=reservas.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
+        const pendientes=prev.filter(r=>r&&r.batchId===loteId&&r.status==='held');
+        let upd=prev;
+        let aCerrar=pendientes;
+        if(!pendientes.length){
+          const reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso});
+          upd=ledgerApi.addReservations(prev,reservas);
+          aCerrar=reservas;
+        }
+        upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
         try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
         return upd;
       });
@@ -8737,15 +8779,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <thead>
                               <tr>
                                 <th>Ingrediente</th>
-                                {/* Una sola columna de stock. El libro de reservas
-                                    (inventory-ledger.js) ya calcula reservado y
-                                    disponible, pero hoy confirmar un lanzamiento
-                                    descuenta en el mismo clic: una reserva nace y se
-                                    consume a la vez, así que "Reservado" sería siempre
-                                    cero. Un cero permanente engaña más que no mostrar
-                                    nada. Las columnas llegan cuando planificar y
-                                    preparar se separen (planned → mix_prepared). */}
-                                <th>Stock (kg)</th>
+                                {/* Las tres columnas del libro de reservas. Estuvieron
+                                    ocultas mientras confirmar un lanzamiento descontaba
+                                    en el mismo clic: una reserva nacía y se consumía a la
+                                    vez, así que "Reservado" no podía valer otra cosa que
+                                    cero, y un cero permanente engaña más que no mostrar
+                                    nada. Ahora planificar reserva y preparar la mezcla
+                                    descuenta, así que el intervalo existe y las tres
+                                    cifras dicen cosas distintas: qué hay, qué está
+                                    comprometido con otro lote y con qué se puede contar. */}
+                                <th>Físico (kg)</th>
+                                <th>Reservado (kg)</th>
+                                <th>Disponible (kg)</th>
                                 <th>Precio / kg</th>
                                 <th>Proveedor</th>
                                 <th>Alerta mín. (kg)</th>
@@ -8779,6 +8824,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         />
                                       ):(
                                         <span>{r.stock.toFixed(1)} kg</span>
+                                      )}
+                                    </td>
+                                    <td data-label="Reservado" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",minWidth:90,color:r.reservado>0?'var(--coral-700)':'var(--ink-500)'}}>
+                                      {r.reservado>0?`${r.reservado.toFixed(1)} kg`:'—'}
+                                    </td>
+                                    <td data-label="Disponible" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,minWidth:90}}>
+                                      {r.disponible.toFixed(1)} kg
+                                      {r.sobrereservado>0&&(
+                                        <span title={`Hay ${r.sobrereservado.toFixed(1)} kg comprometidos por encima de lo que existe físicamente`} style={{display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-700)'}}>
+                                          sobrecomprometido {r.sobrereservado.toFixed(1)} kg
+                                        </span>
                                       )}
                                     </td>
                                     {/* PRECIO */}
@@ -9591,6 +9647,38 @@ body{margin:0;padding:20px 24px;background:#fff;}
         updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
         enqueueFieldTransition(lote,from,to);
       }
+      return;
+    }
+    if(action==='prepare_mix'){
+      // Aquí es donde la bodega se mueve de verdad: preparar la mezcla es el
+      // momento en que el sustrato se pesa. Cierra las reservas que dejó la
+      // planificación y descuenta FIFO; `registrarConsumo` es idempotente por
+      // loteId, así que un segundo toque no descuenta dos veces.
+      const activeSheet=sheet||buildSheetFor(lote);
+      const asignaciones=(lote.ingredientLots||[]).map(a=>({...a}));
+      if(!asignaciones.length){
+        setNoticeDlg({title:'Sin plan de insumos',msg:'Este lote no guardó qué insumos consumir, así que no hay nada que descontar. Regístralo a mano en Bodega.'});
+        return;
+      }
+      const plan={allocations:asignaciones,shortfalls:[],preparation:lote.preparation||null};
+      const fecha=lote.fechaMezcla||new Date().toISOString().split('T')[0];
+      setConfirmDlg({
+        title:'Preparar mezcla',
+        msg:`Se descontarán de Bodega los insumos reservados para ${lote.codigo||lote.id} (FIFO, del lote más antiguo al más nuevo). Es el paso que mueve el stock.`,
+        confirmLabel:'Descontar y registrar',
+        onConfirm:()=>{
+          const ok=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,
+            nota:`Preparación de mezcla · ${lote.codigo||lote.id} · ${fecha}`});
+          if(!ok){
+            setNoticeDlg({title:'Ya estaba descontado',msg:'La bodega ya se había descontado para este lote; no se repite el movimiento.'});
+            return;
+          }
+          if(activeSheet){
+            const recetaId=(lote.recipeSnapshot&&lote.recipeSnapshot.recipeId)||(lote.recipeRef&&lote.recipeRef.id)||lote.recetaId||null;
+            commitSheetAction(activeSheet,lote,'prepare_mix',{recetaId});
+          }
+        },
+      });
       return;
     }
     if(action==='close_batch'){
@@ -15766,7 +15854,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Ejecutar lote</button>
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
                   </div>
                 </div>
@@ -16071,10 +16159,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
-          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
-              <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Ejecutar lote — confirmar descuento de inventario</div>
+          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Planificar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Planificar lote — reservar insumos</div>
               <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se RESERVARÁN los insumos y bolsas. La bodega no se descuenta todavía: eso pasa al registrar «Preparar mezcla», que es cuando el sustrato se pesa (FIFO, del lote más antiguo al más nuevo).</div>
               {(()=>{const h=procedenciaHumedades(loteBatchConfirm.plan.preparation);
                 return h?<div data-testid="confirm-humedad-procedencia" className={'os-provenance-notice'+(h.estimados.length?' os-provenance-notice--estimated':'')} style={{marginBottom:14}}>{h.texto}</div>:null;})()}
               <div className="inv-modal-table-wrap">
@@ -16092,10 +16180,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </tbody>
                 </table>
               </div>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se reservará lo disponible y el faltante quedará a 0.</div>}
               <div className="inv-modal-actions">
                 <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
+                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Reservando…':'Confirmar y reservar'}</button>
               </div>
           </AccessibleModal>
         )}

@@ -508,21 +508,48 @@ test('los dos flujos de lanzamiento sólo preguntan por el insumo comprometido, 
   const confirmBlock = source.slice(source.indexOf('const confirmarEjecucion=conGuardaEjecucion'), source.indexOf('const confirmarEjecucion=conGuardaEjecucion') + 1600);
   assert.match(confirmBlock, /const comprometido=faltantePorReservaDeOtroLote\(loteBatchConfirm\.plan\);/);
   assert.match(confirmBlock, /if\(comprometido\)\{/);
-  assert.match(confirmBlock, /confirmLabel:'Confirmar y descontar'/);
+  assert.match(confirmBlock, /confirmLabel:'Confirmar y reservar'/);
   assert.match(confirmBlock, /onConfirm:\(\)=>\{ejecutarLoteInFlight\.current=true;setEjecutandoLote\(true\);runEjecucionLote\(\);\}/);
   const launchBlock = source.slice(source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento'), source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento') + 1300);
   assert.match(launchBlock, /const comprometido=faltantePorReservaDeOtroLote\(f\.plan\);/);
   assert.match(launchBlock, /onConfirm:\(\)=>\{launchInFlight\.current=true;setLaunching\(true\);runLanzamientoProduccion\(\);\}/);
 });
 
-test('registrarConsumo crea reservas con reservationsForPlan y las marca consumidas con el opId', () => {
-  const start = source.indexOf('const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{');
-  assert.ok(start > -1);
-  const block = source.slice(start, start + 1200);
-  assert.match(block, /ledgerApi\.reservationsForPlan\(plan,\{batchId:loteId,at:nowIso\}\)/);
-  assert.match(block, /ledgerApi\.addReservations\(prev,reservas\)/);
-  // Consumida sólo con el evento que la cierra: op.opId (idempotente por loteId).
-  assert.match(block, /ledgerApi\.consume\(acc,r\.id,\{eventId:op\.opId,at:nowIso\}\)/);
+test('planificar reserva sin tocar bodega, y preparar la mezcla cierra esas reservas y descuenta', () => {
+  // La brecha que esto cierra: antes "confirmar" y "descontar" eran el mismo
+  // clic, así que una reserva nacía y moría en el mismo instante y "Reservado"
+  // no podía valer otra cosa que cero. Ahora la reserva vive entre planificar y
+  // preparar, que es el intervalo real en la finca.
+  const reservarStart = source.indexOf('const reservarInsumos=({loteId,plan,at=null})=>{');
+  assert.ok(reservarStart > -1, 'falta reservarInsumos');
+  const reservar = source.slice(reservarStart, reservarStart + 1200);
+  assert.match(reservar, /ledgerApi\.reservationsForPlan\(plan,\{batchId:loteId,at:nowIso\}\)/);
+  assert.match(reservar, /ledgerApi\.addReservations\(prev,reservas\)/);
+  // Reservar NO descuenta: nada de FIFO ni de sdp_lotes en este camino.
+  assert.doesNotMatch(reservar, /applyLocal|sdp_lotes|sdp_movimientos/);
+  // Replanificar el mismo lote no duplica kilos comprometidos.
+  assert.match(reservar, /r\.batchId===loteId&&r\.status==='held'/);
+
+  // Los dos caminos de lanzamiento reservan, no consumen, y el lote nace planificado.
+  assert.match(source, /estado:'planificado'/);
+  assert.match(source, /estado: 'planificado'/);
+  assert.match(source, /const registered=reservarInsumos\(\{loteId:lote\.id,plan\}\)/);
+  assert.match(source, /const registered = reservarInsumos\(\{ loteId: lote\.id, plan: f\.plan \}\)/);
+
+  // registrarConsumo pasa a CERRAR las reservas pendientes de ese lote, y sólo
+  // las crea si el lote nunca pasó por planificación (los de antes del cambio).
+  const consumoStart = source.indexOf('const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{');
+  const consumo = source.slice(consumoStart, consumoStart + 1800);
+  assert.match(consumo, /prev\.filter\(r=>r&&r\.batchId===loteId&&r\.status==='held'\)/);
+  assert.match(consumo, /if\(!pendientes\.length\)\{/);
+  assert.match(consumo, /ledgerApi\.consume\(acc,r\.id,\{eventId:op\.opId,at:nowIso\}\)/);
+
+  // Y "Preparar mezcla" es quien lo llama desde la ficha del lote.
+  const prepStart = source.indexOf("if(action==='prepare_mix'){");
+  assert.ok(prepStart > -1, 'la ficha no ofrece preparar la mezcla');
+  const prep = source.slice(prepStart, prepStart + 2600);
+  assert.match(prep, /registrarConsumo\(\{loteId:lote\.id,codigo:lote\.codigo,plan,fecha/);
+  assert.match(prep, /commitSheetAction\(activeSheet,lote,'prepare_mix',\{recetaId\}\)/);
 });
 
 test('descartar o eliminar un lote libera sus reservas con releaseForBatch', () => {
@@ -540,20 +567,19 @@ test('descartar o eliminar un lote libera sus reservas con releaseForBatch', () 
   assert.match(deleteBlock, /ledgerApi\.releaseForBatch\(prev,loteId,\{reason:'Lote de producción eliminado',at:new Date\(\)\.toISOString\(\)\}\)/);
 });
 
-test('la Bodega no muestra columnas de reserva mientras siempre valdrían cero', () => {
-  // El libro de reservas funciona y está probado, pero en el flujo actual
-  // confirmar un lanzamiento descuenta el inventario en el mismo clic: la
-  // reserva nace y se consume a la vez, nunca queda en `held`, y "Reservado"
-  // leería siempre 0. Un cero permanente engaña más que no mostrar nada —el
-  // mismo criterio por el que tampoco se muestra "Entrante", que no tiene de
-  // dónde leer hasta que las compras tengan estado—. Las columnas llegan
-  // cuando planificar y preparar se separen (planned → mix_prepared).
-  assert.doesNotMatch(source, /<th>Reservado \(kg\)<\/th>/);
-  assert.doesNotMatch(source, /<th>Disponible \(kg\)<\/th>/);
-  assert.doesNotMatch(source, /<th>Entrante/);
-  assert.match(source, /<th>Stock \(kg\)<\/th>/);
-  // El cálculo sí queda cableado: cuando exista el hueco, sale solo.
-  assert.match(source, /ledgerApi\.availability\(ingId,\{lots:invLotes,ledger:invReservas/);
+test('la Bodega muestra físico, reservado y disponible ahora que el intervalo existe', () => {
+  // Estas columnas estuvieron ocultas a propósito: mientras confirmar un
+  // lanzamiento descontaba en el mismo clic, una reserva nacía y moría a la vez
+  // y "Reservado" no podía valer otra cosa que cero. Con planificar y preparar
+  // separados el intervalo es real, así que las tres cifras dicen cosas
+  // distintas: qué hay, qué está comprometido y con qué se puede contar.
+  assert.match(source, /<th>Físico \(kg\)<\/th>/);
+  assert.match(source, /<th>Reservado \(kg\)<\/th>/);
+  assert.match(source, /<th>Disponible \(kg\)<\/th>/);
+  assert.match(source, /data-label="Reservado"/);
+  assert.match(source, /data-label="Disponible"/);
+  // Y un sobrecompromiso (más reservado que físico) no se esconde tras un 0.
+  assert.match(source, /sobrecomprometido/);
 });
 
 test('las alertas de stock bajo (crítico/bajo/OK y el banner de Stock Crítico) comparan contra el disponible, no el físico', () => {
