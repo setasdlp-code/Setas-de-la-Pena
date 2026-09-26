@@ -6519,7 +6519,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         updated=updated.map(l=>{
           if(!l.activo||l.ingredienteId!==targetId) return l;
           const fraccion=totalActual>0?l.cantidadKgDisponible/totalActual:1/activos.length;
-          return{...l,cantidadKgDisponible:Math.round(kg*fraccion*100)/100,precioPorKgCOP:pr};
+          const nuevoDisponible=Math.round(kg*fraccion*1000)/1000;
+          // Igual que la rama de un solo lote (arriba): cantidadKgTotal nunca
+          // puede quedar por debajo de lo disponible, o el invariante
+          // disponible<=total se rompe silenciosamente para este lote FIFO.
+          return{...l,cantidadKgDisponible:nuevoDisponible,cantidadKgTotal:Math.max(l.cantidadKgTotal,nuevoDisponible),precioPorKgCOP:pr};
         });
       }
       try{localStorage.setItem('sdp_lotes',JSON.stringify(updated));}catch(e){}
