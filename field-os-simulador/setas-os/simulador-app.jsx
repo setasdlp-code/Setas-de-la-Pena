@@ -7838,6 +7838,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
       if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
+      // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
+      // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
+      // descarta 'lote:'+loteId — sin este purgado, una actualizarBolsa o
+      // guardarCosecha pendiente de este lote podía ejecutarse después (o
+      // revivirse con retryStuck) y resucitar en Firestore un documento que
+      // ya no existe localmente.
+      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+      if(syncQueueApi){
+        setSyncQueue(prev=>{
+          const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
+          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
+          return purged;
+        });
+      }
       encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
       // eliminarLoteCascade (arriba) es solo bitacora_* — la ficha pública
       // (public_lotes) es una colección aparte que nadie más limpia: sin
