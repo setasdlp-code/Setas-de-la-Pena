@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 64f67e1733f857d6e0d58e04de234001a2e720555155b08c844d17cde17514df
+// source-hash: 1c4164ed017e41c8ad7fc0d7f2de51b0e68e35fe9166150d70e68a840bedbbc8
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4782,7 +4782,8 @@ function SimuladorShell(props) {
         updated = updated.map((l) => {
           if (!l.activo || l.ingredienteId !== targetId) return l;
           const fraccion = totalActual > 0 ? l.cantidadKgDisponible / totalActual : 1 / activos.length;
-          return { ...l, cantidadKgDisponible: Math.round(kg * fraccion * 100) / 100, precioPorKgCOP: pr };
+          const nuevoDisponible = Math.round(kg * fraccion * 1e3) / 1e3;
+          return { ...l, cantidadKgDisponible: nuevoDisponible, cantidadKgTotal: Math.max(l.cantidadKgTotal, nuevoDisponible), precioPorKgCOP: pr };
         });
       }
       try {
