@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 7c28af16bdedcdd5ab17e8b8b89e022e6121d8742dd9a89e5e150fa747980248
+// source-hash: e41936cffed745ab183fdf2a1f5383b3e62ef711647fc961fa9fa46db067fbaa
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -6116,6 +6116,17 @@ ${errors.slice(0, 5).join("\n")}` : "");
       if (bitActiveLoteId === loteId) {
         setBitActiveLoteId(null);
         goBitTab("bit_dash");
+      }
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      if (syncQueueApi) {
+        setSyncQueue((prev) => {
+          const purged = syncQueueApi.purgeKeys(prev, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
+          try {
+            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
+          } catch (e) {
+          }
+          return purged;
+        });
       }
       encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
       if (lote?.codigo) {
