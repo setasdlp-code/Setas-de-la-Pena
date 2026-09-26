@@ -141,26 +141,14 @@ test('escenario 1: el ciclo completo del lote se recorre de planned a closed sin
   cosechas = [...cosechas, { id: 'C1', loteId: lote.id, flush: 1, fecha: iso(t), pesoFresco: '1500', calidad: 4 }];
   t += DIA;
 
-  // LÍMITE ACTUAL: actionConsequences('advance_stage', …) sólo puede proponer el
-  // PRIMER destino de DEFAULT_TRANSITIONS[estado] (firstValidAdvanceTransition);
-  // desde 'fruiting' ese primer destino es 'resting', no 'closed', y desde
-  // 'resting' es 'fruiting' de nuevo — con esa función nunca se llega a 'closed'.
-  // applyAction sí acepta un `targetState` explícito que se valida contra
-  // workflow.canTransition, así que el cierre real de un lote sólo es alcanzable
-  // hoy por esa vía, no por actionConsequences/applyConsequences.
-  {
-    const sheet = build();
-    const applied = sheetApi.applyAction({
-      sheet, action: 'advance_stage', operatorId, at: iso(t), targetState: 'closed',
-    });
-    log = applied.log;
-    lote = Object.assign({}, lote, { lifecycleState: applied.state });
-    transitionsSeen.push(applied.state);
-  }
+  // 10. cerrar el lote desde la misma cascada que todo lo demás. 'close_batch'
+  // declara transitionsTo: 'closed', así que no necesita destino explícito: es
+  // la acción terminal del ciclo, no un caso especial fuera del flujo.
+  doAction('close_batch', {});
   assert.equal(lote.lifecycleState, 'closed');
 
-  // El historial nunca se rompió, a pesar de mezclar los dos caminos (el normal vía
-  // applyConsequences y el de los dos límites documentados arriba).
+  // El historial nunca se rompió: el ciclo entero, cierre incluido, pasó por
+  // applyConsequences.
   assert.equal(sheetApi.verifyEventChain(log).valid, true);
 
   // La secuencia de transiciones ocurrió en el orden esperado del ciclo de vida.

@@ -1788,6 +1788,18 @@ const PERITO_STATUS={
   critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
+// Color del estado del CICLO DE VIDA de la receta (recipe-lifecycle.js), no
+// confundir con PERITO_STATUS de arriba: eso es viabilidad técnica, esto es
+// autorización de producción. Una receta en ensayo nunca debe leerse igual
+// que una aprobada (SETAS_OS_UX_ARCHITECTURE_V2.md §9) — de ahí que cada
+// estado tenga su propio color, tomado de la paleta de tokens existente.
+const RECIPE_LIFECYCLE_COLOR={
+  draft:'var(--ink-500)',
+  trial:'var(--ochre-500)',
+  approved:'var(--moss-700)',
+  retired:'var(--coral-700)',
+  legacy:'var(--ink-400)',
+};
 const FORM_ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
 const FORM_ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
 const peritoMainLimiter=(opt,an)=>{
@@ -3433,6 +3445,39 @@ const PromptModal=({dlg,onClose})=>{
     </div>
   );
 };
+// Mover un lote de sala es una operación física: hay que declarar A DÓNDE.
+// Antes esta acción sólo cambiaba la sala seleccionada del panel de clima y
+// navegaba allí, sin dejar rastro — el lote aparecía en otra sala sin que
+// nadie pudiera decir cuándo ni quién lo movió. El destino se elige entre las
+// salas reales, con botones de 48 px porque se pulsa con guantes.
+const MoveRoomModal=({dlg,onClose})=>{
+  const dialogRef=useDialogA11y(onClose);
+  const destinos=dlg.rooms.filter(r=>r.id!==dlg.currentRoomId);
+  return(
+  <div className="inv-modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div ref={dialogRef} tabIndex={-1} className="inv-modal" role="dialog" aria-modal="true" aria-label="Mover lote de sala" data-testid="move-room-modal" style={{width:'min(420px, calc(100vw - 24px))',boxSizing:'border-box'}}>
+      <div className="inv-modal-title">Mover {dlg.loteCodigo}</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14,lineHeight:1.5}}>
+        Ahora en <strong>{dlg.currentRoomName||'sala sin asignar'}</strong>. ¿A qué sala pasa?
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:18}}>
+        {destinos.length===0&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>No hay otra sala configurada.</div>}
+        {destinos.map(r=>(
+          <button key={r.id} type="button" className="inv-btn inv-btn-sec" data-room-id={r.id}
+            style={{minHeight:48,textAlign:'left',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px'}}
+            onClick={()=>{dlg.onSelect(r.id);onClose();}}>
+            <span style={{fontWeight:600}}>{r.name}</span>
+            {r.spec&&<span style={{fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>{r.spec}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="inv-modal-actions">
+        <button onClick={onClose} className="inv-btn inv-btn-sec">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  );
+};
 const NoticeModal=({dlg,onClose})=>{
   const dialogRef=useDialogA11y(onClose);
   return(
@@ -3445,6 +3490,28 @@ const NoticeModal=({dlg,onClose})=>{
       </div>
     </div>
   </div>
+  );
+};
+
+// Se abre en vez de dejar editar una receta 'approved'/'retired' directamente
+// (recipe-lifecycle.js assertEditable). La fricción es deliberada — cambiar
+// una receta en producción tiene que notarse — así que no hay "editar de
+// todos modos", solo "crear la versión siguiente".
+const NewRecipeVersionModal=({recipe,onClose,onConfirm})=>{
+  const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+  const identity=lifecycle?lifecycle.recipeIdentity(recipe):{recipeId:recipe.recipeId||recipe.name,version:recipe.version||1};
+  const label=lifecycle?(lifecycle.LIFECYCLE_LABELS[recipe.status]||recipe.status):recipe.status;
+  return(
+    <AccessibleModal onClose={onClose} label="Receta aprobada — crear versión nueva" dialogStyle={{width:'min(460px, calc(100vw - 24px))',boxSizing:'border-box'}}>
+      <div className="inv-modal-title">Receta aprobada</div>
+      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>
+        «{recipe.name}» está <b>{label}</b> ({identity.recipeId} v{identity.version}) y no se puede editar directamente: cambiarla en sitio haría que los lotes ya producidos con ella dejen de poder compararse honestamente. Crea la versión siguiente a partir de ella — nace en borrador, y esta versión aprobada sigue intacta para los lotes que ya la usan.
+      </div>
+      <div className="inv-modal-actions">
+        <button onClick={onClose} className="inv-btn inv-btn-sec" style={{minHeight:44}}>Cancelar</button>
+        <button onClick={onConfirm} className="inv-btn inv-btn-pri" style={{minHeight:44}}>Crear versión {identity.version+1}</button>
+      </div>
+    </AccessibleModal>
   );
 };
 
@@ -4291,6 +4358,18 @@ const precioPonderado=(ingredienteId,lotes)=>{
   if(!totalKg) return null;
   return active.reduce((s,l)=>s+l.precioPorKgCOP*l.cantidadKgDisponible,0)/totalKg;
 };
+// inventory-ledger.js (SetasInventoryLedger.availability) necesita
+// SetasInventario.stockActual para calcular el físico — no se carga
+// inventario.js por script aparte (colisionaría con el stockActual/
+// precioPonderado de arriba, ya duplicados a propósito por la nota de
+// arriba), así que este mismo bundle expone el global que ese módulo
+// externo espera, con el mismo cálculo. Se hace aquí (escribiendo hacia
+// afuera desde dentro de este runtime) y no al revés — el problema que
+// describe la nota de arriba es leer un global ajeno desde acá, no
+// publicar uno propio.
+if(typeof globalThis!=='undefined'&&!globalThis.SetasInventario){
+  globalThis.SetasInventario={stockActual,precioPonderado};
+}
 
 // Costo real de bodega en COP/kg de mezcla SECA (I6): los precios de lote son
 // por kg tal cual se recibe, así que se pasan a base seca con la misma cuenta y
@@ -4504,11 +4583,14 @@ const launchSpawn=(bags,kgPerBag,dynSpawn)=>dynSpawn?{ingredientId:'spawn_grano'
 // Humedad dentro del objetivo (m3): rango resuelto de la especie cuando trae
 // min y max; si no (heredado solo con ideal), el umbral histórico ≥67%.
 const moistureInTargetRange=(h,m)=>(m?.min!=null&&m?.max!=null)?(h>=m.min&&h<=m.max):h>=67;
+// Planificar RESERVA; el descuento ocurre al registrar "Preparar mezcla". Este
+// resumen decía "fueron descontadas de Bodega", que ya no es verdad en este
+// punto del flujo: el stock sigue entero y los kilos sólo están comprometidos.
 const launchDiscountSummary=(plan,ings=[])=>{
   const sf=plan?.shortfalls||[];
-  if(!sf.length) return 'Las materias primas fueron descontadas de Bodega.';
+  if(!sf.length) return 'Las materias primas quedaron reservadas en Bodega; se descontarán al registrar la mezcla.';
   const nameOf=id=>(ings||[]).find(g=>g.id===id)?.name||id;
-  return `Se descontó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
+  return `Se reservó lo disponible; faltaron: ${sf.map(x=>`${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(', ')}.`;
 };
 const hybridOptimizerRow=(candidate,targetKey,ingredients,stockMap,profileKey)=>{
   const an=candidate?.evaluation?.analysis;
@@ -6325,7 +6407,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [checkedSteps,setCheckedSteps]=useCaptureDraft('checkedSteps',{});
   const [loteBatchConfirm,setLoteBatchConfirm]=useState(null); // modal confirmar descuento de inventario
   const [confirmDlg,setConfirmDlg]=useState(null); // {title,msg,onConfirm,danger,confirmLabel} — reemplaza window.confirm
+  const [moveDlg,setMoveDlg]=useState(null); // {loteCodigo,currentRoomId,currentRoomName,rooms,onSelect} — destino de un traslado de sala
   const [promptDlg,setPromptDlg]=useState(null); // {title,label,placeholder,onSubmit} — reemplaza window.prompt
+  const [versionDlg,setVersionDlg]=useState(null); // {recipe} — recetario: receta 'approved'/'retired' cargada, ofrece crear versión nueva en vez de editar
   const [noticeDlg,setNoticeDlg]=useState(null); // {title,msg} — reemplaza alert()
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
@@ -6339,6 +6423,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
   const [bitTasks,setBitTasks]=useState([]);
+  // Eventos de sala (sanitizar/vaciar/ocupar) para SetasRoomState.buildRoomBoard.
+  // Misma mecánica de persistencia que bitTasks: localStorage bajo
+  // 'sdp_room_events', carga en el mismo try/catch de la Bitácora, guarda con
+  // el mismo patrón try/catch + bitQuotaWarn.
+  const [roomEvents,setRoomEvents]=useState([]);
   // Cola de sincronización de la Bitácora (SetasSyncQueue): persiste en
   // localStorage bajo 'sdp_sync_queue' via serialize/deserialize para que
   // sobreviva a un recargue del navegador — una cola que no sobrevive a eso
@@ -6417,6 +6506,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invLotes,setInvLotes]=useState([]);
   const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
+  // Libro de reservas de inventario (inventory-ledger.js): compromisos de
+  // kilos por lote de producción, aparte de invLotes (lo físico). Ver
+  // mergeReservas más abajo para la única forma de escribir aquí.
+  const [invReservas,setInvReservas]=useState([]);
   const [invTab,setInvTab]=useState('stock');
   const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
   const [formularMode,setFormularMode]=useState('auto');
@@ -6485,12 +6578,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||promptDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||moveDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,promptDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,moveDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -6622,6 +6715,20 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     try{
       const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
       if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const bre=localStorage.getItem('sdp_room_events');
+      if(bre) setRoomEvents(JSON.parse(bre));
+      const ir=localStorage.getItem('sdp_inv_reservas');
+      if(ir){
+        const parsedReservas=JSON.parse(ir);
+        // Una reserva vencida no puede seguir bloqueando kilos: se limpia
+        // ya al rehidratar, no solo cuando alguien vuelve a evaluar un plan.
+        const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+        const vigentes=ledgerApi?ledgerApi.expireDue(parsedReservas,Date.now()):parsedReservas;
+        setInvReservas(vigentes);
+        if(ledgerApi&&JSON.stringify(vigentes)!==JSON.stringify(parsedReservas)){
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(vigentes));}catch(e){}
+        }
+      }
       const sq=localStorage.getItem('sdp_sync_queue');
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
       if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
@@ -6752,7 +6859,23 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     setPantryIds(inStockIds);
   },[invLotes]);
 
-  useEffect(()=>{try{const s=localStorage.getItem('setas_v6');if(s) setSaved(JSON.parse(s));}catch(e){};},[]);
+  // Las recetas guardadas nacieron sin estado ni versión. `migrateLegacyRecipe`
+  // las marca `legacy` ("Sin versionar") en vez de inventarles un `draft` —que
+  // diría que no se han usado, y se usan— o un `approved` —que fabricaría una
+  // autorización que nadie dio—. Es idempotente y se persiste una sola vez.
+  useEffect(()=>{
+    try{
+      const s=localStorage.getItem('setas_v6');
+      if(!s) return;
+      const crudas=JSON.parse(s);
+      const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+      if(!lifecycle){ setSaved(crudas); return; }
+      const migradas=crudas.map(r=>lifecycle.migrateLegacyRecipe(r));
+      setSaved(migradas);
+      const cambio=migradas.some((r,i)=>r!==crudas[i]);
+      if(cambio){ try{localStorage.setItem('setas_v6',JSON.stringify(migradas));}catch(e2){} }
+    }catch(e){}
+  },[]);
   useEffect(()=>{ if(props.onSavedChange) props.onSavedChange(saved); },[saved]);
   useEffect(()=>{try{const s=localStorage.getItem('setas_prices_v1');if(s) setPriceOverrides(JSON.parse(s));}catch(e){};},[]);
   useEffect(()=>{try{const s=localStorage.getItem('sdp_alertas');if(s) setAlertaConfig(JSON.parse(s));}catch(e){};},[]);
@@ -6874,9 +6997,53 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
   const loadR=e=>{
-    const apply=()=>{setSKey(e.sKey);setRecipe(e.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
-    if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:apply});return;}
+    const apply=(receta=e)=>{setSKey(receta.sKey);setRecipe(receta.recipe);setLockedIds([]);openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);};
+    // Una receta aprobada (o retirada) no se edita en sitio: editarla dejaría a
+    // los lotes ya producidos con ella sin poder compararse honestamente. El
+    // diálogo ofrece el único camino válido, crear la versión siguiente.
+    const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+    if(lifecycle){
+      try{ lifecycle.assertEditable(e); }
+      catch(err){ setNewVersionFor(e); return; }
+    }
+    if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`,onConfirm:()=>apply()});return;}
     apply();
+  };
+  // Crea la versión siguiente de una receta aprobada, la guarda en borrador y la
+  // carga para editar. La aprobada queda intacta para los lotes que ya la usan.
+  const [newVersionFor,setNewVersionFor]=useState(null);
+  const confirmNewRecipeVersion=()=>{
+    const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+    if(!lifecycle||!newVersionFor) return;
+    try{
+      const nueva=lifecycle.newVersionFrom(newVersionFor,{},{actor:fieldOperatorRole,at:new Date().toISOString()});
+      const u=[{...nueva,id:Date.now()},...saved];
+      setSaved(u);
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+      setNewVersionFor(null);
+      setSKey(nueva.sKey);setRecipe(nueva.recipe);setLockedIds([]);
+      openBuilderSubTab('formular');goTab('formular');
+      setNoticeDlg({title:`Versión ${nueva.version} creada`,msg:`«${nueva.name}» v${nueva.version} nace en borrador y ya está cargada para editar. La versión aprobada anterior queda intacta.`});
+    }catch(err){ setNewVersionFor(null); setNoticeDlg({title:'No se pudo crear la versión',msg:err.message}); }
+  };
+  // Promueve una receta por el ciclo de vida. `promote` valida transición y rol:
+  // aprobar y retirar exigen dirección, y su error se muestra en vez de tragarse.
+  const promoteRecipe=(receta,toState)=>{
+    const lifecycle=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+    if(!lifecycle) return;
+    try{
+      const actualizada=lifecycle.promote(receta,toState,{
+        actor:props.operatorName||'operador-local',
+        // El rol tiene una sola procedencia: getFieldOperatorRole(), que lee
+        // usuarios/{uid}.rol de la sesión. props.isAdmin es el selector del
+        // encabezado y no es autorización (client-invariants.test.js lo exige).
+        role:fieldOperatorRole,
+        at:new Date().toISOString(),
+      });
+      const u=saved.map(s=>s.id===receta.id?{...actualizada,id:receta.id}:s);
+      setSaved(u);
+      try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e){}
+    }catch(err){ setNoticeDlg({title:'No se pudo cambiar el estado',msg:err.message}); }
   };
   // Protección de UI: solo evita el clic accidental de un operador de campo en
   // una acción destructiva e irreversible — no es seguridad real (toda la app
@@ -7349,18 +7516,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
-  const confirmarEjecucion=conGuardaEjecucion(()=>{
-    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
-    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
-      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
-    }
+  // Cuerpo real de "Confirmar y descontar" (Formulador → Ejecutar Lote), separado
+  // de confirmarEjecucion para poder llamarlo tanto directo (plan sin faltantes)
+  // como desde el "sí, de todas formas" del aviso de disponibilidad (ver abajo),
+  // sin volver a evaluar el plan una segunda vez.
+  const runEjecucionLote=()=>{
     const{preview,plan,loteNum,fecha}=loteBatchConfirm;
     let consumoRegistrado=false;
     try{
       const now=Date.now();
       const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
-      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now});
-      const registered=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,nota:`Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}`});
+      // El lote NACE planificado y sus insumos quedan reservados, no
+      // descontados: la bodega se toca al registrar "Preparar mezcla", que es
+      // cuando el sustrato se pesa de verdad.
+      const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
+      const registered=reservarInsumos({loteId:lote.id,plan});
       if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
       consumoRegistrado=true;
 
@@ -7400,15 +7570,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }catch(e){
       console.error('Error al ejecutar lote:',e);
       if(consumoRegistrado){
-        // Caso 2: el consumo de bodega YA quedó registrado (idempotente, por
+        // Caso 2: la RESERVA de insumos ya quedó registrada (idempotente, por
         // loteId) antes de que algo más fallara. Reintentar acuñaría un loteId
-        // nuevo y descontaría el inventario una segunda vez, así que la guarda
-        // NO se libera aquí — solo se reabre al volver a llamar ejecutarLote.
+        // nuevo y comprometería los kilos una segunda vez, así que la guarda NO
+        // se libera aquí — solo se reabre al volver a llamar ejecutarLote. La
+        // bodega no se ha tocado todavía: eso pasa al preparar la mezcla.
         setLoteBatchConfirm(null);
         setEjecutandoLote(false);
         setNoticeDlg({
-          title:'Lote ejecutado con errores',
-          msg:`El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
+          title:'Lote planificado con errores',
+          msg:`Los insumos de ${loteNum} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
         });
       }else{
         // Caso 1: nada se registró todavía — es seguro reintentar. Se libera
@@ -7421,6 +7592,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
       }
     }
+  };
+  const confirmarEjecucion=conGuardaEjecucion(()=>{
+    if(!loteBatchConfirm){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+    if(loteBatchConfirm.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(loteBatchConfirm.plan.preparation,preparation)){
+      setLoteBatchConfirm(null);ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;
+    }
+    // Aviso de insumo comprometido con otro lote, justo antes de tocar bodega.
+    // NO bloquea: el operador puede saber que el otro lote no va a salir y
+    // decidir seguir — el libro de reservas evita que nadie se entere de que
+    // iba corto, no decide por él.
+    const comprometido=faltantePorReservaDeOtroLote(loteBatchConfirm.plan);
+    if(comprometido){
+      ejecutarLoteInFlight.current=false;setEjecutandoLote(false);
+      setConfirmDlg({
+        title:'Insumo comprometido con otro lote',
+        msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        confirmLabel:'Confirmar y reservar',
+        onConfirm:()=>{ejecutarLoteInFlight.current=true;setEjecutandoLote(true);runEjecucionLote();}
+      });
+      return;
+    }
+    runEjecucionLote();
   });
   // ── Bitácora helpers ──
   // Código SDP-{fecha}-{especie}-R{n}: misma nomenclatura en Bitácora (nuevo
@@ -7464,6 +7657,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
       estado:'incubacion',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
+      // El snapshot congela lo que este lote debe seguir diciendo aunque la
+      // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
+      recipeSnapshot:(()=>{
+        const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+        if(!lc||!recipe.length||!balanced) return null;
+        const base=saved.find(r=>r.name===saveName)||{name:saveName||'Receta activa',sKey,recipe:[...recipe],status:'legacy',version:1};
+        try{ return lc.buildProductionSnapshot({...base,sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),cost:Math.round(an.cost)},{at:new Date().toISOString()}); }
+        catch(e){ return null; }
+      })(),
     };
   };
 
@@ -7637,17 +7839,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
-  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
-    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
+  // Cuerpo real de "Lanzar producción" (Producción → Lanzar Lote), separado de
+  // ejecutarLanzamientoProduccion por la misma razón que runEjecucionLote:
+  // se llama directo cuando el plan no tiene faltantes, o desde el "de todas
+  // formas" del aviso de disponibilidad, sin volver a evaluar el plan.
+  const runLanzamientoProduccion = () => {
     const f = prodLaunchForm;
-    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
-      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
-    }
     let consumoRegistrado = false;
     try {
       const now = Date.now();
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
+      // Mismo criterio que el otro camino: planificar reserva, preparar descuenta.
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
+      const registered = reservarInsumos({ loteId: lote.id, plan: f.plan });
       if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
       consumoRegistrado = true;
 
@@ -7680,23 +7883,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
 
       setNoticeDlg({
-        title: 'Producción de Lote Lanzada',
+        title: 'Lote planificado',
         msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
       });
     } catch (e) {
       console.error('Error al lanzar producción de lote:', e);
       if (consumoRegistrado) {
-        // Caso 2: el consumo de bodega YA quedó registrado (idempotente,
+        // Caso 2: la RESERVA de insumos ya quedó registrada (idempotente,
         // por loteId) antes de que algo más fallara. Reintentar acuñaría
-        // un loteId nuevo y descontaría el inventario una segunda vez, así
+        // un loteId nuevo y comprometería los kilos una segunda vez, así
         // que la guarda NO se libera aquí — solo se reabre al abrir un
         // nuevo lanzamiento (openProdLauncher). Se cierra el modal porque
-        // no hay nada seguro que reintentar desde él.
+        // no hay nada seguro que reintentar desde él. La bodega sigue
+        // intacta: eso pasa al preparar la mezcla.
         setShowProdLaunchModal(false);
         setLaunching(false);
         setNoticeDlg({
-          title: 'Lote lanzado con errores',
-          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
+          title: 'Lote planificado con errores',
+          msg: `Los insumos de ${f.codigo} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
         });
       } else {
         // Caso 1: nada se registró todavía — es seguro reintentar. Se
@@ -7709,6 +7913,80 @@ body{margin:0;padding:20px 24px;background:#fff;}
         });
       }
     }
+  };
+
+  // El modal de lanzamiento YA avisa de lo que falta contra el stock físico
+  // ("se descontará lo disponible y el faltante quedará a 0"). Volver a
+  // preguntar lo mismo convierte una confirmación en dos y enseña al operario
+  // a pasar de largo por los avisos — que es justo lo contrario de lo que un
+  // aviso sirve. Lo que el libro de reservas añade, y el modal no puede saber,
+  // es el faltante que NO es por falta de kilos sino porque los kilos están
+  // comprometidos con otro lote. Sólo eso se pregunta aquí.
+  // Los kg requeridos de cada insumo se calculan A PARTIR de su humedad. Cuando
+  // esa humedad es la del catálogo y no una medición del lote, los kg también
+  // son una estimación — y el operario está a punto de pesar sustrato real y
+  // descontar bodega contra ellos. La preparación ya lo sabe por insumo
+  // (moisture.source); esto lo dice donde se decide.
+  const procedenciaHumedades=(preparation)=>{
+    const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+    const items=(preparation&&preparation.items)||[];
+    if(!prov||!items.length) return null;
+    const estimados=[];
+    let medidos=0;
+    items.forEach(it=>{
+      const d=prov.describe({vocabulary:'moisture',value:it.moisture&&it.moisture.source});
+      if(!d) return;
+      if(d.kind===prov.KINDS.measured) medidos+=1;
+      else estimados.push(it.name||it.ingredientId);
+    });
+    const total=medidos+estimados.length;
+    if(!total) return null;
+    if(!estimados.length) return {estimados,medidos,total,texto:`Humedad medida en los ${total} insumos de esta preparación.`};
+    return {
+      estimados,medidos,total,
+      texto:`Humedad: ${medidos} de ${total} medidos. ${estimados.join(', ')} usa${estimados.length===1?'':'n'} la estimación del catálogo, así que los kg requeridos de es${estimados.length===1?'e insumo':'os insumos'} también lo son.`,
+    };
+  };
+
+  const faltantePorReservaDeOtroLote=(plan)=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||!plan) return null;
+    const nowMs=Date.now();
+    const ctx={lots:invLotes,ledger:invReservas,incoming:[],nowMs};
+    let check=null;
+    try{ check=ledgerApi.checkPlan(plan,ctx); }catch(e){ return null; }
+    if(!check||check.ok) return null;
+    const porReserva=(check.lines||[]).filter(l=>{
+      if(!(l.faltante>0)) return false;
+      try{ return ledgerApi.availability(l.ingredienteId,ctx).fisico>=l.necesario; }
+      catch(e){ return false; }
+    });
+    if(!porReserva.length) return null;
+    return porReserva
+      .map(l=>`Faltan ${l.faltante} ${l.unidad} de ${l.ingredienteId} por estar comprometidos con otro lote`)
+      .join(' · ');
+  };
+
+  const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
+    if (!prodLaunchForm) { launchInFlight.current = false; setLaunching(false); return; }
+    const f = prodLaunchForm;
+    if(f.launchRevision!==launchRevision||!SetasLaunchPlanApi.isPreparationCurrent(f.plan.preparation,preparation)){
+      setShowProdLaunchModal(false);launchInFlight.current=false;setLaunching(false);return;
+    }
+    // Mismo aviso no-bloqueante que confirmarEjecucion, para el otro camino de
+    // lanzamiento (Producción → Lanzar Lote).
+    const comprometido=faltantePorReservaDeOtroLote(f.plan);
+    if(comprometido){
+      launchInFlight.current=false;setLaunching(false);
+      setConfirmDlg({
+        title:'Insumo comprometido con otro lote',
+        msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        confirmLabel:'Confirmar y reservar',
+        onConfirm:()=>{launchInFlight.current=true;setLaunching(true);runLanzamientoProduccion();}
+      });
+      return;
+    }
+    runLanzamientoProduccion();
   });
 
   const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
@@ -7750,6 +8028,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return lote.id;
   };
   const updateBitLote=(loteId,fields)=>{
+    // Punto único por el que un lote pasa a 'descartado' (el selector manual
+    // de estado y el flujo de bioseguridad convergen aquí): libera de una vez
+    // sus reservas held, o un lote abandonado bloquearía kilos para siempre.
+    if(fields.estado==='descartado'){
+      const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+      const loteEraDescartado=bitLotes.find(l=>l.id===loteId)?.estado==='descartado';
+      if(ledgerApi&&!loteEraDescartado){
+        setInvReservas(prev=>{
+          const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción descartado',at:new Date().toISOString()});
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          return upd;
+        });
+      }
+    }
     setBitLotes(prev=>{const upd=prev.map(l=>l.id===loteId?{...l,...fields}:l);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
     encolarSync({type:'actualizarLote',key:'lote:'+loteId,args:[loteId,fields]});
     const loteActual=bitLotes.find(l=>l.id===loteId);
@@ -7802,6 +8094,59 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return upd;
     });
   };
+  // Id determinista para un evento de sala — mismo criterio que deriveTaskId
+  // en task-engine.js (objeto+tipo+momento), para que dos llamadas con los
+  // mismos datos produzcan el mismo id en vez de duplicar el evento.
+  const roomEventId=(roomId,type,at)=>`${roomId}-${type}-${at}`;
+  // Añade eventos de sala y persiste igual que mergeIntoTasks/completeBitTasks
+  // (mismo patrón try/catch + bitQuotaWarn, misma clave localStorage).
+  const pushRoomEvents=(nuevosEventos=[])=>{
+    if(!nuevosEventos.length) return;
+    setRoomEvents(prev=>{
+      const upd=[...prev,...nuevosEventos];
+      try{localStorage.setItem('sdp_room_events',JSON.stringify(upd));}catch(e){bitQuotaWarn();}
+      return upd;
+    });
+  };
+  // La ocupación de una sala no se declara: se observa. Emitir el evento
+  // dentro de la acción sería declarar un cambio que el cliente no persiste —
+  // el estado canónico del lote lo escribe el servidor (acceptFieldEvent), así
+  // que al cerrar o descartar el último lote de una sala éste sigue contando
+  // como presente hasta que llega la confirmación: el tablero diría "ocupada"
+  // mientras el evento guardado dice "vacía". Derivarlo aquí, del mismo
+  // bitLotes que alimenta el tablero, hace imposible esa contradicción y se
+  // corrige solo cuando el servidor confirma.
+  //
+  // Sólo se escribe lo que se ha observado: una sala se da por vaciada
+  // únicamente si antes se la vio ocupada. Sin historia previa no se inventa
+  // un `room_emptied`, porque esa fecha arrancaría el reloj de sanitización de
+  // una sala que nunca se usó.
+  useEffect(()=>{
+    const roomStateApi=typeof window!=='undefined'?window.SetasRoomState:null;
+    if(!roomStateApi) return;
+    const nowMs=Date.now();
+    const atIso=new Date(nowMs).toISOString();
+    const nuevos=[];
+    Object.values(ROOMS_CONFIG).forEach(room=>{
+      let ocupada=false;
+      try{
+        ocupada=roomStateApi.buildRoomState({
+          room,lotes:bitLotes,bolsas:bitBolsas,events:roomEvents,telemetry:null,nowMs,
+        }).batchCount>0;
+      }catch(e){ return; }
+      const ultimaOcupacion=roomEvents
+        .filter(e=>e&&e.roomId===room.id&&(e.type==='room_emptied'||e.type==='room_occupied'))
+        .sort((a,b)=>(Date.parse(a.at)||0)-(Date.parse(b.at)||0))
+        .slice(-1)[0]||null;
+      const ultimoTipo=ultimaOcupacion?ultimaOcupacion.type:null;
+      if(ocupada&&ultimoTipo!=='room_occupied'){
+        nuevos.push({id:roomEventId(room.id,'room_occupied',atIso),roomId:room.id,type:'room_occupied',at:atIso,operatorId:'derivado'});
+      }else if(!ocupada&&ultimoTipo==='room_occupied'){
+        nuevos.push({id:roomEventId(room.id,'room_emptied',atIso),roomId:room.id,type:'room_emptied',at:atIso,operatorId:'derivado'});
+      }
+    });
+    if(nuevos.length) pushRoomEvents(nuevos);
+  },[bitLotes,bitBolsas,roomEvents]);
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
     try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
@@ -7834,6 +8179,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const lote=bitLotes.find(l=>l.id===loteId);
       const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
       const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
+      // Eliminar el lote es más definitivo que descartarlo — igual libera sus
+      // reservas held, o un lote borrado seguiría bloqueando kilos.
+      const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+      if(ledgerApi){
+        setInvReservas(prev=>{
+          const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
+          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+          return upd;
+        });
+      }
       setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
       setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
       setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
@@ -7931,10 +8286,71 @@ body{margin:0;padding:20px 24px;background:#fff;}
     })();
     return st.inFlight;
   },[]);
+  // Única forma de escribir en invReservas: fusiona vía SetasInventoryLedger
+  // (que decide si una reserva ya resuelta se reabre o no) y persiste, igual
+  // que el resto de los setters de Bodega/Bitácora en este archivo.
+  const mergeReservas=(nuevas=[])=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||!nuevas.length) return;
+    setInvReservas(prev=>{
+      const upd=ledgerApi.addReservations(prev,nuevas);
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+  };
+  // Planificar un lote RESERVA sus insumos y no mueve un gramo de bodega. Es la
+  // mitad que faltaba: antes "confirmar" y "descontar" eran el mismo clic, así
+  // que una reserva nacía y moría en el mismo instante y "Reservado" siempre
+  // valía cero. Ahora la reserva vive desde que se planifica hasta que se
+  // prepara la mezcla, que es cuando el sustrato se pesa de verdad.
+  const reservarInsumos=({loteId,plan,at=null})=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||!plan||!loteId) return false;
+    const nowIso=at||new Date().toISOString();
+    let reservas;
+    try{ reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso}); }
+    catch(e){ return false; }
+    if(!reservas.length) return false;
+    setInvReservas(prev=>{
+      // Idempotente por lote: replanificar el mismo lote no duplica kilos
+      // comprometidos. Las reservas ya consumidas no se tocan — son historia.
+      const yaTiene=prev.some(r=>r&&r.batchId===loteId&&r.status==='held');
+      if(yaTiene) return prev;
+      const upd=ledgerApi.addReservations(prev,reservas);
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+    return true;
+  };
+
   const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
     if(!added) return false;   // this lote was already discounted: never apply twice
+    // Libro de reservas: este paso CIERRA las reservas que dejó la
+    // planificación, con op.opId como eventId — el mismo id idempotente por
+    // loteId que identifica esta operación de consumo, así que una reserva sólo
+    // queda consumida con la prueba de qué evento la cerró. Un lote que llegó
+    // aquí sin haber pasado por planificación (los anteriores a este cambio, o
+    // uno creado a mano) no tiene reservas que cerrar: se crean y se consumen
+    // en el acto, que es lo que hacía antes todo el mundo.
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(ledgerApi){
+      const nowIso=new Date().toISOString();
+      setInvReservas(prev=>{
+        const pendientes=prev.filter(r=>r&&r.batchId===loteId&&r.status==='held');
+        let upd=prev;
+        let aCerrar=pendientes;
+        if(!pendientes.length){
+          const reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso});
+          upd=ledgerApi.addReservations(prev,reservas);
+          aCerrar=reservas;
+        }
+        upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
+        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        return upd;
+      });
+    }
     // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
     // distintos lanzados muy seguido) deben componerse sobre el prev más
     // reciente, no sobre el invLotes/invMovimientos capturado por closure
@@ -8277,8 +8693,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     invLotes.filter(l=>l.activo).forEach(l=>{
                       aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
                     });
+                    // Las alertas comparan contra DISPONIBLE (físico − reservado), no
+                    // contra el físico: es el único número con el que se decide si hay
+                    // que comprar — el físico puede alcanzar y estar ya comprometido
+                    // por otro lote de producción.
+                    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+                    const availabilityFor=(ingId)=>ledgerApi?ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
                     const criticalStockItems = INGS.map(ing=>{
-                      const stockKg = aggregatedStock[ing.id]||0;
+                      const av=availabilityFor(ing.id);
+                      const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
                       const threshold = lowStockThresholds[ing.type]||5;
                       return { ing, stockKg, threshold, isLow: stockKg < threshold };
                     }).filter(item=>item.isLow);
@@ -8318,14 +8741,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const rows=ingIds.map(id=>{
                       const g=INGS.find(i=>i.id===id);
                       const stock=stockActual(id,invLotes);
+                      const av=availabilityFor(id);
+                      const disponible=av?av.disponible:stock;
+                      const reservado=av?av.reservado:0;
+                      const sobrereservado=av?.sobrereservado||0;
                       const pp=precioPonderado(id,invLotes);
                       const alertaMin=alertaConfig[id]??2;
                       const alertaAm=alertaMin*2.5;
-                      const dotColor=stock<alertaMin?'var(--coral-500)':stock<alertaAm?'var(--ochre-500,#A07828)':'var(--accent-olive)';
+                      // El estado (punto, badge) se decide contra DISPONIBLE, no contra el
+                      // físico: es el único número con el que se puede comprometer bodega.
+                      const dotColor=disponible<alertaMin?'var(--coral-500)':disponible<alertaAm?'var(--ochre-500,#A07828)':'var(--accent-olive)';
                       const provId=provOverride[id]||(invProveedores.find(p=>p.id===invCompras.find(c=>c.id===invLotes.filter(l=>l.activo&&l.ingredienteId===id).sort((a,b)=>new Date(b.fechaIngreso)-new Date(a.fechaIngreso))[0]?.compraId)?.proveedorId)?.id)||'';
                       const prov=invProveedores.find(p=>p.id===provId);
-                      return{id,name:g?.name||id,stock,pp,prov,dotColor,alertaMin,provId};
-                    }).sort((a,b)=>b.stock-a.stock);
+                      return{id,name:g?.name||id,stock,disponible,reservado,sobrereservado,pp,prov,dotColor,alertaMin,provId};
+                    }).sort((a,b)=>b.disponible-a.disponible);
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
                       <div>
@@ -8354,7 +8783,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <thead>
                               <tr>
                                 <th>Ingrediente</th>
-                                <th>Stock (kg)</th>
+                                {/* Las tres columnas del libro de reservas. Estuvieron
+                                    ocultas mientras confirmar un lanzamiento descontaba
+                                    en el mismo clic: una reserva nacía y se consumía a la
+                                    vez, así que "Reservado" no podía valer otra cosa que
+                                    cero, y un cero permanente engaña más que no mostrar
+                                    nada. Ahora planificar reserva y preparar la mezcla
+                                    descuenta, así que el intervalo existe y las tres
+                                    cifras dicen cosas distintas: qué hay, qué está
+                                    comprometido con otro lote y con qué se puede contar. */}
+                                <th>Físico (kg)</th>
+                                <th>Reservado (kg)</th>
+                                <th>Disponible (kg)</th>
                                 <th>Precio / kg</th>
                                 <th>Proveedor</th>
                                 <th>Alerta mín. (kg)</th>
@@ -8377,8 +8817,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <><span className="stock-dot" style={{background:r.dotColor}}/>{r.name}</>
                                       )}
                                     </td>
-                                    {/* STOCK */}
-                                    <td data-label="Stock" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,color:r.dotColor,minWidth:90}}>
+                                    {/* FÍSICO — lo que hay en bodega, editable */}
+                                    <td data-label="Físico" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,minWidth:90}}>
                                       {isEditing?(
                                         <input name={`stockKg-${r.id}`} aria-label={`Stock de ${r.name} en kg`} type="number" min="0" step="0.5"
                                           value={editingRowData.stock}
@@ -8388,6 +8828,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         />
                                       ):(
                                         <span>{r.stock.toFixed(1)} kg</span>
+                                      )}
+                                    </td>
+                                    <td data-label="Reservado" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",minWidth:90,color:r.reservado>0?'var(--coral-700)':'var(--ink-500)'}}>
+                                      {r.reservado>0?`${r.reservado.toFixed(1)} kg`:'—'}
+                                    </td>
+                                    <td data-label="Disponible" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",fontWeight:600,minWidth:90}}>
+                                      {r.disponible.toFixed(1)} kg
+                                      {r.sobrereservado>0&&(
+                                        <span title={`Hay ${r.sobrereservado.toFixed(1)} kg comprometidos por encima de lo que existe físicamente`} style={{display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--coral-700)'}}>
+                                          sobrecomprometido {r.sobrereservado.toFixed(1)} kg
+                                        </span>
                                       )}
                                     </td>
                                     {/* PRECIO */}
@@ -8427,11 +8878,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{r.alertaMin} kg</span>
                                       )}
                                     </td>
-                                    {/* ESTADO */}
+                                    {/* ESTADO — contra DISPONIBLE, no contra el físico: es el número con
+                                        el que se decide si hace falta comprar. */}
                                     <td data-label="Estado">
-                                      {r.stock<r.alertaMin
+                                      {r.disponible<r.alertaMin
                                         ?<span className="sdp-badge sdp-badge--error" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
-                                        :r.stock<r.alertaMin*2.5
+                                        :r.disponible<r.alertaMin*2.5
                                           ?<span className="sdp-badge sdp-badge--warn" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
                                           :<span className="sdp-badge sdp-badge--ok" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
                                     </td>
@@ -8758,7 +9210,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
   const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
   const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
-  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close:'Cerrar lote',discard:'Descartar lote'};
+  const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close_batch:'Finalizar lote',close:'Cerrar lote',discard:'Descartar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
   const openContaminationTriage=(loteId)=>{
     const l=bitLotes.find(x=>x.id===loteId)||bitLotes[0];
@@ -8786,6 +9238,85 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
   useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
   const operatorRole=fieldOperatorRole;
+  // El Perito vivía SÓLO en el Formulador: sabía más que nadie de recetas y no
+  // decía nada cuando el operario estaba frente al lote con el problema. Esto
+  // es la puerta que faltaba, y es sólo una puerta: no puntúa, no ordena y no
+  // propone recetas — ADR-0004 deja la evidencia de producción como contexto,
+  // nunca como entrada del ranking.
+  //
+  // El análisis de la receta del lote se rehace con los catálogos base (INGS/SPP)
+  // y NO con effectiveINGS/effectiveSPP, que llevan los ajustes de la receta
+  // abierta ahora mismo en el Formulador: mezclar el estado de la sesión con la
+  // receta congelada de un lote pasado daría un diagnóstico de otra receta.
+  const peritoContextFor=(lote,sheet)=>{
+    const api=typeof window!=='undefined'?window.SetasPeritoContext:null;
+    if(!api||!sheet||!lote) return null;
+    const snapshot=lote.recipeSnapshot||null;
+    let restrictive=null;
+    let cnRecalculado=null;
+    if(snapshot&&snapshot.sKey&&Array.isArray(snapshot.ingredients)&&snapshot.ingredients.length){
+      try{
+        const receta=snapshot.ingredients.map(i=>({id:i.id,p:i.pct}));
+        const an=analyze(receta,snapshot.sKey,INGS,SPP);
+        cnRecalculado=an&&Number.isFinite(an.cn)?an.cn:null;
+        const sp=SPP[snapshot.sKey];
+        if(an&&sp&&typeof engineCalcRestrictiveFactor==='function'){
+          restrictive=engineCalcRestrictiveFactor(an,sp,{treatment:snapshot.tratamientoTermico||null});
+        }
+      }catch(e){ restrictive=null; }
+    }
+    let history=null;
+    if(snapshot&&snapshot.sKey){
+      try{
+        const receta=(snapshot.ingredients||[]).map(i=>({id:i.id,p:i.pct}));
+        const h=historicalEB(snapshot.sKey,histRows,receta);
+        if(h&&h.n>0&&h.avg!=null) history={n:h.n,avg:h.avg,similarity:h.similarity};
+      }catch(e){ history=null; }
+    }
+    let ctx=null;
+    try{ ctx=api.explainBatch({sheet,snapshot,restrictive,history,nowMs:Date.now()}); }catch(e){ return null; }
+    // El reanálisis usa el catálogo de insumos de HOY, no el del día en que se
+    // produjo. Si el C:N congelado y el recalculado se separan, el catálogo se
+    // movió desde entonces: eso es un dato del operario, no algo que esconder.
+    const derivaCatalogo=(snapshot&&Number.isFinite(snapshot.cn)&&cnRecalculado!=null&&Math.abs(snapshot.cn-cnRecalculado)>0.5)
+      ? `El C:N guardado con el lote era ${Number(snapshot.cn).toFixed(1)}:1 y con el catálogo de hoy da ${cnRecalculado.toFixed(1)}:1 — el catálogo de insumos cambió desde que se produjo.`
+      : null;
+    return {...ctx,derivaCatalogo};
+  };
+
+  const PeritoContextPanel=({lote,sheet,onAction})=>{
+    const ctx=peritoContextFor(lote,sheet);
+    if(!ctx) return null;
+    return (
+      <section className="os-detail-panel" data-testid="perito-context" data-available={ctx.available?'true':'false'}>
+        <h2>Contexto del Perito</h2>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-900)',marginBottom:8}}>{ctx.headline}</div>
+        {ctx.findings.length>0&&(
+          <ul style={{listStyle:'none',padding:0,margin:'0 0 10px',display:'flex',flexDirection:'column',gap:6}}>
+            {ctx.findings.map((f,i)=>(
+              <li key={`${f.code}-${i}`} data-finding={f.code} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',lineHeight:1.45,borderLeft:'2px solid var(--paper-300)',paddingLeft:8}}>
+                {f.text}
+              </li>
+            ))}
+          </ul>
+        )}
+        {ctx.derivaCatalogo&&(
+          <div data-testid="perito-context-deriva" className="os-provenance-notice os-provenance-notice--estimated" style={{marginBottom:10}}>{ctx.derivaCatalogo}</div>
+        )}
+        {/* Se reutiliza sdp-btn--field, la clase con la que ya están hechos los
+            demás botones de acción de esta ficha: es la que cumple el objetivo
+            táctil del proyecto para pulsar con guantes dentro del cuarto. Con
+            .os-action el botón se quedaba en 44 px. */}
+        {ctx.question&&(
+          <button type="button" className="sdp-btn sdp-btn--secondary sdp-btn--field" data-testid="perito-context-question"
+            style={{width:'100%',fontWeight:600}}
+            onClick={()=>onAction&&onAction(ctx.question.action)}>{ctx.question.text}</button>
+        )}
+        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)',marginTop:10,lineHeight:1.4}}>{ctx.disclaimer}</div>
+      </section>
+    );
+  };
+
   const buildSheetFor=(lote)=>{
     if(!batchSheetApi||!lote) return null;
     const room=ROOMS_CONFIG[lote.sala||lote.ubicacion||'']||null;
@@ -9092,6 +9623,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         completeBitTasks(consequences.completes,eventId);
       }
 
+
       return true;
     }catch(err){
       setNoticeDlg({title:'Acción no válida ahora',msg:err.message});
@@ -9121,6 +9653,53 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return;
     }
+    if(action==='prepare_mix'){
+      // Aquí es donde la bodega se mueve de verdad: preparar la mezcla es el
+      // momento en que el sustrato se pesa. Cierra las reservas que dejó la
+      // planificación y descuenta FIFO; `registrarConsumo` es idempotente por
+      // loteId, así que un segundo toque no descuenta dos veces.
+      const activeSheet=sheet||buildSheetFor(lote);
+      const asignaciones=(lote.ingredientLots||[]).map(a=>({...a}));
+      if(!asignaciones.length){
+        setNoticeDlg({title:'Sin plan de insumos',msg:'Este lote no guardó qué insumos consumir, así que no hay nada que descontar. Regístralo a mano en Bodega.'});
+        return;
+      }
+      const plan={allocations:asignaciones,shortfalls:[],preparation:lote.preparation||null};
+      const fecha=lote.fechaMezcla||new Date().toISOString().split('T')[0];
+      setConfirmDlg({
+        title:'Preparar mezcla',
+        msg:`Se descontarán de Bodega los insumos reservados para ${lote.codigo||lote.id} (FIFO, del lote más antiguo al más nuevo). Es el paso que mueve el stock.`,
+        confirmLabel:'Descontar y registrar',
+        onConfirm:()=>{
+          const ok=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,
+            nota:`Preparación de mezcla · ${lote.codigo||lote.id} · ${fecha}`});
+          if(!ok){
+            setNoticeDlg({title:'Ya estaba descontado',msg:'La bodega ya se había descontado para este lote; no se repite el movimiento.'});
+            return;
+          }
+          if(activeSheet){
+            const recetaId=(lote.recipeSnapshot&&lote.recipeSnapshot.recipeId)||(lote.recipeRef&&lote.recipeRef.id)||lote.recetaId||null;
+            commitSheetAction(activeSheet,lote,'prepare_mix',{recetaId});
+          }
+        },
+      });
+      return;
+    }
+    if(action==='close_batch'){
+      // Cerrar es terminal: 'closed' no tiene transiciones de salida. Se
+      // confirma con las bolsas que aún están en pie a la vista, porque
+      // finalizar con bolsas sanas sin cosechar suele ser un error de dedo.
+      const activeSheet=sheet||buildSheetFor(lote);
+      const enPie=bitBolsas.filter(b=>b.loteId===lote.id&&b.estado==='sana').length;
+      setConfirmDlg({
+        title:'Finalizar lote',
+        msg:`¿Cerrar ${lote.codigo||lote.id}? El lote queda cerrado y no admite más acciones de campo.`+(enPie>0?` Quedan ${enPie} bolsa${enPie===1?'':'s'} sana${enPie===1?'':'s'} sin cosechar.`:''),
+        danger:enPie>0,
+        confirmLabel:'Finalizar',
+        onConfirm:()=>{ if(activeSheet) commitSheetAction(activeSheet,lote,'close_batch'); },
+      });
+      return;
+    }
     if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
     if(action==='discard'){
       const from=loteLifecycleState(lote);
@@ -9132,7 +9711,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
       return;
     }
-    if(action==='move'){setSelectedClimateRoom(lote.sala||lote.ubicacion||selectedClimateRoom);goTab('control');return;}
+    if(action==='move'){
+      const activeSheet=sheet||buildSheetFor(lote);
+      const actualId=lote.sala||lote.ubicacion||'';
+      setMoveDlg({
+        loteCodigo:lote.codigo||lote.id,
+        currentRoomId:actualId,
+        currentRoomName:(ROOMS_CONFIG[actualId]||{}).name||actualId,
+        rooms:Object.values(ROOMS_CONFIG),
+        onSelect:(salaDestinoId)=>{
+          // La cascada escribe el evento inmutable y el parche `sala` del lote;
+          // seguir el lote hasta el panel de clima de su nueva sala es
+          // consecuencia de haberlo movido, no el movimiento en sí.
+          if(activeSheet&&commitSheetAction(activeSheet,lote,'move',{salaDestinoId})){
+            setSelectedClimateRoom(salaDestinoId);
+          }
+        },
+      });
+      return;
+    }
     // Inspección, colonización y evidencia fotográfica se capturan sobre la
     // bolsa, que es donde viven el %, la fecha y la foto.
     if(action==='inspection'||action==='colonization'||action==='photo'){goBitTab('bit_bolsas',true);return;}
@@ -9309,12 +9906,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <span>{sheet?`Sala ${sheet.room?sheet.room.name:'sin asignar'}`:(lote.sala||'Sala sin asignar')}</span>
           <span>{sheet?`${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas`:`${lote.numBolsas} bolsas`}</span>
           <span>Inoculación {lote.fechaInoculacion}</span>
-          <span>{sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular')}</span>
+          {/* Si el lote guardó snapshot de producción, la ficha muestra lo que
+              de verdad se usó —código, versión y estado— aunque la receta haya
+              cambiado después. Los lotes anteriores al versionado no tienen
+              snapshot y conservan lo de siempre: no se les inventa una versión. */}
+          <span data-testid="batch-recipe-label">{(()=>{
+            const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+            if(lc&&lote.recipeSnapshot){ try{ return lc.describeSnapshot(lote.recipeSnapshot); }catch(e){} }
+            return sheet&&sheet.recipe?`${sheet.recipe.name||sheet.recipe.id}${sheet.recipe.version?` v${sheet.recipe.version}`:''}`:(lote.recipeRef?.name||'Receta sin vincular');
+          })()}</span>
           <span>{sheet&&sheet.spawnLot&&sheet.spawnLot.id?`Semilla ${sheet.spawnLot.id}`:'Semilla sin vincular'}</span>
           {sheet&&sheet.consumedInventory.length>0&&<span>{sheet.consumedInventory.length} lote(s) de insumo</span>}
           {sheet&&<span title="Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos">Trazabilidad {sheet.completenessPct}%</span>}
         </div>
         <div className="os-batch-header__next"><span className="os-batch-header__next-label">Siguiente acción válida</span><span className="os-batch-header__next-value">{(sheet&&sheet.nextAction&&sheet.nextAction.label)||actionLabel[actions[0]&&actions[0].action]||'Sin acciones pendientes'}</span></div></header>
+      <PeritoContextPanel lote={lote} sheet={sheet} onAction={a=>runBatchAction(a,lote,sheet)} />
       {sheet&&(sheet.blocks.length>0||sheet.anomalies.length>0)&&(
         <section className="os-detail-panel" data-testid="batch-blocks" style={{marginBottom:12}}>
           <h2>Bloqueos y anomalías</h2>
@@ -9806,6 +10412,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             Ver ficha pública QR
           </button>
         </section>
+        <PeritoContextPanel lote={lote} sheet={sheet} onAction={a=>runBatchAction(a,lote,sheet)} />
       </article>
     );
   };
@@ -9828,6 +10435,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
   if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
   const ClimateDashboardSection = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
+    // Tablero de salas: toda la proyección (ocupación, ambiente, alertas,
+    // próxima acción) la calcula SetasRoomState.buildRoomBoard — aquí sólo se
+    // adapta la telemetría en vivo a la forma que ese módulo espera y se
+    // pinta lo que devuelve, sin repetir ninguno de sus cálculos.
+    const roomStateApi = typeof window !== 'undefined' ? window.SetasRoomState : null;
+    const roomBoardNowMs = Date.now();
+    const roomBoardTelemetry = {};
+    Object.keys((liveTelemetry.snapshot && liveTelemetry.snapshot.rooms) || {}).forEach(roomId => {
+      const sample = liveTelemetry.snapshot.rooms[roomId].sample || {};
+      roomBoardTelemetry[roomId] = {
+        latest: { temperature_c: sample.temperature_c, rh_pct: sample.rh_pct, co2_ppm: sample.co2_ppm },
+        lastUpdateAt: sample.lastUpdateAt,
+      };
+    });
+    const roomBoard = roomStateApi ? roomStateApi.buildRoomBoard({
+      rooms: Object.values(ROOMS_CONFIG), lotes: bitLotes, bolsas: bitBolsas,
+      events: roomEvents, telemetry: roomBoardTelemetry, nowMs: roomBoardNowMs,
+    }) : [];
     let cameras=[];
     try{ cameras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ cameras=[]; }
     const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
@@ -10286,8 +10911,107 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : '';
     const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : '';
 
+    // Severidad de room-state.js ('critical'|'warning'|'info') → vocabulario
+    // ya usado por .os-live-alert en este archivo ('critico'|'alarma'|'aviso').
+    const ROOM_ALERT_SEVERITY_CLASS = { critical: 'critico', warning: 'alarma', info: 'aviso' };
     return (
       <div className="climate-dashboard" data-testid="climate-dashboard">
+        {roomBoard.length > 0 && (
+          <section className="climate-overview" data-testid="room-board" aria-labelledby="room-board-title">
+            <div className="climate-section-head">
+              <div>
+                <span className="climate-eyebrow">Estado en vivo</span>
+                <h2 id="room-board-title">Tablero de salas</h2>
+              </div>
+            </div>
+            <div className="climate-module-grid">
+              {roomBoard.map(rs => {
+                const isSelected = rs.roomId === selectedClimateRoom;
+                return (
+                  <div
+                    key={rs.roomId}
+                    data-testid="room-card"
+                    data-room-id={rs.roomId}
+                    data-room-status={rs.status}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    aria-label={`Sala ${rs.name}, ${rs.statusLabel}`}
+                    onClick={() => setSelectedClimateRoom(rs.roomId)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedClimateRoom(rs.roomId); } }}
+                    className={`climate-module-card ${isSelected ? 'on' : ''}`}
+                    style={{ minHeight: 48, cursor: 'pointer' }}
+                  >
+                    <span className="climate-module-top">
+                      <span>{rs.name}</span>
+                      <b>{rs.statusLabel}</b>
+                    </span>
+                    <span className="climate-module-meta">
+                      {rs.batchCount} lote{rs.batchCount === 1 ? '' : 's'} · {rs.bagsActive} bolsa{rs.bagsActive === 1 ? '' : 's'} activa{rs.bagsActive === 1 ? '' : 's'}
+                      {rs.bagsIsolated > 0 ? ` · ${rs.bagsIsolated} bolsa${rs.bagsIsolated === 1 ? '' : 's'} aislada${rs.bagsIsolated === 1 ? '' : 's'}` : ''}
+                    </span>
+                    {rs.dominantStageLabel && (
+                      <span className="climate-module-batches">Etapa dominante: {rs.dominantStageLabel}</span>
+                    )}
+                    {rs.environmentFreshness === 'none' && (
+                      <span className="climate-module-alert" data-testid="room-card-env-freshness" data-freshness="none">Sin lecturas ambientales</span>
+                    )}
+                    {rs.environmentFreshness !== 'none' && (
+                      <span className="climate-module-readings">
+                        <span><small>Temp.</small><strong>{Number.isFinite(rs.environment.temperature_c) ? `${rs.environment.temperature_c}°` : '—'}</strong></span>
+                        <span><small>HR</small><strong>{Number.isFinite(rs.environment.rh_pct) ? `${rs.environment.rh_pct}%` : '—'}</strong></span>
+                        <span><small>CO₂</small><strong>{Number.isFinite(rs.environment.co2_ppm) ? rs.environment.co2_ppm : '—'}</strong></span>
+                      </span>
+                    )}
+                    {rs.environmentFreshness === 'live' && (
+                      <span className="climate-module-batches" data-testid="room-card-env-freshness" data-freshness="live">Lectura en vivo</span>
+                    )}
+                    {rs.environmentFreshness === 'stale' && (
+                      <span className="climate-module-alert" data-testid="room-card-env-freshness" data-freshness="stale">Lectura vieja · {liveAgeLabel(rs.environmentAgeMin * 60000)}</span>
+                    )}
+                    {/* La tarjeta dice cada cosa UNA vez: la frescura ya tiene su
+                        propia línea pegada a las lecturas, así que sus dos alertas
+                        no se repiten aquí. Un dato dicho tres veces en una tarjeta
+                        de campo se lee igual que si no estuviera. */}
+                    {rs.alerts.filter(a => a.code !== 'sin_telemetria' && a.code !== 'telemetria_vieja').length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 10 }}>
+                        {rs.alerts.filter(a => a.code !== 'sin_telemetria' && a.code !== 'telemetria_vieja').map(a => (
+                          <div key={a.code} className={`os-live-alert os-live-alert--${ROOM_ALERT_SEVERITY_CLASS[a.severity] || 'aviso'}`} data-severity={a.severity} style={{ padding: '6px 8px' }}>
+                            <span className="os-live-alert__dot" aria-hidden="true"></span>
+                            <div className="os-live-alert__body">
+                              <div className="os-live-alert__meta">{a.detail}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {rs.nextAction && (
+                      <span className="climate-module-batches">{rs.nextAction.label}{rs.nextAction.reason && !rs.alerts.some(a => a.detail === rs.nextAction.reason) ? ` · ${rs.nextAction.reason}` : ''}</span>
+                    )}
+                    {rs.nextAction && rs.nextAction.action === 'sanitize_room' && (
+                      <button
+                        type="button"
+                        className="inv-btn inv-btn-sec"
+                        style={{ marginTop: 10, minHeight: 44, width: '100%' }}
+                        onClick={e => {
+                          // Sanitizar es la ÚNICA acción de sala que se declara a mano —
+                          // el resto (vaciarse/ocuparse) se deriva de mover/cerrar/descartar
+                          // el último lote (ver commitSheetAction).
+                          e.stopPropagation();
+                          const nowIso = new Date().toISOString();
+                          const sanitizeOperatorId = props.operatorKey || (typeof window !== 'undefined' && window.__setasOperatorKey) || 'operador-local';
+                          pushRoomEvents([{ id: roomEventId(rs.roomId, 'room_sanitized', nowIso), roomId: rs.roomId, type: 'room_sanitized', at: nowIso, operatorId: sanitizeOperatorId }]);
+                        }}
+                      >
+                        Sanitizar sala
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
             <div>
@@ -11494,8 +12218,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
           invLotes.filter(l=>l.activo).forEach(l=>{
             aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
           });
+          // Contra DISPONIBLE (físico − reservado), no contra el físico — mismo
+          // criterio que la tabla de Bodega: el físico puede alcanzar y estar
+          // ya comprometido por otro lote de producción confirmado.
+          const homeLedgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
           const criticalStockItems = INGS.map(ing=>{
-            const stockKg = aggregatedStock[ing.id]||0;
+            const av=homeLedgerApi?homeLedgerApi.availability(ing.id,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
+            const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
             const threshold = lowStockThresholds[ing.type]||5;
             return { ing, stockKg, threshold, isLow: stockKg < threshold };
           }).filter(item=>item.isLow);
@@ -12698,6 +13427,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
 
+          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
+              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
+              teórico o de uno mezclado con el historial real de la finca, y
+              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
+              procedencia. Una etiqueta fija que no sigue al dato es peor que
+              no tener etiqueta: afirma algo que puede ser falso. */}
           {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
           {recipe.length>0&&(
             <section className="form-summary-strip" aria-label="Resumen de receta activa">
@@ -12719,22 +13454,50 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="form-summary-cell">
                 <span className="form-summary-k">C:N</span>
                 <span className="form-summary-v">{an?.cn!=null?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                <span className="os-provenance-line">Calculado</span>
+                <span className="os-provenance-line" title="Derivado de los porcentajes de la receta y del catálogo de insumos">Calculado</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Humedad objetivo</span>
                 <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line">{[SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">BE estimada</span>
                 <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
-                <span className="os-provenance-line">Hipótesis</span>
+                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  if(!prov) return 'Estimado';
+                  // El número que se muestra pasa por blendEBWithHistory, así que
+                  // la etiqueta tiene que decir si de verdad entró historial de la
+                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
+                  // le sirve a nadie para decidir. No se pinta ningún nivel de
+                  // confianza aquí porque la banda de predicción la calcula
+                  // scoring.js y no está en alcance en esta franja — inventarle un
+                  // nivel sería exactamente el defecto que esto viene a corregir.
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
+                  if(!d) return 'Estimado';
+                  const muestra=conHistorial
+                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
+                    : '';
+                  return `${d.label} · ${d.detail}${muestra}`;
+                })()}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line">COP / kg seco</span>
+                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-costo">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  // El valor de esta celda es an.cost, que es SIEMPRE el precio de
+                  // catálogo. El costo real ponderado de los lotes en bodega se
+                  // calcula aparte (realCostPerKg) y no es lo que se muestra aquí,
+                  // así que la línea lo dice y, cuando los dos se separan, enseña
+                  // el de bodega en vez de dejar creer que el de arriba lo es.
+                  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
+                  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
+                  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an?.cost||0))>=20;
+                  return hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base;
+                })()}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>
@@ -13798,7 +14561,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div key={e.id} style={{display:'flex',alignItems:'flex-start',marginBottom:20,paddingLeft:40}}>
                         <div style={{position:'absolute',left:8,top:6,width:14,height:14,background:'var(--coral-500)',border:'2px solid var(--paper-50)',borderRadius:'50%',zIndex:'var(--z-sticky)'}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2}}>{e.name}</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-900)',marginBottom:2,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                            {e.name}
+                            {/* Una receta en ensayo no puede leerse igual que una
+                                aprobada (SETAS_OS_UX_ARCHITECTURE_V2.md §9): el
+                                estado del ciclo de vida va junto al nombre, con
+                                su propio color, no escondido entre las métricas. */}
+                            {e.status&&(()=>{
+                              const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+                              const label=lc?(lc.LIFECYCLE_LABELS[e.status]||e.status):e.status;
+                              const color=RECIPE_LIFECYCLE_COLOR[e.status]||'var(--ink-500)';
+                              const ident=lc?lc.recipeIdentity(e):{version:e.version||1};
+                              return <span data-testid="recipe-lifecycle-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color,border:`1px solid ${color}`,padding:'1px 7px',borderRadius:0}}>{label} · v{ident.version}</span>;
+                            })()}
+                          </div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
@@ -13812,6 +14588,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <button className="sload" onClick={()=>loadR(e)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Cargar</button>
                             <button className="sebreal" onClick={()=>setEbRealFor(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--paper-300)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>{e.ebReal!=null?'Editar EB real':'+ EB real'}</button>
                             <button className="sdel" onClick={()=>delR(e.id)} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:'var(--coral-500)',border:'1px solid var(--coral-200)',borderRadius:'var(--r-xs)',cursor:'pointer'}}>Eliminar</button>
+                            {/* Promoción por el ciclo de vida. `promote` valida la
+                                transición y el rol, así que aquí sólo se ofrece lo
+                                que el estado admite; aprobar y retirar los rechaza
+                                el módulo si no es dirección. */}
+                            {(()=>{
+                              const lc=typeof window!=='undefined'?window.SetasRecipeLifecycle:null;
+                              if(!lc||!e.status) return null;
+                              const destinos=[['trial','A ensayo'],['approved','Aprobar'],['retired','Retirar']]
+                                .filter(([to])=>lc.canTransition(e.status,to));
+                              return destinos.map(([to,label])=>(
+                                <button key={to} data-testid={`recipe-promote-${to}`} onClick={()=>promoteRecipe(e,to)}
+                                  style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'3px 8px',background:'transparent',color:RECIPE_LIFECYCLE_COLOR[to],border:`1px solid ${RECIPE_LIFECYCLE_COLOR[to]}`,borderRadius:'var(--r-xs)',cursor:'pointer'}}>{label}</button>
+                              ));
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -15068,7 +15858,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Descontar insumos y bolsas del inventario (FIFO)":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Ejecutar lote</button>
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
                   </div>
                 </div>
@@ -15243,7 +16033,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
                   <tbody>
-                    {rows.map((x,i)=>{const id=x.r.id;const ov=prodMoist[id]!=null&&prodMoist[id]!=='';return(
+                    {/* La procedencia sale de preparation.items[i].moisture.source,
+                        que es el campo canónico, y no de releer el control de
+                        entrada: dos formas de deducir el mismo hecho acaban
+                        discrepando y aquí se imprime para pesar en la mesa. */}
+                    {rows.map((x,i)=>{const id=x.r.id;
+                      const provApi=typeof window!=='undefined'?window.SetasProvenance:null;
+                      const src=preparation.items[i]&&preparation.items[i].moisture&&preparation.items[i].moisture.source;
+                      const dProv=provApi?provApi.describe({vocabulary:'moisture',value:src}):null;
+                      const ov=dProv?dProv.kind===provApi.KINDS.measured:(prodMoist[id]!=null&&prodMoist[id]!=='');return(
                       <tr key={i}>
                         <td>{x.g?x.g.name:id}{ov?<span style={{color:'var(--coral-500)',fontSize:"var(--text-xs)"}}> · medido</span>:null}</td>
                         <td className="num">{parseFloat(x.r.p).toFixed(1)}</td>
@@ -15357,15 +16155,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {tab==='labExtraction'&&<LabExtraction/>}
 
         {confirmDlg&&<ConfirmModal dlg={confirmDlg} onClose={()=>setConfirmDlg(null)}/>}
+        {moveDlg&&<MoveRoomModal dlg={moveDlg} onClose={()=>setMoveDlg(null)}/>}
+        {newVersionFor&&<NewRecipeVersionModal recipe={newVersionFor} onClose={()=>setNewVersionFor(null)} onConfirm={confirmNewRecipeVersion}/>}
         {promptDlg&&<PromptModal dlg={promptDlg} onClose={()=>setPromptDlg(null)}/>}
+        {versionDlg&&<NewRecipeVersionModal recipe={versionDlg.recipe} onClose={()=>setVersionDlg(null)} onConfirm={()=>confirmNewRecipeVersion(versionDlg.recipe)}/>}
         {noticeDlg&&<NoticeModal dlg={noticeDlg} onClose={()=>setNoticeDlg(null)}/>}
 
         {/* MODAL EJECUTAR LOTE */}
         {loteBatchConfirm&&(
-          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Ejecutar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
-              <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Ejecutar lote — confirmar descuento de inventario</div>
+          <AccessibleModal onClose={()=>setLoteBatchConfirm(null)} label="Planificar lote" dialogStyle={{width:'min(520px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <div className="inv-modal-title"><AppIcon name="bolt" size={14} style={{marginRight:6}} /> Planificar lote — reservar insumos</div>
               <p>{loteBatchConfirm.plan.preparation.revision} · agua {loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {loteBatchConfirm.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
-              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo).</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:14}}>Lote <b style={{color:'var(--ink-900)'}}>{loteBatchConfirm.loteNum||'—'}</b> · {loteBatchConfirm.fecha} — se RESERVARÁN los insumos y bolsas. La bodega no se descuenta todavía: eso pasa al registrar «Preparar mezcla», que es cuando el sustrato se pesa (FIFO, del lote más antiguo al más nuevo).</div>
+              {(()=>{const h=procedenciaHumedades(loteBatchConfirm.plan.preparation);
+                return h?<div data-testid="confirm-humedad-procedencia" className={'os-provenance-notice'+(h.estimados.length?' os-provenance-notice--estimated':'')} style={{marginBottom:14}}>{h.texto}</div>:null;})()}
               <div className="inv-modal-table-wrap">
                 <table style={{width:'100%',minWidth:340,borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",marginBottom:0}}>
                   <thead><tr>{['Ingrediente','Requerido','Stock',''].map(h=>(<th key={h} style={{textAlign:h==='Requerido'||h==='Stock'?'right':'left',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)',borderBottom:'1.5px solid var(--ink-900)',padding:'6px 8px',whiteSpace:'nowrap'}}>{h}</th>))}</tr></thead>
@@ -15381,10 +16184,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </tbody>
                 </table>
               </div>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0.</div>}
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se reservará lo disponible y el faltante quedará a 0.</div>}
               <div className="inv-modal-actions">
                 <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
-                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Descontando…':'Confirmar y descontar'}</button>
+                <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Reservando…':'Confirmar y reservar'}</button>
               </div>
           </AccessibleModal>
         )}
@@ -16610,6 +17413,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span className="prod-launch-stat-val">{f.humedad}%</span>
                   </div>
                 </div>
+                {(()=>{const h=procedenciaHumedades(f.plan&&f.plan.preparation);
+                  return h?<div data-testid="launch-humedad-procedencia" className={'os-provenance-notice'+(h.estimados.length?' os-provenance-notice--estimated':'')} style={{marginBottom:12}}>{h.texto}</div>:null;})()}
 
                 <p>{f.plan.preparation.revision} · agua {f.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {f.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
                 {/* Desglose de Insumos y Descuento en Bodega */}
