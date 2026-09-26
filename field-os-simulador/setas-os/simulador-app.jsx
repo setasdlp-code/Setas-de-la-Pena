@@ -6415,6 +6415,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invProveedores,setInvProveedores]=useState([]);
   const [invCompras,setInvCompras]=useState([]);
   const [invLotes,setInvLotes]=useState([]);
+  // Espejo síncrono de invLotes para registrarConsumo: el updater funcional de
+  // setInvLotes se ejecuta en el siguiente render, no en el momento de la
+  // llamada, así que dos confirmaciones de consumo en el mismo tick (dos
+  // lotes de producción lanzados casi simultáneamente) verían ambas el mismo
+  // invLotes "prev" si dependieran de eso. Este ref se actualiza de forma
+  // síncrona en cada llamada a registrarConsumo, así que la segunda siempre
+  // aplica sobre el stock que dejó la primera, no sobre una foto stale.
+  const invLotesRef=useRef([]);
+  useEffect(()=>{invLotesRef.current=invLotes;},[invLotes]);
   const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
   const [invTab,setInvTab]=useState('stock');
@@ -7935,24 +7944,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
     if(!added) return false;   // this lote was already discounted: never apply twice
-    // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
-    // distintos lanzados muy seguido) deben componerse sobre el prev más
-    // reciente, no sobre el invLotes/invMovimientos capturado por closure
-    // en el render que originó cada llamada. Los movimientos se derivan
-    // solo de op.allocations — no dependen de los lotes — así que se
-    // calculan una vez fuera del updater y se reutilizan en ambos lados.
-    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
-    setInvLotes(prev => {
-      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
-      try { localStorage.setItem('sdp_lotes', JSON.stringify(r.lotes)); } catch(e) {}
-      return r.lotes;
-    });
-    setInvMovimientos(prev => {
-      const upd = [...prev, ...movimientos];
-      try { localStorage.setItem('sdp_movimientos', JSON.stringify(upd)); } catch(e) {}
+    // Se aplica sobre invLotesRef.current (no sobre el invLotes de closure ni
+    // dentro de un updater funcional de setInvLotes): dos confirmaciones de
+    // consumo casi simultáneas (dos lotes de producción lanzados muy seguido,
+    // cada uno planificado contra la misma foto de stock) deben componerse en
+    // el orden en que se confirman, cada una viendo lo que dejó la anterior —
+    // el ref se actualiza aquí mismo, de forma síncrona, así que la segunda
+    // llamada en el mismo tick ya ve el resultado de la primera. applyLocal
+    // clampa cada allocation contra el stock real de ese momento, así que si
+    // el plan (calculado antes) pedía más de lo que ya quedaba, el registro
+    // de consumo persistido refleja lo realmente tomado, no lo planificado.
+    const r=SetasInventoryConsumptionApi.applyLocal(invLotesRef.current,op,{fecha,nota});
+    invLotesRef.current=r.lotes;
+    setInvLotes(r.lotes);
+    try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
+    setInvMovimientos(prev=>{
+      const upd=[...prev,...r.movimientos];
+      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){}
       return upd;
     });
-    saveInvOps(queue);
+    if(r.shortfalls.length){
+      console.warn('Consumo de inventario con faltante frente al plan (stock cambió entre planificar y confirmar):',r.shortfalls);
+    }
+    const finalQueue=queue.map(o=>o.opId===r.appliedOp.opId?r.appliedOp:o);
+    saveInvOps(finalQueue);
     runInventorySync();
     return true;
   };
