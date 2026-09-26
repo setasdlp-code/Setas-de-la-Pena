@@ -26,21 +26,43 @@ function enqueue(queue = [], op) {
   return { queue: [...queue, op], added: true };
 }
 
+// Un lote de compra recibe consumo desde una sola allocation por op (el FIFO
+// de buildLaunchPlan no reparte un mismo ingrediente entre lotes cuando uno
+// alcanza), pero op.allocations puede quedar desactualizada frente al stock
+// real si otra operación de consumo se aplicó entre que se planificó este
+// lote de producción y que se confirmó (dos lanzamientos casi simultáneos
+// planificados contra la misma foto de invLotes). Clampar aquí, contra el
+// `lotes` que realmente se recibe (el más fresco disponible en el momento de
+// aplicar, no el capturado al planificar), evita que el registro de consumo
+// —lo que se persiste y sincroniza a Firestore— declare haber tomado más kg
+// de los que el lote de compra tenía disponibles en ese momento.
 function applyLocal(lotes = [], op, { fecha = null, nota = '' } = {}) {
-  const take = new Map();
-  for (const a of op.allocations) take.set(a.lotId, (take.get(a.lotId) || 0) + a.quantity);
+  const disponiblePorLote = new Map(lotes.map(l => [l.id, Number(l.cantidadKgDisponible) || 0]));
+  const appliedAllocations = [];
+  const shortfalls = [];
+  for (const a of op.allocations) {
+    const disponible = disponiblePorLote.get(a.lotId) || 0;
+    const aplicado = round3(Math.min(a.quantity, Math.max(0, disponible)));
+    disponiblePorLote.set(a.lotId, round3(disponible - aplicado));
+    appliedAllocations.push({ ...a, quantity: aplicado });
+    if (aplicado < a.quantity - 0.0001) {
+      shortfalls.push({ ingredientId: a.ingredientId, lotId: a.lotId, unidad: a.unidad, faltante: round3(a.quantity - aplicado) });
+    }
+  }
   const updated = lotes.map(l => {
-    const t = take.get(l.id);
-    if (!t) return l;
-    const restante = Math.max(0, round3((Number(l.cantidadKgDisponible) || 0) - t));
+    const restante = disponiblePorLote.has(l.id) ? disponiblePorLote.get(l.id) : (Number(l.cantidadKgDisponible) || 0);
+    if (restante === (Number(l.cantidadKgDisponible) || 0)) return l;
     return { ...l, cantidadKgDisponible: restante, activo: restante > 0.0001 };
   });
-  const movimientos = op.allocations.map((a, i) => ({
-    id: `mov_lote_${op.opId}_${i}`, tipo: 'consumo_lote',
-    ingredienteId: a.ingredientId, loteInventarioId: a.lotId, kgMovidos: a.quantity, unidad: a.unidad,
-    loteNum: op.codigo, fecha, nota, timestamp: op.createdAt,
-  }));
-  return { lotes: updated, movimientos };
+  const movimientos = appliedAllocations
+    .filter(a => a.quantity > 0.0001)
+    .map((a, i) => ({
+      id: `mov_lote_${op.opId}_${i}`, tipo: 'consumo_lote',
+      ingredienteId: a.ingredientId, loteInventarioId: a.lotId, kgMovidos: a.quantity, unidad: a.unidad,
+      loteNum: op.codigo, fecha, nota, timestamp: op.createdAt,
+    }));
+  const appliedOp = { ...op, allocations: appliedAllocations, shortfalls: [...(op.shortfalls || []), ...shortfalls] };
+  return { lotes: updated, movimientos, appliedOp, shortfalls };
 }
 
 const toRecord = op => ({

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: b622423b79b56aeca039b50fbe608f17c2d8af0dee75e4b553c9ca6f8a605244
+// source-hash: d9e2e58fe9e3d33bdee567409d5fb8a65934c0e655dfd78927e102abfe6bce68
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4633,6 +4633,10 @@ function SimuladorShell(props) {
   const [invProveedores, setInvProveedores] = useState([]);
   const [invCompras, setInvCompras] = useState([]);
   const [invLotes, setInvLotes] = useState([]);
+  const invLotesRef = useRef([]);
+  useEffect(() => {
+    invLotesRef.current = invLotes;
+  }, [invLotes]);
   const [peritoInventoryLoaded, setPeritoInventoryLoaded] = useState(false);
   const [invMovimientos, setInvMovimientos] = useState([]);
   const [invTab, setInvTab] = useState("stock");
@@ -6243,24 +6247,27 @@ ${errors.slice(0, 5).join("\n")}` : "");
     const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });
     const { queue, added } = SetasInventoryConsumptionApi.enqueue(readInvOps(), op);
     if (!added) return false;
-    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
-    setInvLotes((prev) => {
-      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
-      try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
-      } catch (e) {
-      }
-      return r.lotes;
-    });
+    const r = SetasInventoryConsumptionApi.applyLocal(invLotesRef.current, op, { fecha, nota });
+    invLotesRef.current = r.lotes;
+    setInvLotes(r.lotes);
+    try {
+      localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
+    } catch (e) {
+      bitQuotaWarn();
+    }
     setInvMovimientos((prev) => {
-      const upd = [...prev, ...movimientos];
+      const upd = [...prev, ...r.movimientos];
       try {
         localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
       } catch (e) {
       }
       return upd;
     });
-    saveInvOps(queue);
+    if (r.shortfalls.length) {
+      console.warn("Consumo de inventario con faltante frente al plan (stock cambió entre planificar y confirmar):", r.shortfalls);
+    }
+    const finalQueue = queue.map((o) => o.opId === r.appliedOp.opId ? r.appliedOp : o);
+    saveInvOps(finalQueue);
     runInventorySync();
     return true;
   };
