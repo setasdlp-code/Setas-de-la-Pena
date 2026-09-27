@@ -589,10 +589,12 @@ test('las alertas de stock bajo (crítico/bajo/OK y el banner de Stock Crítico)
   // availability(...).disponible, no cantidadKgDisponible agregado en bruto.
   const stockTabStart = source.indexOf("const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };");
   const stockTabItems = source.slice(stockTabStart, stockTabStart + 1600);
-  assert.match(stockTabItems, /availabilityFor=\(ingId\)=>ledgerApi\?ledgerApi\.availability\(ingId,\{lots:invLotes,ledger:invReservas,incoming:\[\],nowMs:Date\.now\(\)\}\):null/);
+  // `incoming` ya no es un placeholder vacío: viene de las compras "por
+  // recibir" (purchases.js), así que `entrante` en availability() es real.
+  assert.match(stockTabItems, /availabilityFor=\(ingId\)=>ledgerApi\?ledgerApi\.availability\(ingId,\{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date\.now\(\)\}\):null/);
   assert.match(stockTabItems, /const av=availabilityFor\(ing\.id\);/);
   const homeItemsStart = source.indexOf('const homeLedgerApi=');
   assert.ok(homeItemsStart > -1);
   const homeItems = source.slice(homeItemsStart, homeItemsStart + 500);
-  assert.match(homeItems, /homeLedgerApi\.availability\(ing\.id,\{lots:invLotes,ledger:invReservas,incoming:\[\],nowMs:Date\.now\(\)\}\)/);
+  assert.match(homeItems, /homeLedgerApi\.availability\(ing\.id,\{lots:invLotes,ledger:invReservas,incoming:homeIncomingCompras,nowMs:Date\.now\(\)\}\)/);
 });
