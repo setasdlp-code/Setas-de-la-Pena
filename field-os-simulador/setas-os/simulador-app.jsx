@@ -4041,7 +4041,7 @@ const EBDial=({an,sp})=>{
 
 
 // ── BAND GAUGES ──────────────────────────────────────────────────────────────────────────
-const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='#A8432A'})=>{
+const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='#A8432A',provenance})=>{
   const sMin=scaleMin??min*0.5;
   const sMax=scaleMax??max*1.5;
   const range=sMax-sMin;
@@ -4070,6 +4070,7 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
         <span style={{color:`${color}99`}}>ideal {ideal}{unit}</span>
         <span>{max}{unit}</span>
       </div>
+      {provenance&&<span className="os-provenance-line" title={provenance.title||undefined}>{provenance.texto}</span>}
     </div>
   );
 };
@@ -4084,6 +4085,49 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
 const blendEBWithHistory=(an,historical)=>{
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
   return hasHist?(an.eb*(1-historical.weight)+historical.avg*historical.weight):an.eb;
+};
+
+// ── Procedencia de las métricas de nutrientes (C:N, N, pH, digestibilidad) ──
+// Las cuatro salen de analyze() en substrate-analysis.js: promedios ponderados
+// de constantes del catálogo de insumos, nunca de un análisis del lote real.
+// provenance.js ya declara ese vocabulario ('nutrient'); aquí solo se traduce
+// la métrica a su valor del vocabulario y se pinta lo que describe() devuelve
+// — nunca un nivel de confianza (estas métricas no tienen escala asociada) ni
+// una palabra como "óptimo" inventada aquí. Mismo patrón de guardado que
+// prov-eb/prov-costo (form-summary-strip, ~línea 13588/13610).
+const NUTRIENT_METRIC_VOCAB=Object.freeze({cn:'catalog-lignocellulosic',n:'catalog-lignocellulosic',dig:'catalog-whole-mix',ph:'catalog-whole-mix-unbuffered'});
+// La línea de procedencia se pinta con .os-provenance-line, que el DS compone
+// en mayúsculas y ~11 px: es un pie de dato, no un párrafo. Medido en
+// navegador, meter aquí el `detail` completo (109 caracteres en caps) hacía
+// que la celda C:N de la franja midiera 141 px de alto en una columna de 144
+// px de ancho. Así que la línea lleva el `label` y el `detail` va en el
+// title; el texto largo se lee, al tamaño del resto, en la nota
+// os-provenance-notice de abajo.
+const procedenciaNutriente=(metrica)=>{
+  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+  const value=NUTRIENT_METRIC_VOCAB[metrica];
+  const d=prov&&value?prov.describe({vocabulary:'nutrient',value}):null;
+  if(!d) return {texto:'Calculado',title:null};
+  return {texto:d.label,title:`${d.detail}. ${d.caveat}`};
+};
+// Sin fracción lignocelulósica (receta de puros aditivos), C:N y N salen en 0
+// del motor — y 0 no es un valor, es la ausencia de uno (ver 'no-nutritive-matrix'
+// en provenance.js, que devuelve null a propósito: falla cerrado). describe()
+// no tiene detail/caveat que dar aquí, así que esta es la única línea de este
+// módulo que compone un texto a mano en vez de citar describe() — porque no hay
+// nada que citar, y decirlo es preferible a pintar "Calculado" sobre la nada.
+const procedenciaSinMatrizNutritiva=()=>({texto:'Sin matriz nutritiva',title:'Esta receta no tiene fracción lignocelulósica: no hay carbono ni nitrógeno que ponderar, así que C:N y Nitrógeno no son 0, simplemente no existen para esta mezcla'});
+// Nota compuesta para debajo de la rejilla .mgrid (data-testid="prov-nutrientes"):
+// arma el texto a partir de detail/caveat de describe(), no de cadenas escritas
+// a mano, para que si el vocabulario cambia la pantalla cambie con él.
+const cap=(s)=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+const procedenciaNutrientesResumen=()=>{
+  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+  const ligno=prov?prov.describe({vocabulary:'nutrient',value:'catalog-lignocellulosic'}):null;
+  const whole=prov?prov.describe({vocabulary:'nutrient',value:'catalog-whole-mix'}):null;
+  const ph=prov?prov.describe({vocabulary:'nutrient',value:'catalog-whole-mix-unbuffered'}):null;
+  if(!ligno||!whole||!ph) return 'Las cuatro métricas (C:N, Nitrógeno, pH, Digestibilidad) son calculadas.';
+  return `${cap(ligno.caveat)}. C:N y Nitrógeno: ${ligno.detail}. pH y Digestibilidad: ${whole.detail}. pH: ${ph.caveat}.`;
 };
 
 // ── Minimalist SVG Icons (Design System compliant) ──
@@ -4302,15 +4346,21 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
   return (
     <aside className="bg-wrap recipe-live-evaluation" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
       <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
+      {/* C:N y N repiten aquí la misma línea de procedencia que .mgrid, sin
+          repetir la nota completa (prov-nutrientes): esta aside se pinta en la
+          misma pantalla, justo debajo del panel bl-perito que ya la muestra —
+          duplicarla ahí sería la misma frase dos veces seguidas. */}
       <BandGauge label="C:N" unit=":1"
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
-        color="var(--accent-olive)" warnColor="#A8432A"/>
+        color="var(--accent-olive)" warnColor="#A8432A"
+        provenance={procedenciaNutriente('cn')}/>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Calculado en base seca · corrige H₂O por insumo</div>
       <BandGauge label="N" unit="%"
         min={sp.n_optimal.min} max={sp.n_optimal.max} ideal={sp.n_optimal.ideal}
         value={an.avgN} scaleMin={0} scaleMax={3.5}
-        color="var(--accent-blue-grey)" warnColor="#A8432A"/>
+        color="var(--accent-blue-grey)" warnColor="#A8432A"
+        provenance={procedenciaNutriente('n')}/>
       <BandGauge label="EB estimado" unit="%"
         min={sp.eb_baseline} max={sp.eb_optimal} ideal={sp.eb_optimal}
         value={an?Math.round(blendedEB):null}
@@ -13574,8 +13624,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?.cn!=null?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                <span className="os-provenance-line" title="Derivado de los porcentajes de la receta y del catálogo de insumos">Calculado</span>
+                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Humedad objetivo</span>
@@ -14316,20 +14366,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
                   <div className="mgrid" style={{marginBottom:12}}>
                     {[
-                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                      {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
+                      {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
                       {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
                       {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
+                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
                     ].map(m=>(
                       <div key={m.l} className="mc">
                         <div className="mlbl">{m.l}</div>
                         <div className="mval">{m.v}</div>
                         <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
                       </div>
                     ))}
                   </div>
+                  <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
 
                   {/* ── EBDial + C:N gauge ── */}
                   <EBDial an={an} sp={sp}/>
@@ -14864,23 +14916,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* Resumen Métricas */}
                   {an&&(
+                    <>
                     <div className="mgrid" style={{marginBottom:14}}>
                       {[
-                        {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                        {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                        {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
+                        {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
                         {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
                         {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
                         {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
-                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
                       ].map(m=>(
                         <div key={m.l} className="mc">
                           <div className="mlbl">{m.l}</div>
                           <div className="mval">{m.v}</div>
                           <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                          {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
                         </div>
                       ))}
                     </div>
+                    <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
+                    </>
                   )}
 
                   {/* Gauges */}
