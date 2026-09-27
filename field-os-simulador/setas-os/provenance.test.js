@@ -182,6 +182,61 @@ test("describeConfidence('method', …) siempre declara que califica el método,
   }
 });
 
+// ── 10. fromLegacy('nutrient', …) / describe(): substrate-analysis.js analyze() ──
+
+test("fromLegacy('nutrient', …) traduce los tres valores con dato de analyze() en substrate-analysis.js", () => {
+  assert.deepEqual(fromLegacy('nutrient', 'catalog-lignocellulosic'), {
+    kind: KINDS.calculated,
+    detail: 'ponderado del catálogo sobre la fracción lignocelulósica (los aditivos minerales secos no entran)',
+    caveat: 'valores de referencia del catálogo: ningún insumo de este lote fue analizado',
+  });
+  assert.deepEqual(fromLegacy('nutrient', 'catalog-whole-mix'), {
+    kind: KINDS.calculated,
+    detail: 'ponderado del catálogo sobre la mezcla completa, aditivos incluidos',
+    caveat: 'valores de referencia del catálogo: ningún insumo de este lote fue analizado',
+  });
+  assert.deepEqual(fromLegacy('nutrient', 'catalog-whole-mix-unbuffered'), {
+    kind: KINDS.calculated,
+    detail: 'ponderado del catálogo sobre la mezcla completa, aditivos incluidos',
+    caveat: 'promedio lineal sin capacidad buffer: sirve para comparar recetas, no para anticipar un pH-metro',
+  });
+});
+
+test("fromLegacy('nutrient', 'no-nutritive-matrix') devuelve null: sin fracción lignocelulósica no hay matriz que medir", () => {
+  assert.equal(fromLegacy('nutrient', 'no-nutritive-matrix'), null);
+});
+
+test("fromLegacy('nutrient', …) con valor desconocido devuelve null, no adivina", () => {
+  assert.equal(fromLegacy('nutrient', 'valor-que-no-existe'), null);
+});
+
+test("describe({vocabulary:'nutrient',value}) da kind calculated y el caveat correcto para los tres valores con dato", () => {
+  const ligno = describe({ vocabulary: 'nutrient', value: 'catalog-lignocellulosic' });
+  const whole = describe({ vocabulary: 'nutrient', value: 'catalog-whole-mix' });
+  const ph = describe({ vocabulary: 'nutrient', value: 'catalog-whole-mix-unbuffered' });
+  for (const d of [ligno, whole, ph]) {
+    assert.equal(d.kind, KINDS.calculated);
+    assert.equal(d.label, 'Calculado');
+  }
+  assert.equal(ligno.caveat, 'valores de referencia del catálogo: ningún insumo de este lote fue analizado');
+  assert.equal(whole.caveat, 'valores de referencia del catálogo: ningún insumo de este lote fue analizado');
+  assert.equal(ph.caveat, 'promedio lineal sin capacidad buffer: sirve para comparar recetas, no para anticipar un pH-metro');
+});
+
+test("describe({vocabulary:'nutrient',value:'no-nutritive-matrix'}) devuelve null: la ausencia de matriz nutritiva no es un kind optimista", () => {
+  assert.equal(describe({ vocabulary: 'nutrient', value: 'no-nutritive-matrix' }), null);
+});
+
+test("describe({vocabulary:'nutrient',value:'valor-inventado'}) devuelve null", () => {
+  assert.equal(describe({ vocabulary: 'nutrient', value: 'valor-inventado' }), null);
+});
+
+test('el caveat del pH de nutrient declara explícitamente que es un promedio lineal sin capacidad buffer — la afirmación que no se puede perder en un refactor', () => {
+  const d = describe({ vocabulary: 'nutrient', value: 'catalog-whole-mix-unbuffered' });
+  assert.ok(d.caveat.includes('promedio lineal'), 'debe decir que es un promedio lineal');
+  assert.ok(d.caveat.toLowerCase().includes('buffer'), 'debe nombrar la ausencia de capacidad buffer');
+});
+
 // ── Casos límite adicionales: scale/level desconocidos fallan cerrado ──────────
 
 test('describeConfidence con scale o level desconocidos devuelve null', () => {
