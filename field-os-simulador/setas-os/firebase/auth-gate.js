@@ -72,7 +72,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../perito-workbench-core.js",
   "../historical-calibration.js",
   "../species-targets.js",
-  "../recipe-version.js",
+  "../mass-balance.js",
   "../recipe-lifecycle.js",
   "../launch-plan.js",
   "../inventory-consumption.js",

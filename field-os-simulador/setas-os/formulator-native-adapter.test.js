@@ -2,7 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-require('./recipe-version.js');
+require('./mass-balance.js');
 require('./formulator-api.js');
 
 // Prefer the real recipeDistance from perito-scenarios.js over a hand-rolled
