@@ -194,7 +194,7 @@ test('la cola de sincronización se rehidrata desde localStorage junto con la bi
 });
 
 test('el drenador de la cola de sincronización es un hook de nivel superior con limpieza', () => {
-  assert.match(source, /const drainAll=async\(\)=>\{/);
+  assert.match(source, /const drainOnce=async\(\)=>\{/);
   assert.match(source, /syncQueueApi\.nextPending\(syncQueueRef\.current,Date\.now\(\)\)/);
   assert.match(source, /syncQueueApi\.markSynced\(syncQueueRef\.current,op\.id\)/);
   assert.match(source, /syncQueueApi\.markFailed\(syncQueueRef\.current,op\.id,err,Date\.now\(\)\)/);
@@ -202,6 +202,8 @@ test('el drenador de la cola de sincronización es un hook de nivel superior con
   assert.match(source, /window\.addEventListener\('online',onOnline\)/);
   assert.match(source, /cancelled=true;\s*\n\s*clearInterval\(intervalId\);\s*\n\s*window\.removeEventListener\('online',onOnline\);/);
   assert.match(source, /navigator\.onLine===false/);
+  // I2: un solo drainAll en vuelo — mismo patrón inFlight/again que runInventorySync.
+  assert.match(source, /if\(drainRef\.inFlight\)\{drainRef\.again=true;return drainRef\.inFlight;\}/);
 });
 
 test('el indicador de sincronización usa describeForOperator y ofrece reintentar los atascados', () => {
