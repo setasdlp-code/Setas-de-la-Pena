@@ -173,6 +173,9 @@
   .rail-btn.on { color:var(--ink-0); }
   .rail-btn svg { width:22px; height:22px; flex-shrink:0; }
   .rail-btn span { font-family:var(--font-mono); font-size:var(--size-label, 11px); font-weight:600; letter-spacing:0.15em; text-transform:uppercase; }
+  .rail-global-actions { margin-top:auto; padding:8px 0 10px; border-top:1px solid var(--border-soft); display:grid; gap:2px; }
+  .rail-btn--action { min-height:44px; justify-content:center; padding:6px 4px; color:var(--accent-terracotta); }
+  .rail-btn--action span { letter-spacing:.1em; }
   .rail-badge { position:absolute; top:4px; left:50%; margin-left:2px; min-width:18px; height:18px; padding:0 4px; border-radius:0; background:var(--status-error); color:#fff; font-family:var(--font-mono); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; box-shadow:none; animation:fos-badge .3s cubic-bezier(.32,.72,.36,1); }
   .rail-badge.attention { background:var(--status-attention); }
   @keyframes fos-badge { from { transform:scale(0); } to { transform:scale(1); } }
@@ -358,28 +361,40 @@
   <a class="skip-link" href="#setas-main">Saltar al contenido</a>
   <div class="rail-peek" title="Mostrar menú"></div>
   <!-- ===================== RAIL / TAB BAR ===================== -->
-  <nav class="app-rail" aria-label="Espacios de trabajo">
-    <button class="rail-mark" onClick="{{ goWorkspaceControl }}" aria-label="Ir a Control, Hoy">
+  <nav class="app-rail" aria-label="Destinos principales">
+    <button class="rail-mark" onClick="{{ goDestinationHoy }}" aria-label="Ir a Hoy">
       <img data-auth-src="_standalone_imgs/logo-sdlp.png" alt="Setas de la Peña" width="96" height="50" style="width:96px;height:auto;max-height:54px;object-fit:contain;display:block;margin:0 auto;filter:contrast(1.05);" />
     </button>
-    <button class="rail-btn {{ navWorkspaceFormularCls }}" data-workspace="formular" onClick="{{ goWorkspaceFormular }}" aria-current="{{ curWorkspaceFormular }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
-      <span>Formular</span>
+    <button class="rail-btn {{ navDestinationHoyCls }}" data-workspace="hoy" onClick="{{ goDestinationHoy }}" aria-current="{{ curDestinationHoy }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>
+      <span>Hoy</span>
     </button>
-    <button class="rail-btn {{ navWorkspaceProduccionCls }}" data-workspace="produccion" onClick="{{ goWorkspaceProduccion }}" aria-current="{{ curWorkspaceProduccion }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 21V9l9-6 9 6v12"></path><path d="M3 21h18"></path><path d="M9 21v-6h6v6"></path><path d="M7 12h.01M17 12h.01"></path></svg>
-      <span>Producción</span>
-      <sc-if value="{{ hasStockBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge attention" aria-label="{{ stockBadgeLabel }}">{{ stockBadge }}</span></sc-if>
+    <button class="rail-btn {{ navDestinationLotesCls }}" data-workspace="lotes" onClick="{{ goDestinationLotes }}" aria-current="{{ curDestinationLotes }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"></path></svg>
+      <span>Lotes</span>
     </button>
-    <button class="rail-btn {{ navWorkspaceBitacoraCls }}" data-workspace="bitacora" onClick="{{ goWorkspaceBitacora }}" aria-current="{{ curWorkspaceBitacora }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"></path><path d="M9 4V2h6v2M8 10h8M8 14h8M8 18h5"></path></svg>
-      <span>Bitácora</span>
-    </button>
-    <button class="rail-btn {{ navWorkspaceControlCls }}" data-workspace="control" onClick="{{ goWorkspaceControl }}" aria-current="{{ curWorkspaceControl }}">
+    <button class="rail-btn {{ navDestinationSalasCls }}" data-workspace="salas" onClick="{{ goDestinationSalas }}" aria-current="{{ curDestinationSalas }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18v-5M10 18V6M16 18v-9M22 18V3"></path><path d="M2 21h20"></path></svg>
-      <span>Control</span>
+      <span>Salas</span>
       <sc-if value="{{ hasClimaBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge" aria-label="{{ climaBadgeLabel }}">{{ climaBadge }}</span></sc-if>
     </button>
+    <button class="rail-btn {{ navDestinationInventarioCls }}" data-workspace="inventario" onClick="{{ goDestinationInventario }}" aria-current="{{ curDestinationInventario }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16v13H4zM7 4h10v3M8 11h8"></path></svg>
+      <span>Inventario</span>
+      <sc-if value="{{ hasStockBadge }}" hint-placeholder-val="{{ false }}"><span class="rail-badge attention" aria-label="{{ stockBadgeLabel }}">{{ stockBadge }}</span></sc-if>
+    </button>
+    <button class="rail-btn {{ navDestinationRecetasCls }}" data-workspace="recetas" onClick="{{ goDestinationRecetas }}" aria-current="{{ curDestinationRecetas }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3"></path><path d="M8 3h8"></path><path d="M7.5 14h9"></path></svg>
+      <span>Recetas</span>
+    </button>
+    <button class="rail-btn {{ navDestinationConocimientoCls }}" data-workspace="conocimiento" onClick="{{ goDestinationConocimiento }}" aria-current="{{ curDestinationConocimiento }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 0-4 0z"></path><path d="M9 4v16"></path></svg>
+      <span>Conocimiento</span>
+    </button>
+    <div class="rail-global-actions" aria-label="Acciones globales">
+      <button class="rail-btn rail-btn--action" data-action="scan" onClick="{{ goGlobalScan }}"><span>Escanear</span></button>
+      <button class="rail-btn rail-btn--action" data-action="register" onClick="{{ goGlobalRegister }}"><span>Registrar</span></button>
+    </div>
   </nav>
 
   <!-- ===================== MOBILE PRIMARY NAV (Criterio) =====================
@@ -411,9 +426,9 @@
     </button>
   </nav>
   <sc-if value="{{ mobileMoreOpen }}" hint-placeholder-val="{{ false }}">
-    <div class="rail-flyout mobile-more-flyout" id="mobile-more-panel" role="group" aria-label="Más secciones">
+    <div class="rail-flyout mobile-more-flyout" id="mobile-more-panel" role="group" aria-label="Más destinos y acciones">
       <sc-for list="{{ mobileMoreItems }}" as="t" hint-placeholder-count="6">
-        <button class="rail-flyout-item {{ t.cls }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
+        <button class="rail-flyout-item {{ t.cls }}" data-dest="{{ t.key }}" data-action="{{ t.action }}" onClick="{{ t.go }}" aria-current="{{ t.current }}">{{ t.label }}</button>
       </sc-for>
     </div>
   </sc-if>
@@ -2474,8 +2489,12 @@ class Component extends DCLogic {
       const route=navigation
         ?navigation.readLocation(window.location)
         :{view:new URLSearchParams(window.location.search).get('view')||'home'};
-      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
+      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck','aprender'];
       if(!allowed.includes(route.view)) return;
+      if(route.view==='aprender'){
+        this.setState({module:'aprender',capture:false,workspaceMoreOpen:false,mobileMoreOpen:false});
+        return;
+      }
       this.setState(s=>({module:'sim',simTab:route.view,simTabNonce:s.simTabNonce+1}));
     }catch(e){}
   }
@@ -2628,8 +2647,6 @@ class Component extends DCLogic {
     const temp = Math.round(((tR[0]+tR[1])/2 + wave(1,tick)*((tR[1]-tR[0])/2+0.6))*10)/10;
     const hum = Math.round(((hR[0]+hR[1])/2 + wave(2,tick)*((hR[1]-hR[0])/2+2)));
     const co2 = Math.round((cR[0]+cR[1])/2 + wave(3,tick)*((cR[1]-cR[0])/2+40));
-    const outOfRange = temp<tR[0]-0.3 || temp>tR[1]+0.3 || hum<hR[0]-3 || hum>hR[1]+3 || co2>cMax;
-    const alert = this.state.ledger.find(e=>e.type==='clima' && (e.container===cm.name || e.container===cm.id));
     const N=24, W=280, H=56;
     const tPts=[], hPts=[], cPts=[];
     for(let i=0;i<N;i++){
@@ -2662,9 +2679,13 @@ class Component extends DCLogic {
     }));
     return {
       liveTemp: temp, liveHum: hum, liveCo2: co2,
-      liveAccent: outOfRange?'var(--status-error)':'var(--status-active)',
-      liveStatusLabel: outOfRange?'Fuera de rango':'Dentro de rango',
-      hasLiveAlert: !!alert, liveAlertNote: alert?alert.note:'',
+      // Estos valores son una referencia visual generada desde los rangos del
+      // cultivo. No son lecturas de una sonda y nunca deben disparar alertas ni
+      // presentarse como mediciones operativas.
+      provenance: 'reference', isMeasured: false,
+      liveAccent: 'var(--text-metadata, var(--ink-500))',
+      liveStatusLabel: 'Referencia de modelo',
+      hasLiveAlert: false, liveAlertNote: '',
       tempSeries:tPts.map(v=>Math.round(v*10)/10), humSeries:hPts.map(v=>Math.round(v)), co2Series:cPts.map(v=>Math.round(v)),
       tempSpark: tSpark.d, humSpark: hSpark.d, co2Spark: cSpark.d,
       tempSparkEndY: tSpark.endY, humSparkEndY: hSpark.endY, co2SparkEndY: cSpark.endY,
@@ -2688,6 +2709,9 @@ class Component extends DCLogic {
       const fruiting = cm.stages.includes('fructificación')||cm.stages.includes('primordios');
       const tR = fruiting?meta.fruitT:meta.incT, hR=meta.hr, cMax=meta.co2;
       const r = this.liveMonitor(cm);
+      // liveMonitor entrega una referencia modelada para la ilustración de la
+      // sala. Solo una lectura medida puede crear una alerta operativa.
+      if(!r.isMeasured) return;
       const checks = [
         r.liveTemp>tR[1]+0.3 && {metric:'temp',action:'Enfriar',label:'Temperatura alta'},
         r.liveTemp<tR[0]-0.3 && {metric:'temp',action:'Calentar',label:'Temperatura baja'},
@@ -2915,6 +2939,14 @@ class Component extends DCLogic {
     }catch(e){}
     this.setState(s=>({ module:'sim', capture:false, simFlyoutOpen:false, workspaceMoreOpen:false, mobileMoreOpen:false, simTab:next, simTabNonce:s.simTabNonce+1 }));
   }
+  goKnowledge(){
+    try{
+      const navigation=window.SetasOSNavigation;
+      if(navigation) navigation.navigate(window,'aprender');
+      else {const url=new URL(window.location.href);url.searchParams.set('view','aprender');window.history.pushState(null,'',url);}
+    }catch(e){}
+    this.setState({module:'aprender',capture:false,workspaceMoreOpen:false,mobileMoreOpen:false});
+  }
   goBitTab(bitSubtab){
     const allowed=['bit_dash','bit_bolsas','bit_cosechas','bit_comparador','bit_ficha'];
     const next=allowed.includes(bitSubtab)?bitSubtab:'bit_dash';
@@ -2929,38 +2961,30 @@ class Component extends DCLogic {
   // IA objetivo (SETAS_OS_UX_ARCHITECTURE_V2.md §2): Hoy · Lotes · Scan · Salas · Más.
   // No agrega valores nuevos a module/simTab/bitSubtab — solo adapta el rail
   // primario en mobile a rutas que ya existen (home/bitacora/clima) más un
-  // panel "Más" que reagrupa los destinos secundarios (Formular, Producción,
-  // Bodega, Planificar, Bitácora, Métricas, Conocimiento, Costos, Calidad,
-  // Comercial) que dejaron de tener botón propio en el rail primario.
+  // panel "Más" que contiene los tres destinos canónicos que no caben en el
+  // rail inferior y la acción global Registrar.
   mobileNavData(s){
     const mobileDest = (s.module==='sim'&&s.simTab==='home') ? 'hoy'
       : (s.module==='sim'&&s.simTab==='bitacora') ? 'lotes'
       : (s.module==='sim'&&s.simTab==='clima') ? 'salas'
       : 'mas';
     const moreDefs = [
-      ['catalogo','Catálogo & Recetario',()=>this.goSimTab('catalogo')],
-      ['formular','Formular receta',()=>this.goSimTab('formular')],
-      ['produccion','Preparar mezcla',()=>this.goSimTab('produccion')],
-      ['bodega','Bodega',()=>this.goSimTab('inventario')],
-      ['plan','Planificar',()=>this.setState({module:'plan',capture:false,mobileMoreOpen:false})],
-      ['sesion','Registrar evento',()=>this.setState({module:'sesion',screen:'home',capture:true,mobileMoreOpen:false})],
-      ['revision','Métricas',()=>this.setState({module:'revision',capture:false,mobileMoreOpen:false})],
-      ['aprender','Conocimiento',()=>this.setState({module:'aprender',capture:false,mobileMoreOpen:false})],
-      ['costes','Costos',()=>this.setState({module:'costes',capture:false,mobileMoreOpen:false})],
-      ['calidad','Calidad',()=>this.setState({module:'calidad',capture:false,mobileMoreOpen:false})],
-      ['comercial','Comercial',()=>this.setState({module:'comercial',capture:false,mobileMoreOpen:false})],
+      ['registrar','Registrar',()=>this.setState({module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false,mobileMoreOpen:false}),'register'],
+      ['inventario','Inventario',()=>this.goSimTab('inventario')],
+      ['recetas','Recetas',()=>this.goSimTab('catalogo')],
+      ['conocimiento','Conocimiento',()=>this.goKnowledge()],
     ];
     const mobileMoreItems = moreDefs
       .filter(([key])=>!ROLE_GATE[key]||ROLE_GATE[key].includes(s.role))
-      .map(([key,label,go])=>{
-        const current = key==='plan' ? s.module==='plan'
-          : key==='sesion' ? s.module==='sesion'
-          : key==='catalogo' ? (s.module==='sim'&&s.simTab==='catalogo')
-          : key==='formular' ? (s.module==='sim'&&s.simTab==='formular')
-          : key==='produccion' ? (s.module==='sim'&&s.simTab==='produccion')
-          : key==='bodega' ? (s.module==='sim'&&s.simTab==='inventario')
-          : s.module===key;
-        return { key, label, go, current:current?'page':undefined, cls:current?'on':'' };
+      .map(([key,label,go,action])=>{
+        const current = key==='registrar'
+          ? false
+          : key==='inventario'
+          ? (s.module==='sim'&&s.simTab==='inventario')||s.module==='inventario'
+          : key==='recetas'
+            ? (s.module==='sim'&&['catalogo','formular','produccion'].includes(s.simTab))
+            : s.module==='aprender'||(s.module==='sim'&&['labExtraction','bioCheck'].includes(s.simTab));
+        return { key, label, go, action, current:current?'page':undefined, cls:current?'on':'' };
       });
     return {
       mobileDest,
@@ -3318,17 +3342,26 @@ class Component extends DCLogic {
     const escalatedList = climateAlertList.filter(a=>a.escalated);
     const lowStockRows = INVENTORY_ROWS.filter(r=>r.status==='Reponer');
     const mkTabs = pairs => gated(pairs).map(([m,label])=>({ label, on:s.module===m, style:tabStyle(s.module===m), go:()=>this.setState(Object.assign({module:m,capture:false}, m==='camaras'?{camDetail:null,climaBadge:0}:{})) }));
-    const FORMULAR_SIM_TABS = ['catalogo','formular'];
-    const PRODUCCION_SIM_TABS = ['produccion','inventario','schedule'];
-    const CONTROL_MODULES = ['inicio','camaras','revision','costes','calidad','aprender','comercial'];
+    const RECIPES_SIM_TABS = ['catalogo','formular','produccion'];
+    const KNOWLEDGE_SIM_TABS = ['labExtraction','bioCheck'];
     const activeWorkspace = s.module==='sim'
-      ? (FORMULAR_SIM_TABS.includes(s.simTab)?'formular':((PRODUCCION_SIM_TABS.includes(s.simTab)||['labExtraction','bioCheck'].includes(s.simTab))?'produccion':(s.simTab==='bitacora'?'bitacora':'control')))
-      : (['plan','inventario'].includes(s.module)?'produccion':(s.module==='sesion'?'bitacora':(CONTROL_MODULES.includes(s.module)?'control':'control')));
+      ? (s.simTab==='home'||s.simTab==='inicio'?'hoy'
+        :s.simTab==='bitacora'||s.simTab==='schedule'?'lotes'
+        :s.simTab==='clima'?'salas'
+        :s.simTab==='inventario'?'inventario'
+        :RECIPES_SIM_TABS.includes(s.simTab)?'recetas'
+        :KNOWLEDGE_SIM_TABS.includes(s.simTab)?'conocimiento'
+        :'hoy')
+      : (s.module==='sesion'||s.module==='plan'?'lotes'
+        :s.module==='camaras'?'salas'
+        :s.module==='inventario'?'inventario'
+        :s.module==='aprender'?'conocimiento'
+        :'hoy');
     // Banco Climático: sigue simulando siempre (así las alertas de cámara llegan aunque el
     // usuario esté en Formular), pero solo necesita RENDERIZAR su DOM mientras el workspace
     // activo es 'control' — el resto del tiempo el iframe de 1px es invisible igual. Se avisa
     // por postMessage solo cuando cambia, no en cada render.
-    const climaActive = activeWorkspace==='control';
+    const climaActive = activeWorkspace==='hoy'||activeWorkspace==='salas';
     if(this._climaActiveSent!==climaActive){
       this._climaActiveSent = climaActive;
       if(!this._climaFrameEl) this._climaFrameEl = document.querySelector('iframe[title="Banco Climático"]');
@@ -3338,28 +3371,34 @@ class Component extends DCLogic {
     }
     const contextTab = (label,on,go)=>({label,on,go,cls:on?'on':'',tabIndex:on?0:-1});
     let workspaceTabs = [];
-    if(activeWorkspace==='formular') workspaceTabs = [
-      contextTab('Catálogo & Recetario',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
-      contextTab('Formular',s.module==='sim'&&s.simTab==='formular',()=>this.goSimTab('formular')),
-    ];
-    if(activeWorkspace==='produccion') workspaceTabs = [
-      ...(ROLE_GATE.plan.includes(s.role)?[contextTab('Planificar',s.module==='plan'||(s.module==='sim'&&s.simTab==='schedule'),()=>this.setState({module:'plan',capture:false,workspaceMoreOpen:false}))]:[]),
+    if(activeWorkspace==='recetas') workspaceTabs = [
+      contextTab('Recetario',s.module==='sim'&&s.simTab==='catalogo',()=>this.goSimTab('catalogo')),
+      contextTab('Nueva receta',s.module==='sim'&&s.simTab==='formular',()=>this.goSimTab('formular')),
       contextTab('Preparar mezcla',s.module==='sim'&&s.simTab==='produccion',()=>this.goSimTab('produccion')),
-      contextTab('Bodega',(s.module==='sim'&&s.simTab==='inventario')||s.module==='inventario',()=>this.goSimTab('inventario')),
     ];
-    if(activeWorkspace==='bitacora') workspaceTabs = [
-      contextTab('Registrar evento',s.module==='sesion',()=>this.setState({module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false})),
+    if(activeWorkspace==='inventario') workspaceTabs = [
+      contextTab('Inventario',(s.module==='sim'&&s.simTab==='inventario')||s.module==='inventario',()=>this.goSimTab('inventario')),
+    ];
+    if(activeWorkspace==='lotes') workspaceTabs = [
       contextTab('Lotes',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_dash',()=>this.goBitTab('bit_dash')),
       contextTab('Seguimiento',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_bolsas',()=>this.goBitTab('bit_bolsas')),
       contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
+      ...(ROLE_GATE.plan.includes(s.role)?[contextTab('Planificar',s.module==='plan'||(s.module==='sim'&&s.simTab==='schedule'),()=>this.setState({module:'plan',capture:false,workspaceMoreOpen:false}))]:[]),
     ];
-    if(activeWorkspace==='control') workspaceTabs = [
-      contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
-      contextTab('Cámaras & IoT',(s.module==='sim'&&s.simTab==='clima')||(s.module==='camaras'&&!!s.camDetail),()=>this.goSimTab('clima')),
+    if(activeWorkspace==='hoy') workspaceTabs = [
+      contextTab('Hoy',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
       contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
     ];
+    if(activeWorkspace==='salas') workspaceTabs = [
+      contextTab('Salas',(s.module==='sim'&&s.simTab==='clima')||s.module==='camaras',()=>this.goSimTab('clima')),
+    ];
+    if(activeWorkspace==='conocimiento') workspaceTabs = [
+      contextTab('Conocimiento',s.module==='aprender',()=>this.goKnowledge()),
+      contextTab('Laboratorio',s.module==='sim'&&s.simTab==='labExtraction',()=>this.goSimTab('labExtraction')),
+      contextTab('Bioseguridad',s.module==='sim'&&s.simTab==='bioCheck',()=>this.goSimTab('bioCheck')),
+    ];
     if(workspaceTabs.length&&!workspaceTabs.some(t=>t.on)) workspaceTabs[0].tabIndex=0;
-    const workspaceMoreItems = gated([['costes','Costos'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]).map(([m,label])=>({
+    const workspaceMoreItems = gated([['costes','Costos'],['calidad','Calidad'],['comercial','Comercial']]).map(([m,label])=>({
       label, on:s.module===m, current:s.module===m?'page':undefined, cls:s.module===m?'on':'',
       go:()=>this.setState({module:m,capture:false,workspaceMoreOpen:false}),
     }));
@@ -3369,21 +3408,23 @@ class Component extends DCLogic {
       isSesion:s.module==='sesion', isSim:s.module==='sim', isRevision:s.module==='revision', isCamaras:s.module==='camaras',
       isPlan:s.module==='plan', isInventario:s.module==='inventario', isCalidad:s.module==='calidad', isAprender:s.module==='aprender', isComercial:s.module==='comercial',
       shellCls: '',
-      workspaceLabel:'Navegación de '+({formular:'Formular',produccion:'Producción',bitacora:'Bitácora',control:'Control'}[activeWorkspace]),
+      workspaceLabel:'Navegación de '+({hoy:'Hoy',lotes:'Lotes',salas:'Salas',inventario:'Inventario',recetas:'Recetas',conocimiento:'Conocimiento'}[activeWorkspace]),
       workspaceTabs, activeWorkspace,
-      navWorkspaceFormularCls:activeWorkspace==='formular'?'on':'', curWorkspaceFormular:activeWorkspace==='formular'?'page':undefined,
-      navWorkspaceProduccionCls:activeWorkspace==='produccion'?'on':'', curWorkspaceProduccion:activeWorkspace==='produccion'?'page':undefined,
-      navWorkspaceBitacoraCls:activeWorkspace==='bitacora'?'on':'', curWorkspaceBitacora:activeWorkspace==='bitacora'?'page':undefined,
-      navWorkspaceControlCls:activeWorkspace==='control'?'on':'', curWorkspaceControl:activeWorkspace==='control'?'page':undefined,
-      goWorkspaceFormular:()=>this.goSimTab('formular'),
-      goWorkspaceProduccion:()=>ROLE_GATE.plan.includes(s.role)
-        ?this.setState({module:'plan',capture:false,workspaceMoreOpen:false})
-        :this.goSimTab('produccion'),
-      goWorkspaceBitacora:()=>s.sessionType
-        ?this.setState({module:'sesion',capture:false,workspaceMoreOpen:false})
-        :this.goBitTab('bit_dash'),
-      goWorkspaceControl:()=>this.goSimTab('home'),
-      hasWorkspaceMore:activeWorkspace==='control'&&workspaceMoreItems.length>0,
+      navDestinationHoyCls:activeWorkspace==='hoy'?'on':'', curDestinationHoy:activeWorkspace==='hoy'?'page':undefined,
+      navDestinationLotesCls:activeWorkspace==='lotes'?'on':'', curDestinationLotes:activeWorkspace==='lotes'?'page':undefined,
+      navDestinationSalasCls:activeWorkspace==='salas'?'on':'', curDestinationSalas:activeWorkspace==='salas'?'page':undefined,
+      navDestinationInventarioCls:activeWorkspace==='inventario'?'on':'', curDestinationInventario:activeWorkspace==='inventario'?'page':undefined,
+      navDestinationRecetasCls:activeWorkspace==='recetas'?'on':'', curDestinationRecetas:activeWorkspace==='recetas'?'page':undefined,
+      navDestinationConocimientoCls:activeWorkspace==='conocimiento'?'on':'', curDestinationConocimiento:activeWorkspace==='conocimiento'?'page':undefined,
+      goDestinationHoy:()=>this.goSimTab('home'),
+      goDestinationLotes:()=>this.goBitTab('bit_dash'),
+      goDestinationSalas:()=>this.goSimTab('clima'),
+      goDestinationInventario:()=>this.goSimTab('inventario'),
+      goDestinationRecetas:()=>this.goSimTab('catalogo'),
+      goDestinationConocimiento:()=>this.goKnowledge(),
+      goGlobalScan:()=>this.openFieldScan(),
+      goGlobalRegister:()=>this.setState({module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false,mobileMoreOpen:false}),
+      hasWorkspaceMore:activeWorkspace==='hoy'&&workspaceMoreItems.length>0,
       workspaceMoreOpen:s.workspaceMoreOpen, workspaceMoreItems,
       workspaceMoreCls:s.workspaceMoreOpen?'on':'',
       toggleWorkspaceMore:()=>this.setState(st=>({workspaceMoreOpen:!st.workspaceMoreOpen})),
@@ -3470,6 +3511,7 @@ class Component extends DCLogic {
         id:c.id, name:c.name, zona:c.zona, sppName:c.sppName, estadoLabel:c.estadoLabel, estadoAccent:c.estadoAccent,
         count:c.count, capKg:c.capKg, occupancy:c.occupancy, note:c.note,
         liveTemp:c.liveTemp, liveHum:c.liveHum, liveCo2:c.liveCo2, liveStatusLabel:c.liveStatusLabel,
+        provenance:c.provenance, isMeasured:c.isMeasured,
         hasLiveAlert:c.hasLiveAlert, liveAlertNote:c.liveAlertNote,
         tempSeries:c.tempSeries, humSeries:c.humSeries, co2Series:c.co2Series,
         tempSpark:c.tempSpark, humSpark:c.humSpark, co2Spark:c.co2Spark,
@@ -3927,11 +3969,11 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
-    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
-    const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
-      inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
-      revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };
+    const SIM_CRUMB = { catalogo:'Recetario', produccion:'Preparar mezcla', bitacora:'Lotes', schedule:'Planificar', formular:'Nueva receta', inventario:'Inventario', home:'Hoy', clima:'Salas', bioCheck:'Bioseguridad', labExtraction:'Laboratorio' };
+    const SIM_WORKSPACE = {catalogo:'Recetas',formular:'Recetas',produccion:'Recetas',inventario:'Inventario',schedule:'Lotes',bitacora:'Lotes',home:'Hoy',clima:'Salas',bioCheck:'Conocimiento',labExtraction:'Conocimiento'};
+    const crumbMap = { inicio:'Hoy · Sesión', sesion:'Lotes · Registro', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Salas · Detalle', plan:'Lotes · Planificar',
+      inventario:'Inventario · Histórico', calidad:'Hoy · Calidad', costes:'Hoy · Costos',
+      revision:'Hoy · Métricas', aprender:'Conocimiento', comercial:'Hoy · Comercial' };
     const undoOpen = s.ledger.length>0 && (Date.now()-(s.lastPushAt||0) < 30000);
     return {
       bannerBotanicoImg: this.bannerImgResolved(),

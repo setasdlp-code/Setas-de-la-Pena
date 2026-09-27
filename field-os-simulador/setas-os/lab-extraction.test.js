@@ -78,7 +78,7 @@ test("Lab Extraction — calculations, yields, costs and component integration",
     assert.match(navigationCode, /'labExtraction'/);
     assert.match(navigationCode, /'bioCheck'/);
     assert.match(shellCode, /onSimTabChange:\(tab\)=>\{[\s\S]*?allowed=\[[^\]]*'labExtraction'[^\]]*'bioCheck'/);
-    assert.match(shellCode, /SIM_CRUMB = \{[^}]*bioCheck:'Bio-Check'[^}]*labExtraction:'Laboratorio'/);
-    assert.match(shellCode, /SIM_WORKSPACE = \{[^}]*bioCheck:'Producción'[^}]*labExtraction:'Producción'/);
+    assert.match(shellCode, /SIM_CRUMB = \{[^}]*bioCheck:'Bioseguridad'[^}]*labExtraction:'Laboratorio'/);
+    assert.match(shellCode, /SIM_WORKSPACE = \{[^}]*bioCheck:'Conocimiento'[^}]*labExtraction:'Conocimiento'/);
   });
 });

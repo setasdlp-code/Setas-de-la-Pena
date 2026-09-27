@@ -40,6 +40,8 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   const errores=[];page.on('pageerror',e=>errores.push(e.message));
   await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
   await page.addInitScript(()=>{
+   if(sessionStorage.getItem('sdp_plan_prepare_seeded')==='1')return;
+   sessionStorage.setItem('sdp_plan_prepare_seeded','1');
    localStorage.setItem('sdp_seeded','1');
    localStorage.setItem('sdp_lotes',JSON.stringify(['paja_trigo','salvado_trigo','spawn_grano','bolsa_pp_plana','bolsa_unicorn_microfiltro']
      .map((id,i)=>({id:'fx-'+i,ingredienteId:id,activo:true,cantidadKgDisponible:200,unidad:id.startsWith('bolsa')?'ud':'kg',
@@ -53,6 +55,16 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   await page.selectOption('#form-species-context-select','p_ostreatus_gris');
   await page.evaluate(r=>window.SetasFormulatorAPI.applyRecipe(r),RECETA);
   const navegar=async v=>{await page.evaluate(v=>{window.SetasOSNavigation.navigate(window,v);window.dispatchEvent(new PopStateEvent('popstate'));},v);};
+  const autorizarPreparacion=async()=>{
+    const release=page.getByRole('dialog',{name:'Autorizar ensayo controlado'});
+    await release.getByLabel('Equipo disponible').fill('Equipo de ensayo documentado');
+    await release.getByLabel('Protocolo a ejecutar').fill('Protocolo sintético para prueba de software');
+    await release.getByLabel('Responsable que autoriza').fill('Operador de prueba');
+    await release.getByRole('checkbox').check();
+    const confirmar=release.getByRole('button',{name:/Autorizar, descontar y registrar/i});
+    await confirmar.waitFor({state:'visible'});
+    await confirmar.click();
+  };
   await page.evaluate(recipe=>SetasPrototype.savePlan(localStorage,{
     id:'browser-trial',title:'Ensayo sintético vinculado',hypothesis:'Verificar trazabilidad de software',
     speciesId:'p_ostreatus_gris',design:'exploratory',primaryMetric:'be_pct',status:'draft',
@@ -117,14 +129,7 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   const preparar=page.getByRole('button',{name:/Preparar mezcla/i}).first();
   await preparar.waitFor({state:'visible'});
   await preparar.click();
-  const release=page.getByRole('dialog',{name:'Autorizar ensayo controlado'});
-  await release.getByLabel('Equipo disponible').fill('Equipo de ensayo documentado');
-  await release.getByLabel('Protocolo a ejecutar').fill('Protocolo sintético para prueba de software');
-  await release.getByLabel('Responsable que autoriza').fill('Operador de prueba');
-  await release.getByRole('checkbox').check();
-  const confirmar=release.getByRole('button',{name:/Autorizar, descontar y registrar/i});
-  await confirmar.waitFor({state:'visible'});
-  await confirmar.click();
+  await autorizarPreparacion();
 
   // Ahora sí se movió la bodega.
   await expect.poll(async()=>await stockDe(page,'paja_trigo')).toBeLessThan(pajaAntes);
@@ -141,8 +146,84 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   },lote.id);
   assert.ok(ev.includes('mix_prepared'),`transiciones: ${ev.join(' | ')}`);
 
+  // ── 3. CONFLICTO ENTRE RESERVAS: cero mutaciones hasta liberar ──────────
+  // El físico alcanza para B si se ignora a A, pero A ya lo comprometió. Esta
+  // es la carrera que la guarda de ejecución debe detener.
+  const conflict=await page.evaluate(()=>{
+    const source=(JSON.parse(localStorage.getItem('sdp_bit_lotes')||'[]'))[0];
+    const plan=JSON.parse(JSON.stringify(source.launchPlan));
+    const bId='LOTE_RES_B';
+    const aId='LOTE_RES_A';
+    const pajaNeed=(plan.allocations||[]).filter(x=>x.ingredientId==='paja_trigo').reduce((sum,x)=>sum+x.quantity,0);
+    const inventory=JSON.parse(localStorage.getItem('sdp_lotes')||'[]').map(item=>item.ingredienteId==='paja_trigo'
+      ?{...item,activo:true,cantidadKgTotal:pajaNeed,cantidadKgDisponible:pajaNeed}
+      :{...item,activo:true,cantidadKgTotal:200,cantidadKgDisponible:200});
+    const cleanBatch=(id,codigo)=>({...source,id,codigo,estado:'planificado',lifecycleEvents:[],launchPlan:plan,
+      ingredientLots:plan.allocations||[],fechaFin:null,updatedAt:new Date().toISOString()});
+    const baseBags=JSON.parse(localStorage.getItem('sdp_bit_bolsas')||'[]').filter(x=>x.loteId===source.id);
+    const bags=baseBags.map((bag,i)=>({...bag,id:`B-${i+1}`,codigo:`B-${i+1}`,loteId:bId}));
+    const at=new Date().toISOString();
+    const own=window.SetasInventoryLedger.reservationsForPlan(plan,{batchId:bId,at});
+    const heldByA=window.SetasInventoryLedger.reserve({ingredienteId:'paja_trigo',kg:pajaNeed,batchId:aId,at});
+    const ledger=window.SetasInventoryLedger.addReservations([],[heldByA,...own]);
+    localStorage.setItem('sdp_lotes',JSON.stringify(inventory));
+    localStorage.setItem('sdp_bit_lotes',JSON.stringify([cleanBatch(bId,'UX-RES-B'),cleanBatch(aId,'UX-RES-A')]));
+    localStorage.setItem('sdp_bit_bolsas',JSON.stringify(bags));
+    localStorage.setItem('sdp_inv_reservas',JSON.stringify(ledger));
+    localStorage.setItem('sdp_movimientos','[]');
+    localStorage.setItem('sdp_inventory_ops','[]');
+    return {aId,bId,pajaNeed};
+  });
+  await page.reload();
+  await page.locator('.app-rail-mobile [data-dest="lotes"]').click();
+  const conflictCard=page.locator(`.panel.sdp-lote[data-lote-id="${conflict.bId}"]`).first();
+  await conflictCard.waitFor({state:'visible'});
+  await conflictCard.click();
+
+  const beforeBlock=await page.evaluate(id=>{
+    const read=key=>localStorage.getItem(key)||'';
+    const batch=(JSON.parse(read('sdp_bit_lotes')||'[]')).find(x=>x.id===id);
+    return {inventory:read('sdp_lotes'),movements:read('sdp_movimientos'),ledger:read('sdp_inv_reservas'),ops:read('sdp_inventory_ops'),events:JSON.stringify(batch?.lifecycleEvents||[])};
+  },conflict.bId);
+  await page.getByRole('button',{name:/Preparar mezcla/i}).first().click();
+  const blocked=page.getByRole('dialog',{name:'Inventario comprometido o incompleto'});
+  await expect(blocked).toBeVisible();
+  assert.match(await blocked.innerText(),/No se descontó Bodega ni avanzó el lote/);
+  const afterBlock=await page.evaluate(id=>{
+    const read=key=>localStorage.getItem(key)||'';
+    const batch=(JSON.parse(read('sdp_bit_lotes')||'[]')).find(x=>x.id===id);
+    return {inventory:read('sdp_lotes'),movements:read('sdp_movimientos'),ledger:read('sdp_inv_reservas'),ops:read('sdp_inventory_ops'),events:JSON.stringify(batch?.lifecycleEvents||[])};
+  },conflict.bId);
+  assert.deepEqual(afterBlock,beforeBlock,'el bloqueo por reserva ajena mutó estado físico o trazabilidad');
+  await blocked.getByRole('button',{name:'Aceptar'}).click();
+
+  // Liberar A recupera B sin alterar su plan. Tras recargar, B puede consumir,
+  // cerrar únicamente su propia reserva y registrar una sola transición.
+  await page.evaluate(({aId})=>{
+    const ledger=JSON.parse(localStorage.getItem('sdp_inv_reservas')||'[]');
+    const released=window.SetasInventoryLedger.releaseForBatch(ledger,aId,{at:new Date().toISOString(),reason:'Prueba de recuperación'});
+    localStorage.setItem('sdp_inv_reservas',JSON.stringify(released));
+  },conflict);
+  await page.reload();
+  await page.locator('.app-rail-mobile [data-dest="lotes"]').click();
+  await page.locator(`.panel.sdp-lote[data-lote-id="${conflict.bId}"]`).first().click();
+  await page.getByRole('button',{name:/Preparar mezcla/i}).first().click();
+  await autorizarPreparacion();
+  await expect.poll(async()=>await stockDe(page,'paja_trigo')).toBe(0);
+  await expect.poll(async()=>(await reservas(page)).filter(r=>r.batchId===conflict.bId&&r.status==='held').length).toBe(0);
+  const recovery=await page.evaluate(id=>{
+    const batch=(JSON.parse(localStorage.getItem('sdp_bit_lotes')||'[]')).find(x=>x.id===id)||{};
+    const events=(batch.lifecycleEvents||[]).map(e=>(e.payload&&e.payload.to)||e.action||e.type);
+    const ops=JSON.parse(localStorage.getItem('sdp_inventory_ops')||'[]').filter(x=>x.loteId===id);
+    const consumed=JSON.parse(localStorage.getItem('sdp_inv_reservas')||'[]').filter(r=>r.batchId===id&&r.status==='consumed');
+    return {events,ops,consumed};
+  },conflict.bId);
+  assert.equal(recovery.events.filter(x=>x==='mix_prepared').length,1,'la recuperación no registró exactamente una transición');
+  assert.equal(recovery.ops.length,1,'la recuperación no produjo exactamente una operación de inventario');
+  assert.ok(recovery.consumed.length>0&&recovery.consumed.every(r=>r.consumedByEventId),'la reserva propia no quedó trazada como consumida');
+
   assert.deepEqual(errores,[]);
-  console.log('OK e2e/plan-prepare: planificar reserva sin tocar bodega; preparar la mezcla la descuenta');
+  console.log('OK e2e/plan-prepare: reserva al planificar; conflicto ajeno bloquea sin mutar; liberar permite consumir una vez');
  }finally{
   if(browser)await browser.close();
   server.close();

@@ -135,6 +135,36 @@ function buildLaunchPlan({
   };
 }
 
+// Reasigna un plan guardado contra la foto ACTUAL de Bodega. La composición y
+// las cantidades objetivo no cambian; sólo cambian los lotes FIFO elegidos y
+// los faltantes. Es el puente seguro entre planificar hoy y preparar después.
+function refreshLaunchPlanInventory(plan, inventoryLots = [], unitIngredientIds = []) {
+  if (!plan) throw new Error('refreshLaunchPlanInventory requiere un plan');
+  const unitItems = Array.isArray(plan.unitItems) ? plan.unitItems : [];
+  const unitIds = [...new Set([...(unitIngredientIds || []), ...unitItems.map(i => i.ingredientId)])];
+  const need = [
+    ...(plan.items || []).map(i => [i.ingredientId, i.asReceivedKg, i.unidad || 'kg']),
+    ...(plan.spawnItem ? [[plan.spawnItem.ingredientId, plan.spawnItem.asReceivedKg, plan.spawnItem.unidad || 'kg']] : []),
+    ...unitItems.map(i => [i.ingredientId, i.units, i.unidad || 'ud']),
+  ];
+  const allocations = [];
+  const shortfalls = [];
+  for (const [ingredientId, needed, unidad] of need) {
+    const r = allocate(inventoryLots, ingredientId, needed, unidad, unitIds);
+    allocations.push(...r.allocations);
+    if (r.missing > 0) {
+      const available = unidad === 'ud' ? needed - r.missing : round3(needed - r.missing);
+      shortfalls.push({ ingredientId, needed, available, missing: r.missing, unidad });
+    }
+  }
+  return { ...plan, allocations, shortfalls };
+}
+
+// Separates planning from physical preparation. A plan may expose shortfalls
+// so the operator can prepare a purchase, but FIFO consumption requires a
+// freshly reassigned plan with zero shortfalls.
+const canExecuteLaunchPlan = plan => !!plan && Array.isArray(plan.shortfalls) && plan.shortfalls.length === 0;
+
 // Construye el lote de Bitácora y sus bolsas a partir del plan de lanzamiento.
 // Puro: no toca localStorage ni Firestore — eso lo hace el componente.
 // `estado` decide en qué etapa NACE el lote. Por defecto sigue siendo
@@ -183,6 +213,7 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
     ubicacion: form.sala,
     ingredientShortfalls: (plan.shortfalls || []).map(s => ({ ...s })),
     ingredientLots: (plan.allocations || []).map(a => ({ ...a })),
+    launchPlan: JSON.parse(JSON.stringify(plan)),
     recipeRef: {
       id: now,
       name: recipeName || `Receta ${form.especie} (${form.codigo})`,
@@ -206,7 +237,7 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
   return { lote, bolsas };
 }
 
-const api = { buildPreparationSnapshot, isPreparationCurrent, buildLaunchPlan, buildLoteRecords, unidadDe, cantidadDisponible };
+const api = { buildPreparationSnapshot, isPreparationCurrent, buildLaunchPlan, refreshLaunchPlanInventory, canExecuteLaunchPlan, buildLoteRecords, unidadDe, cantidadDisponible };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

@@ -127,9 +127,12 @@ test('las bandas objetivo tienen una sola definición para Hoy y para Cámaras',
   assert.match(jsx, /criticalMax: 26\.0/);
 });
 
-test('el dashboard de Cámaras prioriza la lectura medida sobre la sintética', () => {
+test('el dashboard de Salas prioriza lecturas medidas y rotula las referencias', () => {
   assert.match(jsx, /const roomLive = liveTelemetry\.roomLive\(selectedClimateRoom\)/);
-  assert.match(jsx, /const currentMetrics = \{ \.\.\.baseMetrics, \.\.\.physicalMetrics, \.\.\.\(injected\|\|\{\}\), \.\.\.liveMetrics \};/);
+  assert.match(jsx, /const currentMetrics = \{ \.\.\.baseMetrics, \.\.\.physicalMetrics, \.\.\.manualMetrics, \.\.\.liveMetrics \};/);
+  assert.match(jsx, /selectedCamera\?\.isMeasured===true/);
+  assert.match(jsx, /label:'REFERENCIA'/);
+  assert.match(jsx, /SIN LECTURA OPERATIVA/);
   assert.match(jsx, /const liveSeriesFor=\(metric,fallback\)=>/);
   assert.match(jsx, /const tempSeries=liveSeriesFor\('temperature_c'/);
   assert.match(jsx, /const co2Series=liveSeriesFor\('co2_ppm'/);
@@ -146,11 +149,13 @@ test('el CO₂ en vivo no se compensa por altitud dos veces', () => {
   assert.doesNotMatch(jsx, /calcBarometricCO2Correction\(currentMetrics\.co2, 745\.0, currentMetrics\.temp\)/);
 });
 
-test('el dashboard no muestra dos veces la misma alerta de la sala', () => {
+test('el dashboard no muestra dos veces la misma alerta ni evalúa referencias como estado operativo', () => {
   // El diagnóstico instantáneo de evalClimateHealth dice lo mismo que el motor
   // de umbrales pero sin dwell ni histéresis. Con telemetría real, mostrar los
   // dos duplica cada problema y la copia sin filtrar parpadea.
-  assert.match(jsx, /\{liveRoomAlerts\.length === 0 && climateHealth\.alerts\.length > 0 && \(/);
+  assert.match(jsx, /\{hasOperationalMetrics && liveRoomAlerts\.length === 0 && climateHealth\.alerts\.length > 0 && \(/);
+  assert.match(shell, /provenance: 'reference', isMeasured: false/);
+  assert.match(shell, /if\(!r\.isMeasured\) return;/);
 });
 
 test('los bloques en vivo se montan en el cockpit que de verdad se renderiza', () => {
@@ -167,6 +172,9 @@ test('los bloques en vivo se montan en el cockpit que de verdad se renderiza', (
     assert.ok(homeBlock.includes(tag), `falta ${tag} en el cockpit home`);
   });
   assert.equal((jsx.match(/<LiveAlertsSection\s*\/>/g)||[]).length, 1, 'las alertas operativas no se duplican');
+  const queueStart=jsx.indexOf('className="home-operational-queue"');
+  const queueBlock=jsx.slice(queueStart,homeStart);
+  assert.ok(queueBlock.includes('<LiveAlertsSection/>'),'las alertas medidas deben permanecer en la banda de atención');
   // Una sola definición de cada pieza: dos copias del markup vuelven a abrir la
   // puerta a que un cockpit muestre un criterio de severidad y el otro, otro.
   ['LiveTelemetryStatusBar', 'LiveAlertsSection', 'LiveClimateStrip'].forEach(name => {

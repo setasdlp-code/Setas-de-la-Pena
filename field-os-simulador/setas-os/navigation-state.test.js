@@ -8,8 +8,27 @@ test('normalizes only known Setas OS views and preserves supported aliases', () 
   assert.equal(navigation.normalizeView('formular'), 'formular');
   assert.equal(navigation.normalizeView('telemetria'), 'clima');
   assert.equal(navigation.normalizeView('optimizar'), 'formular');
+  assert.equal(navigation.normalizeView('hoy'), 'home');
+  assert.equal(navigation.normalizeView('lotes'), 'bitacora');
+  assert.equal(navigation.normalizeView('salas'), 'clima');
+  assert.equal(navigation.normalizeView('recetas'), 'catalogo');
+  assert.equal(navigation.normalizeView('conocimiento'), 'aprender');
   assert.equal(navigation.normalizeView('unknown'), 'home');
   assert.equal(navigation.normalizeView('unknown', null), null);
+});
+
+test('maps compatible route ids into the six canonical product destinations', () => {
+  assert.deepEqual(Object.keys(navigation.DESTINATION_ROUTES), [
+    'hoy', 'lotes', 'salas', 'inventario', 'recetas', 'conocimiento',
+  ]);
+  assert.equal(navigation.destinationForView('home'), 'hoy');
+  assert.equal(navigation.destinationForView('bitacora'), 'lotes');
+  assert.equal(navigation.destinationForView('clima'), 'salas');
+  assert.equal(navigation.destinationForView('inventario'), 'inventario');
+  assert.equal(navigation.destinationForView('formular'), 'recetas');
+  assert.equal(navigation.destinationForView('bioCheck'), 'conocimiento');
+  assert.equal(navigation.viewForDestination('recetas'), 'catalogo');
+  assert.equal(navigation.viewForDestination('not-real'), 'home');
 });
 
 test('reads the view route without allowing arbitrary query values into navigation state', () => {

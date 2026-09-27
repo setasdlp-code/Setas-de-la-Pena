@@ -5827,16 +5827,16 @@ function SimuladorShell(props){
       return navigation?navigation.normalizeView(requested,'home'):(requested||'home');
     }catch(e){return'home';}
   });
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
+  const TAB_LABELS={home:'Hoy',inicio:'Inicio',catalogo:'Recetario',formular:'Nueva receta',inventario:'Inventario',produccion:'Preparar mezcla',schedule:'Planificar',clima:'Salas',bitacora:'Lotes',bioCheck:'Bioseguridad',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
-    {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
+    {key:'recetas',label:'Recetas',tabs:['catalogo','formular','produccion'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
     {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
+    {key:'registro',label:'Lotes',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const TAB_PAGE_TITLES={home:'Hoy',inicio:'Inicio',catalogo:'Recetas',formular:'Nueva receta',inventario:'Inventario',produccion:'Preparar mezcla',schedule:'Planificar cultivo',clima:'Salas',bitacora:'Lotes',bioCheck:'Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular'];
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
@@ -6930,7 +6930,20 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Libro de reservas de inventario (inventory-ledger.js): compromisos de
   // kilos por lote de producción, aparte de invLotes (lo físico). Ver
   // mergeReservas más abajo para la única forma de escribir aquí.
-  const [invReservas,setInvReservas]=useState([]);
+  const [invReservas,setInvReservasState]=useState([]);
+  // Espejo síncrono equivalente a invLotesRef. La guarda de Preparar mezcla
+  // debe ver una reserva creada/liberada en este mismo tick, no esperar al
+  // siguiente render de React.
+  const invReservasRef=useRef([]);
+  const setInvReservas=(nextOrUpdater)=>{
+    const next=typeof nextOrUpdater==='function'
+      ?nextOrUpdater(invReservasRef.current)
+      :nextOrUpdater;
+    invReservasRef.current=next;
+    setInvReservasState(next);
+    return next;
+  };
+  useEffect(()=>{invReservasRef.current=invReservas;},[invReservas]);
   const [invTab,setInvTab]=useState('stock');
   const [stockAlertsExpanded,setStockAlertsExpanded]=useState(false);
   const [formularMode,setFormularMode]=useState('auto');
@@ -8988,13 +9001,41 @@ body{margin:0;padding:20px 24px;background:#fff;}
     return true;
   };
 
+  const checkExecutionAvailability=({loteId,plan})=>{
+    if(!SetasLaunchPlanApi.canExecuteLaunchPlan(plan)){
+      return {ok:false,reason:'physical_shortfall',lines:(plan?.shortfalls||[]).map(s=>({
+        ingredienteId:s.ingredientId,faltante:s.missing,unidad:s.unidad,
+      }))};
+    }
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi||typeof ledgerApi.checkPlanForExecution!=='function'){
+      return {ok:false,reason:'ledger_unavailable',lines:[]};
+    }
+    const incoming=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
+    return ledgerApi.checkPlanForExecution(plan,{
+      lots:invLotesRef.current,
+      ledger:invReservasRef.current,
+      incoming,
+      nowMs:Date.now(),
+      batchId:loteId,
+    });
+  };
+
   const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{
+    const availability=checkExecutionAvailability({loteId,plan});
+    if(!availability.ok){
+      return {ok:false,reason:'reservation_shortfall',shortfalls:availability.lines||[],mensaje:availability.mensaje||''};
+    }
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
-    if(!added) return false;   // this lote was already discounted: never apply twice
+    if(!added) return {ok:false,reason:'already_applied'}; // this lote was already discounted: never apply twice
     // invLotesRef se actualiza aquí mismo, síncrono: dos confirmaciones
     // casi simultáneas ven el stock real que dejó la anterior.
     const r=SetasInventoryConsumptionApi.applyLocal(invLotesRef.current,op,{fecha,nota});
+    // Última guarda, dentro del controlador que mueve Bodega: si el stock
+    // cambió después de abrir el modal, no se aplica un consumo parcial ni se
+    // avanza el lote. La acción se reabre con una asignación FIFO fresca.
+    if(r.shortfalls.length) return {ok:false,reason:'shortfall',shortfalls:r.shortfalls};
     invLotesRef.current=r.lotes;
     setInvLotes(r.lotes);
     try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
@@ -9010,26 +9051,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(ledgerApi){
       const nowIso=new Date().toISOString();
       setInvReservas(prev=>{
-        const pendientes=prev.filter(r=>r&&r.batchId===loteId&&r.status==='held');
-        let upd=prev;
-        let aCerrar=pendientes;
-        if(!pendientes.length){
-          const reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso});
-          upd=ledgerApi.addReservations(prev,reservas);
-          aCerrar=reservas;
-        }
+        const reservas=ledgerApi.reservationsForPlan(plan,{batchId:loteId,at:nowIso});
+        let upd=ledgerApi.addReservations(prev,reservas);
+        const aCerrar=upd.filter(r=>r&&r.batchId===loteId&&r.status==='held');
         upd=aCerrar.reduce((acc,r)=>ledgerApi.consume(acc,r.id,{eventId:op.opId,at:nowIso}),upd);
         try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
         return upd;
       });
     }
-    if(r.shortfalls.length){
-      console.warn('Consumo de inventario con faltante frente al plan (stock cambió entre planificar y confirmar):',r.shortfalls);
-    }
     const finalQueue=queue.map(o=>o.opId===r.appliedOp.opId?r.appliedOp:o);
     saveInvOps(finalQueue);
     runInventorySync();
-    return true;
+    return {ok:true};
   };
   useEffect(()=>{runInventorySync();const on=()=>runInventorySync();window.addEventListener('online',on);window.addEventListener('setas-db-ready',on);return()=>{window.removeEventListener('online',on);window.removeEventListener('setas-db-ready',on);};},[runInventorySync]);
 
@@ -10419,6 +10452,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     if(action==='prepare_mix'){
+      const asignaciones=(lote.ingredientLots||[]).map(a=>({...a}));
+      if(!asignaciones.length){
+        setNoticeDlg({title:'Sin plan de insumos',msg:'Este lote no guardó qué insumos consumir, así que no hay nada que descontar. Regístralo a mano en Bodega.'});
+        return;
+      }
+      const planBase=lote.launchPlan||{allocations:asignaciones,shortfalls:[],preparation:lote.preparation||null};
+      const plan=lote.launchPlan&&SetasLaunchPlanApi.refreshLaunchPlanInventory
+        ?SetasLaunchPlanApi.refreshLaunchPlanInventory(planBase,invLotesRef.current)
+        :planBase;
+      const executionCheck=checkExecutionAvailability({loteId:lote.id,plan});
+      if(!executionCheck.ok){
+        const faltantes=(executionCheck.lines||[]).filter(s=>s.faltante>0).map(s=>{
+          const nombre=effectiveINGS.find(g=>g.id===s.ingredienteId)?.name||s.ingredienteId;
+          return `${nombre}: ${s.faltante} ${s.unidad}`;
+        }).join(' · ');
+        setInvTab('compra');
+        setNoticeDlg({title:executionCheck.reason==='ledger_unavailable'?'No se pudo verificar Inventario':'Inventario comprometido o incompleto',msg:`No se descontó Bodega ni avanzó el lote. Registra o libera los insumos necesarios antes de preparar la mezcla${faltantes?`: ${faltantes}`:'.'}`});
+        return;
+      }
       setReleaseBatchId(lote.id);
       return;
     }
@@ -11224,10 +11276,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
     const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'referencia de modelo · sin lectura de sonda' };
-    const physicalMetrics=selectedCamera?{
+    const physicalMetrics=selectedCamera?.isMeasured===true?{
       temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'monitor de cámara'
     }:{};
     const injected = injectedClimateReadings[selectedClimateRoom];
+    const manualMetrics={};
+    if(injected){
+      ['temp','rh','co2','subTemp'].forEach(key=>{if(Number.isFinite(Number(injected[key])))manualMetrics[key]=Number(injected[key]);});
+      if(Object.keys(manualMetrics).length)manualMetrics.timestamp=injected.timestamp||'lectura manual';
+    }
 
     // Telemetría real del puente (WebSocket / MQTT / Firestore), ya compensada
     // por altitud. Se arma métrica por métrica porque una sala puede tener sonda
@@ -11242,8 +11299,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const hasLiveMetrics = Object.keys(liveMetrics).length > 0;
     if (hasLiveMetrics) liveMetrics.timestamp = `${liveAgeLabel(roomLive.ageMs)} · ${(liveSample.sources||[]).join(' + ')||'en vivo'}`;
 
-    // Prioridad: telemetría en vivo > webhook manual > monitor de cámara > demo.
-    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}), ...liveMetrics };
+    // Prioridad: telemetría en vivo > lectura manual > monitor medido > referencia.
+    const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...manualMetrics, ...liveMetrics };
+    const metricProvenance=key=>{
+      if(Object.prototype.hasOwnProperty.call(liveMetrics,key))return{kind:'measured',label:'MEDIDO',short:'med.'};
+      if(Object.prototype.hasOwnProperty.call(manualMetrics,key))return{kind:'manual',label:'MANUAL',short:'manual'};
+      if(Object.prototype.hasOwnProperty.call(physicalMetrics,key))return{kind:'measured',label:'MEDIDO',short:'med.'};
+      return{kind:'reference',label:'REFERENCIA',short:'ref.'};
+    };
+    const provenanceBadge=key=>{const p=metricProvenance(key);return <span className="sdp-provenance" data-provenance={p.kind==='reference'?'simulated':p.kind}>{p.label}</span>;};
+    const hasOperationalMetrics=['temp','rh','co2'].every(key=>metricProvenance(key).kind!=='reference');
     const liveRoomAlerts = liveTelemetry.roomAlerts(selectedClimateRoom);
     const co2Correction = liveSample.co2_correction || null;
 
@@ -11771,7 +11836,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <AppIcon name="temp" size={13} />
               <span>Hub IoT & Firmware</span>
             </button>
-              <span className="climate-live-label" data-live={hasLiveMetrics?'true':'false'}><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
+              <span className="climate-live-label" data-live={hasLiveMetrics?'true':'false'} data-operational={hasOperationalMetrics?'true':'false'}><i/> {cameras.length} nodos · {currentMetrics.timestamp}</span>
             </div>
           </div>
           {cameras.length>0?<div className="climate-module-grid" data-testid="salas-grid">
@@ -11780,6 +11845,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const cardLive = liveTelemetry.roomLive(roomId);
               const cardSample = (cardLive && cardLive.sample) || {};
               const cardHasLive = ['temperature_c','rh_pct','co2_ppm'].some(metric => Number.isFinite(cardSample[metric]));
+              const cardTemp=Number.isFinite(cardSample.temperature_c)?cardSample.temperature_c:c.liveTemp;
+              const cardRh=Number.isFinite(cardSample.rh_pct)?cardSample.rh_pct:c.liveHum;
+              const cardCo2=Number.isFinite(cardSample.co2_ppm)?cardSample.co2_ppm:c.liveCo2;
+              const cardProvenance=metric=>Number.isFinite(cardSample[metric])?'med.':c.isMeasured===true?'med.':'ref.';
               // Lotes/bolsas reales de la sala — mismo criterio que batch-sheet.js
               // (bagsActive excluye descartada/contaminada) para que Salas y Batch
               // Detail nunca discrepen sobre qué bolsa cuenta como activa.
@@ -11792,8 +11861,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               return <button key={c.id} type="button" className={`climate-module-card ${roomId===selectedClimateRoom?'on':''}`} onClick={()=>setSelectedClimateRoom(roomId)} aria-pressed={roomId===selectedClimateRoom}>
                 <span className="climate-module-top"><span><i style={{background:c.estadoAccent}}/>{c.name}</span><b>{c.estadoLabel}</b></span>
                 <span className="climate-module-meta">Zona {c.zona} · {c.sppName} · {c.count} activos</span>
-                <span className="climate-module-readings"><span><small>Temp.</small><strong>{c.liveTemp}°</strong></span><span><small>HR</small><strong>{c.liveHum}%</strong></span><span><small>CO₂</small><strong>{c.liveCo2}</strong></span></span>
-                {!cardHasLive&&<span className="climate-module-reference">Referencia de modelo · sin lectura de sonda</span>}
+                <span className="climate-module-readings"><span><small>Temp. · {cardProvenance('temperature_c')}</small><strong>{cardTemp}°</strong></span><span><small>HR · {cardProvenance('rh_pct')}</small><strong>{cardRh}%</strong></span><span><small>CO₂ · {cardProvenance('co2_ppm')}</small><strong>{cardCo2}</strong></span></span>
+                <span className="climate-module-reference">{cardHasLive||c.isMeasured===true?'Lectura operativa':'Referencia de modelo · sin lectura de sonda'}</span>
                 <span className="climate-module-batches">{roomBatches.length} lote{roomBatches.length===1?'':'s'} · {roomBagsActive}/{roomBagsTotal} bolsas</span>
                 <span className="climate-occupancy"><span><i style={{width:`${c.occupancy}%`,background:c.estadoAccent}}/></span><b>{c.occupancy}% ocupado</b></span>
                 {c.hasLiveAlert&&<span className="climate-module-alert">{c.liveAlertNote}</span>}
@@ -11887,14 +11956,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{
               padding:'6px 12px',
               borderRadius:'var(--radius-sm)',
-              background: climateHealth.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
-              color: climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-800)',
-              border: `1px solid ${climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-600)'}`,
+              background: !hasOperationalMetrics?'var(--paper-2)':climateHealth.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
+              color: !hasOperationalMetrics?'var(--ink-2)':climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-800)',
+              border: `1px solid ${!hasOperationalMetrics?'var(--line-0)':climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-600)'}`,
               fontFamily:'var(--font-mono)',
               fontSize:11,
               fontWeight:700
             }}>
-              {climateHealth.severity === 'critical' ? 'ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
+              {!hasOperationalMetrics?'SIN LECTURA OPERATIVA':climateHealth.severity === 'critical' ? 'ALERTA AMBIENTAL' : '● CONDICIONES NOMINALES'}
             </div>
           </div>
         </div>
@@ -12000,7 +12069,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             esta lista se oculta: dice lo mismo pero sin dwell ni histéresis, así
             que con telemetría real mostraría dos veces el mismo problema — y la
             copia sin filtrar parpadearía mientras la filtrada se mantiene. */}
-        {liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && (
+        {hasOperationalMetrics && liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && (
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             {climateHealth.alerts.map((al, idx) => (
               <div key={idx} style={{
@@ -12093,7 +12162,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 <div className="climate-kpi-value sdp-tele__value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span>{ndirCorr.correctedPpm}</span>
-                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm compensados</span>
+                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>{metricProvenance('co2').kind==='reference'?'ppm de referencia':'ppm'}</span>
                   <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
                 <div className="climate-kpi-sub sdp-tele__label">
@@ -12108,9 +12177,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-kpi-header sdp-tele__header">
               <span>VPD & Psicrometría</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                <span className="sdp-provenance">Estimado · derivado de T° y HR</span>
-                <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
-                  {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
+                <span className="sdp-provenance" data-provenance={hasOperationalMetrics?'estimated':'simulated'}>{hasOperationalMetrics?'ESTIMADO':'REFERENCIA'}</span>
+                <span style={{color: hasOperationalMetrics&&vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
+                  {!hasOperationalMetrics?'Proyección de referencia':vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
                 </span>
               </div>
             </div>
@@ -12348,7 +12417,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onTouchMove={handleTouchMove}
               />
               <div style={{marginTop:8,fontSize:9,fontFamily:'var(--font-sans)',color:'var(--ink-2)',textAlign:'center',maxWidth:240}}>
-                Triángulo sólido: Sensores en vivo (Compensados).<br/>
+                Triángulo sólido: {hasOperationalMetrics?'Lecturas operativas':'Referencia del modelo'}.<br/>
                 Línea discontinua: Proyección del simulador.
               </div>
             </div>
@@ -12442,12 +12511,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Actuadores y Relés de Potencia (Hosyond 2ch)
               </h3>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)',marginTop:2}}>
-                Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto
+                Simulación local de histéresis y pulsos. No envía comandos al equipo.
               </div>
             </div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--moss-700)',fontWeight:700}}>
-              ● Lógica Local Activa (ESP32)
-            </div>
+            <span className="sdp-provenance" data-provenance="simulated">SIMULACIÓN LOCAL</span>
           </div>
 
           <div className="climate-actuators-grid">
@@ -12458,12 +12525,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Humidificador (Relay Ch1 · T7/H05)
                 </span>
                 <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min) ? 'on' : 'off'}`}>
-                  {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (currentMetrics.rh < defaultTargets.rh_pct.min ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
+                  {humidifierOverride === 'ON' ? 'SIM [ON]' : humidifierOverride === 'OFF' ? 'SIM [OFF]' : (currentMetrics.rh < defaultTargets.rh_pct.min ? 'SIM [ENCENDIDO]' : 'SIM [REPOSO]')}
                 </span>
               </div>
               <div className="climate-actuator-meta">
                 <b>Potencia:</b> 100% · <b>Modo:</b> {humidifierOverride ? 'Manual' : 'Bang-Bang con Histéresis'} (Min idle: 120s)<br/>
-                <b>Diagnóstico:</b> {humidifierOverride === 'ON' ? 'Forzado manualmente por el operario.' : (currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`)}
+                <b>Diagnóstico:</b> {!hasOperationalMetrics?'Sin lectura operativa. La comparación usa la referencia del modelo.':humidifierOverride === 'ON' ? 'Simulación activada por el operario.' : (currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`)}
               </div>
               <div style={{display:'flex',gap:6,marginTop:4}}>
                 <button
@@ -12471,7 +12538,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   className="climate-actuator-btn"
                   onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
                 >
-                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : <><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)</>}
+                  {humidifierOverride === 'ON' ? '↺ Restablecer simulación' : 'Simular humidificación (1 min)'}
                 </button>
                 {humidifierOverride !== null && (
                   <button
@@ -12492,12 +12559,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <AppIcon name="wind" size={13} style={{marginRight:4}} /> Extractor FAE (Relay Ch2 · Cloudline H4)
                 </span>
                 <span className={`climate-actuator-badge ${faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'pulse' : 'off'}`}>
-                  {faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'PULSO ACTIVO (35s)' : 'AUTO [EN ESPERA]'}
+                  {faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'SIM [PULSO 35s]' : 'SIM [EN ESPERA]'}
                 </span>
               </div>
               <div className="climate-actuator-meta">
                 <b>Velocidad física:</b> 1–2 (~18 CFM efectivo) · <b>Duración pulso:</b> 35s<br/>
-                <b>Diagnóstico:</b> {faePulseActive ? 'Evacuando CO2 y renovando aire fresco...' : (currentMetrics.co2 > defaultTargets.co2_ppm.max ? `CO₂ alto (${currentMetrics.co2} ppm > ${defaultTargets.co2_ppm.max} ppm)` : `CO₂ en rango (${currentMetrics.co2} ppm). Próximo pulso programado en ~12 min`)}
+                <b>Diagnóstico:</b> {!hasOperationalMetrics?'Sin lectura operativa. La comparación usa la referencia del modelo.':faePulseActive ? 'Simulando renovación de aire.' : (currentMetrics.co2 > defaultTargets.co2_ppm.max ? `CO₂ alto (${currentMetrics.co2} ppm > ${defaultTargets.co2_ppm.max} ppm)` : `CO₂ en rango (${currentMetrics.co2} ppm). Próximo pulso programado en ~12 min`)}
               </div>
               <div style={{display:'flex',gap:6,marginTop:4}}>
                 <button
@@ -12509,29 +12576,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   }}
                   disabled={faePulseActive}
                 >
-                  {faePulseActive ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Pulso en Curso...</> : <><AppIcon name="wind" size={13} style={{marginRight:4}} /> Disparar Pulso FAE (35s)</>}
+                  {faePulseActive ? <><AppIcon name="clock" size={13} style={{marginRight:4}} /> Simulación en curso...</> : <><AppIcon name="wind" size={13} style={{marginRight:4}} /> Simular pulso FAE (35s)</>}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Historial de Eventos Recientes de Actuación */}
+          {/* No se inventan eventos de actuación. La integración de hardware
+              debe aportar eventos verificados antes de mostrar un historial. */}
           <div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-1)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>
-              <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Historial Reciente de Conmutación de Relés
+              <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Historial de actuadores
             </div>
             <div className="climate-actuator-logs">
               <div className="climate-log-row">
-                <span>[Ch2 · Extractor H4] Pulso periódico FAE completado (35s a vel. 1)</span>
-                <span style={{color:'var(--ink-2)'}}>hace 14m</span>
-              </div>
-              <div className="climate-log-row">
-                <span>[Ch1 · Humidificador T7] Apagado al alcanzar HR target (91.5% >= 90%)</span>
-                <span style={{color:'var(--ink-2)'}}>hace 22m</span>
-              </div>
-              <div className="climate-log-row">
-                <span>[Ch1 · Humidificador T7] Encendido por banda mínima (84.2% &lt; 85%)</span>
-                <span style={{color:'var(--ink-2)'}}>hace 26m</span>
+                <span>Sin eventos de actuadores verificados en esta sesión.</span>
+                <span className="sdp-provenance" data-provenance="pending">PENDIENTE</span>
               </div>
             </div>
           </div>
@@ -12598,11 +12658,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {bitTab==='bit_dash'&&(
               <div className="panel">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                  <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Lotes experimentales <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({bitLotes.length})</span></div>
-                  <div style={{display:'flex',gap:6}}>
+                  <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Lotes <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({bitLotes.length})</span></div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'100%'}}>
                     <button onClick={()=>setBitDashView('grid')} style={{padding:'6px 12px',background:bitDashView==='grid'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='grid'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>⊞ Cuadrícula</button>
                     <button onClick={()=>setBitDashView('tabla')} style={{padding:'6px 12px',background:bitDashView==='tabla'?'var(--ink-900)':'var(--paper-50)',color:bitDashView==='tabla'?'var(--paper-0)':'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",cursor:'pointer',transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>≡ Tabla</button>
-                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">+ Nueva prueba</button>
+                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="inv-btn inv-btn-pri">Nuevo lote de prueba</button>
                   </div>
                 </div>
                 {bitLotes.length>0&&(()=>{const allStats=bitLotes.map(lt=>({lt,s:calcLoteStats(lt.id)}));const wd=allStats.filter(x=>x.s&&x.s.totalFresco>0);const avgBE=wd.length?wd.reduce((s,x)=>s+(x.s.be||0),0)/wd.length:null;const ws=allStats.filter(x=>x.s);const avgCont=ws.length?ws.reduce((s,x)=>s+(x.s.contPct||0),0)/ws.length:null;const totalKg=allStats.reduce((s,x)=>s+(x.s?.totalFresco||0),0);return(<div className="inv-stat-row" style={{marginBottom:16}}><div className="inv-stat"><div className="inv-stat-val">{bitLotes.length}</div><div className="inv-stat-lbl">Lotes</div></div><div className="inv-stat"><div className="inv-stat-val">{avgBE!=null?avgBE.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE media</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:avgCont!=null&&avgCont>15?'var(--coral-700)':'inherit'}}>{avgCont!=null?avgCont.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">Contam. media</div></div><div className="inv-stat"><div className="inv-stat-val">{totalKg.toFixed(2)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>);})()} 
@@ -13008,7 +13068,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           const nowLots=operationalQueue.filter(item=>item.bucket==='overdue'||item.bucket==='now');
           const laterLots=operationalQueue.filter(item=>item.bucket==='later'||item.bucket==='context');
 
-          // Ambientes & Sensores: cámaras físicas REALES
+          // Ambientes & Sensores: salas configuradas. El shell declara si cada
+          // valor proviene de una medición o de la referencia del modelo.
           let camaras=[];
           try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
@@ -13048,31 +13109,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             sala: l.sala || l.ubicacion || null,
           }));
 
+          // El snapshot del puente conserva timestamps exactos por última
+          // lectura, pero sus buffers reducidos contienen valores sin tiempo.
+          // No inventamos una cadencia para convertir curvas de referencia en
+          // evidencia operacional: el Copiloto funciona sin series hasta que
+          // el contrato exponga puntos medidos con su timestamp original.
           const copilotSeriesByRoom = {};
-          try {
-            const camIdToRoomId = {};
-            Object.keys(ROOMS_CONFIG).forEach(rid => { camIdToRoomId[ROOMS_CONFIG[rid].cameraId] = rid; });
-            camaras.forEach(cam => {
-              if (!cam || !cam.id) return;
-              const roomId = camIdToRoomId[cam.id] || cam.id;
-              const temps = Array.isArray(cam.tempSeries) ? cam.tempSeries : [];
-              const hums = Array.isArray(cam.humSeries) ? cam.humSeries : [];
-              const co2s = Array.isArray(cam.co2Series) ? cam.co2Series : [];
-              const n = Math.max(temps.length, hums.length, co2s.length);
-              if (!n) return;
-              // La demo de cámaras no trae timestamp por lectura: se asume 1
-              // lectura/hora terminando en "ahora" solo para poder alimentar
-              // los motores, que sí requieren series con `t`. Telemetría real
-              // (roomLive.series) trae su propio `t` y no pasa por aquí.
-              const stepMs = 3600000;
-              const series = [];
-              for (let i = 0; i < n; i++) {
-                const idxFromEnd = n - 1 - i;
-                series.push({ t: operationalNow - idxFromEnd * stepMs, temperature_c: temps[i], rh_pct: hums[i], co2_ppm: co2s[i] });
-              }
-              copilotSeriesByRoom[roomId] = series;
-            });
-          } catch (e) { /* copilotSeriesByRoom queda parcial/vacío; el copiloto sigue sin telemetría de cámara */ }
 
           let copilotBriefing = null;
           try {
@@ -13149,21 +13191,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
             }
           };
 
-          return (
-            <div className="home-cockpit">
-              {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
-              <div className="home-header-cockpit">
+          const homeContext=(
+              <section className="home-header-cockpit" aria-label="Contexto y registro del turno">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:16}}>
                   <div style={{minWidth:240}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                       <span style={{width:8,height:8,borderRadius:0,background:operationStatus.color,display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:operationStatus.color}}>
-                        CONTROL · TURNO ACTUAL
+                        OPERACIÓN · TURNO ACTUAL
                       </span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2, #6B6759)'}}>· Tenjo · 2.592 msnm</span>
                     </div>
                     <h1 style={{fontFamily:'var(--font-serif, "Gaya", serif)',fontWeight:700,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.01em',color:'var(--ink-0, #1E1D19)',margin:0}}>
-                      Tablero de Control
+                      Hoy
                     </h1>
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
@@ -13200,7 +13240,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   </div>
                 )}
-              </div>
+              </section>
+          );
+
+          return (
+            <div className="home-cockpit">
 
               {/* COLA OPERATIVA DE HOY · 3 BANDAS DE PRIORIDAD (DS-2026 CRITERIO FIELD MODE) */}
               <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
@@ -13634,6 +13678,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   )}
                 </div>
               )}
+              {/* El contexto sano sigue a las decisiones del turno. La cola de
+                  atención/ahora/después conserva la primera posición visual y
+                  semántica para operación de campo y lectores de pantalla. */}
+              {homeContext}
 
               {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
               <div style={{
@@ -13771,11 +13819,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       SECCIÓN C · AMBIENTES & SENSORES
                     </span>
                     <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                      Cámaras de Cultivo
+                      Salas de cultivo
                     </h2>
                   </div>
                   <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
-                    Ver Cámaras & IoT ({camaras.length}) →
+                    Ver Salas e IoT ({camaras.length}) →
                   </button>
                 </div>
 
@@ -13786,7 +13834,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 ) : (
                   <div className="home-ambient-strip">
                     {camaras.map(c=>(
-                      <div key={c.id} className="sdp-tele ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-2)'}`}}>
+                      <div key={c.id} className="sdp-tele ambient-chamber-card" data-provenance={c.isMeasured===true?'measured':'reference'} style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-2)'}`}}>
                         <div style={{minWidth:0,flex:1}}>
                           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
                             <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-2)'}}><IconCamera size={13}/></span>
@@ -13798,6 +13846,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>
                             Zona {c.zona} · {c.sppName} · {c.occupancy}% cap.
                           </div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-2)',marginTop:2,textTransform:'uppercase'}}>
+                            {c.isMeasured===true?'Medido por sonda':'Referencia de modelo · sin lectura de sonda'}
+                          </div>
                           {c.hasLiveAlert && (
                             <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--accent-terracotta)',marginTop:2,fontWeight:700}}>
                               <AppIcon name="alert" size={11} color="var(--accent-terracotta)" style={{marginRight:4}} /> {c.liveAlertNote}
@@ -13808,13 +13859,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
                           <div style={{display:'flex',gap:6,textAlign:'center',fontFamily:'var(--font-mono)'}}>
                             <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveTemp}°C
+                              {c.liveTemp}°C <span style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>{c.isMeasured===true?'med.':'ref.'}</span>
                             </span>
                             <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveHum}%
+                              {c.liveHum}% <span style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>{c.isMeasured===true?'med.':'ref.'}</span>
                             </span>
                             <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveCo2} <span className="chem" style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>CO₂ ppm</span>
+                              {c.liveCo2} <span className="chem" style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>CO₂ ppm · {c.isMeasured===true?'med.':'ref.'}</span>
                             </span>
                           </div>
                           <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-2)',display:'grid',placeItems:'center'}}>
@@ -13895,8 +13946,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <div className="spp-sect spp-sect-catalog">
             <div className="catalog-hdr">
               <div>
-                <span className="catalog-eyebrow">Receta</span>
-                <h1 className="catalog-title">Catálogo de especies &amp; Recetario</h1>
+                <span className="catalog-eyebrow">Biblioteca</span>
+                <h1 className="catalog-title">Recetas</h1>
               </div>
               <div className="catalog-hdr-stats">
                 <span><b>{Object.keys(SPP).length}</b> especies</span>
@@ -13904,6 +13955,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span><b>{saved.length}</b> receta{saved.length!==1?'s':''} guardada{saved.length!==1?'s':''}</span>
               </div>
             </div>
+            <details className="species-catalog-disclosure">
+              <summary>
+                <span>Explorar catálogo de especies</span>
+                <small>Referencia de cultivo y filtro del recetario</small>
+              </summary>
             <div className="spp-grid">
               {Object.entries(SPP).map(([k,d],idx)=>{
                 const hasImg=!!IMG[k];
@@ -13943,6 +13999,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 );
               })}
             </div>
+            </details>
 
             <div className="ed-div" aria-hidden="true"><span className="ed-div__m">Recetario</span></div>
 
@@ -14274,10 +14331,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
                 <AppIcon name="wand" size={13} />
-                <span>Generador de Recetas</span>
+                <span>Herramientas avanzadas</span>
               </button>
             </nav>
-            <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
+            {builderSubTab==='generador'&&<div className="formular-coform-control" role="group" aria-label="Co-Formulación">
               <button
                 type="button"
                 id="formular-coform-toggle"
@@ -14291,8 +14348,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>{coFormMode?'Co-Formulación activa':'Co-Formulación'}</span>
                 <small>{coFormMode?'Ocultar ponderación':'Combinar especies'}</small>
               </button>
-            </div>
-            {coFormMode&&(
+            </div>}
+            {builderSubTab==='generador'&&coFormMode&&(
               <section id="co-form-panel" className="co-form-panel" data-testid="co-form-panel" aria-labelledby="formular-coform-toggle">
                 <header className="co-form-panel-head">
                   <div>
@@ -15892,10 +15949,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             )}
                             {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
-                              <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
+                              <div data-testid="generator-empty-state" role="status" aria-live="polite" style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
                                 {(()=>{const d=optResults[`_diag_${optProfile}`]||{diag:optResults._diag?.diag};const diag=d?.diag;return diag?(
                                   <div>
-                                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas — diagnóstico</div>
+                                    <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas: diagnóstico</div>
                                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4px 16px',marginBottom:12}}>
                                       {[
                                         ['Stock en bodega',diag.stockIds],
@@ -15923,8 +15980,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
-                                Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
+                              <button type="button" data-testid="generator-empty-state" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                                Sin stock registrado. Ve a <strong>Inventario &gt; Compra</strong> para agregar ingredientes.
                               </button>
                             )}
                           </div>
@@ -16804,7 +16861,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </tbody>
                 </table>
               </div>
-              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Uno o más ingredientes no tienen stock suficiente — se reservará lo disponible y el faltante quedará a 0.</div>}
+              {loteBatchConfirm.preview.some(r=>!r.ok)&&<div role="alert" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--coral-700)',background:'color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))',border:'1px solid var(--coral-200)',borderRadius:4,padding:'8px 12px',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><AppIcon name="alert" size={13} color="var(--coral-700)" /> Inventario incompleto. El lote puede quedar planificado; solo se reservará lo disponible y los faltantes deberán registrarse antes de preparar la mezcla.</div>}
               <div className="inv-modal-actions">
                 <button onClick={()=>setLoteBatchConfirm(null)} disabled={ejecutandoLote} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button onClick={confirmarEjecucion} disabled={ejecutandoLote} className="inv-btn inv-btn-pri">{ejecutandoLote?'Reservando…':'Confirmar y reservar'}</button>
@@ -18094,11 +18151,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   return h?<div data-testid="launch-humedad-procedencia" className={'os-provenance-notice'+(h.estimados.length?' os-provenance-notice--estimated':'')} style={{marginBottom:12}}>{h.texto}</div>:null;})()}
 
                 <p>{f.plan.preparation.revision} · agua {f.plan.preparation.totals.waterToAddKg.toFixed(4)} L · pesaje {f.plan.preparation.weighing.resolutionG} g · Bodega a 1 g.</p>
-                {/* Desglose de Insumos y Descuento en Bodega */}
+                {/* Desglose de insumos que quedarán reservados al planificar */}
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:6}}>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--ink-1)'}}>
-                      <AppIcon name="box" size={14} style={{marginRight:6}} /> Insumos a Descontar de Bodega
+                      <AppIcon name="box" size={14} style={{marginRight:6}} /> Insumos a reservar
                     </span>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:10,color: allInsumosOk ? 'var(--moss-700)' : 'var(--coral-500)'}}>
                       {allInsumosOk ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} color="var(--moss-700)" /> Stock suficiente para todo el batch</span> : <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-500)" /> Algunos insumos requieren compra</span>}
@@ -18106,8 +18163,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {f.plan?.shortfalls?.length > 0 && (
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
-                      <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
+                    <div role="alert" style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                      <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en Inventario: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Puedes guardar el plan; registra los faltantes antes de preparar la mezcla.
                     </div>
                   )}
 
@@ -18278,7 +18335,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     className="btn-launch-prod"
                     style={{minHeight:44,padding:'8px 20px'}}
                   >
-                    {launching ? 'Lanzando…' : <><AppIcon name="rocket" size={14} style={{marginRight:6}} /> Confirmar y Lanzar Producción</>}
+                    {launching ? 'Planificando…' : <><AppIcon name="rocket" size={14} style={{marginRight:6}} /> Confirmar y planificar</>}
                   </button>
                 </div>
               </div>

@@ -19,7 +19,7 @@
  */
 
 // build:cache-version
-const CACHE_VERSION = '684a99a52676';
+const CACHE_VERSION = '7779a0b604ed';
 const CACHE = `setas-os-${CACHE_VERSION}`;
 
 // Lo imprescindible para pintar algo y llegar al gate de autenticación.

@@ -60,7 +60,7 @@ const preparationFixture=()=>{
  const storage=memory(),at='2026-09-26T12:00:00.000Z';
  const lote={id:'b',codigo:'TEST-1',createdAt:at,estado:'planificado',recipeRef:{id:'r'},preparation:{revision:'v1'},ingredientLots:[{ingredientId:'a',lotId:'stock',quantity:2,unidad:'kg'}]};
  const plan={allocations:lote.ingredientLots,shortfalls:[]};
- p.persist(storage,[['sdp_lotes',[{id:'stock',cantidadKgDisponible:10,activo:true}]]]);
+ p.persist(storage,[['sdp_lotes',[{id:'stock',ingredienteId:'a',cantidadKgDisponible:10,activo:true}]]]);
  p.planBatch(storage,{lote,bolsas:[{id:'bag',loteId:'b'}],plan});
  const sheet=require('./batch-sheet').buildBatchSheet({lote,bolsas:[],cosechas:[],nowMs:Date.parse(at)});
  const trialRelease=p.release(lote,{equipment:'Fixture',protocol:'Fixture',reviewer:'Test',acknowledged:true,at});
@@ -78,6 +78,21 @@ test('planning atomically reserves without consumption; preparation validates th
  assert.equal(p.read(storage,'sdp_movimientos').length,1);
  assert.equal(p.read(storage,'sdp_bit_lotes')[0].lifecycleState,undefined);
 });
+test('preparation rejects another batch reservation without mutation, then succeeds after release',()=>{
+ const {storage,args}=preparationFixture();
+ const ledgerApi=require('./inventory-ledger');
+ const competing=ledgerApi.reserve({ingredienteId:'a',kg:9,batchId:'other',at:args.at});
+ p.persist(storage,[['sdp_inv_reservas',ledgerApi.addReservations(p.read(storage,'sdp_inv_reservas'),[competing])]]);
+ const before=Object.fromEntries(['sdp_lotes','sdp_movimientos','sdp_inventory_ops','sdp_inv_reservas','sdp_bit_lotes','sdp_sync_queue'].map(key=>[key,storage.getItem(key)]));
+ assert.throws(()=>p.prepareBatch(storage,args),/Faltan 1,0 kg de a/);
+ for(const [key,value] of Object.entries(before))assert.equal(storage.getItem(key),value,`${key} no debe mutar al bloquear`);
+ const released=ledgerApi.releaseForBatch(p.read(storage,'sdp_inv_reservas'),'other',{at:'2026-09-26T12:01:00.000Z'});
+ p.persist(storage,[['sdp_inv_reservas',released]]);
+ const result=p.prepareBatch(storage,args);
+ assert.equal(result.reused,false);
+ assert.equal(p.read(storage,'sdp_lotes')[0].cantidadKgDisponible,8);
+ assert.equal(p.read(storage,'sdp_inventory_ops').length,1);
+});
 test('restored preparation resumes without double deduction or automatic outbox replay',async()=>{
  const {storage,args}=preparationFixture();p.prepareBatch(storage,args);
  const data=await p.backup(storage),restored=memory();p.restore(restored,data);
@@ -87,11 +102,11 @@ test('restored preparation resumes without double deduction or automatic outbox 
 });
 test('stock shortage and quota failures leave all preparation records unchanged',()=>{
  const {storage,args}=preparationFixture();
- p.persist(storage,[['sdp_lotes',[{id:'stock',cantidadKgDisponible:1}]]]);
- assert.throws(()=>p.prepareBatch(storage,args),/Stock insuficiente/);
+ p.persist(storage,[['sdp_lotes',[{id:'stock',ingredienteId:'a',cantidadKgDisponible:1,activo:true}]]]);
+ assert.throws(()=>p.prepareBatch(storage,args),/Faltan 1,0 kg de a/);
  assert.equal(p.read(storage,'sdp_lotes')[0].cantidadKgDisponible,1);
  assert.equal(p.read(storage,'sdp_inventory_ops').length,0);
- p.persist(storage,[['sdp_lotes',[{id:'stock',cantidadKgDisponible:10}]]]);
+ p.persist(storage,[['sdp_lotes',[{id:'stock',ingredienteId:'a',cantidadKgDisponible:10,activo:true}]]]);
  const original=storage.setItem;let n=0;storage.setItem=(k,v)=>{if(++n===4)throw Error('quota');original(k,v);};
  assert.throws(()=>p.prepareBatch(storage,args),/quota/);
  assert.equal(p.read(storage,'sdp_lotes')[0].cantidadKgDisponible,10);
