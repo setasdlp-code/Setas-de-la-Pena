@@ -4041,7 +4041,7 @@ const EBDial=({an,sp})=>{
 
 
 // ── BAND GAUGES ──────────────────────────────────────────────────────────────────────────
-const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='#A8432A'})=>{
+const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='#A8432A',provenance})=>{
   const sMin=scaleMin??min*0.5;
   const sMax=scaleMax??max*1.5;
   const range=sMax-sMin;
@@ -4070,6 +4070,7 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
         <span style={{color:`${color}99`}}>ideal {ideal}{unit}</span>
         <span>{max}{unit}</span>
       </div>
+      {provenance&&<span className="os-provenance-line" title={provenance.title||undefined}>{provenance.texto}</span>}
     </div>
   );
 };
@@ -4084,6 +4085,49 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
 const blendEBWithHistory=(an,historical)=>{
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
   return hasHist?(an.eb*(1-historical.weight)+historical.avg*historical.weight):an.eb;
+};
+
+// ── Procedencia de las métricas de nutrientes (C:N, N, pH, digestibilidad) ──
+// Las cuatro salen de analyze() en substrate-analysis.js: promedios ponderados
+// de constantes del catálogo de insumos, nunca de un análisis del lote real.
+// provenance.js ya declara ese vocabulario ('nutrient'); aquí solo se traduce
+// la métrica a su valor del vocabulario y se pinta lo que describe() devuelve
+// — nunca un nivel de confianza (estas métricas no tienen escala asociada) ni
+// una palabra como "óptimo" inventada aquí. Mismo patrón de guardado que
+// prov-eb/prov-costo (form-summary-strip, ~línea 13588/13610).
+const NUTRIENT_METRIC_VOCAB=Object.freeze({cn:'catalog-lignocellulosic',n:'catalog-lignocellulosic',dig:'catalog-whole-mix',ph:'catalog-whole-mix-unbuffered'});
+// La línea de procedencia se pinta con .os-provenance-line, que el DS compone
+// en mayúsculas y ~11 px: es un pie de dato, no un párrafo. Medido en
+// navegador, meter aquí el `detail` completo (109 caracteres en caps) hacía
+// que la celda C:N de la franja midiera 141 px de alto en una columna de 144
+// px de ancho. Así que la línea lleva el `label` y el `detail` va en el
+// title; el texto largo se lee, al tamaño del resto, en la nota
+// os-provenance-notice de abajo.
+const procedenciaNutriente=(metrica)=>{
+  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+  const value=NUTRIENT_METRIC_VOCAB[metrica];
+  const d=prov&&value?prov.describe({vocabulary:'nutrient',value}):null;
+  if(!d) return {texto:'Calculado',title:null};
+  return {texto:d.label,title:`${d.detail}. ${d.caveat}`};
+};
+// Sin fracción lignocelulósica (receta de puros aditivos), C:N y N salen en 0
+// del motor — y 0 no es un valor, es la ausencia de uno (ver 'no-nutritive-matrix'
+// en provenance.js, que devuelve null a propósito: falla cerrado). describe()
+// no tiene detail/caveat que dar aquí, así que esta es la única línea de este
+// módulo que compone un texto a mano en vez de citar describe() — porque no hay
+// nada que citar, y decirlo es preferible a pintar "Calculado" sobre la nada.
+const procedenciaSinMatrizNutritiva=()=>({texto:'Sin matriz nutritiva',title:'Esta receta no tiene fracción lignocelulósica: no hay carbono ni nitrógeno que ponderar, así que C:N y Nitrógeno no son 0, simplemente no existen para esta mezcla'});
+// Nota compuesta para debajo de la rejilla .mgrid (data-testid="prov-nutrientes"):
+// arma el texto a partir de detail/caveat de describe(), no de cadenas escritas
+// a mano, para que si el vocabulario cambia la pantalla cambie con él.
+const cap=(s)=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+const procedenciaNutrientesResumen=()=>{
+  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+  const ligno=prov?prov.describe({vocabulary:'nutrient',value:'catalog-lignocellulosic'}):null;
+  const whole=prov?prov.describe({vocabulary:'nutrient',value:'catalog-whole-mix'}):null;
+  const ph=prov?prov.describe({vocabulary:'nutrient',value:'catalog-whole-mix-unbuffered'}):null;
+  if(!ligno||!whole||!ph) return 'Las cuatro métricas (C:N, Nitrógeno, pH, Digestibilidad) son calculadas.';
+  return `${cap(ligno.caveat)}. C:N y Nitrógeno: ${ligno.detail}. pH y Digestibilidad: ${whole.detail}. pH: ${ph.caveat}.`;
 };
 
 // ── Minimalist SVG Icons (Design System compliant) ──
@@ -4302,15 +4346,21 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
   return (
     <aside className="bg-wrap recipe-live-evaluation" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
       <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
+      {/* C:N y N repiten aquí la misma línea de procedencia que .mgrid, sin
+          repetir la nota completa (prov-nutrientes): esta aside se pinta en la
+          misma pantalla, justo debajo del panel bl-perito que ya la muestra —
+          duplicarla ahí sería la misma frase dos veces seguidas. */}
       <BandGauge label="C:N" unit=":1"
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
-        color="var(--accent-olive)" warnColor="#A8432A"/>
+        color="var(--accent-olive)" warnColor="#A8432A"
+        provenance={procedenciaNutriente('cn')}/>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Calculado en base seca · corrige H₂O por insumo</div>
       <BandGauge label="N" unit="%"
         min={sp.n_optimal.min} max={sp.n_optimal.max} ideal={sp.n_optimal.ideal}
         value={an.avgN} scaleMin={0} scaleMax={3.5}
-        color="var(--accent-blue-grey)" warnColor="#A8432A"/>
+        color="var(--accent-blue-grey)" warnColor="#A8432A"
+        provenance={procedenciaNutriente('n')}/>
       <BandGauge label="EB estimado" unit="%"
         min={sp.eb_baseline} max={sp.eb_optimal} ideal={sp.eb_optimal}
         value={an?Math.round(blendedEB):null}
@@ -6566,6 +6616,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [cmpFecha,setCmpFecha]=useState((()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})());
   const [cmpProvId,setCmpProvId]=useState('');
   const [cmpFuente,setCmpFuente]=useState('manual');
+  const [cmpRecibida,setCmpRecibida]=useState(true); // true='Ya la recibí', false='Por recibir' (no crea lote hasta recibirCompra)
   const [cmpItems,setCmpItems]=useState([{uid:1,ingId:'',kg:'',precio:''}]);
   const [cmpMode,setCmpMode]=useState('manual');
   const [cmpPasteText,setCmpPasteText]=useState('');
@@ -7961,7 +8012,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
     if(!ledgerApi||!plan) return null;
     const nowMs=Date.now();
-    const ctx={lots:invLotes,ledger:invReservas,incoming:[],nowMs};
+    const incoming=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
+    const ctx={lots:invLotes,ledger:invReservas,incoming,nowMs};
     let check=null;
     try{ check=ledgerApi.checkPlan(plan,ctx); }catch(e){ return null; }
     if(!check||check.ok) return null;
@@ -8575,35 +8627,98 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setCmpParsing(false);
   };
 
+  const resetCmpForm=()=>{
+    setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
+    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);
+    setCmpRecibida(true);
+  };
+
   const registrarCompra=()=>{
     const valid=cmpItems.filter(it=>it.ingId&&parseFloat(it.kg)>0);
     if(!cmpProvId||valid.length===0){setNoticeDlg({msg:'Selecciona proveedor y agrega al menos un ítem.'});return;}
     const cId='compra_'+Date.now();
-    const nuevaCompra={id:cId,fecha:cmpFecha,proveedorId:cmpProvId,
-      items:valid.map(it=>({ingredienteId:it.ingId,kg:parseFloat(it.kg),precio:parseFloat(it.precio)||0})),
-      fuenteCaptura:cmpFuente,revisadoManualmente:true};
-    const newLotes=valid.map((it,i)=>({
-      id:'lote_'+Date.now()+'_'+i,compraId:cId,
-      ingredienteId:it.ingId,cantidadKgTotal:parseFloat(it.kg),
-      precioPorKgCOP:parseFloat(it.precio)||0,fechaIngreso:cmpFecha,
-      cantidadKgDisponible:parseFloat(it.kg),activo:true
-    }));
-    const newMovs=newLotes.map(l=>({
-      id:'mov_'+Date.now()+'_'+l.id,loteId:l.id,ingredienteId:l.ingredienteId,
-      tipo:'entrada',cantidadKg:l.cantidadKgTotal,fecha:cmpFecha,referencia:cId
-    }));
-    saveCompras([...invCompras,nuevaCompra]);
-    saveLotes([...invLotes,...newLotes]);
-    saveMovimientos([...invMovimientos,...newMovs]);
     const prov=invProveedores.find(p=>p.id===cmpProvId);
+    // Siempre se construye como pendiente primero: es la única forma que
+    // conoce nuevaCompra. "Ya la recibí" sólo decide si se le pasa de
+    // inmediato por receiveCompra() — así queda UN solo constructor de lote.
+    const compraPendiente={id:cId,fecha:cmpFecha,proveedorId:cmpProvId,
+      items:valid.map(it=>({ingredienteId:it.ingId,kg:parseFloat(it.kg),precio:parseFloat(it.precio)||0})),
+      fuenteCaptura:cmpFuente,revisadoManualmente:true,
+      estado:'pendiente',fechaEsperada:cmpFecha};
+
+    if(!cmpRecibida){
+      // Por recibir: sólo saveCompras. Ni lotes ni movimientos — el stock
+      // físico no se toca hasta que alguien confirme que los kilos llegaron.
+      saveCompras([...invCompras,compraPendiente]);
+      const resumen=valid.map(it=>{
+        const g=INGS.find(x=>x.id===it.ingId);
+        return{nombre:g?g.name:it.ingId,kgComprado:parseFloat(it.kg)};
+      });
+      setCmpConfirm({proveedor:prov?prov.nombre:'',fecha:cmpFecha,total:valid.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0),items:resumen,pendiente:true});
+      resetCmpForm();
+      return;
+    }
+
+    if(!window.SetasPurchases){
+      setNoticeDlg({title:'No se pudo registrar',msg:'Falta el módulo de compras (purchases.js), así que no se puede recibir nada de forma confiable. No se registró la compra — recarga la página o avisa al equipo técnico.'});
+      return;
+    }
+    let rec;
+    try{
+      rec=window.SetasPurchases.receiveCompra(compraPendiente,{at:cmpFecha});
+    }catch(err){
+      setNoticeDlg({title:'No se pudo registrar',msg:`No se pudo recibir la compra: ${err.message}`});
+      return;
+    }
+    saveCompras([...invCompras,rec.compra]);
+    saveLotes([...invLotes,...rec.lots]);
+    saveMovimientos([...invMovimientos,...rec.movements]);
     const resumen=valid.map(it=>{
       const g=INGS.find(x=>x.id===it.ingId);
       const stockPrevio=invLotes.filter(l=>l.activo&&l.ingredienteId===it.ingId).reduce((s,l)=>s+l.cantidadKgDisponible,0);
       return{nombre:g?g.name:it.ingId,kgComprado:parseFloat(it.kg),stockNuevo:stockPrevio+parseFloat(it.kg)};
     });
-    setCmpConfirm({proveedor:prov?prov.nombre:'',fecha:cmpFecha,total:valid.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0),items:resumen});
-    setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
-    setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);
+    setCmpConfirm({proveedor:prov?prov.nombre:'',fecha:cmpFecha,total:valid.reduce((s,it)=>s+(parseFloat(it.kg)||0)*(parseFloat(it.precio)||0),0),items:resumen,pendiente:false});
+    resetCmpForm();
+  };
+
+  // Recibir una compra "por recibir": nace el lote y el movimiento, con
+  // fecha de HOY (no la de la compra) porque el FIFO ordena por cuándo
+  // llegaron los kilos a bodega, no por cuándo se encargaron.
+  const recibirCompra=(compraId)=>{
+    const compra=invCompras.find(c=>c.id===compraId);
+    if(!compra) return;
+    const prov=invProveedores.find(p=>p.id===compra.proveedorId);
+    const kgTotal=(compra.items||[]).reduce((s,it)=>s+(Number(it.kg??it.cantidadKg)||0),0);
+    setConfirmDlg({
+      title:'Registrar recepción',
+      msg:`¿Confirmar que llegaron ${kgTotal.toFixed(1)} kg de ${prov?prov.nombre:'proveedor sin nombre'}? Esto sí mueve el físico de bodega.`,
+      confirmLabel:'Confirmar recepción',
+      onConfirm:()=>{
+        if(!window.SetasPurchases){
+          setNoticeDlg({title:'No se pudo recibir',msg:'Falta el módulo de compras (purchases.js). No se registró nada — recarga la página o avisa al equipo técnico.'});
+          return;
+        }
+        const hoy=new Date().toISOString().split('T')[0];
+        let rec;
+        try{
+          rec=window.SetasPurchases.receiveCompra(compra,{at:hoy});
+        }catch(err){
+          setNoticeDlg({title:'No se pudo recibir',msg:`No se pudo recibir la compra: ${err.message}`});
+          return;
+        }
+        saveCompras(invCompras.map(c=>c.id===compraId?rec.compra:c));
+        saveLotes([...invLotes,...rec.lots]);
+        saveMovimientos([...invMovimientos,...rec.movements]);
+        const resumen=(compra.items||[]).map(it=>{
+          const g=INGS.find(x=>x.id===it.ingredienteId);
+          const kg=Number(it.kg??it.cantidadKg)||0;
+          const stockPrevio=invLotes.filter(l=>l.activo&&l.ingredienteId===it.ingredienteId).reduce((s,l)=>s+l.cantidadKgDisponible,0);
+          return `${g?g.name:it.ingredienteId}: ${(stockPrevio+kg).toFixed(1)} kg`;
+        }).join(' · ');
+        setNoticeDlg({title:'Recepción registrada',msg:`Se recibieron ${kgTotal.toFixed(1)} kg de ${prov?prov.nombre:'proveedor'}. Stock nuevo — ${resumen}.`});
+      },
+    });
   };
 
   const autoBalance=(mode=balanceMode)=>{
@@ -8715,12 +8830,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     // que comprar — el físico puede alcanzar y estar ya comprometido
                     // por otro lote de producción.
                     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-                    const availabilityFor=(ingId)=>ledgerApi?ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
+                    const incomingCompras=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
+                    const availabilityFor=(ingId)=>ledgerApi?ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date.now()}):null;
                     const criticalStockItems = INGS.map(ing=>{
                       const av=availabilityFor(ing.id);
                       const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
                       const threshold = lowStockThresholds[ing.type]||5;
-                      return { ing, stockKg, threshold, isLow: stockKg < threshold };
+                      return { ing, stockKg, threshold, entranteKg: av?.entrante||0, isLow: stockKg < threshold };
                     }).filter(item=>item.isLow);
 
                     // Las bolsas viven en invLotes con el mismo modelo FIFO, pero se
@@ -8740,9 +8856,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold, entranteKg }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg){entranteKg>0?` (+${entranteKg.toFixed(1)} kg en camino)`:''}
                                 </span>
                               ))}
                             </div>
@@ -8762,6 +8878,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const disponible=av?av.disponible:stock;
                       const reservado=av?av.reservado:0;
                       const sobrereservado=av?.sobrereservado||0;
+                      const entrante=av?.entrante||0;
                       const pp=precioPonderado(id,invLotes);
                       const alertaMin=alertaConfig[id]??2;
                       const alertaAm=alertaMin*2.5;
@@ -8770,7 +8887,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const dotColor=disponible<alertaMin?'var(--coral-500)':disponible<alertaAm?'var(--ochre-500,#A07828)':'var(--accent-olive)';
                       const provId=provOverride[id]||(invProveedores.find(p=>p.id===invCompras.find(c=>c.id===invLotes.filter(l=>l.activo&&l.ingredienteId===id).sort((a,b)=>new Date(b.fechaIngreso)-new Date(a.fechaIngreso))[0]?.compraId)?.proveedorId)?.id)||'';
                       const prov=invProveedores.find(p=>p.id===provId);
-                      return{id,name:g?.name||id,stock,disponible,reservado,sobrereservado,pp,prov,dotColor,alertaMin,provId};
+                      return{id,name:g?.name||id,stock,disponible,reservado,sobrereservado,entrante,pp,prov,dotColor,alertaMin,provId};
                     }).sort((a,b)=>b.disponible-a.disponible);
                     const INP={fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--coral-500)',borderRadius:'var(--r-xs)',padding:'4px 6px',background:'var(--paper-50)',color:'var(--ink-900)',outline:'none',width:'100%',boxSizing:'border-box'};
                     return(
@@ -8786,9 +8903,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </button>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold }) => (
+                              {(stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0,4)).map(({ ing, stockKg, threshold, entranteKg }) => (
                                 <span key={ing.id} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', padding: '2px 6px', background: 'var(--paper-0)', border: '1px solid var(--coral-300)', borderRadius: 2, color: 'color-mix(in oklab, var(--coral-700) 70%, black)' }}>
-                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                                  {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg){entranteKg>0?` (+${entranteKg.toFixed(1)} kg en camino)`:''}
                                 </span>
                               ))}
                             </div>
@@ -8812,6 +8929,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <th>Físico (kg)</th>
                                 <th>Reservado (kg)</th>
                                 <th>Disponible (kg)</th>
+                                <th>Entrante (kg)</th>
                                 <th>Precio / kg</th>
                                 <th>Proveedor</th>
                                 <th>Alerta mín. (kg)</th>
@@ -8857,6 +8975,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           sobrecomprometido {r.sobrereservado.toFixed(1)} kg
                                         </span>
                                       )}
+                                    </td>
+                                    {/* ENTRANTE — pedidos "por recibir" que aún no son físico */}
+                                    <td data-label="Entrante" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",minWidth:90,color:r.entrante>0?'var(--ochre-700,#A07828)':'var(--ink-500)'}}>
+                                      {r.entrante>0?`${r.entrante.toFixed(1)} kg`:'—'}
                                     </td>
                                     {/* PRECIO */}
                                     <td data-label="Precio / kg" style={{color:'var(--ink-500)',minWidth:100}}>
@@ -8965,21 +9087,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{maxWidth:560}}>
                   {cmpConfirm?(
                     <div>
-                      <div style={{padding:'14px 16px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',marginBottom:14}}>
-                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name="check" size={13} color="var(--ink-800)" /> Compra registrada</div>
+                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name={cmpConfirm.pendiente?'clipboard':'check'} size={13} color="var(--ink-800)" /> {cmpConfirm.pendiente?'Pedido registrado':'Compra registrada'}</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
+                        {cmpConfirm.pendiente&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:6}}>El stock físico de bodega NO cambió. Estos kilos quedan en camino hasta que confirmes la recepción.</div>}
                       </div>
                       <div className="inv-section" style={{marginBottom:14}}>
                         {cmpConfirm.items.map((it,i)=>(
                           <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',borderBottom:i<cmpConfirm.items.length-1?'1px solid var(--border-soft)':'none'}}>
                             <div>
                               <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-base)",fontWeight:600,color:'var(--ink-800)'}}>{it.nombre}</div>
-                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>+{it.kgComprado} kg comprados</div>
+                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>+{it.kgComprado} kg {cmpConfirm.pendiente?'en camino':'comprados'}</div>
                             </div>
-                            <div style={{textAlign:'right'}}>
-                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-base)",fontWeight:700,color:'var(--accent-olive)'}}>{it.stockNuevo.toFixed(1)} kg</div>
-                              <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>stock actual</div>
-                            </div>
+                            {!cmpConfirm.pendiente&&(
+                              <div style={{textAlign:'right'}}>
+                                <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-base)",fontWeight:700,color:'var(--accent-olive)'}}>{it.stockNuevo.toFixed(1)} kg</div>
+                                <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)'}}>stock actual</div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -8987,6 +9112,33 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   ):(
                   <div>
+                  {(()=>{
+                    const pendientes=window.SetasPurchases?window.SetasPurchases.pendingCompras(invCompras):[];
+                    if(!pendientes.length) return null;
+                    return(
+                      <div data-testid="pending-purchases" style={{marginBottom:16}}>
+                        <span className="inv-label">Pedidos por recibir ({pendientes.length})</span>
+                        {pendientes.map(c=>{
+                          const prov=invProveedores.find(p=>p.id===c.proveedorId);
+                          return(
+                            <div key={c.id} data-testid="pending-purchase" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',padding:'10px 12px',marginTop:6,border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)'}}>
+                              <div>
+                                <div style={{fontFamily:"var(--font-body)",fontWeight:600,fontSize:"var(--text-sm)",color:'var(--ink-800)'}}>{prov?.nombre||'Proveedor eliminado'}</div>
+                                <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>Esperado: {c.fechaEsperada||c.fecha}</div>
+                                <div style={{display:'flex',flexWrap:'wrap',gap:3,marginTop:4}}>
+                                  {(c.items||[]).map((it,i)=>{
+                                    const g=INGS.find(x=>x.id===it.ingredienteId);
+                                    return<span key={i} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)',borderRadius:2}}>{g?.name||it.ingredienteId} {it.kg}kg</span>;
+                                  })}
+                                </div>
+                              </div>
+                              <button type="button" className="inv-btn inv-btn-pri sdp-btn--field" onClick={()=>recibirCompra(c.id)}>Registrar recepción</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                   <div style={{display:'flex',gap:8,marginBottom:14}}>
                     {[['manual',<AppIcon name="edit" size={14}/>,'Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto',<AppIcon name="clipboard" size={14}/>,'Pegar texto']].map(([v,icon,l])=>(
                       <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
@@ -9040,7 +9192,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
                     <div>
-                      <label className="inv-label" htmlFor="purchase-date">Fecha de compra</label>
+                      <label className="inv-label" htmlFor="purchase-date">{cmpRecibida?'Fecha de compra':'Fecha esperada'}</label>
                       <input id="purchase-date" name="purchaseDate" type="date" className="inv-input" value={cmpFecha} onChange={e=>setCmpFecha(e.target.value)}/>
                     </div>
                   </div>
@@ -9078,9 +9230,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </span>
                   </div>
 
+                  <div className="inv-label">¿Ya llegó a bodega?</div>
+                  <div style={{display:'flex',gap:8,marginBottom:14}}>
+                    {[[true,'Ya la recibí'],[false,'Por recibir']].map(([v,l])=>(
+                      <button key={String(v)} type="button" className="inv-btn inv-btn-sec sdp-btn--field" data-testid={`cmp-estado-${v?'recibida':'pendiente'}`}
+                        style={{flex:1,...(cmpRecibida===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}}
+                        onClick={()=>setCmpRecibida(v)}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+
                   <div style={{display:'flex',gap:10}}>
-                    <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>Registrar compra</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');}}><AppIcon name="close" size={12} /> Limpiar</button>
+                    <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>{cmpRecibida?'Registrar compra':'Registrar pedido'}</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');setCmpRecibida(true);}}><AppIcon name="close" size={12} /> Limpiar</button>
                   </div>
                   </div>
                   )}
@@ -9120,13 +9283,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <table className="inv-table">
                                 <thead>
                                   <tr>
-                                    <th>Fecha</th><th>Proveedor</th><th>Ítems</th><th>Total COP</th><th>Fuente</th>
+                                    <th>Fecha</th><th>Proveedor</th><th>Ítems</th><th>Total COP</th><th>Fuente</th><th>Estado</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {cmpras.map(c=>{
                                     const prov=invProveedores.find(p=>p.id===c.proveedorId);
                                     const tot=c.items.reduce((s,it)=>s+(it.kg||0)*(it.precio||0),0);
+                                    const estado=window.SetasPurchases?window.SetasPurchases.compraEstado(c):'recibida';
+                                    const pendiente=estado==='pendiente';
                                     return(
                                       <tr key={c.id}>
                                         <td>{c.fecha}</td>
@@ -9141,6 +9306,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </td>
                                         <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--ink-900)'}}>${tot.toLocaleString('es-CO')}</td>
                                         <td style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}</td>
+                                        <td>
+                                          <span className={`sdp-badge ${pendiente?'sdp-badge--warn':'sdp-badge--ok'}`} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>
+                                            {window.SetasPurchases?window.SetasPurchases.COMPRA_ESTADO_LABELS[estado]:estado}
+                                          </span>
+                                        </td>
                                       </tr>
                                     );
                                   })}
@@ -12239,11 +12409,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
           // criterio que la tabla de Bodega: el físico puede alcanzar y estar
           // ya comprometido por otro lote de producción confirmado.
           const homeLedgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+          const homeIncomingCompras=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
           const criticalStockItems = INGS.map(ing=>{
-            const av=homeLedgerApi?homeLedgerApi.availability(ing.id,{lots:invLotes,ledger:invReservas,incoming:[],nowMs:Date.now()}):null;
+            const av=homeLedgerApi?homeLedgerApi.availability(ing.id,{lots:invLotes,ledger:invReservas,incoming:homeIncomingCompras,nowMs:Date.now()}):null;
             const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
             const threshold = lowStockThresholds[ing.type]||5;
-            return { ing, stockKg, threshold, isLow: stockKg < threshold };
+            return { ing, stockKg, threshold, entranteKg: av?.entrante||0, isLow: stockKg < threshold };
           }).filter(item=>item.isLow);
           const lowStockCount = criticalStockItems.length;
           const totalBolsasCount = bitBolsas.length;
@@ -12426,9 +12597,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Alerta de Stock Crítico ({criticalStockItems.length})
                         </span>
                         <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                          {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => (
+                          {criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold, entranteKg }) => (
                             <span key={ing.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--rule)',borderRadius:0,color:'var(--status-warn-text)'}}>
-                              {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg)
+                              {ing.name}: {stockKg.toFixed(1)} kg (&lt; {threshold} kg){entranteKg>0?` (+${entranteKg.toFixed(1)} kg en camino)`:''}
                             </span>
                           ))}
                           {criticalStockItems.length > 3 && (
@@ -13470,8 +13641,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?.cn!=null?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                <span className="os-provenance-line" title="Derivado de los porcentajes de la receta y del catálogo de insumos">Calculado</span>
+                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Humedad objetivo</span>
@@ -14212,20 +14383,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
                   <div className="mgrid" style={{marginBottom:12}}>
                     {[
-                      {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                      {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                      {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
+                      {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
                       {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
                       {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
+                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
                     ].map(m=>(
                       <div key={m.l} className="mc">
                         <div className="mlbl">{m.l}</div>
                         <div className="mval">{m.v}</div>
                         <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
                       </div>
                     ))}
                   </div>
+                  <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
 
                   {/* ── EBDial + C:N gauge ── */}
                   <EBDial an={an} sp={sp}/>
@@ -14760,23 +14933,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* Resumen Métricas */}
                   {an&&(
+                    <>
                     <div className="mgrid" style={{marginBottom:14}}>
                       {[
-                        {l:'C:N',v:`${an.cn.toFixed(1)}:1`,ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max},
-                        {l:'Nitrógeno',v:`${an.avgN.toFixed(2)}%`,ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max},
+                        {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
+                        {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
                         {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
                         {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
                         {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
-                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false},
-                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
                       ].map(m=>(
                         <div key={m.l} className="mc">
                           <div className="mlbl">{m.l}</div>
                           <div className="mval">{m.v}</div>
                           <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                          {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
                         </div>
                       ))}
                     </div>
+                    <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
+                    </>
                   )}
 
                   {/* Gauges */}
