@@ -96,6 +96,10 @@ test('stock shortage and quota failures leave all preparation records unchanged'
  assert.throws(()=>p.prepareBatch(storage,args),/quota/);
  assert.equal(p.read(storage,'sdp_lotes')[0].cantidadKgDisponible,10);
  assert.equal(p.read(storage,'sdp_bit_lotes')[0].lifecycleEvents,undefined);
+ storage.setItem=original;
+ p.persist(storage,[['sdp_inventory_ops',[{opId:'b',loteId:'b',shortfalls:[{missing:1}]}]]]);
+ assert.throws(()=>p.prepareBatch(storage,args),/consumo parcial/);
+ assert.equal(p.read(storage,'sdp_bit_lotes')[0].lifecycleEvents,undefined);
 });
 
 test('repeated backup and restore retain interrupted consumption identities',async()=>{

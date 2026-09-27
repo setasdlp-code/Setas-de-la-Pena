@@ -151,6 +151,7 @@
     const existing=queue.find(o=>o.loteId===loteId)||(restored.inventory||[]).find(o=>o.loteId===loteId);
     // Validate consequences BEFORE changing stock. Existing consumption alone does
     // not prove the preparation event exists (legacy interrupted operation).
+    if((existing?.shortfalls||[]).length)throw Error('Hay un consumo parcial anterior. Reconcilia los insumos antes de registrar la preparación.');
     const alreadyRecorded=(lote.lifecycleEvents||[]).some(e=>e.action==='prepare_mix');
     if(alreadyRecorded)return {entries:null,lote,transition:'mix_prepared',reused:true};
     const recetaId=lote.recipeRef?.versionId||lote.recipeRef?.id||lote.recetaId;

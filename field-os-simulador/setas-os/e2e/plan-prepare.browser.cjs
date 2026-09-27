@@ -53,6 +53,15 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   await page.selectOption('#form-species-context-select','p_ostreatus_gris');
   await page.evaluate(r=>window.SetasFormulatorAPI.applyRecipe(r),RECETA);
   const navegar=async v=>{await page.evaluate(v=>{window.SetasOSNavigation.navigate(window,v);window.dispatchEvent(new PopStateEvent('popstate'));},v);};
+  await page.evaluate(recipe=>SetasPrototype.savePlan(localStorage,{
+    id:'browser-trial',title:'Ensayo sintético vinculado',hypothesis:'Verificar trazabilidad de software',
+    speciesId:'p_ostreatus_gris',design:'exploratory',primaryMetric:'be_pct',status:'draft',
+    control:{id:'control',label:'Referencia',plannedReplicates:1,batchIds:[],recipeVersionId:'browser-v1',recipeSnapshot:{versionId:'browser-v1',sKey:'p_ostreatus_gris',recipe}},treatments:[]
+  }),RECETA);
+  await navegar('bitacora');
+  const trials=page.getByRole('region',{name:'Ensayos y respaldos'});
+  await trials.getByText('Ensayo sintético vinculado · Planificado',{exact:true}).click();
+  await trials.getByRole('button',{name:'Planificar lote de Referencia (0/1)',exact:true}).click();
   await navegar('produccion');
   await page.locator('#prod-bags').fill('10');
   await page.locator('#prod-kg').fill('1');
@@ -75,6 +84,9 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   const lote=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes')||'[]')[0]);
   // El lote NACE planificado, no en incubación.
   assert.equal(lote.estado,'planificado',`nació en "${lote.estado}"`);
+  assert.equal(lote.experimentId,'browser-trial');assert.equal(lote.armId,'control');
+  assert.equal(lote.recipeRef.versionId,'browser-v1');
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_experiments_v1'))[0].control.batchIds),[lote.id]);
 
   // La bodega sigue intacta y los kilos están comprometidos, no gastados.
   assert.equal(await stockDe(page,'paja_trigo'),pajaAntes,'planificar descontó bodega');
