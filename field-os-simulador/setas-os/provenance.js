@@ -150,9 +150,47 @@
     missing: null,
   });
 
+  // substrate-analysis.js analyze(): las métricas de nutrientes (C:N, N medio,
+  // pH, digestibilidad) son promedios ponderados de constantes del CATÁLOGO de
+  // insumos (substrate-catalog.js) por el % de la receta. Ningún ingrediente
+  // real de un lote se analiza: son valores de referencia, no medición.
+  //
+  // El denominador NO es el mismo para todas, y eso cambia lo que significa
+  // cada número: C:N y N se ponderan sólo sobre la fracción lignocelulósica
+  // —los aditivos minerales y estructurales secos quedan fuera, para no diluir
+  // el denominador— mientras pH y digestibilidad se ponderan sobre la mezcla
+  // completa, aditivos incluidos. Quien lee "pH 6,8" no puede deducir eso, y
+  // con 15 % de carbonato en la receta importa.
+  const NUTRIENT = Object.freeze({
+    'catalog-lignocellulosic': {
+      kind: KINDS.calculated,
+      detail: 'ponderado del catálogo sobre la fracción lignocelulósica (los aditivos minerales secos no entran)',
+      caveat: 'valores de referencia del catálogo: ningún insumo de este lote fue analizado',
+    },
+    'catalog-whole-mix': {
+      kind: KINDS.calculated,
+      detail: 'ponderado del catálogo sobre la mezcla completa, aditivos incluidos',
+      caveat: 'valores de referencia del catálogo: ningún insumo de este lote fue analizado',
+    },
+    // El pH de una mezcla no es el promedio de los pH de sus partes: depende de
+    // la capacidad buffer de cada componente, que el catálogo no modela. El
+    // número sirve para comparar recetas entre sí, no para anticipar la lectura
+    // de un pH-metro en el sustrato.
+    'catalog-whole-mix-unbuffered': {
+      kind: KINDS.calculated,
+      detail: 'ponderado del catálogo sobre la mezcla completa, aditivos incluidos',
+      caveat: 'promedio lineal sin capacidad buffer: sirve para comparar recetas, no para anticipar un pH-metro',
+    },
+    // Sin fracción lignocelulósica (receta de puros aditivos) no hay matriz
+    // nutritiva que medir. C:N y N salen en 0 del motor, y 0 no es un valor:
+    // es la ausencia de uno. Quien pinta debe saberlo.
+    'no-nutritive-matrix': null,
+  });
+
   const LEGACY_VOCAB = Object.freeze({
     timeline: TIMELINE,
     moisture: MOISTURE,
+    nutrient: NUTRIENT,
     cost: COST,
     ebType: EB_TYPE,
     calibration: CALIBRATION,
