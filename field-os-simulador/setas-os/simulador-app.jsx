@@ -6810,8 +6810,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // dentro de una IIFE de render ni detrás de un return condicional.
   useEffect(()=>{
     let cancelled=false; // ignora resultados tardíos si el efecto se desmonta
+    // Una sola pasada en vuelo (mismo patrón que invSyncRef/runInventorySync):
+    // si una operación tarda más que el intervalo de 15s, el montaje, el
+    // setInterval y el evento 'online' pueden llamar a drainAll casi a la
+    // vez; sin este guard, dos pasadas ven la misma op como 'pending' y la
+    // mandan dos veces a Firestore.
+    const drainRef={inFlight:null,again:false};
 
-    const drainAll=async()=>{
+    const drainOnce=async()=>{
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
       const bitacoraDb=typeof window!=='undefined'?window.SetasBitacoraDB:null;
       // Sin el módulo de cola, sin el backend de Firestore, o sin red: la
@@ -6840,6 +6846,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         setSyncQueue(updatedQueue);
         try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(updatedQueue));}catch(e){}
       }
+    };
+
+    const drainAll=()=>{
+      if(drainRef.inFlight){drainRef.again=true;return drainRef.inFlight;}
+      drainRef.inFlight=drainOnce().finally(()=>{
+        drainRef.inFlight=null;
+        if(drainRef.again){drainRef.again=false;drainAll();}
+      });
+      return drainRef.inFlight;
     };
 
     drainAll();

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 83175901040f43678966b4259968c8e8d38ace06d853e5c38cc5c2cf9909e3b0
+// source-hash: a82d8080952373d4b0628cfdab9a4b11aede352549e5c6f93621920f36f75eb0
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4955,7 +4955,8 @@ function SimuladorShell(props) {
   }, [syncQueue]);
   useEffect(() => {
     let cancelled = false;
-    const drainAll = async () => {
+    const drainRef = { inFlight: null, again: false };
+    const drainOnce = async () => {
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       const bitacoraDb = typeof window !== "undefined" ? window.SetasBitacoraDB : null;
       if (!syncQueueApi || !bitacoraDb) return;
@@ -4980,6 +4981,20 @@ function SimuladorShell(props) {
         } catch (e) {
         }
       }
+    };
+    const drainAll = () => {
+      if (drainRef.inFlight) {
+        drainRef.again = true;
+        return drainRef.inFlight;
+      }
+      drainRef.inFlight = drainOnce().finally(() => {
+        drainRef.inFlight = null;
+        if (drainRef.again) {
+          drainRef.again = false;
+          drainAll();
+        }
+      });
+      return drainRef.inFlight;
     };
     drainAll();
     const intervalId = setInterval(drainAll, 15e3);
