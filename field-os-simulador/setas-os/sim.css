@@ -6484,3 +6484,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     color: var(--ink-0);
   }
 }
+
+/* Prototype operational forms use the existing typographic and color system. */
+.prototype-panel{padding:16px;border:1px solid var(--border-soft);margin:12px 0;min-width:0}
+.prototype-panel p{line-height:1.5;overflow-wrap:anywhere}
+.prototype-panel label{display:block;font-size:14px}
+.prototype-panel input:not([type=checkbox]),.prototype-panel select,.prototype-panel textarea{display:block;width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:16px;margin:6px 0 12px;padding:8px;border:1px solid var(--border-soft);background:var(--paper-50);color:var(--ink-900)}
+.prototype-panel button{min-height:44px;min-width:44px;white-space:normal;margin:4px}
+.prototype-panel details{padding:12px 0}.prototype-panel summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+.prototype-check{display:flex!important;align-items:center;gap:12px;padding:12px 0}.prototype-check input{width:24px;height:24px;flex-shrink:0}
+.prototype-actions{display:flex;gap:8px;flex-wrap:wrap}

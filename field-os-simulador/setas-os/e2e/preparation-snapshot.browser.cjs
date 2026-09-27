@@ -71,7 +71,7 @@ const root=path.resolve(__dirname,'..');
   await dialog.getByRole('button',{name:'Confirmar y reservar'}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes')).length)).toBe(1);
   const record=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes'))[0]);
-  assert.deepEqual(record.preparation,accepted);assert.equal(record.numBolsas,12);assert.equal(record.pesoHumedo,1);assert.equal(record.peseSeco,4.8);
+  assert.deepEqual(record.preparation,accepted);assert.equal(record.numBolsas,12);assert.equal(record.pesoHumedo,1);assert.equal(record.peseSeco,accepted.totals.dryKg);
   // Planificar RESERVA los insumos y no toca bodega: el descuento ocurre al
   // registrar "Preparar mezcla" (ver e2e/plan-prepare.browser.cjs). Antes este
   // mismo clic descontaba, así que la comprobación cambia de lado: el stock

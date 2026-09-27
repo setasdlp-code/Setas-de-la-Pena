@@ -105,7 +105,12 @@ const reservas=async page=>page.evaluate(()=>JSON.parse(localStorage.getItem('sd
   const preparar=page.getByRole('button',{name:/Preparar mezcla/i}).first();
   await preparar.waitFor({state:'visible'});
   await preparar.click();
-  const confirmar=page.getByRole('button',{name:/Descontar y registrar/i});
+  const release=page.getByRole('dialog',{name:'Autorizar ensayo controlado'});
+  await release.getByLabel('Equipo disponible').fill('Equipo de ensayo documentado');
+  await release.getByLabel('Protocolo a ejecutar').fill('Protocolo sintético para prueba de software');
+  await release.getByLabel('Responsable que autoriza').fill('Operador de prueba');
+  await release.getByRole('checkbox').check();
+  const confirmar=release.getByRole('button',{name:/Autorizar, descontar y registrar/i});
   await confirmar.waitFor({state:'visible'});
   await confirmar.click();
 

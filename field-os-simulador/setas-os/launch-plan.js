@@ -161,7 +161,8 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
     fechaInoculacion: form.fechaInoculacion,
     numBolsas: nb,
     pesoHumedo: kb,
-    peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+    peseSeco: spec ? spec.totals.dryKg : parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+    dryWeightProvenance: 'planned-calculated',
     spawnPct: spec ? spec.spawn.pct : analysis?.dynSpawn || 8,
     ...(spec?{preparation:JSON.parse(JSON.stringify(spec)),spawnKg:spec.spawn.kg}:{}),
     humedad: hm,
@@ -174,6 +175,7 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
     veredicto: '',
     sala: form.sala,
     ubicacion: form.sala,
+    ingredientShortfalls: (plan.shortfalls || []).map(s => ({ ...s })),
     ingredientLots: (plan.allocations || []).map(a => ({ ...a })),
     recipeRef: {
       id: now,
