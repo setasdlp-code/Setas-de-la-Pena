@@ -167,6 +167,23 @@
   const markSynced = (queue, id) => (queue || []).filter(op => op.id !== id);
 
   /**
+   * Descarta de la cola cualquier operación cuya key esté en `keys`, sin
+   * importar su tipo. Existe para el borrado en cascada de un lote: sus
+   * bolsas y cosechas tienen sus propias keys ('bolsa:'+id, 'cosecha:'+id),
+   * así que enqueue() con isDeleteType (que sólo descarta la key exacta del
+   * borrado, 'lote:'+loteId) no las alcanza. Sin este purgado, una
+   * actualizarBolsa/guardarCosecha pendiente de un lote ya borrado localmente
+   * puede ejecutarse después de eliminarLoteCascade (o revivirse vía
+   * retryStuck) y resucitar en Firestore un documento que ya no existe en la
+   * app — huérfano que bitacora-sync.js nunca relee ni reconcilia.
+   */
+  const purgeKeys = (queue, keys) => {
+    const keySet = new Set(keys || []);
+    if (keySet.size === 0) return queue || [];
+    return (queue || []).filter(op => !keySet.has(op.key));
+  };
+
+  /**
    * Registra un fallo con retroceso exponencial (tope 5 min). Al llegar a
    * MAX_ATTEMPTS la operación pasa a 'stuck' y deja de reintentarse sola:
    * fallar cinco veces no es falta de red, es algo que el operario debe ver.
@@ -263,6 +280,7 @@
     enqueue,
     nextPending,
     markSynced,
+    purgeKeys,
     markFailed,
     retryStuck,
     stats,
