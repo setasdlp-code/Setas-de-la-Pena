@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: a82d8080952373d4b0628cfdab9a4b11aede352549e5c6f93621920f36f75eb0
+// source-hash: bb76ab3c50fba6ffe2fb08760fee45ced1fb6ee9aaa09fb47d178c15362d1c7f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -855,8 +855,8 @@ if (typeof globalThis !== "undefined") {
   globalThis.SPP = SPP;
   globalThis.analyze = analyze;
 }
-const SetasRecipeVersionApi = typeof SetasRecipeVersion !== "undefined" ? SetasRecipeVersion : typeof require !== "undefined" ? require("./recipe-version.js") : null;
-const MASS_BALANCE_TOL = SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
+const SetasMassBalanceApi = typeof SetasMassBalance !== "undefined" ? SetasMassBalance : typeof require !== "undefined" ? require("./mass-balance.js") : null;
+const MASS_BALANCE_TOL = SetasMassBalanceApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced = (a) => !!a && Math.abs(a.tot - 100) <= MASS_BALANCE_TOL;
 const massBalanceMsg = (a) => {
   if (!a) return "";

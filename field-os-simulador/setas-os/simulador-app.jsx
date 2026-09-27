@@ -1119,11 +1119,11 @@ if (typeof globalThis !== 'undefined') { globalThis.INGS = INGS; globalThis.SPP 
 
 // ── Balance de masa: única fuente de verdad usada por Formulador, Ficha,
 //    Comparador, Dashboard y Bitácora. Tolerancia explícita: ±0.5 pp,
-//    definida una sola vez en recipe-version.js (declarado antes de usarse
+//    definida una sola vez en mass-balance.js (declarado antes de usarse
 //    aquí; el resto de los puentes UMD vive más abajo, junto a los módulos
 //    que importan).
-const SetasRecipeVersionApi=(typeof SetasRecipeVersion!=='undefined'?SetasRecipeVersion:(typeof require!=='undefined'?require('./recipe-version.js'):null));
-const MASS_BALANCE_TOL=SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
+const SetasMassBalanceApi=(typeof SetasMassBalance!=='undefined'?SetasMassBalance:(typeof require!=='undefined'?require('./mass-balance.js'):null));
+const MASS_BALANCE_TOL=SetasMassBalanceApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced=a=>!!a&&Math.abs(a.tot-100)<=MASS_BALANCE_TOL;
 const massBalanceMsg=a=>{
   if(!a) return'';

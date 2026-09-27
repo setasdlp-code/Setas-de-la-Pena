@@ -37,7 +37,7 @@
   // Igual que en batch-sheet.js / task-engine.js: la dependencia se resuelve en
   // cada llamada, no al cargar el módulo, porque en el navegador el orden de
   // carga entre listas de <script> no está garantizado.
-  const recipeVersionRef = () => (isNode ? require('./recipe-version.js') : (glob && glob.SetasRecipeVersion) || null);
+  const massBalanceRef = () => (isNode ? require('./mass-balance.js') : (glob && glob.SetasMassBalance) || null);
 
   const LIFECYCLE_STATES = Object.freeze(['draft', 'trial', 'approved', 'retired', 'legacy']);
 
@@ -242,7 +242,7 @@
     if (!ingredients.length) {
       reasons.push('la receta no tiene ingredientes');
     } else {
-      const rv = recipeVersionRef();
+      const rv = massBalanceRef();
       if (rv) {
         const total = rv.totalPct(ingredients);
         if (!rv.isMassBalancedTotal(total)) {

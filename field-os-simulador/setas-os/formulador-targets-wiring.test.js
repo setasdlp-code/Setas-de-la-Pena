@@ -3,7 +3,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { extractConsts } = require('./test-support/jsx-extract.js');
 globalThis.SetasSpeciesTargets = require('./species-targets.js');
-globalThis.SetasRecipeVersion = require('./recipe-version.js');
+globalThis.SetasMassBalance = require('./mass-balance.js');
 
 // DENSOS es un `const` local dentro de `analyze` (no de nivel superior) — no se
 // puede extraer con `extractConsts`, y `analyze` no lo necesita desde afuera.
