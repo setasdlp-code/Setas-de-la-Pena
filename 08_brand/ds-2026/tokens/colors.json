@@ -6,17 +6,17 @@
   "color": {
     "primitive": {
       "paper100": {
-        "value": "#F6F4EC",
+        "value": "#FAF8F3",
         "type": "color",
-        "role": "Warm archival paper ground. Canonical page background."
+        "role": "Warm archival paper ground, lightened 2026-09. Canonical page background."
       },
       "paper50": {
-        "value": "#FCFBF6",
+        "value": "#FEFDFB",
         "type": "color",
         "role": "Lightest cream. Elevated surfaces, cards, inset highlights."
       },
       "paper200": {
-        "value": "#EDE8DB",
+        "value": "#EFE9DE",
         "type": "color",
         "role": "Darker cream. Sunken wells, image placeholders, table hover."
       },
@@ -91,7 +91,7 @@
         "role": "Legacy mineral rule retained for compatibility surfaces. New semantic borders use Ink 500."
       },
       "paper": {
-        "value": "#F6F4EC",
+        "value": "#FAF8F3",
         "type": "color",
         "role": "Legacy alias to paper-100"
       },
@@ -184,7 +184,7 @@
         "value": "{color.primitive.paper-50}"
       },
       "borderHairline": {
-        "value": "{color.primitive.ink-500}"
+        "value": "{color.primitive.rule-500}"
       },
       "borderHeavy": {
         "value": "{color.primitive.ink-900}"
@@ -234,6 +234,9 @@
       "statusErrorBg": {
         "value": "{color.derived.coral-tint}"
       },
+      "statusOkMarker": {
+        "value": "{color.primitive.moss-500}"
+      },
       "actionPrimary": {
         "value": "{color.primitive.moss-700}"
       },
@@ -247,7 +250,7 @@
         "value": "{color.primitive.coral-700}"
       },
       "actionAccentText": {
-        "value": "{color.primitive.paper-50}"
+        "value": "{color.primitive.coral-700}"
       },
       "actionDanger": {
         "value": "{color.primitive.coral-700}"

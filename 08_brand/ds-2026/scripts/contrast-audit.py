@@ -24,6 +24,7 @@ P = {
     "RULE": PRIM["rule-500"]["value"],
     "SOIL": PRIM["bark-700"]["value"],
     "MOSS": PRIM["moss-700"]["value"],
+    "MOSS_500": PRIM["moss-500"]["value"],
     "SLATE": PRIM["slate-500"]["value"],
     "CORAL_500": PRIM["coral-500"]["value"],
     "CORAL_700": PRIM["coral-700"]["value"],
@@ -73,6 +74,8 @@ PAIRS = [
     ("INK", "WARNING_TINT", "Body text on caution tint", 4.5, ALLOW),
     ("RULE", "PAPER", "Legacy specimen rule (non-text)", 3.0, ALLOW),
     ("MOSS", "PAPER", "OK graphical marker", 3.0, ALLOW),
+    ("MOSS_500", "PAPER", "OK bar/meter fill (graphic)", 3.0, ALLOW),
+    ("MOSS_500", "PAPER_RECESSED", "OK bar over recessed track", 3.0, ALLOW),
     ("CORAL_500", "PAPER", "Decorative terracotta rule/fill", 3.0, ALLOW),
 
     # Explicitly banned uses.

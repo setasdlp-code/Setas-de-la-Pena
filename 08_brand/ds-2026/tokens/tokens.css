@@ -8,9 +8,9 @@
 
 :root {
   /* 1 · PRIMITIVE MINERAL PIGMENTS & GROUNDS */
-  --paper-100: #F6F4EC;
-  --paper-50: #FCFBF6;
-  --paper-200: #EDE8DB;
+  --paper-100: #FAF8F3;
+  --paper-50: #FEFDFB;
+  --paper-200: #EFE9DE;
   --ink-900: #1A1410;
   --ink-700: #3A2F26;
   --ink-500: #6B5B4A;
@@ -54,7 +54,7 @@
   --text-secondary: var(--ink-700);
   --text-metadata: var(--ink-500);
   --text-inverse: var(--paper-50);
-  --border-hairline: var(--ink-500);
+  --border-hairline: var(--rule-500);
   --border-heavy: var(--ink-900);
   --border-strong: var(--ink-900);
   --brand-primary: var(--moss-700);
@@ -71,11 +71,12 @@
   --status-warn-bg: var(--warning-tint);
   --status-warn-marker: var(--warning-text);
   --status-error-bg: var(--coral-tint);
+  --status-ok-marker: var(--moss-500);
   --action-primary: var(--moss-700);
   --action-secondary: var(--paper-50);
   --focus-ring: var(--moss-700);
   --action-accent: var(--coral-700);
-  --action-accent-text: var(--paper-50);
+  --action-accent-text: var(--coral-700);
   --action-danger: var(--coral-700);
   --action-danger-text: var(--paper-50);
   --action-primary-hover: var(--moss-900);
@@ -102,7 +103,6 @@
   --size-small: 14px;
   --size-data: 13px;
   --size-label: 11px;
-  --size-micro: 11px;
   --size-micro-screen: 11px;
   --size-micro-print: 9px;
   --size-lot-code-print: 6mm;
@@ -171,6 +171,18 @@
   --pictogram-grid: 48;
   --pictogram-stroke: 1.5px;
 
+  /* Component measures — fixed dimensions the components used to hard-code */
+  --bar-height: 4px;
+  --marker-width: 3px;
+  --band-rule: 5px;
+  --sign-frame: 3px;
+  --size-data-lg: 28px;
+  --size-data-xl: 36px;
+  --ingredient-size: 64px;
+  --step-index: 40px;
+  --step-key: 28px;
+  --plate-height: 148px;
+
   /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */
   --provenance-measured-symbol: "●";
   --provenance-calculated-symbol: "◆";
@@ -183,6 +195,20 @@
   --sync-pending-symbol: "◌";
   --sync-error-symbol: "✕";
   --sync-offline-symbol: "⚡";
+
+  /* 6b · DOMAIN PICTOGRAMS — mask sources inlined as data URIs so the token
+      resolves identically from any consumer's stylesheet path */
+  --provenance-measured-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-measured'%3E %3Ccircle cx='24' cy='24' r='9' fill='currentColor' stroke='none'/%3E %3C/svg%3E");
+  --provenance-calculated-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-calculated'%3E %3Cpath d='M24 9 39 24 24 39 9 24Z' fill='currentColor' stroke='none'/%3E %3C/svg%3E");
+  --provenance-estimated-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-estimated'%3E %3Cpath d='M24 10 38 24 24 38 10 24Z'/%3E %3C/svg%3E");
+  --provenance-target-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-target'%3E %3Ccircle cx='24' cy='24' r='14'/%3E%3Ccircle cx='24' cy='24' r='6' fill='currentColor' stroke='none'/%3E %3C/svg%3E");
+  --provenance-manual-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-manual'%3E %3Cpath d='M24 11 38 36H10Z'/%3E %3C/svg%3E");
+  --provenance-simulated-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-simulated'%3E %3Cpath d='M24 9 37 16.5v15L24 39 11 31.5v-15Z'/%3E %3C/svg%3E");
+  --provenance-pending-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-pending'%3E %3Ccircle cx='24' cy='24' r='13' stroke-dasharray='4 4'/%3E %3C/svg%3E");
+  --sync-synced-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-synced'%3E %3Cpath d='M11 25l8 9 18-20'/%3E %3C/svg%3E");
+  --sync-pending-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-pending'%3E %3Ccircle cx='24' cy='24' r='13' stroke-dasharray='4 4'/%3E %3C/svg%3E");
+  --sync-error-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-error'%3E %3Cpath d='M13 13l22 22M35 13L13 35'/%3E %3C/svg%3E");
+  --sync-offline-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-offline'%3E %3Cpath d='M26 8 13 27h9l-2 13 15-20h-9Z'/%3E %3C/svg%3E");
   --status-quarantine-border-style: dashed;
 }
 
