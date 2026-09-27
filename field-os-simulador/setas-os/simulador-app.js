@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 889fe4f36a02d5d0ce8375e1ab78dfb35b4385a35ff7322344a11372fef9241a
+// source-hash: 0b4cc2d33e1f4b2c1a65ffe915a1739ddcf829bfde18ad6816411cf4eb419c2a
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4674,6 +4674,10 @@ function SimuladorShell(props) {
   const [invProveedores, setInvProveedores] = useState([]);
   const [invCompras, setInvCompras] = useState([]);
   const [invLotes, setInvLotes] = useState([]);
+  const invLotesRef = useRef([]);
+  useEffect(() => {
+    invLotesRef.current = invLotes;
+  }, [invLotes]);
   const [peritoInventoryLoaded, setPeritoInventoryLoaded] = useState(false);
   const [invMovimientos, setInvMovimientos] = useState([]);
   const [invReservas, setInvReservas] = useState([]);
@@ -6579,11 +6583,27 @@ ${errors.slice(0, 5).join("\n")}` : "");
     const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });
     const { queue, added } = SetasInventoryConsumptionApi.enqueue(readInvOps(), op);
     if (!added) return false;
+    const r = SetasInventoryConsumptionApi.applyLocal(invLotesRef.current, op, { fecha, nota });
+    invLotesRef.current = r.lotes;
+    setInvLotes(r.lotes);
+    try {
+      localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
+    } catch (e) {
+      bitQuotaWarn();
+    }
+    setInvMovimientos((prev) => {
+      const upd = [...prev, ...r.movimientos];
+      try {
+        localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
     const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
     if (ledgerApi) {
       const nowIso = (/* @__PURE__ */ new Date()).toISOString();
       setInvReservas((prev) => {
-        const pendientes = prev.filter((r) => r && r.batchId === loteId && r.status === "held");
+        const pendientes = prev.filter((r2) => r2 && r2.batchId === loteId && r2.status === "held");
         let upd = prev;
         let aCerrar = pendientes;
         if (!pendientes.length) {
@@ -6591,7 +6611,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
           upd = ledgerApi.addReservations(prev, reservas);
           aCerrar = reservas;
         }
-        upd = aCerrar.reduce((acc, r) => ledgerApi.consume(acc, r.id, { eventId: op.opId, at: nowIso }), upd);
+        upd = aCerrar.reduce((acc, r2) => ledgerApi.consume(acc, r2.id, { eventId: op.opId, at: nowIso }), upd);
         try {
           localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
         } catch (e) {
@@ -6599,24 +6619,11 @@ ${errors.slice(0, 5).join("\n")}` : "");
         return upd;
       });
     }
-    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
-    setInvLotes((prev) => {
-      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
-      try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
-      } catch (e) {
-      }
-      return r.lotes;
-    });
-    setInvMovimientos((prev) => {
-      const upd = [...prev, ...movimientos];
-      try {
-        localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
-      } catch (e) {
-      }
-      return upd;
-    });
-    saveInvOps(queue);
+    if (r.shortfalls.length) {
+      console.warn("Consumo de inventario con faltante frente al plan (stock cambió entre planificar y confirmar):", r.shortfalls);
+    }
+    const finalQueue = queue.map((o) => o.opId === r.appliedOp.opId ? r.appliedOp : o);
+    saveInvOps(finalQueue);
     runInventorySync();
     return true;
   };

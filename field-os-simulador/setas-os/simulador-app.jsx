@@ -6504,6 +6504,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [invProveedores,setInvProveedores]=useState([]);
   const [invCompras,setInvCompras]=useState([]);
   const [invLotes,setInvLotes]=useState([]);
+  // Espejo síncrono de invLotes para registrarConsumo: el updater funcional de
+  // setInvLotes se ejecuta en el siguiente render, no en el momento de la
+  // llamada, así que dos confirmaciones de consumo en el mismo tick (dos
+  // lotes de producción lanzados casi simultáneamente) verían ambas el mismo
+  // invLotes "prev" si dependieran de eso. Este ref se actualiza de forma
+  // síncrona en cada llamada a registrarConsumo, así que la segunda siempre
+  // aplica sobre el stock que dejó la primera, no sobre una foto stale.
+  const invLotesRef=useRef([]);
+  useEffect(()=>{invLotesRef.current=invLotes;},[invLotes]);
   const [peritoInventoryLoaded,setPeritoInventoryLoaded]=useState(false);
   const [invMovimientos,setInvMovimientos]=useState([]);
   // Libro de reservas de inventario (inventory-ledger.js): compromisos de
@@ -8341,13 +8350,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const op=SetasInventoryConsumptionApi.buildConsumptionOp({loteId,codigo,plan,createdAt:Date.now()});
     const {queue,added}=SetasInventoryConsumptionApi.enqueue(readInvOps(),op);
     if(!added) return false;   // this lote was already discounted: never apply twice
-    // Libro de reservas: este paso CIERRA las reservas que dejó la
-    // planificación, con op.opId como eventId — el mismo id idempotente por
-    // loteId que identifica esta operación de consumo, así que una reserva sólo
-    // queda consumida con la prueba de qué evento la cerró. Un lote que llegó
-    // aquí sin haber pasado por planificación (los anteriores a este cambio, o
-    // uno creado a mano) no tiene reservas que cerrar: se crean y se consumen
-    // en el acto, que es lo que hacía antes todo el mundo.
+    // invLotesRef se actualiza aquí mismo, síncrono: dos confirmaciones
+    // casi simultáneas ven el stock real que dejó la anterior.
+    const r=SetasInventoryConsumptionApi.applyLocal(invLotesRef.current,op,{fecha,nota});
+    invLotesRef.current=r.lotes;
+    setInvLotes(r.lotes);
+    try{localStorage.setItem('sdp_lotes',JSON.stringify(r.lotes));}catch(e){bitQuotaWarn();}
+    setInvMovimientos(prev=>{
+      const upd=[...prev,...r.movimientos];
+      try{localStorage.setItem('sdp_movimientos',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+    // Libro de reservas: CIERRA las reservas que dejó la planificación, con
+    // op.opId como eventId. Un lote sin reservas (creado antes de este
+    // cambio, o a mano) las crea y consume en el acto.
     const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
     if(ledgerApi){
       const nowIso=new Date().toISOString();
@@ -8365,24 +8381,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
         return upd;
       });
     }
-    // Actualizaciones funcionales: dos llamadas casi simultáneas (dos lotes
-    // distintos lanzados muy seguido) deben componerse sobre el prev más
-    // reciente, no sobre el invLotes/invMovimientos capturado por closure
-    // en el render que originó cada llamada. Los movimientos se derivan
-    // solo de op.allocations — no dependen de los lotes — así que se
-    // calculan una vez fuera del updater y se reutilizan en ambos lados.
-    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
-    setInvLotes(prev => {
-      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
-      try { localStorage.setItem('sdp_lotes', JSON.stringify(r.lotes)); } catch(e) {}
-      return r.lotes;
-    });
-    setInvMovimientos(prev => {
-      const upd = [...prev, ...movimientos];
-      try { localStorage.setItem('sdp_movimientos', JSON.stringify(upd)); } catch(e) {}
-      return upd;
-    });
-    saveInvOps(queue);
+    if(r.shortfalls.length){
+      console.warn('Consumo de inventario con faltante frente al plan (stock cambió entre planificar y confirmar):',r.shortfalls);
+    }
+    const finalQueue=queue.map(o=>o.opId===r.appliedOp.opId?r.appliedOp:o);
+    saveInvOps(finalQueue);
     runInventorySync();
     return true;
   };
