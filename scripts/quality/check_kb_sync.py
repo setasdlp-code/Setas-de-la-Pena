@@ -532,24 +532,40 @@ def kpi_point(label: str, unit: str, kb_file: str, section: str, row: str, app_k
     )
 
 
+# Los tres umbrales de BE apuntan a la misma frase de production_schedule.md
+# ("La BE de referencia del repositorio es 40–70%, pero la capacidad y el
+# rendimiento de Setas de la Peña permanecen sin validar"), porque es lo único
+# que el KB documenta sobre BE a nivel de proyecto. Antes buscaban filas de
+# tabla que nunca existieron ("BE total objetivo", "BE óptimo"), así que los
+# tres salían como present_in_app_absent_from_kb: el reporte decía "no hay
+# fuente" cuando sí la hay y el app la contradice. Un hueco de cobertura y una
+# divergencia real se triagean distinto, y confundirlos esconde la segunda.
+BE_REFERENCE_ROW = r"BE de referencia"
+
 KPI_SYNC_POINTS: list[SyncPoint] = [
     kpi_point("BE objetivo", "%", "06_operations/production_schedule.md",
-              r".", r"BE total objetivo", "beTarget"),
-    kpi_point("Yield por bloque", "g", "06_operations/production_schedule.md",
-              r".", r"Yield fresco por bloque", "yieldPerBlock"),
+              r".", BE_REFERENCE_ROW, "beTarget"),
+    kpi_point("BE óptimo", "%", "06_operations/production_schedule.md",
+              r".", BE_REFERENCE_ROW, "beOptimal"),
+    kpi_point("BE de alerta", "%", "06_operations/production_schedule.md",
+              r".", BE_REFERENCE_ROW, "beAlert"),
     kpi_point("Umbral de contaminación", "%", "02_substrates/contamination.md",
               r"Best Practices", r"contaminaci", "contamMax"),
-    # No known KB source for these three as of this writing — routed through
-    # the same empty-candidates path as everything else (instead of a
-    # special-cased footnote) so they surface as regular
-    # present_in_app_absent_from_kb findings, and so a future KB edit that
-    # adds a matching row is picked up automatically.
-    kpi_point("BE óptimo", "%", "06_operations/production_schedule.md",
-              r".", r"BE.*[oó]ptim|[oó]ptim.*BE", "beOptimal"),
-    kpi_point("BE de alerta", "%", "06_operations/production_schedule.md",
-              r".", r"BE.*alert|alert.*BE", "beAlert"),
     kpi_point("Umbral de alerta de contaminación", "%", "02_substrates/contamination.md",
-              r"Best Practices", r"15%|alerta", "contamAlert"),
+              r"Best Practices", r"contaminaci", "contamAlert"),
+    # yieldPerBlock (800 g) sigue sin fuente, y su patrón de fila apunta a
+    # propósito a una etiqueta que el KB no tiene: así cae por el camino normal
+    # de candidatos vacíos y se reporta como present_in_app_absent_from_kb, en
+    # vez de desaparecer del reporte. Si algún día se documenta el rendimiento
+    # por bloque bajo esa etiqueta, el punto lo levanta solo.
+    #
+    # Lo que NO hay que hacer es apuntarlo a "Empacar en bolsas (500–1,000 g por
+    # bloque)" (04_facility/comprehensive_guide.md): 800 cae dentro de ese rango
+    # y el checker declararía que coincide, pero ese rango es masa de SUSTRATO
+    # EMPACADO, no cosecha fresca. Daría por validado un KPI que nadie midió,
+    # comparando dos magnitudes distintas — peor que reportar el hueco.
+    kpi_point("Yield por bloque", "g", "06_operations/production_schedule.md",
+              r".", r"Yield fresco por bloque", "yieldPerBlock"),
 ]
 
 
