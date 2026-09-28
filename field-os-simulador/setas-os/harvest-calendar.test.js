@@ -281,4 +281,118 @@ test('Setas OS — Calendario de Cosecha y Ventas (harvest-calendar)', async (t)
       assert.ok(Math.abs(e.kgExpected - proj.remainingFlushes[i].kg) < 0.01);
     });
   });
+
+  // -------------------------------------------------------------------
+  // Hallazgo de revisión #7 — lifecycleState canónico y quarantine excluidos
+  // -------------------------------------------------------------------
+
+  await t.test('22. Excluye lotes por lifecycleState canónico (closed/discarded/failed/quarantine)', () => {
+    const base = { bags: 50, kgPerBag: 1.5, moisture: 65, eb: 90, fechaInoculacion: '2026-08-01', sKey: 'p_ostreatus_gris' };
+    const lots = [
+      { ...base, id: 'A', lifecycleState: 'closed' },
+      { ...base, id: 'B', lifecycleState: 'discarded' },
+      { ...base, id: 'C', lifecycleState: 'failed' },
+      { ...base, id: 'D', lifecycleState: 'quarantine' },
+      { ...base, id: 'E', lifecycleState: 'incubation' },
+    ];
+    const events = hc.buildHarvestEvents(lots, { now: NOW, horizonDays: 90 });
+    const lotIds = new Set(events.map((e) => e.lotId));
+    assert.ok(!lotIds.has('A') && !lotIds.has('B') && !lotIds.has('C') && !lotIds.has('D'),
+      'lotes cerrados/descartados/fallidos/en cuarentena (canónicos) deben excluirse');
+    assert.ok(lotIds.has('E'), 'lote activo (incubation) debe incluirse');
+  });
+
+  await t.test('23. lifecycleState tiene prioridad sobre estado/status legacy', () => {
+    const lot = {
+      id: 'LP-LC', bags: 50, kgPerBag: 1.5, moisture: 65, eb: 90, fechaInoculacion: '2026-08-01', sKey: 'p_ostreatus_gris',
+      estado: 'incubacion', lifecycleState: 'closed',
+    };
+    const events = hc.buildHarvestEvents([lot], { now: NOW, horizonDays: 90 });
+    assert.equal(events.length, 0, 'lifecycleState=closed debe excluir el lote aunque estado legacy diga activo');
+  });
+
+  // -------------------------------------------------------------------
+  // Hallazgo de revisión #8 — normalización de especie en matchDemand
+  // -------------------------------------------------------------------
+
+  await t.test('24. matchDemand normaliza alias de especie (orellana_gris) contra la clave canónica de la oferta', () => {
+    const weeks = [
+      { key: '2026-W40', kgExpected: 10, kgLow: 7.5, kgHigh: 12.5, bySpecies: { p_ostreatus_gris: 10 }, events: [] },
+    ];
+    const commitments = [
+      { client: 'Rest A', speciesId: 'orellana_gris', kgPerWeek: 8, fromWeek: '2026-W40', toWeek: '2026-W40' },
+    ];
+    const demand = hc.matchDemand(weeks, commitments);
+    const week = demand.weeks[0];
+    assert.equal(Object.keys(week.bySpecies).length, 1, 'oferta y demanda del mismo hongo deben quedar en una sola clave normalizada');
+    const entry = week.bySpecies.p_ostreatus_gris;
+    assert.ok(entry, 'debe existir la entrada bajo la clave canónica p_ostreatus_gris');
+    assert.equal(entry.supply, 10);
+    assert.equal(entry.demand, 8);
+    assert.notEqual(entry.status, 'déficit', 'no debe haber déficit falso por alias sin normalizar');
+  });
+
+  // -------------------------------------------------------------------
+  // Hallazgo de revisión #16 — provenance de valores heurísticos
+  // -------------------------------------------------------------------
+
+  await t.test('25. HEURISTICS expone provenance {class, note} para windowRadius, banda ±25% y kg/hora-operario', () => {
+    assert.ok(Object.isFrozen(hc.HEURISTICS));
+    ['windowRadiusDivisor', 'yieldBandFraction', 'harvestKgPerOperatorHour'].forEach((key) => {
+      const entry = hc.HEURISTICS[key];
+      assert.ok(entry, `debe existir HEURISTICS.${key}`);
+      assert.equal(entry.class, 'heuristic');
+      assert.ok(typeof entry.note === 'string' && entry.note.length > 0);
+      assert.ok(typeof entry.value === 'number');
+    });
+    assert.equal(hc.HEURISTICS.yieldBandFraction.value, 0.25);
+    assert.equal(hc.HEURISTICS.harvestKgPerOperatorHour.value, 8);
+  });
+
+  // -------------------------------------------------------------------
+  // Hallazgo de revisión #18 — confidence no se basa en conteo de eventos
+  // -------------------------------------------------------------------
+
+  await t.test('26. buildHarvestCalendar declara "low" aun con muchos eventos, salvo opts.calibrated === true', () => {
+    const lots = [
+      { id: 'LP-1', bags: 200, kgPerBag: 1.5, moisture: 65, eb: 90, fechaInoculacion: '2026-08-01', sKey: 'p_ostreatus_gris' },
+      { id: 'LP-2', bags: 200, kgPerBag: 1.5, moisture: 65, eb: 90, fechaInoculacion: '2026-08-05', sKey: 'shiitake' },
+    ];
+    const calDefault = hc.buildHarvestCalendar({ lots, commitments: [], now: NOW, horizonDays: 400 });
+    assert.ok(calDefault.events.length >= 5, 'precondición: debe haber al menos 5 eventos proyectados');
+    assert.equal(calDefault.confidence, 'low', 'muchos eventos proyectados no son evidencia; sigue siendo low');
+
+    const calCalibrated = hc.buildHarvestCalendar({ lots, commitments: [], now: NOW, horizonDays: 400, calibrated: true });
+    assert.equal(calCalibrated.confidence, 'medium', 'calibrated:true (de calibrateFlushProfileFromHarvests) sí sube a medium');
+  });
+
+  // -------------------------------------------------------------------
+  // Hallazgo de revisión #20 — ambientTemp nunca se pasaba al motor
+  // -------------------------------------------------------------------
+
+  await t.test('27. ambientTempByLot / lot.ambientTempC se pasan al motor y desplazan la proyección', () => {
+    const lot = { id: 'LP-TEMP', bags: 50, kgPerBag: 1.5, moisture: 65, eb: 90, fechaInoculacion: '2026-08-01', sKey: 'p_ostreatus_gris' };
+    const coldTemp = 18; // tRef=24 para p_ostreatus_gris: más frío retrasa la proyección (Q10).
+
+    const eventsDefault = hc.buildHarvestEvents([lot], { now: NOW, horizonDays: 200 });
+    const eventsColdByOpt = hc.buildHarvestEvents([lot], { now: NOW, horizonDays: 200, ambientTempByLot: { 'LP-TEMP': coldTemp } });
+    const eventsColdByLotField = hc.buildHarvestEvents([{ ...lot, ambientTempC: coldTemp }], { now: NOW, horizonDays: 200 });
+
+    assert.notEqual(eventsColdByOpt[0].peakDate, eventsDefault[0].peakDate,
+      'ambientTempByLot debe desplazar la fecha proyectada respecto a la temperatura de referencia');
+    assert.equal(eventsColdByOpt[0].peakDate, eventsColdByLotField[0].peakDate,
+      'lot.ambientTempC debe producir el mismo resultado que ambientTempByLot para ese lote');
+
+    // Debe coincidir exactamente con pasarle la temperatura directo al motor.
+    const proj = engine.calculateRemainingFlushes(lot, { ambientTemp: coldTemp });
+    assert.equal(eventsColdByOpt[0].peakDate, proj.remainingFlushes[0].date);
+
+    // opts.ambientTempByLot tiene prioridad sobre lot.ambientTempC.
+    const eventsPriority = hc.buildHarvestEvents(
+      [{ ...lot, ambientTempC: 30 }],
+      { now: NOW, horizonDays: 200, ambientTempByLot: { 'LP-TEMP': coldTemp } }
+    );
+    assert.equal(eventsPriority[0].peakDate, eventsColdByOpt[0].peakDate,
+      'ambientTempByLot debe ganar sobre lot.ambientTempC cuando ambos están presentes');
+  });
 });

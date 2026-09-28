@@ -19,10 +19,17 @@ const COLORS = {
   mycelium: [240, 238, 232],       // blanco/crema: s baja, v alta
   substrate: [130, 90, 55],        // marrón tostado (v y s moderados, fuera del rango de neurospora)
   trichoderma: [30, 150, 45],      // verde
-  neurospora: [255, 150, 95],      // naranja/salmón brillante y saturado
-  bacterial_blotch: [190, 160, 80],// amarillo-marrón, sat/valor medios
+  neurospora: [255, 140, 60],      // naranja/salmón intenso: h~25°, s~0.76, v=1 (dentro de la banda estrecha afinada)
+  amarillo_marron: [190, 160, 80], // banda antes clasificada como bacterial_blotch: ahora debe caer en substrate
   dark_rot: [15, 15, 12],          // muy oscuro
-  background: [40, 60, 220]        // azul, no cae en ninguna regla cálida
+  background: [40, 60, 220],       // azul, no cae en ninguna regla cálida
+  // Colores de sustrato reales de la granja (hallazgo de revisión #9): antes
+  // se clasificaban erróneamente como bacterial_blotch/neurospora.
+  straw: [200, 170, 110],          // paja: h=40°, s=0.45, v=0.78
+  sawdust: [180, 140, 90],         // aserrín: h=33°, s=0.5, v=0.71
+  oakShavings: [195, 165, 115],    // viruta de encino: h=37.5°, s=0.41, v=0.76
+  // Micelio muy iluminado pero no puramente blanco (hallazgo de revisión #10).
+  brightMycelium: [250, 245, 240]  // v=0.98, s=0.04 — no debe marcarse sobreexpuesto
 };
 
 /** Crea un ImageData-like plano de un solo color RGBA. */
@@ -104,8 +111,23 @@ test('classifyPixel: naranja/salmón brillante clasifica como neurospora', () =>
   assert.equal(classifyPixel(...COLORS.neurospora), 'neurospora');
 });
 
-test('classifyPixel: amarillo-marrón medio clasifica como bacterial_blotch', () => {
-  assert.equal(classifyPixel(...COLORS.bacterial_blotch), 'bacterial_blotch');
+// Hallazgo de revisión #9: la regla absoluta de color 'bacterial_blotch' se
+// retiró porque marcaba sustrato sano como posible contaminación bacteriana.
+// La banda amarillo-marrón ahora cae en 'substrate'.
+test('classifyPixel: amarillo-marrón medio clasifica como substrate (bacterial_blotch retirado)', () => {
+  assert.equal(classifyPixel(...COLORS.amarillo_marron), 'substrate');
+});
+
+test('classifyPixel: paja (straw) real de sustrato clasifica como substrate, no como patógeno', () => {
+  assert.equal(classifyPixel(...COLORS.straw), 'substrate');
+});
+
+test('classifyPixel: aserrín (sawdust) real de sustrato clasifica como substrate, no neurospora', () => {
+  assert.equal(classifyPixel(...COLORS.sawdust), 'substrate');
+});
+
+test('classifyPixel: viruta de encino (oak shavings) real de sustrato clasifica como substrate', () => {
+  assert.equal(classifyPixel(...COLORS.oakShavings), 'substrate');
 });
 
 test('classifyPixel: muy oscuro clasifica como dark_rot sin importar matiz', () => {
@@ -178,7 +200,79 @@ test('analyzeImageData: imagen homogénea de micelio da colonizationPct alto y e
   assert.ok(result.fractions.mycelium > 0.99);
   assert.equal(result.colonizationPct, 100);
   assert.deepEqual(result.flags, []);
-  assert.equal(result.confidence, 'medium');
+  // Hallazgo de revisión #19: los umbrales solo se afinaron sobre casos
+  // sintéticos, sin corpus fotográfico validado — nunca debe declarar 'medium'.
+  assert.equal(result.confidence, 'low');
+});
+
+// ---------------------------------------------------------------------------
+// Hallazgo de revisión #9 — sustrato sano no debe producir banderas de patógeno
+// ---------------------------------------------------------------------------
+
+test('analyzeImageData: imagen homogénea de paja (straw) es substrate puro, sin banderas', () => {
+  const img = makeSolidImage(30, 30, COLORS.straw);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.usable, true);
+  assert.ok(result.fractions.substrate > 0.99);
+  assert.deepEqual(result.flags, []);
+});
+
+test('analyzeImageData: imagen homogénea de aserrín (sawdust) es substrate puro, sin banderas', () => {
+  const img = makeSolidImage(30, 30, COLORS.sawdust);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.usable, true);
+  assert.ok(result.fractions.substrate > 0.99);
+  assert.deepEqual(result.flags, []);
+});
+
+test('analyzeImageData: imagen homogénea de viruta de encino es substrate puro, sin banderas', () => {
+  const img = makeSolidImage(30, 30, COLORS.oakShavings);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.usable, true);
+  assert.ok(result.fractions.substrate > 0.99);
+  assert.deepEqual(result.flags, []);
+});
+
+test('analyzeImageData: imagen mixta de solo sustratos sanos (paja/aserrín/encino) no da ninguna bandera', () => {
+  const img = makeBandedImage(90, 20, [COLORS.straw, COLORS.sawdust, COLORS.oakShavings]);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.usable, true);
+  assert.deepEqual(result.flags, []);
+});
+
+// ---------------------------------------------------------------------------
+// Hallazgo de revisión #10 — micelio muy iluminado no debe marcarse sobreexpuesto
+// ---------------------------------------------------------------------------
+
+test('analyzeImageData: bolsa de micelio bien iluminada (v~0.98) sigue siendo usable con colonización alta', () => {
+  const img = makeSolidImage(30, 30, COLORS.brightMycelium);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.overexposed, false);
+  assert.equal(result.quality.usable, true);
+  assert.equal(result.colonizationPct, 100);
+});
+
+test('analyzeImageData: blanco puro (v=1, s=0) sí se marca sobreexpuesto', () => {
+  const img = makeSolidImage(20, 20, [255, 255, 255]);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.overexposed, true);
+  assert.equal(result.quality.usable, false);
+});
+
+// ---------------------------------------------------------------------------
+// Hallazgo de revisión #13 — zona oscura ya no se atribuye a Mycogone
+// ---------------------------------------------------------------------------
+
+test('analyzeImageData: zona oscura extensa genera bandera sin patógeno asignado (anomalia_oscura), no mycogone', () => {
+  // 1/3 de zona oscura sobre sustrato: supera el umbral de alerta (0.20) para
+  // dark_anomaly sin hacer que la imagen completa sea subexpuesta (meanV>=0.2).
+  const img = makeBandedImage(30, 10, [COLORS.substrate, COLORS.substrate, COLORS.dark_rot]);
+  const result = analyzeImageData(img, { stride: 1 });
+  assert.equal(result.quality.usable, true);
+  const flag = result.flags.find((f) => f.anomalyId === 'anomalia_oscura');
+  assert.ok(flag, 'debe existir la bandera de anomalía oscura');
+  assert.equal(flag.pathogenId, null);
+  assert.ok(!result.flags.some((f) => f.pathogenId === 'mycogone'), 'no debe aparecer mycogone');
 });
 
 test('analyzeImageData: banda de trichoderma por encima de "alerta" genera bandera alerta', () => {

@@ -13,8 +13,13 @@
  * de cualquier sospecha de patógeno requiere inspección visual/olfativa del
  * operario en campo — nunca se activa un flujo de contaminación solo por esto.
  *
- * ids de patógenos alineados con PATHOGENS_CATALOG de contamination-workflow.js:
- * trichoderma, neurospora, cobweb, bacillus, mycogone.
+ * ids de patógenos alineados con PATHOGENS_CATALOG de contamination-workflow.js.
+ * Solo trichoderma y neurospora tienen una regla de color con especificidad
+ * suficiente para emitir un `pathogenId`. La banda amarillo-marrón (posible
+ * mancha bacteriana) y las zonas oscuras (v<0.18, posible pudrición) NO se
+ * atribuyen a un patógeno por color absoluto — se solapan demasiado con
+ * sustrato sano y sombras reales; ver FLAG_THRESHOLDS.dark_anomaly y el
+ * comentario de classifyPixel (hallazgos de revisión #9 y #13).
  */
 
 (function (root, factory) {
@@ -76,7 +81,10 @@
       label: 'Sustrato (marrón/tostado)',
       provenance: {
         class: 'heuristic',
-        note: 'Tonos marrón/tostado con saturación y valor medios. Regla heurística, se solapa con bacterial_blotch a propósito.'
+        note: 'Tonos marrón/tostado con saturación y valor medios. Incluye la banda amarillo-marrón que antes se ' +
+          'clasificaba como bacterial_blotch: esa regla de color absoluta se retiró (ver dark_rot y FLAG_THRESHOLDS) ' +
+          'porque no distinguía de forma confiable sustrato sano de mancha bacteriana; sustrato sano no debe generar ' +
+          'una bandera de patógeno.'
       }
     },
     trichoderma: {
@@ -92,15 +100,9 @@
       label: 'Posible Neurospora (naranja/salmón)',
       provenance: {
         class: 'heuristic',
-        note: 'Matiz naranja/salmón ~15-40°, saturación y valor altos. Puede confundirse con sustrato muy anaranjado.'
-      }
-    },
-    bacterial_blotch: {
-      id: 'bacterial_blotch',
-      label: 'Posible mancha bacteriana (amarillo-marrón)',
-      provenance: {
-        class: 'heuristic',
-        note: 'Matiz ~30-55°, saturación y valor medios. Se superpone deliberadamente con substrate; por eso confianza baja.'
+        note: 'Matiz naranja/salmón acotado 15-35°, saturación >=0.65 y valor >=0.75 (rango estrecho, afinado tras ' +
+          'observar falsos positivos sobre sustrato de aserrín/viruta de encino). Puede seguir confundiéndose con ' +
+          'sustrato muy anaranjado y brillante.'
       }
     },
     dark_rot: {
@@ -124,7 +126,16 @@
   /**
    * Clasifica un píxel RGB en una de las COLOR_CLASSES.
    * Orden de evaluación: oscuro > micelio (blanco/crema) > verde > naranja/salmón
-   * > amarillo-marrón (blotch, mayor saturación/valor) > sustrato > fondo.
+   * (banda estrecha) > sustrato (banda amplia, incluye amarillo-marrón) > fondo.
+   *
+   * NOTA (hallazgo de revisión #9): existía una regla absoluta de color para
+   * 'bacterial_blotch' (amarillo-marrón, h 30-55°) que se solapaba con sustrato
+   * sano recién mezclado (p.ej. paja o aserrín claro), generando falsas
+   * banderas de contaminación bacteriana sobre sustrato sin problema alguno.
+   * Se retiró: no hay clase de color propia confiable para distinguir mancha
+   * bacteriana de sustrato sano por color absoluto. Esa banda de color ahora
+   * cae en 'substrate'. Detectar mancha bacteriana requiere comparar contra
+   * una línea base del mismo lote (ver compareSnapshots) o inspección directa.
    */
   function classifyPixel(r, g, b) {
     const { h, s, v } = rgbToHsv(r, g, b);
@@ -138,17 +149,13 @@
     // Verde: Trichoderma.
     if (h >= 70 && h <= 170 && s > 0.25) return 'trichoderma';
 
-    // Naranja/salmón intenso y brillante: Neurospora.
-    if (h >= 15 && h <= 40 && s >= 0.45 && v >= 0.55) return 'neurospora';
+    // Naranja/salmón intenso y brillante: Neurospora. Banda estrecha y alta
+    // en saturación/valor para no confundir sustrato de aserrín/viruta de
+    // encino (más pálido y menos saturado) con la señal de patógeno.
+    if (h >= 15 && h <= 35 && s >= 0.65 && v >= 0.75) return 'neurospora';
 
-    // Amarillo-marrón, saturación/valor medios: mancha bacteriana.
-    // Se evalúa antes que substrate para capturar el rango de mayor
-    // saturación/valor dentro de la banda compartida de matiz.
-    if (h >= 30 && h <= 55 && s >= 0.35 && s <= 0.75 && v >= 0.35 && v <= 0.85) {
-      return 'bacterial_blotch';
-    }
-
-    // Sustrato: marrones/tostados en banda amplia de matiz cálido.
+    // Sustrato: marrones/tostados en banda amplia de matiz cálido (incluye
+    // la banda amarillo-marrón antes atribuida a bacterial_blotch).
     if (h >= 15 && h <= 55 && s >= 0.15 && s <= 0.9 && v >= 0.15 && v <= 0.9) {
       return 'substrate';
     }
@@ -176,22 +183,22 @@
       alerta: 0.05,
       provenance: { class: 'heuristic', note: 'Umbrales de fracción de área elegidos por criterio de diseño, no calibrados con fotos reales de bache.' }
     },
-    bacillus: {
-      // bacterial_blotch se mapea al id de catálogo 'bacillus'.
-      pathogenId: 'bacillus',
-      observar: 0.01,
-      sospecha: 0.05,
-      alerta: 0.15,
-      provenance: { class: 'heuristic', note: 'Umbral más alto por el solape intencional con substrate; confianza baja siempre.' }
-    },
-    mycogone: {
-      // No hay clase de color propia estable para mycogone (mancha ámbar/tumoral);
-      // se aproxima con dark_rot como señal débil de zonas anómalas oscuras/húmedas.
-      pathogenId: 'mycogone',
+    // NOTA (hallazgo de revisión #13): dark_rot (v<0.18, sin importar matiz)
+    // incluye sombras reales y zonas oscuras/húmedas de origen no patógeno; no
+    // hay clase de color propia y confiable para ningún patógeno específico
+    // ahí. Antes se mapeaba a 'mycogone', pero Mycogone es principalmente un
+    // patógeno de Agaricus y esta app no cultiva Agaricus como especie
+    // primaria — ese mapeo atribuía sombras a un patógeno improbable. Se
+    // reemplaza por una bandera sin patógeno asignado (pathogenId: null,
+    // anomalyId: 'anomalia_oscura'), que solo indica "zona oscura a revisar",
+    // nunca un diagnóstico de especie de patógeno.
+    dark_anomaly: {
+      pathogenId: null,
+      anomalyId: 'anomalia_oscura',
       observar: 0.02,
       sospecha: 0.08,
       alerta: 0.20,
-      provenance: { class: 'heuristic', note: 'Aproximación muy débil vía dark_rot; no hay clase de color dedicada. Confianza siempre baja.' }
+      provenance: { class: 'heuristic', note: 'Zona oscura (v<0.18) sin atribución a un patógeno; incluye sombras reales. No se asigna a Mycogone ni a ningún otro patógeno específico. Confianza siempre baja.' }
     }
   });
 
@@ -277,9 +284,12 @@
         counts[cls] += 1;
         pixelsAnalyzed += 1;
 
-        const { v } = rgbToHsv(r, g, b);
+        const { s, v } = rgbToHsv(r, g, b);
         sumV += v;
-        if (v > 0.97) overexposedCount += 1;
+        // Sobreexpuesto: casi blanco puro (v muy alto, saturación casi nula).
+        // Un bloque de micelio blanco bien iluminado (v~0.98 pero con algo de
+        // matiz/sombra, s no ~0) no debe contar aquí (hallazgo de revisión #10).
+        if (v > 0.99 && s < 0.02) overexposedCount += 1;
       }
     }
 
@@ -289,7 +299,7 @@
     });
 
     const meanV = pixelsAnalyzed > 0 ? sumV / pixelsAnalyzed : 0;
-    const overexposed = pixelsAnalyzed > 0 && overexposedCount / pixelsAnalyzed > 0.4;
+    const overexposed = pixelsAnalyzed > 0 && overexposedCount / pixelsAnalyzed > 0.6;
     const underexposed = meanV < 0.2;
     const usable = pixelsAnalyzed > 0 && !overexposed && !underexposed;
 
@@ -298,7 +308,6 @@
     const contaminantFrac =
       (fractions.trichoderma || 0) +
       (fractions.neurospora || 0) +
-      (fractions.bacterial_blotch || 0) +
       (fractions.dark_rot || 0);
     const colonizationDenom = myceliumFrac + substrateFrac + contaminantFrac;
     const colonizationPct = colonizationDenom > 0
@@ -310,18 +319,19 @@
       const flagInputs = [
         { classId: 'trichoderma', thresholds: FLAG_THRESHOLDS.trichoderma },
         { classId: 'neurospora', thresholds: FLAG_THRESHOLDS.neurospora },
-        { classId: 'bacterial_blotch', thresholds: FLAG_THRESHOLDS.bacillus },
-        { classId: 'dark_rot', thresholds: FLAG_THRESHOLDS.mycogone }
+        { classId: 'dark_rot', thresholds: FLAG_THRESHOLDS.dark_anomaly }
       ];
       flagInputs.forEach(({ classId, thresholds }) => {
         const fraction = fractions[classId] || 0;
         const severity = severityFromFraction(thresholds, fraction);
         if (severity) {
-          flags.push({
-            pathogenId: thresholds.pathogenId,
+          const flag = {
+            pathogenId: thresholds.pathogenId ?? null,
             fraction: Math.round(fraction * 10000) / 10000,
             severity
-          });
+          };
+          if (thresholds.anomalyId) flag.anomalyId = thresholds.anomalyId;
+          flags.push(flag);
         }
       });
     }
@@ -344,8 +354,10 @@
       recommendation = 'Se detectaron señales de color a vigilar. Revisa visualmente la zona marcada en la próxima ronda.';
       confidence = 'low';
     } else if (colonizationPct >= 70) {
+      // Hallazgo de revisión #19: los umbrales de este módulo se afinaron solo
+      // sobre casos sintéticos, sin corpus fotográfico validado. No hay base
+      // para declarar 'medium' aquí; confidence se queda en 'low' siempre.
       recommendation = 'Colonización visual alta y sin señales de color relevantes. Continúa el monitoreo habitual.';
-      confidence = 'medium';
     } else {
       recommendation = 'Sin señales de color relevantes. Continúa el monitoreo habitual del lote.';
       confidence = 'low';
@@ -389,7 +401,7 @@
 
     const prevFractions = safePrev.fractions || {};
     const nextFractions = safeNext.fractions || {};
-    const contaminantIds = ['trichoderma', 'neurospora', 'bacterial_blotch', 'dark_rot'];
+    const contaminantIds = ['trichoderma', 'neurospora', 'dark_rot'];
 
     const contaminantDeltas = {};
     contaminantIds.forEach((id) => {

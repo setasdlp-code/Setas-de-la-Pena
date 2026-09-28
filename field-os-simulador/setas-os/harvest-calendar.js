@@ -39,7 +39,40 @@
   const round2 = (v) => Math.round((v + Number.EPSILON) * 100) / 100;
 
   // Estados de lote que se excluyen del calendario de cosecha (lote ya cerrado).
-  const CLOSED_LOT_STATES = ['completado', 'descartado', 'cerrado', 'cancelado'];
+  // Incluye tanto los estados legacy en español (Bitácora histórica) como los
+  // estados canónicos del ciclo de vida de setas-os-workflow.js (NORMAL_STATES
+  // 'closed' + EXCEPTION_STATES 'discarded'/'failed'/'quarantine'). 'quarantine'
+  // se excluye porque un lote en cuarentena no debe proyectarse en el
+  // calendario de cosecha comercial (hallazgo de revisión #7).
+  const CLOSED_LOT_STATES = [
+    'completado', 'descartado', 'cerrado', 'cancelado',
+    'closed', 'discarded', 'failed', 'quarantine',
+  ];
+
+  // Valores heurísticos con procedencia explícita (hallazgo de revisión #16).
+  // Ninguno de estos números está calibrado contra datos held-out; son
+  // decisiones de diseño operativo, documentadas para que no se confundan
+  // con evidencia medida (ver .claude/skills/agronomic-claims/SKILL.md).
+  const HEURISTICS = Object.freeze({
+    windowRadiusDivisor: Object.freeze({
+      value: 6,
+      class: 'heuristic',
+      note: 'Radio de ventana de cosecha = round(restDaysBetweenFlushes / 6), mínimo 2 días. ' +
+        'Elegido por criterio operativo, no calibrado contra fotos ni datos reales de cosecha.',
+    }),
+    yieldBandFraction: Object.freeze({
+      value: 0.25,
+      class: 'heuristic',
+      note: 'Banda kgLow/kgHigh = kgExpected ±25%. Heurística de incertidumbre sobre EB y timing ' +
+        'de fructificación, no un intervalo calibrado contra datos held-out.',
+    }),
+    harvestKgPerOperatorHour: Object.freeze({
+      value: 8,
+      class: 'heuristic',
+      note: 'Tasa asumida de 8 kg cosechados por hora-operario. Criterio operativo de referencia, ' +
+        'no un estándar medido de productividad de cosecha.',
+    }),
+  });
 
   // ---------------------------------------------------------------------
   // Utilidades de fecha, independientes de la zona horaria del host.
@@ -164,8 +197,12 @@
     list.forEach((lot) => {
       if (!lot || typeof lot !== 'object') return;
 
-      const estado = String(lot.estado || lot.status || '').trim().toLowerCase();
-      if (CLOSED_LOT_STATES.includes(estado)) return; // lote cerrado/descartado: excluido
+      // lifecycleState es el campo canónico (setas-os-workflow.js); estado/status
+      // son alias legacy de Bitácora. Se lee lifecycleState primero (hallazgo de
+      // revisión #7: antes nunca se leía, así que un lote canónico 'quarantine'
+      // o 'closed' no se excluía del calendario).
+      const estado = String(lot.lifecycleState || lot.estado || lot.status || '').trim().toLowerCase();
+      if (CLOSED_LOT_STATES.includes(estado)) return; // lote cerrado/descartado/cuarentena: excluido
 
       const speciesRaw = lot.especie || lot.sKey || lot.speciesKey;
       const inocRaw = lot.fechaInoculacion || lot.inocDate;
@@ -174,21 +211,34 @@
       const inocDate = engine.parseDateSafe(inocRaw);
       if (!inocDate) return; // fecha no parseable: excluido
 
+      const lotId = lot.id || lot.codigo || 'LOTE';
+
+      // Temperatura ambiente para el ajuste térmico de oleadas (hallazgo de
+      // revisión #20): antes nunca se pasaba, así que toda fecha se proyectaba
+      // a la temperatura de referencia (tRef) del perfil de la especie, sin
+      // importar la temperatura real del cuarto. Prioridad: override explícito
+      // por lote (opts.ambientTempByLot), luego el dato propio del lote
+      // (lot.ambientTempC), luego ninguno (el motor cae a tRef por su cuenta).
+      const ambientTempOverride = opts.ambientTempByLot && Number.isFinite(opts.ambientTempByLot[lotId])
+        ? opts.ambientTempByLot[lotId]
+        : (Number.isFinite(lot.ambientTempC) ? lot.ambientTempC : undefined);
+      const engineOpts = ambientTempOverride !== undefined ? { ambientTemp: ambientTempOverride } : {};
+
       let proj;
       try {
-        proj = engine.calculateRemainingFlushes(lot, {});
+        proj = engine.calculateRemainingFlushes(lot, engineOpts);
       } catch (e) {
         return; // lote con datos incalculables: excluido, no se fabrica una proyección
       }
       if (!proj || !Array.isArray(proj.remainingFlushes)) return;
 
-      const lotId = lot.id || lot.codigo || 'LOTE';
       const speciesId = proj.speciesKey;
       const profile = engine.getSpeciesFlushProfile(speciesId);
       const restDays = profile.restDaysBetweenFlushes || 14;
       // Radio heurístico de la ventana de cosecha alrededor del pico: proporcional
       // al descanso entre oleadas de la especie, acotado a un mínimo operable.
-      const windowRadius = Math.max(2, Math.round(restDays / 6));
+      // Provenance: HEURISTICS.windowRadiusDivisor.
+      const windowRadius = Math.max(2, Math.round(restDays / HEURISTICS.windowRadiusDivisor.value));
 
       proj.remainingFlushes.forEach((f) => {
         if (!f || !f.date) return;
@@ -210,8 +260,8 @@
           windowEnd,
           peakDate: f.date,
           kgExpected: round2(f.kg),
-          kgLow: round2(f.kg * 0.75),
-          kgHigh: round2(f.kg * 1.25),
+          kgLow: round2(f.kg * (1 - HEURISTICS.yieldBandFraction.value)),
+          kgHigh: round2(f.kg * (1 + HEURISTICS.yieldBandFraction.value)),
           status,
         });
       });
@@ -374,20 +424,32 @@
       const supplyTotal = supplyWeek ? supplyWeek.kgExpected : 0;
       const bySpeciesSupply = supplyWeek ? supplyWeek.bySpecies : {};
 
+      // Hallazgo de revisión #8: los compromisos comerciales pueden usar un
+      // alias de especie (p.ej. 'orellana_gris') distinto de la clave canónica
+      // que usa la oferta proyectada (p.ej. 'p_ostreatus_gris'), lo que
+      // producía un déficit falso por no emparejar la misma especie. Se
+      // normaliza con normalizeSpeciesKey del motor de oleadas en ambos lados
+      // (oferta y demanda) antes de agrupar por especie.
       const speciesDemand = {};
       let demandTotal = 0;
       commList.forEach((c) => {
         if (!c || !weekInRange(wk, c.fromWeek, c.toWeek)) return;
         const kg = parseFloat(c.kgPerWeek) || 0;
-        const sKey = c.speciesId || c.especie || 'desconocida';
+        const sKey = engine.normalizeSpeciesKey(c.speciesId || c.especie);
         demandTotal += kg;
         speciesDemand[sKey] = (speciesDemand[sKey] || 0) + kg;
       });
 
-      const speciesKeys = new Set([...Object.keys(bySpeciesSupply), ...Object.keys(speciesDemand)]);
+      const normalizedSupply = {};
+      Object.keys(bySpeciesSupply).forEach((sk) => {
+        const nk = engine.normalizeSpeciesKey(sk);
+        normalizedSupply[nk] = (normalizedSupply[nk] || 0) + bySpeciesSupply[sk];
+      });
+
+      const speciesKeys = new Set([...Object.keys(normalizedSupply), ...Object.keys(speciesDemand)]);
       const bySpecies = {};
       speciesKeys.forEach((sk) => {
-        bySpecies[sk] = buildMatchEntry(bySpeciesSupply[sk] || 0, speciesDemand[sk] || 0);
+        bySpecies[sk] = buildMatchEntry(normalizedSupply[sk] || 0, speciesDemand[sk] || 0);
       });
 
       const total = buildMatchEntry(supplyTotal, demandTotal);
@@ -414,9 +476,10 @@
    */
   const peakLoad = (days = [], options = {}) => {
     const opts = options || {};
+    // Provenance: HEURISTICS.harvestKgPerOperatorHour.
     const rate = Number.isFinite(opts.harvestKgPerOperatorHour) && opts.harvestKgPerOperatorHour > 0
       ? opts.harvestKgPerOperatorHour
-      : 8;
+      : HEURISTICS.harvestKgPerOperatorHour.value;
 
     const sorted = (Array.isArray(days) ? days.slice() : [])
       .sort((a, b) => (b.kgExpected || 0) - (a.kgExpected || 0))
@@ -549,19 +612,31 @@
    */
   const buildHarvestCalendar = (params = {}) => {
     const p = params || {};
-    const events = buildHarvestEvents(p.lots || [], { now: p.now, horizonDays: p.horizonDays });
+    const events = buildHarvestEvents(p.lots || [], {
+      now: p.now,
+      horizonDays: p.horizonDays,
+      ambientTempByLot: p.ambientTempByLot,
+    });
     const days = aggregateByDay(events);
     const weeks = aggregateByWeek(events);
     const demand = matchDemand(weeks, p.commitments || []);
     const peaks = peakLoad(days, {});
 
-    // Confianza estructuralmente acotada a low/medium: son proyecciones de
-    // modelo (perfiles de oleada + cinética térmica), nunca evidencia medida.
-    const confidence = events.length >= 5 ? 'medium' : 'low';
+    // Hallazgo de revisión #18: contar eventos proyectados (events.length>=5)
+    // no es evidencia, es solo volumen de proyección del propio modelo — un
+    // lote con más oleadas restantes no hace la predicción más confiable.
+    // 'medium' ahora solo se declara si el llamador afirma explícitamente que
+    // pasó historial calibrado (opts.calibrated === true, producido por
+    // engine.calibrateFlushProfileFromHarvests). Sin esa declaración, siempre
+    // 'low', sin importar cuántos eventos haya.
+    const calibrated = p.calibrated === true;
+    const confidence = calibrated ? 'medium' : 'low';
     const basis = 'Proyección de modelo (perfiles biológicos de oleada por especie + cinética térmica Q10 de ' +
-      'flush-forecast-engine.js), no evidencia medida. Bandas kgLow/kgHigh = kgExpected ±25%, heurística de ' +
-      'incertidumbre sobre EB y timing de fructificación, no un intervalo calibrado contra datos held-out. ' +
-      "Confianza 'medium' requiere ≥5 eventos de cosecha proyectados en el horizonte; con menos, 'low'.";
+      `flush-forecast-engine.js), no evidencia medida. Bandas kgLow/kgHigh = kgExpected ±${Math.round(HEURISTICS.yieldBandFraction.value * 100)}%, ` +
+      'heurística de incertidumbre sobre EB y timing de fructificación, no un intervalo calibrado contra datos ' +
+      "held-out. Confianza 'medium' requiere que el llamador declare historial calibrado " +
+      "(opts.calibrated === true, vía calibrateFlushProfileFromHarvests); el número de eventos proyectados no " +
+      "es evidencia y nunca por sí solo sube la confianza. Sin esa declaración, 'low'.";
 
     return { events, days, weeks, demand, peaks, confidence, basis };
   };
@@ -574,6 +649,8 @@
     peakLoad,
     toICS,
     buildHarvestCalendar,
+    // Provenance de los valores heurísticos usados arriba (hallazgo #16).
+    HEURISTICS,
     // Utilidades expuestas para pruebas/reuso (no reimplementan física del motor).
     toBogotaDateStr,
     addDaysToDateStr,
