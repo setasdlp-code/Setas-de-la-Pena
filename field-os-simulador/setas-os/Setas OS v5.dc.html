@@ -2145,7 +2145,26 @@ const KB_SUB = {
   tuza_maiz:          { name:'Tuza de maíz (Tusa/Zuro)',   cn:'70',  autoclave:false, fc:65, be:[70,120] },
 };
 // KPIs de producción (kpis.yaml)
-const KPI = { beTarget:80, beOptimal:100, beAlert:70, contamMax:10, contamAlert:15, yieldPerBlock:800 };
+//
+// Los tres umbrales de EB clasifican el rendimiento por sustrato en el tablero
+// (alert < beAlert <= warn < beTarget <= ok < beOptimal <= optimal). Estaban en
+// 70/80/100, calibrados contra el techo de la literatura en vez del rango de
+// esta finca: con esos cortes una EB de 65% —normal y sana para Pleurotus sobre
+// paja pasteurizada— se pintaba en rojo, y `optimal` era inalcanzable por ciclo.
+// Los valores >100% que justificarían un optimal de 100 se reportan acumulados
+// sobre 4–6 cosechas, con cepa seleccionada y suplementación alta; compararlos
+// contra una EB por ciclo enfrenta dos magnitudes distintas.
+//
+// Se reanclan al único rango que knowledge_base documenta para el proyecto:
+// "La BE de referencia del repositorio es 40–70%, pero la capacidad y el
+// rendimiento de Setas de la Peña permanecen sin validar"
+// (06_operations/production_schedule.md). De ahí salen el piso (40, debajo del
+// rango documentado) y el techo (70, tope del rango documentado). El 55 es un
+// SETPOINT elegido dentro de esa banda, no un valor medido: no hay EB medida de
+// esta finca todavía. Cuando el corpus de campo exista, estos tres se calibran
+// contra él y se separan por especie y número de cosecha — hoy son un solo
+// escalar para todas las especies, que es la simplificación que queda pendiente.
+const KPI = { beTarget:55, beOptimal:70, beAlert:40, contamMax:10, contamAlert:15, yieldPerBlock:800 };
 // Zonas de la instalación (master_blueprint.md)
 const ZONAS = [
   { n:1, name:'Preparación', tag:'Sucio' }, { n:2, name:'Inoculación', tag:'Limpio' },
