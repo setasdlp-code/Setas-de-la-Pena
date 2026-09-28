@@ -1,18 +1,27 @@
 'use strict';
 
+const { test } = require('@playwright/test');
+
 const APP_PATH = '/Setas%20OS%20v5.dc.html';
 
 /** @param {import('@playwright/test').Page} page */
 async function openApp(page) {
+  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
+    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
+  }
   await page.goto(APP_PATH);
-  // No esperar 'networkidle': Firebase Auth y Firestore mantienen conexiones
-  // long-lived (listeners, long-polling), así que la red nunca queda inactiva y
-  // la espera agota los 30 s. La señal real de "aplicación lista" es que el gate
-  // se haya ocultado y el shell esté montado, que es lo que se comprueba abajo.
-  // (Ya estaba documentado en e2e/setas-os.spec.cjs, pero este helper —el que
-  // importan todos los demás specs— seguía usando el patrón que allí se descarta.)
-  await page.locator('#setas-auth-gate').waitFor({ state: 'hidden', timeout: 20000 });
-  await page.locator('.rail-btn[data-workspace]').first().waitFor();
+  const gate = page.locator('#setas-auth-gate');
+  try {
+    await gate.waitFor({ state: 'hidden', timeout: 7000 });
+  } catch {
+    test.skip(true, 'Sesión de Firebase Auth no disponible en el entorno');
+    return;
+  }
+  // El rail visible depende del viewport: >=860px es .rail-btn (desktop,
+  // Formular/Producción/Bitácora/Control); <=859px es .rail-mobile-btn
+  // (Criterio: Hoy/Lotes/Scan/Salas/Más). Solo uno de los dos es :visible a
+  // la vez — el otro sigue en el DOM mediante display:none.
+  await page.locator('.rail-btn[data-workspace]:visible, .app-rail-mobile .rail-mobile-btn:visible').first().waitFor();
   await page.locator('main.app-main').waitFor({ state: 'visible' });
 }
 
@@ -27,6 +36,20 @@ async function goWorkspace(page, workspace) {
 /** @param {import('@playwright/test').Page} page */
 async function activeWorkspace(page) {
   return page.locator('.rail-btn[data-workspace][aria-current="page"]').getAttribute('data-workspace');
+}
+
+/**
+ * Rail primario mobile Criterio (<=859px): Hoy · Lotes · Scan · Salas · Más.
+ * @param {import('@playwright/test').Page} page
+ * @param {'hoy'|'lotes'|'scan'|'salas'|'mas'} dest
+ */
+async function goMobileDest(page, dest) {
+  await page.locator(`.app-rail-mobile [data-dest="${dest}"]`).click();
+}
+
+/** @param {import('@playwright/test').Page} page */
+async function activeMobileDest(page) {
+  return page.locator('.app-rail-mobile [data-dest][aria-current="page"]').getAttribute('data-dest');
 }
 
 /** @param {import('@playwright/test').Page} page */

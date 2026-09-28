@@ -4,37 +4,107 @@
 // Mantener las declaraciones en un scope privado hace la carga idempotente.
 (function initHistoricalCalibration() {
 
-// Deriva filas de eficiencia biológica REAL a partir de la Bitácora.
-// BE = kg frescos cosechados / kg secos de sustrato × 100 — misma fórmula que
-// calcLoteStats en simulador-app.jsx. Un lote solo aporta una fila cuando puede
-// producir un BE honesto: necesita peso seco, receta asociada y al menos una
-// cosecha registrada. Los lotes aún en incubación se excluyen: reportarían BE 0
-// y hundirían la media en vez de no opinar.
-const bitacoraEBRows = (bitLotes, bitCosechas) => {
-  if (!Array.isArray(bitLotes) || !Array.isArray(bitCosechas)) return [];
-  const rows = [];
-  for (const lote of bitLotes) {
-    const rawDry = lote && (lote.peseSeco ?? lote.pesoSeco ?? lote.peso_seco ?? lote.dryWeightKg);
-    const peseSeco = parseFloat(rawDry) || 0;
-    const ref = lote && lote.recipeRef;
-    if (peseSeco <= 0 || !ref || !ref.sKey) continue;
-    const cosechas = bitCosechas.filter((c) => c && c.loteId === lote.id);
-    if (!cosechas.length) continue;
-    const totalFresco = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0) / 1000;
-    if (totalFresco <= 0) continue;
-    const be = (totalFresco / peseSeco) * 100;
-    if (!Number.isFinite(be) || be <= 0 || be > 400) continue;
-    rows.push({
-      loteId: lote.id,
-      codigo: lote.codigo || '',
-      sKey: ref.sKey,
-      recipe: Array.isArray(ref.recipe) ? ref.recipe : [],
-      be,
-      fecha: lote.fechaInoculacion || null,
-    });
-  }
-  return rows;
+// Final-outcome contract. Numeric EB alone is never proof of a completed cycle.
+// "verified" records an explicit operator confirmation, not scientific confidence.
+const finiteEB = value => {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && !value.trim()) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 && n <= 400 ? n : null;
 };
+const finiteNonnegative = value => {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && !value.trim()) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+};
+// Same aliases and lifecycleState precedence as batch-sheet.normalizeLifecycleState.
+const isCompletedBatch = lote => ['closed', 'completado', 'cerrado'].includes(lote?.lifecycleState || lote?.estado);
+const confirmedOutcome = eb => ({status: eb === 0 ? 'completed-zero-yield' : 'completed-success', verified: true});
+const sourceIdentity = row => {
+  const batch = row?.loteId || row?.batchId;
+  if (batch) return `batch:${batch}`;
+  const id = row?.sourceId || row?.id;
+  return id ? `${row.source || 'trial'}:${id}` : null;
+};
+const classifyOutcome = (row, field = 'ebReal') => {
+  const eb = finiteEB(row?.[field]);
+  const declared = row?.outcome;
+  const status = eb == null ? 'missing' :
+    ['completed-success', 'completed-zero-yield'].includes(declared?.status) ? declared.status : 'partial';
+  const reason = row?.exclusionReason || (eb == null ? 'missing-or-invalid-eb' :
+    status === 'partial' ? 'incomplete-outcome' :
+    declared?.verified !== true ? 'unverified-outcome' :
+    (status === 'completed-zero-yield') !== (eb === 0) ? 'outcome-value-mismatch' :
+    !sourceIdentity(row) ? 'missing-source-identity' :
+    !Array.isArray(row?.recipe) ? 'missing-recipe-reference' : null);
+  return {status, eb, eligible: !reason, reason};
+};
+const assessHistory = (rows = [], field = 'ebReal') => {
+  const observations = (Array.isArray(rows) ? rows : []).map(row => ({row, ...classifyOutcome(row, field)}));
+  const groups = new Map();
+  observations.filter(x => sourceIdentity(x.row)).forEach(x => {
+    const key = sourceIdentity(x.row);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(x);
+  });
+  groups.forEach(group => {
+    // Conflicting final copies have no ordering authority. Exclude all of them.
+    const signature = x => JSON.stringify([x.eb, x.status, x.eligible, x.reason, x.row.sKey || x.row.speciesId || null,
+      [...recipePctMap(x.row.recipe)].sort(([a], [b]) => a.localeCompare(b))]);
+    const conflict = new Set(group.map(signature)).size > 1;
+    group.forEach((x, i) => {
+      if (conflict || i > 0) { x.eligible = false; x.reason = conflict ? 'conflicting-source-records' : 'duplicate-source-record'; }
+    });
+  });
+  const eligibleRows = observations.filter(x => x.eligible).map(x => ({...x.row, [field]:x.eb}));
+  const exclusionReasons = {};
+  observations.filter(x => !x.eligible).forEach(x => { exclusionReasons[x.reason] = (exclusionReasons[x.reason] || 0) + 1; });
+  return {eligibleRows, observations, total: observations.length, eligibleN: eligibleRows.length,
+    excludedN: observations.length - eligibleRows.length, exclusionReasons};
+};
+const EXCLUSION_LABELS = {
+  'missing-or-invalid-eb':'EB ausente o inválida', 'incomplete-outcome':'ciclo incompleto o sin cierre confirmado',
+  'unverified-outcome':'resultado sin verificar', 'outcome-value-mismatch':'resultado y EB inconsistentes',
+  'missing-source-identity':'sin identidad de origen', 'duplicate-source-record':'registro duplicado',
+  'conflicting-source-records':'copias de origen contradictorias', 'invalid-dry-weight':'peso seco ausente o inválido',
+  'invalid-harvest':'cosecha inválida o sin identidad', 'missing-recipe-reference':'sin referencia de receta o especie',
+};
+const describeHistory = report => `${report?.eligibleN || 0} resultado(s) final(es) elegible(s) · ${report?.excludedN || 0} excluido(s)` +
+  Object.entries(report?.exclusionReasons || {}).map(([reason, n]) => ` · ${EXCLUSION_LABELS[reason] || reason}: ${n}`).join('');
+
+// Shared derivation for calibration and contextual cycle evidence. A closed room
+// stage is not a completed batch. No harvest is missing, never an inferred zero.
+const batchOutcome = (lote, cosechas = []) => {
+  const dry = finiteNonnegative(lote?.peseSeco ?? lote?.pesoSeco ?? lote?.peso_seco ?? lote?.dryWeightKg);
+  let reason = dry == null || dry <= 0 ? 'invalid-dry-weight' : null;
+  const unique = new Map();
+  for (const c of cosechas) {
+    const weight = finiteNonnegative(c?.pesoFresco);
+    const kg = weight == null ? null : c.unit === 'kg' ? weight : !c.unit || c.unit === 'g' ? weight / 1000 : null;
+    if (!c?.id || kg == null || (unique.has(c.id) && unique.get(c.id) !== kg)) reason = 'invalid-harvest';
+    else unique.set(c.id, kg);
+  }
+  const verifiedZero = lote?.outcome?.status === 'completed-zero-yield' && lote.outcome.verified === true;
+  const fresh = unique.size ? [...unique.values()].reduce((a,b) => a+b, 0) : verifiedZero ? 0 : null;
+  if (verifiedZero && fresh > 0) reason = 'outcome-value-mismatch';
+  const be = !reason && fresh != null ? finiteEB(fresh / dry * 100) : null;
+  const closed = isCompletedBatch(lote);
+  const outcome = be == null ? {status:'missing', verified:false} :
+    closed && (be > 0 || verifiedZero) ? confirmedOutcome(be) : {status:'partial', verified:false};
+  return {be, outcome, ...(reason ? {exclusionReason:reason} : {})};
+};
+const bitacoraObservations = (bitLotes, bitCosechas) => {
+  if (!Array.isArray(bitLotes) || !Array.isArray(bitCosechas)) return [];
+  return bitLotes.filter(Boolean).map(lote => {
+    const ref = lote.recipeRef;
+    return {loteId:lote.id, source:'bitacora', codigo:lote.codigo || '', sKey:ref?.sKey,
+      recipe:Array.isArray(ref?.recipe) ? ref.recipe : [], fecha:lote.fechaInoculacion || null,
+      ...batchOutcome(lote, bitCosechas.filter(c => c && c.loteId === lote.id)),
+      ...(!ref?.sKey ? {exclusionReason:'missing-recipe-reference'} : {})};
+  });
+};
+const bitacoraEBRows = (bitLotes, bitCosechas) => assessHistory(bitacoraObservations(bitLotes, bitCosechas), 'be').eligibleRows;
 
 // Date.UTC() no valida rangos: mes 13 o día 32 se normalizan hacia adelante
 // en vez de fallar, así que una fecha con dígitos fuera de rango produciría
@@ -106,10 +176,11 @@ const PRIOR_N = 5; // n/(n+5): la evidencia tiene que acumularse para pesar
 // curva suave de scoring.js — min(0.65, similitud · n/(n+5)) — en vez de
 // min(0.7, 0.25n), que saturaba con solo 3 lotes.
 const historicalEB = (sKey, rows, recipe = null) => {
-  const empty = { n: 0, avg: null, meanEB: null, sd: null, subs: [], weight: 0, matched: false, similarity: 0 };
+  const eligibility = assessHistory((Array.isArray(rows) ? rows : []).filter(r => r?.sKey === sKey), 'be');
+  const empty = { eligibility, n: 0, avg: null, meanEB: null, sd: null, subs: [], weight: 0, matched: false, similarity: 0 };
   if (!sKey || !Array.isArray(rows) || !rows.length) return empty;
 
-  let pool = rows.filter((r) => r && r.sKey === sKey && Number.isFinite(r.be) && r.be >= 0 && r.be <= 400);
+  let pool = eligibility.eligibleRows;
   if (!pool.length) return empty;
 
   let matched = false;
@@ -132,6 +203,7 @@ const historicalEB = (sKey, rows, recipe = null) => {
   return {
     n,
     avg,
+    eligibility,
     meanEB: avg, // alias — resolveCalibration en scoring.js lee h.meanEB, no h.avg
     sd: Math.sqrt(variance),
     subs: [...new Set(pool.map((r) => r.codigo).filter(Boolean))],
@@ -146,10 +218,10 @@ const historicalEB = (sKey, rows, recipe = null) => {
 // perito-ui-bridge.js) en su pool de setas_v6/ebReal, para que puedan mezclar
 // ambas fuentes de evidencia real en un mismo arreglo sin reescribir su propia
 // ponderación por similitud.
-const bitacoraAsTrialRows = (sKey, bitLotes, bitCosechas) =>
-  bitacoraEBRows(bitLotes, bitCosechas)
-    .filter((r) => r.sKey === sKey)
-    .map((r) => ({ recipe: r.recipe, ebReal: r.be, source: 'bitacora', loteId: r.loteId, fecha: r.fecha }));
+const bitacoraAsTrialRows = (sKey, bitLotes, bitCosechas, {includeIncomplete = false} = {}) =>
+  (includeIncomplete ? bitacoraObservations(bitLotes, bitCosechas) : bitacoraEBRows(bitLotes, bitCosechas))
+    .filter(r => r.sKey === sKey)
+    .map(r => ({...r, ebReal:r.be}));
 
 const CALIBRATION_SIMILARITY_THRESHOLD = 0.55;
 const CALIBRATION_WEIGHT_FLOOR = 0.08;
@@ -176,7 +248,8 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 // como brecha abierta, fuera de alcance de este cambio).
 const weightedCalibration = (recipe, rows, recipeDistanceFn, options = {}) => {
   if (!Array.isArray(rows) || !rows.length || typeof recipeDistanceFn !== 'function') return null;
-  const validRows = rows.filter((r) => r && Number.isFinite(Number(r.ebReal)) && Number(r.ebReal) >= 0 && Number(r.ebReal) <= 400);
+  const eligibility = assessHistory(rows);
+  const validRows = eligibility.eligibleRows;
   if (!validRows.length) return null;
   const now = Number.isFinite(options.now) ? options.now : Date.now();
   const recencyWindowDays = Number.isFinite(options.recencyWindowDays) ? options.recencyWindowDays : RECENCY_WINDOW_DAYS;
@@ -201,6 +274,7 @@ const weightedCalibration = (recipe, rows, recipeDistanceFn, options = {}) => {
   return {
     n: pool.length,
     recentN,
+    eligibility,
     meanEB,
     sd: Math.sqrt(Math.max(0, variance)),
     similarity: Math.max(0, Math.min(1, similarity)),
@@ -208,7 +282,7 @@ const weightedCalibration = (recipe, rows, recipeDistanceFn, options = {}) => {
   };
 };
 
-const api = { bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration, parseRowDate, RECENCY_WINDOW_DAYS };
+const api = { finiteEB, confirmedOutcome, classifyOutcome, assessHistory, describeHistory, batchOutcome, bitacoraObservations, bitacoraEBRows, historicalEB, recipeOverlap, bitacoraAsTrialRows, weightedCalibration, parseRowDate, RECENCY_WINDOW_DAYS };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

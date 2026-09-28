@@ -94,13 +94,36 @@ const extractLiteral = (src, name, open, close) => {
   return src.slice(start + 1, end + endMark.length);
 };
 
+// Desde la extracción de Fase 2 el catálogo vive en substrate-catalog.js y se
+// puede require(). El recorte del bundle queda como respaldo porque la revisión
+// base puede ser anterior a esa extracción: sin él, comparar contra un baseline
+// viejo fallaría por forma del repo y no por el modelo.
 const loadProductionCatalog = (dir) => {
+  const modulePath = path.join(dir, 'substrate-catalog.js');
+  if (fs.existsSync(modulePath)) {
+    const { SPP, INGS } = require(modulePath);
+    if (!SPP || !Object.keys(SPP).length) throw new Error(`${modulePath}: SPP vacío`);
+    if (!Array.isArray(INGS) || !INGS.length) throw new Error(`${modulePath}: INGS vacío`);
+    return { SPP, INGS };
+  }
   const src = fs.readFileSync(path.join(dir, 'simulador-app.js'), 'utf8');
   const code = `${extractLiteral(src, 'SPP', '{', '}')}\n${extractLiteral(src, 'INGS', '[', ']')}\n;({ SPP, INGS })`;
   const { SPP, INGS } = vm.runInNewContext(code, {}, { timeout: 5000 });
   if (!SPP || !Object.keys(SPP).length) throw new Error('SPP extraído está vacío');
   if (!Array.isArray(INGS) || !INGS.length) throw new Error('INGS extraído está vacío');
   return { SPP, INGS };
+};
+
+// El analyze() que se mide debe ser el de producción. Antes solo estaba
+// disponible el de recipe-optimizer.js (el oráculo legado), porque el de
+// producción vivía dentro del JSX y no se podía require(). Hoy sus `eb`
+// coinciden, pero medir el oráculo y creer que se mide producción es una
+// trampa esperando a que los dos diverjan. substrate-analysis.js lo resuelve;
+// el legado sigue siendo el respaldo para revisiones base anteriores.
+const loadProductionAnalyze = (dir, legacy) => {
+  const modulePath = path.join(dir, 'substrate-analysis.js');
+  if (fs.existsSync(modulePath)) return { analyze: require(modulePath).analyze, source: 'substrate-analysis.js' };
+  return { analyze: legacy.analyze, source: 'recipe-optimizer.js (legado)' };
 };
 
 // ── una corrida del modelo (árbol de trabajo o revisión base) ─────
@@ -110,8 +133,9 @@ const runModel = (dir, fixtures) => {
   const scoring = require(path.join(dir, 'scoring.js'));
   const harness = require(path.join(dir, 'ground-truth-regression.js'));
   const { SPP, INGS } = loadProductionCatalog(dir);
+  const { analyze } = loadProductionAnalyze(dir, legacy);
 
-  const analyzeFn = (fixture) => legacy.analyze(fixture.recipe, fixture.sKey, INGS, SPP);
+  const analyzeFn = (fixture) => analyze(fixture.recipe, fixture.sKey, INGS, SPP);
   const scoreFn = (an, fixture) => {
     const sev = scoring.assessSeverity(an);
     const treatment = legacy.calcTreatment(an, fixture.sKey, SPP);

@@ -1,0 +1,15 @@
+/* DS-2026 · Core: Color (Semantic surfaces, text & border utilities) */
+.surface-page     { background-color: var(--surface-page); }
+.surface-panel    { background-color: var(--surface-panel); }
+.surface-recessed { background-color: var(--surface-recessed); }
+
+.text-primary   { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-metadata  { color: var(--text-metadata); }
+.text-brand     { color: var(--brand-accent-text); }
+.text-ok        { color: var(--status-ok); }
+.text-warn      { color: var(--status-warn-text); }
+.text-err       { color: var(--status-error); }
+
+.border-hairline { border: 1px solid var(--border-hairline); }
+.border-heavy    { border: 2px solid var(--border-heavy); }

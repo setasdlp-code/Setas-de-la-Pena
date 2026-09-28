@@ -1,0 +1,61 @@
+/* DS-2026 · Operations: Scan & Capture (QR Camera Viewport, Target Reticle) */
+.sdp-scanner {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  background: var(--surface-recessed);
+  border: 2px solid var(--border-heavy);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sdp-scanner__viewport {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  background: var(--surface-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sdp-scanner__reticle {
+  width: 220px;
+  height: 220px;
+  border: 2px dashed var(--brand-accent);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.sdp-scanner__reticle::before,
+.sdp-scanner__reticle::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: var(--brand-accent-text);
+  border-style: solid;
+}
+
+.sdp-scanner__reticle::before {
+  top: -2px; left: -2px;
+  border-width: 3px 0 0 3px;
+}
+
+.sdp-scanner__reticle::after {
+  bottom: -2px; right: -2px;
+  border-width: 0 3px 3px 0;
+}
+
+.sdp-scanner__tip {
+  padding: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro-screen);
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: center;
+}

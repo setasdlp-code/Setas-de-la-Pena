@@ -1,0 +1,63 @@
+/* DS-2026 · Shared: Actions (Buttons and interactive touch targets) */
+.sdp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-3);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  border: var(--rule-hairline);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  user-select: none;
+}
+.sdp-btn:hover { background: var(--surface-panel); }
+.sdp-btn:active { transform: translateY(1px); }
+
+.sdp-btn--primary {
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+  color: var(--text-inverse);
+}
+.sdp-btn--primary:hover { background: var(--action-primary-hover); }
+
+.sdp-btn--secondary {
+  background: var(--action-secondary);
+  border-color: var(--border-heavy);
+  color: var(--text-primary);
+}
+.sdp-btn--secondary:hover { background: var(--action-secondary-hover); }
+
+/* Accent is outlined: coral signs the action without reading as an alarm.
+   A filled coral button is reserved for .sdp-btn--danger. */
+.sdp-btn--accent {
+  background: var(--action-secondary);
+  border-color: var(--action-accent);
+  color: var(--action-accent-text);
+}
+.sdp-btn--accent:hover { background: var(--brand-accent-tint); text-decoration: underline; }
+
+.sdp-btn--field {
+  min-height: var(--field-cell-min-height);
+  padding: 0 var(--space-4);
+  font-size: var(--size-data);
+}
+
+.sdp-btn:disabled, .sdp-btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+
+.sdp-btn--danger {
+  background: var(--action-danger);
+  border-color: var(--action-danger);
+  color: var(--action-danger-text);
+}
+.sdp-btn--danger:hover { text-decoration: underline; }

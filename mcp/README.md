@@ -20,23 +20,36 @@ Ambos pueden correr en paralelo — no comparten estado ni se importan entre sí
 
 ## Instalación
 
+**En Claude Code no hace falta ninguna.** `.mcp.json` lanza ambos servidores a
+través de `mcp/run_server.sh`, que crea `.venv/` e instala `mcp/requirements.txt`
+la primera vez que arranca (~10 s) y después solo hace `exec`. Como `.venv/` está
+en `.gitignore`, ese bootstrap es lo que hace que los servidores funcionen en un
+checkout nuevo — contenedor de agente, clon limpio u otra máquina — en vez de
+fallar con `ENOENT` por un intérprete que nadie instaló.
+
+Para instalarlo a mano (Claude Desktop, MCP Inspector, ejecución suelta):
+
 ```bash
-# 1. Crear un entorno e instalar dependencias estables
+# Desde la raíz del repo
 python3 -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r mcp/requirements.txt
 
-# 2. Verificar que corre
-.venv/bin/python "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_mcp.py"
-# No debe lanzar errores
+# Verificar que ambos arrancan y exponen sus tools
+sh mcp/run_server.sh setas_mcp.py          # 9 tools
+sh mcp/run_server.sh setas_bridge_mcp.py   # 8 tools
+# Se quedan esperando JSON-RPC por stdin: eso es que arrancaron bien. Ctrl-C.
 
-# 3. Testear con MCP Inspector (opcional)
-npx @modelcontextprotocol/inspector python3 "/Users/sebastianpinzon/Documents/Claude/Projects/Setas de la Peña/mcp/setas_mcp.py"
+# MCP Inspector (opcional)
+npx @modelcontextprotocol/inspector sh mcp/run_server.sh setas_mcp.py
 ```
+
+`run_server.sh` reinstala solo si `mcp/requirements.txt` cambió (guarda su SHA-256
+dentro del venv). Toda su salida va a **stderr**: stdout es el transporte JSON-RPC
+y cualquier cosa impresa ahí rompe el protocolo.
 
 ## Conectar a Claude Desktop
 
-Agrega el bloque de `claude_desktop_config_snippet.json` al archivo de configuración de Claude Desktop. El snippet apunta al intérprete del entorno `.venv`; si mueves el proyecto, actualiza ambas rutas absolutas.
+Agrega el bloque de `claude_desktop_config_snippet.json` al archivo de configuración de Claude Desktop. El snippet apunta al intérprete del entorno `.venv`; si mueves el proyecto, actualiza ambas rutas absolutas. Alternativa más robusta: apuntar a `sh <ruta>/mcp/run_server.sh` con el nombre del servidor como argumento, que se autoinstala igual que en Claude Code.
 
 Reinicia Claude Desktop. En cualquier conversación podrás usar los tools directamente.
 

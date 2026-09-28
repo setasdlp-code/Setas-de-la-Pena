@@ -232,7 +232,7 @@ test('Perito consume SetasFormulatorAPI y no conoce controles internos del Formu
   assert.match(formulatorApi, /const applyRecipe = async/);
   assert.match(formulatorApi, /const undoRecipe = async/);
   assert.match(formulatorApi, /adapterType/);
-  assert.match(formulatorApi, /mutateDom/);
+  assert.match(formulatorApi, /no_native_adapter/);
 
   assert.match(bridge, /SetasPeritoScenarios\.searchScenarios/);
   assert.match(bridge, /localStorage\.getItem\('setas_workmode'\)/);

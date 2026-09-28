@@ -22,6 +22,7 @@ const { normalizeLifecycleState } = require('./shared/batch-sheet.js');
 
 const BATCHES = 'lotes_produccion';
 const EVENTS = 'field_events';
+const CONTAINERS = 'contenedores';
 
 const fail = (code, detail) => {
   const err = new Error(detail ? `${code}: ${detail}` : code);
@@ -50,6 +51,12 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
       throw fail('invalid_envelope', 'attachmentIds debe estar vacío en v1');
     }
 
+    const isV2 = event.schemaVersion === 2 || payload.schemaVersion === 2;
+    const isContainer = isV2 && event.entityType === 'container';
+    if (isContainer && !event.entityId) {
+      throw fail('invalid_envelope', 'entityId requerido para evento de contenedor');
+    }
+
     // La identidad del operario viene de la sesión, nunca del payload: aceptarla
     // del cliente permitiría firmar un evento a nombre de otra persona.
     const operatorId = auth.uid;
@@ -57,6 +64,7 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
 
     const eventRef = db.collection(EVENTS).doc(event.id);
     const batchRef = db.collection(BATCHES).doc(event.batchId);
+    const containerRef = isContainer ? db.collection(CONTAINERS).doc(event.entityId) : null;
 
     return db.runTransaction(async (tx) => {
       const storedSnap = await tx.get(eventRef);
@@ -78,23 +86,93 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
       if (!batchSnap.exists) throw fail('batch_not_found', event.batchId);
 
       const batch = batchSnap.data();
-      const currentState = batch.lifecycleState
-        || normalizeLifecycleState(batch.estado, DEFAULT_INITIAL_STATE);
-      const currentRevision = Number.isInteger(batch.revision) ? batch.revision : 0;
+      const currentBatchRevision = Number.isInteger(batch.revision) ? batch.revision : 0;
 
-      if (event.expectedBatchRevision !== currentRevision) {
-        throw fail('revision_conflict', `esperaba ${event.expectedBatchRevision}, el lote va en ${currentRevision}`);
+      if (isContainer) {
+        const containerSnap = await tx.get(containerRef);
+        const container = containerSnap.exists ? containerSnap.data() : null;
+
+        const currentContainerState = container
+          ? (container.lifecycleState || normalizeLifecycleState(container.estado, DEFAULT_INITIAL_STATE))
+          : DEFAULT_INITIAL_STATE;
+        const currentContainerRevision = container && Number.isInteger(container.revision)
+          ? container.revision
+          : 0;
+
+        if (event.expectedEntityRevision !== null && event.expectedEntityRevision !== undefined) {
+          if (event.expectedEntityRevision !== currentContainerRevision) {
+            throw fail('revision_conflict', `esperaba revisión de contenedor ${event.expectedEntityRevision}, va en ${currentContainerRevision}`);
+          }
+        }
+
+        if (event.expectedBatchRevision !== null && event.expectedBatchRevision !== undefined) {
+          if (event.expectedBatchRevision !== currentBatchRevision) {
+            throw fail('revision_conflict', `esperaba ${event.expectedBatchRevision}, el lote va en ${currentBatchRevision}`);
+          }
+        }
+
+        const targetTo = event.payload?.to;
+        const targetFrom = event.payload?.from || currentContainerState;
+        if (targetTo) {
+          validateTransition({ state: currentContainerState }, targetFrom, targetTo, operatorRole);
+        }
+
+        const nextContainerRevision = currentContainerRevision + 1;
+        const nextBatchRevision = currentBatchRevision + 1;
+
+        const receipt = {
+          eventId: event.id,
+          acceptedAt: new Date().toISOString(),
+          entityRevisionAfter: nextContainerRevision,
+          batchRevisionAfter: nextBatchRevision,
+          serverEventPath: `${EVENTS}/${event.id}`,
+        };
+        validateReceipt(receipt);
+
+        const containerPatch = {
+          id: event.entityId,
+          batchId: event.batchId,
+          lifecycleState: targetTo || currentContainerState,
+          revision: nextContainerRevision,
+          updatedAt: new Date().toISOString(),
+          lastEventId: event.id,
+        };
+        if (event.payload?.reasonCode) containerPatch.lastReasonCode = event.payload.reasonCode;
+        if (event.payload?.notes) containerPatch.lastNotes = event.payload.notes;
+
+        const batchPatch = {
+          revision: nextBatchRevision,
+          updatedAt: new Date().toISOString(),
+          lastEventId: event.id,
+        };
+
+        tx.set(containerRef, containerPatch, { merge: true });
+        tx.set(batchRef, batchPatch, { merge: true });
+        tx.set(eventRef, { ...event, operatorId, accountId, receipt });
+
+        return receipt;
       }
 
-      validateTransition({ state: currentState }, event.payload.from, event.payload.to, operatorRole);
+      // Flujo v1 / eventos de lote:
+      const currentBatchState = batch.lifecycleState
+        || normalizeLifecycleState(batch.estado, DEFAULT_INITIAL_STATE);
 
-      const nextRevision = currentRevision + 1;
+      if (event.expectedBatchRevision !== currentBatchRevision) {
+        throw fail('revision_conflict', `esperaba ${event.expectedBatchRevision}, el lote va en ${currentBatchRevision}`);
+      }
+
+      validateTransition({ state: currentBatchState }, event.payload.from, event.payload.to, operatorRole);
+
+      const nextRevision = currentBatchRevision + 1;
       const receipt = {
         eventId: event.id,
         acceptedAt: new Date().toISOString(),
         batchRevisionAfter: nextRevision,
         serverEventPath: `${EVENTS}/${event.id}`,
       };
+      if (isV2) {
+        receipt.entityRevisionAfter = nextRevision;
+      }
       validateReceipt(receipt);
 
       tx.set(batchRef, { lifecycleState: event.payload.to, revision: nextRevision }, { merge: true });
@@ -105,4 +183,4 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
   };
 };
 
-module.exports = { createAcceptFieldEvent, DEFAULT_INITIAL_STATE, BATCHES, EVENTS };
+module.exports = { createAcceptFieldEvent, DEFAULT_INITIAL_STATE, BATCHES, EVENTS, CONTAINERS };

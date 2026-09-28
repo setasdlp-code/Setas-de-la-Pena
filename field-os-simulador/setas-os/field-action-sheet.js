@@ -289,6 +289,86 @@
     return { event, queueEntry };
   };
 
+  /**
+   * Persiste una transición a nivel de contenedor (FieldEvent v2) tras confirmación explícita.
+   */
+  const confirmContainerTransition = async ({
+    db,
+    container,
+    batch,
+    from,
+    to,
+    accountId,
+    operatorId,
+    operatorRole = 'operario',
+    expectedEntityRevision = null,
+    expectedBatchRevision = null,
+    confirmed = false,
+    reasonCode = null,
+    notes = null,
+  }) => {
+    if (confirmed !== true) {
+      throw new Error('operator_confirmation_required');
+    }
+
+    const model = getModel();
+    if (!model) {
+      throw new Error('field_events_model_unavailable: field-events-model.js aún no se ha cargado');
+    }
+    const queue = getQueue();
+    if (!queue) {
+      throw new Error('field_event_queue_unavailable: field-event-queue.js aún no se ha cargado');
+    }
+
+    const containerId = container?.id || container?.codigo || container?.containerId;
+    const batchId = batch?.id || batch?.codigo || batch?.batchId || container?.batchId || container?.loteId;
+
+    if (!containerId) {
+      throw new Error('invalid_envelope: containerId requerido');
+    }
+    if (!batchId) {
+      throw new Error('invalid_envelope: batchId requerido');
+    }
+
+    const currentState = resolveLifecycleState(container || batch);
+    model.validateTransition({ state: currentState }, from, to, operatorRole);
+
+    const occurredAt = new Date().toISOString();
+    const entityRevision = Number.isInteger(expectedEntityRevision)
+      ? expectedEntityRevision
+      : (Number.isInteger(container?.revision) ? container.revision : 0);
+    const batchRevision = Number.isInteger(expectedBatchRevision)
+      ? expectedBatchRevision
+      : (Number.isInteger(batch?.revision) ? batch.revision : 0);
+
+    const event = model.createFieldEventV2({
+      entityType: 'container',
+      entityId: containerId,
+      batchId,
+      eventType: 'state_transition',
+      from,
+      to,
+      expectedEntityRevision: entityRevision,
+      expectedBatchRevision: batchRevision,
+      operatorId,
+      occurredAt,
+      reasonCode,
+      notes,
+    });
+
+    const queueEntry = {
+      eventId: event.id,
+      accountId,
+      status: 'pending',
+      attempts: 0,
+      enqueuedAt: occurredAt,
+    };
+
+    await queue.persistFieldEvent(db, event, queueEntry, accountId);
+
+    return { event, queueEntry };
+  };
+
   const api = {
     DEFAULT_INITIAL_STATE,
     STATE_LABELS,
@@ -297,6 +377,7 @@
     SIMULATED_PALETTE,
     buildActionSheetModel,
     confirmTransition,
+    confirmContainerTransition,
   };
 
   if (isNode) module.exports = api;

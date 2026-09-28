@@ -60,31 +60,10 @@ function getCliCredential() {
   return null;
 }
 
-// Idéntico a sanearLote/sanearCosecha en public-trace-sync.js — si cambias
-// el esquema público allá, cambia también aquí.
-const sanearLote = (lote) => ({
-  codigo: String(lote.codigo || '').slice(0, 64),
-  especie: String(lote.especie || '').slice(0, 128),
-  especieCientifico: String(lote.especieCientifico || '').slice(0, 128),
-  fechaInoculacion: String(lote.fechaInoculacion || '').slice(0, 32),
-  numBolsas: Number.isFinite(Number(lote.numBolsas))
-    ? Math.max(0, Math.min(100000, Math.floor(Number(lote.numBolsas))))
-    : null,
-  estado: String(lote.estado || 'incubacion').slice(0, 32),
-});
+// Usa el módulo canónico compartido public-trace-dto.js
+const dto = require('../../public-trace-dto.js');
+const { sanearCosecha } = dto;
 
-const sanearCosecha = (cosecha) => ({
-  fecha: String(cosecha.fecha || '').slice(0, 32),
-  pesoFresco: Number.isFinite(Number(cosecha.pesoFresco))
-    ? Math.max(0, Math.min(10000000, Number(cosecha.pesoFresco)))
-    : 0,
-  calidad: Number.isFinite(Number(cosecha.calidad))
-    ? Math.max(0, Math.min(5, Math.floor(Number(cosecha.calidad))))
-    : null,
-  flush: Number.isFinite(Number(cosecha.flush))
-    ? Math.max(1, Math.floor(Number(cosecha.flush)))
-    : 1,
-});
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
@@ -113,16 +92,29 @@ async function main() {
       continue;
     }
 
-    const loteSaneado = { ...sanearLote(lote), syncedAt: FieldValue.serverTimestamp() };
+    const cosechasSnap = await db.collection('bitacora_cosechas')
+      .where('loteId', '==', loteDoc.id)
+      .get();
+    const cosechas = cosechasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    let bolsas = [];
+    try {
+      const bolsasSnap = await db.collection('bitacora_bolsas')
+        .where('loteId', '==', loteDoc.id)
+        .get();
+      bolsas = bolsasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (_) {}
+
+    const loteSaneado = {
+      ...dto.buildPublicTraceDocument(lote, cosechas, bolsas),
+      syncedAt: FieldValue.serverTimestamp()
+    };
     console.log(`  → public_lotes/${lote.codigo}${dryRun ? ' (dry-run, no se escribe)' : ''}`);
     if (!dryRun) {
       await db.collection('public_lotes').doc(lote.codigo).set(loteSaneado, { merge: true });
     }
     lotesEscritos += 1;
 
-    const cosechasSnap = await db.collection('bitacora_cosechas')
-      .where('loteId', '==', loteDoc.id)
-      .get();
     for (const cosechaDoc of cosechasSnap.docs) {
       const cosecha = cosechaDoc.data();
       const cosechaSaneada = { ...sanearCosecha(cosecha), syncedAt: FieldValue.serverTimestamp() };

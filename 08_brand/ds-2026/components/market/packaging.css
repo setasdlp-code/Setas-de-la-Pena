@@ -1,0 +1,10 @@
+/* DS-2026 · Market: Packaging & Box Mockups */
+.sdp-pack { border: var(--rule-hairline); background: var(--surface-page); display: grid; }
+.sdp-pack__brand { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
+.sdp-pack--front { padding: var(--space-4) var(--space-3); grid-template-rows: auto 1fr auto; gap: var(--space-3); text-align: center; justify-items: center; }
+.sdp-pack__illo { width: 100%; max-width: 260px; }
+.sdp-pack__net { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; border-top: var(--rule-hairline); padding-top: var(--space-1); width: 100%; }
+.sdp-pack--back { display: flex; flex-direction: column; padding: var(--space-3); gap: var(--space-2); }
+.sdp-pack__sect { border-top: var(--rule-hairline); padding-top: var(--space-1); }
+.sdp-pack__sk { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: var(--space-half); }
+.sdp-pack__sv { font: var(--t-small); display: block; }

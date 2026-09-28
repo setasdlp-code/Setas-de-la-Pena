@@ -71,3 +71,25 @@ test('the merged Catálogo & Recetario view keeps ?view=dashboard working', () =
   assert.equal(navigation.VIEWS.includes('dashboard'), false);
   assert.equal(navigation.readLocation('?view=dashboard').view, 'catalogo');
 });
+
+test('resolveOperationalTarget parses batch, bag, flush and crate deep links', () => {
+  const lotTarget = navigation.resolveOperationalTarget('?view=bitacora&lote=SDP-260904-SHI-R01');
+  assert.ok(lotTarget);
+  assert.equal(lotTarget.kind, 'batch');
+  assert.equal(lotTarget.batchCode, 'SDP-260904-SHI-R01');
+
+  const bagTarget = navigation.resolveOperationalTarget('?view=bitacora&lote=SDP-260904-SHI-R01&bolsa=B02');
+  assert.ok(bagTarget);
+  assert.equal(bagTarget.kind, 'bag');
+  assert.equal(bagTarget.batchCode, 'SDP-260904-SHI-R01');
+  assert.equal(bagTarget.bagCode, 'SDP-260904-SHI-R01-B02');
+  assert.equal(bagTarget.bagNumber, 2);
+
+  const crateTarget = navigation.resolveOperationalTarget('?crate=CAN-01');
+  assert.ok(crateTarget);
+  assert.equal(crateTarget.kind, 'crate');
+  assert.equal(crateTarget.crateCode, 'CAN-01');
+
+  const noTarget = navigation.resolveOperationalTarget('?view=home');
+  assert.equal(noTarget, null);
+});

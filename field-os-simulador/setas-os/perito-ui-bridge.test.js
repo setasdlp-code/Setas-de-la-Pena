@@ -24,32 +24,18 @@ test('el hook se vuelve a enganchar si el runtime .dc reemplaza SetasScoring sin
   assert.doesNotMatch(hook, /setInterval/);
 });
 
-test('Bodega usa cantidades reales persistidas y no solo presencia de IDs', () => {
-  assert.match(bridge, /sdp_lotes/);
-  assert.match(bridge, /cantidadKgDisponible/);
-  assert.match(bridge, /stockKgById/);
-  assert.match(bridge, /batchWetKg/);
-  assert.match(bridge, /ingredientMoistureById/);
-});
-
-test('la humedad usada para cobertura cuantitativa puede recuperarse del catálogo activo', () => {
-  const start = compiled.indexOf('const INGS = [');
-  const end = compiled.indexOf('const CATS =', start);
-  assert.ok(start >= 0 && end > start, 'no se encontró el catálogo INGS compilado');
-  const block = compiled.slice(start, end);
-  const re = /id:\s*['"]([^'"]+)['"][\s\S]{0,650}?moisture:\s*([0-9.]+)/g;
-  const found = {};
-  let m;
-  while ((m = re.exec(block))) found[m[1]] = Number(m[2]);
-  assert.equal(found.paja_trigo, 12);
-  assert.equal(found.bagazo_caña, 55);
-  assert.ok(Object.keys(found).length >= 20, `muy pocos ingredientes con humedad: ${Object.keys(found).length}`);
+test('Bodega and moisture arrive from the active React snapshot, never compiled code or DOM inputs', () => {
+  const jsx = fs.readFileSync(path.join(ROOT, 'simulador-app.jsx'), 'utf8');
+  assert.match(jsx, /stockKgById:\{\.\.\.stockMap\}/);
+  assert.match(jsx, /ingredientMoistureById:Object.fromEntries\(prodIngs/);
+  assert.match(bridge, /batchWetKg: detail.batch.wetKg/);
+  assert.doesNotMatch(bridge, /fetch\(|localStorage\.getItem|parseMoistureCatalog|findBatchWetKg/);
 });
 
 test('Recetario calibra EB real solo para la misma especie y pondera similitud', () => {
   assert.match(bridge, /setas_v6/);
   assert.match(bridge, /r\.sKey\s*===\s*sKey/);
-  assert.match(bridge, /ebReal/);
+  assert.match(bridge, /assessHistory/);
   assert.match(bridge, /weightedCalibration/);
   assert.match(bridge, /historyCalibration/);
 });

@@ -1,0 +1,14 @@
+/* DS-2026 · Shared Metadata atoms */
+.sdp-plateline { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+
+.sdp-statusline { font: var(--t-data); text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--text-secondary); }
+
+.sdp-sep { color: var(--rule); padding: 0 0.35em; }
+
+.sdp-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: var(--rule-heavy); padding-bottom: var(--space-1); }
+.sdp-nav__crumbs { display: flex; align-items: baseline; gap: var(--space-1); font: var(--t-small); color: var(--text-secondary); flex-wrap: wrap; }
+.sdp-nav__crumbs a { text-decoration: none; color: var(--text-secondary); }
+.sdp-nav__crumbs a:hover { color: var(--text-primary); text-decoration: underline; }
+.sdp-nav__crumbs [aria-current="page"] { color: var(--text-primary); font-weight: var(--weight-medium); }
+.sdp-nav__sep { color: var(--rule); }
+.sdp-nav__meta { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }

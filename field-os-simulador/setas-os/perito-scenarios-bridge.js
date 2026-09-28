@@ -76,14 +76,14 @@ import './formulator-api.js';
   const bitacoraTrialRows = sKey => {
     const calib = globalThis.SetasHistoricalCalibration;
     if (!calib?.bitacoraAsTrialRows) return [];
-    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []));
+    return calib.bitacoraAsTrialRows(sKey, readJson('sdp_bit_lotes', []), readJson('sdp_bit_cosechas', []), {includeIncomplete:true});
   };
 
   const historyCalibrationFor = (sKey, recipe) => {
     const engine = globalThis.SetasPeritoScenarios;
     const calib = globalThis.SetasHistoricalCalibration;
     if (!engine?.recipeDistance || !calib?.weightedCalibration) return null;
-    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey && n(r.ebReal) != null && Array.isArray(r.recipe));
+    const trialRows = readJson('setas_v6', []).filter(r => r?.sKey === sKey);
     const rows = [...bitacoraTrialRows(sKey), ...trialRows];
     return calib.weightedCalibration(recipe, rows, engine.recipeDistance);
   };

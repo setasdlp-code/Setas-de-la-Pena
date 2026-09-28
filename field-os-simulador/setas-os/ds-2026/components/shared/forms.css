@@ -1,0 +1,27 @@
+/* DS-2026 · Shared Form elements */
+.sdp-field {
+  display: grid;
+  gap: var(--space-half);
+}
+.sdp-field__label {
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-metadata);
+}
+
+.sdp-input, .sdp-select {
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-2);
+  font: var(--t-body);
+  border: var(--rule-hairline);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  border-radius: var(--radius-none);
+  outline: none;
+}
+.sdp-input:focus, .sdp-select:focus {
+  border-color: var(--focus-ring);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}

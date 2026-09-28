@@ -1,0 +1,23 @@
+/* ═══════════════════════════════════════════════════════════════
+   Setas de la Peña · DS-2026 · Criterio Edition
+   Market & Editorial Public Entrypoint (ARCHIVE & CULINARY profiles)
+   ═══════════════════════════════════════════════════════════════ */
+@import "tokens/tokens.css";
+
+/* Core */
+@import "components/core/foundations.css";
+@import "components/core/layout.css";
+@import "components/core/typography.css";
+
+/* Shared */
+@import "components/shared/metadata.css";
+@import "components/shared/species.css";
+@import "components/shared/figure.css";
+@import "components/shared/status.css";
+@import "components/shared/action.css";
+@import "components/shared/forms.css";
+
+/* Market */
+@import "components/market/packaging.css";
+@import "components/market/traceability.css";
+@import "components/market/archive.css";

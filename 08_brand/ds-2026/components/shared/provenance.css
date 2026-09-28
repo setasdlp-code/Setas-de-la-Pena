@@ -1,0 +1,48 @@
+/* DS-2026 · Shared: Provenance Grammar
+   data-provenance is the canonical API. Modifier classes remain as compatibility aliases.
+*/
+.sdp-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro-screen);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--surface-panel);
+  border: var(--rule-hairline);
+  border-left: var(--marker-width) solid var(--provenance-marker, var(--border-hairline));
+  padding: var(--space-half) var(--space-1);
+}
+
+/* The mark is an SVG mask filled with currentColor, never a font glyph:
+   ● ◆ ◇ ◎ △ ⬡ ◌ are not in Plex or Gaya, so each device would substitute
+   its own font. --provenance-*-symbol remains for plain-text contexts. */
+.sdp-provenance:is([data-provenance="measured"], [data-provenance="calculated"], [data-provenance="estimated"], [data-provenance="target"], [data-provenance="manual"], [data-provenance="simulated"], [data-provenance="pending"])::before {
+  content: "";
+  flex: none;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask: var(--provenance-mark) center / contain no-repeat;
+          mask: var(--provenance-mark) center / contain no-repeat;
+}
+
+/* Canonical attribute API: mark + semantic marker. */
+.sdp-provenance[data-provenance="measured"]   { --provenance-mark: var(--provenance-measured-mark);        --provenance-marker: var(--status-ok-marker); }
+.sdp-provenance[data-provenance="calculated"] { --provenance-mark: var(--provenance-calculated-mark);      --provenance-marker: var(--text-secondary); }
+.sdp-provenance[data-provenance="estimated"]  { --provenance-mark: var(--provenance-estimated-mark);       --provenance-marker: var(--status-warn-marker); }
+.sdp-provenance[data-provenance="target"]     { --provenance-mark: var(--provenance-target-mark);          --provenance-marker: var(--brand-accent); }
+.sdp-provenance[data-provenance="manual"]     { --provenance-mark: var(--provenance-manual-mark);          --provenance-marker: var(--text-primary); }
+.sdp-provenance[data-provenance="simulated"]  { --provenance-mark: var(--provenance-simulated-mark);       --provenance-marker: var(--text-secondary); border-left-style: dashed; }
+.sdp-provenance[data-provenance="pending"]    { --provenance-mark: var(--provenance-pending-mark);         --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }
+
+/* Legacy modifier aliases: styling only; migrate markup to data-provenance. */
+.sdp-provenance--measured   { --provenance-marker: var(--status-ok-marker); }
+.sdp-provenance--calculated { --provenance-marker: var(--text-secondary); }
+.sdp-provenance--estimated  { --provenance-marker: var(--status-warn-marker); }
+.sdp-provenance--target     { --provenance-marker: var(--brand-accent); }
+.sdp-provenance--manual     { --provenance-marker: var(--text-primary); }
+.sdp-provenance--simulated  { --provenance-marker: var(--text-secondary); border-left-style: dashed; }
+.sdp-provenance--pending    { --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }

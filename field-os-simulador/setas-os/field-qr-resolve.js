@@ -17,12 +17,12 @@
   // Formatos aceptados. Una cadena suelta no se acepta como código: es
   // indistinguible de un QR de otro sistema, y aceptarla haría que escanear
   // cualquier etiqueta ajena abriera la hoja de acción de un lote arbitrario.
-  const TRACE_URL = /^https?:\/\/(?:www\.)?setasdelapena\.com\/trace\/([A-Za-z0-9_-]{1,64})\/?$/;
+  const TRACE_URL = /^https?:\/\/(?:www\.)?setasdelapena\.(?:com|co)\/(?:trace|c)\/([A-Za-z0-9_-]{1,64})\/?$/;
   const SETAS_SCHEME = /^setas:lote:([A-Za-z0-9_-]{1,64})$/;
   // La etiqueta térmica que imprime la aplicación lleva el código en la query
-  // sobre la copia publicada en GitHub Pages. Sigue siendo lista blanca: el
-  // dominio es parte del patrón, no un formato genérico de URL.
-  const LABEL_URL = /^https?:\/\/setasdlp-code\.github\.io\/Setas-de-la-Pena\/public\/trace\.html\?(?:[^#]*&)?codigo=([A-Za-z0-9_-]{1,64})(?:&[^#]*)?$/;
+  // sobre la copia publicada en GitHub Pages o el dominio canónico. Sigue
+  // siendo lista blanca: el dominio es parte del patrón, no un formato genérico de URL.
+  const LABEL_URL = /^https?:\/\/(?:setasdlp-code\.github\.io\/Setas-de-la-Pena|(?:www\.)?setasdelapena\.(?:com|co))\/public\/trace\.html\?(?:[^#]*&)?codigo=([A-Za-z0-9_-]{1,64})(?:&[^#]*)?$/;
 
   const parseBatchRef = (text) => {
     const raw = typeof text === 'string' ? text.trim() : '';

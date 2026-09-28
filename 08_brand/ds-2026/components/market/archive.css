@@ -1,0 +1,57 @@
+/* DS-2026 · Market: Archive & Botanical Editorial Layer */
+:root {
+  --measure-archive: 58ch;
+  --measure-note: 22ch;
+
+  --t-lede: var(--weight-light) 22px/1.46 var(--font-editorial);
+  --t-prose-archive: var(--weight-light) 17.5px/1.62 var(--font-editorial);
+  --t-eyebrow-ed: var(--weight-medium) 12px/1.2 var(--font-editorial);
+
+  --rule-editorial: 1px solid var(--ink);
+
+  --size-display-cover: 88px;
+  --t-display-cover: var(--weight-black) var(--size-display-cover)/var(--leading-solid) var(--font-editorial);
+}
+
+[data-mode="archive"] .sdp-ficha__hd .sdp-species__common,
+[data-mode="archive"] .sdp-pack--front .sdp-species__common {
+  font: var(--t-display-cover);
+  letter-spacing: var(--tracking-display);
+  display: inline-block;
+  padding-bottom: var(--space-1);
+  border-bottom: 2px solid var(--accent-warm);
+}
+
+[data-mode="archive"] .ed-prose p {
+  font: var(--t-prose-archive);
+  max-width: var(--measure-archive);
+  margin: 0 0 var(--space-2);
+  text-wrap: pretty;
+  hanging-punctuation: first last;
+}
+
+.ed-lede {
+  font: var(--t-lede) !important;
+  color: var(--text-primary);
+  max-width: var(--measure-archive);
+  margin: 0 0 var(--space-2);
+}
+
+.ed-drop::first-letter,
+[data-mode="archive"] .ed-prose p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-bold);
+  font-size: 4.2em;
+  line-height: 0.82;
+  padding-right: 0.12em;
+  padding-top: 0.05em;
+  color: var(--text-primary);
+}
+
+.ed-folio {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-top: var(--rule-editorial); padding-top: var(--space-1);
+  font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
+  color: var(--text-metadata);
+}

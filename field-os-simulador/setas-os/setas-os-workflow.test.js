@@ -58,3 +58,11 @@ test('provenance accepts only the canonical data-origin vocabulary', () => {
   assert.deepEqual(workflow.provenance('measured', { sensor: 'SHT45' }), { kind: 'measured', sensor: 'SHT45' });
   assert.throws(() => workflow.provenance('guessed'), /Unknown provenance kind/);
 });
+
+// --- Regresión BUG D: 'inoculated' debe ofrecer 'advance_stage' para poder avanzar
+// a 'incubation' desde la ficha de campo (antes no había ninguna acción de campo
+// para ese salto de estado). ---
+test('inoculated incluye advance_stage entre sus acciones válidas', () => {
+  assert.ok(workflow.ACTIONS_BY_STATE.inoculated.includes('advance_stage'));
+  assert.ok(workflow.validActions('inoculated', 'operario').includes('advance_stage'));
+});

@@ -55,6 +55,10 @@
     ? require('./climate-math.js')
     : (typeof globalThis !== 'undefined' ? globalThis.SetasClimate : null);
 
+  const sensorHealth = isNode
+    ? require('./sensor-health.js')
+    : (typeof globalThis !== 'undefined' ? globalThis.SetasSensorHealth : null);
+
   // Tenjo, Cundinamarca — 2.600 msnm. Presión nominal usada cuando el nodo no
   // reporta barómetro propio. Ver TENJO_NOMINAL_PRESSURE_HPA en climate-math.
   const TENJO_ALTITUDE_M = 2600;
@@ -573,20 +577,52 @@
       };
     };
 
+    const getHealthReport = (roomId) => {
+      if (!sensorHealth) return null;
+      const entry = roomsState.get(roomId);
+      const readings = entry ? Object.values(entry.latest) : [];
+      return sensorHealth.evaluateRoomSensorHealth({
+        roomId,
+        readings,
+        devices: {},
+        transports: getStatus().transports,
+        now: clock(),
+        config: { freshMs },
+      });
+    };
+
     /** Instantánea completa para el render: métricas, series y frescura por sala. */
     const getSnapshot = ({ buckets = 24 } = {}) => {
       const at = clock();
       const rooms = {};
       roomsState.forEach((entry, roomId) => {
+        // Freshness is a property of each sensor reading, not of the last
+        // packet received for the room. A new temperature packet must not make
+        // yesterday's CO₂ look current.
+        const metricAgeMs = {};
+        const freshMetrics = {};
+        Object.entries(entry.latest).forEach(([metric, reading]) => {
+          const observedAt = reading && Date.parse(reading.observed_at);
+          // Do not substitute the room's last packet time here: it might belong
+          // to a different sensor and would falsely revive a malformed/unknown
+          // timestamp as fresh.
+          const observedMs = Number.isFinite(observedAt) ? observedAt : null;
+          const ageMs = observedMs == null ? null : Math.max(0, at - observedMs);
+          metricAgeMs[metric] = ageMs;
+          freshMetrics[metric] = ageMs != null && ageMs <= freshMs;
+        });
         rooms[roomId] = {
           id: roomId,
           sample: getSample(roomId),
+          health: getHealthReport(roomId),
           ageMs: entry.lastUpdateAt != null ? at - entry.lastUpdateAt : null,
           series: SERIES_METRICS.reduce((acc, m) => {
             acc[m] = entry.series[m].downsample(buckets);
             return acc;
           }, {}),
           latest: Object.assign({}, entry.latest),
+          metricAgeMs,
+          freshMetrics,
         };
       });
       return { at, status: getStatus(), rooms };
@@ -610,6 +646,7 @@
       stop,
       ingest,
       getStatus,
+      getHealthReport,
       getSnapshot,
       getSample,
       getSeries,

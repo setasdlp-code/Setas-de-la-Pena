@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-08-03
+last_reviewed: 2026-09-13
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-09-13
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Corregidos los objetivos de C:N/N en `01_species/pleurotus_eryngii.md` y `01_species/pleurotus_ostreatus.md` para igualar `field-os-simulador/setas-os/species-targets.js`. *P. eryngii* bolsa suplementada: C:N de mezcla 25–40:1 (ideal 28:1), N 1.2–1.8%, suplementación hasta 55% (Li et al. 2024, PMC11123215) — reemplaza la cifra previa de 20:1–25:1. *P. ostreatus* diferenciado por clase de sustrato (Bellettini et al. 2019): paja sin suplementar C:N 50–100:1 / N 0.4–1.5%; bolsa suplementada C:N 25–50:1 / N 0.8–1.5%. Se aclara que 70–90:1 corresponde a paja sin suplementar como base, no a un requisito de formulación de bolsa. |
 
 ### 2026-08-29
 

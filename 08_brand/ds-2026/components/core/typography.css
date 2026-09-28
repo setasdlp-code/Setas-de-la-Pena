@@ -1,0 +1,18 @@
+/* DS-2026 · Core Typography classes */
+.t-display-01 { font: var(--t-display-01); letter-spacing: var(--tracking-display); }
+.t-display-02 { font: var(--t-display-02); letter-spacing: var(--tracking-display); }
+.t-heading-01 { font: var(--t-heading-01); letter-spacing: var(--tracking-tight); }
+.t-heading-02 { font: var(--t-heading-02); letter-spacing: var(--tracking-tight); }
+.t-heading-03 { font: var(--t-heading-03); }
+.t-species    { font: var(--t-species);    letter-spacing: var(--tracking-tight); }
+.t-latin      { font: var(--t-latin); }
+.t-body       { font: var(--t-body);  max-width: var(--measure-prose); }
+.t-small      { font: var(--t-small); color: var(--text-secondary); }
+.t-data       { font: var(--t-data); }
+.t-label      { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.t-micro      { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+
+h1 { font: var(--t-heading-01); letter-spacing: var(--tracking-tight); margin: 0 0 var(--space-3); }
+h2 { font: var(--t-heading-02); letter-spacing: var(--tracking-tight); margin: 0 0 var(--space-2); }
+h3 { font: var(--t-heading-03); margin: 0 0 var(--space-1); }
+p  { margin: 0 0 var(--space-2); max-width: var(--measure-prose); text-wrap: pretty; }

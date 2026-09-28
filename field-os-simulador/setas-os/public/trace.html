@@ -451,6 +451,87 @@
     font-size: 12px;
     color: var(--ink-2);
   }
+
+  /* Línea de Tiempo de Ciclo y Eventos de Trazabilidad */
+  .timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--line-0);
+    padding-top: 10px;
+  }
+  .timeline-item {
+    background: var(--paper-1);
+    border: 1px solid var(--line-0);
+    border-left: 3px solid var(--accent-olive);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .timeline-item--bag {
+    border-left-color: var(--species-accent);
+    background: color-mix(in srgb, var(--species-accent-tint) 15%, var(--paper-1));
+  }
+  .timeline-item__hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-2);
+  }
+  .timeline-item__title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-0);
+  }
+  .timeline-item__meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+  .meta-tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    padding: 1px 5px;
+    background: var(--paper-0);
+    border: 1px solid var(--line-0);
+    color: var(--ink-1);
+  }
+  .meta-obs {
+    font-size: 11.5px;
+    font-style: italic;
+    color: var(--ink-1);
+    margin-top: 2px;
+  }
+
+  /* CTA Abrir en Setas OS */
+  .cta-open-os {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    background: var(--ink-0);
+    color: var(--paper-0);
+    text-align: center;
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid var(--ink-0);
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+  .cta-open-os:hover {
+    background: var(--ink-1);
+    color: var(--paper-0);
+  }
 </style>
 </head>
 <body>
@@ -460,6 +541,8 @@
     </div>
   </div>
 
+  <script src="../trace-identity.js"></script>
+  <script src="../public-trace-dto.js"></script>
   <script type="module">
     import { initializeApp } from "../vendor/firebase/firebase-app.js";
     import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy } from "../vendor/firebase/firebase-firestore.js";
@@ -506,8 +589,90 @@
       }
     };
 
-    function extraerCodigo() {
-      return new URLSearchParams(location.search).get('codigo') || '';
+    const SCAN_CODE_PARAMS = ['codigo', 'code', 'lote', 'batch'];
+    const CRATE_CODE_PARAMS = ['crate', 'canastilla'];
+
+    function extraerParametros() {
+      let rawCode = '';
+      let flush = null;
+      let isCrate = false;
+
+      try {
+        const search = new URLSearchParams(location.search);
+        const presentValues = new Set();
+        for (const key of SCAN_CODE_PARAMS) {
+          const val = search.get(key);
+          if (val) {
+            const clean = val.replace(/^(?:setas:(?:lote|bag|bolsa|crate):|SDP-CERT-)/i, '').trim();
+            if (clean) presentValues.add(clean);
+          }
+        }
+        for (const key of CRATE_CODE_PARAMS) {
+          const val = search.get(key);
+          if (val) {
+            const clean = val.replace(/^(?:setas:crate:)/i, '').trim();
+            if (clean) presentValues.add(clean);
+          }
+        }
+        // Si hay parámetros en conflicto con valores distintos (e.g. ?codigo=LOT-1&batch=LOT-2), rechazar
+        if (presentValues.size > 1) {
+          return { codigo: '', flush: null, error: 'conflicting_parameters' };
+        }
+        if (presentValues.size === 1) {
+          // Precedencia determinista: codigo > code > lote > batch > crate > canastilla
+          for (const key of SCAN_CODE_PARAMS) {
+            const val = search.get(key);
+            if (val) {
+              rawCode = val;
+              break;
+            }
+          }
+          if (!rawCode) {
+            for (const key of CRATE_CODE_PARAMS) {
+              const val = search.get(key);
+              if (val) {
+                rawCode = val;
+                isCrate = true;
+                break;
+              }
+            }
+          }
+        }
+
+        // Validación estricta de flush: entero positivo 1 a 99
+        const flushVal = search.get('flush');
+        if (flushVal && /^[1-9]\d{0,1}$/.test(flushVal.trim())) {
+          flush = parseInt(flushVal.trim(), 10);
+        }
+      } catch (e) {}
+
+      // Fallback por ruta limpia: /c/<codigo> o /trace/<codigo>
+      if (!rawCode) {
+        try {
+          const segments = location.pathname.split('/').filter(Boolean);
+          if (segments.length >= 2) {
+            const prev = segments[segments.length - 2].toLowerCase();
+            if (prev === 'c' || prev === 'trace') {
+              const last = decodeURIComponent(segments[segments.length - 1]).trim();
+              if (last && !last.endsWith('.html')) {
+                rawCode = last;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!rawCode) return { codigo: '', flush: null, isCrate: false, error: null };
+
+      // Normalizar: strip de esquemas conocidos y sanitización estricta [A-Za-z0-9_-]{1,64}
+      const cleaned = rawCode.replace(/^(?:setas:(?:lote|bag|bolsa|crate):|SDP-CERT-)/i, '').trim();
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(cleaned)) {
+        return { codigo: '', flush: null, error: 'invalid_characters' };
+      }
+      if (/^CAN-\d+/i.test(cleaned)) {
+        isCrate = true;
+      }
+      return { codigo: cleaned, flush, isCrate, error: null };
     }
 
     function esc(s) {
@@ -554,19 +719,48 @@
       return DISPONIBILIDAD_POR_ESTADO[estado] || { label: estado || 'Sin estado', tone: 'neutral' };
     }
 
-    function render(lote, cosechas, codigo) {
+    function render(lote, cosechas, codigo, bagInfo = null, targetFlush = null) {
       const app = document.getElementById('app');
       if (!lote) {
+        const bagNum = bagInfo ? bagInfo.replace(/^B/i, '') : null;
         app.innerHTML = `
           <header>
+            <div class="badge-stamp">${bagInfo ? `Bolsa #${esc(bagNum)}` : 'Lote'}</div>
             <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
-            <h1>Código no encontrado</h1>
+            <h1>${esc(codigo)}</h1>
+            <div class="sci">Ficha Provisional · En Proceso de Publicación</div>
           </header>
-          <div class="state-msg">
-            No hay una ficha pública registrada para <strong>${esc(codigo)}</strong>.<br>
-            Verifica el código impreso en la etiqueta térmica o contacta al equipo de Setas de la Peña.
-          </div>
-          <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
+          <main>
+            <div class="section-box">
+              <div class="section-hd">
+                <span>Estado de Trazabilidad</span>
+                <span class="tag">Ficha Provisional</span>
+              </div>
+              <div class="section-body">
+                <p class="tasting-lead">
+                  El código escaneado <strong>${esc(codigo)}</strong> corresponde a una unidad de cultivo de Setas de la Peña en Tenjo, Colombia (2.592 msnm).
+                </p>
+                <div class="lot-row">
+                  <div>
+                    <div class="codigo-mono">${esc(codigo)}</div>
+                    <div style="font-size:11px;color:var(--ink-2);margin-top:2px;">Finca Santa Isabel · Serranía de Juaica${bagInfo ? ` · Bolsa individual ${esc(bagInfo)}` : ''}</div>
+                  </div>
+                  <div class="state-chip state-chip--warn">Pendiente de Sincronización</div>
+                </div>
+                <p style="font-size:12px;color:var(--ink-1);line-height:1.5;">
+                  La ficha pública detallada aún no ha sido sincronizada a la nube para este lote. Si formas parte del equipo operativo de Setas de la Peña, puedes consultar y registrar eventos directamente en Setas OS.
+                </p>
+              </div>
+            </div>
+
+            <a class="cta-open-os" href="../Setas%20OS%20v5.dc.html?view=bitacora&lote=${encodeURIComponent(codigo)}${bagInfo ? `&bolsa=${encodeURIComponent(bagInfo)}` : ''}">
+              Abrir registro operativo en Setas OS &rarr;
+            </a>
+          </main>
+          <footer>
+            Setas de la Peña · Sabana Centro, Colombia<br>
+            <a href="https://setasdelapena.co">setasdelapena.co</a> · <span style="font-family:var(--font-mono);">FOS v3.0</span>
+          </footer>`;
         return;
       }
 
@@ -583,23 +777,62 @@
         ? cosechas.map(c => {
             const calidad = Math.max(0, Math.min(5, Math.floor(Number(c.calidad)) || 0));
             const stars = calidad > 0 ? `<span class="stars">${'★'.repeat(calidad)}</span>` : '';
+            const isTarget = targetFlush && Number(c.flush) === targetFlush;
             return `
-            <div class="cosecha-item">
-              <span>Flush #${esc(c.flush || 1)} · ${esc(c.fecha || '—')}</span>
+            <div class="cosecha-item" ${isTarget ? 'style="border-left:3px solid var(--species-accent);background:var(--species-accent-tint);padding-left:10px;"' : ''}>
+              <span>Flush #${esc(c.flush || 1)} · ${esc(c.fecha || '—')}${isTarget ? ' <strong style="font-size:10px;text-transform:uppercase;color:var(--species-accent);">(Esta entrega)</strong>' : ''}</span>
               <strong>${(parseFloat(c.pesoFresco) || 0).toFixed(0)} g ${stars}</strong>
             </div>`;
           }).join('')
         : '<div class="cosecha-item" style="color:var(--ink-2);">Cosecha en desarrollo en sala de fructificación</div>';
 
+      const rawEvents = Array.isArray(lote.lifecycleEvents) ? lote.lifecycleEvents : [];
+      const eventsHtml = rawEvents.length
+        ? rawEvents.map(ev => {
+            const isBagEvent = Boolean(ev.bagId || ev.scope === 'bag');
+            const metaTags = [];
+            if (ev.meta?.temperatura != null) metaTags.push(`${ev.meta.temperatura}°C`);
+            if (ev.meta?.humedad != null) metaTags.push(`${ev.meta.humedad}% HR`);
+            if (ev.meta?.co2 != null) metaTags.push(`${ev.meta.co2} ppm CO2`);
+            if (ev.meta?.tipoInspeccion) metaTags.push(esc(ev.meta.tipoInspeccion));
+            if (ev.meta?.resultadoInspeccion) metaTags.push(esc(ev.meta.resultadoInspeccion));
+            if (ev.meta?.flush) metaTags.push(`Flush ${ev.meta.flush}`);
+            if (ev.meta?.fase) metaTags.push(esc(ev.meta.fase));
+
+            const obs = ev.meta?.observacionPublica
+              ? `<div class="meta-obs">“${esc(ev.meta.observacionPublica)}”</div>`
+              : '';
+
+            return `
+              <div class="timeline-item ${isBagEvent ? 'timeline-item--bag' : ''}">
+                <div class="timeline-item__hd">
+                  <span>${esc(ev.stage ? ev.stage.toUpperCase() : 'CICLO')}</span>
+                  <span>${esc(ev.at ? ev.at.slice(0, 16).replace('T', ' ') : '—')}</span>
+                </div>
+                <div class="timeline-item__title">
+                  ${esc(ev.title || ev.type || 'Evento')}
+                  ${isBagEvent ? `<span class="meta-tag" style="margin-left:6px;border-color:var(--species-accent);">Bolsa ${esc(ev.bagId ? ev.bagId.replace(/^.*-B/i, 'B') : '')}</span>` : ''}
+                </div>
+                ${metaTags.length ? `<div class="timeline-item__meta">${metaTags.map(m => `<span class="meta-tag">${m}</span>`).join('')}</div>` : ''}
+                ${obs}
+              </div>`;
+          }).join('')
+        : '<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-2);padding:6px 0;">Ciclo agronómico registrado en salas de cultivo de Tenjo, Colombia.</div>';
+
       app.innerHTML = `
         <header>
-          <div class="badge-stamp">Cosecha de Autor</div>
+          <div class="badge-stamp">${bagInfo ? `Bolsa #${esc(bagInfo.replace(/^B/i, ''))}` : 'Cosecha de Autor'}</div>
           <div class="eyebrow">Tenjo, Colombia · 2.592 msnm · Sabana Centro</div>
           <h1>${esc(lote.especie || 'Seta Cultivada')}</h1>
           <div class="sci">${esc(lote.especieCientifico || perfil.comun)}</div>
         </header>
 
         <main>
+          <!-- ENLACE OPERATIVO DIRECTO HACIA SETAS OS -->
+          <a class="cta-open-os" href="../Setas%20OS%20v5.dc.html?view=bitacora&lote=${encodeURIComponent(lote.codigo)}${bagInfo ? `&bolsa=${encodeURIComponent(bagInfo)}` : ''}">
+            Abrir registro operativo en Setas OS &rarr;
+          </a>
+
           <!-- BLOQUE 1: PASE GASTRONÓMICO / FICHA PARA CHEF -->
           <div class="section-box">
             <div class="section-hd">
@@ -655,13 +888,13 @@
           <div class="section-box">
             <div class="section-hd">
               <span>Ficha Técnica de Origen</span>
-              <span>Lote #${esc(lote.codigo)}</span>
+              <span>Lote #${esc(lote.codigo)}${bagInfo ? ` · Bolsa #${esc(bagInfo.replace(/^B/i, ''))}` : ''}</span>
             </div>
             <div class="section-body">
               <div class="lot-row">
                 <div>
-                  <div class="codigo-mono">${esc(lote.codigo)}</div>
-                  <div style="font-size:11px;color:var(--ink-2);margin-top:2px;">Finca Santa Isabel · Serranía de Juaica</div>
+                  <div class="codigo-mono">${esc(codigo || lote.codigo)}</div>
+                  <div style="font-size:11px;color:var(--ink-2);margin-top:2px;">Finca Santa Isabel · Serranía de Juaica${bagInfo ? ` · Bolsa individual ${esc(bagInfo)}` : ''}</div>
                 </div>
                 <div class="state-chip state-chip--${disponibilidad.tone}">${esc(disponibilidad.label)}</div>
               </div>
@@ -693,6 +926,22 @@
             </div>
           </div>
 
+          <!-- BLOQUE 2.5: REGISTRO DE EVENTOS Y TRAZABILIDAD DE CICLO -->
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Registro de Eventos de Ciclo</span>
+              <span class="tag">${bagInfo ? `Bolsa #${esc(bagInfo.replace(/^B/i, ''))}` : 'Bitácora'}</span>
+            </div>
+            <div class="section-body">
+              <div style="font-size:12px;color:var(--ink-1);line-height:1.4;">
+                Eventos inmutables verificados en sala y reportados mediante captura digital en granja.
+              </div>
+              <div class="timeline-list">
+                ${eventsHtml}
+              </div>
+            </div>
+          </div>
+
           <!-- BLOQUE 3: PRÓXIMO PASO (Culinary Market) -->
           <a class="cta-button" href="mailto:info@setasdelapena.co?subject=${encodeURIComponent('Consulta lote ' + (lote.codigo || ''))}">
             Escríbenos por este lote &rarr;
@@ -705,22 +954,163 @@
         </footer>`;
     }
 
+    function renderCrate(crateCode) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <header>
+          <div class="badge-stamp">Canastilla</div>
+          <div class="eyebrow">Activo de Cosecha · Tenjo, Colombia</div>
+          <h1>Canastilla de Cosecha</h1>
+          <div class="sci">${esc(crateCode)}</div>
+        </header>
+
+        <main>
+          <div class="section-box">
+            <div class="section-hd">
+              <span>Identidad Operativa</span>
+              <span class="tag">Báscula Continua</span>
+            </div>
+            <div class="section-body">
+              <p class="tasting-lead">
+                Contenedor plástico grado alimentario para recolección en sala de fructificación y pesaje continuo en Setas OS.
+              </p>
+              <div class="lot-row">
+                <span class="lbl">Identificador</span>
+                <span class="codigo-mono">${esc(crateCode)}</span>
+              </div>
+              <div class="lot-row">
+                <span class="lbl">Uso en Granja</span>
+                <span class="val">Corte y pesaje de flushes</span>
+              </div>
+            </div>
+          </div>
+
+          <a class="cta-open-os" href="../Setas%20OS%20v5.dc.html?view=inventario&crate=${encodeURIComponent(crateCode)}">
+            Abrir canastilla en Setas OS &rarr;
+          </a>
+        </main>
+
+        <footer>
+          Setas de la Peña · Sabana Centro, Colombia<br>
+          <a href="https://setasdelapena.co">setasdelapena.co</a> · <span style="font-family:var(--font-mono);">FOS v3.0</span>
+        </footer>`;
+    }
+
     (async () => {
-      const codigo = extraerCodigo();
+      const { codigo, flush, isCrate, error } = extraerParametros();
+      if (error === 'conflicting_parameters') {
+        document.getElementById('app').innerHTML = `
+          <header>
+            <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
+            <h1>Enlace no válido</h1>
+          </header>
+          <div class="state-msg">
+            El enlace escaneado contiene parámetros en conflicto.<br>
+            Verifica el código impreso en la etiqueta térmica.
+          </div>
+          <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
+        return;
+      }
+      if (error === 'invalid_characters') {
+        document.getElementById('app').innerHTML = `
+          <header>
+            <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
+            <h1>Código no válido</h1>
+          </header>
+          <div class="state-msg">
+            El código contiene caracteres no permitidos.<br>
+            Verifica la etiqueta térmica.
+          </div>
+          <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
+        return;
+      }
       if (!codigo) {
         render(null, [], '');
         return;
       }
+      if (isCrate || /^CAN-\d+/i.test(codigo)) {
+        renderCrate(codigo);
+        return;
+      }
       try {
-        const loteSnap = await getDoc(doc(db, 'public_lotes', codigo));
-        const cosechasSnap = await getDocs(query(collection(db, 'public_lotes', codigo, 'cosechas'), orderBy('flush', 'asc')));
-        const cosechas = cosechasSnap.docs.map(d => d.data());
-        render(loteSnap.exists() ? loteSnap.data() : null, cosechas, codigo);
+        let loteCodigo = codigo;
+        let bagInfo = null;
+
+        // 1. Consulta directa por el código exacto primero
+        let loteSnap = await getDoc(doc(db, 'public_lotes', loteCodigo));
+
+        // 2. Si no existe exactamente, verificar si coincide con el patrón canónico de bolsa: <lote>-B<num>
+        if (!loteSnap.exists()) {
+          const bagMatch = codigo.match(/^([A-Za-z0-9_-]+)-B(\d{2,4})$/i);
+          if (bagMatch) {
+            const parentCode = bagMatch[1];
+            const bagNum = bagMatch[2];
+            const parentSnap = await getDoc(doc(db, 'public_lotes', parentCode));
+            if (parentSnap.exists()) {
+              loteSnap = parentSnap;
+              loteCodigo = parentCode;
+              bagInfo = `B${bagNum}`;
+            }
+          }
+        }
+
+        // 3. Fallback local oportunista (en caso de offline o mismo origen durante pruebas)
+        if (!loteSnap.exists()) {
+          try {
+            const rawLocal = localStorage.getItem('sdp_bit_lotes');
+            if (rawLocal) {
+              const localLotes = JSON.parse(rawLocal);
+              const foundLocal = localLotes.find(l => String(l.codigo || '').toUpperCase() === loteCodigo.toUpperCase() || l.id === loteCodigo);
+              if (foundLocal) {
+                let localCosechas = [];
+                try {
+                  const rawCos = localStorage.getItem('sdp_bit_cosechas');
+                  if (rawCos) {
+                    localCosechas = JSON.parse(rawCos).filter(c => c.loteId === foundLocal.id);
+                  }
+                } catch (_) {}
+                let localBolsas = [];
+                try {
+                  const rawBolsas = localStorage.getItem('sdp_bit_bolsas');
+                  if (rawBolsas) {
+                    localBolsas = JSON.parse(rawBolsas).filter(b => b.loteId === foundLocal.id || b.loteCodigo === foundLocal.codigo);
+                  }
+                } catch (_) {}
+                const safeDoc = (window.SetasPublicTraceDTO && typeof window.SetasPublicTraceDTO.buildPublicTraceDocument === 'function')
+                  ? window.SetasPublicTraceDTO.buildPublicTraceDocument(foundLocal, localCosechas, localBolsas)
+                  : foundLocal;
+                render(safeDoc, safeDoc.harvests || localCosechas, codigo, bagInfo, flush);
+                return;
+              }
+            }
+          } catch (_) {}
+        }
+
+        let cosechas = [];
+        if (loteSnap.exists()) {
+          const data = loteSnap.data();
+          if (Array.isArray(data.harvests) && data.harvests.length > 0) {
+            cosechas = data.harvests;
+          } else {
+            const cosechasSnap = await getDocs(query(collection(db, 'public_lotes', loteCodigo, 'cosechas'), orderBy('flush', 'asc')));
+            cosechas = cosechasSnap.docs.map(d => d.data());
+          }
+        }
+
+        render(loteSnap.exists() ? loteSnap.data() : null, cosechas, codigo, bagInfo, flush);
       } catch (err) {
+        const isOffline = !navigator.onLine || (err && (err.code === 'unavailable' || String(err.message).includes('offline')));
         document.getElementById('app').innerHTML = `
+          <header>
+            <div class="eyebrow">Trazabilidad de Origen · Tenjo, Colombia</div>
+            <h1>${isOffline ? 'Sin conexión a internet' : 'Error de consulta'}</h1>
+          </header>
           <div class="state-msg">
-            Error cargando ficha técnica (${esc(err.message || err.code || 'error de red')}).<br>Por favor reintenta.
-          </div>`;
+            ${isOffline
+              ? 'La consulta de trazabilidad pública en vivo requiere conexión de datos activa.<br>Por favor reconéctate y vuelve a escanear la etiqueta.'
+              : `Error consultando ficha técnica pública (${esc(err.message || err.code || 'error de red')}).<br>Por favor reintenta en unos minutos.`}
+          </div>
+          <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
       }
     })();
   </script>

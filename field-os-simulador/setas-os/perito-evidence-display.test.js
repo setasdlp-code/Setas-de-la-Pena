@@ -116,7 +116,7 @@ test('especie sin historial produce estado vacío, no una excepción', () => {
 test('el render de evidencia usa el resultado de describePeritoEvidence sin asumir shape', () => {
   assert.match(jsx, /const evi=describePeritoEvidence\(optResults\[`_evidence_\$\{optProfile\}`\]\);/);
   assert.match(jsx, /evi\.hasEvidence\s*\?/);
-  assert.match(jsx, /Sin evidencia de producción registrada aún/);
+  assert.match(jsx, /Sin resultados finales elegibles de producción/);
 });
 
 // ── orden de ranking intacto: el bloque de evidencia no reordena optResults ─

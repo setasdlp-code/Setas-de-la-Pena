@@ -12,6 +12,13 @@
     return globalThis.SetasTelemetry;
   };
 
+  const getSensorHealth = () => {
+    if (typeof module !== 'undefined' && module.exports) return require('./sensor-health.js');
+    return globalThis.SetasSensorHealth;
+  };
+
+  const getHistory = () => typeof module !== 'undefined' && module.exports ? require('./historical-calibration.js') : globalThis.SetasHistoricalCalibration;
+
   const toKg = (value, unit) => {
     const n = Number(value);
     if (!Number.isFinite(n)) return 0;
@@ -61,6 +68,7 @@
     if (!telem?.aggregateTelemetry) throw new Error('SetasTelemetry unavailable');
 
     const stats = bitacora.calcLoteStats(lote, bolsas, cosechas);
+    const finalOutcome = getHistory().batchOutcome(lote, cosechas);
     const cycleReadings = telemetry.filter((r) => telem.readingBelongsToCycle(r, cycle));
     const environment = telem.aggregateTelemetry(cycleReadings);
     const flushes = harvestByFlush(cosechas);
@@ -68,10 +76,18 @@
     const hasHarvest = !!stats && stats.totalFresco > 0;
     const hasTraceability = !!recipeSnapshot && ingredientLots.length > 0;
 
+    const sensorHealthModule = getSensorHealth();
+    const telemetryHealth = sensorHealthModule
+      ? sensorHealthModule.summarizeCycleTelemetryHealth(cycleReadings, { startAt: cycle.startAt, endAt: cycle.endAt })
+      : null;
+
     // Un solo ciclo nunca recibe confianza alta por sí mismo: es evidencia
     // operacional observacional, no un experimento causal replicado.
+    // Además, un ciclo con telemetría degradada se degrada a confianza 'low'.
     const completenessScore = [hasHarvest, bolsas.length > 0, completeEnvironmentMetrics >= 2, hasTraceability].filter(Boolean).length;
-    const confidence = completenessScore >= 3 ? 'medium' : 'low';
+    const baseConfidence = completenessScore >= 3 ? 'medium' : 'low';
+    const isDegradedTelemetry = telemetryHealth && telemetryHealth.reliabilityGrade === 'LOW';
+    const confidence = isDegradedTelemetry ? 'low' : baseConfidence;
 
     return {
       schema: 'setas.cycle-evidence.v1',
@@ -90,8 +106,11 @@
       recipeSnapshot,
       ingredientLots: ingredientLots.map((x) => ({ ...x })),
       spawnLot: spawnLot ? { ...spawnLot } : null,
+      outcome: finalOutcome.outcome,
+      outcomeExclusionReason: finalOutcome.exclusionReason || null,
+      batchState: lote.lifecycleState || lote.estado || null,
       metrics: stats ? {
-        be_pct: stats.be,
+        be_pct: finalOutcome.be,
         contamination_pct: stats.contPct,
         colonization_days: stats.diasCol,
         total_fresh_kg: stats.totalFresco,
@@ -102,13 +121,17 @@
       } : null,
       flushes,
       environment,
+      telemetryHealth,
       telemetrySummary: {
         totalReadings: cycleReadings.length,
         metricsWithValidData: completeEnvironmentMetrics,
+        reliabilityGrade: telemetryHealth?.reliabilityGrade || 'NONE',
       },
       provenance: {
         biological: 'measured_calculated_from_bitacora',
-        environment: cycleReadings.length ? 'measured' : 'missing',
+        environment: !cycleReadings.length ? 'missing'
+          : isDegradedTelemetry ? 'degraded'
+          : 'measured',
         recipe: recipeSnapshot ? 'snapshot' : 'missing',
         ingredients: ingredientLots.length ? 'lot_traceable' : 'missing',
       },
@@ -122,7 +145,10 @@
       if (recipeVersionId && r.recipeSnapshot?.versionId !== recipeVersionId && r.recipeSnapshot?.id !== recipeVersionId) return false;
       return true;
     });
-    const completed = filtered.filter(r => r.metrics?.total_fresh_kg > 0);
+    const eligibility = getHistory().assessHistory(filtered.map(r => ({...r,
+      ebReal:r.metrics?.be_pct, recipe:r.recipeSnapshot?.recipe || [],
+      exclusionReason:r.outcomeExclusionReason || null})));
+    const completed = eligibility.eligibleRows;
     const withEnvironment = completed.filter(r => (r.telemetrySummary?.metricsWithValidData || 0) >= 2);
     const withTraceability = completed.filter(r => r.recipeSnapshot && (r.ingredientLots || []).length > 0);
     // Observaciones históricas por sí solas se limitan a medium; high queda
@@ -135,10 +161,13 @@
       filters: { speciesId, recipeVersionId },
       summary: {
         sampleSize: completed.length,
+        excludedRecords: eligibility.excludedN,
+        exclusionReasons: eligibility.exclusionReasons,
         recordsWithEnvironment: withEnvironment.length,
         recordsWithFullIngredientTraceability: withTraceability.length,
       },
       records: completed,
+      observations: eligibility.observations,
     };
   };
 

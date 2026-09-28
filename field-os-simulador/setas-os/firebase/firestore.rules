@@ -56,6 +56,16 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Consumo de inventario por lote: registro append-only; la identidad es el loteId.
+    match /inventory_consumptions/{opId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.opId == opId
+        && request.resource.data.loteId == opId
+        && request.resource.data.allocations is list;
+      allow update, delete: if false;
+    }
+
     // Cuaderno de campo: `lifecycleState` y `revision` sólo los escribe la
     // aceptación de eventos (Admin SDK, que ignora estas reglas). `estado` sigue
     // siendo del cliente: lo usan bitácora y trazabilidad, y una vez que existe

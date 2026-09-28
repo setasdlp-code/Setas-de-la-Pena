@@ -15,7 +15,7 @@ test('simulador-app.jsx includes unified production launch buttons and modal wor
   assert.match(jsx, /openProdLauncher/);
   assert.match(jsx, /ejecutarLanzamientoProduccion/);
   assert.match(jsx, /data-testid="prod-launch-modal"/);
-  assert.match(jsx, /🚀 Lanzar Producción/);
+  assert.match(jsx, /<AppIcon name="rocket"[^>]*\/>\s*(?:Confirmar y\s*)?Lanzar Producción/);
   assert.match(jsx, /showProdLaunchModal/);
 });
 

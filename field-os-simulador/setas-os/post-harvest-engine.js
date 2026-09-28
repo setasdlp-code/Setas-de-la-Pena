@@ -134,8 +134,12 @@
     p_ostreatus_gris: 'orellana_gris',
     p_ostreatus_blanco: 'orellana_blanca',
     p_djamor_rosa: 'orellana_rosa',
+    orellana_rosada: 'orellana_rosa',
     p_eryngii: 'seta_cardo',
+    seta_de_cardo: 'seta_cardo',
     lions_mane: 'melena_leon',
+    melena_de_leon: 'melena_leon',
+    melena_de_león: 'melena_leon',
     pleurotus_ostreatus: 'orellana_gris',
     pleurotus_florida: 'orellana_blanca',
     pleurotus_djamor: 'orellana_rosa',
@@ -145,6 +149,15 @@
     flammulina_velutipes: 'enoki',
     pholiota_nameko: 'nameko',
     ganoderma_lucidum: 'reishi',
+    ost: 'orellana_gris',
+    obl: 'orellana_blanca',
+    ros: 'orellana_rosa',
+    ery: 'seta_cardo',
+    shi: 'shiitake',
+    mel: 'melena_leon',
+    rei: 'reishi',
+    eno: 'enoki',
+    nam: 'nameko',
   };
 
   /**
@@ -152,7 +165,12 @@
    */
   const resolveSpeciesKey = (key) => {
     if (!key || typeof key !== 'string') return 'orellana_gris';
-    const clean = key.trim().toLowerCase();
+    const clean = key
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[-\s]+/g, '_');
     if (SPECIES_POSTHARVEST_PROFILES[clean]) return clean;
     return SPECIES_KEY_ALIASES[clean] || 'orellana_gris';
   };
@@ -310,10 +328,12 @@
 
     return {
       speciesId: sp.id,
+      speciesKey: sp.id,
       speciesName: sp.name,
       storageTempC: t,
       storageRhPct: rh,
       marketableShelfLifeDays: marketableDays,
+      marketableDays,
       limitingFactor,
       statusBadge,
       componentLimits: {

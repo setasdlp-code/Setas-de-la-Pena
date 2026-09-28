@@ -132,8 +132,12 @@
     p_ostreatus_gris: 'orellana_gris',
     p_ostreatus_blanco: 'orellana_blanca',
     p_djamor_rosa: 'orellana_rosa',
+    orellana_rosada: 'orellana_rosa',
     p_eryngii: 'seta_cardo',
+    seta_de_cardo: 'seta_cardo',
     lions_mane: 'melena_leon',
+    melena_de_leon: 'melena_leon',
+    melena_de_león: 'melena_leon',
     pleurotus_ostreatus: 'orellana_gris',
     pleurotus_florida: 'orellana_blanca',
     pleurotus_djamor: 'orellana_rosa',
@@ -143,6 +147,15 @@
     flammulina_velutipes: 'enoki',
     pholiota_nameko: 'nameko',
     ganoderma_lucidum: 'reishi',
+    ost: 'orellana_gris',
+    obl: 'orellana_blanca',
+    ros: 'orellana_rosa',
+    ery: 'seta_cardo',
+    shi: 'shiitake',
+    mel: 'melena_leon',
+    rei: 'reishi',
+    eno: 'enoki',
+    nam: 'nameko',
   };
 
   /**
@@ -150,7 +163,12 @@
    */
   const resolveSpeciesKey = (key) => {
     if (!key || typeof key !== 'string') return null;
-    const clean = key.trim().toLowerCase();
+    const clean = key
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[-\s]+/g, '_');
     if (SPECIES_CLIMATE_PROFILES[clean]) return clean;
     return SPECIES_KEY_ALIASES[clean] || null;
   };
@@ -214,7 +232,7 @@
     const reasons = [];
 
     // 1. Conflicto por esporulación masiva de Pleurotus sobre Melena de León o Shiitake
-    const isPleurotusHeavy = ['orellana_gris', 'orellana_blanca'].includes(speciesA.id) || ['orellana_gris', 'orellana_blanca'].includes(speciesB.id);
+    const isPleurotusHeavy = ['orellana_gris', 'orellana_blanca', 'orellana_rosa'].includes(speciesA.id) || ['orellana_gris', 'orellana_blanca', 'orellana_rosa'].includes(speciesB.id);
     const isDelicate = ['melena_leon', 'shiitake'].includes(speciesA.id) || ['melena_leon', 'shiitake'].includes(speciesB.id);
     if (isPleurotusHeavy && isDelicate) {
       penalty += 0.15;
@@ -222,7 +240,7 @@
     }
 
     // 2. Conflicto por incompatibilidad morfogenética de CO2 (ej. Orellana/Melena vs Reishi/Enoki)
-    const needsHighFae = ['orellana_gris', 'melena_leon'].includes(speciesA.id) || ['orellana_gris', 'melena_leon'].includes(speciesB.id);
+    const needsHighFae = ['orellana_gris', 'orellana_blanca', 'orellana_rosa', 'melena_leon'].includes(speciesA.id) || ['orellana_gris', 'orellana_blanca', 'orellana_rosa', 'melena_leon'].includes(speciesB.id);
     const needsHighCo2 = ['reishi', 'enoki'].includes(speciesA.id) || ['reishi', 'enoki'].includes(speciesB.id);
     if (needsHighFae && needsHighCo2) {
       penalty += 0.25;
@@ -354,9 +372,11 @@
    * @returns {object} Setpoints recomendados, puntuación grupal y alertas
    */
   const optimizeChamberSetpoints = (speciesKeys = [], options = {}) => {
-    const validKeys = (Array.isArray(speciesKeys) ? speciesKeys : [])
-      .map(resolveSpeciesKey)
-      .filter((k) => k && SPECIES_CLIMATE_PROFILES[k]);
+    const validKeys = Array.from(new Set(
+      (Array.isArray(speciesKeys) ? speciesKeys : [])
+        .map(resolveSpeciesKey)
+        .filter((k) => k && SPECIES_CLIMATE_PROFILES[k])
+    ));
 
     if (validKeys.length === 0) {
       return null;
@@ -379,6 +399,8 @@
           vpdKpa: vpd,
         },
         bottlenecks: [],
+        biologicalAlerts: [],
+        penalties: [],
       };
     }
 
@@ -488,6 +510,7 @@
         vpdKpa: vpdFinal,
       },
       biologicalAlerts: Array.from(allPenalties),
+      penalties: Array.from(allPenalties),
       bottlenecks,
     };
   };

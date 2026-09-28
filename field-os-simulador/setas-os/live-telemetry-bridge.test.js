@@ -177,6 +177,17 @@ test('dos nodos de la misma sala publicando en el mismo instante no se pisan', (
   assert.equal(bridge.getSeries('martha_01', 'temperature_c').count, 2);
 });
 
+test('la frescura del snapshot se calcula por métrica y no revive un CO₂ retenido', () => {
+  const clock = makeClock();
+  const bridge = createLiveTelemetryBridge({ transports: [], factories: {}, clock: clock.now, freshMs: 90_000 });
+  bridge.ingest(frame({ observed_at: new Date(clock.now() - 180_000).toISOString(), temperature_c: undefined, rh_pct: undefined, co2_ppm: 740 }), { source: 'manual' });
+  bridge.ingest(frame({ observed_at: new Date(clock.now()).toISOString(), temperature_c: 17.4, rh_pct: undefined, co2_ppm: undefined }), { source: 'manual' });
+  const room = bridge.getSnapshot().rooms.martha_01;
+  assert.equal(room.freshMetrics.temperature_c, true);
+  assert.equal(room.freshMetrics.co2_ppm, false);
+  assert.ok(room.metricAgeMs.co2_ppm >= 180_000);
+});
+
 test('el puente reconecta con backoff exponencial tras una caída', () => {
   const clock = makeClock();
   const timers = makeTimers();
@@ -429,5 +440,29 @@ test('el puente vive sin transportes: el webhook manual del Hub IoT sigue funcio
   assert.equal(accepted.length, 3);
   assert.equal(bridge.getStatus().connectivity, 'offline', 'sin transportes no hay conexión que reportar');
   assert.equal(bridge.getSample('cloudlab_844').temperature_c, 18.4);
+  bridge.stop();
+});
+
+test('getHealthReport expone la salud determinística de la sala en vivo', () => {
+  const clock = makeClock();
+  const bridge = createLiveTelemetryBridge({ transports: [], factories: {}, clock: clock.now });
+  bridge.start();
+  bridge.ingest({
+    room_id: 'martha_01',
+    device_id: 'sht45_01',
+    temperature_c: 18.0,
+    rh_pct: 92.0,
+    observed_at: new Date(clock.now() - 5000).toISOString(),
+  }, { source: 'manual' });
+
+  const health = bridge.getHealthReport('martha_01');
+  assert.ok(health);
+  assert.equal(health.roomId, 'martha_01');
+  assert.equal(health.metrics.temperature_c.status, 'healthy');
+  assert.equal(health.overallStatus, 'healthy');
+
+  const snap = bridge.getSnapshot();
+  assert.ok(snap.rooms.martha_01.health);
+  assert.equal(snap.rooms.martha_01.health.overallStatus, 'healthy');
   bridge.stop();
 });

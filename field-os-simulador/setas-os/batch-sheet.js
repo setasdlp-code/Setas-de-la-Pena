@@ -27,6 +27,8 @@
   // está garantizado. Un require() de Node sí es estable.
   const workflowRef = () => (isNode ? require('./setas-os-workflow.js') : (glob && glob.SetasOSWorkflow) || null);
   const bitacoraRef = () => (isNode ? require('./bitacora-model.js') : (glob && glob.SetasBitacora) || null);
+  const flushForecastRef = () => (isNode ? require('./flush-forecast-engine.js') : (glob && glob.SetasFlushForecast) || null);
+  const traceIdentityRef = () => (isNode ? require('./trace-identity.js') : (glob && glob.SetasTraceIdentity) || null);
 
   const DAY_MS = 86400000;
 
@@ -65,6 +67,27 @@
     activo: 'inoculated',
   });
 
+  /**
+   * Estados canónicos de bolsa. `aislada` es nuevo: separa "bajo observación
+   * por posible contaminación" (aislada) de "confirmada contaminada"
+   * (contaminada), porque la decisión operativa y su seguimiento son distintos.
+   */
+  const BAG_STATES = Object.freeze({
+    sana: 'sana',
+    dudosa: 'dudosa',
+    aislada: 'aislada',
+    contaminada: 'contaminada',
+    descartada: 'descartada',
+  });
+
+  const BAG_STATE_LABELS = Object.freeze({
+    sana: 'Sana',
+    dudosa: 'Dudosa',
+    aislada: 'Aislada',
+    contaminada: 'Contaminada',
+    descartada: 'Descartada',
+  });
+
   const STATE_LABELS = Object.freeze({
     planned: 'Planificado',
     mix_prepared: 'Mezcla preparada',
@@ -101,6 +124,7 @@
     riego: { label: 'Riego', requires: [] },
     harvest: { label: 'Registrar cosecha', requires: ['pesoFresco', 'flush'] },
     advance_stage: { label: 'Avanzar etapa', requires: [] },
+    close_batch: { label: 'Finalizar lote', requires: [], transitionsTo: 'closed' },
     report_problem: { label: 'Reportar problema', requires: ['observacion'] },
     discard: { label: 'Descartar lote', requires: ['motivo'], transitionsTo: 'discarded' },
   });
@@ -115,12 +139,12 @@
     mix_prepared: ['start_thermal_treatment', 'note', 'photo', 'discard'],
     thermal_treatment: ['complete_thermal_treatment', 'report_problem', 'note', 'photo'],
     cooling: ['inoculate', 'report_problem', 'note', 'photo'],
-    inoculated: ['inspection', 'contamination', 'photo', 'move'],
+    inoculated: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
     incubation: ['colonization', 'contamination', 'photo', 'move', 'advance_stage'],
     maturation: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
     induction: ['inspection', 'contamination', 'photo', 'move', 'advance_stage'],
-    fruiting: ['harvest', 'inspection', 'contamination', 'photo', 'advance_stage'],
-    resting: ['inspection', 'contamination', 'photo', 'advance_stage'],
+    fruiting: ['harvest', 'inspection', 'contamination', 'advance_stage', 'close_batch'],
+    resting: ['advance_stage', 'close_batch', 'inspection', 'contamination', 'photo'],
     quarantine: ['contamination', 'inspection', 'photo', 'discard', 'advance_stage'],
     closed: ['note', 'photo'],
     discarded: ['note', 'photo'],
@@ -129,7 +153,13 @@
 
   // `colonization` y `photo` son capturas específicas de campo que se apoyan en
   // los permisos de `inspection` y `note` de la máquina de estados.
-  const ACTION_PERMISSION_BASE = Object.freeze({ colonization: 'inspection', photo: 'note' });
+  const ACTION_PERMISSION_BASE = Object.freeze({
+    colonization: 'inspection',
+    photo: 'note',
+    // Finalizar es la última transición del ciclo, así que se apoya en el
+    // permiso de avance: quien puede mover el lote de etapa puede cerrarlo.
+    close_batch: 'advance_stage',
+  });
 
   const MAX_CONTEXTUAL_ACTIONS = 5;
 
@@ -156,6 +186,41 @@
 
   const stateLabel = state => STATE_LABELS[state] || state;
 
+  // Catálogo inicial de canastillas plásticas reutilizables configuradas en Tenjo.
+  // Nota operativa: taraGramos se define como null (taraSource: 'unverified')
+  // hasta que cada canastilla sea calibrada físicamente en báscula.
+  const CONFIG_CRATES = Object.freeze([
+    Object.freeze({ id: 'crate_CAN-01', codigo: 'CAN-01', taraGramos: null, taraSource: 'unverified', activa: true }),
+    Object.freeze({ id: 'crate_CAN-02', codigo: 'CAN-02', taraGramos: null, taraSource: 'unverified', activa: true }),
+    Object.freeze({ id: 'crate_CAN-03', codigo: 'CAN-03', taraGramos: null, taraSource: 'unverified', activa: true }),
+  ]);
+
+  /**
+   * Constructor canónico uniforme de 10 claves para todas las resoluciones.
+   * Garantiza que todas las ramas (incluidas unknown y fallos) tengan la misma forma de objeto.
+   */
+  const emptyResolution = (raw, kind = 'unknown', reason = null) => ({
+    kind,
+    batchId: null,
+    batchCode: null,
+    bagId: null,
+    crateId: null,
+    crateCode: null,
+    taraGramos: null,
+    taraSource: null,
+    raw: raw == null ? '' : String(raw),
+    reason,
+  });
+
+  // Parámetros de query que definen explícitamente la intención de escaneo
+  const INTENT_PARAMS = [
+    { key: 'crate', intent: 'crate' },
+    { key: 'lote', intent: 'batch' },
+    { key: 'batch', intent: 'batch' },
+    { key: 'bag', intent: 'bag' },
+    { key: 'bolsa', intent: 'bag' },
+  ];
+
   // Nombres de parámetro que llevan el código en una URL de etiqueta o enlace
   // público. `flush`, `utm_*` y compañía viajan al lado y deben ignorarse.
   const SCAN_CODE_PARAMS = ['codigo', 'code', 'lote', 'batch', 'bolsa', 'bag', 'c', 'id'];
@@ -164,6 +229,20 @@
   // llevaría por delante el escaneo entero, así que el crudo es el respaldo.
   const safeDecode = (value) => {
     try { return decodeURIComponent(value); } catch (err) { return value; }
+  };
+
+  const readParamValue = (search, targetKey) => {
+    if (!search) return '';
+    const normKey = targetKey.toLowerCase();
+    const pairs = String(search).split(/[&;]/);
+    for (const pair of pairs) {
+      const eq = pair.indexOf('=');
+      if (eq < 0) continue;
+      if (safeDecode(pair.slice(0, eq)).trim().toLowerCase() !== normKey) continue;
+      const value = safeDecode(pair.slice(eq + 1).replace(/\+/g, ' ')).trim();
+      if (value) return value;
+    }
+    return '';
   };
 
   const readScanCodeParam = (search) => {
@@ -182,79 +261,153 @@
   };
 
   /**
-   * Resuelve el contenido de una etiqueta QR a un objeto operativo.
+   * Resuelve el contenido de una etiqueta QR a un objeto operativo uniforme de 10 claves.
    *
-   * Acepta el código de lote crudo, el id interno, un código de bolsa
-   * (`<lote>-B03`), una URL de trazabilidad —tanto `.../trace/<codigo>` como la
-   * etiqueta impresa `.../trace.html?codigo=<codigo>`— y payloads
-   * JSON `{"batch":"..."}`. Devuelve siempre un resultado explícito para que la
-   * UI nunca aterrice en un menú genérico.
+   * Acepta código de lote crudo, id interno, código de bolsa (`<lote>-B03`),
+   * canastillas reutilizables (`CAN-01`, `setas:crate:CAN-01`), entregas de lote
+   * históricas (`CAN-<lote>-F1`), URLs de trazabilidad y deep-links.
    *
    * @param {string} raw Texto leído del QR
-   * @param {object} index { lotes, bolsas }
-   * @returns {{kind:'batch'|'bag'|'unknown', batchId:?string, batchCode:?string, bagId:?string, raw:string, reason:?string}}
+   * @param {object} [options]
+   * @param {Array} [options.lotes=[]] Lotes registrados
+   * @param {Array} [options.bolsas=[]] Bolsas registradas
+   * @param {Array} [options.crates=CONFIG_CRATES] Catálogo de canastillas
+   * @returns {{
+   *   kind: 'batch'|'bag'|'crate'|'crate_unregistered'|'unknown',
+   *   batchId: string|null,
+   *   batchCode: string|null,
+   *   bagId: string|null,
+   *   crateId: string|null,
+   *   crateCode: string|null,
+   *   taraGramos: number|null,
+   *   taraSource: string|null,
+   *   raw: string,
+   *   reason: string|null
+   * }}
    */
-  const resolveScan = (raw, { lotes = [], bolsas = [] } = {}) => {
+  const resolveScan = (raw, { lotes = [], bolsas = [], crates = CONFIG_CRATES } = {}) => {
     const text = raw == null ? '' : String(raw).trim();
-    const miss = reason => ({ kind: 'unknown', batchId: null, batchCode: null, bagId: null, raw: text, reason });
-    if (!text) return miss('empty_payload');
+    if (!text) return emptyResolution(raw, 'unknown', 'empty_payload');
 
-    let candidate = text;
-    if (text.startsWith('{')) {
-      try {
-        const parsed = JSON.parse(text);
-        candidate = parsed.batch || parsed.batchCode || parsed.codigo || parsed.id || parsed.bag || text;
-      } catch (err) { /* payload no-JSON: se sigue tratando como texto */ }
-    }
-    // URL de trazabilidad o deep-link. La etiqueta impresa lleva el código en la
-    // query (`.../public/trace.html?codigo=<codigo>`), así que la query manda
-    // sobre la ruta: leer el último segmento devolvería "trace.html" y ninguna
-    // etiqueta impresa resolvería jamás. Sin query se conserva el formato de
-    // ruta (`.../trace/<codigo>`), que es el que usan los enlaces públicos.
-    if (/[:/]/.test(candidate)) {
-      const [beforeHash, ...hashRest] = candidate.split('#');
-      const queryAt = beforeHash.indexOf('?');
-      const pathPart = queryAt >= 0 ? beforeHash.slice(0, queryAt) : beforeHash;
-      const query = queryAt >= 0 ? beforeHash.slice(queryAt + 1) : '';
-      const fromQuery = readScanCodeParam(query) || readScanCodeParam(hashRest.join('#'));
-      if (fromQuery) {
-        candidate = fromQuery;
-      } else {
-        const segments = pathPart.split('/').filter(Boolean);
-        if (segments.length) candidate = safeDecode(segments[segments.length - 1]);
+    // Compatibilidad y parsing rápido de query
+    const query = text.includes('?') ? text.slice(text.indexOf('?') + 1) : '';
+    const queryCodeFallback = readScanCodeParam(query);
+
+    const ti = traceIdentityRef();
+    const identity = ti && ti.resolveTraceIdentity ? ti.resolveTraceIdentity(raw) : null;
+    if (!identity || !identity.valid) {
+      let failReason = identity ? identity.reason : 'invalid_payload';
+      if (identity && identity.intent === 'crate' && (failReason === 'invalid-crate-code' || failReason === 'invalid_crate_code')) {
+        failReason = 'unregistered_crate';
       }
+      return emptyResolution(text, 'unknown', failReason);
     }
-    candidate = candidate.replace(/^(?:SDP-CERT-|CAN-)/i, '').trim();
-    if (!candidate) return miss('empty_payload');
 
     const norm = s => String(s == null ? '' : s).trim().toLowerCase();
-    const target = norm(candidate);
 
-    const bag = bolsas.find(b => norm(b.codigo) === target || norm(b.id) === target);
-    if (bag) {
-      const lote = lotes.find(l => l.id === bag.loteId) || null;
-      return {
-        kind: 'bag',
-        batchId: bag.loteId || (lote ? lote.id : null),
-        batchCode: lote ? (lote.codigo || lote.id) : null,
-        bagId: bag.id,
-        raw: text,
-        reason: null,
-      };
+    // 1. Detección de colisión / ambigüedad si no hubo intención explícita:
+    // Si el código coincide simultáneamente con más de una entidad en los catálogos proporcionados
+    if (!identity.intent) {
+      const candidateCode = identity.crateCode || identity.batchCode;
+      const targetNorm = norm(candidateCode);
+      const matchedCrateInCat = crates.find(c => norm(c.codigo) === targetNorm || norm(c.id) === targetNorm);
+      const isCrateSyntax = ti.CRATE_CODE_REGEX ? ti.CRATE_CODE_REGEX.test(candidateCode) : /^CAN-\d{1,4}$/i.test(candidateCode);
+      const hasCrateMatch = Boolean(matchedCrateInCat || isCrateSyntax);
+      const hasLotMatch = lotes.some(l => norm(l.codigo) === targetNorm || norm(l.id) === targetNorm);
+      const hasBagMatch = bolsas.some(b => norm(b.codigo) === targetNorm || norm(b.id) === targetNorm);
+
+      if ((hasCrateMatch && hasLotMatch) || (hasCrateMatch && hasBagMatch) || (hasLotMatch && hasBagMatch)) {
+        return emptyResolution(text, 'unknown', 'ambiguous_identifier');
+      }
     }
 
-    const exact = lotes.find(l => norm(l.codigo) === target || norm(l.id) === target);
-    if (exact) {
-      return { kind: 'batch', batchId: exact.id, batchCode: exact.codigo || exact.id, bagId: null, raw: text, reason: null };
+    // 2. Canastillas (crate)
+    if (identity.kind === 'crate') {
+      const targetNorm = norm(identity.crateCode);
+      const matchedCrate = crates.find(c => norm(c.codigo) === targetNorm || norm(c.id) === targetNorm);
+      if (matchedCrate) {
+        if (matchedCrate.activa === false) {
+          const res = emptyResolution(text, 'unknown', 'inactive_crate');
+          res.crateId = matchedCrate.id;
+          res.crateCode = matchedCrate.codigo;
+          return res;
+        }
+        const res = emptyResolution(text, 'crate', null);
+        res.crateId = matchedCrate.id;
+        res.crateCode = matchedCrate.codigo;
+        res.taraGramos = matchedCrate.taraGramos ?? null;
+        res.taraSource = matchedCrate.taraSource ?? 'unverified';
+        return res;
+      }
+      const res = emptyResolution(text, 'crate_unregistered', 'unregistered_crate');
+      res.crateCode = identity.crateCode;
+      return res;
     }
 
-    // Etiqueta de bolsa cuyo registro aún no existe: `<codigoLote>-B07`.
-    const prefixed = lotes.find(l => l.codigo && target.startsWith(norm(l.codigo) + '-'));
-    if (prefixed) {
-      return { kind: 'batch', batchId: prefixed.id, batchCode: prefixed.codigo, bagId: null, raw: text, reason: 'resolved_by_prefix' };
+    // 3. Bolsas (bag)
+    if (identity.kind === 'bag') {
+      const bagNorm = norm(identity.bagCode);
+      const batchNorm = norm(identity.batchCode);
+      const matchedBag = bolsas.find(b => norm(b.codigo) === bagNorm || norm(b.id) === bagNorm);
+      const parentLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+
+      if (matchedBag) {
+        const resolvedParent = parentLot || lotes.find(l => l.id === matchedBag.loteId) || null;
+        const res = emptyResolution(text, 'bag', null);
+        res.batchId = matchedBag.loteId || (resolvedParent ? resolvedParent.id : null);
+        res.batchCode = resolvedParent ? (resolvedParent.codigo || resolvedParent.id) : identity.batchCode;
+        res.bagId = matchedBag.id;
+        return res;
+      }
+
+      // Si la bolsa específica no está en el array bolsas pero el lote padre sí, cae al lote (resolved_by_prefix)
+      if (parentLot) {
+        const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
+        res.batchId = parentLot.id;
+        res.batchCode = parentLot.codigo || parentLot.id;
+        return res;
+      }
+
+      return emptyResolution(text, 'unknown', 'no_match');
     }
 
-    return miss('no_match');
+    // 4. Flush (histórico o por query)
+    if (identity.kind === 'flush') {
+      const batchNorm = norm(identity.batchCode);
+      const matchedLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+      if (matchedLot) {
+        const res = emptyResolution(text, 'batch', null);
+        res.batchId = matchedLot.id;
+        res.batchCode = matchedLot.codigo || matchedLot.id;
+        return res;
+      }
+      return emptyResolution(text, 'unknown', 'historical_batch_not_found');
+    }
+
+    // 5. Lote Maestro (batch)
+    if (identity.kind === 'batch') {
+      const batchNorm = norm(identity.batchCode);
+      const matchedLot = lotes.find(l => norm(l.codigo) === batchNorm || norm(l.id) === batchNorm);
+      if (matchedLot) {
+        const res = emptyResolution(text, 'batch', null);
+        res.batchId = matchedLot.id;
+        res.batchCode = matchedLot.codigo || matchedLot.id;
+        return res;
+      }
+
+      // Prefijo si algún lote coincide con el inicio del código
+      const prefixedLot = lotes.find(l => l.codigo && (batchNorm.startsWith(norm(l.codigo) + '-') || norm(l.codigo).startsWith(batchNorm)));
+      if (prefixedLot) {
+        const res = emptyResolution(text, 'batch', 'resolved_by_prefix');
+        res.batchId = prefixedLot.id;
+        res.batchCode = prefixedLot.codigo;
+        return res;
+      }
+
+      return emptyResolution(text, 'unknown', 'no_match');
+    }
+
+    return emptyResolution(text, 'unknown', 'no_match');
   };
 
   const buildEventTimeline = ({ lote, bolsas, cosechas, events, incidencias, nowMs }) => {
@@ -363,8 +516,10 @@
     const stageSince = lastTransitionAt || lote.fechaInoculacion || lote.fechaMezcla || null;
 
     const bagsActive = loteBolsas.length
-      ? loteBolsas.filter(b => b.estado !== 'descartada' && b.estado !== 'contaminada').length
+      ? loteBolsas.filter(b => !['descartada', 'contaminada', 'aislada'].includes(b.estado)).length
       : (parseInt(lote.numBolsas, 10) || 0);
+
+    const bagsIsolated = loteBolsas.filter(b => b.estado === 'aislada').length;
 
     const recipeRef = recipe || lote.recipeRef || lote.recetaSnapshot || null;
     const recipeId = (recipeRef && (recipeRef.id || recipeRef.recipeId)) || lote.recetaId || null;
@@ -395,6 +550,9 @@
         severity: stats.contPct >= 20 ? 'critical' : 'warning',
         detail: `${stats.bolsasContaminadas}/${stats.numBolsas} bolsas contaminadas (${stats.contPct.toFixed(0)}%)`,
       });
+    }
+    if (bagsIsolated > 0) {
+      anomalies.push({ kind: 'isolation', severity: 'warning', detail: `${bagsIsolated} bolsa(s) aislada(s) en observación` });
     }
     loteIncidencias.forEach(inc => {
       anomalies.push({ kind: 'environment', severity: inc.severity || 'warning', detail: inc.title || inc.msg || inc.detail || 'Incidencia ambiental', incidentId: inc.id || null });
@@ -435,6 +593,7 @@
       ageDays: daysBetween(lote.fechaInoculacion || lote.fechaMezcla, nowMs),
       room: room ? { id: room.id, name: room.name || room.id } : (roomId ? { id: roomId, name: roomId } : null),
       bagsActive,
+      bagsIsolated,
       bagsTotal: loteBolsas.length || (parseInt(lote.numBolsas, 10) || 0),
       recipe: recipeId || recipeRef ? {
         id: recipeId,
@@ -462,6 +621,26 @@
         contaminationPct: stats.contPct,
         colonizationDays: stats.diasCol,
       } : null,
+      flushForecast: (() => {
+        const flushEngine = flushForecastRef();
+        if (!flushEngine || typeof (flushEngine.calculateRemainingFlushes || flushEngine.calculateLotYieldAndFlushes) !== 'function') {
+          return null;
+        }
+        const calcFn = flushEngine.calculateRemainingFlushes || flushEngine.calculateLotYieldAndFlushes;
+        const maxHarvestedFlush = loteCosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
+        const validHarvests = loteCosechas.filter(c => c && c.fecha);
+        const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
+        try {
+          return calcFn(lote, {
+            currentFlush: maxHarvestedFlush,
+            lastFlushDate: lastHarvest ? lastHarvest.fecha : null,
+            eb: stats?.ebEstimada || lote.eb || lote.ebEstimada || (lote.recipeRef && lote.recipeRef.eb) || stats?.be,
+            contamRate: stats ? (stats.contPct / 100) : (lote.contamRate ?? 0),
+          });
+        } catch (err) {
+          return null;
+        }
+      })(),
       anomalies,
       blocks,
       photos,
@@ -728,8 +907,180 @@
     };
   };
 
+  const actionConsequences = (sheet, action, payload = {}, options = {}) => {
+    const workflow = workflowRef();
+    const role = options.role || 'operario';
+    const available = contextualActions(sheet, { role });
+    const match = available.find(a => a.action === action);
+    if (!match) throw new Error(`Acción "${action}" no es válida para un lote en estado "${sheet.state}"`);
+    if (match.blockedBy) throw new Error(`Acción "${action}" bloqueada por: ${match.blockedBy}`);
+
+    const operatorId = options.operatorId || null;
+    const at = options.at || null;
+    const event = { batchId: sheet.batchId, action, operatorId, at, payload };
+    const bags = options.bolsas || [];
+
+    let bagUpdates = [];
+    let batchPatch = {};
+    let transition = null;
+    let followUps = [];
+
+    // Recalcula activas/aisladas simulando las actualizaciones sobre `bags`,
+    // sin mutar nada: el mismo criterio que usa buildBatchSheet para bagsActive.
+    const recalcCounts = updates => {
+      const updated = bags.map(b => {
+        const u = updates.find(x => x.bagId === b.id);
+        return u ? Object.assign({}, b, u.fields) : b;
+      });
+      return {
+        bagsActive: updated.filter(b => !['descartada', 'contaminada', 'aislada'].includes(b.estado)).length,
+        bagsIsolated: updated.filter(b => b.estado === 'aislada').length,
+      };
+    };
+
+    // Primer destino de la máquina de estados que sea un estado terminal
+    // (closed/discarded/failed): no todo estado tiene 'discarded' disponible
+    // como vecino directo (p.ej. incubation sólo llega a 'failed').
+    const firstValidTerminalTransition = () => {
+      if (!workflow) return null;
+      const targets = workflow.DEFAULT_TRANSITIONS[sheet.state] || [];
+      return targets.find(t => workflow.isTerminalState(t)) || null;
+    };
+
+    const explicitAdvanceTransition = () => {
+      const target = payload.targetState || null;
+      if (!workflow || !target) return null;
+      return workflow.canTransition(sheet.state, target) ? target : null;
+    };
+
+    const firstValidAdvanceTransition = () => {
+      if (!workflow) return null;
+      const target = (workflow.DEFAULT_TRANSITIONS[sheet.state] || [])[0] || null;
+      return target && workflow.canTransition(sheet.state, target) ? target : null;
+    };
+
+    if (action === 'contamination') {
+      const decision = payload.decision;
+      const bagIds = payload.bagIds || [];
+      const DECISION_REASONS = {
+        aislar: 'se decidió aislar las bolsas afectadas',
+        descartar_bolsa: 'se decidió descartar las bolsas afectadas',
+        descartar_lote: 'se decidió descartar el lote completo',
+        observar: 'se decidió observar en dudosa',
+      };
+      if (decision === 'aislar') {
+        bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.aislada } }));
+      } else if (decision === 'descartar_bolsa') {
+        bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.contaminada } }));
+      } else if (decision === 'descartar_lote') {
+        bagUpdates = bags
+          .filter(b => b.estado !== BAG_STATES.descartada)
+          .map(b => ({ bagId: b.id, fields: { estado: BAG_STATES.descartada } }));
+        transition = firstValidTerminalTransition();
+      } else if (decision === 'observar') {
+        bagUpdates = bagIds.map(bagId => ({ bagId, fields: { estado: BAG_STATES.dudosa } }));
+      }
+      batchPatch = recalcCounts(bagUpdates);
+      followUps = [{
+        type: 'reinspection',
+        offsetDays: 3,
+        priority: 'high',
+        reason: `Reinspección tras contaminación: ${DECISION_REASONS[decision] || `decisión "${decision}"`}`,
+        // 'incident' es el vocabulario de task-engine.js para seguimiento nacido
+        // de un incidente de campo; `ref` traza al lote que originó la contaminación.
+        generatedBy: { source: 'incident', ref: sheet.batchId },
+      }];
+    } else if (action === 'colonization') {
+      const pct = Number(payload.porcentaje);
+      if (pct >= 100) {
+        transition = firstValidAdvanceTransition();
+      } else {
+        followUps = [{
+          type: 'colonization_check', offsetDays: 7, priority: 'normal',
+          reason: 'Seguimiento de colonización a 7 días',
+          generatedBy: { source: 'operator', ref: sheet.batchId },
+        }];
+      }
+    } else if (action === 'harvest') {
+      followUps = [{
+        type: 'harvest', offsetDays: 7, priority: 'normal',
+        reason: 'Siguiente flush estimado a 7 días',
+        generatedBy: { source: 'operator', ref: sheet.batchId },
+      }];
+    } else if (action === 'move') {
+      batchPatch = { sala: payload.salaDestinoId };
+    } else if (action === 'advance_stage') {
+      // `firstValidAdvanceTransition` sólo propone el primer destino de la
+      // máquina de estados, que desde fructificación es 'resting'. Cuando hay
+      // varios destinos válidos (fructificación → descanso o cerrado,
+      // incubación → maduración, inducción o fructificación) la captura puede
+      // declarar cuál con `payload.targetState`; si no es válido se ignora y
+      // manda el destino por defecto.
+      transition = explicitAdvanceTransition() || firstValidAdvanceTransition();
+    } else if (ACTION_CATALOG[action] && ACTION_CATALOG[action].transitionsTo) {
+      // Comportamiento por defecto: cualquier acción del catálogo que declare
+      // `transitionsTo` (prepare_mix, start_thermal_treatment,
+      // complete_thermal_treatment, inoculate, discard, …) propone esa
+      // transición. No se revalida aquí la máquina de estados: applyConsequences
+      // ya la valida contra workflow.canTransition, el mismo criterio que usa
+      // applyAction — no se duplica esa lógica.
+      transition = ACTION_CATALOG[action].transitionsTo;
+    }
+    // inspection, photo, note, report_problem, etc.: sólo el evento.
+
+    const completes = payload.taskIds ? [...payload.taskIds] : (payload.taskId ? [payload.taskId] : []);
+
+    return Object.freeze({ event, bagUpdates, batchPatch, transition, followUps, completes });
+  };
+
+  /**
+   * Aplica las consecuencias declaradas por `actionConsequences`: encadena el
+   * evento con `appendBatchEvent` y, si hay transición, la valida y encadena
+   * como `batch_state_transition` — el mismo criterio que `applyAction`. Sigue
+   * siendo puro: no persiste nada, sólo devuelve lo que la UI debe guardar.
+   *
+   * @param {object} sheet Ficha construida por buildBatchSheet
+   * @param {object} consequences Objeto devuelto por actionConsequences
+   * @param {object} [options] { log } Historial existente
+   * @returns {{log:Array<object>, state:string, bagUpdates:Array, batchPatch:object, followUps:Array}}
+   */
+  const applyConsequences = (sheet, consequences, { log = [] } = {}) => {
+    const workflow = workflowRef();
+    let nextLog = appendBatchEvent(log, consequences.event);
+    let state = sheet.state;
+
+    if (consequences.transition) {
+      if (!workflow || !workflow.canTransition(sheet.state, consequences.transition)) {
+        throw new Error(`Transición inválida de "${sheet.state}" a "${consequences.transition}"`);
+      }
+      const transition = workflow.transitionEvent({
+        batchId: sheet.batchId, from: sheet.state, to: consequences.transition,
+        operatorId: consequences.event.operatorId, at: consequences.event.at || undefined,
+        reason: (consequences.event.payload && consequences.event.payload.motivo) || null,
+      });
+      state = consequences.transition;
+      nextLog = appendBatchEvent(nextLog, {
+        batchId: sheet.batchId, action: 'advance_stage', type: 'batch_state_transition',
+        operatorId: consequences.event.operatorId, at: transition.at,
+        payload: { from: transition.from, to: transition.to, reason: transition.reason },
+      });
+    }
+
+    return {
+      log: nextLog,
+      state,
+      bagUpdates: consequences.bagUpdates,
+      batchPatch: consequences.batchPatch,
+      followUps: consequences.followUps,
+    };
+  };
+
   const api = {
+    CONFIG_CRATES,
+    emptyResolution,
     LEGACY_STATE_ALIASES,
+    BAG_STATES,
+    BAG_STATE_LABELS,
     STATE_LABELS,
     ACTION_CATALOG,
     ACTION_PRIORITY,
@@ -743,6 +1094,8 @@
     verifyEventChain,
     contaminationEvent,
     applyAction,
+    actionConsequences,
+    applyConsequences,
     batchScoreboard,
     CULTIVO_EVENT_TIPOS,
     buildCultivoEvento,

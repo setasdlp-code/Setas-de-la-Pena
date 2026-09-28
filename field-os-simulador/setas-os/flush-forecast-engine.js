@@ -241,8 +241,13 @@
     orellana_gris: 'p_ostreatus_gris',
     orellana_blanca: 'p_ostreatus_blanco',
     orellana_rosa: 'p_djamor_rosa',
+    orellana_rosada: 'p_djamor_rosa',
     seta_cardo: 'p_eryngii',
+    seta_de_cardo: 'p_eryngii',
     melena_leon: 'lions_mane',
+    melena_de_leon: 'lions_mane',
+    melena_de_león: 'lions_mane',
+    lions_mane: 'lions_mane',
     pleurotus_ostreatus: 'p_ostreatus_gris',
     pleurotus_florida: 'p_ostreatus_blanco',
     pleurotus_djamor: 'p_djamor_rosa',
@@ -252,6 +257,15 @@
     flammulina_velutipes: 'enoki',
     pholiota_nameko: 'nameko',
     ganoderma_lucidum: 'reishi',
+    ost: 'p_ostreatus_gris',
+    obl: 'p_ostreatus_blanco',
+    ros: 'p_djamor_rosa',
+    ery: 'p_eryngii',
+    shi: 'shiitake',
+    mel: 'lions_mane',
+    rei: 'reishi',
+    eno: 'enoki',
+    nam: 'nameko',
   };
 
   /**
@@ -259,7 +273,12 @@
    */
   const normalizeSpeciesKey = (key) => {
     if (!key || typeof key !== 'string') return 'p_ostreatus_gris';
-    const clean = key.trim().toLowerCase();
+    const clean = key
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[-\s]+/g, '_');
     return SPECIES_KEY_ALIASES[clean] || (SPECIES_FLUSH_PROFILES[clean] ? clean : 'p_ostreatus_gris');
   };
 
@@ -355,7 +374,8 @@
   const calculateLotYieldAndFlushes = (lot = {}, options = {}) => {
     const l = lot || {};
     const opts = options || {};
-    const speciesKey = l.especie || l.sKey || l.speciesKey || opts.speciesKey || 'p_ostreatus_gris';
+    const rawSpeciesKey = l.especie || l.sKey || l.speciesKey || opts.speciesKey || 'p_ostreatus_gris';
+    const speciesKey = normalizeSpeciesKey(rawSpeciesKey);
     const profile = getSpeciesFlushProfile(speciesKey);
 
     const bags = Math.max(1, parseInt(l.bags || l.numBolsas || opts.bags || 1, 10));
@@ -842,6 +862,17 @@
     };
   };
 
+  /**
+   * Alias canónico y cálculo de proyecciones y oleadas restantes para un lote.
+   *
+   * @param {object} lot Datos del lote
+   * @param {object} options Opciones operativas
+   * @returns {object} Proyección detallada y desglose de oleadas restantes
+   */
+  const calculateRemainingFlushes = (lot = {}, options = {}) => {
+    return calculateLotYieldAndFlushes(lot, options);
+  };
+
   const api = {
     SPECIES_FLUSH_PROFILES,
     SPECIES_KEY_ALIASES,
@@ -851,6 +882,7 @@
     getISOWeekKey,
     calcThermalDelayFactor,
     calculateLotYieldAndFlushes,
+    calculateRemainingFlushes,
     calculateSowingRequirement,
     sowingRecommendation,
     matchWeeklyCoverage,
@@ -860,4 +892,5 @@
 
   if (isNode) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasFlushForecast = api;
+  if (typeof window !== 'undefined') window.SetasFlushForecast = api;
 })();

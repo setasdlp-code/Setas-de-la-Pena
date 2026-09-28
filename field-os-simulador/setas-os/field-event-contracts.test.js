@@ -149,3 +149,33 @@ test('todo rol traducido pertenece al vocabulario del flujo', () => {
       `${JSON.stringify(entrada)} produjo un rol fuera del vocabulario`);
   }
 });
+
+test('envelope carries schemaVersion 2 when event is v2', () => {
+  const v2Event = {
+    ...validEvent(),
+    schemaVersion: 2,
+    entityType: 'container',
+    entityId: 'BAG-001',
+    expectedEntityRevision: 1,
+  };
+  const env = buildRequestEnvelope(v2Event, 'account_1');
+  assert.equal(env.schemaVersion, 2);
+  assert.equal(env.event.entityType, 'container');
+  assert.equal(env.event.entityId, 'BAG-001');
+});
+
+test('validateReceipt accepts receipt with both entityRevisionAfter and batchRevisionAfter', () => {
+  const v2Receipt = {
+    ...validReceipt(),
+    entityRevisionAfter: 2,
+    batchRevisionAfter: 5,
+  };
+  assert.equal(validateReceipt(v2Receipt), true);
+});
+
+test('validateReceipt rejects invalid entityRevisionAfter', () => {
+  for (const bad of [0, -1, 1.5, '2']) {
+    const r = { ...validReceipt(), entityRevisionAfter: bad };
+    assert.throws(() => validateReceipt(r), /incomplete_event_record/);
+  }
+});

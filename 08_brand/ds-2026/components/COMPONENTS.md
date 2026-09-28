@@ -1,10 +1,9 @@
-# Component spec sheets · DS-2026
+# Component spec sheets · DS-2026 · Criterio Edition
 
-Eleven components. Each sheet gives **anatomy** (the parts, in DOM order),
+Canonical component families. Each sheet gives **anatomy** (the parts, in DOM order),
 **states**, **grid span and mode**, and the **rules** that are not negotiable.
 
-Import order is always: `tokens/tokens.css` → `components/base.css` →
-`components/components.css`.
+Prefer one public bundle: `operations.css` for Setas OS, `market.css` for commercial/editorial surfaces, or `index.css` when both families are required. Do not stack public bundles.
 
 ---
 
@@ -12,9 +11,9 @@ Import order is always: `tokens/tokens.css` → `components/base.css` →
 
 - **No shadows.** `--shadow-none` is the only legal value. Depth is a rule.
 - **No gradients, no glass, no floating panels.**
-- **One accent per view.**
+- **One identity accent per composition.** Semantic state colours may coexist.
 - **Status is colour *and* word.** Never colour alone.
-- **Mono is uppercase and tracked ≥ 0.15em.** Always.
+- **Mono labels are uppercase and tracked ≥ 0.15em.** Numeric data stays untracked.
 - **Tap targets ≥ 44px** with ≥ 8px between them.
 
 ---
@@ -60,8 +59,7 @@ The field object: one production lot at a glance.
 
 **Span** 3–4 · **Mode** `field`, also used in `control` asides.
 
-**States** · `--ok` moss · `--warn` ochre bar + `WARNING_TEXT` word ·
-`--error` rust. The modifier drives bar fill **and** word colour together.
+**States** · `--ok` moss · `--warn` dark ochre marker (`--status-warn-marker`) + `--status-warn-text` · `--error` Coral 700. Raw Ochre 500 never carries a thin status rule.
 
 **Rules.** The status bar is a 4px rule — never a pill, badge, or rounded chip.
 Line-art specimens use `--plate` (fixed height, `contain`, paper ground); photos
@@ -116,8 +114,7 @@ appears on field print at that size.
 **Span** 4–12 · **Mode** any · **States** `--ok`, `--warn`, `--error`.
 
 **Rules.** There is no "info" state — informational text is body text. In
-`--warn` the label uses `WARNING_TEXT #8C6B2E`, never raw ochre (2.39:1). The
-message always sits in `INK` on the tint. The 4px rule carries the pigment.
+`--warn` the label uses `WARNING_TEXT #826326`, never raw ochre (2.39:1). The message always sits in `INK` on the tint. Warning rules use `--status-warn-marker`, not low-contrast Ochre 500.
 
 ---
 
@@ -159,16 +156,21 @@ sanctioned inversion in the system; never invert onto an accent.
 
 ---
 
-## 9–10 · Packaging — `.sdp-pack--front` / `.sdp-pack--back`
+## 9–10 · Packaging — `.sdp-pack--front` / `.sdp-pack--back` / `.sdp-pack--multi`
 
-**Front** — 3-row grid, centred: brand + origin / plate / naming block + net
+**Front (Single Species)** — 3-row grid, centred: brand + origin / plate / naming block + net
 weight. Species at **Gaya Bold 36px**, binomial at **Gaya Italic 18px**.
+
+**Front (Multi-Species / Co-pack)** — `.sdp-pack--multi` introduces a 2-column species grid
+(`.sdp-pack__species-grid`) separating companion species (e.g. *Orellana Rosa* + *Shiitake*)
+with hairline dividers, common name at **Gaya Bold 24px**, binomial at **Gaya Italic 14px**,
+and a centered `.sdp-pack__duo-badge` ("SELECCIÓN CULINARIA") above the co-pack title (*Dúo Silvestre*).
 
 **Back** — **flex column** so the traceability block pushes to the foot no
 matter how long the copy runs. Sections are hairline-topped `__sect` blocks:
 ingredients, preparación, conservación, trazabilidad + QR.
 
-**Mode** `archive` · **States** none.
+**Mode** `culinary` (or `archive` for specimen/editorial presentations) · **States** none.
 
 **Rules.** The front carries **no operational codes**. No room name, no operator
 name, ever reaches a customer surface — traceability goes through the QR. Grain
@@ -191,3 +193,76 @@ texture (`.grain`) is permitted on packaging and print only.
 
 **Rules.** Deviations are recorded on the lot ficha, never annotated onto the
 SOP. Every SOP carries a revision number and a stop condition.
+
+---
+
+## 12 · Button — `.sdp-btn`
+
+Variants: base, `--primary`, `--secondary`, `--accent`, `--danger` and `--field`. Coral 500 is decorative; text-bearing terracotta actions use the accessible `action.accent` role (Coral 700). Native `button` and `a` elements
+share the same 44px minimum target. Supported states are hover, active,
+focus-visible, disabled and `aria-busy="true"`. A busy button keeps its label so
+the action does not become ambiguous.
+
+## 13 · Field — `.sdp-field`
+
+The visible label precedes `.sdp-field__control`; hint or error copy follows it.
+Placeholder text never replaces a label. `--error` changes the border and
+requires a textual `.sdp-field__error` linked with `aria-describedby`.
+
+## 14 · Segmented selector — `.sdp-segment`
+
+Use native radio inputs for a mutually exclusive choice such as Hogar / Chef.
+The checked and keyboard-focus states remain visible without JavaScript. The
+legend names the decision represented by the group.
+
+## 15 · Operational reading — `.sdp-reading`
+
+A reading is the canonical expression of an operational number:
+
+```
+.sdp-reading--{ok|warn|error|stale}
+├── .sdp-reading__label       parameter / sensor key
+├── .sdp-reading__value       numeric value in Ink (legacy alias: __val)
+│   └── .sdp-reading__unit    ppm / °C / % / kg
+├── .sdp-reading__target      target or expected band
+└── .sdp-reading__meta        provenance + source + reading age
+```
+
+**Invariant.** State may recolour the left marker, target relation and status word,
+but never the numeric value. A bad reading must remain at least as legible as a
+normal one. `--stale` uses a dashed neutral marker; it means the evidence is old,
+not that the measured value itself was bad.
+
+## 16 · Operational state and provenance
+
+`.sdp-state` answers **what is happening**: active, attention, blocked, failed
+or unavailable. `.sdp-provenance` answers **how we know**: measured, calculated,
+estimated, target, manual, simulated or pending. They may appear together and
+must never be collapsed into a single badge.
+
+New markup uses the attribute API, for example
+`<span class="sdp-provenance" data-provenance="measured">MEASURED · SCD30 · 3 MIN</span>`.
+The glyph is generated from the domain token (`--provenance-measured-symbol`);
+visible wording remains application-localized. Legacy `.sdp-provenance--*`
+modifiers are compatibility aliases for marker styling only.
+
+## 17 · View state — `.sdp-view-state`
+
+Loading, empty and error states explain the situation and the next valid action.
+Dynamic messages use `role="status"` or `aria-live="polite"`; errors that need
+immediate attention use `role="alert"`.
+
+## 18 · Thermal print specification — `.sdp-thermal` / `[data-print="thermal"]`
+
+The field label output: 203 DPI (8 dots/mm) 1-bit monochrome thermal printing (Phomemo M110).
+
+```
+[data-print="thermal"]        background: #FFFFFF, color: #000000
+├── all borders               1px or 2px solid #000000 (no gray dithering)
+├── all text & metadata       #000000 (ink, muted ink, rules all collapse to pure black)
+└── status bars               solid #000000 fill
+```
+
+**Rules.** On 1-bit thermal printers, `#888888` mineral hairlines dither into broken,
+jagged artifacts. When printing in thermal mode, `--rule`, `--border-hairline`, and all
+metadata text strictly fall back to `#000000` on `#FFFFFF` with `filter: contrast(400%) grayscale(100%)`.

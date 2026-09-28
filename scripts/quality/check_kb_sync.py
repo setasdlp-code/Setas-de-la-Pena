@@ -50,6 +50,16 @@ RANGE_RE = re.compile(rf"({NUM})\s*[–—-]\s*({NUM})")
 BOUND_RE = re.compile(rf"([<>≥≤~])\s*({NUM})")
 SINGLE_RE = re.compile(NUM)
 
+# Digits inside an identifier are not measurements: `paper_022`, `DEC-013`,
+# `ADR-0007`, `H2O`. Without this guard the checker reports a citation key as
+# a documented KB value — fabricating a number for a parameter the KB may have
+# deliberately declined to state, which is worse than reporting nothing.
+IDENTIFIER_LEAD_RE = re.compile(r"(?:[A-Za-z_]|[A-Za-z]-)$")
+
+
+def in_identifier(text: str, start: int) -> bool:
+    return bool(IDENTIFIER_LEAD_RE.search(text[:start]))
+
 
 def parse_number(token: str) -> float:
     if re.fullmatch(r"\d{1,3}(?:,\d{3})+", token):
@@ -83,6 +93,8 @@ def extract_candidates(text: str) -> list[Candidate]:
             consumed[i] = True
 
     for m in RANGE_RE.finditer(text):
+        if in_identifier(text, m.start()):
+            continue
         lo, hi = parse_number(m.group(1)), parse_number(m.group(2))
         candidates.append(Candidate(min(lo, hi), max(lo, hi), "range", m.group(0)))
         mark(m)
@@ -97,7 +109,7 @@ def extract_candidates(text: str) -> list[Candidate]:
         mark(m)
 
     for m in SINGLE_RE.finditer(text):
-        if any(consumed[m.start() : m.end()]):
+        if any(consumed[m.start() : m.end()]) or in_identifier(text, m.start()):
             continue
         val = parse_number(m.group(0))
         candidates.append(Candidate(val, val, "single", m.group(0)))
@@ -126,6 +138,26 @@ def section_blocks(text: str, title_pattern: str) -> str:
     return "\n".join(blocks)
 
 
+# A KB file may state, in prose, that it deliberately does NOT fix a value
+# (masters_mix: "no existe todavía una meta de BE del proyecto";
+# lentinula CO₂: "los valores genéricos no se promueven aquí a estándar
+# operacional"). Those sentences mention the parameter, so the prose fallback
+# below matches them and then scrapes an unrelated digit out of the same
+# sentence — a composition ratio, a citation key — and reports it as the
+# documented value. Treating a refusal as a reading is the worst outcome
+# available here: it manufactures canonical authority for a number nobody
+# ever wrote down. When a line declines, the point yields no KB candidate and
+# is reported as present_in_app_absent_from_kb, which is what it actually is.
+DECLINES_VALUE_RE = re.compile(
+    r"no existe.{0,40}\bmeta\b"
+    r"|no se promueven"
+    r"|no la receta aprobada"
+    r"|no.{0,20}est[áa]ndar operacional"
+    r"|sin (?:meta|valor|umbral) (?:de(?:finid[oa])?|del proyecto)",
+    re.IGNORECASE,
+)
+
+
 def row_values(block: str, label_pattern: str) -> list[str]:
     """Return the value cells of every table row whose label matches label_pattern.
 
@@ -145,6 +177,8 @@ def row_values(block: str, label_pattern: str) -> list[str]:
     for line in block.splitlines():
         stripped = line.strip().lstrip("-*").strip()
         if not stripped or stripped.startswith("|"):
+            continue
+        if DECLINES_VALUE_RE.search(stripped):
             continue
         if re.search(label_pattern, stripped, re.IGNORECASE):
             values.append(stripped)
@@ -420,7 +454,7 @@ SPECIES_SYNC_POINTS: list[SyncPoint] = [
     species_point("pleurotus_djamor", "Fructificación HR", "%", "pleurotus_djamor.md",
                   r"Fructificaci", r"^HR$", "hr"),
     species_point("pleurotus_djamor", "Fructificación CO2", "ppm", "pleurotus_djamor.md",
-                  r"Fructificaci", r"CO", "co2"),
+                  r"Fructificaci", r"CO[₂2]", "co2"),
     # Pleurotus ostreatus
     species_point("pleurotus_ostreatus", "Fructificación temperatura", "°C", "pleurotus_ostreatus.md",
                   r"Fructificaci", r"^Temperatura$", "fruitT"),
@@ -429,7 +463,7 @@ SPECIES_SYNC_POINTS: list[SyncPoint] = [
     species_point("pleurotus_ostreatus", "Fructificación HR", "%", "pleurotus_ostreatus.md",
                   r"Fructificaci", r"^HR$", "hr"),
     species_point("pleurotus_ostreatus", "Fructificación CO2", "ppm", "pleurotus_ostreatus.md",
-                  r"Fructificaci", r"CO", "co2"),
+                  r"Fructificaci", r"CO[₂2]", "co2"),
     # Hericium erinaceus
     species_point("hericium_erinaceus", "Fructificación temperatura", "°C", "hericium_erinaceus.md",
                   r"Fructificaci", r"^Temperatura$", "fruitT"),
@@ -438,7 +472,7 @@ SPECIES_SYNC_POINTS: list[SyncPoint] = [
     species_point("hericium_erinaceus", "Fructificación HR", "%", "hericium_erinaceus.md",
                   r"Fructificaci", r"^HR$", "hr"),
     species_point("hericium_erinaceus", "Fructificación CO2", "ppm", "hericium_erinaceus.md",
-                  r"Fructificaci", r"CO", "co2"),
+                  r"Fructificaci", r"CO[₂2]", "co2"),
     # Lentinula edodes
     species_point("lentinula_edodes", "Fructificación temperatura", "°C", "lentinula_edodes.md",
                   r"Fructificaci", r"^Temperatura$", "fruitT"),
@@ -447,7 +481,7 @@ SPECIES_SYNC_POINTS: list[SyncPoint] = [
     species_point("lentinula_edodes", "Fructificación HR", "%", "lentinula_edodes.md",
                   r"Fructificaci", r"^HR$", "hr"),
     species_point("lentinula_edodes", "Fructificación CO2", "ppm", "lentinula_edodes.md",
-                  r"Fructificaci", r"CO", "co2"),
+                  r"Fructificaci", r"CO[₂2]", "co2"),
     # Ganoderma lucidum (fruiting/induction share one heading; incubation labels differ)
     species_point("ganoderma_lucidum", "Fructificación temperatura", "°C", "ganoderma_lucidum.md",
                   r"Inducci|Fructificaci", r"Temperatura", "fruitT"),
@@ -456,7 +490,7 @@ SPECIES_SYNC_POINTS: list[SyncPoint] = [
     species_point("ganoderma_lucidum", "Fructificación HR", "%", "ganoderma_lucidum.md",
                   r"Inducci|Fructificaci", r"^HR", "hr"),
     species_point("ganoderma_lucidum", "Fructificación CO2", "ppm", "ganoderma_lucidum.md",
-                  r"Inducci|Fructificaci", r"CO", "co2"),
+                  r"Inducci|Fructificaci", r"CO[₂2]", "co2"),
 ]
 
 

@@ -2,7 +2,7 @@
 title: Pleurotus eryngii — King Oyster / Seta de Cardo
 category: species
 load_priority: selective
-last_reviewed: 2026-08-09
+last_reviewed: 2026-09-13
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -18,19 +18,18 @@ related_documents:
 ---
 
 # Executive Summary
-*Pleurotus eryngii* (King Oyster / Seta de Cardo) es la especie de mayor valor gastronómico y vida útil poscosecha dentro del género *Pleurotus*. Posee una carne firme y estípite grueso altamente apreciado en alta cocina (HORECA). A diferencia de otras orellanas, es una especie de clima templado-frío (13–17 °C) que encaja perfectamente con el clima de Tenjo (Cundinamarca), pero exige sustratos con alto contenido de nitrógeno (C:N 20:1 a 25:1) y **esterilización obligatoria en autoclave**.
+*Pleurotus eryngii* (King Oyster / Seta de Cardo) es la especie de mayor valor gastronómico y vida útil poscosecha dentro del género *Pleurotus*. Posee una carne firme y estípite grueso altamente apreciado en alta cocina (HORECA). A diferencia de otras orellanas, es una especie de clima templado-frío (13–17 °C) que encaja perfectamente con el clima de Tenjo (Cundinamarca), pero exige sustratos con alto contenido de nitrógeno (C:N de mezcla ≈ 25:1 a 40:1, base seca, bolsa suplementada) y **esterilización obligatoria en autoclave**.
 
 # Research Consensus
 
 ## Nutrición y Relación C:N
 **Consensus**
 Supported by:
-- Estrada & Royse 2007
-- Zied & Pardo-Giménez 2017
-- Stamets 2000
+- Li et al. 2024 (Life, PMC11123215) — bolsas industriales medidas en C:N 25.5 (control) y 28.6 (mejor tratamiento)
+- Bellettini et al. 2019 (Saudi J Biol Sci, PMC6486501)
 
-*P. eryngii* requiere una relación C:N significativamente más baja (20:1 a 25:1, con N total 1.5%–2.0%) que *P. ostreatus* (70–90:1) o *P. djamor* (35–45:1). Esta alta concentración de nitrógeno hace inviable la pasteurización simple por agua caliente (riesgo extremo de *Trichoderma*); requiere autoclave a 121 °C por 1.5–2 horas.
-**Strength of evidence:** ★★★★★
+*P. eryngii* se formula con una relación C:N de la mezcla completa de aproximadamente 25:1 a 40:1 (base seca, sin correctores de pH/estructura), con N total de 1.2 %–1.8 % y suplementación de hasta ~55 % en bolsa esterilizada. Estos valores describen la **mezcla suplementada**, no la materia prima base. El valor de 70–90:1 que a veces se cita para *P. ostreatus* corresponde a paja sin suplementar como base, no a un requisito de formulación. La alta carga de nitrógeno exige esterilización en autoclave (121 °C, 1.5–2 h) para evitar *Trichoderma*.
+**Strength of evidence:** ★★★☆☆ (literatura primaria para C:N de bolsa; sin validación local todavía)
 
 ## Modulación Morfológica por CO₂ y Temperatura
 **Consensus**
@@ -93,7 +92,7 @@ La morfología comercial preferida (pie grueso, cilíndrico y sombrero pequeño 
 | **Aireador** | Cascarilla de arroz (10%) | Cascarilla de arroz (5%) |
 | **Correctores pH** | CaCO₃ (3%) + Yeso (2%) | CaCO₃ (3%) + Yeso (2%) |
 | **Humedad final** | 63–65% | 64–66% |
-| **Eficiencia Biológica (EB)**| 85–110% | 75–100% |
+| **Eficiencia Biológica (EB)**| 85–110% (no validado localmente; Li 2024 midió 74–87%) | 75–100% |
 
 # Best Practices
 1. **Selección de primordios:** Si emergen demasiados pines pequeños, raletear manualmente dejando los 2–4 más vigorosos por bolsa para maximizar calibre comercial (Grado A > 80 g por unidad).

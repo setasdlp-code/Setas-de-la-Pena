@@ -74,7 +74,10 @@
       'readwrite'
     );
 
-    const reservationId = reservationKey(accountId, event.batchId);
+    const targetEntityId = (event && event.schemaVersion === 2 && event.entityType === 'container' && event.entityId)
+      ? event.entityId
+      : event.batchId;
+    const reservationId = reservationKey(accountId, targetEntityId);
     const existingReq = tx.objectStore('pending_batch_transitions').get(reservationId);
 
     existingReq.onsuccess = () => {
@@ -90,6 +93,7 @@
           reservationId,
           accountId,
           batchId: event.batchId,
+          entityId: targetEntityId,
           eventId: event.id,
           reservedAt: new Date().toISOString(),
         });
@@ -108,14 +112,22 @@
     tx.oncomplete = () => resolve();
   });
 
-  const getReservation = (db, accountId, batchId) => new Promise((resolve, reject) => {
+  const getReservation = (db, accountId, entityOrBatchId) => new Promise((resolve, reject) => {
     const tx = db.transaction('pending_batch_transitions', 'readonly');
-    const req = tx.objectStore('pending_batch_transitions')
-      .index('accountBatch')
-      .get([accountId, batchId]);
+    const store = tx.objectStore('pending_batch_transitions');
+    const resId = reservationKey(accountId, entityOrBatchId);
+    const byKeyReq = store.get(resId);
 
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
+    byKeyReq.onsuccess = () => {
+      if (byKeyReq.result) {
+        resolve(byKeyReq.result);
+        return;
+      }
+      const byIndexReq = store.index('accountBatch').get([accountId, entityOrBatchId]);
+      byIndexReq.onsuccess = () => resolve(byIndexReq.result || null);
+      byIndexReq.onerror = () => reject(byIndexReq.error);
+    };
+    byKeyReq.onerror = () => reject(byKeyReq.error);
   });
 
   /**
