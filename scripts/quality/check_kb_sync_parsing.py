@@ -87,6 +87,40 @@ def check_live_kb_has_no_fabricated_values(m) -> None:
             raise AssertionError(f"masters_mix BE volvió a fabricar un valor desde: {value[:70]!r}")
 
 
+def check_be_reference_is_found(m) -> None:
+    """Los tres umbrales de BE deben leer la frase que el KB sí documenta.
+
+    Apuntaban a filas de tabla inexistentes, así que salían como "no hay
+    fuente" mientras production_schedule.md documenta 40–70% y el app usa
+    80/100/70. Un hueco de cobertura y una divergencia real se triagean
+    distinto; esto fija que se reporte la segunda.
+    """
+    point = next(p for p in m.KPI_SYNC_POINTS if p.app_source == "KPI.beTarget")
+    candidates, _ = m.kb_candidates_for(point.kb_file, point.kb_section_pattern, point.kb_row_pattern)
+    if not candidates:
+        raise AssertionError("la BE de referencia del KB dejó de encontrarse")
+    if not any(c.lo == 40 and c.hi == 70 for c in candidates):
+        raise AssertionError(f"se esperaba leer 40–70 de la BE de referencia, se leyó {[c.raw for c in candidates]}")
+
+
+def check_yield_per_block_stays_unsourced(m) -> None:
+    """800 g/bloque no tiene fuente, y el rango de empaque no es su fuente.
+
+    "Empacar en bolsas (500–1,000 g por bloque)" es masa de sustrato empacado,
+    no cosecha fresca. Apuntar ahí el KPI haría que el checker declarara que
+    coincide comparando magnitudes distintas — daría por validado un número
+    que nadie midió. El punto debe seguir existiendo (para que el hueco se
+    reporte) y seguir sin candidatos.
+    """
+    point = next(p for p in m.KPI_SYNC_POINTS if p.app_source == "KPI.yieldPerBlock")
+    candidates, combined = m.kb_candidates_for(point.kb_file, point.kb_section_pattern, point.kb_row_pattern)
+    if candidates or combined:
+        raise AssertionError(
+            f"yieldPerBlock quedó con fuente: {[c.raw for c in candidates]} — "
+            "verificar que no se cableó al rango de empaque"
+        )
+
+
 def main() -> int:
     m = load_checker()
     for check in (
@@ -94,6 +128,8 @@ def main() -> int:
         check_declining_prose_yields_no_value,
         check_co2_label_is_not_substring_of_words,
         check_live_kb_has_no_fabricated_values,
+        check_be_reference_is_found,
+        check_yield_per_block_stays_unsourced,
     ):
         check(m)
     print("check_kb_sync parsing: OK")
