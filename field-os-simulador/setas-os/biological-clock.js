@@ -115,6 +115,11 @@
     const tOpt = Number.isFinite(profile.tOpt) ? profile.tOpt : (Number.isFinite(profile.tRef) ? profile.tRef + 1 : 24);
     const tMax = Number.isFinite(profile.tMax) ? profile.tMax : 32;
     const tBase = tbaseEntry.tBaseC;
+    // tRef: temperatura ambiente de referencia usada por flush-forecast-engine.js
+    // para derivar nominalIncubationDays/nominalFirstFlushDays. No es tOpt: los
+    // conteos de días nominales están calibrados a tRef, no al óptimo (ver
+    // stageRequirement más abajo).
+    const tRef = Number.isFinite(profile.tRef) ? profile.tRef : tOpt;
 
     return {
       speciesId: key,
@@ -122,14 +127,116 @@
       tBase,
       tOpt: tBase < tOpt ? tOpt : tBase + 1, // garantiza tOpt > tBase
       tMax: tMax > tOpt ? tMax : tOpt + 1, // garantiza tMax > tOpt
+      tRef,
       tBaseProvenance: tbaseEntry.provenance,
       tOptTMaxSource: fromFallback
         ? { class: 'heuristic', source: 'Tabla de respaldo interna de biological-clock.js', note: 'flush-forecast-engine.js no estaba disponible al cargar este módulo.' }
-        : { class: 'literature_target', source: 'flush-forecast-engine.js SPECIES_FLUSH_PROFILES.tOpt/tMax', note: 'Cardinales térmicos ya definidos y usados por el motor de pronóstico de oleadas.' },
+        : { class: 'heuristic', source: 'flush-forecast-engine.js SPECIES_FLUSH_PROFILES.tOpt/tMax', note: 'Cardinales térmicos usados por el motor de pronóstico de oleadas; no llevan cita de literatura primaria asociada, no representan un óptimo medido ni validado en finca.' },
       nominalIncubationDays: Number.isFinite(profile.nominalIncubationDays) ? profile.nominalIncubationDays : null,
       nominalFirstFlushDays: Number.isFinite(profile.nominalFirstFlushDays) ? profile.nominalFirstFlushDays : null,
+      nominalMaturationDays: Number.isFinite(profile.nominalMaturationDays) ? profile.nominalMaturationDays : null,
       usedFallbackProfile: fromFallback,
     };
+  };
+
+  /**
+   * Cardinales térmicos de FRUCTIFICACIÓN por especie, tomados de
+   * knowledge_base/01_species/*.md — distintos de los cardinales MICELIALES
+   * (tOpt/tMax de flush-forecast-engine.js) que ya se usaban para todas las
+   * etapas. Sin esta tabla, la etapa 'induction' (inducción/fructificación) se
+   * evaluaba con la curva micelial (p.ej. tOpt 24–25 °C para P. eryngii),
+   * cuando la fructificación real ocurre a temperaturas más bajas (14–16 °C
+   * para P. eryngii según la KB), generando falsos "retraso_termico".
+   *
+   * Solo se listan especies con un valor de fructificación explícito en la
+   * KB. Para las demás, getStageThermalProfile() cae de vuelta a la curva
+   * micelial y fuerza confidence 'low' (ver stageThermalProfile.usedFruitingCardinalFallback).
+   */
+  const FRUITING_CARDINALS = Object.freeze({
+    p_eryngii: {
+      tOptC: 15,
+      tMaxC: 20,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/pleurotus_eryngii.md',
+        note: 'Temperatura de fructificación óptima reportada 14–16 °C (tOpt=15 como punto medio). tMax no está reportado explícitamente en la KB; se aproxima por el mismo margen tOpt→tMax de la curva micelial de la especie.',
+      },
+    },
+    p_ostreatus_gris: {
+      tOptC: 17.5,
+      tMaxC: 24,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/pleurotus_ostreatus.md',
+        note: 'Fructifica 13–24 °C; óptimo comercial citado 15–20 °C / 15–22 °C según la fuente referenciada en la KB (tOpt=17.5 como punto medio de 15–20 °C).',
+      },
+    },
+    p_ostreatus_blanco: {
+      tOptC: 17.5,
+      tMaxC: 24,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/pleurotus_ostreatus.md',
+        note: 'Extrapolado de P. ostreatus (misma ficha de especie en la KB); no hay ficha separada para la variedad blanca.',
+      },
+    },
+    p_djamor_rosa: {
+      tOptC: 26,
+      tMaxC: 30,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/pleurotus_djamor.md',
+        note: 'Rango de fructificación citado 22–30 °C (Salmones 2017; guide_002); especie termófila, sin validación local.',
+      },
+    },
+    lions_mane: {
+      tOptC: 18,
+      tMaxC: 23,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/hericium_erinaceus.md',
+        note: 'Referencia experimental acotada de 18±2 °C; Tabi et al. 2021 evaluó 15/20/25 °C con respuesta dependiente del aislamiento/cepa — no es un óptimo universal.',
+      },
+    },
+    reishi: {
+      tOptC: 29,
+      tMaxC: 34,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/ganoderma_lucidum.md',
+        note: 'Fructificación óptima citada 27–32 °C (rango 20–34 °C); <20 °C deforma el carpóforo (Cenicafé 2005).',
+      },
+    },
+  });
+
+  /**
+   * Perfil térmico a usar para INTEGRAR telemetría real durante una etapa
+   * dada: para 'induction' usa FRUITING_CARDINALS si la especie tiene un
+   * valor citado en la KB; si no, cae de vuelta a la curva micelial de
+   * getThermalProfile() y marca `usedFruitingCardinalFallback: true` para que
+   * el llamador pueda (a) forzar confidence 'low' y (b) suprimir la alerta
+   * 'retraso_termico' en esa condición (ver buildLotBiologicalClock).
+   */
+  const getStageThermalProfile = (speciesId, normStage) => {
+    const base = getThermalProfile(speciesId);
+    if (normStage !== 'induction') {
+      return { ...base, usedFruitingCardinalFallback: false };
+    }
+    const cardinal = FRUITING_CARDINALS[base.speciesId];
+    if (cardinal && Number.isFinite(cardinal.tOptC)) {
+      const tOpt = cardinal.tOptC;
+      const tMax = (Number.isFinite(cardinal.tMaxC) && cardinal.tMaxC > tOpt) ? cardinal.tMaxC : tOpt + 1;
+      const tBase = base.tBase < tOpt ? base.tBase : tOpt - 1;
+      return {
+        ...base,
+        tBase,
+        tOpt,
+        tMax,
+        tOptTMaxSource: cardinal.provenance,
+        usedFruitingCardinalFallback: false,
+      };
+    }
+    return { ...base, usedFruitingCardinalFallback: true };
   };
 
   // ---------------------------------------------------------------------
@@ -275,24 +382,78 @@
     };
   };
 
-  const STAGE_ALIASES = {
+  /**
+   * Tabla única de mapeo entre estados/etapas (canónicos en inglés, per
+   * setas-os-workflow.js NORMAL_STATES/EXCEPTION_STATES, y variantes legacy en
+   * español, insensibles a acentos/mayúsculas) y las etapas del reloj
+   * biológico térmico:
+   *
+   * - 'incubation': colonización del sustrato (incluye 'inoculated': un lote
+   *   recién inoculado ya empezó a acumular tiempo térmico de colonización).
+   * - 'induction': bucket combinado de inducción + fructificación (no
+   *   distingue floración de cosecha).
+   * - 'maturation': maduración postcolonización (p.ej. pardeamiento de
+   *   shiitake) — etapa PROPIA, nunca se confunde con 'induction'.
+   * - 'no_aplica': estados de proceso normal previos a inoculación
+   *   (planned/mix_prepared/thermal_treatment/cooling), reposo entre oleadas,
+   *   o estados de excepción/terminales (quarantine/discarded/failed/closed).
+   *   Ninguno de estos corresponde a una etapa proyectable del reloj
+   *   biológico térmico.
+   *
+   * Única tabla de esta clase en el módulo (reemplaza el STAGE_ALIASES
+   * anterior, que además mapeaba 'maturation' incorrectamente a 'induction').
+   */
+  const LIFECYCLE_STAGE_MAP = Object.freeze({
     incubation: 'incubation',
     incubacion: 'incubation',
     colonization: 'incubation',
     colonizacion: 'incubation',
+    inoculated: 'incubation',
+    inoculado: 'incubation',
+
     induction: 'induction',
     induccion: 'induction',
     fruiting: 'induction',
     fructificacion: 'induction',
     pinning: 'induction',
-    maturation: 'induction',
-    maduracion: 'induction',
-  };
 
+    maturation: 'maturation',
+    maduracion: 'maturation',
+
+    planned: 'no_aplica',
+    planificado: 'no_aplica',
+    mix_prepared: 'no_aplica',
+    mezcla_preparada: 'no_aplica',
+    thermal_treatment: 'no_aplica',
+    tratamiento_termico: 'no_aplica',
+    cooling: 'no_aplica',
+    enfriamiento: 'no_aplica',
+    resting: 'no_aplica',
+    reposo: 'no_aplica',
+
+    quarantine: 'no_aplica',
+    cuarentena: 'no_aplica',
+    discarded: 'no_aplica',
+    descartado: 'no_aplica',
+    failed: 'no_aplica',
+    fallido: 'no_aplica',
+    closed: 'no_aplica',
+    cerrado: 'no_aplica',
+  });
+
+  /**
+   * Normaliza un estado/etapa (canónico o legacy en español,
+   * mayúsculas/minúsculas y acentos indistintos) a la etapa del reloj
+   * biológico térmico correspondiente, vía LIFECYCLE_STAGE_MAP. Usada tanto
+   * para el parámetro `stage` de stageRequirement()/projectStageCompletion()
+   * como para el `lifecycleState` de un lote en buildLotBiologicalClock()
+   * (mapLifecycleStateToStage es un alias de esta misma función: una sola
+   * tabla, un solo comportamiento).
+   */
   const normalizeStage = (stage) => {
     if (!stage || typeof stage !== 'string') return 'incubation';
     const clean = stage.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    return STAGE_ALIASES[clean] || 'incubation';
+    return LIFECYCLE_STAGE_MAP[clean] || 'incubation';
   };
 
   /**
@@ -310,18 +471,69 @@
   const stageRequirement = (speciesId, stage) => {
     const thermalProfile = getThermalProfile(speciesId);
     const normStage = normalizeStage(stage);
-    const { nominalIncubationDays, nominalFirstFlushDays } = thermalProfile;
+
+    if (normStage === 'no_aplica') {
+      return {
+        stage: 'no_aplica',
+        speciesId: thermalProfile.speciesId,
+        requiredHours: null,
+        confidence: 'low',
+        provenance: {
+          class: 'heuristic',
+          source: 'biological-clock.js LIFECYCLE_STAGE_MAP',
+          note: 'Este estado del lote (planificación, mezcla, tratamiento térmico, enfriamiento, reposo, cuarentena o un estado terminal) no corresponde a ninguna etapa del reloj biológico térmico; no se proyecta tiempo térmico.',
+        },
+      };
+    }
+
+    const { nominalIncubationDays, nominalFirstFlushDays, nominalMaturationDays } = thermalProfile;
+
+    // Las duraciones nominales (nominalIncubationDays/nominalFirstFlushDays)
+    // de flush-forecast-engine.js están definidas asumiendo la temperatura
+    // ambiente de referencia tRef, NO tOpt. Escalar por thermalRate(tRef) evita
+    // que un lote sostenido exactamente a tRef (rate<1) se lea como retrasado
+    // frente a un requerimiento calculado a rate=1 (tOpt).
+    const refTemp = Number.isFinite(thermalProfile.tRef) ? thermalProfile.tRef : thermalProfile.tOpt;
+    const rateAtRef = thermalRate(refTemp, thermalProfile);
+    const effectiveRate = rateAtRef > 0 ? rateAtRef : 1;
+
+    if (normStage === 'maturation') {
+      if (!Number.isFinite(nominalMaturationDays) || nominalMaturationDays <= 0) {
+        return {
+          stage: 'maturation',
+          speciesId: thermalProfile.speciesId,
+          requiredHours: null,
+          confidence: 'low',
+          provenance: {
+            class: 'heuristic',
+            source: 'biological-clock.js',
+            note: 'Ninguna especie del catálogo tiene definida una duración nominal de maduración postcolonización (p.ej. pardeamiento de shiitake); no se proyecta esta etapa hasta contar con ese dato.',
+          },
+        };
+      }
+      return {
+        stage: 'maturation',
+        speciesId: thermalProfile.speciesId,
+        requiredHours: round1(nominalMaturationDays * 24 * effectiveRate),
+        confidence: 'low',
+        provenance: {
+          class: 'heuristic',
+          source: 'flush-forecast-engine.js SPECIES_FLUSH_PROFILES.nominalMaturationDays, escalado por thermalRate(tRef)',
+          note: 'nominalMaturationDays × 24 × thermalRate(tRef) — sin cita de literatura primaria, etiquetado heurístico.',
+        },
+      };
+    }
 
     let days = null;
     let note;
     if (normStage === 'incubation') {
       days = nominalIncubationDays;
-      note = 'nominalIncubationDays × 24 (horas-grado tOpt-equivalentes asumiendo el ritmo nominal de flush-forecast-engine.js).';
+      note = 'nominalIncubationDays × 24 × thermalRate(tRef, curva micelial) — nominalIncubationDays de flush-forecast-engine.js está calibrado a tRef, no a tOpt.';
     } else {
       days = (Number.isFinite(nominalIncubationDays) && Number.isFinite(nominalFirstFlushDays))
         ? nominalFirstFlushDays - nominalIncubationDays
         : null;
-      note = '(nominalFirstFlushDays - nominalIncubationDays) × 24 — ventana desde fin de colonización hasta primera cosecha.';
+      note = '(nominalFirstFlushDays - nominalIncubationDays) × 24 × thermalRate(tRef, curva micelial) — ventana desde fin de colonización hasta primera cosecha, calibrada a tRef.';
     }
 
     if (!Number.isFinite(days) || days <= 0) {
@@ -330,20 +542,23 @@
       return {
         stage: normStage,
         speciesId: thermalProfile.speciesId,
-        requiredHours: days * 24,
+        requiredHours: round1(days * 24 * effectiveRate),
         confidence: 'low',
-        provenance: { class: 'heuristic', source: 'Valor de respaldo genérico de biological-clock.js', note: `Faltaban campos nominales de días en el perfil de especie; se usó un valor genérico (${days} días).` },
+        provenance: { class: 'heuristic', source: 'Valor de respaldo genérico de biological-clock.js', note: `Faltaban campos nominales de días en el perfil de especie; se usó un valor genérico (${days} días) escalado por thermalRate(tRef).` },
       };
     }
 
     return {
       stage: normStage,
       speciesId: thermalProfile.speciesId,
-      requiredHours: round1(days * 24),
-      confidence: thermalProfile.usedFallbackProfile ? 'low' : 'medium',
+      requiredHours: round1(days * 24 * effectiveRate),
+      // Capado en 'low': tOpt/tMax/tRef (tOptTMaxSource) y los conteos de días
+      // nominales no llevan cita de literatura primaria — son heurísticos del
+      // motor de pronóstico de oleadas, no un valor medido ni validado en finca.
+      confidence: 'low',
       provenance: {
-        class: 'literature_target',
-        source: 'flush-forecast-engine.js SPECIES_FLUSH_PROFILES (nominalIncubationDays / nominalFirstFlushDays)',
+        class: 'heuristic',
+        source: 'flush-forecast-engine.js SPECIES_FLUSH_PROFILES (nominalIncubationDays / nominalFirstFlushDays), escalado por thermalRate(tRef)',
         note,
       },
     };
@@ -351,6 +566,19 @@
 
   const addHours = (date, hours) => new Date(date.getTime() + hours * 3600000);
   const addDays = (date, days) => new Date(date.getTime() + days * 86400000);
+
+  // Bogotá = UTC-5 fijo, sin horario de verano (mismo enfoque que
+  // toBogotaDateStr en harvest-calendar.js; no se importa desde ahí para no
+  // acoplar este módulo a ese archivo, se replica el helper mínimo).
+  const BOGOTA_OFFSET_MS = 5 * 3600000;
+  const toBogotaDateStr = (d) => {
+    if (!(d instanceof Date) || isNaN(d.getTime())) return null;
+    const shifted = new Date(d.getTime() - BOGOTA_OFFSET_MS);
+    const y = shifted.getUTCFullYear();
+    const mo = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+    const da = String(shifted.getUTCDate()).padStart(2, '0');
+    return `${y}-${mo}-${da}`;
+  };
 
   /**
    * Proyecta el avance y la fecha de finalización probable de una etapa
@@ -365,9 +593,17 @@
    * @param {number} [params.lookbackHours=72] Ventana reciente para estimar la tasa térmica media
    * @returns {object} Proyección con progreso, fechas, estado y resumen en español
    */
+  const STAGE_LABEL_ES = {
+    incubation: 'incubación',
+    induction: 'inducción/fructificación',
+    maturation: 'maduración',
+    no_aplica: 'no aplicable',
+  };
+
   const projectStageCompletion = ({ speciesId, stage, stageStartAt, series, now, lookbackHours = 72 } = {}) => {
-    const thermalProfile = getThermalProfile(speciesId);
+    const normStage = normalizeStage(stage);
     const requirement = stageRequirement(speciesId, stage);
+    const thermalProfile = getStageThermalProfile(speciesId, normStage);
     const startMs = toMillis(stageStartAt);
     const nowMs = toMillis(now);
 
@@ -377,7 +613,22 @@
       stage: requirement.stage,
       requiredHours: requirement.requiredHours,
       requirementProvenance: requirement.provenance,
+      usedFruitingCardinalFallback: !!thermalProfile.usedFruitingCardinalFallback,
     };
+
+    // 'no_aplica' (estados de proceso/excepción) o 'maturation' sin duración
+    // nominal definida para la especie: no hay requerimiento numérico contra
+    // el cual proyectar, así que no se intenta (ver finding #3).
+    if (!Number.isFinite(requirement.requiredHours)) {
+      return {
+        ...base,
+        status: 'no_aplica',
+        progressPct: null,
+        effectiveDegreeHours: 0,
+        confidence: 'low',
+        resumen: `${thermalProfile.speciesName}: la etapa "${requirement.stage}" no se proyecta con el reloj biológico térmico (${requirement.provenance.note})`,
+      };
+    }
 
     if (!Number.isFinite(startMs) || !Number.isFinite(nowMs)) {
       return {
@@ -452,16 +703,23 @@
       status = 'en_curso';
     }
 
-    const confidence = (totalAcc.confidence === 'medium' && requirement.confidence === 'medium') ? 'medium' : 'low';
+    // requirement.confidence ya está capado en 'low' (finding #17); se conserva
+    // la fórmula completa (en vez de fijar 'low' directo) para que, si algún
+    // día se relaja ese cap con evidencia real, la confianza de la etapa siga
+    // exigiendo también telemetría suficiente y (para 'induction') un
+    // cardinal de fructificación citado, no solo uno de los tres factores.
+    const stageProfileConfidence = thermalProfile.usedFruitingCardinalFallback ? 'low' : 'medium';
+    const confidence = (totalAcc.confidence === 'medium' && requirement.confidence === 'medium' && stageProfileConfidence === 'medium') ? 'medium' : 'low';
 
-    const dateLabel = (d) => (d ? d.toISOString().split('T')[0] : 'indeterminada');
+    const dateLabel = (d) => (d ? (toBogotaDateStr(d) || 'indeterminada') : 'indeterminada');
+    const stageLabel = STAGE_LABEL_ES[requirement.stage] || requirement.stage;
     let resumen;
     if (status === 'listo_probable') {
-      resumen = `${thermalProfile.speciesName}: etapa de ${requirement.stage === 'incubation' ? 'incubación' : 'inducción/fructificación'} completa según tiempo térmico acumulado (${progressPct}% del requerimiento estimado).`;
+      resumen = `${thermalProfile.speciesName}: etapa de ${stageLabel} completa según tiempo térmico acumulado (${progressPct}% del requerimiento estimado).`;
     } else if (status === 'retrasado') {
-      resumen = `${thermalProfile.speciesName}: avance térmico de ${progressPct}% en la etapa de ${requirement.stage === 'incubation' ? 'incubación' : 'inducción/fructificación'}, por debajo del ritmo calendario esperado` + (projectedCompletionDate ? ` (cierre probable ${dateLabel(projectedCompletionDate)}, ${Math.abs(deltaDaysVsCalendar)} día(s) después de lo calculado por calendario).` : ', sin tasa térmica positiva reciente para proyectar cierre.');
+      resumen = `${thermalProfile.speciesName}: avance térmico de ${progressPct}% en la etapa de ${stageLabel}, por debajo del ritmo calendario esperado` + (projectedCompletionDate ? ` (cierre probable ${dateLabel(projectedCompletionDate)}, ${Math.abs(deltaDaysVsCalendar)} día(s) después de lo calculado por calendario).` : ', sin tasa térmica positiva reciente para proyectar cierre.');
     } else {
-      resumen = `${thermalProfile.speciesName}: avance térmico de ${progressPct}% en la etapa de ${requirement.stage === 'incubation' ? 'incubación' : 'inducción/fructificación'}` + (projectedCompletionDate ? `, cierre probable ${dateLabel(projectedCompletionDate)}.` : '.');
+      resumen = `${thermalProfile.speciesName}: avance térmico de ${progressPct}% en la etapa de ${stageLabel}` + (projectedCompletionDate ? `, cierre probable ${dateLabel(projectedCompletionDate)}.` : '.');
     }
 
     return {
@@ -485,25 +743,10 @@
     };
   };
 
-  const LIFECYCLE_STAGE_MAP = {
-    incubation: 'incubation',
-    incubacion: 'incubation',
-    colonization: 'incubation',
-    colonizacion: 'incubation',
-    induction: 'induction',
-    induccion: 'induction',
-    fruiting: 'induction',
-    fructificacion: 'induction',
-    maturation: 'induction',
-    maduracion: 'induction',
-    pinning: 'induction',
-  };
-
-  const mapLifecycleStateToStage = (lifecycleState) => {
-    if (!lifecycleState || typeof lifecycleState !== 'string') return 'incubation';
-    const clean = lifecycleState.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-    return LIFECYCLE_STAGE_MAP[clean] || 'incubation';
-  };
+  // mapLifecycleStateToStage es un alias directo de normalizeStage: una sola
+  // tabla (LIFECYCLE_STAGE_MAP, definida arriba junto a normalizeStage) para
+  // ambos usos, sin una segunda tabla duplicada que pueda desincronizarse.
+  const mapLifecycleStateToStage = normalizeStage;
 
   /**
    * Construye el reloj biológico completo de un lote: proyección de etapa
@@ -521,10 +764,40 @@
     const speciesId = l.speciesId || l.especie || l.sKey || 'p_ostreatus_gris';
     const lifecycleState = l.lifecycleState || l.estado || 'incubation';
     const stage = mapLifecycleStateToStage(lifecycleState);
-    const stageStartAt = l.stageStartAt || l.startAt || l.fechaInoculacion || null;
+    const lotLabel = l.id || l.codigo || 'sin ID';
+
+    // Estados de proceso normal (planned/mix_prepared/thermal_treatment/
+    // cooling), reposo entre oleadas, o estados de excepción/terminales
+    // (quarantine/discarded/failed/closed): ninguno corresponde a una etapa
+    // del reloj biológico térmico. Se corta aquí, sin invocar
+    // projectStageCompletion con fechas que no describen ninguna etapa real.
+    if (stage === 'no_aplica') {
+      return {
+        lotId: l.id || l.codigo || null,
+        speciesId: getThermalProfile(speciesId).speciesId,
+        lifecycleState,
+        stage: 'no_aplica',
+        projection: {
+          status: 'no_aplica',
+          progressPct: null,
+          effectiveDegreeHours: 0,
+          confidence: 'low',
+          resumen: `Lote ${lotLabel} en estado "${lifecycleState}": este estado no corresponde a ninguna etapa del reloj biológico térmico (colonización, inducción/fructificación o maduración); no se proyecta.`,
+        },
+        alerts: [],
+      };
+    }
+
+    // fechaInoculacion marca el inicio de la INCUBACIÓN, no el de una etapa
+    // posterior. Usarla como respaldo de stageStartAt para 'induction' o
+    // 'maturation' cuenta horas de incubación como si fueran horas de esa
+    // etapa. Solo se usa como respaldo cuando la etapa evaluada es, en
+    // efecto, incubación.
+    const explicitStageStartAt = l.stageStartAt || l.startAt || null;
+    const stageStartAt = explicitStageStartAt || (stage === 'incubation' ? (l.fechaInoculacion || null) : null);
     const now = opts.now;
 
-    const projection = projectStageCompletion({
+    let projection = projectStageCompletion({
       speciesId,
       stage,
       stageStartAt,
@@ -533,12 +806,21 @@
       lookbackHours: Number.isFinite(opts.lookbackHours) ? opts.lookbackHours : 72,
     });
 
+    if (!explicitStageStartAt && stage !== 'incubation' && projection.status !== 'no_aplica') {
+      projection = {
+        ...projection,
+        status: 'sin_datos',
+        progressPct: null,
+        resumen: `No se puede proyectar la etapa "${stage}" del lote ${lotLabel}: falta la fecha de inicio de esta etapa (stageStartAt/startAt). No se usa fechaInoculacion como respaldo porque marca el inicio de incubación, no el de esta etapa.`,
+      };
+    }
+
     const alerts = [];
     if (Number.isFinite(projection.heatStressHours) && projection.heatStressHours > 6) {
       alerts.push({
         level: 'warning',
         code: 'heat_stress_sostenido',
-        message: `Estrés térmico por calor: ${projection.heatStressHours} h por encima de tMax en la ventana evaluada del lote ${l.id || l.codigo || 'sin ID'}.`,
+        message: `Estrés térmico por calor: ${projection.heatStressHours} h por encima de tMax en la ventana evaluada del lote ${lotLabel}.`,
       });
     }
     if (Number.isFinite(projection.coldHours) && projection.coldHours > 6) {
@@ -548,7 +830,12 @@
         message: `Temperatura por debajo de tBase durante ${projection.coldHours} h en la ventana evaluada: el avance de la etapa se detiene en esos periodos.`,
       });
     }
-    if (projection.status === 'retrasado') {
+    // 'retraso_termico' se suprime cuando la etapa evaluada no es incubación
+    // y el perfil térmico usado cayó al respaldo de curva micelial (sin
+    // cardinal de fructificación citado en la KB, ver FRUITING_CARDINALS):
+    // en ese caso la confianza ya es 'low' y no hay base suficiente para
+    // levantar una alerta operativa de retraso.
+    if (projection.status === 'retrasado' && !(projection.stage !== 'incubation' && projection.usedFruitingCardinalFallback)) {
       alerts.push({
         level: 'warning',
         code: 'retraso_termico',
@@ -559,7 +846,7 @@
       alerts.push({
         level: 'info',
         code: 'telemetria_insuficiente',
-        message: `No hay telemetría suficiente del lote ${l.id || l.codigo || 'sin ID'} desde el inicio de la etapa para proyectar su reloj biológico.`,
+        message: `No hay telemetría suficiente del lote ${lotLabel} desde el inicio de la etapa para proyectar su reloj biológico.`,
       });
     }
 
@@ -575,12 +862,16 @@
 
   const api = {
     TBASE_TABLE,
+    FRUITING_CARDINALS,
+    LIFECYCLE_STAGE_MAP,
+    normalizeStage,
     thermalRate,
     accumulateThermalTime,
     stageRequirement,
     projectStageCompletion,
     buildLotBiologicalClock,
     getThermalProfile,
+    toBogotaDateStr,
   };
 
   if (isNode) module.exports = api;
