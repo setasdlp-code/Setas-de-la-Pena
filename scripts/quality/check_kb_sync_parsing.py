@@ -121,6 +121,38 @@ def check_yield_per_block_stays_unsourced(m) -> None:
         )
 
 
+def check_latex_ranges_are_read_as_ranges(m) -> None:
+    """`$85\\text{–}90\\text{ °C}$` es un rango, no dos valores sueltos.
+
+    09_research escribe números en LaTeX. Sin desenvolver \\text{}, el guion
+    del rango queda oculto y 85–90 se lee como 85 y 90: suficiente para
+    reportar 88 °C como divergencia estando dentro del rango documentado.
+    """
+    got = m.extract_candidates(r"a $85\text{–}90\text{ °C}$ durante 2 a 3 horas")
+    if not any(c.lo == 85 and c.hi == 90 for c in got):
+        raise AssertionError(f"rango LaTeX no leído como rango: {[c.raw for c in got]}")
+
+
+def check_documented_extractions_are_compared(m) -> None:
+    """Hericium/Reishi sí tienen cinética de extracción documentada.
+
+    El checker afirmaba en bloque que extraction-factors.json no tiene
+    contraparte en knowledge_base/. deep_research_synthesis_2026.md §1 la tiene
+    para Hericium/Reishi, y el app la contradice en varios parámetros.
+    """
+    if not m.EXTRACTION_SYNC_POINTS:
+        raise AssertionError("se perdieron los puntos de extracción documentados")
+    for point in m.EXTRACTION_SYNC_POINTS:
+        candidates, _ = m.kb_candidates_for(point.kb_file, point.kb_section_pattern, point.kb_row_pattern)
+        if not candidates:
+            raise AssertionError(f"sin candidatos para {point.entity} / {point.parameter}")
+    # Las especies sin fuente no deben quedar cubiertas por accidente.
+    covered = {s for (s, _m) in m.EXTRACTION_COVERED_PARAMS}
+    for species in ("p_ostreatus_gris", "shiitake"):
+        if species in covered:
+            raise AssertionError(f"{species} no tiene fuente documentada y quedó marcada como cubierta")
+
+
 def main() -> int:
     m = load_checker()
     for check in (
@@ -130,6 +162,8 @@ def main() -> int:
         check_live_kb_has_no_fabricated_values,
         check_be_reference_is_found,
         check_yield_per_block_stays_unsourced,
+        check_latex_ranges_are_read_as_ranges,
+        check_documented_extractions_are_compared,
     ):
         check(m)
     print("check_kb_sync parsing: OK")
