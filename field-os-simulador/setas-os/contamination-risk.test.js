@@ -6,6 +6,8 @@ const assert = require('node:assert/strict');
 const {
   EXPOSURE_THRESHOLDS,
   PATHOGEN_RISK_MODELS,
+  normalizeStage,
+  getStagnationCo2Threshold,
   extractClimateExposure,
   scorePathogenRisk,
   assessLotRisk,
@@ -86,8 +88,15 @@ test('extractClimateExposure: detecta estancamiento por CO2 alto', () => {
   assert.ok(exp.stagnationHours > 0);
 });
 
-test('extractClimateExposure: detecta eventos de condensación al caer T bajo el punto de rocío previo', () => {
-  // 18°C/95%HR -> dew point ~17.1°C. Bajar a 16°C debe disparar condensación.
+// Hallazgo #14: la condensación solo puede confirmarse con una temperatura
+// de SUPERFICIE/SUSTRATO real, no comparando el aire consigo mismo. Antes
+// se comparaba la temperatura del aire actual contra el punto de rocío de
+// la lectura ANTERIOR, lo que a RH alta disparaba "eventos" con cualquier
+// oscilación de sensor de ~0.6°C — sin ningún dato de superficie de por
+// medio. Sin sensor de superficie en la serie, el resultado debe ser null
+// (sin evidencia), nunca 0 (que afirmaría "sin condensación" sin haberla
+// medido).
+test('extractClimateExposure: sin sensor de superficie/sustrato, condensationEvents es null (no 0)', () => {
   const series = [
     { t: new Date(NOW - 3 * HOUR).toISOString(), temperature_c: 18, rh_pct: 95 },
     { t: new Date(NOW - 2 * HOUR).toISOString(), temperature_c: 16, rh_pct: 95 },
@@ -95,7 +104,26 @@ test('extractClimateExposure: detecta eventos de condensación al caer T bajo el
     { t: new Date(NOW).toISOString(), temperature_c: 20, rh_pct: 70 }
   ];
   const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  assert.equal(exp.condensationEvents, null);
+});
+
+test('extractClimateExposure: detecta eventos de condensación cuando la superficie cae bajo el punto de rocío del aire actual', () => {
+  // Aire a 20°C/95%HR -> punto de rocío ~19.1°C. Una superficie/sustrato a
+  // 18°C (por debajo del punto de rocío del aire que la rodea) SÍ condensa.
+  const series = [
+    { t: new Date(NOW - 3 * HOUR).toISOString(), temperature_c: 20, rh_pct: 95, substrate_temperature_c: 21 },
+    { t: new Date(NOW - 2 * HOUR).toISOString(), temperature_c: 20, rh_pct: 95, substrate_temperature_c: 18 },
+    { t: new Date(NOW - 1 * HOUR).toISOString(), temperature_c: 20, rh_pct: 95, substrate_temperature_c: 18 },
+    { t: new Date(NOW).toISOString(), temperature_c: 20, rh_pct: 70, substrate_temperature_c: 21 }
+  ];
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
   assert.equal(exp.condensationEvents, 1); // un solo evento discreto, no uno por lectura sostenida
+});
+
+test('extractClimateExposure: alta RH sin sensor de superficie no cuenta como condensación aunque oscile el aire (evita el falso saturamiento del hallazgo #14)', () => {
+  const series = buildSeries(20, (h) => ({ temperature_c: h % 2 === 0 ? 20 : 20.6, rh_pct: 96 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  assert.equal(exp.condensationEvents, null);
 });
 
 test('extractClimateExposure: calcula tempSwingMax dentro de ventanas de 24h', () => {
@@ -106,6 +134,18 @@ test('extractClimateExposure: calcula tempSwingMax dentro de ventanas de 24h', (
   ];
   const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
   assert.ok(exp.tempSwingMax >= 11.9 && exp.tempSwingMax <= 12.1);
+});
+
+// Hallazgo #5: una serie horaria que cubre exactamente la ventana completa
+// (72 lecturas horarias en una ventana de 72h) no debe reportar más de 72h
+// de cobertura. Antes la última lectura recibía un segmento simétrico
+// adicional, dando 73h de cobertura sobre una ventana de 72h
+// (coverageRatio 1.014, por encima del 100%).
+test('extractClimateExposure: coverageRatio nunca supera 1.0 aunque la serie cubra toda la ventana (hallazgo #5)', () => {
+  const series = buildSeries(72, () => ({ temperature_c: 20, rh_pct: 85 })); // 73 lecturas horarias, 0..72h
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  assert.ok(exp.coverageHours <= 72, `coverageHours (${exp.coverageHours}) no debe superar windowHours (72)`);
+  assert.ok(exp.coverageRatio <= 1, `coverageRatio (${exp.coverageRatio}) no debe superar 1.0`);
 });
 
 test('extractClimateExposure: coverageRatio refleja fracción de la ventana con datos', () => {
@@ -271,4 +311,116 @@ test('assessRoomRisk: un lote con su propia serie distinta de la de sala se resp
   const frio = result.lots.find((l) => l.lotId === 'lote-frio');
   const caliente = result.lots.find((l) => l.lotId === 'lote-caliente');
   assert.ok(caliente.overallScore > frio.overallScore);
+});
+
+// ---------------------------------------------------------------------
+// Hallazgo #6 — normalizeStage: la comparación de etapa era sensible a
+// mayúsculas/idioma, por lo que un `stage` en español ('incubacion') no
+// coincidía con el valor canónico en inglés del catálogo, atenuando el
+// score de Trichoderma como si el lote NO estuviera en una etapa
+// susceptible. Además, nada mapeaba 'maturation'/'resting'.
+// ---------------------------------------------------------------------
+test('normalizeStage (contamination-risk): normaliza español/mayúsculas/acentos al mismo valor canónico', () => {
+  assert.equal(normalizeStage('incubacion'), 'incubation');
+  assert.equal(normalizeStage('INCUBACIÓN'), 'incubation');
+  assert.equal(normalizeStage('Incubation'), 'incubation');
+  assert.equal(normalizeStage('maduracion'), 'maturation');
+  assert.equal(normalizeStage('descanso'), 'resting');
+  assert.equal(normalizeStage('reposo'), 'resting');
+  assert.equal(normalizeStage('estado-desconocido'), null);
+});
+
+test('scorePathogenRisk: stage "incubacion" (español) puntúa igual que "incubation" para trichoderma (hallazgo #6)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 29, rh_pct: 80, co2_ppm: 2500 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const en = scorePathogenRisk('trichoderma', exp, { stage: 'incubation' });
+  const es = scorePathogenRisk('trichoderma', exp, { stage: 'incubacion' });
+  assert.equal(es.score, en.score);
+});
+
+test('scorePathogenRisk: trichoderma es susceptible en maturation y resting (hallazgo #6)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 29, rh_pct: 80, co2_ppm: 2500 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const baseline = scorePathogenRisk('trichoderma', exp, { stage: 'incubation' });
+  const maturation = scorePathogenRisk('trichoderma', exp, { stage: 'maturation' });
+  const resting = scorePathogenRisk('trichoderma', exp, { stage: 'resting' });
+  assert.equal(maturation.score, baseline.score);
+  assert.equal(resting.score, baseline.score);
+});
+
+// ---------------------------------------------------------------------
+// Hallazgo #12 — bacillus: el catálogo lo describe como grano/sustrato
+// húmedo por esterilización deficiente o exceso de agua EN LA MEZCLA (un
+// problema de incubación), no condensación de fructificación. El modelo ya
+// no debe considerar 'fruiting' su etapa susceptible.
+// ---------------------------------------------------------------------
+test('PATHOGEN_RISK_MODELS.bacillus: susceptibleStages es incubation, ya no fruiting (hallazgo #12)', () => {
+  assert.deepEqual(PATHOGEN_RISK_MODELS.bacillus.susceptibleStages, ['incubation']);
+  const factorIds = PATHOGEN_RISK_MODELS.bacillus.factors.map((f) => f.id);
+  assert.ok(!factorIds.includes('condensationEvents'), 'condensationEvents ya no debe ser el driver principal de bacillus');
+});
+
+test('scorePathogenRisk: bacillus en incubación puntúa por encima de bacillus en fruiting (hallazgo #12)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 29, rh_pct: 99, co2_ppm: 3000 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const incubation = scorePathogenRisk('bacillus', exp, { stage: 'incubation' });
+  const fruiting = scorePathogenRisk('bacillus', exp, { stage: 'fruiting' });
+  assert.ok(incubation.score >= fruiting.score);
+});
+
+// ---------------------------------------------------------------------
+// Hallazgo #13 — Mycogone perniciosa: reportado mayoritariamente como
+// patógeno de Agaricus; este catálogo de especies no cultiva Agaricus, así
+// que su score no debería dominar el ranking de un lote de otra especie sin
+// evidencia propia.
+// ---------------------------------------------------------------------
+test('scorePathogenRisk: mycogone se atenúa para especies no-Agaricus (hallazgo #13)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 22, rh_pct: 99, co2_ppm: 2500 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const pleurotus = scorePathogenRisk('mycogone', exp, { stage: 'fruiting', speciesId: 'p_ostreatus_gris' });
+  const agaricus = scorePathogenRisk('mycogone', exp, { stage: 'fruiting', speciesId: 'a_bisporus' });
+  assert.ok(pleurotus.score < agaricus.score);
+});
+
+test('assessLotRisk: mycogone ya no domina el ranking de un lote de fructificación de una especie no-Agaricus (hallazgo #13)', () => {
+  const series = buildSeries(72, () => ({ temperature_c: 22, rh_pct: 99, co2_ppm: 2500 }));
+  const result = assessLotRisk({ lot: { id: 'lote-pleurotus', stage: 'fruiting', speciesId: 'p_ostreatus_gris' }, series, now: NOW, windowHours: 72 });
+  const mycogone = result.pathogens.find((p) => p.pathogenId === 'mycogone');
+  assert.ok(mycogone.score < result.overallScore || result.pathogens[0].pathogenId !== 'mycogone');
+});
+
+// ---------------------------------------------------------------------
+// Hallazgo #15 — estancamiento por CO2: 2000 ppm se contaba como riesgo sin
+// distinguir etapa ni especie, pero la KB prescribe 1500-2500 ppm para
+// desarrollo de tallo de eryngii, y CO2 alto es normal en incubación.
+// ---------------------------------------------------------------------
+test('getStagnationCo2Threshold: usa 3000 ppm para eryngii y 2000 ppm por defecto (hallazgo #15)', () => {
+  assert.equal(getStagnationCo2Threshold('p_eryngii').value, 3000);
+  assert.equal(getStagnationCo2Threshold('p_ostreatus_gris').value, 2000);
+  assert.equal(getStagnationCo2Threshold(undefined).value, 2000);
+});
+
+test('scorePathogenRisk: el factor stagnationHours no cuenta en incubación aunque el CO2 sea alto (hallazgo #15)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 20, rh_pct: 80, co2_ppm: 6000 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const r = scorePathogenRisk('trichoderma', exp, { stage: 'incubation' });
+  const stagnationFactor = r.factors.find((f) => f.id === 'stagnationHours');
+  assert.equal(stagnationFactor.contribution, 0);
+  assert.ok(stagnationFactor.note && stagnationFactor.note.length > 0);
+});
+
+test('scorePathogenRisk: el factor stagnationHours sí cuenta en fructificación con CO2 alto (hallazgo #15)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 20, rh_pct: 80, co2_ppm: 6000 }));
+  const exp = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const r = scorePathogenRisk('trichoderma', exp, { stage: 'fruiting' });
+  const stagnationFactor = r.factors.find((f) => f.id === 'stagnationHours');
+  assert.ok(stagnationFactor.contribution > 0);
+});
+
+test('extractClimateExposure: con speciesId eryngii, 2500 ppm ya no cuenta como estancamiento (dentro del rango objetivo de KB)', () => {
+  const series = buildSeries(48, () => ({ temperature_c: 20, rh_pct: 80, co2_ppm: 2500 }));
+  const expDefault = extractClimateExposure(series, { now: NOW, windowHours: 72 });
+  const expEryngii = extractClimateExposure(series, { now: NOW, windowHours: 72, speciesId: 'p_eryngii' });
+  assert.ok(expDefault.stagnationHours > 0);
+  assert.equal(expEryngii.stagnationHours, 0);
 });

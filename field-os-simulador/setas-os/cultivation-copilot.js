@@ -121,10 +121,10 @@
     cooling: 'planned',
     inoculated: 'incubation',
     incubation: 'incubation',
-    maturation: 'induction',
+    maturation: 'maturation',
     induction: 'induction',
     fruiting: 'fruiting',
-    resting: 'fruiting',
+    resting: 'resting',
     closed: 'closed',
     // Canónicos (EXCEPTION_STATES)
     quarantine: 'quarantine',
@@ -139,11 +139,11 @@
     inoculado: 'incubation',
     incubacion: 'incubation',
     colonizacion: 'incubation',
-    maduracion: 'induction',
+    maduracion: 'maturation',
     induccion: 'induction',
     fructificacion: 'fruiting',
     pinning: 'induction',
-    descanso: 'fruiting',
+    descanso: 'resting',
     cosechada: 'closed',
     completado: 'closed',
     cerrado: 'closed',
@@ -159,16 +159,26 @@
   /**
    * Normaliza un estado de ciclo de vida (canónico o español heredado) a una
    * de las etapas que entienden los motores agronómicos:
-   * 'planned' | 'incubation' | 'induction' | 'fruiting' | 'quarantine' | 'closed'.
-   * Un estado desconocido cae a 'incubation' (el más conservador: sigue
-   * generando chequeos, no lo saca silenciosamente del radar del copiloto).
+   * 'planned' | 'incubation' | 'maturation' | 'induction' | 'fruiting' |
+   * 'resting' | 'quarantine' | 'closed' | 'desconocido'.
+   *
+   * Un estado desconocido/vacío devuelve 'desconocido', NO 'incubation'.
+   * Antes caía a 'incubation' "por conservador", pero eso hacía justo lo
+   * contrario a lo previsto: un lote con `estado` mal escrito o ausente se
+   * proyectaba silenciosamente como si estuviera en incubación real (reloj
+   * biológico, riesgo de contaminación por etapa, acción de "listo_probable"
+   * incluidos), en vez de señalar que no se sabe en qué etapa está. Con
+   * 'desconocido', buildLotInsights/recommendActions omiten explícitamente
+   * las acciones basadas en etapa para ese lote (ver buildLotInsights).
    */
   const normalizeStage = (lifecycleState) => {
     const clean = stripAccents(lifecycleState);
-    return STAGE_ALIASES[clean] || 'incubation';
+    if (!clean) return 'desconocido';
+    return STAGE_ALIASES[clean] || 'desconocido';
   };
 
   const isClosedStage = (stage) => stage === 'closed';
+  const isUnknownStage = (stage) => stage === 'desconocido';
 
   // ---------------------------------------------------------------------
   // buildLotInsights — un lote a la vez
@@ -202,8 +212,16 @@
     const safeSeries = Array.isArray(series) ? series : [];
     const alerts = [];
 
+    // Etapa desconocida (estado ausente, vacío o no reconocido): no se
+    // invoca biological-clock.js con ella. Ese motor tiene su PROPIA tabla
+    // de normalización (LIFECYCLE_STAGE_MAP) que no conoce 'desconocido' y
+    // caería a 'incubation' por defecto, proyectando tiempo térmico y
+    // generando la acción "listo_probable" como si el lote sí estuviera en
+    // incubación real. Omitir la llamada aquí es lo que hace explícita la
+    // regla "etapa desconocida -> sin acciones basadas en etapa" (ver
+    // normalizeStage), en vez de heredar el valor por defecto de otro motor.
     let biologicalClock = null;
-    if (engines.BiologicalClock) {
+    if (engines.BiologicalClock && !isUnknownStage(stage)) {
       try {
         biologicalClock = engines.BiologicalClock.buildLotBiologicalClock(
           { id: lotId, speciesId, lifecycleState: stage, stageStartAt: l.stageStartAt || l.startAt || l.fechaInoculacion || l.inocDate || null },
@@ -491,13 +509,6 @@
    * Convierte acciones de recommendActions() en tareas de task-engine.js
    * (SetasTaskEngine.createTask), si ese motor está disponible.
    *
-   * NOTA sobre generatedBy: GENERATED_BY_SOURCES de task-engine.js es un
-   * catálogo cerrado que no incluye 'copiloto' (ampliarlo es un cambio de
-   * task-engine.js, fuera del alcance de este módulo). Se usa el origen más
-   * cercano disponible, `{ source: 'perito', ref: 'copiloto' }`, para no
-   * lanzar en createTask() y para que el `ref` deje trazabilidad de que la
-   * tarea nació del copiloto y no del Perito de recetas propiamente dicho.
-   *
    * @param {Array<object>} actions Salida de recommendActions().
    * @param {object} [opts] { now } — reservado para futura lógica de vencimiento relativo a `now`.
    * @returns {Array<object>} Tareas canónicas (o [] si SetasTaskEngine no está disponible).
@@ -522,7 +533,7 @@
           dueAt: action.dueAt,
           priority: action.priority || 'normal',
           reason: `${action.title} — ${action.why}`,
-          generatedBy: { source: 'perito', ref: 'copiloto' },
+          generatedBy: { source: 'copiloto' },
         }));
       } catch (e) {
         // Una acción con forma inesperada no debe tumbar la conversión de las demás.

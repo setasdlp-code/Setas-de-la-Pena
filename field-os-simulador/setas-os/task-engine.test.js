@@ -26,6 +26,22 @@ test('createTask produce la forma canónica y congela la tarea', () => {
   assert.throws(() => { t.status = 'done'; });
 });
 
+// Regresión: GENERATED_BY_SOURCES debe incluir 'copiloto' (cultivation-copilot.js
+// generaba tareas con generatedBy.source: 'perito' como workaround porque este
+// catálogo no lo aceptaba; ver cultivation-copilot.test.js).
+test('createTask acepta generatedBy.source "copiloto" (GENERATED_BY_SOURCES incluye al copiloto de cultivo)', () => {
+  const t = taskEngine.createTask({
+    type: 'inspection',
+    objectType: 'batch',
+    objectId: 'LOTE_COPILOTO',
+    dueAt: '2026-09-20T10:00:00-05:00',
+    priority: 'normal',
+    reason: 'Sugerencia del copiloto de cultivo',
+    generatedBy: { source: 'copiloto', ref: 'copiloto' },
+  });
+  assert.equal(t.generatedBy.source, 'copiloto');
+});
+
 test('createTask deriva un id determinista objectId-type-fecha', () => {
   const t = taskEngine.createTask({
     type: 'harvest',

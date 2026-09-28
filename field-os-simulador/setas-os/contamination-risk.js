@@ -115,7 +115,7 @@
       provenance: {
         class: 'heuristic',
         source: 'Proxy operativo de FAE insuficiente (Setas OS calcDynamicFAE / calcBarometricCO2Correction)',
-        note: 'CO2 ≥ 2000 ppm se usa como indicador indirecto de aire estancado, no como toxicidad directa al patógeno.'
+        note: 'Umbral POR DEFECTO. CO2 ≥ 2000 ppm se usa como indicador indirecto de aire estancado en inducción/fructificación, no como toxicidad directa al patógeno. Ver STAGNATION_CO2_THRESHOLDS_BY_SPECIES para overrides por especie (p.ej. eryngii, que requiere 1500–2500 ppm como TARGET fisiológico de tallo) y el gating por etapa en scorePathogenRisk (hallazgo #15): el factor de estancamiento solo cuenta en inducción/fructificación, nunca en incubación, donde CO2 alto es normal y esperado (p.ej. >5000 ppm en incubación de eryngii, knowledge_base/01_species/pleurotus_eryngii.md).'
       }
     },
     condensationDeltaC: {
@@ -135,6 +135,41 @@
       }
     }
   });
+
+  // ---------------------------------------------------------------------
+  // Umbral de estancamiento por CO2, por especie (hallazgo #15).
+  // La KB prescribe 1,500–2,500 ppm de CO2 como TARGET fisiológico durante
+  // el desarrollo del tallo de eryngii (knowledge_base/01_species/
+  // pleurotus_eryngii.md), y CO2 alto (>5,000 ppm) es NORMAL durante
+  // incubación de cualquier especie. Usar el umbral genérico de 2000 ppm sin
+  // distinción de especie/etapa marcaba como "estancamiento" un rango que en
+  // eryngii es precisamente el objetivo de manejo. El umbral por especie aquí
+  // se fija POR ENCIMA del rango prescrito (nunca dentro de él); el gating
+  // por etapa (solo inducción/fructificación) vive en scorePathogenRisk.
+  // ---------------------------------------------------------------------
+  const STAGNATION_CO2_THRESHOLDS_BY_SPECIES = Object.freeze({
+    default: {
+      value: 2000,
+      provenance: {
+        class: 'heuristic',
+        source: 'Proxy operativo de FAE insuficiente (Setas OS calcDynamicFAE / calcBarometricCO2Correction)',
+        note: 'Umbral por defecto para especies sin override específico en esta tabla.'
+      }
+    },
+    p_eryngii: {
+      value: 3000,
+      provenance: {
+        class: 'literature_target',
+        source: 'knowledge_base/01_species/pleurotus_eryngii.md',
+        note: 'KB prescribe 1,500–2,500 ppm de CO2 como TARGET fisiológico durante el desarrollo del tallo (día 1-6: 1,800–2,500 ppm) para lograr la morfología comercial de tallo grueso. 3000 ppm se fija por ENCIMA de ese rango objetivo, como umbral de estancamiento real, para no contar el CO2 deseado como riesgo.'
+      }
+    }
+  });
+
+  function getStagnationCo2Threshold(speciesId) {
+    const key = typeof speciesId === 'string' ? speciesId.trim().toLowerCase() : '';
+    return STAGNATION_CO2_THRESHOLDS_BY_SPECIES[key] || STAGNATION_CO2_THRESHOLDS_BY_SPECIES.default;
+  }
 
   // ---------------------------------------------------------------------
   // Utilidades de series temporales
@@ -159,11 +194,15 @@
         const temperature_c = Number(r.temperature_c);
         const rh_pct = Number(r.rh_pct);
         const co2_ppm = r.co2_ppm != null ? Number(r.co2_ppm) : null;
+        const substrate_temperature_c = r.substrate_temperature_c != null ? Number(r.substrate_temperature_c) : null;
+        const surface_temperature_c = r.surface_temperature_c != null ? Number(r.surface_temperature_c) : null;
         return {
           ts,
           temperature_c: Number.isFinite(temperature_c) ? temperature_c : null,
           rh_pct: Number.isFinite(rh_pct) ? rh_pct : null,
-          co2_ppm: Number.isFinite(co2_ppm) ? co2_ppm : null
+          co2_ppm: Number.isFinite(co2_ppm) ? co2_ppm : null,
+          substrate_temperature_c: Number.isFinite(substrate_temperature_c) ? substrate_temperature_c : null,
+          surface_temperature_c: Number.isFinite(surface_temperature_c) ? surface_temperature_c : null
         };
       })
       .filter(Boolean)
@@ -174,15 +213,18 @@
    * Extrae métricas de exposición climática de una serie temporal, robusto a huecos,
    * datos faltantes y series desordenadas.
    *
-   * @param {Array<{t:*, temperature_c?:number, rh_pct?:number, co2_ppm?:number}>} series
+   * @param {Array<{t:*, temperature_c?:number, rh_pct?:number, co2_ppm?:number, substrate_temperature_c?:number, surface_temperature_c?:number}>} series
    * @param {object} [opts]
    * @param {number} [opts.now] Epoch ms del "ahora" (obligatorio para determinismo; no usa Date.now()).
    * @param {number} [opts.windowHours=72] Ventana hacia atrás desde `now`.
+   * @param {string} [opts.speciesId] Usado para elegir el umbral de estancamiento por CO2
+   *   (ver STAGNATION_CO2_THRESHOLDS_BY_SPECIES); sin ella se usa el umbral por defecto.
    * @returns {object} Resumen de exposición con horas por criterio y cobertura.
    */
   function extractClimateExposure(series, opts = {}) {
     const now = Number.isFinite(opts.now) ? opts.now : toTimestamp(opts.now);
     const windowHours = Number.isFinite(opts.windowHours) && opts.windowHours > 0 ? opts.windowHours : 72;
+    const stagnationThreshold = getStagnationCo2Threshold(opts.speciesId);
 
     const result = {
       windowHours,
@@ -190,8 +232,13 @@
       saturationHours: 0,
       warmHours: 0,
       hotHours: 0,
+      // null hasta que se confirme si hay o no sensor de superficie/sustrato
+      // en la serie (hallazgo #14); nunca queda en 0 por defecto cuando no
+      // hay forma de saberlo.
       condensationEvents: 0,
       stagnationHours: 0,
+      stagnationCo2ThresholdPpm: stagnationThreshold.value,
+      stagnationCo2Provenance: stagnationThreshold.provenance,
       tempSwingMax: null,
       coverageHours: 0,
       coverageRatio: 0,
@@ -218,13 +265,13 @@
     const satRh = EXPOSURE_THRESHOLDS.saturationRh.value;
     const warmT = EXPOSURE_THRESHOLDS.warmTempC.value;
     const hotT = EXPOSURE_THRESHOLDS.hotTempC.value;
-    const stagnationCo2 = EXPOSURE_THRESHOLDS.stagnationCo2Ppm.value;
+    const stagnationCo2 = stagnationThreshold.value;
     const condDelta = EXPOSURE_THRESHOLDS.condensationDeltaC.value;
 
     let coverageMs = 0;
-    let prevPoint = null;
-    let prevDewPoint = null;
     let wasCondensing = false;
+    let condensationEventsCount = 0;
+    let hasSurfaceSensor = false;
 
     for (let i = 0; i < points.length; i++) {
       const p = points[i];
@@ -241,13 +288,13 @@
           segmentMs = 0; // no se cuenta el hueco
         }
       } else {
-        // Última lectura: se le atribuye un pequeño intervalo simétrico si hay un
-        // punto previo cercano, o se ignora si es un punto aislado.
-        if (prevPoint && (p.ts - prevPoint.ts) <= gapMaxMs) {
-          segmentMs = Math.min(gapMaxMs, p.ts - prevPoint.ts);
-        } else {
-          segmentMs = 0;
-        }
+        // Última lectura: NO se le atribuye ningún segmento propio. No hay
+        // una siguiente lectura que delimite cuánto tiempo describe, y el
+        // intervalo hasta ella ya quedó contado por la lectura anterior.
+        // Antes se le sumaba un intervalo simétrico adicional aquí, lo que
+        // duplicaba el último tramo y podía llevar coverageRatio por encima
+        // de 1.0 (hallazgo #5: 73h de cobertura sobre una ventana de 72h).
+        segmentMs = 0;
       }
 
       const segmentHours = segmentMs / 3600000;
@@ -265,29 +312,41 @@
         result.stagnationHours += segmentHours;
       }
 
-      // Condensación: la temperatura actual cae por debajo (o muy cerca) del punto de
-      // rocío calculado en la lectura anterior (agua se condensa sobre superficies frías).
-      // Se cuenta como EVENTO discreto (transición hacia la zona de condensación), no por
-      // cada lectura sostenida dentro de ella, para no inflar el conteo en tramos largos.
-      if (prevDewPoint != null && p.temperature_c != null) {
-        const isCondensing = (p.temperature_c - prevDewPoint) < condDelta;
+      // Condensación (hallazgo #14): se necesita una temperatura de
+      // SUPERFICIE/SUSTRATO real, no la del aire. A RH alta, el aire mismo
+      // oscila por debajo de su propio punto de rocío recién calculado con
+      // cualquier ruido de sensor (a RH>=90%, ~0.6°C ya alcanza), lo que
+      // antes saturaba el conteo de eventos en condiciones normales de
+      // fructificación. El agua se condensa quien SÍ está frío: la
+      // superficie del sustrato/bloque, no el aire que la rodea. Se cuenta
+      // como EVENTO discreto (transición hacia la zona de condensación), no
+      // por cada lectura sostenida, para no inflar el conteo en tramos largos.
+      const surfaceTemp = p.substrate_temperature_c != null
+        ? p.substrate_temperature_c
+        : (p.surface_temperature_c != null ? p.surface_temperature_c : null);
+
+      if (surfaceTemp != null) hasSurfaceSensor = true;
+
+      if (surfaceTemp != null && p.temperature_c != null && p.rh_pct != null) {
+        const dp = calcDewPoint(p.temperature_c, p.rh_pct);
+        const isCondensing = dp != null && (surfaceTemp - dp) < condDelta;
         if (isCondensing && !wasCondensing) {
-          result.condensationEvents += 1;
+          condensationEventsCount += 1;
         }
         wasCondensing = isCondensing;
       } else {
+        // Sin sensor de superficie o sin datos suficientes en esta lectura:
+        // no se puede afirmar ni descartar condensación en este punto.
         wasCondensing = false;
       }
-
-      if (p.temperature_c != null && p.rh_pct != null) {
-        const dp = calcDewPoint(p.temperature_c, p.rh_pct);
-        prevDewPoint = dp;
-      } else {
-        prevDewPoint = null;
-      }
-
-      prevPoint = p;
     }
+
+    // Sin NINGÚN sensor de superficie/sustrato en toda la serie, no hay base
+    // física para afirmar 0 eventos de condensación (sería inventar un dato
+    // que nunca se midió). condensationEvents queda null; el factor de
+    // riesgo correspondiente lo trata como "sin evidencia" (contribución 0
+    // con nota explícita), nunca como "sin riesgo confirmado".
+    result.condensationEvents = hasSurfaceSensor ? condensationEventsCount : null;
 
     // tempSwingMax: máxima oscilación (max-min) dentro de cualquier ventana móvil de 24 h.
     let tempSwingMax = null;
@@ -319,7 +378,12 @@
     result.tempSwingMax = tempSwingMax;
 
     result.coverageHours = Math.round((coverageMs / 3600000) * 100) / 100;
+    // Clamp defensivo: con la corrección del hallazgo #5 coverageMs ya no
+    // debería poder superar windowHours, pero se deja el tope explícito para
+    // que coverageRatio nunca reporte más del 100% de la ventana evaluada.
+    result.coverageHours = Math.min(result.coverageHours, windowHours);
     result.coverageRatio = windowHours > 0 ? Math.round((result.coverageHours / windowHours) * 1000) / 1000 : 0;
+    result.coverageRatio = Math.min(result.coverageRatio, 1);
 
     // Redondeo final de horas acumuladas a 2 decimales
     for (const k of ['highHumidityHours', 'saturationHours', 'warmHours', 'hotHours', 'stagnationHours']) {
@@ -333,10 +397,98 @@
   // Modelos de riesgo por patógeno: factores ponderados + susceptibilidad por etapa.
   // Todos heurísticos salvo que se indique lo contrario explícitamente en provenance.
   // ---------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------
+  // normalizeStage (hallazgo #6) — la comparación de etapa contra
+  // susceptibleStages era sensible a mayúsculas/idioma: un `stage` en
+  // español ('incubacion') no coincidía con el valor canónico en inglés
+  // ('incubation') del catálogo de modelos, así que el multiplicador de
+  // etapa-no-susceptible (0.4x) se aplicaba de forma incorrecta (p.ej.
+  // Trichoderma en incubación real caía de 25 a ~10). Mismo enfoque de
+  // normalización case/acento-insensible que SetasBiologicalClock.normalizeStage
+  // (biological-clock.js), pero con tabla PROPIA: ese motor funde
+  // 'fruiting'→'induction' y 'resting'→'no_aplica' para el reloj térmico, lo
+  // cual perdería exactamente las distinciones de etapa que los modelos de
+  // este archivo necesitan (p.ej. cobweb/mycogone distinguen 'induction' de
+  // 'fruiting'; Trichoderma ahora distingue 'resting' de 'no_aplica'). Por
+  // eso NO se delega en ese motor: se mantiene una tabla local equivalente,
+  // en el mismo espíritu, para el vocabulario de etapa que usa este módulo.
+  // Un estado desconocido devuelve null (no se asume ninguna etapa) en vez
+  // de caer silenciosamente a 'incubation' como hacía la comparación previa.
+  // ---------------------------------------------------------------------
+  const STAGE_CATEGORY_MAP = Object.freeze({
+    // Canónicos (setas-os-workflow.js NORMAL_STATES) y legacy en español.
+    incubation: 'incubation',
+    incubacion: 'incubation',
+    inoculated: 'incubation',
+    inoculado: 'incubation',
+    colonization: 'colonization',
+    colonizacion: 'colonization',
+    induction: 'induction',
+    induccion: 'induction',
+    pinning: 'induction',
+    fruiting: 'fruiting',
+    fructificacion: 'fruiting',
+    maturation: 'maturation',
+    maduracion: 'maturation',
+    resting: 'resting',
+    descanso: 'resting',
+    reposo: 'resting',
+    // Estados de proceso/excepción/terminales: no corresponden a ninguna
+    // etapa biológica susceptible; se devuelven explícitamente como null.
+    planned: null,
+    planificado: null,
+    mix_prepared: null,
+    mezcla_preparada: null,
+    thermal_treatment: null,
+    tratamiento_termico: null,
+    cooling: null,
+    enfriamiento: null,
+    quarantine: null,
+    cuarentena: null,
+    discarded: null,
+    descartado: null,
+    failed: null,
+    fallido: null,
+    closed: null,
+    cerrado: null,
+  });
+
+  function normalizeStage(stage) {
+    if (!stage || typeof stage !== 'string') return null;
+    const clean = stage.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (Object.prototype.hasOwnProperty.call(STAGE_CATEGORY_MAP, clean)) {
+      return STAGE_CATEGORY_MAP[clean];
+    }
+    return null; // desconocido: no se asume ninguna etapa
+  }
+
+  // ---------------------------------------------------------------------
+  // Relevancia por especie/género de un modelo de patógeno (hallazgo #13):
+  // Mycogone perniciosa está reportada mayoritariamente como patógeno de
+  // Agaricus bisporus; este catálogo de especies no cultiva Agaricus
+  // (solo Pleurotus/Lentinula/Ganoderma), así que su score no debería
+  // dominar el ranking de patógenos de un lote de esas especies sin
+  // evidencia propia. `default` heurístico (no medido en esta granja).
+  // ---------------------------------------------------------------------
+  function speciesGenusRelevance(speciesId, relevanceMap) {
+    if (!relevanceMap) return 1;
+    const id = typeof speciesId === 'string' ? speciesId.trim().toLowerCase() : '';
+    const isAgaricus = id.startsWith('a_') || id.includes('agaricus') || id.includes('bisporus');
+    if (isAgaricus) {
+      return Number.isFinite(relevanceMap.agaricus) ? relevanceMap.agaricus : 1;
+    }
+    return Number.isFinite(relevanceMap.default) ? relevanceMap.default : 1;
+  }
+
   const PATHOGEN_RISK_MODELS = Object.freeze({
     trichoderma: {
       id: 'trichoderma',
-      susceptibleStages: ['incubation', 'colonization'],
+      // 'maturation' y 'resting' agregados (hallazgo #6): el bloque de
+      // reposo entre oleadas es una ventana clásica de Trichoderma (sustrato
+      // ya colonizado, sin actividad de fructificación activa que lo proteja,
+      // igual que la maduración postcolonización).
+      susceptibleStages: ['incubation', 'colonization', 'maturation', 'resting'],
       earlyStageBoost: true,
       factors: [
         {
@@ -454,42 +606,42 @@
         }
       ]
     },
+    // Bacillus (hallazgo #12): PATHOGENS_CATALOG.bacillus (contamination-workflow.js)
+    // lo describe como grano/sustrato húmedo, grasoso, de olor agrio, por
+    // esterilización deficiente o exceso de agua en la MEZCLA — un problema
+    // de preparación/incubación, no de condensación en sala de
+    // fructificación (eso es mancha bacteriana por Pseudomonas tolaasii,
+    // patógeno distinto, no catalogado aquí). El modelo anterior usaba
+    // condensationEvents/saturationHours de fructificación como drivers
+    // principales, prediciendo el patógeno equivocado. La causa real
+    // (falla de autoclave, exceso de agua al mezclar) no es observable
+    // desde telemetría ambiental de sala: los pesos aquí son
+    // deliberadamente bajos y el clima solo aporta una señal MUY débil.
     bacillus: {
       id: 'bacillus',
-      susceptibleStages: ['fruiting'],
-      earlyStageBoost: false,
+      susceptibleStages: ['incubation'],
+      earlyStageBoost: true,
       factors: [
         {
-          id: 'condensationEvents',
-          label: 'Eventos de condensación (agua libre)',
-          weight: 0.45,
-          normalizeCount: 6,
+          id: 'warmHours',
+          label: 'Horas cálidas (≥25°C) en incubación',
+          weight: 0.5,
+          normalizeHours: 48,
           provenance: {
             class: 'heuristic',
-            source: 'Bacillus spp. asociado a exceso de agua/condensación en sustrato (consistente con nota de humedad máxima en contamination-workflow.js)',
-            note: 'Heurístico interno.'
-          }
-        },
-        {
-          id: 'saturationHours',
-          label: 'Horas de saturación (RH ≥98%)',
-          weight: 0.35,
-          normalizeHours: 24,
-          provenance: {
-            class: 'heuristic',
-            source: 'Saturación prolongada favorece condiciones anaeróbicas superficiales asociadas a bacteriosis',
-            note: 'Heurístico interno.'
+            source: 'Catálogo (contamination-workflow.js): Bacillus subtilis/B. cereus asociado a grano/sustrato húmedo por esterilización deficiente o exceso de agua en la mezcla, no a condensación de fructificación',
+            note: 'Proxy MUY débil: temperatura de sala no mide humedad de sustrato ni eficacia de esterilización. Peso bajo a propósito; confidence de este módulo nunca sube de "low" (ver agronomic-claims).'
           }
         },
         {
           id: 'stagnationHours',
-          label: 'Horas de aire estancado (CO2 ≥2000 ppm)',
-          weight: 0.20,
+          label: 'Horas de aire estancado (CO2 alto) en incubación',
+          weight: 0.5,
           normalizeHours: 24,
           provenance: {
             class: 'heuristic',
-            source: 'Estancamiento agrava condiciones de baja oxigenación superficial',
-            note: 'Heurístico interno.'
+            source: 'Aire estancado en sala de incubación puede coincidir con bolsas de grano mal preparadas con exceso de actividad metabólica/humedad, pero es un proxy indirecto',
+            note: 'Proxy débil, no una medición de humedad de sustrato. Peso bajo a propósito; el diagnóstico real requiere inspección física del grano/bolsa, no telemetría de sala.'
           }
         }
       ]
@@ -498,6 +650,23 @@
       id: 'mycogone',
       susceptibleStages: ['induction', 'fruiting'],
       earlyStageBoost: false,
+      // Hallazgo #13: Mycogone perniciosa está reportada mayoritariamente
+      // como patógeno de Agaricus bisporus en la literatura de cultivo
+      // comercial; este catálogo de especies no cultiva Agaricus (solo
+      // Pleurotus/Lentinula/Ganoderma), así que su relevancia real para los
+      // lotes de esta granja es menor de lo que el score climático crudo
+      // sugiere. Sin este ajuste, mycogone dominaba el ranking de patógenos
+      // en lotes de fructificación pese a no ser el riesgo dominante
+      // esperado para estas especies.
+      speciesRelevance: {
+        agaricus: 1.0,
+        default: 0.3,
+        provenance: {
+          class: 'heuristic',
+          source: 'Mycogone perniciosa (Burbuja Húmeda) reportada mayoritariamente en Agaricus bisporus; sin evidencia propia de incidencia en Pleurotus/Lentinula/Ganoderma en esta granja',
+          note: 'Peso 0.3 heurístico para especies no-Agaricus (todo el catálogo actual de la granja); no calibrado contra incidencia real propia. No reduce a 0: el patógeno puede afectar otros géneros, solo con menor frecuencia reportada.'
+        }
+      },
       factors: [
         {
           id: 'highHumidityHours',
@@ -610,7 +779,10 @@
    * @param {string} pathogenId Debe coincidir con una clave de PATHOGENS_CATALOG.
    * @param {object} exposure Salida de extractClimateExposure().
    * @param {object} [context]
-   * @param {string} [context.stage] Etapa del ciclo de vida (incubation/induction/fruiting/colonization...).
+   * @param {string} [context.stage] Etapa del ciclo de vida (canónico inglés o legacy español,
+   *   case/acento-insensible vía normalizeStage: incubation/induction/fruiting/maturation/resting/...).
+   * @param {string} [context.speciesId] Usado para el ajuste de relevancia por especie/género
+   *   (hallazgo #13, p.ej. Mycogone perniciosa en especies no-Agaricus).
    * @param {number} [context.daysSinceInoculation]
    * @param {object} [context.roomHistory] { contaminationEventsLast30d, pathogenIds:[] }
    * @param {number} [context.substratePh]
@@ -635,30 +807,62 @@
     }
 
     const safeExposure = exposure && typeof exposure === 'object' ? exposure : {};
+    // Categoría de etapa normalizada (hallazgo #6) — usada tanto para el
+    // multiplicador de susceptibilidad por etapa más abajo como para el
+    // gating del factor stagnationHours (hallazgo #15).
+    const stageCategory = ctx.stage ? normalizeStage(ctx.stage) : null;
     const factors = [];
     let weightedSum = 0;
     let weightTotal = 0;
 
     for (const f of model.factors) {
-      const normalized = factorNormalizedValue(f, safeExposure);
+      // Hallazgo #15: CO2 alto es normal (y a menudo deseable) fuera de
+      // inducción/fructificación — p.ej. >5000 ppm es rutinario en
+      // incubación (knowledge_base/01_species/pleurotus_eryngii.md). El
+      // factor de estancamiento solo cuenta cuando la etapa evaluada es
+      // 'induction' o 'fruiting'; en cualquier otra etapa (o etapa
+      // desconocida) contribuye 0 en vez de sobre-contar CO2 esperado como
+      // riesgo de contaminación.
+      const stagnationGated = f.id === 'stagnationHours' && stageCategory !== 'induction' && stageCategory !== 'fruiting';
+      const normalized = stagnationGated ? 0 : factorNormalizedValue(f, safeExposure);
       const contribution = Math.round(normalized * f.weight * 100 * 100) / 100; // en puntos de 0-100
       weightedSum += normalized * f.weight;
       weightTotal += f.weight;
-      factors.push({
+      const factorEntry = {
         id: f.id,
         label: f.label,
         contribution,
         value: factorRawValue(f.id, safeExposure),
         provenance: f.provenance
-      });
+      };
+      if (stagnationGated) {
+        factorEntry.note = 'CO2 alto es normal fuera de inducción/fructificación (p.ej. incubación); no se cuenta como estancamiento en esta etapa.';
+      }
+      if (f.id === 'condensationEvents' && safeExposure.condensationEvents == null) {
+        factorEntry.note = 'sin sensor de superficie';
+      }
+      factors.push(factorEntry);
     }
 
     let baseScore = weightTotal > 0 ? (weightedSum / weightTotal) * 100 : 0;
 
+    // Hallazgo #13: relevancia por especie/género (p.ej. Mycogone en
+    // especies no-Agaricus) atenúa el score ANTES del multiplicador de
+    // etapa, para que un patógeno poco relevante para la especie del lote
+    // no domine el ranking solo por exposición climática favorable.
+    let speciesMultiplier = 1;
+    if (model.speciesRelevance) {
+      speciesMultiplier = speciesGenusRelevance(ctx.speciesId, model.speciesRelevance);
+    }
+    baseScore *= speciesMultiplier;
+
     // Modificador por etapa de susceptibilidad: si la etapa actual no es susceptible,
-    // se atenúa el score (persiste como riesgo latente bajo, no cero).
-    const stage = ctx.stage || null;
-    const stageSusceptible = stage ? model.susceptibleStages.includes(stage) : true;
+    // se atenúa el score (persiste como riesgo latente bajo, no cero). Usa
+    // stageCategory (normalizado, hallazgo #6), no el `stage` crudo: una
+    // etapa desconocida (stageCategory null) se trata igual que "sin dato de
+    // etapa" (susceptible por defecto), en vez de fallar la comparación
+    // silenciosamente por mayúsculas/idioma como antes.
+    const stageSusceptible = stageCategory ? model.susceptibleStages.includes(stageCategory) : true;
     let stageMultiplier = stageSusceptible ? 1.0 : 0.4;
 
     // Refuerzo temprano: si el modelo marca earlyStageBoost y estamos en los primeros días,
@@ -743,7 +947,8 @@
     const disclaimer = 'Índice heurístico de riesgo de contaminación, NO una probabilidad ni un diagnóstico. ' +
       'No reemplaza inspección visual ni protocolos de bioseguridad de contamination-workflow.js.';
 
-    const exposure = extractClimateExposure(series, { now, windowHours });
+    const speciesId = (lot && (lot.speciesId || lot.especie || lot.sKey)) || null;
+    const exposure = extractClimateExposure(series, { now, windowHours, speciesId });
 
     if (!exposure.readingCount) {
       return {
@@ -760,6 +965,7 @@
 
     const context = {
       stage: lot.stage || lot.lifecycleState || null,
+      speciesId,
       daysSinceInoculation: Number.isFinite(lot.daysSinceInoculation) ? lot.daysSinceInoculation : undefined,
       roomHistory,
       substratePh: lot.substratePh
@@ -869,7 +1075,10 @@
 
   const api = {
     EXPOSURE_THRESHOLDS,
+    STAGNATION_CO2_THRESHOLDS_BY_SPECIES,
     PATHOGEN_RISK_MODELS,
+    normalizeStage,
+    getStagnationCo2Threshold,
     extractClimateExposure,
     scorePathogenRisk,
     assessLotRisk,

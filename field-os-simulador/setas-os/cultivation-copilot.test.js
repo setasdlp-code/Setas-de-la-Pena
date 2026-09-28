@@ -94,12 +94,28 @@ test('normalizeStage mapea estados en español heredado de Bitácora', () => {
   assert.equal(copilot.normalizeStage('planificado'), 'planned');
 });
 
-test('normalizeStage cae a incubation ante un estado desconocido o vacío (conservador, no lo saca del radar)', () => {
+// Regresión (hallazgo C): antes un estado desconocido/vacío caía a
+// 'incubation' "por conservador", lo que en realidad proyectaba el lote
+// como si estuviera en incubación real (reloj biológico + riesgo de
+// contaminación por etapa) sin ninguna base. Ahora cae a 'desconocido', que
+// buildLotInsights/recommendActions tratan como "sin acciones basadas en
+// etapa" en vez de inventar una etapa.
+test('normalizeStage cae a "desconocido" ante un estado desconocido o vacío (ya no a incubation)', () => {
   const copilot = freshCopilot();
-  assert.equal(copilot.normalizeStage(undefined), 'incubation');
-  assert.equal(copilot.normalizeStage(null), 'incubation');
-  assert.equal(copilot.normalizeStage(''), 'incubation');
-  assert.equal(copilot.normalizeStage('estado-inventado-xyz'), 'incubation');
+  assert.equal(copilot.normalizeStage(undefined), 'desconocido');
+  assert.equal(copilot.normalizeStage(null), 'desconocido');
+  assert.equal(copilot.normalizeStage(''), 'desconocido');
+  assert.equal(copilot.normalizeStage('estado-inventado-xyz'), 'desconocido');
+});
+
+// Regresión (hallazgo C): 'maturation' y 'resting' son ahora etapas propias,
+// no se funden en 'induction'/'fruiting' como antes.
+test('normalizeStage mapea maturation y resting como etapas explícitas, no fundidas en induction/fruiting', () => {
+  const copilot = freshCopilot();
+  assert.equal(copilot.normalizeStage('maturation'), 'maturation');
+  assert.equal(copilot.normalizeStage('maduracion'), 'maturation');
+  assert.equal(copilot.normalizeStage('resting'), 'resting');
+  assert.equal(copilot.normalizeStage('descanso'), 'resting');
 });
 
 test('buildLotInsights compone reloj biológico y riesgo de contaminación con confianza nunca alta', () => {
@@ -123,8 +139,45 @@ test('buildLotInsights degrada con gracia si un lote no trae datos (objeto vací
   const copilot = freshCopilot();
   const insights = copilot.buildLotInsights({ lot: {}, series: [], now: NOW });
   assert.equal(insights.lotId, null);
-  assert.equal(insights.stage, 'incubation');
+  assert.equal(insights.stage, 'desconocido');
+  // Etapa desconocida: no se invoca biological-clock.js (hallazgo C) — ese
+  // motor no distingue "desconocido" de "sin dato" y por defecto asumiría
+  // 'incubation', reintroduciendo justo el problema que se corrige aquí.
+  assert.equal(insights.biologicalClock, null);
   assert.notEqual(insights.confidence, 'high');
+});
+
+// Regresión (hallazgo C): un lote con estado no reconocido no debe generar
+// ninguna acción basada en etapa (ni "etapa: listo_probable" ni "clima" por
+// estrés térmico), aunque sí puede seguir generando otras sugerencias
+// (p.ej. de contaminación) porque esas no dependen de biological-clock.js.
+test('recommendActions no genera acciones de etapa/clima para un lote con estado desconocido', () => {
+  const copilot = freshCopilot();
+  const lots = [{ id: 'L-DESCONOCIDO', especie: 'p_ostreatus_gris', estado: 'estado-que-no-existe', fechaInoculacion: '2026-09-01', sala: 'm1' }];
+  const actions = copilot.recommendActions({ lots, now: NOW });
+  assert.ok(!actions.some((a) => a.kind === 'etapa'));
+  assert.ok(!actions.some((a) => a.kind === 'clima'));
+});
+
+// Regresión (hallazgo C): 'resting' (reposo entre oleadas) es 'no_aplica'
+// para biological-clock.js (LIFECYCLE_STAGE_MAP), y ese status nunca debe
+// producir la acción de etapa "listo_probable".
+test('buildLotInsights: lote en resting produce status biológico no_aplica y ninguna acción de etapa', () => {
+  const copilot = freshCopilot();
+  const insights = copilot.buildLotInsights({
+    lot: { id: 'L-RESTING', especie: 'p_ostreatus_gris', estado: 'resting', fechaInoculacion: '2026-08-01' },
+    series: [],
+    now: NOW,
+  });
+  assert.equal(insights.stage, 'resting');
+  assert.ok(insights.biologicalClock, 'biological-clock sigue disponible para resting (a diferencia de desconocido)');
+  assert.equal(insights.biologicalClock.projection.status, 'no_aplica');
+
+  const actions = copilot.recommendActions({
+    lots: [{ id: 'L-RESTING', especie: 'p_ostreatus_gris', estado: 'resting', fechaInoculacion: '2026-08-01' }],
+    now: NOW,
+  });
+  assert.ok(!actions.some((a) => a.kind === 'etapa' && a.lotId === 'L-RESTING'));
 });
 
 test('buildLotInsights funciona en modo degradado sin biological-clock ni vision-diagnosis', () => {
@@ -252,7 +305,10 @@ test('recommendActions funciona en modo degradado sin harvest-calendar (require 
   });
 });
 
-test('toTasks convierte acciones en tareas de task-engine.js con generatedBy trazable al copiloto', () => {
+// Regresión (Parte B): GENERATED_BY_SOURCES de task-engine.js ahora incluye
+// 'copiloto' directamente, así que toTasks ya no necesita el workaround
+// { source: 'perito', ref: 'copiloto' }.
+test('toTasks convierte acciones en tareas de task-engine.js con generatedBy.source "copiloto"', () => {
   const copilot = freshCopilot();
   const lots = [{ id: 'L-013', especie: 'p_ostreatus_gris', estado: 'fructificacion', fechaInoculacion: '2026-08-01' }];
   const actions = copilot.recommendActions({ lots, now: NOW });
@@ -261,8 +317,7 @@ test('toTasks convierte acciones en tareas de task-engine.js con generatedBy tra
   tasks.forEach((t) => {
     assert.equal(t.status, 'pending');
     assert.ok(t.generatedBy);
-    assert.equal(t.generatedBy.source, 'perito');
-    assert.equal(t.generatedBy.ref, 'copiloto');
+    assert.equal(t.generatedBy.source, 'copiloto');
   });
 });
 
