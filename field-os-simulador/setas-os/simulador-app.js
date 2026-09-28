@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: bb76ab3c50fba6ffe2fb08760fee45ced1fb6ee9aaa09fb47d178c15362d1c7f
+// source-hash: 8620d6ec626c084fe0cfedc13b993b88be2d350af52d7a94a283178249af468f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
@@ -4467,6 +4467,9 @@ function SimuladorShell(props) {
     }
   };
   const [selectedClimateRoom, setSelectedClimateRoom] = useState("martha_01");
+  const [copilotVisionResult, setCopilotVisionResult] = useState(null);
+  const [copilotVisionError, setCopilotVisionError] = useState(null);
+  const [copilotVisionBusy, setCopilotVisionBusy] = useState(false);
   const [climateTimeRange, setClimateTimeRange] = useState("24h");
   const [faePulseActive, setFaePulseActive] = useState(false);
   const [humidifierOverride, setHumidifierOverride] = useState(null);
@@ -9058,6 +9061,109 @@ BATCH (${numBags}×${kgBag} kg):
       recentActivity = [];
     }
     const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
+    const copilotLots = activeLotes.map((l) => ({
+      id: l.id || l.codigo || null,
+      especie: l.especie || l.speciesKey || l.sKey || null,
+      estado: l.estado || null,
+      fechaInoculacion: l.fechaInoculacion || l.inocDate || null,
+      sala: l.sala || l.ubicacion || null
+    }));
+    const copilotSeriesByRoom = {};
+    try {
+      const camIdToRoomId = {};
+      Object.keys(ROOMS_CONFIG).forEach((rid) => {
+        camIdToRoomId[ROOMS_CONFIG[rid].cameraId] = rid;
+      });
+      camaras.forEach((cam) => {
+        if (!cam || !cam.id) return;
+        const roomId = camIdToRoomId[cam.id] || cam.id;
+        const temps = Array.isArray(cam.tempSeries) ? cam.tempSeries : [];
+        const hums = Array.isArray(cam.humSeries) ? cam.humSeries : [];
+        const co2s = Array.isArray(cam.co2Series) ? cam.co2Series : [];
+        const n = Math.max(temps.length, hums.length, co2s.length);
+        if (!n) return;
+        const stepMs = 36e5;
+        const series = [];
+        for (let i = 0; i < n; i++) {
+          const idxFromEnd = n - 1 - i;
+          series.push({ t: operationalNow - idxFromEnd * stepMs, temperature_c: temps[i], rh_pct: hums[i], co2_ppm: co2s[i] });
+        }
+        copilotSeriesByRoom[roomId] = series;
+      });
+    } catch (e) {
+    }
+    let copilotBriefing = null;
+    try {
+      const CopilotApi = typeof window !== "undefined" ? window.SetasCultivationCopilot : null;
+      if (CopilotApi && typeof CopilotApi.buildCopilotBriefing === "function") {
+        copilotBriefing = CopilotApi.buildCopilotBriefing({
+          lots: copilotLots,
+          seriesByRoom: copilotSeriesByRoom,
+          commitments: [],
+          now: operationalNow
+        });
+      }
+    } catch (e) {
+      copilotBriefing = null;
+    }
+    const copilotTopActions = copilotBriefing ? copilotBriefing.actions.slice(0, 5) : [];
+    const copilotActionColor = (priority) => priority === "critical" ? "var(--status-error,#B53A25)" : priority === "high" ? "var(--ochre-700,#A66A1E)" : priority === "normal" ? "var(--ink-1,#3A362E)" : "var(--ink-2,#6B6759)";
+    const copilotConfidenceLabel = (c) => c === "medium" ? "confianza media" : "confianza baja";
+    const handleCopilotExportIcs = () => {
+      try {
+        const HarvestApi = typeof window !== "undefined" ? window.SetasHarvestCalendar : null;
+        if (!HarvestApi || typeof HarvestApi.buildHarvestEvents !== "function") return;
+        const events = HarvestApi.buildHarvestEvents(copilotLots, { now: operationalNow, horizonDays: 60 });
+        const icsText = HarvestApi.toICS(events, { now: operationalNow, calendarName: "Setas OS · Cosechas" });
+        const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "setas-os-cosechas.ics";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2e3);
+      } catch (e) {
+      }
+    };
+    const handleCopilotPhotoChange = (ev) => {
+      try {
+        const file = ev && ev.target && ev.target.files && ev.target.files[0];
+        ev.target.value = "";
+        if (!file) return;
+        setCopilotVisionError(null);
+        setCopilotVisionResult(null);
+        const VisionApi = typeof window !== "undefined" ? window.SetasVisionDiagnosis : null;
+        if (!VisionApi || typeof VisionApi.analyzeImageElement !== "function") {
+          setCopilotVisionError("El cribado de foto no está disponible en este dispositivo.");
+          return;
+        }
+        setCopilotVisionBusy(true);
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const result = VisionApi.analyzeImageElement(img);
+            setCopilotVisionResult(result);
+          } catch (err) {
+            setCopilotVisionError("No se pudo analizar la foto. Intenta de nuevo con buena luz y foco.");
+          } finally {
+            setCopilotVisionBusy(false);
+            URL.revokeObjectURL(objectUrl);
+          }
+        };
+        img.onerror = () => {
+          setCopilotVisionError("No se pudo cargar la imagen seleccionada.");
+          setCopilotVisionBusy(false);
+          URL.revokeObjectURL(objectUrl);
+        };
+        img.src = objectUrl;
+      } catch (e) {
+        setCopilotVisionError("No se pudo procesar la foto.");
+        setCopilotVisionBusy(false);
+      }
+    };
     return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit" }, /* @__PURE__ */ React.createElement("div", { className: "home-header-cockpit" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 0, background: operationStatus.color, display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-widest, 0.12em)", textTransform: "uppercase", color: operationStatus.color } }, "CONTROL · TURNO ACTUAL"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2, #6B6759)" } }, "· Tenjo · 2.592 msnm")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: 'var(--font-serif, "Gaya", serif)', fontWeight: 700, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.01em", color: "var(--ink-0, #1E1D19)", margin: 0 } }, "Tablero de Control")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
       { value: activeLotes.length, label: "Lotes activos", icon: IconMicroscope, tone: "neutral" },
       { value: pendingTaskCount, label: "Tareas pendientes", icon: IconClipboard, tone: pendingTaskCount > 0 ? "attention" : "neutral" },
@@ -9164,7 +9270,7 @@ BATCH (${numBags}×${kgBag} kg):
         style: { cursor: "pointer", minHeight: 40, padding: "0 16px", background: "var(--paper-0)", color: "var(--ink-0)", border: "1px solid var(--line-0)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" }
       },
       "Cerrar jornada"
-    ))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), /* @__PURE__ */ React.createElement("div", { style: {
+    ))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), (copilotBriefing || typeof window !== "undefined" && window.SetasVisionDiagnosis) && /* @__PURE__ */ React.createElement("div", { className: "home-cultivation-copilot", style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: 0, padding: "20px", marginTop: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-2)" } }, "Copiloto de cultivo · sugerencias heurísticas"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", letterSpacing: "-0.01em", color: "var(--ink-0)", marginTop: 2, marginBottom: 0 } }, "Próximas mejores acciones")), copilotBriefing && copilotBriefing.harvestCalendar && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Próx. 14 días"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-lg)", color: "var(--ink-0)" } }, copilotBriefing.harvestCalendar.kgNext14d, " kg"))), copilotBriefing && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-1)", marginTop: 0, marginBottom: 14, lineHeight: 1.4 } }, copilotBriefing.headline), copilotTopActions.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 } }, copilotTopActions.map((action) => /* @__PURE__ */ React.createElement("div", { key: action.id, style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "10px 12px", border: "1px solid var(--border-hairline)", borderLeft: `4px solid ${copilotActionColor(action.priority)}`, borderRadius: 0, background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: copilotActionColor(action.priority), border: `1px solid ${copilotActionColor(action.priority)}`, padding: "1px 5px" } }, action.kind), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, action.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)", border: "1px solid var(--border-hairline)", padding: "1px 5px" } }, copilotConfidenceLabel(action.confidence))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)", marginTop: 4, lineHeight: 1.4 } }, action.why))))) : /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", marginBottom: 14 } }, "Sin sugerencias del copiloto por ahora."), copilotBriefing.harvestCalendar && copilotBriefing.harvestCalendar.nextDeficitWeek && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ochre-700)", marginBottom: 14 } }, "Déficit proyectado en ", copilotBriefing.harvestCalendar.nextDeficitWeek.week, ": ", copilotBriefing.harvestCalendar.nextDeficitWeek.deficitKg, " kg (oferta ", copilotBriefing.harvestCalendar.nextDeficitWeek.supply, " kg vs. demanda ", copilotBriefing.harvestCalendar.nextDeficitWeek.demand, " kg)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: handleCopilotExportIcs, style: { cursor: "pointer", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 12px", minHeight: 44, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-0)" } }, "Exportar calendario (.ics)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)" } }, "Motores: ", copilotBriefing.enginesUsed.join(", ") || "ninguno disponible", copilotBriefing.enginesMissing.length > 0 ? ` · faltan: ${copilotBriefing.enginesMissing.join(", ")}` : "")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "11px", color: "var(--ink-2)", marginTop: 10, lineHeight: 1.4, fontStyle: "italic" } }, copilotBriefing.disclaimer)), typeof window !== "undefined" && window.SetasVisionDiagnosis && /* @__PURE__ */ React.createElement("div", { style: { marginTop: copilotBriefing ? 18 : 0, paddingTop: copilotBriefing ? 16 : 0, borderTop: copilotBriefing ? "1px solid var(--border-hairline)" : "none" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "Cribado de foto (bolsa/bloque)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 12px", minHeight: 44, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-0)" } }, copilotVisionBusy ? "Analizando…" : "Tomar/elegir foto", /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", capture: "environment", onChange: handleCopilotPhotoChange, style: { display: "none" }, disabled: copilotVisionBusy })), copilotVisionError && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error,#B53A25)", marginTop: 8 } }, copilotVisionError), copilotVisionResult && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: "10px 12px", border: "1px solid var(--border-hairline)", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, "Colonización estimada: ", copilotVisionResult.colonizationPct, "%"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)", border: "1px solid var(--border-hairline)", padding: "1px 5px" } }, copilotConfidenceLabel(copilotVisionResult.confidence))), copilotVisionResult.flags.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 } }, copilotVisionResult.flags.map((flag, i) => /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "2px 6px", border: "1px solid var(--ochre-700)", color: "var(--ochre-700)" } }, flag.pathogenId, " · ", flag.severity))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 8 } }, copilotVisionResult.recommendation), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "11px", color: "var(--ink-2)", marginTop: 6, fontStyle: "italic" } }, copilotVisionResult.disclaimer)))), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: 0,

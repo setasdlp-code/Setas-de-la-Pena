@@ -26,18 +26,37 @@
 
   // --- Dependencias con fallback (Node require / globals de navegador) ---
   let ClimateMath = null;
-  let ContaminationWorkflow = null;
 
   if (isNode) {
     try { ClimateMath = require('./climate-math.js'); } catch (e) { ClimateMath = null; }
-    try { ContaminationWorkflow = require('./contamination-workflow.js'); } catch (e) { ContaminationWorkflow = null; }
   }
   if (!ClimateMath && typeof globalThis !== 'undefined' && globalThis.SetasClimate) {
     ClimateMath = globalThis.SetasClimate;
   }
-  if (!ContaminationWorkflow && typeof globalThis !== 'undefined' && globalThis.SetasContaminationWorkflow) {
-    ContaminationWorkflow = globalThis.SetasContaminationWorkflow;
-  }
+
+  // contamination-workflow.js se resuelve de forma PEREZOSA (en cada llamada,
+  // no al cargar este módulo). En el navegador, auth-gate.js carga este
+  // archivo dentro de PROTECTED_APP_SCRIPTS, que se ejecuta ANTES que
+  // DC_RUNTIME_SCRIPTS (donde vive contamination-workflow.js) — ver
+  // firebase/auth-gate.js. Si PATHOGENS_CATALOG se capturara aquí arriba en
+  // tiempo de carga, quedaría congelado en `{}` para siempre en el navegador
+  // real, aunque contamination-workflow.js termine cargando un instante
+  // después. Node no tiene este problema (require es síncrono e inmediato),
+  // pero se usa la misma función perezosa en ambos entornos por consistencia.
+  const resolveContaminationWorkflow = () => {
+    if (isNode) {
+      try { return require('./contamination-workflow.js'); } catch (e) { /* no disponible */ }
+    }
+    if (typeof globalThis !== 'undefined' && globalThis.SetasContaminationWorkflow) {
+      return globalThis.SetasContaminationWorkflow;
+    }
+    return null;
+  };
+
+  const getPathogensCatalog = () => {
+    const workflow = resolveContaminationWorkflow();
+    return (workflow && workflow.PATHOGENS_CATALOG) || {};
+  };
 
   // Fallback mínimo de calcDewPoint si el módulo climático no está disponible
   // (mantiene el módulo utilizable en aislamiento, p.ej. en tests unitarios parciales).
@@ -53,8 +72,6 @@
       if (denominator === 0) return null;
       return Math.round(((237.3 * gamma) / denominator) * 10) / 10;
     };
-
-  const PATHOGENS_CATALOG = (ContaminationWorkflow && ContaminationWorkflow.PATHOGENS_CATALOG) || {};
 
   // ---------------------------------------------------------------------
   // Umbrales de exposición climática. Todos heurísticos de manejo de cultivo,
@@ -856,8 +873,18 @@
     extractClimateExposure,
     scorePathogenRisk,
     assessLotRisk,
-    assessRoomRisk
+    assessRoomRisk,
+    getPathogensCatalog
   };
+
+  // PATHOGENS_CATALOG se expone como propiedad de solo lectura resuelta en
+  // cada acceso (no en la carga del módulo) para que consultarla después de
+  // que contamination-workflow.js termine de cargar siempre vea el catálogo
+  // real, sin importar el orden de <script> en el navegador.
+  Object.defineProperty(api, 'PATHOGENS_CATALOG', {
+    enumerable: true,
+    get: getPathogensCatalog
+  });
 
   return api;
 });
