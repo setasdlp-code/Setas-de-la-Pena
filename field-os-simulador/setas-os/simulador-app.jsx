@@ -6349,6 +6349,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
   const [selectedClimateRoom,setSelectedClimateRoom]=useState('martha_01');
+  // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
+  // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
+  // de React no pueden llamarse condicionalmente — ese bloque solo se ejecuta
+  // cuando tab==='home'/'inicio'.
+  const [copilotVisionResult,setCopilotVisionResult]=useState(null);
+  const [copilotVisionError,setCopilotVisionError]=useState(null);
+  const [copilotVisionBusy,setCopilotVisionBusy]=useState(false);
   const [climateTimeRange,setClimateTimeRange]=useState('24h');
   const [faePulseActive,setFaePulseActive]=useState(false);
   const [humidifierOverride,setHumidifierOverride]=useState(null);
@@ -12494,6 +12501,120 @@ body{margin:0;padding:20px 24px;background:#fff;}
           try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
           const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
+          // ————— COPILOTO DE CULTIVO (Fase 3: 4 motores compuestos) —————
+          // Todo este bloque está guardado con try/catch: si falta un motor o
+          // los datos vienen en una forma inesperada, el panel simplemente no
+          // se muestra (copilotBriefing queda null) y el resto de Hoy sigue
+          // funcionando igual, sin romperse.
+          const copilotLots = activeLotes.map(l => ({
+            id: l.id || l.codigo || null,
+            especie: l.especie || l.speciesKey || l.sKey || null,
+            estado: l.estado || null,
+            fechaInoculacion: l.fechaInoculacion || l.inocDate || null,
+            sala: l.sala || l.ubicacion || null,
+          }));
+
+          const copilotSeriesByRoom = {};
+          try {
+            const camIdToRoomId = {};
+            Object.keys(ROOMS_CONFIG).forEach(rid => { camIdToRoomId[ROOMS_CONFIG[rid].cameraId] = rid; });
+            camaras.forEach(cam => {
+              if (!cam || !cam.id) return;
+              const roomId = camIdToRoomId[cam.id] || cam.id;
+              const temps = Array.isArray(cam.tempSeries) ? cam.tempSeries : [];
+              const hums = Array.isArray(cam.humSeries) ? cam.humSeries : [];
+              const co2s = Array.isArray(cam.co2Series) ? cam.co2Series : [];
+              const n = Math.max(temps.length, hums.length, co2s.length);
+              if (!n) return;
+              // La demo de cámaras no trae timestamp por lectura: se asume 1
+              // lectura/hora terminando en "ahora" solo para poder alimentar
+              // los motores, que sí requieren series con `t`. Telemetría real
+              // (roomLive.series) trae su propio `t` y no pasa por aquí.
+              const stepMs = 3600000;
+              const series = [];
+              for (let i = 0; i < n; i++) {
+                const idxFromEnd = n - 1 - i;
+                series.push({ t: operationalNow - idxFromEnd * stepMs, temperature_c: temps[i], rh_pct: hums[i], co2_ppm: co2s[i] });
+              }
+              copilotSeriesByRoom[roomId] = series;
+            });
+          } catch (e) { /* copilotSeriesByRoom queda parcial/vacío; el copiloto sigue sin telemetría de cámara */ }
+
+          let copilotBriefing = null;
+          try {
+            const CopilotApi = typeof window !== 'undefined' ? window.SetasCultivationCopilot : null;
+            if (CopilotApi && typeof CopilotApi.buildCopilotBriefing === 'function') {
+              copilotBriefing = CopilotApi.buildCopilotBriefing({
+                lots: copilotLots,
+                seriesByRoom: copilotSeriesByRoom,
+                commitments: [],
+                now: operationalNow,
+              });
+            }
+          } catch (e) { copilotBriefing = null; }
+
+          const copilotTopActions = copilotBriefing ? copilotBriefing.actions.slice(0, 5) : [];
+          const copilotActionColor = (priority) => (
+            priority === 'critical' ? 'var(--status-error,#B53A25)'
+            : priority === 'high' ? 'var(--ochre-700,#A66A1E)'
+            : priority === 'normal' ? 'var(--ink-1,#3A362E)'
+            : 'var(--ink-2,#6B6759)'
+          );
+          const copilotConfidenceLabel = (c) => (c === 'medium' ? 'confianza media' : 'confianza baja');
+
+          const handleCopilotExportIcs = () => {
+            try {
+              const HarvestApi = typeof window !== 'undefined' ? window.SetasHarvestCalendar : null;
+              if (!HarvestApi || typeof HarvestApi.buildHarvestEvents !== 'function') return;
+              const events = HarvestApi.buildHarvestEvents(copilotLots, { now: operationalNow, horizonDays: 60 });
+              const icsText = HarvestApi.toICS(events, { now: operationalNow, calendarName: 'Setas OS · Cosechas' });
+              const blob = new Blob([icsText], { type: 'text/calendar;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = 'setas-os-cosechas.ics';
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(url), 2000);
+            } catch (e) { /* sin descarga si algo falla; no debe romper Hoy */ }
+          };
+
+          const handleCopilotPhotoChange = (ev) => {
+            try {
+              const file = ev && ev.target && ev.target.files && ev.target.files[0];
+              ev.target.value = ''; // permite volver a elegir la misma foto
+              if (!file) return;
+              setCopilotVisionError(null);
+              setCopilotVisionResult(null);
+              const VisionApi = typeof window !== 'undefined' ? window.SetasVisionDiagnosis : null;
+              if (!VisionApi || typeof VisionApi.analyzeImageElement !== 'function') {
+                setCopilotVisionError('El cribado de foto no está disponible en este dispositivo.');
+                return;
+              }
+              setCopilotVisionBusy(true);
+              const objectUrl = URL.createObjectURL(file);
+              const img = new Image();
+              img.onload = () => {
+                try {
+                  const result = VisionApi.analyzeImageElement(img);
+                  setCopilotVisionResult(result);
+                } catch (err) {
+                  setCopilotVisionError('No se pudo analizar la foto. Intenta de nuevo con buena luz y foco.');
+                } finally {
+                  setCopilotVisionBusy(false);
+                  URL.revokeObjectURL(objectUrl);
+                }
+              };
+              img.onerror = () => {
+                setCopilotVisionError('No se pudo cargar la imagen seleccionada.');
+                setCopilotVisionBusy(false);
+                URL.revokeObjectURL(objectUrl);
+              };
+              img.src = objectUrl;
+            } catch (e) {
+              setCopilotVisionError('No se pudo procesar la foto.');
+              setCopilotVisionBusy(false);
+            }
+          };
+
           return (
             <div className="home-cockpit">
               {/* CABECERA PRINCIPAL DEL CENTRO DE MANDO */}
@@ -12857,6 +12978,125 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   )}
                 </section>
               </div>
+
+              {/* COPILOTO DE CULTIVO — compone biological-clock / contamination-risk /
+                  harvest-calendar / vision-diagnosis. Se oculta por completo si el
+                  motor o los datos no están disponibles (nunca rompe Hoy). */}
+              {(copilotBriefing || (typeof window !== 'undefined' && window.SetasVisionDiagnosis)) && (
+                <div className="home-cultivation-copilot" style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'20px',marginTop:18}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                        Copiloto de cultivo · sugerencias heurísticas
+                      </span>
+                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
+                        Próximas mejores acciones
+                      </h2>
+                    </div>
+                    {copilotBriefing && copilotBriefing.harvestCalendar && (
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Próx. 14 días</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-lg)',color:'var(--ink-0)'}}>{copilotBriefing.harvestCalendar.kgNext14d} kg</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {copilotBriefing && (
+                    <React.Fragment>
+                      <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',marginTop:0,marginBottom:14,lineHeight:1.4}}>
+                        {copilotBriefing.headline}
+                      </p>
+
+                      {copilotTopActions.length > 0 ? (
+                        <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
+                          {copilotTopActions.map(action => (
+                            <div key={action.id} style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,padding:'10px 12px',border:'1px solid var(--border-hairline)',borderLeft:`4px solid ${copilotActionColor(action.priority)}`,borderRadius:0,background:'var(--paper-1)'}}>
+                              <div style={{minWidth:0}}>
+                                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:copilotActionColor(action.priority),border:`1px solid ${copilotActionColor(action.priority)}`,padding:'1px 5px'}}>
+                                    {action.kind}
+                                  </span>
+                                  <span style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{action.title}</span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)',border:'1px solid var(--border-hairline)',padding:'1px 5px'}}>
+                                    {copilotConfidenceLabel(action.confidence)}
+                                  </span>
+                                </div>
+                                <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:4,lineHeight:1.4}}>{action.why}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',marginBottom:14}}>
+                          Sin sugerencias del copiloto por ahora.
+                        </div>
+                      )}
+
+                      {copilotBriefing.harvestCalendar && copilotBriefing.harvestCalendar.nextDeficitWeek && (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ochre-700)',marginBottom:14}}>
+                          Déficit proyectado en {copilotBriefing.harvestCalendar.nextDeficitWeek.week}: {copilotBriefing.harvestCalendar.nextDeficitWeek.deficitKg} kg
+                          (oferta {copilotBriefing.harvestCalendar.nextDeficitWeek.supply} kg vs. demanda {copilotBriefing.harvestCalendar.nextDeficitWeek.demand} kg).
+                        </div>
+                      )}
+
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                        <button type="button" onClick={handleCopilotExportIcs} style={{cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
+                          Exportar calendario (.ics)
+                        </button>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)'}}>
+                          Motores: {copilotBriefing.enginesUsed.join(', ') || 'ninguno disponible'}
+                          {copilotBriefing.enginesMissing.length > 0 ? ` · faltan: ${copilotBriefing.enginesMissing.join(', ')}` : ''}
+                        </span>
+                      </div>
+
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:'11px',color:'var(--ink-2)',marginTop:10,lineHeight:1.4,fontStyle:'italic'}}>
+                        {copilotBriefing.disclaimer}
+                      </div>
+                    </React.Fragment>
+                  )}
+
+                  {/* Cribado de foto — tamizaje visual offline, nunca un diagnóstico */}
+                  {typeof window !== 'undefined' && window.SetasVisionDiagnosis && (
+                    <div style={{marginTop:copilotBriefing?18:0,paddingTop:copilotBriefing?16:0,borderTop:copilotBriefing?'1px solid var(--border-hairline)':'none'}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-2)',marginBottom:8}}>
+                        Cribado de foto (bolsa/bloque)
+                      </div>
+                      <label style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
+                        {copilotVisionBusy ? 'Analizando…' : 'Tomar/elegir foto'}
+                        <input type="file" accept="image/*" capture="environment" onChange={handleCopilotPhotoChange} style={{display:'none'}} disabled={copilotVisionBusy} />
+                      </label>
+
+                      {copilotVisionError && (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error,#B53A25)',marginTop:8}}>{copilotVisionError}</div>
+                      )}
+
+                      {copilotVisionResult && (
+                        <div style={{marginTop:10,padding:'10px 12px',border:'1px solid var(--border-hairline)',background:'var(--paper-1)'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>
+                              Colonización estimada: {copilotVisionResult.colonizationPct}%
+                            </span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)',border:'1px solid var(--border-hairline)',padding:'1px 5px'}}>
+                              {copilotConfidenceLabel(copilotVisionResult.confidence)}
+                            </span>
+                          </div>
+                          {copilotVisionResult.flags.length > 0 && (
+                            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:8}}>
+                              {copilotVisionResult.flags.map((flag,i) => (
+                                <span key={i} style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'2px 6px',border:'1px solid var(--ochre-700)',color:'var(--ochre-700)'}}>
+                                  {flag.pathogenId} · {flag.severity}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:8}}>{copilotVisionResult.recommendation}</div>
+                          <div style={{fontFamily:'var(--font-sans)',fontSize:'11px',color:'var(--ink-2)',marginTop:6,fontStyle:'italic'}}>{copilotVisionResult.disclaimer}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
               <div style={{

@@ -51,6 +51,7 @@
     'incident',
     'operator',
     'perito',
+    'copiloto',
     'schedule',
     'inventory',
   ]);
