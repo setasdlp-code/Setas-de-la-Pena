@@ -389,7 +389,7 @@ test('restaurant tasting dossier modal provides organoleptic notes and chef pair
 
 test('home cockpit computes FIFO stock aggregations and displays critical substrate alerts with direct purchase CTA', () => {
   assert.match(source, /criticalStockItems/);
-  assert.match(source, /lowStockThresholds/);
+  assert.match(source, /const criticalStockItems = stockAlerts;/);
   assert.match(source, /Alerta de Stock Crítico/);
   assert.match(source, /Registrar Compra \+/);
   assert.match(styles, /\.sim-root \.stock-critical-card/);
@@ -587,16 +587,13 @@ test('la Bodega muestra físico, reservado y disponible ahora que el intervalo e
 test('las alertas de stock bajo (crítico/bajo/OK y el banner de Stock Crítico) comparan contra el disponible, no el físico', () => {
   assert.match(source, /r\.disponible<r\.alertaMin/);
   assert.match(source, /r\.disponible<r\.alertaMin\*2\.5/);
-  // Tabla de Bodega y Centro de Mando: ambos criticalStockItems usan
-  // availability(...).disponible, no cantidadKgDisponible agregado en bruto.
-  const stockTabStart = source.indexOf("const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };");
-  const stockTabItems = source.slice(stockTabStart, stockTabStart + 1600);
-  // `incoming` ya no es un placeholder vacío: viene de las compras "por
-  // recibir" (purchases.js), así que `entrante` en availability() es real.
-  assert.match(stockTabItems, /availabilityFor=\(ingId\)=>ledgerApi\?ledgerApi\.availability\(ingId,\{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date\.now\(\)\}\):null/);
-  assert.match(stockTabItems, /const av=availabilityFor\(ing\.id\);/);
-  const homeItemsStart = source.indexOf('const homeLedgerApi=');
-  assert.ok(homeItemsStart > -1);
-  const homeItems = source.slice(homeItemsStart, homeItemsStart + 500);
-  assert.match(homeItems, /homeLedgerApi\.availability\(ing\.id,\{lots:invLotes,ledger:invReservas,incoming:homeIncomingCompras,nowMs:Date\.now\(\)\}\)/);
+  // Badge, Bodega and Hoy share one reservation-aware alert policy.
+  // Domain behavior (scope, thresholds, incoming and expiry) is covered in
+  // inventory-alerts.test.js; this test only guards the UI wiring.
+  assert.match(source, /stockAlerts=window\.SetasInventoryLedger\.lowStockAlerts\(\{/);
+  assert.match(source, /ingredients:INGS,lots:invLotes,ledger:invReservas/);
+  assert.match(source, /thresholds:alertaConfig,nowMs:Date\.now\(\)/);
+  assert.match(source, /incoming:window\.SetasPurchases\?window\.SetasPurchases\.incomingFromCompras\(invCompras\)/);
+  assert.equal((source.match(/const criticalStockItems = stockAlerts;/g)||[]).length,2);
+  assert.match(source, /const lowStockCount=stockAlerts\.length/);
 });
