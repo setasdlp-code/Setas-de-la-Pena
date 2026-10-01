@@ -286,6 +286,20 @@
     return { ...stats, batchesConReserva: batchesConReserva.size };
   };
 
+  /** Shared alert policy: only registered active catalog ingredients are tracked.
+   * Depleted active lots still count; deleted/inactive lots and the rest of the
+   * catalog do not. Pending purchases remain separate from available stock.
+   */
+  const lowStockAlerts = ({ ingredients = [], lots = [], ledger = [], incoming = [], thresholds = {}, nowMs } = {}) => {
+    const registered = new Set(lots.filter(l => l.activo).map(l => l.ingredienteId));
+    return ingredients.filter(ing => registered.has(ing.id)).map(ing => {
+      const configured = thresholds[ing.id];
+      const threshold = typeof configured === 'number' && Number.isFinite(configured) && configured >= 0 ? configured : 2;
+      const av = availability(ing.id, { lots, ledger, incoming, nowMs });
+      return { ing, stockKg: av.disponible, threshold, entranteKg: av.entrante, isLow: av.disponible < threshold };
+    }).filter(item => item.isLow);
+  };
+
   const api = {
     RESERVATION_STATES,
     RESERVATION_STATE_LABELS,
@@ -296,6 +310,7 @@
     releaseForBatch,
     expireDue,
     availability,
+    lowStockAlerts,
     checkPlan,
     reservationsForPlan,
     ledgerStats,

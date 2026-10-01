@@ -53,7 +53,7 @@ test('context tabs are keyboard accessible and mobile targets stay usable', () =
 test('badges use live local state and duplicate simulator chips stay hidden', () => {
   assert.match(shell, /hasStockBadge:s\.stockAlertCount>0/);
   assert.match(shell, /hasClimaBadge:climateAlertList\.length>0/);
-  assert.match(jsx, /const lowStockCount=useMemo/);
+  assert.match(jsx, /const lowStockCount=stockAlerts\.length/);
   assert.match(jsx, /props\.onStockAlertChange\(lowStockCount\)/);
   assert.match(css, /\.sim-root \.fos-chips\{display:none!important;\}/);
   assert.match(css, /\.species-bridge\{position:sticky!important;bottom:0!important;top:auto!important;/);
