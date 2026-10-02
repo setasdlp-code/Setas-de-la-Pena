@@ -1,9 +1,13 @@
 ---
 title: "Corroboración de discrepancias entre Setas OS y knowledge_base"
 category: research
-status: "PENDIENTE DE VALIDACIÓN"
+status: "PENDIENTE DE VALIDACIÓN · REVISADA"
 confidence: medium
 date: 2026-09-28
+last_reviewed: 2026-10-02
+revisions:
+  - date: 2026-10-02
+    change: "Corregida la conclusión de temperatura de incubación (iba en dirección contraria) y reclasificado el delta de autocalentamiento como supuesto, no hallazgo. Añadidos los veredictos de la segunda ronda de investigación."
 species:
   - "Pleurotus ostreatus"
   - "Ganoderma lucidum"
@@ -28,6 +32,13 @@ related:
 > parámetros activos. Registra evidencia externa para que las decisiones sobre
 > qué lado corregir se tomen con las fuentes a la vista, y para que no haya que
 > re-derivarlas. Ningún valor de `knowledge_base/` fue editado a partir de ella.
+>
+> **Revisada el 2026-10-02.** Una segunda ronda de investigación corrigió dos
+> afirmaciones de la primera versión: la conclusión sobre temperatura de
+> incubación estaba invertida, y el delta de autocalentamiento del bloque se daba
+> como hallazgo cuando es un supuesto operativo sin respaldo revisado por pares.
+> Ambas quedan anuladas y anotadas en su sección. Los veredictos de esa segunda
+> ronda están en «Preguntas abiertas».
 
 ## Por qué existe
 
@@ -48,7 +59,7 @@ espectro— más que sobre la calidad del KB.
 | EB objetivo / óptimo | 80 / 100% | "referencia 40–70%, sin validar" | App calibrado al techo; >100% son acumulados de 4–6 cosechas | **Media-alta** |
 | Umbral de contaminación | 15% (alerta) | revisar a 10% | Benchmark comercial real 2–5%; el KB es incluso laxo | **Media** |
 | Fructificación *P. ostreatus* | 10–21 °C | 13–24 °C (óptimo 15–20) | KB gana; el valor del app no corresponde a ninguna fuente | **Media-alta** |
-| Incubación *P. ostreatus* | 22–27 °C (antes) | 20–24 °C | Ninguno exacto; aire objetivo 22–25 °C | **Media-alta** |
+| Incubación *P. ostreatus* | 22–27 °C (antes) | 20–24 °C | KB correcto como aire; núcleo objetivo 23–25 °C (corregido 2026-10-02) | **Media-alta** |
 | CO₂ fructificación *G. lucidum* | escalar 2000 ppm | régimen de 3 estados | KB gana: es control morfológico, no techo | **Alta** |
 | UAE etanol *H. erinaceus* | 70% | 75–95% | KB gana; 80% es el único valor optimizado publicado | **Media-alta** |
 | Decocción acuosa reishi | 95 °C | 85–90 °C | **Sin diferencia sustantiva**; ambos dentro de lo aceptado | **Media-alta** |
@@ -109,19 +120,45 @@ Un único par de números no describe la especie. La observación que ya estaba 
 - https://link.springer.com/article/10.1007/BF00278373
 - https://extension.psu.edu/forage-and-food-crops/mushrooms/production-and-harvesting
 
-### La incubación se mide en aire, no en micelio
+### La incubación tiene tres medidas distintas, no dos
 
-El óptimo de **velocidad** del micelio in vitro es mayor (~28 °C) que la
-temperatura de **aire** recomendada (23–25 °C), porque el bloque se autocalienta
-2–5 °C por encima del aire. Considerando todos los rasgos agronómicos y no solo
-velocidad, un estudio sobre cascarilla de algodón sitúa el óptimo integral en
-22 °C. Por encima de ~28 °C el beneficio de velocidad se paga con
+> **Corregido el 2026-10-02.** La primera versión de esta ficha concluía que el
+> aire objetivo era 22–25 °C y que el `[20,24]` vigente quedaba 1 °C corto
+> arriba. **Era un error de dirección** y queda anulado: ver abajo.
+
+Hay tres cosas que la literatura mezcla y que no son intercambiables:
+
+1. **Óptimo in vitro** (micelio en agar): ~25–28 °C. Es velocidad de extensión
+   radial, no consigna de sala.
+2. **Óptimo integral en sustrato**: 22 °C, considerando vigor, tiempo a
+   primordios, morfología y EB — no solo velocidad (Zhang et al. 2023,
+   cascarilla de algodón, 8 temperaturas entre 15 y 32 °C).
+3. **Consigna comercial**: la industria especifica 23–25 °C de temperatura de
+   **SUSTRATO** (núcleo del bloque), no de aire.
+
+El error de la primera versión fue aplicar el autocalentamiento en la dirección
+equivocada. Si el objetivo de **núcleo** es 23–25 °C y el bloque corre por
+encima del aire, entonces la consigna de **aire** debe ser **más baja** que el
+núcleo, no más alta. El `[20, 24]` que hoy comparten KB y app es defendible; lo
+que faltaba era un óptimo puntual y la advertencia de qué se está midiendo.
+
+Por encima de ~28 °C de núcleo, el beneficio de velocidad se paga con
 susceptibilidad a *Trichoderma*.
 
-Confundir ambas medidas es lo que produce rangos con techo de 27 °C.
+**El autocalentamiento NO está cuantificado.** No existe medición publicada y
+revisada por pares del delta núcleo–aire en bloques de Pleurotus durante spawn
+run. Las cifras que circulan (un pico de +3 °C como señal de actividad intensa o
+contaminación incipiente; núcleo a 36–37 °C con aire >25 °C) son divulgación
+comercial. El delta de 2–5 °C que afirmaba la primera versión de esta ficha es
+un **supuesto operativo, no un hallazgo**, y así debe citarse.
 
 - https://doi.org/10.3390/horticulturae9010095
 - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5658199/
+- https://doi.org/10.1016/j.scienta.2015.12.035 — "spawn-burning" por anoxia
+  bajo estrés térmico en spawn run (*P. eryngii*), revisado por pares
+- Penn State Extension (23–25 °C de sustrato): **no verificado en fuente
+  primaria**, el proxy de salida bloqueó el dominio y la cifra viene de extracto
+  de búsqueda.
 
 ### El etanol de UAE depende de qué fracción se busca
 
@@ -161,19 +198,75 @@ hay dato publicado que cuantifique ese delta exacto para hericenonas.
 Registrados aquí para trazabilidad. Ninguno tocó `knowledge_base/`:
 
 - `KB_SPP.pleurotus_ostreatus.incT`: 22–27 → 20–24 °C, para alinear con el `.md`
-  de la especie. **Esta corroboración lo matiza**: el valor mejor respaldado como
-  aire objetivo es 22–25 °C, así que el KB y el app coinciden hoy en un valor que
-  la literatura deja 1 °C corto arriba. Pendiente de decisión.
+  de la especie. **Confirmado correcto** en la segunda ronda (2026-09-30): como
+  consigna de aire, 20–24 °C es defendible. La primera versión de esta ficha
+  decía que quedaba 1 °C corto arriba; era un error de dirección, ya corregido
+  arriba. No requiere cambio.
+- `KB_SPP.pleurotus_ostreatus.fruitT`: 10–21 → 13–24 °C. Alineado con el `.md`,
+  pero ver la pregunta abierta 4: para una cepa sin identificar, un par de
+  números no es planificable y el sistema debería abstenerse, no dar un número.
 - `KPI.beAlert / beTarget / beOptimal`: 70/80/100 → 40/55/70. El piso y el techo
   salen del rango documentado en `production_schedule.md`; el 55 es un setpoint
   elegido dentro de la banda, **no un valor medido**.
 
 ## Preguntas abiertas
 
-1. ¿Se adopta 22–25 °C como aire objetivo de incubación, corrigiendo ambos lados?
-2. ¿Se modela el CO₂ de *Ganoderma* como régimen por fase? ¿Con qué umbral de
-   asta, dado que las fuentes discrepan entre 1.500 y 5.000 ppm?
-3. ¿Se separan los umbrales de EB por especie y número de cosecha? Requiere
-   corpus de campo.
-4. ¿Se marca la temperatura de fructificación como dependiente de cepa en vez de
-   hard-codearla?
+Las cuatro se investigaron el 2026-09-30 (segunda ronda). Quedan abiertas como
+**decisión**, no como duda de evidencia; lo que sigue resume el veredicto.
+
+1. **Incubación.** ~~Adoptar 22–25 °C de aire~~ — **descartado**: iba en
+   dirección contraria. El `[20,24]` vigente es correcto como aire. Lo que sí
+   procede es añadir `incubation_temp_optimal_c: 22` (Zhang 2023, óptimo
+   integral) y registrar aparte el objetivo de núcleo 23–25 °C, con la
+   advertencia de que se gobierna el núcleo y el delta no está cuantificado.
+2. **CO₂ de *Ganoderma*.** Sí procede modelarlo como régimen, pero **por
+   producto objetivo (antler vs conk) con la fase como modulador**: incubación y
+   primordios son comunes a ambos y la bifurcación aparece solo después de
+   primordios. El umbral de asta **no existe en la literatura**: ninguna fuente
+   publica curva dosis-respuesta y el corte va de ~1.000 ppm (literatura china) a
+   5.000 ppm (guías comerciales). Corresponde una banda de incertidumbre
+   declarada, no un número. Y el CO₂ no va solo: la maduración del conk es un
+   descenso simultáneo de CO₂, HR y temperatura, con la luz al alza.
+3. **EB por especie y cosecha.** Sí, y con dos ejes: por especie y separando
+   1er flush de acumulado. El escalar único es **inalcanzable para *djamor* y
+   trivial para shiitake suplementado**. Distribución por flush en Pleurotus:
+   F1 = 40–65 % del acumulado, F2 = 25–38 %, F3 = 10–20 %. Antes de fijar nada
+   hay que resolver dos definiciones: masa seca **antes** de hidratar (lo
+   trazable es la masa seca formulada) y si el spawn entra al denominador
+   (incluirlo baja la EB 5–15 %; debe ser campo explícito).
+4. **Fructificación dependiente de cepa.** Sí, pero **no clonando el enum de
+   shiitake**: en *P. ostreatus* las clases comerciales (wide range / warm /
+   cold) se solapan masivamente y no particionan el espacio. El eje real es la
+   identidad de cepa. Lo defendible es que el sistema **se abstenga de dar
+   recomendación térmica mientras la cepa sea desconocida** — como ya hace el
+   `blocked_pending_*` de shiitake — y separar `pinning_temp_c` de
+   `pileus_expansion_temp_c`, que están desacoplados en híbridos.
+
+### Lo que las cuatro dicen en conjunto
+
+Tres de las cuatro terminan en el mismo sitio: **la literatura está agotada como
+fuente de respuestas**. El umbral de CO₂, los umbrales de EB y la clase de cepa
+solo se resuelven con datos propios, y las tres piden listas de campos por lote
+muy solapadas. El desbloqueo no es seguir ajustando parámetros, es el **registro
+por lote** — que además es el corpus ausente que bloquea `perito-regression`.
+
+Tamaños mínimos reportados: EB necesita ≥12–15 lotes por especie×sustrato×cepa
+en ≥3 tandas (CV entre lotes 15–30 %); con <8 lotes, solo mediana y rango, nunca
+un umbral derivado. La clase de cepa se infiere con 3–4 lotes en rangos térmicos
+distintos, y el dato que más discrimina es la **temperatura ambiente al primer
+primordio** más si se aplicó choque frío.
+
+### Nota de altitud (inferencia, no evidencia)
+
+La altitud apareció como modificador real en dos de las cuatro, y en ninguna hay
+literatura:
+
+- **CO₂**: a 2.600 m las mismas ppm equivalen a ~73 % de la presión parcial a
+  nivel del mar, así que un umbral en ppm importado de literatura de nivel del
+  mar sobreestima la dosis fisiológica.
+- **Calor**: ~26 % menos densidad implica menor capacidad de remoción convectiva
+  a igual caudal volumétrico.
+
+Ambas son inferencias físicas propias. Son legítimas como nota de ingeniería;
+**no deben citarse como evidencia** ni usarse para mover un parámetro sin
+medición local.
