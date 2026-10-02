@@ -57,7 +57,7 @@ test('cockpit Hoy is structured into 3 explicit priority bands in Field mode', (
   // Banda 2: AHORA (shift actions, now lots, shift checklist)
   assert.match(source, /sdp-band--ahora/);
   assert.match(source, /Banda 2 · Ahora/);
-  assert.match(source, /Acciones directas ≥ 44px/);
+  assert.match(source, /Registro de campo/);
   assert.match(source, /sdp-task--now/);
 
   // Banda 3: DESPUÉS (scheduled later transitions, monitoring)
