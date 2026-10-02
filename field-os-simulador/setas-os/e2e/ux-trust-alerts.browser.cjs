@@ -54,7 +54,7 @@ const root=path.resolve(__dirname,'..');
    }
    await page.getByRole('button',{name:'Hub IoT & Firmware'}).click();
    const hub=page.getByRole('dialog',{name:'Hub de Integración IoT & Telemetría'});
-   await hub.getByRole('button',{name:'Consola Webhook / Test'}).click();
+   await hub.getByRole('tab',{name:'Consola Webhook / Test'}).click();
    await hub.locator('textarea').fill(JSON.stringify({room_id:'martha_01',temperature_c:18,rh_pct:80,co2_ppm:600}));
    await hub.getByRole('button',{name:'Inyectar Telemetría de Prueba'}).click();
    await hub.press('Escape');

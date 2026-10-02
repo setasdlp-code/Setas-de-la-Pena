@@ -3000,10 +3000,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
     <AccessibleModal
       onClose={onClose}
       label="Hub de Integración IoT & Telemetría"
+      dialogClassName="inv-modal iot-hub-dialog"
+      backdropClassName="inv-modal-bg iot-hub-backdrop"
       dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
     >
       {/* Header */}
-      <div style={{ background: 'var(--ink-0, #1A1410)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="iot-hub-header" style={{ background: 'var(--ink-0, #1A1410)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppIcon name="temp" size={20} color="var(--accent-olive, #5B6B44)" />
           <div>
@@ -3015,32 +3017,31 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
           </div>
         </div>
-        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
+        <button type="button" className="modal-icon-close" aria-label="Cerrar Hub IoT" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
       </div>
 
-      {/* Navigation Pills */}
-      <div style={{ padding: '16px 24px 0', background: 'var(--paper-50)' }}>
-        <div className="iot-hub-pills">
-          <button type="button" className={`iot-hub-pill ${tab === 'nodos' ? 'on' : ''}`} onClick={() => setTab('nodos')}>
-            <AppIcon name="radio" size={12} style={{marginRight:6}} /> Nodos en Finca ({nodes.length})
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'firmware' ? 'on' : ''}`} onClick={() => setTab('firmware')}>
-            <AppIcon name="bolt" size={12} style={{marginRight:6}} /> Generador de Firmware
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'webhook' ? 'on' : ''}`} onClick={() => setTab('webhook')}>
-            <AppIcon name="flask" size={12} style={{marginRight:6}} /> Consola Webhook / Test
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'conexion' ? 'on' : ''}`} onClick={() => setTab('conexion')}>
-            <AppIcon name="plug" size={12} style={{marginRight:6}} /> Conexión en Vivo
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'reglas' ? 'on' : ''}`} onClick={() => setTab('reglas')}>
-            <AppIcon name="gear" size={12} style={{marginRight:6}} /> Reglas de Automatización
-          </button>
+      <div className="iot-hub-navigation">
+        <div className="iot-hub-pills" role="tablist" aria-label="Secciones del Hub IoT" onKeyDown={e=>{
+          const keys=['nodos','firmware','webhook','conexion','reglas'];
+          const index=keys.indexOf(tab);
+          const next=e.key==='ArrowRight'?(index+1)%keys.length:e.key==='ArrowLeft'?(index+keys.length-1)%keys.length:e.key==='Home'?0:e.key==='End'?keys.length-1:null;
+          if(next===null)return;
+          e.preventDefault();setTab(keys[next]);
+          e.currentTarget.querySelector(`#iot-hub-tab-${keys[next]}`)?.focus();
+        }}>
+          {[
+            ['nodos',`Nodos en Finca (${nodes.length})`,'radio'],
+            ['firmware','Generador de Firmware','bolt'],
+            ['webhook','Consola Webhook / Test','flask'],
+            ['conexion','Conexión en Vivo','plug'],
+            ['reglas','Reglas de Automatización','gear'],
+          ].map(([key,label,icon])=><button key={key} type="button" id={`iot-hub-tab-${key}`} role="tab" aria-selected={tab===key} aria-controls="iot-hub-panel" tabIndex={tab===key?0:-1} className={`iot-hub-pill ${tab===key?'on':''}`} onClick={()=>setTab(key)}>
+            <AppIcon name={icon} size={14} style={{marginRight:6}}/>{label}
+          </button>)}
         </div>
       </div>
 
-      {/* Body */}
-      <div style={{ padding: '20px 24px', maxHeight: '68vh', overflowY: 'auto' }}>
+      <div className="iot-hub-body" role="tabpanel" id="iot-hub-panel" aria-labelledby={`iot-hub-tab-${tab}`} tabIndex={0}>
         {tab === 'nodos' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -3077,7 +3078,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                     <button
                       type="button"
                       className="btn btn--sm"
-                      style={{ fontSize: 10.5, padding: '3px 8px' }}
+                      style={{ fontSize: 11, padding: '3px 8px' }}
                       onClick={() => {
                         if (typeof setSelectedClimateRoom === 'function') setSelectedClimateRoom(n.roomId);
                         onClose();
@@ -3090,20 +3091,20 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginTop: 10 }}>
                   <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Temperatura</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Temperatura</div>
                     <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.temp.toFixed(1)}°C</div>
                   </div>
                   <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Humedad Relativa</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Humedad Relativa</div>
                     <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.rh.toFixed(1)}%</div>
                   </div>
                   <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Dióxido de Carbono</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Dióxido de Carbono</div>
                     <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.co2} ppm</div>
                   </div>
                   {n.metrics.subTemp != null && (
                     <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Sonda Sustrato</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Sonda Sustrato</div>
                       <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.subTemp.toFixed(1)}°C</div>
                     </div>
                   )}
@@ -3117,8 +3118,8 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 16 }}>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Microcontrolador</label>
-                <select className="field-input" value={fwMcu} onChange={e => setFwMcu(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
+                <label htmlFor="iot-fw-mcu" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Microcontrolador</label>
+                <select id="iot-fw-mcu" name="iot-fw-mcu" className="field-input" value={fwMcu} onChange={e => setFwMcu(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
                   <option value="esp32dev">ESP32 NodeMCU / WROOM-32 (Recomendado)</option>
                   <option value="esp32c3">ESP32-C3 SuperMini (Compacto)</option>
                   <option value="esp8266">ESP8266 Wemos D1 Mini</option>
@@ -3127,8 +3128,8 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </div>
 
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Sala Asignada</label>
-                <select className="field-input" value={fwRoom} onChange={e => setFwRoom(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
+                <label htmlFor="iot-fw-room" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Sala Asignada</label>
+                <select id="iot-fw-room" name="iot-fw-room" className="field-input" value={fwRoom} onChange={e => setFwRoom(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
                   <option value="martha_01">Carpa 01 · Fructificación Orellanas</option>
                   <option value="martha_02">Carpa 02 · Fructificación Shiitake</option>
                   <option value="incubacion_01">Sala 03 · Incubación Térmica</option>
@@ -3136,10 +3137,13 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </div>
 
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Servidor Setas OS (Host : Puerto)</label>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input type="text" className="field-input" value={fwServerHost} onChange={e => setFwServerHost(e.target.value)} style={{ flex: 2, fontSize: 12 }} />
-                  <input type="text" className="field-input" value={fwServerPort} onChange={e => setFwServerPort(e.target.value)} style={{ flex: 1, fontSize: 12 }} />
+                <div className="iot-hub-server-fields">
+                  <div><label htmlFor="iot-fw-host">Host del servidor Setas OS</label>
+                    <input id="iot-fw-host" name="iot-fw-host" type="text" className="field-input" autoComplete="off" spellCheck={false} value={fwServerHost} onChange={e=>setFwServerHost(e.target.value)}/>
+                  </div>
+                  <div><label htmlFor="iot-fw-port">Puerto del servidor</label>
+                    <input id="iot-fw-port" name="iot-fw-port" type="text" inputMode="numeric" className="field-input" autoComplete="off" value={fwServerPort} onChange={e=>setFwServerPort(e.target.value)}/>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3180,7 +3184,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
 
             {/* Selector de formato de exportación */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div className="iot-hub-export" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'esphome' ? 'on' : ''}`} onClick={() => setFwFormat('esphome')}>
                   <AppIcon name="file" size={12} style={{marginRight:6}} /> ESPHome (YAML)
@@ -3245,7 +3249,9 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </button>
             </div>
 
+            <label htmlFor="iot-webhook-json">JSON de telemetría de prueba</label>
             <textarea
+              id="iot-webhook-json" name="iot-webhook-json" spellCheck={false}
               className="field-input"
               rows={8}
               style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: '#181512', color: '#E6E1D8', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
@@ -3266,7 +3272,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </button>
 
               {webhookFeedback && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
+                <div role="status" aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
                   {webhookFeedback.success ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : <AppIcon name="close" size={11} style={{marginRight:4}} />} {webhookFeedback.msg}
                 </div>
               )}
@@ -3290,10 +3296,10 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                       {t.state}{t.fresh ? ' · datos frescos' : t.lastDataAt ? ' · sin datos recientes' : ''}
                     </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                       {t.readingsIn} lecturas · {t.attempts} reintento{t.attempts === 1 ? '' : 's'}
                     </div>
-                    {t.lastError && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)' }}>{t.lastError}</div>}
+                    {t.lastError && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-terracotta)' }}>{t.lastError}</div>}
                   </div>
                 ))}
                 {(liveTelemetry.status.transports || []).length === 0 && (
@@ -3306,25 +3312,25 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                <label htmlFor="iot-conn-ws" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                   WebSocket del gateway (prioridad 1 · menor latencia)
                 </label>
-                <input type="text" className="field-input" value={connWs} onChange={e => { setConnWs(e.target.value); setConnSaved(false); }}
+                <input type="text" id="iot-conn-ws" name="iot-conn-ws" className="field-input" value={connWs} onChange={e => { setConnWs(e.target.value); setConnSaved(false); }}
                   placeholder="wss://gateway.setasdelapena.local/telemetry" style={{ width: '100%', fontSize: 12 }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                <label htmlFor="iot-conn-mqtt" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                   Broker MQTT sobre WebSocket (prioridad 2)
                 </label>
-                <input type="text" className="field-input" value={connMqtt} onChange={e => { setConnMqtt(e.target.value); setConnSaved(false); }}
+                <input type="text" id="iot-conn-mqtt" name="iot-conn-mqtt" className="field-input" value={connMqtt} onChange={e => { setConnMqtt(e.target.value); setConnSaved(false); }}
                   placeholder="wss://broker.setasdelapena.local:9001" style={{ width: '100%', fontSize: 12 }} />
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)', marginTop: 3 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
                   Mosquitto necesita <code>listener 9001</code> + <code>protocol websockets</code>. Topics: <code>setas/&lt;sala&gt;/&lt;nodo&gt;/&lt;métrica&gt;</code>.
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Topics suscritos</label>
-                <input type="text" className="field-input" value={connTopics} onChange={e => { setConnTopics(e.target.value); setConnSaved(false); }}
+                <label htmlFor="iot-conn-topics" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Topics suscritos</label>
+                <input type="text" id="iot-conn-topics" name="iot-conn-topics" className="field-input" value={connTopics} onChange={e => { setConnTopics(e.target.value); setConnSaved(false); }}
                   style={{ width: '100%', fontSize: 12 }} />
               </div>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -3333,14 +3339,14 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   Firestore (prioridad 3 · sobrevive a NAT y firewalls)
                 </label>
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                  <label htmlFor="iot-conn-pressure" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Presión barométrica local (hPa)
                   </label>
-                  <input type="number" className="field-input" value={connPressure} onChange={e => { setConnPressure(e.target.value); setConnSaved(false); }}
+                  <input type="number" id="iot-conn-pressure" name="iot-conn-pressure" className="field-input" value={connPressure} onChange={e => { setConnPressure(e.target.value); setConnSaved(false); }}
                     style={{ width: 120, fontSize: 12 }} />
                 </div>
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                 745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación
                 de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico.
               </div>
@@ -3359,7 +3365,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   Guardar y reconectar
                 </button>
                 {connSaved && (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
+                  <span role="status" aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
                     <AppIcon name="check" size={12} style={{marginRight:4}} /> Puente reiniciado con la configuración nueva
                   </span>
                 )}
@@ -3381,12 +3387,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Mínima de Arranque (%)</label>
-                    <input type="number" className="field-input" value={autoRhMin} onChange={e => setAutoRhMin(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-rh-min" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Mínima de Arranque (%)</label>
+                    <input type="number" id="iot-rule-rh-min" name="iot-rule-rh-min" className="field-input" value={autoRhMin} onChange={e => setAutoRhMin(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Target de Reposo (%)</label>
-                    <input type="number" className="field-input" value={autoRhTarget} onChange={e => setAutoRhTarget(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-rh-target" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Target de Reposo (%)</label>
+                    <input type="number" id="iot-rule-rh-target" name="iot-rule-rh-target" className="field-input" value={autoRhTarget} onChange={e => setAutoRhTarget(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                 </div>
               </div>
@@ -3397,12 +3403,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Límite Máximo CO2 (ppm)</label>
-                    <input type="number" className="field-input" value={autoCo2Max} onChange={e => setAutoCo2Max(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-co2-max" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Límite Máximo CO2 (ppm)</label>
+                    <input type="number" id="iot-rule-co2-max" name="iot-rule-co2-max" className="field-input" value={autoCo2Max} onChange={e => setAutoCo2Max(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Duración Pulso FAE (segundos)</label>
-                    <input type="number" className="field-input" value={autoFaeDuration} onChange={e => setAutoFaeDuration(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-fae-duration" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Duración Pulso FAE (segundos)</label>
+                    <input type="number" id="iot-rule-fae-duration" name="iot-rule-fae-duration" className="field-input" value={autoFaeDuration} onChange={e => setAutoFaeDuration(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                 </div>
               </div>
@@ -3412,10 +3418,10 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   <AppIcon name="temp" size={13} style={{marginRight:6}} /> Seguridad Biológica de Sustrato
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
-                  <input type="number" step="0.5" className="field-input" value={autoSubTempMax} onChange={e => setAutoSubTempMax(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  <label htmlFor="iot-rule-sub-temp" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
+                  <input type="number" step="0.5" id="iot-rule-sub-temp" name="iot-rule-sub-temp" className="field-input" value={autoSubTempMax} onChange={e => setAutoSubTempMax(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ink-2)', marginTop: 4 }}>
-                    Si $T_{'{sustrato}'} &gt; 28^\circ\text{C}$ durante incubación, se dispara alerta de riesgo de daño al micelio.
+                    Si la temperatura de sustrato supera 28 °C durante incubación, se dispara alerta de riesgo de daño al micelio.
                   </div>
                 </div>
               </div>
@@ -3440,7 +3446,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '12px 24px', background: 'var(--paper-100)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="iot-hub-footer" style={{ padding: '12px 24px', background: 'var(--paper-100)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end' }}>
         <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{ fontSize: 11 }}>
           Cerrar
         </button>
@@ -6452,6 +6458,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [releaseBatchId,setReleaseBatchId]=useState(null);
   const [prodLaunchForm,setProdLaunchForm]=useState(null);
   const [showIoTHub,setShowIoTHub]=useState(false);
+  const iotHubTriggerRef=useRef(null);
   const [injectedClimateReadings,setInjectedClimateReadings]=useState({});
   // Puente de telemetría en vivo (WebSocket / MQTT / Firestore) + motor de
   // umbrales. Se monta una sola vez en el shell y alimenta a la vez el strip de
@@ -6737,12 +6744,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||moveDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||moveDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId||showIoTHub);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,moveDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,moveDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId,showIoTHub]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -9987,7 +9994,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <span className="live-telemetry-status__alt" title="Los sensores NDIR subestiman el CO₂ ~26 % a esta altitud; el puente corrige cada lectura antes de evaluarla.">
           CO₂ compensado · {liveTelemetry.status.altitudeM||2600} msnm
         </span>
-        <button className="os-action live-telemetry-status__cfg" type="button" onClick={()=>setShowIoTHub(true)}>
+        <button ref={iotHubTriggerRef} className="os-action live-telemetry-status__cfg" type="button" onClick={()=>setShowIoTHub(true)}>
           Configurar
         </button>
       </div>
@@ -11257,6 +11264,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <button
               type="button"
               className="btn btn--sm btn--secondary"
+              ref={iotHubTriggerRef}
               onClick={() => setShowIoTHub(true)}
               style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',fontSize:11}}
             >
@@ -19866,7 +19874,7 @@ interval:
         {showIoTHub && (
           <IoTHubModal
             isOpen={showIoTHub}
-            onClose={() => setShowIoTHub(false)}
+            onClose={() => {setShowIoTHub(false);requestAnimationFrame(()=>iotHubTriggerRef.current?.focus());}}
             liveTelemetry={liveTelemetry}
             selectedRoomId={selectedClimateRoom}
             onInjectReading={(r) => {
