@@ -520,8 +520,52 @@
     return item;
   };
 
+  // ── createRecipeEvaluator — contexto único de score del Perito ──
+  // Antes el veredicto, el "Índice estimado" de cada sugerencia, el ΔScore de
+  // la tarjeta y el Morphing calculaban el score con contextos distintos
+  // (con/sin tratamiento, stock, EB histórico, y con los objetivos de la receta
+  // ANTERIOR al cambio). Este evaluador fija ese contexto una vez: para cada
+  // receta resuelve sus propios objetivos (resolveSpp — la clase de sustrato
+  // puede cambiar con la composición), analiza, toma el tratamiento
+  // recomendado, mezcla la EB con el histórico (blendEB) y puntúa con el mismo
+  // stock. Mismo resultado para la misma receta, venga de donde venga.
+  const EVALUATOR_CACHE_MAX = 256;
+  const createRecipeEvaluator = ({
+    sKey,
+    ings,
+    spp = null,
+    resolveSpp = null,
+    stockIds = new Set(),
+    blendEB = null,
+    analyzeFn = null,
+  } = {}) => {
+    const runAnalyze = typeof analyzeFn === 'function' ? analyzeFn : analyze;
+    const cache = new Map();
+    return (recipe) => {
+      if (!Array.isArray(recipe) || !recipe.length) return null;
+      const key = JSON.stringify(recipe.map(r => [r.id, Number(r.p ?? r.pct) || 0]));
+      if (cache.has(key)) return cache.get(key);
+      const resolved = typeof resolveSpp === 'function' ? resolveSpp(recipe) : null;
+      const recipeSpp = resolved || getEffectiveSPP(spp);
+      const an = runAnalyze(recipe, sKey, ings, recipeSpp);
+      let out = null;
+      if (an) {
+        const treatment = calcTreatment(an, sKey, recipeSpp);
+        const blended = typeof blendEB === 'function' ? blendEB(an) : null;
+        const scoreObj = scoreAn(an, { treatment, recipe, stockIds, blendedEB: blended });
+        out = { recipe, spp: recipeSpp, an, treatment, blendedEB: blended, scoreObj, score: scoreObj.score, status: scoreObj.status };
+      }
+      if (cache.size >= EVALUATOR_CACHE_MAX) cache.delete(cache.keys().next().value);
+      cache.set(key, out);
+      return out;
+    };
+  };
+
   // ── generateOptimizer — motor de diagnóstico basado en reglas ──
-  const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}, spp, usageCounts = {}) => {
+  // `evaluate` (opcional, de createRecipeEvaluator) fija el contexto de score
+  // del veredicto y de las predicciones. Sin él se conserva el comportamiento
+  // histórico (oráculo de paridad y tests que no lo pasan).
+  const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}, spp, usageCounts = {}, evaluate = null) => {
     const effectiveINGS = getEffectiveINGS(ings);
     const effectiveSPP = getEffectiveSPP(spp);
     if (!an || !an.sp) return { score: 0, status: 'sin_receta', items: [] };
@@ -800,19 +844,39 @@
     });
 
     const tr13 = recommendedTreatment;
-    const { score, status: statusFromScore } = scoreAn(an, { treatment: tr13, recipe, stockIds, blendedEB });
+    // Con evaluador, el veredicto sale del mismo contexto que las predicciones
+    // de cada sugerencia, el ΔScore de la tarjeta y el Morphing.
+    const baseEval = typeof evaluate === 'function' && recipe && recipe.length ? evaluate(recipe) : null;
+    const { score, status: statusFromScore } = baseEval
+      ? baseEval.scoreObj
+      : scoreAn(an, { treatment: tr13, recipe, stockIds, blendedEB });
+    // Evaluación de una receta candidata: objetivos propios de esa receta (la
+    // clase de sustrato puede cambiar al aplicar el ajuste) y mismo contexto
+    // de score que el veredicto. Sin evaluador: comportamiento histórico.
+    const evalCandidate = (cand) => {
+      if (typeof evaluate === 'function') {
+        const e = evaluate(cand);
+        return e ? { an: e.an, scoreObj: e.scoreObj, spp: e.spp } : null;
+      }
+      const a = analyze(cand, sKey, effectiveINGS, effectiveSPP);
+      if (!a) return null;
+      return { an: a, scoreObj: scoreAn(a, { treatment: calcTreatment(a, sKey, effectiveSPP), recipe: cand, stockIds }), spp: effectiveSPP };
+    };
 
     const SIDE_EFFECT_FLAGS = ['cnHigh', 'cnLow', 'nLow', 'nHigh', 'phLow', 'phHigh'];
     const FLAG_OWNER_ICON = { cnHigh: '↓C:N', cnLow: '↑C:N', nLow: '↑N', nHigh: '↓N', phLow: '↑pH', phHigh: '↓pH' };
     const FLAG_LABEL = { cnHigh: 'C:N demasiado alto', cnLow: 'C:N demasiado bajo', nLow: 'N insuficiente', nHigh: 'exceso de N', phLow: 'pH ácido', phHigh: 'pH alcalino' };
-    const phIdealForCombo = sp.ph_optimal ? (sp.ph_optimal.min + sp.ph_optimal.max) / 2 : null;
+    // Los objetivos del arreglo combinado son los de la receta candidata
+    // (spC), no los de la receta actual: si el ajuste cambió la clase de
+    // sustrato, el efecto secundario se corrige hacia los rangos nuevos.
+    const phCenter = s => (s && s.ph_optimal ? (s.ph_optimal.min + s.ph_optimal.max) / 2 : null);
     const FLAG_FIX = {
-      cnHigh: () => ({ ing: bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n), metric: 'cn', target: sp.cn_optimal.ideal }),
-      cnLow: () => ({ ing: bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'cn', target: sp.cn_optimal.ideal }),
-      nLow: () => ({ ing: bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost), metric: 'n', target: sp.n_optimal.ideal }),
-      nHigh: () => ({ ing: bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'n', target: sp.n_optimal.ideal }),
-      phLow: () => ({ ing: bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph), metric: 'ph', target: phIdealForCombo }),
-      phHigh: () => ({ ing: bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph), metric: 'ph', target: phIdealForCombo }),
+      cnHigh: spC => ({ ing: bestStock(g => g.n >= 1.5 && g.role !== 'base_carbono', (a, b) => b.n - a.n), metric: 'cn', target: spC.cn_optimal.ideal }),
+      cnLow: spC => ({ ing: bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'cn', target: spC.cn_optimal.ideal }),
+      nLow: spC => ({ ing: bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost), metric: 'n', target: spC.n_optimal.ideal }),
+      nHigh: spC => ({ ing: bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'n', target: spC.n_optimal.ideal }),
+      phLow: spC => ({ ing: bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph), metric: 'ph', target: phCenter(spC) }),
+      phHigh: spC => ({ ing: bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph), metric: 'ph', target: phCenter(spC) }),
     };
 
     if (recipe && recipe.length) {
@@ -820,24 +884,26 @@
         if (!it.apply || (it.priority !== 'critical' && it.priority !== 'warning')) return;
         try {
           const candidate = applyOptToRecipe(recipe, it.apply, lockedIds, effectiveINGS);
-          const a2 = analyze(candidate, sKey, effectiveINGS, effectiveSPP);
-          if (!a2) return;
-          const s2 = scoreAn(a2, { treatment: calcTreatment(a2, sKey, effectiveSPP), recipe: candidate, stockIds });
+          const e2 = evalCandidate(candidate);
+          if (!e2) return;
+          const a2 = e2.an;
+          const s2 = e2.scoreObj;
           it.predictedScore = s2.score;
           const newFlags = SetasScoring.detectSeverity ? SetasScoring.detectSeverity(a2) || {} : {};
           const worsened = SIDE_EFFECT_FLAGS.filter(k => newFlags[k] && !flags[k] && FLAG_OWNER_ICON[k] !== it.icon);
           if (worsened.length) {
             it.sideEffect = `Ojo: aplicar esto puede generar ${worsened.map(k => FLAG_LABEL[k]).join(' y ')}.`;
             const fixKey = worsened[0];
-            const fix = FLAG_FIX[fixKey] ? FLAG_FIX[fixKey]() : null;
+            const spC = a2.sp || sp;
+            const fix = FLAG_FIX[fixKey] ? FLAG_FIX[fixKey](spC) : null;
             if (fix && fix.ing && fix.target != null) {
-              const res2 = solveTargetPct(candidate, sKey, effectiveINGS, fix.ing.id, fix.metric, fix.target, lockedIds, effectiveSPP);
+              const res2 = solveTargetPct(candidate, sKey, effectiveINGS, fix.ing.id, fix.metric, fix.target, lockedIds, e2.spp);
               if (res2) {
                 const secondApply = { mode: 'set', id: fix.ing.id, value: res2.pct };
                 const candidate2 = applyOptToRecipe(candidate, secondApply, lockedIds, effectiveINGS);
-                const a3 = analyze(candidate2, sKey, effectiveINGS, effectiveSPP);
-                if (a3) {
-                  const s3 = scoreAn(a3, { treatment: calcTreatment(a3, sKey, effectiveSPP), recipe: candidate2, stockIds });
+                const e3 = evalCandidate(candidate2);
+                if (e3) {
+                  const s3 = e3.scoreObj;
                   if (s3.score > it.predictedScore) {
                     it.comboApply = [it.apply, secondApply];
                     it.comboPredictedScore = s3.score;
@@ -1158,6 +1224,7 @@
     calcMaxBatchFromStock,
     quantifyItem,
     generateOptimizer,
+    createRecipeEvaluator,
     ENERGY_COST,
     energyCostPerKgSeco,
     calcTreatment,

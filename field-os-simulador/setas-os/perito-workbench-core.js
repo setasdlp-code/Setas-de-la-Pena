@@ -258,6 +258,11 @@
    * Simula la aplicación de un ajuste a la receta y calcula los deltas exactos respecto al estado base,
    * incluyendo rangos de incertidumbre para ΔEB y nivel de confianza.
    *
+   * Con `evaluate` (createRecipeEvaluator de recipe-optimizer.js) la receta base y la resultante se
+   * analizan y puntúan con el mismo contexto que el veredicto del Perito — objetivos resueltos por
+   * receta, tratamiento recomendado, stock y EB histórico —, así el ΔScore coincide con el
+   * "Índice estimado". Sin él se usan `analyze`/`score` como antes.
+   *
    * @param {Object} options
    * @returns {Object} Simulación con { diff, resultingRecipe, resultingAn, resultingScore, isViable }
    */
@@ -271,14 +276,30 @@
     score,
     baseAn,
     baseScore,
+    evaluate = null,
   }) => {
-    if (!apply || typeof applyOptToRecipe !== 'function' || typeof analyze !== 'function' || typeof score !== 'function') {
+    const hasEvaluate = typeof evaluate === 'function';
+    if (!apply || typeof applyOptToRecipe !== 'function' || (!hasEvaluate && (typeof analyze !== 'function' || typeof score !== 'function'))) {
       return null;
     }
 
     const nextRecipe = applyOptToRecipe(recipe, apply, lockedIds, ingredients);
-    const nextAn = analyze(nextRecipe);
-    const nextScoreObj = score(nextAn, { recipe: nextRecipe });
+    let nextAn;
+    let nextScoreObj;
+    if (hasEvaluate) {
+      const nextEval = evaluate(nextRecipe);
+      if (!nextEval) return null;
+      nextAn = nextEval.an;
+      nextScoreObj = nextEval.scoreObj;
+      if (baseAn == null || baseScore == null) {
+        const baseEval = evaluate(recipe);
+        if (baseAn == null) baseAn = baseEval ? baseEval.an : null;
+        if (baseScore == null) baseScore = baseEval ? baseEval.score : 0;
+      }
+    } else {
+      nextAn = analyze(nextRecipe);
+      nextScoreObj = score(nextAn, { recipe: nextRecipe });
+    }
     const newScore = Number(nextScoreObj?.score || 0);
     const prevScore = Number(baseScore?.score != null ? baseScore.score : (baseScore || 0));
 
@@ -437,7 +458,7 @@
     recipeA = [],
     recipeB = [],
     lockedIds = [],
-    species = {},
+    species: speciesDefault = {},
     analyzeFn = null,
     steps = 10,
     requestedAlpha = 0.5,
@@ -457,6 +478,9 @@
       if (typeof analyzeFn === 'function') {
         an = analyzeFn(blended);
         if (an) {
+          // Objetivos de la propia mezcla si el análisis los trae (la clase de
+          // sustrato cambia a lo largo de α); si no, el perfil recibido.
+          const species = an.sp || speciesDefault;
           if (an.trichoderma) {
             isFeasible = false;
             violations.push('Riesgo de contaminación (Trichoderma)');
@@ -503,6 +527,7 @@
     if (typeof analyzeFn === 'function') {
       requestedAn = analyzeFn(reqBlend);
       if (requestedAn) {
+        const species = requestedAn.sp || speciesDefault;
         if (requestedAn.trichoderma) {
           isFeasibleAtRequestedAlpha = false;
           requestedViolations.push('Riesgo de contaminación (Trichoderma)');

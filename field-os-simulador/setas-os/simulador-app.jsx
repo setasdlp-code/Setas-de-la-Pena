@@ -1216,6 +1216,7 @@ const {
   calcMaxBatchFromStock,
   quantifyItem,
   generateOptimizer,
+  createRecipeEvaluator,
   ENERGY_COST,
   energyCostPerKgSeco,
   calcTreatment,
@@ -1897,32 +1898,31 @@ const PeritoChangePreview=({changes})=>(
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
   </details>
 );
-const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,speciesKey,onMorph})=>{
+const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,evaluate,onMorph})=>{
   const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
   const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
   const hasPrediction=item.predictedScore!=null&&baseScore!=null;
   const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
 
+  // Mismo evaluador que el veredicto (peritoEvaluate): el ΔScore y el
+  // "Índice estimado" de abajo salen del mismo contexto y coinciden.
   const deltaSim=React.useMemo(()=>{
-    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length) return null;
+    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length||typeof evaluate!=='function') return null;
     try{
-      const sK=speciesKey||(item.speciesKey)||'p_ostreatus_gris';
-      const curAn=analyze(recipe,sK,ingredients,SPP);
       return engineSimulateSuggestionDelta({
         recipe,
         apply:item.apply,
         lockedIds,
         ingredients,
         applyOptToRecipe,
-        analyze:(r)=>analyze(r,sK,ingredients,SPP),
-        score:(anObj,extra)=>scoreAn(anObj,extra),
-        baseAn:curAn,
+        evaluate,
+        baseAn:evaluate(recipe)?.an,
         baseScore,
       });
     }catch(_){
       return null;
     }
-  },[recipe,item.apply,lockedIds,ingredients,speciesKey,baseScore]);
+  },[recipe,item.apply,lockedIds,ingredients,evaluate,baseScore]);
 
   return(
   <div className={`perito-item pi-${item.priority}`}>
@@ -4665,12 +4665,19 @@ const runHybridRecipeSearch=({
 //    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
 //    análisis y las cantidades de cada paso usan los mismos rangos que la UI
 //    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
-const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+// `resolveSpp` (receta → objetivos) hace que cada paso use los objetivos de la
+// receta en ese momento: aplicar un ajuste puede cambiar la clase de sustrato,
+// y puntuar el paso siguiente con los rangos de la receta inicial lo aceptaría
+// o rechazaría con el contexto equivocado. Sin él, `spp` fijo como antes.
+const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,resolveSpp=null,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+  const evaluate=createRecipeEvaluator({sKey,ings,spp,resolveSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze});
+  const sppFor=r=>(typeof resolveSpp==='function'&&resolveSpp(r))||spp;
   let cur=recipe;let bestScore=-1;
   for(let i=0;i<maxIter;i++){
-    const a=analyze(cur,sKey,ings,spp);
+    const curSpp=sppFor(cur);
+    const a=analyze(cur,sKey,ings,curSpp);
     if(!a) break;
-    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,spp,usageCounts);
+    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,curSpp,usageCounts,evaluate);
     if(o.score<=bestScore) break;
     bestScore=o.score;
     const candidates=o.items
@@ -4681,9 +4688,10 @@ const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,
     let bestCandScore=-1,bestCandidate=null,bestO2=null;
     for(const cand of candidates){
       const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-      const tryA=analyze(tryRec,sKey,ings,spp);
+      const trySpp=sppFor(tryRec);
+      const tryA=analyze(tryRec,sKey,ings,trySpp);
       if(!tryA) continue;
-      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,spp,usageCounts);
+      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,trySpp,usageCounts,evaluate);
       if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
     }
     if(!bestCandidate) break;
@@ -7448,7 +7456,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts]);
+  // Contexto único de score del Perito: veredicto, "Índice estimado" de cada
+  // sugerencia, ΔScore de la tarjeta, Morphing y Auto-mejorar puntúan con el
+  // mismo evaluador. Cada receta evaluada resuelve sus propios objetivos
+  // (resolvePeritoSpp ≡ effectiveSPP para la receta activa), así la predicción
+  // de un ajuste ya refleja si cambia la clase de sustrato.
+  const resolvePeritoSpp=React.useCallback(r=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,r,effectiveINGS),[sKey,effectiveINGS]);
+  const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
   const peritoRevisionRef=React.useRef(0);
@@ -7570,7 +7585,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
   const autoImprove=()=>{
-    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
+    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
   };
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
@@ -14739,9 +14754,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
+                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
+                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
                       {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
                     </>
                   )}
@@ -15288,7 +15303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             recipe={recipe}
                             lockedIds={lockedIds}
                             ingredients={optimizerINGS}
-                            speciesKey={sKey}
+                            evaluate={peritoEvaluate}
                             onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
                           />
                         ))}
@@ -15309,7 +15324,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             recipe={recipe}
                             lockedIds={lockedIds}
                             ingredients={optimizerINGS}
-                            speciesKey={sKey}
+                            evaluate={peritoEvaluate}
                             onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
                           />
                         ))}
@@ -15332,7 +15347,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               recipe={recipe}
                               lockedIds={lockedIds}
                               ingredients={optimizerINGS}
-                              speciesKey={sKey}
+                              evaluate={peritoEvaluate}
                               onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
                             />
                           ))}
@@ -15352,12 +15367,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const morphedRec = (hasBase && hasCandidate && engineMorphRecipes)
                 ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds)
                 : (recipe || []);
-              const anMorph = (hasBase && hasCandidate)
-                ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP)
-                : an;
-              const scoreMorphObj = (hasBase && hasCandidate && anMorph)
-                ? scoreAn(anMorph, { recipe: morphedRec })
-                : opt;
+              // Mismo evaluador que el veredicto: con α=0 el score morfeado es
+              // el del Perito, y cada mezcla usa sus propios objetivos.
+              const evalMorph = (hasBase && hasCandidate) ? peritoEvaluate(morphedRec) : null;
+              const anMorph = (hasBase && hasCandidate) ? (evalMorph?.an || null) : an;
+              const scoreMorphObj = evalMorph ? evalMorph.scoreObj : opt;
               const scoreMorph = Math.round(scoreMorphObj?.score || 0);
 
               const trajectoryAnalysis = (hasBase && hasCandidate && engineAnalyzeMorphTrajectory)
@@ -15366,7 +15380,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     recipeB: activeCandidate,
                     lockedIds,
                     species: sp,
-                    analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+                    analyzeFn: (r) => peritoEvaluate(r)?.an || null,
                     requestedAlpha: morphAlpha,
                   })
                 : null;

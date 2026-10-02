@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: f8831d92b271391092fd171add56d024870a1a2e0199646b95068a1f0ca3e4d1
+// source-hash: bb0af67c06ef3732bf58a47483dd7626713e2c7faea763f05050f40e0a0196dc
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -1035,6 +1035,7 @@ const {
   calcMaxBatchFromStock,
   quantifyItem,
   generateOptimizer,
+  createRecipeEvaluator,
   ENERGY_COST,
   energyCostPerKgSeco,
   calcTreatment,
@@ -1478,31 +1479,28 @@ const describePeritoChanges = (recipe, apply, lockedIds, ingredients) => {
   })).filter((row) => Math.abs(row.after - row.before) > 1e-6);
 };
 const PeritoChangePreview = ({ changes }) => /* @__PURE__ */ React.createElement("details", { style: { marginTop: 6, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("summary", { style: { cursor: "pointer", fontWeight: 700 } }, "Ver cambios de la receta (", changes.length, ")"), /* @__PURE__ */ React.createElement("p", { style: { margin: "5px 0", color: "var(--ink-600)" } }, "Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo."), /* @__PURE__ */ React.createElement("ul", { style: { margin: 0, paddingLeft: 18 } }, changes.map((row) => /* @__PURE__ */ React.createElement("li", { key: row.id, style: { overflowWrap: "anywhere" } }, row.name, ": ", Number(row.before.toFixed(2)), "% → ", Number(row.after.toFixed(2)), "%"))), !changes.length && /* @__PURE__ */ React.createElement("p", null, "Esta propuesta no cambia la receta con los bloqueos actuales."));
-const PeritoItem = React.memo(({ item, onApply, baseScore, recipe, lockedIds, ingredients, speciesKey, onMorph }) => {
+const PeritoItem = React.memo(({ item, onApply, baseScore, recipe, lockedIds, ingredients, evaluate, onMorph }) => {
   const changes = describePeritoChanges(recipe, item.apply, lockedIds, ingredients);
   const comboChanges = describePeritoChanges(recipe, item.comboApply, lockedIds, ingredients);
   const hasPrediction = item.predictedScore != null && baseScore != null;
   const scoreDelta = hasPrediction ? Math.round(item.predictedScore - baseScore) : null;
   const deltaSim = React.useMemo(() => {
-    if (!item.apply || !engineSimulateSuggestionDelta || !recipe?.length) return null;
+    if (!item.apply || !engineSimulateSuggestionDelta || !recipe?.length || typeof evaluate !== "function") return null;
     try {
-      const sK = speciesKey || item.speciesKey || "p_ostreatus_gris";
-      const curAn = analyze(recipe, sK, ingredients, SPP);
       return engineSimulateSuggestionDelta({
         recipe,
         apply: item.apply,
         lockedIds,
         ingredients,
         applyOptToRecipe,
-        analyze: (r) => analyze(r, sK, ingredients, SPP),
-        score: (anObj, extra) => scoreAn(anObj, extra),
-        baseAn: curAn,
+        evaluate,
+        baseAn: evaluate(recipe)?.an,
         baseScore
       });
     } catch (_) {
       return null;
     }
-  }, [recipe, item.apply, lockedIds, ingredients, speciesKey, baseScore]);
+  }, [recipe, item.apply, lockedIds, ingredients, evaluate, baseScore]);
   return /* @__PURE__ */ React.createElement("div", { className: `perito-item pi-${item.priority}` }, /* @__PURE__ */ React.createElement("div", { className: "pi-icon-col" }, /* @__PURE__ */ React.createElement("span", { className: "pi-icon" }, item.icon)), /* @__PURE__ */ React.createElement("div", { className: "pi-body" }, /* @__PURE__ */ React.createElement("div", { className: "pi-head" }, /* @__PURE__ */ React.createElement("span", { className: "pi-label" }, item.label), item.capped && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#8C4020", background: "rgba(200,112,64,.12)", border: "1px solid rgba(200,112,64,.3)", borderRadius: 3, padding: "1px 6px" } }, "tope alcanzado"), item.notInStock && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#7A5A10", background: "rgba(160,120,40,.12)", border: "1px solid rgba(160,120,40,.3)", borderRadius: 3, padding: "1px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "cart", size: 10 }), " no en bodega — a comprar")), item.delta && /* @__PURE__ */ React.createElement("span", { className: "pi-delta" }, item.delta)), item.repeatedApply && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginBottom: 2 } }, "↻ Ya aplicaste esto ", item.repeatedApply, "x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”."), /* @__PURE__ */ React.createElement("div", { className: "pi-action", dangerouslySetInnerHTML: { __html: item.action } }), /* @__PURE__ */ React.createElement("div", { className: "pi-effect" }, item.effect), deltaSim?.diff && /* @__PURE__ */ React.createElement("div", { className: "pi-deltas", style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaScore >= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaScore >= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔScore: ", deltaSim.diff.deltaScore >= 0 ? `+${deltaSim.diff.deltaScore}` : deltaSim.diff.deltaScore, " pts (", deltaSim.diff.newScore, ")"), /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaEb >= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaEb >= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔEB: ", deltaSim.diff.deltaEb >= 0 ? `+${deltaSim.diff.deltaEb}%` : `${deltaSim.diff.deltaEb}%`, " ", deltaSim.diff.deltaEbRange ? `[${deltaSim.diff.deltaEbRange[0] >= 0 ? "+" : ""}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1] >= 0 ? "+" : ""}${deltaSim.diff.deltaEbRange[1]}%]` : "", " (", deltaSim.diff.newEb, "%)"), deltaSim.diff.confidence && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 6px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 600, background: "rgba(43,76,126,.1)", color: "var(--slate-800)" } }, "confianza: ", deltaSim.diff.confidence === "high" ? "alta" : deltaSim.diff.confidence === "low" ? "baja" : "media"), deltaSim.diff.deltaCost !== 0 && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaCost <= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaCost <= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔCosto: ", deltaSim.diff.deltaCost <= 0 ? `-$${Math.abs(deltaSim.diff.deltaCost)}/kg` : `+$${deltaSim.diff.deltaCost}/kg`), deltaSim.diff.deltaCn !== 0 && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: "var(--paper-200)", color: "var(--ink-700)" } }, "ΔC:N: ", deltaSim.diff.deltaCn >= 0 ? `+${deltaSim.diff.deltaCn}` : deltaSim.diff.deltaCn, " (", deltaSim.diff.newCn, ":1)")), item.evidence && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Evidencia:"), " ", item.evidence.type === "heuristic-model" ? "heurística de composición" : "sin fuente específica", " · confianza ", item.evidence.confidence === "low" ? "baja" : item.evidence.confidence || "baja", " · ", item.evidence.note), item.why && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3, opacity: 0.85 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Por qué:"), " ", item.why), item.riskIfIgnored && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Riesgo:"), " ", item.riskIfIgnored), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: scoreDelta > 0 ? "var(--accent-olive)" : "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "Índice estimado: ", Math.round(baseScore), "/100 → ", Math.round(item.predictedScore), "/100 (", scoreDelta >= 0 ? "+" : "", scoreDelta, ")"), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Comparación del modelo; no garantiza rendimiento en producción."), item.apply && /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes }), item.sideEffect && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--coral-600,#B5451F)" }), " ", item.sideEffect)), item.comboApply && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, padding: "6px 8px", background: "rgba(74,107,74,.08)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, item.comboLabel), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)" } }, "Índice estimado con ambos cambios: ", Math.round(item.comboPredictedScore), "/100"), /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes: comboChanges }), /* @__PURE__ */ React.createElement("button", { disabled: !comboChanges.length, "aria-label": `Aplicar corrección combinada: ${item.label}`, onClick: () => onApply(item.comboApply, item.icon), className: "pi-apply", style: { marginTop: 4 } }, "Aplicar corrección combinada"))), /* @__PURE__ */ React.createElement("div", { className: "pi-actions", style: { display: "flex", gap: 6, alignItems: "center", flexDirection: "column" } }, item.apply ? /* @__PURE__ */ React.createElement("button", { disabled: !changes.length, "aria-label": `Aplicar ajuste: ${item.label}`, onClick: () => onApply(item.apply, item.icon), className: "pi-apply" }, "Aplicar ajuste") : /* @__PURE__ */ React.createElement("div", { className: "pi-spacer" }), deltaSim?.resultingRecipe && onMorph && /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -3147,13 +3145,16 @@ const runHybridRecipeSearch = ({
     lockedIds: new Set(lockedIds || [])
   });
 };
-const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, resolveSpp = null, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+  const evaluate = createRecipeEvaluator({ sKey, ings, spp, resolveSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze });
+  const sppFor = (r) => typeof resolveSpp === "function" && resolveSpp(r) || spp;
   let cur = recipe;
   let bestScore = -1;
   for (let i = 0; i < maxIter; i++) {
-    const a = analyze(cur, sKey, ings, spp);
+    const curSpp = sppFor(cur);
+    const a = analyze(cur, sKey, ings, curSpp);
     if (!a) break;
-    const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, spp, usageCounts);
+    const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, curSpp, usageCounts, evaluate);
     if (o.score <= bestScore) break;
     bestScore = o.score;
     const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
@@ -3161,9 +3162,10 @@ const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, stockIds, l
     let bestCandScore = -1, bestCandidate = null, bestO2 = null;
     for (const cand of candidates) {
       const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
-      const tryA = analyze(tryRec, sKey, ings, spp);
+      const trySpp = sppFor(tryRec);
+      const tryA = analyze(tryRec, sKey, ings, trySpp);
       if (!tryA) continue;
-      const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), useStock, void 0, spp, usageCounts);
+      const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), useStock, void 0, trySpp, usageCounts, evaluate);
       if (tryO.score > bestCandScore) {
         bestCandScore = tryO.score;
         bestCandidate = tryRec;
@@ -5731,7 +5733,9 @@ function SimuladorShell(props) {
   React.useEffect(() => {
     setUsageCounts({});
   }, [sKey]);
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts]);
+  const resolvePeritoSpp = React.useCallback((r) => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, r, effectiveINGS), [sKey, effectiveINGS]);
+  const peritoEvaluate = useMemo(() => createRecipeEvaluator({ sKey, ings: effectiveINGS, resolveSpp: resolvePeritoSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze }), [sKey, effectiveINGS, resolvePeritoSpp, stockIds, histStats]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate]);
   const peritoRevisionRef = React.useRef(0);
   useEffect(() => {
     const input = {
@@ -5848,7 +5852,7 @@ function SimuladorShell(props) {
     setRecipeHistory((h) => h.slice(0, -1));
   };
   const autoImprove = () => {
-    setRecipe(autoImproveRecipe({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats }));
+    setRecipe(autoImproveRecipe({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, resolveSpp: resolvePeritoSpp, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats }));
   };
   const openPrintWindow = (mode2) => {
     const el = document.querySelector(".prod-sheet[data-preparation-revision]");
@@ -10078,15 +10082,15 @@ Click para ver análisis completo`
       { l: "EB estimada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb?.toFixed(0) || "—"}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
       { l: "Costo / kg Seco", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
       { l: "Costo / kg Hongo", v: an.eb > 0 ? `$${Math.round((an.cost || 0) / (an.eb / 100)).toLocaleString("es-CO")}` : "—", ok: (an.cost || 0) / (an.eb / 100) < 1600, w: (an.cost || 0) / (an.eb / 100) < 3200 }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg seco"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg seco"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), !isMassBalanced(an) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", { id: "perito-recommendations" }, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, speciesKey: sKey, onMorph: (tgt) => {
+    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg seco"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg seco"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), !isMassBalanced(an) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", { id: "perito-recommendations" }, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, evaluate: peritoEvaluate, onMorph: (tgt) => {
       setMorphTargetRecipe(tgt);
       setWorkbenchMode("morphing");
       openBuilderSubTab("generador");
-    } }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, speciesKey: sKey, onMorph: (tgt) => {
+    } }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, evaluate: peritoEvaluate, onMorph: (tgt) => {
       setMorphTargetRecipe(tgt);
       setWorkbenchMode("morphing");
       openBuilderSubTab("generador");
-    } }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, speciesKey: sKey, onMorph: (tgt) => {
+    } }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, evaluate: peritoEvaluate, onMorph: (tgt) => {
       setMorphTargetRecipe(tgt);
       setWorkbenchMode("morphing");
       openBuilderSubTab("generador");
@@ -10286,7 +10290,7 @@ Click para ver análisis completo`
         recipe,
         lockedIds,
         ingredients: optimizerINGS,
-        speciesKey: sKey,
+        evaluate: peritoEvaluate,
         onMorph: (tgt) => {
           setMorphTargetRecipe(tgt);
           setWorkbenchMode("morphing");
@@ -10302,7 +10306,7 @@ Click para ver análisis completo`
         recipe,
         lockedIds,
         ingredients: optimizerINGS,
-        speciesKey: sKey,
+        evaluate: peritoEvaluate,
         onMorph: (tgt) => {
           setMorphTargetRecipe(tgt);
           setWorkbenchMode("morphing");
@@ -10318,7 +10322,7 @@ Click para ver análisis completo`
         recipe,
         lockedIds,
         ingredients: optimizerINGS,
-        speciesKey: sKey,
+        evaluate: peritoEvaluate,
         onMorph: (tgt) => {
           setMorphTargetRecipe(tgt);
           setWorkbenchMode("morphing");
@@ -10330,15 +10334,16 @@ Click para ver análisis completo`
     const hasCandidate = activeCandidate && activeCandidate.length > 0;
     const hasBase = recipe && recipe.length > 0;
     const morphedRec = hasBase && hasCandidate && engineMorphRecipes ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds) : recipe || [];
-    const anMorph = hasBase && hasCandidate ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP) : an;
-    const scoreMorphObj = hasBase && hasCandidate && anMorph ? scoreAn(anMorph, { recipe: morphedRec }) : opt;
+    const evalMorph = hasBase && hasCandidate ? peritoEvaluate(morphedRec) : null;
+    const anMorph = hasBase && hasCandidate ? evalMorph?.an || null : an;
+    const scoreMorphObj = evalMorph ? evalMorph.scoreObj : opt;
     const scoreMorph = Math.round(scoreMorphObj?.score || 0);
     const trajectoryAnalysis = hasBase && hasCandidate && engineAnalyzeMorphTrajectory ? engineAnalyzeMorphTrajectory({
       recipeA: recipe,
       recipeB: activeCandidate,
       lockedIds,
       species: sp,
-      analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+      analyzeFn: (r) => peritoEvaluate(r)?.an || null,
       requestedAlpha: morphAlpha
     }) : null;
     const isMorphFeasible = trajectoryAnalysis ? trajectoryAnalysis.isFeasibleAtRequestedAlpha : true;

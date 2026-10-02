@@ -13,6 +13,7 @@ const RO = require('./recipe-optimizer.js');
 globalThis.generateOptimizer = RO.generateOptimizer;
 globalThis.applyOptToRecipe = RO.applyOptToRecipe;
 globalThis.calcTreatment = RO.calcTreatment;
+globalThis.createRecipeEvaluator = RO.createRecipeEvaluator;
 
 const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'blendEBWithHistory',
   'hybridRoleCaps', 'hybridIngredientCaps', 'autoImproveRecipe', 'runHybridRecipeSearch']);

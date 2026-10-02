@@ -85,6 +85,10 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 `scoring.js` es compartido entre ambos motores — evitar recrear una segunda función de scoring.
 
+**Excepción importante:** el diagnóstico del Perito que ve el usuario (veredicto, sugerencias, "Aplicar ajuste", Auto-mejorar) sí sale de `recipe-optimizer.js` en producción: `generateOptimizer`, `applyOptToRecipe` y `createRecipeEvaluator`. Lo que es oráculo legado es solo el Generador por fuerza bruta (`runAutoOptimizer`).
+
+**Contexto único de score del Perito.** El veredicto, el "Índice estimado" de cada sugerencia, el ΔScore de la tarjeta (`simulateSuggestionDelta`), el Morphing y Auto-mejorar puntúan con el mismo evaluador: `createRecipeEvaluator` (en el componente, `peritoEvaluate`). Para cada receta resuelve sus propios objetivos (`species-targets.js`; la clase de sustrato puede cambiar al aplicar un ajuste), toma el tratamiento recomendado, mezcla la EB con el histórico y puntúa con el mismo stock. No llamar `scoreAn` con un contexto armado a mano para mostrar un score del Perito: pasar por el evaluador. Pruebas: `perito-score-context.test.js` y `e2e/perito-score-context.browser.cjs`.
+
 ## 3b. El modelo agronómico vive fuera del JSX
 
 Desde la extracción de Fase 2, el catálogo y el modelo ya no están dentro de
