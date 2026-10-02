@@ -6580,3 +6580,16 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .inv-modal-bg.iot-hub-backdrop { padding:16px!important; align-items:center!important; }
 .sim-root .inv-modal.iot-hub-dialog { padding:0!important; margin:0!important; overflow:hidden!important; }
+
+/* Hoy keeps turn actions ahead of optional summaries. */
+.sim-root .home-secondary-summary { border:1px solid var(--border-hairline); padding:0 16px; min-width:0; }
+.sim-root .home-secondary-summary summary { min-height:48px; display:flex; align-items:center; cursor:pointer; font-size:14px; font-weight:600; }
+.sim-root .home-secondary-summary summary::before { content:'+'; margin-right:10px; font-family:var(--font-mono); }
+.sim-root .home-secondary-summary[open] summary::before { content:'−'; }
+.sim-root .home-secondary-summary summary:focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
+.sim-root .home-secondary-summary .home-registro-row, .sim-root .home-secondary-summary .home-live-telemetry { margin-top:0!important; padding-top:12px!important; padding-bottom:16px; }
+@media(max-width:560px) {
+ .sim-root .home-header-cockpit { padding:14px 16px; }
+ .sim-root .home-cockpit { gap:12px; }
+ .sim-root .home-quick-actions-strip { grid-template-columns:minmax(0,1fr)!important; }
+}
