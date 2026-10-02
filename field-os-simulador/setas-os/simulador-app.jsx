@@ -1216,6 +1216,7 @@ const {
   calcMaxBatchFromStock,
   quantifyItem,
   generateOptimizer,
+  createRecipeEvaluator,
   ENERGY_COST,
   energyCostPerKgSeco,
   calcTreatment,
@@ -1870,7 +1871,7 @@ const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
   if(!first) return null;
-  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','!':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Sin mineral estabilizador de pH','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
+  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','!':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Calcio mineral bajo el mínimo funcional (≥0,6 % CaCO₃/CaSO₄)','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
   return MAP[first.icon]||first.label;
 };
 const peritoCorreccionMinima=(opt)=>{
@@ -1897,32 +1898,112 @@ const PeritoChangePreview=({changes})=>(
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
   </details>
 );
-const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,speciesKey,onMorph})=>{
+// ── Clase de sustrato en el Perito ──
+// La clase (species-targets.js) decide los rangos objetivo, y cruzar el umbral
+// de suplementación los cambia de golpe: en orellana, 1,5 % de salvado se
+// evalúa como paja sin suplementar (C:N 50–100) y 2 % como bolsa suplementada
+// (C:N 25–50). Estos componentes no cambian ningún número: dicen qué clase
+// rige, de dónde salen sus rangos y cuándo un ajuste o un punto de suplemento
+// la cambia. El umbral es un criterio del modelo sin fuente publicada, y así se
+// declara.
+const fmtClassRanges=c=>[
+  c?.cn?`C:N ${c.cn.min}–${c.cn.max}:1`:null,
+  c?.nPct?`N ${c.nPct.min}–${c.nPct.max} %`:null,
+].filter(Boolean).join(', ');
+const classCitation=c=>c?.cn?.citation||c?.nPct?.citation||null;
+const SubstrateClassNote=({info})=>{
+  if(!info) return null;
+  const alt=info.alternative;
+  const cite=classCitation(info);
+  return(
+    <div data-testid="perito-substrate-class" data-class={info.resolvedClass} data-near-threshold={info.nearThreshold?'true':'false'} style={{marginTop:6}}>
+      <div className="os-provenance-line" style={{textTransform:'none',letterSpacing:0}}>
+        {[
+          `Clase de sustrato: ${info.fallback&&info.substrateLabel&&info.substrateLabel!==info.label?`${info.substrateLabel} (sin objetivos propios; se usan los de ${info.label})`:info.label}`,
+          `suplemento ${info.supplementPct} %${info.hasMediumSupplement?' ponderado (los suplementos medios cuentan al 60 %)':''}`,
+          fmtClassRanges(info)?`objetivos ${fmtClassRanges(info)}`:null,
+          cite,
+        ].filter(Boolean).join(' · ')}
+      </div>
+      {info.nearThreshold&&alt&&(
+        <div data-testid="perito-class-threshold" className="os-provenance-notice os-provenance-notice--estimated" style={{marginTop:4}}>
+          {alt.direction==='above'
+            ?`Si el suplemento llega a ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt)?` (${fmtClassRanges(alt)})`:''} y el veredicto se recalcula con esos rangos.`
+            :`Si el suplemento baja de ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt)?` (${fmtClassRanges(alt)})`:''} y el veredicto se recalcula con esos rangos.`}
+          {' '}El umbral de {info.thresholdPct} % es un criterio de clasificación del modelo, sin fuente publicada.
+        </div>
+      )}
+    </div>
+  );
+};
+const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
+  if(!change) return null;
+  const cite=classCitation(change.to);
+  return(
+    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'#7A5A10',fontFamily:'var(--font-mono)',marginTop:3}}>
+      <span style={{fontWeight:700}}>Cambia la clase de sustrato:</span> {change.from.label} → {change.to.label}.
+      {fmtClassRanges(change.to)?` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite?` (${cite})`:''}.`:''} El índice estimado ya usa esos rangos.
+    </div>
+  );
+};
+const recipeKeyOf=r=>JSON.stringify((r||[]).map(x=>[x.id,Number(x.p)||0]));
+// Resumen de Auto-mejorar: qué aplicó, cómo cambió el veredicto y cómo
+// volver atrás. Sin cambios, lo dice en vez de no hacer nada visible.
+const AutoImproveSummary=({result,onUndo,canUndo})=>{
+  if(!result) return null;
+  const {steps,before,after}=result;
+  if(!steps.length) return(
+    <div data-testid="auto-improve-summary" data-steps="0" role="status" aria-live="polite" className="os-provenance-notice" style={{marginBottom:10}}>
+      Auto-mejorar no encontró un ajuste que quite críticos o suba el score con los ingredientes y bloqueos actuales{before?` (score ${before.score}, ${before.criticals} crítico${before.criticals===1?'':'s'})`:''}.
+    </div>
+  );
+  return(
+    <div data-testid="auto-improve-summary" data-steps={steps.length} role="status" aria-live="polite" className="os-provenance-notice" style={{marginBottom:10,display:'flex',gap:10,alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap'}}>
+      <div style={{flex:'1 1 240px',minWidth:0}}>
+        <b>Auto-mejorar aplicó {steps.length} ajuste{steps.length===1?'':'s'}</b> para: {steps.map(st=>st.labels.join(' + ')).join(' → ')}.
+        {before&&after&&<> Score {before.score} → {after.score} · críticos {before.criticals} → {after.criticals}.</>}
+      </div>
+      {canUndo&&<button type="button" className="sdp-btn sdp-btn--secondary" onClick={onUndo} style={{flexShrink:0,padding:'6px 12px'}}>Deshacer Auto-mejorar</button>}
+    </div>
+  );
+};
+const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,evaluate,onMorph})=>{
   const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
   const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
   const hasPrediction=item.predictedScore!=null&&baseScore!=null;
   const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
 
+  // Mismo evaluador que el veredicto (peritoEvaluate): el ΔScore y el
+  // "Índice estimado" de abajo salen del mismo contexto y coinciden.
   const deltaSim=React.useMemo(()=>{
-    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length) return null;
+    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length||typeof evaluate!=='function') return null;
     try{
-      const sK=speciesKey||(item.speciesKey)||'p_ostreatus_gris';
-      const curAn=analyze(recipe,sK,ingredients,SPP);
       return engineSimulateSuggestionDelta({
         recipe,
         apply:item.apply,
         lockedIds,
         ingredients,
         applyOptToRecipe,
-        analyze:(r)=>analyze(r,sK,ingredients,SPP),
-        score:(anObj,extra)=>scoreAn(anObj,extra),
-        baseAn:curAn,
+        evaluate,
+        baseAn:evaluate(recipe)?.an,
         baseScore,
       });
     }catch(_){
       return null;
     }
-  },[recipe,item.apply,lockedIds,ingredients,speciesKey,baseScore]);
+  },[recipe,item.apply,lockedIds,ingredients,evaluate,baseScore]);
+  const classChange=React.useMemo(()=>{
+    if(typeof evaluate!=='function'||!SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from=evaluate(recipe)?.an?.targets;
+    const to=deltaSim?.resultingAn?.targets;
+    return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
+  },[evaluate,recipe,deltaSim]);
+  const comboClassChange=React.useMemo(()=>{
+    if(!item.comboApply||typeof evaluate!=='function'||!SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from=evaluate(recipe)?.an?.targets;
+    const to=evaluate(applyOptToRecipe(recipe,item.comboApply,lockedIds,ingredients))?.an?.targets;
+    return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
+  },[evaluate,recipe,item.comboApply,lockedIds,ingredients]);
 
   return(
   <div className={`perito-item pi-${item.priority}`}>
@@ -1945,7 +2026,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
-            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({deltaSim.diff.newEb}%)
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({Math.round(deltaSim.diff.newEb)}%)
           </span>
           {deltaSim.diff.confidence&&(
             <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>
@@ -1959,7 +2040,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           )}
           {deltaSim.diff.deltaCn!==0&&(
             <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:'var(--paper-200)',color:'var(--ink-700)'}}>
-              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({deltaSim.diff.newCn}:1)
+              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({Number(deltaSim.diff.newCn).toFixed(1)}:1)
             </span>
           )}
         </div>
@@ -1969,11 +2050,13 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+      <ClassChangeNote change={classChange}/>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600,#B5451F)" /> {item.sideEffect}</span></div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
+        <ClassChangeNote change={comboClassChange} testId="perito-combo-class-change"/>
         <PeritoChangePreview changes={comboChanges}/>
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
@@ -4659,39 +4742,75 @@ const runHybridRecipeSearch=({
     lockedIds:new Set(lockedIds||[]),
   });
 };
-// ── Auto-mejorar: aplica en cadena la sugerencia crítica/advertencia que de
-//    verdad mejora el score global (hasta maxIter pasos) — prueba las 3 de
-//    mayor score predicho y se queda con la mejor tras aplicarla, no solo con la
-//    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
+// ── Auto-mejorar: aplica en cadena (hasta maxIter pasos) el ajuste crítico o
+//    de advertencia que más avanza — evalúa todos los ajustes accionables y
+//    sus correcciones combinadas, y si ninguno avanza solo, pares de ajustes.
+//    `spp` son los objetivos resueltos del Formulador: el
 //    análisis y las cantidades de cada paso usan los mismos rangos que la UI
 //    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
-const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
-  let cur=recipe;let bestScore=-1;
+// `resolveSpp` (receta → objetivos) hace que cada paso use los objetivos de la
+// receta en ese momento: aplicar un ajuste puede cambiar la clase de sustrato,
+// y puntuar el paso siguiente con los rangos de la receta inicial lo aceptaría
+// o rechazaría con el contexto equivocado. Sin él, `spp` fijo como antes.
+// Progreso de Auto-mejorar: primero menos críticos, después más score. Con
+// varios críticos, el tope de severidad deja el score igual al corregir solo
+// uno, y la regla anterior ("solo si sube el score") se detenía ahí con la
+// receta en "No ejecutar". Ahora un paso que quita un crítico sin bajar el
+// score es progreso; uno que no quita críticos tiene que subir el score; uno
+// que agrega críticos nunca se acepta.
+const autoImproveIsBetter=(next,cur)=>(next.criticals<cur.criticals&&next.score>=cur.score)||(next.criticals===cur.criticals&&next.score>cur.score);
+const AUTO_IMPROVE_PAIR_POOL=8;
+const autoImproveOps=apply=>Array.isArray(apply)?apply:(apply?[apply]:[]);
+const autoImproveRecipeDetailed=({recipe,sKey,ings,optimizerINGS,spp,resolveSpp=null,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+  const evaluate=createRecipeEvaluator({sKey,ings,spp,resolveSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze});
+  const sppFor=r=>(typeof resolveSpp==='function'&&resolveSpp(r))||spp;
+  // Mismo evaluador que el veredicto: el score de cada candidato es el que el
+  // Perito mostrará después de aplicarlo.
+  const progressOf=r=>{
+    const e=evaluate(r);
+    if(!e) return null;
+    return{score:e.score,status:e.status,criticals:SetasScoring.assessSeverity(e.an).criticals};
+  };
+  let cur=recipe;
+  let curP=progressOf(cur);
+  const before=curP;
+  const steps=[];
+  if(!curP) return{recipe,steps,before:null,after:null};
   for(let i=0;i<maxIter;i++){
-    const a=analyze(cur,sKey,ings,spp);
+    const curSpp=sppFor(cur);
+    const a=analyze(cur,sKey,ings,curSpp);
     if(!a) break;
-    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,spp,usageCounts);
-    if(o.score<=bestScore) break;
-    bestScore=o.score;
-    const candidates=o.items
-      .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
-      .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
-      .slice(0,3);
-    if(!candidates.length) break;
-    let bestCandScore=-1,bestCandidate=null,bestO2=null;
-    for(const cand of candidates){
-      const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-      const tryA=analyze(tryRec,sKey,ings,spp);
-      if(!tryA) continue;
-      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,spp,usageCounts);
-      if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
+    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,curSpp,usageCounts,evaluate);
+    const moves=[];
+    o.items.filter(it=>it.priority==='critical'||it.priority==='warning').forEach(it=>{
+      if(it.apply) moves.push({apply:it.apply,icons:[it.icon],labels:[it.label]});
+      if(it.comboApply) moves.push({apply:it.comboApply,icons:[it.icon],labels:[it.comboLabel||it.label]});
+    });
+    if(!moves.length) break;
+    let best=null;
+    const tryMove=(apply,meta)=>{
+      const next=applyOptToRecipe(cur,apply,lockedIds,optimizerINGS);
+      const p=progressOf(next);
+      if(p&&autoImproveIsBetter(p,curP)&&(!best||autoImproveIsBetter(p,best.after))) best={recipe:next,apply,after:p,...meta};
+    };
+    moves.forEach(m=>tryMove(m.apply,{icons:m.icons,labels:m.labels}));
+    // Ningún ajuste suelto avanza: probar dos a la vez (p. ej. N y pH), que es
+    // lo que hace falta cuando cada crítico por separado no cambia el score.
+    if(!best){
+      const pool=moves.slice(0,AUTO_IMPROVE_PAIR_POOL);
+      for(let x=0;x<pool.length;x++) for(let y=0;y<pool.length;y++){
+        if(x===y) continue;
+        tryMove([...autoImproveOps(pool[x].apply),...autoImproveOps(pool[y].apply)],{icons:[...pool[x].icons,...pool[y].icons],labels:[...pool[x].labels,...pool[y].labels]});
+      }
     }
-    if(!bestCandidate) break;
-    if(bestO2.score<=o.score) break; // no aceptar si no mejora el score global
-    cur=bestCandidate;
+    if(!best) break;
+    steps.push({labels:best.labels,icons:best.icons,ingredientIds:[...new Set(autoImproveOps(best.apply).map(op=>op&&op.id).filter(Boolean))],before:curP,after:best.after});
+    cur=best.recipe;
+    curP=best.after;
   }
-  return cur;
+  return{recipe:cur,steps,before,after:curP};
 };
+const autoImproveRecipe=args=>autoImproveRecipeDetailed(args).recipe;
 // ── Entradas del plan de lanzamiento compartidas por "Lanzar Lote" y
 //    "Ejecutar Lote" (I4/I5). La humedad que el operador editó a mano manda;
 //    si no la tocó, el objetivo resuelto de la especie. El spawn es grano
@@ -7448,7 +7567,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts]);
+  // Contexto único de score del Perito: veredicto, "Índice estimado" de cada
+  // sugerencia, ΔScore de la tarjeta, Morphing y Auto-mejorar puntúan con el
+  // mismo evaluador. Cada receta evaluada resuelve sus propios objetivos
+  // (resolvePeritoSpp ≡ effectiveSPP para la receta activa), así la predicción
+  // de un ajuste ya refleja si cambia la clase de sustrato.
+  const resolvePeritoSpp=React.useCallback(r=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,r,effectiveINGS),[sKey,effectiveINGS]);
+  const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
+  const substrateClassInfo=useMemo(()=>SetasSpeciesTargetsApi.describeSubstrateClass?SetasSpeciesTargetsApi.describeSubstrateClass({speciesId:sKey,recipe,ings:effectiveINGS,legacySpp:SPP}):null,[sKey,recipe,effectiveINGS]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
   const peritoRevisionRef=React.useRef(0);
@@ -7569,8 +7696,244 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // accionables con mejor predictedScore (generateOptimizer ya lo calcula) y
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
+  // Auto-mejorar entra al historial como un solo paso: "Deshacer" devuelve la
+  // receta de antes de todos sus ajustes. Registra ingredientes e íconos igual
+  // que "Aplicar ajuste" y deja un resumen visible mientras la receta sea la
+  // que produjo (autoImproveResult.recipeKey).
+  const [autoImproveResult,setAutoImproveResult]=React.useState(null);
   const autoImprove=()=>{
-    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
+    const res=autoImproveRecipeDetailed({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats});
+    if(!res.steps.length){
+      setAutoImproveResult({recipeKey:recipeKeyOf(recipe),steps:[],before:res.before,after:res.before});
+      return;
+    }
+    setRecipeHistory(h=>[...h,recipe]);
+    setRecipe(res.recipe);
+    setAppliedIcons(s=>{const next={...s};res.steps.forEach(st=>st.icons.forEach(ic=>{next[ic]=(next[ic]||0)+1;}));return next;});
+    setUsageCounts(s=>{const next={...s};res.steps.forEach(st=>st.ingredientIds.forEach(id=>{next[id]=(next[id]||0)+1;}));return next;});
+    setAutoImproveResult({recipeKey:recipeKeyOf(res.recipe),steps:res.steps,before:res.before,after:res.after});
+  };
+  const autoImproveSummary=autoImproveResult&&autoImproveResult.recipeKey===recipeKeyOf(recipe)?autoImproveResult:null;
+  // ── Panel del Perito: una sola implementación ──
+  // Antes el Formulador (#bl-perito) y la Mesa del Perito (subpestaña
+  // Generador, .perito-standalone-panel) tenían dos copias del mismo panel
+  // —encabezado, métricas, medidores y tarjetas— que ya diferían en textos,
+  // métricas y orden. Ahora ambos renderizan esto; la variante solo agrega lo
+  // propio de cada lugar: siguiente paso del flujo, crear prueba, gráficos y
+  // evaluación técnica en el Formulador; factor restrictivo y contexto físico
+  // de Tenjo en la Mesa del Perito. La "barra resumen" que repetía score, EB y
+  // costo justo debajo de las métricas se retiró: el costo por kg de hongo
+  // quedó como segunda línea de la métrica de costo.
+  const peritoItemKeys=list=>{const seen=new Map();return list.map(it=>{const base=`${it.priority}|${it.icon}|${it.label}`;const n=seen.get(base)||0;seen.set(base,n+1);return n?`${base}#${n}`:base;});};
+  const renderPeritoPanel=(variant)=>{
+    const isWorkbench=variant==='workbench';
+    if(!an) return isWorkbench?(
+      <section className="panel perito-standalone-panel" data-perito-variant={variant} style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+        <div className="os-provenance-notice">Agrega ingredientes en la Mesa de Mezcla para ver el diagnóstico del Perito.</div>
+      </section>
+    ):null;
+    const hasPer=recipe.length>0;
+    const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+    const criticals=items.filter(s=>s.priority==='critical');
+    const warnings=items.filter(s=>s.priority==='warning');
+    const tips=items.filter(s=>s.priority==='tip');
+    const infos=items.filter(s=>s.priority==='info');
+    const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+    const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+    const cur=sp?Math.min(an.cn,max):0;
+    const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
+    const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
+    const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
+    const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+    const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
+    const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
+    return(
+      <section className={`panel print-panel${isWorkbench?' perito-standalone-panel':''}`} id={isWorkbench?undefined:'bl-perito'} data-perito-variant={variant} aria-label="Perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:isWorkbench?24:12,transition:'background .3s,border-color .3s',...(isWorkbench?{padding:20,borderRadius:'var(--r-md)'}:{})}}>
+        {/* ── ENCABEZADO: score, veredicto y acciones (Auto-mejorar primero, asistente IA al final) ── */}
+        {hasPer&&(
+          <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
+                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
+                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
+                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
+                        </div>
+              {isWorkbench&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4}}>Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})</div>}
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
+                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                          Deshacer ({recipeHistory.length})
+                        </button>}
+              {!isWorkbench&&<>
+                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+              </>}
+                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
+                          <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
+                        </button>
+            </div>
+          </div>
+        )}
+        {hasPer&&<div style={{marginTop:-8,marginBottom:12}}><SubstrateClassNote info={substrateClassInfo}/></div>}
+        {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
+
+        {isWorkbench&&<>
+                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
+                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                          Factor Restrictivo Estimado: {restrictiveFactor.label}
+                        </span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
+                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
+                      </div>
+                      {restrictiveFactor.counterfactualOpportunity&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
+                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
+                        </div>
+                      )}
+                      {restrictiveFactor.actionRequired&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                          → Acción correctiva: {restrictiveFactor.actionRequired}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+
+                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
+                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
+                        <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
+                      </div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                        All American 1941X: {reqPsi.toFixed(2)} psig
+                      </span>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
+                      <div>
+                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                      </div>
+                      <div>
+                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
+                      </div>
+                      <div>
+                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
+                      </div>
+                    </div>
+                  </div>
+
+        </>}
+
+        {/* ── MÉTRICAS ── */}
+        <div className="mgrid" style={{marginBottom:12}}>
+          {[
+                        {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
+                        {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
+                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                        {l:'Costo / kg seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800,sub:an.eb>0?`≈ $${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')} por kg de hongo con la EB estimada`:null},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
+                    ].map(m=>(
+                      <div key={m.l} className="mc">
+                        <div className="mlbl">{m.l}</div>
+                        <div className="mval">{m.v}</div>
+                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
+              {m.sub&&<span className="os-provenance-line" data-testid="metric-sub">{m.sub}</span>}
+                      </div>
+                    ))}
+        </div>
+        <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
+
+        {/* ── EB + C:N ── */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:16,margin:'12px 0'}}>
+          <EBDial an={an} sp={sp}/>
+                  {sp&&an.cn>0&&(
+                    <div className="gauge-wrap">
+                      <div className="gauge-hdr">
+                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                      </div>
+                      <div className="gauge-tr">
+                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                      </div>
+                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                    </div>
+                  )}
+        </div>
+        <NitrogenChart recipe={recipe}/>
+
+        {/* ── EVIDENCIA + SUGERENCIAS ── */}
+        {hasPer&&(
+          <>
+                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
+                        </div>}
+                      {histStats&&histStats.n>0&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
+                        </div>}
+                      {modelAccuracy!=null&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
+                        </div>}
+                      {similarTrial&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
+                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
+                        </div>}
+                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
+                      </div>
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
+            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
+            {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
+            {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
+            {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
+          </>
+        )}
+
+        {!isWorkbench&&<>
+                  {/* ── CHARTS TOGGLE + CHARTS ── */}
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
+                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
+                  </div>
+                  {showFlush&&<FlushChart an={an}/>}
+                  {showCompChart&&<CompositionChart recipe={recipe}/>}
+                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
+
+                  {/* ── EVALUACIÓN TÉCNICA ── */}
+                  <div className="dbox" style={{marginTop:8}}>
+                    <div className="dttl">Evaluación</div>
+                    <div className="dtxt">{dg.main}</div>
+                  </div>
+                  {dg.sugs.length>0&&(<>
+                    <div className="sec" style={{marginTop:8}}>A considerar</div>
+                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
+                  </>)}
+        </>}
+      </section>
+    );
   };
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
@@ -14627,158 +14990,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <button type="button" onClick={()=>openBuilderSubTab('generador')}>Abrir generador</button>
             </header>
-            {an&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const infos=items.filter(s=>s.priority==='info');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an.cn,max):0;
-              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
-              return(
-                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
-                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
-                  {hasPer&&(
-                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
-                      </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
-                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
-                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
-                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
-                        </div>
-                      </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
-                          <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
-                        </button>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
-                          Deshacer ({recipeHistory.length})
-                        </button>}
-                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
-                  <div className="mgrid" style={{marginBottom:12}}>
-                    {[
-                      {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
-                      {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
-                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
-                    ].map(m=>(
-                      <div key={m.l} className="mc">
-                        <div className="mlbl">{m.l}</div>
-                        <div className="mval">{m.v}</div>
-                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                        {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
-
-                  {/* ── EBDial + C:N gauge ── */}
-                  <EBDial an={an} sp={sp}/>
-                  {sp&&an.cn>0&&(
-                    <div className="gauge-wrap">
-                      <div className="gauge-hdr">
-                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                      </div>
-                      <div className="gauge-tr">
-                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                      </div>
-                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                    </div>
-                  )}
-                  <NitrogenChart recipe={recipe}/>
-
-                  {/* ── PERITO: INDICADORES + ITEMS ── */}
-                  {hasPer&&(
-                    <>
-                      {/* ── barra resumen live: score + EB + costo seco + costo hongo (Funcionalidad 2) ── */}
-                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
-                        {[
-                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
-                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                          {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
-                        ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 8px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',fontWeight:700,fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
-                        </div>}
-                      {histStats&&histStats.n>0&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
-                        </div>}
-                      {modelAccuracy!=null&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
-                        </div>}
-                      {similarTrial&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
-                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
-                        </div>}
-                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
-                      </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
-                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
-                    </>
-                  )}
-
-                  {/* ── CHARTS TOGGLE + CHARTS ── */}
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
-                  </div>
-                  {showFlush&&<FlushChart an={an}/>}
-                  {showCompChart&&<CompositionChart recipe={recipe}/>}
-                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
-
-                  {/* ── EVALUACIÓN TÉCNICA ── */}
-                  <div className="dbox" style={{marginTop:8}}>
-                    <div className="dttl">Evaluación</div>
-                    <div className="dtxt">{dg.main}</div>
-                  </div>
-                  {dg.sugs.length>0&&(<>
-                    <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
-                  </>)}
-                </div>
-              );
-            })()}
-            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+            {renderPeritoPanel('formulador')}            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
             {recipe.length>0&&<div className="panel panel-accent" id="bl-receta-summary">
               {/* ── HEADER EDITORIAL ── */}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
@@ -15137,223 +15349,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </button>
             </div>
 
-            {/* ── SECCIÓN 1: PERITO DIAGNÓSTICO VIVO (STANDALONE) ── */}
-            {['all','perito'].includes(workbenchMode)&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const restrictiveFactor=engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null);
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an?.cn||0,max):0;
-              const cnOk=sp&&an&&an.cn>=oMin&&an.cn<=oMax;
-              const reqPsi=engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03);
-              const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
-
-              return (
-                <section className="panel perito-standalone-panel" style={{background:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,marginBottom:16,paddingBottom:14,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap'}}>
-                    <div style={{display:'flex',gap:14,alignItems:'center'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:68,height:68,borderRadius:'50%',background:sm.badge,flexShrink:0,boxShadow:'0 4px 10px rgba(0,0,0,.1)'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.8)',letterSpacing:'var(--tracking-button)',marginTop:2}}>PERITO</span>
-                      </div>
-                      <div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,fontWeight:800}}>Dictamen Pericial Dinámico · Receta Activa</div>
-                        <h2 style={{fontFamily:'var(--font-display)',fontSize:"var(--text-xl)",fontWeight:700,color:sm.txt,margin:'2px 0 4px'}}>{sm.veredicto}</h2>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)'}}>
-                          {sm.accion} · Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
-                      {recipeHistory.length>0&&<button type="button" onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>Deshacer ({recipeHistory.length})</button>}
-                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="wand" size={13} color="var(--paper-0)" /> Consultar IA</button>
-                    </div>
-                  </div>
-
-                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
-                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
-                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
-                          Factor Restrictivo Estimado: {restrictiveFactor.label}
-                        </span>
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
-                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
-                      </div>
-                      {restrictiveFactor.counterfactualOpportunity&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
-                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
-                        </div>
-                      )}
-                      {restrictiveFactor.actionRequired&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
-                          → Acción correctiva: {restrictiveFactor.actionRequired}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
-                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
-                        <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
-                      </div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
-                        All American 1941X: {reqPsi.toFixed(2)} psig
-                      </span>
-                    </div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
-                      <div>
-                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
-                      </div>
-                      <div>
-                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
-                      </div>
-                      <div>
-                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Resumen Métricas */}
-                  {an&&(
-                    <>
-                    <div className="mgrid" style={{marginBottom:14}}>
-                      {[
-                        {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
-                        {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
-                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                        {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                        {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
-                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
-                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
-                      ].map(m=>(
-                        <div key={m.l} className="mc">
-                          <div className="mlbl">{m.l}</div>
-                          <div className="mval">{m.v}</div>
-                          <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                          {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
-                    </>
-                  )}
-
-                  {/* Gauges */}
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginBottom:16}}>
-                    <EBDial an={an} sp={sp}/>
-                    {sp&&an?.cn>0&&(
-                      <div className="gauge-wrap" style={{marginTop:0}}>
-                        <div className="gauge-hdr">
-                          <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                          <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                        </div>
-                        <div className="gauge-tr">
-                          <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                          <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                        </div>
-                        <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                        <NitrogenChart recipe={recipe}/>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Sugerencias Dinámicas con Simulación Delta */}
-                  <div className="perito-suggestions-deck" style={{marginTop:12}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,paddingBottom:6,borderBottom:'1px solid var(--border-soft)'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                        Sugerencias Inteligentes con Simulación Delta ({items.length})
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
-                        Simulación de impacto en vivo sin mutar mesa
-                      </div>
-                    </div>
-
-                    {criticals.length===0&&warnings.length===0&&tips.length===0&&(
-                      <div style={{padding:'12px 16px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#2F4A24'}}>
-                        <AppIcon name="check" size={13} style={{marginRight:4}} /> Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
-                      </div>
-                    )}
-
-                    {criticals.length>0&&(
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)',marginBottom:6}}>
-                          Críticos ({criticals.length})
-                        </div>
-                        {criticals.map((item,i)=>(
-                          <PeritoItem
-                            key={i}
-                            item={item}
-                            onApply={applyOptStep}
-                            baseScore={opt.score}
-                            recipe={recipe}
-                            lockedIds={lockedIds}
-                            ingredients={optimizerINGS}
-                            speciesKey={sKey}
-                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {warnings.length>0&&(
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)',marginBottom:6}}>
-                          Mejoras y Balance ({warnings.length})
-                        </div>
-                        {warnings.map((item,i)=>(
-                          <PeritoItem
-                            key={i}
-                            item={item}
-                            onApply={applyOptStep}
-                            baseScore={opt.score}
-                            recipe={recipe}
-                            lockedIds={lockedIds}
-                            ingredients={optimizerINGS}
-                            speciesKey={sKey}
-                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {tips.length>0&&(
-                      <details style={{marginBottom:10}}>
-                        <summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'6px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}>
-                          <span>Opcionales &amp; Ajustes Finos ({tips.length})</span>
-                          <span style={{fontSize:"var(--text-xs)"}}>▾</span>
-                        </summary>
-                        <div style={{marginTop:6}}>
-                          {tips.map((item,i)=>(
-                            <PeritoItem
-                              key={i}
-                              item={item}
-                              onApply={applyOptStep}
-                              baseScore={opt.score}
-                              recipe={recipe}
-                              lockedIds={lockedIds}
-                              ingredients={optimizerINGS}
-                              speciesKey={sKey}
-                              onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
-                            />
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                </section>
-              );
-            })()}
-
+            {/* ── SECCIÓN 1: DIAGNÓSTICO DEL PERITO (misma implementación que el Formulador) ── */}
+            {['all','perito'].includes(workbenchMode)&&renderPeritoPanel('workbench')}
             {/* ── SECCIÓN 2: COMPARADOR & MORPHING DE RECETAS ── */}
             {['all','morphing'].includes(workbenchMode)&&(()=>{
               const activeCandidate = morphTargetRecipe || (optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe) || [];
@@ -15362,12 +15359,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const morphedRec = (hasBase && hasCandidate && engineMorphRecipes)
                 ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds)
                 : (recipe || []);
-              const anMorph = (hasBase && hasCandidate)
-                ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP)
-                : an;
-              const scoreMorphObj = (hasBase && hasCandidate && anMorph)
-                ? scoreAn(anMorph, { recipe: morphedRec })
-                : opt;
+              // Mismo evaluador que el veredicto: con α=0 el score morfeado es
+              // el del Perito, y cada mezcla usa sus propios objetivos.
+              const evalMorph = (hasBase && hasCandidate) ? peritoEvaluate(morphedRec) : null;
+              const anMorph = (hasBase && hasCandidate) ? (evalMorph?.an || null) : an;
+              const scoreMorphObj = evalMorph ? evalMorph.scoreObj : opt;
               const scoreMorph = Math.round(scoreMorphObj?.score || 0);
 
               const trajectoryAnalysis = (hasBase && hasCandidate && engineAnalyzeMorphTrajectory)
@@ -15376,7 +15372,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     recipeB: activeCandidate,
                     lockedIds,
                     species: sp,
-                    analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+                    analyzeFn: (r) => peritoEvaluate(r)?.an || null,
                     requestedAlpha: morphAlpha,
                   })
                 : null;

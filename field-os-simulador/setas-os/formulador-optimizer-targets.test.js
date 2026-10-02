@@ -13,9 +13,10 @@ const RO = require('./recipe-optimizer.js');
 globalThis.generateOptimizer = RO.generateOptimizer;
 globalThis.applyOptToRecipe = RO.applyOptToRecipe;
 globalThis.calcTreatment = RO.calcTreatment;
+globalThis.createRecipeEvaluator = RO.createRecipeEvaluator;
 
 const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'blendEBWithHistory',
-  'hybridRoleCaps', 'hybridIngredientCaps', 'autoImproveRecipe', 'runHybridRecipeSearch']);
+  'hybridRoleCaps', 'hybridIngredientCaps', 'autoImproveIsBetter', 'AUTO_IMPROVE_PAIR_POOL', 'autoImproveOps', 'autoImproveRecipeDetailed', 'autoImproveRecipe', 'runHybridRecipeSearch']);
 
 const FORMULA_A = [
   { id: 'aserrin_roble', p: 45 }, { id: 'salvado_trigo', p: 25 }, { id: 'cascarilla_soya', p: 15 },
