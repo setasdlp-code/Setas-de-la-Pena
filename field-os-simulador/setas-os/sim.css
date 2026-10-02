@@ -6593,3 +6593,41 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
  .sim-root .home-cockpit { gap:12px; }
  .sim-root .home-quick-actions-strip { grid-template-columns:minmax(0,1fr)!important; }
 }
+
+/* Formulador: composición primero; metodología y procedencia a un paso. */
+.sim-root .form-support-details{margin:0 0 12px;border:1px solid var(--border-soft);background:var(--paper-panel);}
+.sim-root .form-support-details > summary{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 14px;cursor:pointer;color:var(--ink-800);font:600 var(--text-sm)/1.4 var(--font-body);list-style:none;}
+.sim-root .form-support-details > summary::-webkit-details-marker{display:none;}
+.sim-root .form-support-details > summary::before{content:'+';font:700 18px/1 var(--font-mono);}
+.sim-root .form-support-details[open] > summary::before{content:'−';}
+.sim-root .form-support-details > summary:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px;}
+.sim-root .form-support-details .form-summary-strip,.sim-root .form-support-details .form-flow{margin:0;border:0;}
+.sim-root .form-species-context{grid-template-columns:minmax(0,1fr) minmax(190px,1fr) minmax(190px,1fr);gap:12px;}
+
+.sim-root .form-species-context .form-species-picker select{min-height:44px;}
+@media(max-width:900px){
+ .sim-root .form-species-context{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .sim-root .form-species-context .form-species-identity{grid-column:1/-1;}
+}
+@media(max-width:560px){
+ .sim-root .form-species-context.has-recipe{grid-template-columns:minmax(0,1fr);}
+ .sim-root .form-method-details .form-flow{display:block;}
+}
+
+.sim-root .form-species-context .form-species-origin-toggle{display:grid;gap:5px;}
+.sim-root .form-species-origin-toggle > span{color:rgba(255,255,255,.65);font:700 var(--text-2xs)/1.2 var(--font-mono);}
+.sim-root .form-species-origin-toggle > div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.sim-root .form-species-origin-toggle button{min-height:44px;border:1px solid rgba(255,255,255,.42);background:transparent;color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-body);cursor:pointer;}
+.sim-root .form-species-origin-toggle button.is-active{background:var(--paper-0);color:var(--ink-900);}
+.sim-root .form-species-origin-toggle button:focus-visible{outline:2px solid var(--paper-0);outline-offset:2px;}
+.sim-root .form-method-details .form-species-targets{padding:12px 14px;border:0;border-bottom:1px solid var(--border-soft);}
+.sim-root .form-method-details .form-species-targets small{color:var(--ink-600);}
+.sim-root .form-method-details .form-species-targets b{color:var(--ink-900);}
+@media(max-width:560px){.sim-root .form-method-details .form-species-targets{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}}
+
+@media(max-width:560px){
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;}
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-left{grid-column:1/-1;min-width:0;}
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-metrics{margin:0;flex-wrap:nowrap;}
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-actions{grid-column:2;grid-row:2;justify-content:flex-end;}
+}
