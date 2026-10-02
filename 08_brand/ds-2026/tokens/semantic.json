@@ -34,8 +34,8 @@
     },
     "border": {
       "hairline": {
-        "value": "{color.primitive.ink-500}",
-        "description": "1px hairline border, specimen frames, subtle table rules."
+        "value": "{color.primitive.rule-500}",
+        "description": "1px hairline, specimen frames, table rules. Mineral gray: lighter than text so a card reads as a frame, not a box (3.34:1, clears the 3:1 graphic floor)."
       },
       "heavy": {
         "value": "{color.primitive.ink-900}",
@@ -97,6 +97,10 @@
       },
       "error-bg": {
         "value": "{color.derived.coral-tint}"
+      },
+      "ok-marker": {
+        "value": "{color.primitive.moss-500}",
+        "description": "Restrained moss for OK bars, meters and thin rules. Moss 700 is so close to ink that a status bar reads black."
       }
     },
     "action": {
@@ -111,10 +115,11 @@
       },
       "accent": {
         "value": "{color.primitive.coral-700}",
-        "description": "Accessible terracotta action fill. Coral 500 is never used behind small button text."
+        "description": "Terracotta action border and label colour. Never a fill: a coral fill is indistinguishable from the danger action."
       },
       "accent-text": {
-        "value": "{color.primitive.paper-50}"
+        "value": "{color.primitive.coral-700}",
+        "description": "Terracotta action text. The accent button is an outline, so its label sits on paper, never on a coral fill."
       },
       "danger": {
         "value": "{color.primitive.coral-700}"

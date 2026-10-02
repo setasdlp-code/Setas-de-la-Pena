@@ -11,6 +11,15 @@ const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const ROOT=path.resolve(__dirname,'..'), T=path.join(ROOT,'tokens');
 const read=n=>JSON.parse(fs.readFileSync(path.join(T,n),'utf8'));
 const primitives=read('primitives.json'), semantic=read('semantic.json'), domain=read('domain.json'), typography=read('typography.json'), spacing=read('spacing.json');
+const ICONS=path.join(ROOT,'assets','icons');
+const iconUri=file=>{
+ const raw=fs.readFileSync(path.join(ICONS,file),'utf8')
+   .replace(/<!--[\s\S]*?-->/g,'')
+   .replace(/\s*\n\s*/g,' ')
+   .trim();
+ const enc=raw.replace(/"/g,"'").replace(/[%#<>{}|\\^`\[\]]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0'));
+ return 'url("data:image/svg+xml,'+enc+'")';
+};
 const cssRef=value=>{ const m=String(value).match(/^\{color\.(primitive|derived)\.([^}]+)\}$/); if(!m) throw new Error('Unsupported semantic reference: '+value); return 'var(--'+m[2]+')'; };
 const semName=(g,k)=>g==='status'&&k.startsWith('warning')?'status-warn'+k.slice('warning'.length):g==='action'&&k==='focus-ring'?'focus-ring':g+'-'+k;
 const weightNameByValue=Object.fromEntries(Object.entries(typography.weights).map(([k,v])=>[String(v),k]));
@@ -27,7 +36,7 @@ function generateCss(){
  L.push('','  /* 3 · TYPE SCALE & ROLES */');
  for(const [k,v] of Object.entries(typography.weights)) L.push('  --weight-'+k+': '+v+';');
  L.push('');
- for(const [k,v] of Object.entries(typography.scale)) L.push('  --size-'+k+': '+v.size+';');
+ for(const [k,v] of Object.entries(typography.scale)) { if(k==='micro') continue; L.push('  --size-'+k+': '+v.size+';'); }
  L.push('  --size-micro: var(--size-micro-screen);','');
  L.push('  --leading-solid: '+typography.scale['display-01'].leading+';','  --leading-tight: '+typography.scale['display-02'].leading+';','  --leading-snug: '+typography.scale['heading-03'].leading+';','  --leading-normal: '+typography.scale.body.leading+';','  --leading-data: '+typography.scale.data.leading+';','');
  L.push('  --tracking-display: '+typography.scale['display-01'].tracking+';','  --tracking-tight: '+typography.scale['heading-01'].tracking+';','  --tracking-normal: '+typography.scale.body.tracking+';','  --tracking-label: '+typography.scale.label.tracking+';','  --tracking-micro: '+typography.scale.micro.tracking+';','');
@@ -36,9 +45,12 @@ function generateCss(){
  for(const [k,v] of Object.entries(spacing.scale)) L.push('  --space-'+k+': '+v+';');
  L.push('  --grid-columns: '+spacing.grid.columns+';');
  for(const [mode,v] of Object.entries(spacing.grid.modes)){ L.push('  --gutter-'+mode+': '+v.gutter+';'); L.push('  --margin-'+mode+': '+v.pageMargin+';'); }
- L.push('  --gutter: var(--gutter-field);','  --page-margin: var(--margin-field);','  --measure-prose: '+spacing.grid.measureProse+';','','  /* 5 · STRUCTURE & OPERATIONAL CONSTRAINTS */','  --radius-none: '+spacing.structure.radius.none+';','  --radius-sm: '+spacing.structure.radius.sm+';','  --rule-hairline: '+spacing.structure.rule.hairline+' solid var(--border-hairline);','  --rule-heavy: '+spacing.structure.rule.heavy+' solid var(--border-heavy);','  --rule-frame: '+spacing.structure.rule.frame+' solid var(--border-hairline);','  --shadow-none: none;','  --tap-target-min: '+spacing.structure.tapTargetMin+';','  --field-cell-min-height: '+spacing.structure.fieldCellMinHeight+';','  --print-code-x-height: '+spacing.structure.printCodeXHeight+';','  --pictogram-grid: '+spacing.structure.pictogram.grid+';','  --pictogram-stroke: '+spacing.structure.pictogram.stroke+';','','  /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */');
+ L.push('  --gutter: var(--gutter-field);','  --page-margin: var(--margin-field);','  --measure-prose: '+spacing.grid.measureProse+';','','  /* 5 · STRUCTURE & OPERATIONAL CONSTRAINTS */','  --radius-none: '+spacing.structure.radius.none+';','  --radius-sm: '+spacing.structure.radius.sm+';','  --rule-hairline: '+spacing.structure.rule.hairline+' solid var(--border-hairline);','  --rule-heavy: '+spacing.structure.rule.heavy+' solid var(--border-heavy);','  --rule-frame: '+spacing.structure.rule.frame+' solid var(--border-hairline);','  --shadow-none: none;','  --tap-target-min: '+spacing.structure.tapTargetMin+';','  --field-cell-min-height: '+spacing.structure.fieldCellMinHeight+';','  --print-code-x-height: '+spacing.structure.printCodeXHeight+';','  --pictogram-grid: '+spacing.structure.pictogram.grid+';','  --pictogram-stroke: '+spacing.structure.pictogram.stroke+';','',"  /* Component measures — fixed dimensions the components used to hard-code */",'  --bar-height: '+spacing.structure.component.barHeight+';','  --marker-width: '+spacing.structure.component.markerWidth+';','  --band-rule: '+spacing.structure.component.bandRule+';','  --sign-frame: '+spacing.structure.component.signFrame+';','  --size-data-lg: '+spacing.structure.component.dataLg+';','  --size-data-xl: '+spacing.structure.component.dataXl+';','  --ingredient-size: '+spacing.structure.component.ingredient+';','  --step-index: '+spacing.structure.component.stepIndex+';','  --step-key: '+spacing.structure.component.stepKey+';','  --plate-height: '+spacing.structure.component.plateHeight+';','','  /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */');
  for(const [k,v] of Object.entries(domain.domain.provenance)) L.push('  --provenance-'+k+'-symbol: "'+v.symbol+'";');
  for(const [k,v] of Object.entries(domain.domain.sync)) L.push('  --sync-'+k+'-symbol: "'+v.symbol+'";');
+ L.push('','  /* 6b · DOMAIN PICTOGRAMS — mask sources inlined as data URIs so the token',"      resolves identically from any consumer's stylesheet path */");
+ for(const [k,v] of Object.entries(domain.domain.provenance)) if(v.icon) L.push('  --provenance-'+k+'-icon: '+iconUri(v.icon)+';');
+ for(const [k,v] of Object.entries(domain.domain.sync)) if(v.icon) L.push('  --sync-'+k+'-icon: '+iconUri(v.icon)+';');
  if(domain.domain.status?.quarantine?.treatment) L.push('  --status-quarantine-border-style: '+domain.domain.status.quarantine.treatment+';');
  L.push('}','','/* Density profiles are semantic surface modes, never viewport aliases. */');
  for(const [mode] of Object.entries(spacing.grid.modes)) L.push('[data-mode="'+mode+'"] { --gutter: var(--gutter-'+mode+'); --page-margin: var(--margin-'+mode+'); }');

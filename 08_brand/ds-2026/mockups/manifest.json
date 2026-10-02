@@ -62,5 +62,53 @@
     "height": 900,
     "scale": 2,
     "fullPage": true
+  },
+  {
+    "name": "11-formulario-error",
+    "file": "mockups/formulario-error.html",
+    "width": 430,
+    "height": 932,
+    "scale": 3,
+    "fullPage": true
+  },
+  {
+    "name": "12-view-state",
+    "file": "mockups/view-state.html",
+    "width": 430,
+    "height": 932,
+    "scale": 3,
+    "fullPage": true
+  },
+  {
+    "name": "13-segmento",
+    "file": "mockups/segmento.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "14-etiqueta-termica",
+    "file": "mockups/etiqueta-termica.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "15-empaque-multi",
+    "file": "mockups/empaque-multi.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "16-editorial",
+    "file": "mockups/editorial.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
   }
 ]

@@ -16,6 +16,7 @@
 @import "components/shared/status.css";
 @import "components/shared/action.css";
 @import "components/shared/forms.css";
+@import "components/shared/segment.css";
 
 /* Market */
 @import "components/market/packaging.css";

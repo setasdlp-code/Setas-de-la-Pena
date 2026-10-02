@@ -1,0 +1,83 @@
+/* DS-2026 · Shared: State and View State
+   .sdp-state       what is happening (active, attention, blocked, failed, unavailable).
+   .sdp-view-state  loading, empty and error at screen level.
+   Pair of .sdp-provenance: same box, same --marker-width left rule, same label scale.
+   Nothing here animates: loading is stated in words, never in motion. */
+
+.sdp-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-half);
+  font-family: var(--font-mono);
+  font-size: var(--size-micro-screen);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  border: var(--rule-hairline);
+  border-left: var(--marker-width) solid var(--state-marker, var(--border-hairline));
+  padding: var(--space-half) var(--space-1);
+}
+
+.sdp-state--active      { --state-marker: var(--status-ok-marker); }
+.sdp-state--attention   { --state-marker: var(--status-warn-marker); background: var(--status-warn-bg); color: var(--status-warn-text); }
+.sdp-state--blocked     { --state-marker: var(--status-warn-marker); border-left-style: var(--status-quarantine-border-style); background: var(--status-warn-bg); color: var(--status-warn-text); }
+.sdp-state--failed      { --state-marker: var(--status-error); background: var(--status-error-bg); color: var(--status-error); }
+.sdp-state--unavailable { --state-marker: var(--text-metadata); border-left-style: dotted; color: var(--text-metadata); }
+
+/* View state: one situation, one message, one next action. */
+.sdp-view-state {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  background: var(--surface-panel);
+  border: var(--rule-hairline);
+  border-left: var(--bar-height) solid var(--view-state-marker, var(--border-hairline));
+  padding: var(--space-3);
+}
+
+.sdp-view-state__label {
+  font-family: var(--font-mono);
+  font-size: var(--size-micro-screen);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.sdp-view-state__title {
+  margin: 0;
+  font: var(--t-body);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.sdp-view-state__body {
+  margin: 0;
+  max-width: 60ch;
+  font: var(--t-small);
+  color: var(--text-secondary);
+}
+
+.sdp-view-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+/* Loading: dotted marker, no motion. Content already on screen stays readable. */
+.sdp-view-state--loading { --view-state-marker: var(--text-metadata); border-left-style: dotted; }
+
+/* Empty: neutral, the next step is the only content. */
+.sdp-view-state--empty   { --view-state-marker: var(--text-primary); background: var(--surface-recessed); }
+
+/* Error: the cause decides the action. No network is waiting; server is retry or report. */
+.sdp-view-state--error                          { --view-state-marker: var(--status-error); background: var(--status-error-bg); }
+.sdp-view-state--error .sdp-view-state__label   { color: var(--status-error); }
+.sdp-view-state--error[data-cause="network"]    { --view-state-marker: var(--status-warn-marker); background: var(--status-warn-bg); border-left-style: dashed; }
+.sdp-view-state--error[data-cause="network"] .sdp-view-state__label { color: var(--status-warn-text); }
+
+[data-mode="field"] .sdp-view-state { padding: var(--space-2); }
+[data-mode="field"] .sdp-view-state__actions { gap: var(--space-1); }
+[data-mode="field"] .sdp-view-state__actions > * { min-height: var(--tap-target-min); }
