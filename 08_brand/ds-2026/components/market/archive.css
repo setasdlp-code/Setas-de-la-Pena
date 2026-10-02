@@ -37,15 +37,49 @@
   margin: 0 0 var(--space-2);
 }
 
-.ed-drop::first-letter,
-[data-mode="archive"] .ed-prose p:first-of-type::first-letter {
+/* Capitular unica: automatica en el cuerpo de la ficha y en la primera seccion
+   del dorso del empaque, o manual con .ed-drop. Nunca sobre un lede. */
+.ed-drop:not(.ed-lede)::first-letter,
+[data-mode="archive"] .sdp-ficha__prose > p:first-of-type:not(.ed-lede)::first-letter,
+[data-mode="archive"] .sdp-pack--back .sdp-pack__sect:not(.sdp-pack__sect ~ .sdp-pack__sect) .sdp-pack__sv::first-letter {
   float: left;
   font-family: var(--font-editorial);
-  font-weight: var(--weight-bold);
-  font-size: 4.2em;
-  line-height: 0.82;
-  padding-right: 0.12em;
-  padding-top: 0.05em;
+  font-weight: var(--weight-black);
+  font-size: 3.05em;
+  line-height: 0.86;
+  padding: 0.06em 0.09em 0 0;
+  color: var(--ink);
+}
+
+.ed-eyebrow { font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); }
+
+.ed-sec { border-top: var(--rule-editorial); padding-top: var(--space-1); margin-top: var(--space-3); }
+.ed-sec__k { display: block; font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: var(--space-half); }
+.ed-sec__h { font: var(--t-heading-02); letter-spacing: var(--tracking-tight); margin: 0; }
+
+.ed-note { max-width: var(--measure-note); font: var(--t-small); color: var(--text-secondary); border-top: var(--rule-hairline); padding-top: var(--space-half); }
+.ed-note__k { display: block; font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); margin-bottom: var(--space-half); }
+
+.ed-div { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0; }
+.ed-div::before, .ed-div::after { content: ""; flex: 1; border-top: var(--rule-hairline); }
+.ed-div__m { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+
+.ed-cartouche { border-top: var(--rule-editorial); padding-top: var(--space-1); display: grid; gap: var(--space-half); }
+.ed-cartouche__n { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
+.ed-cartouche__l { font-family: var(--font-editorial); font-style: italic; font-size: 17px; color: var(--text-primary); }
+.ed-cartouche__d { font: var(--t-small); color: var(--text-secondary); }
+
+.ed-cols { column-count: 2; column-gap: var(--space-4); column-rule: var(--rule-hairline); }
+.ed-cols > p { margin-top: 0; }
+
+/* Voz de pie de figura en superficie de archivo. */
+[data-mode="archive"] .sdp-fig__ref {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  font-size: 17px;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-primary);
 }
 

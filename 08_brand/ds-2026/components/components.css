@@ -9,6 +9,8 @@
 @import "./shared/status.css";
 @import "./shared/action.css";
 @import "./shared/forms.css";
+@import "./shared/segment.css";
+@import "./shared/view-state.css";
 
 @import "./operations/lot.css";
 @import "./operations/event.css";
