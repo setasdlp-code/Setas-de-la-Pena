@@ -4,6 +4,24 @@
 const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // Prototype plans and portable records. Suggestions never become observations.
+// Observation drafts are separate from durable bag records and survive panel remounts.
+function BagObservationEditor({bolsa,onSave}) {
+  const key='setas_bag_observation_draft:'+bolsa.id;
+  const [text,setText]=useState(()=>{try{return sessionStorage.getItem(key)??(bolsa.observaciones||'');}catch{return bolsa.observaciones||'';}});
+  const [error,setError]=useState('');
+  const dirty=text!==(bolsa.observaciones||'');
+  const discard=()=>{try{sessionStorage.removeItem(key);}catch{setError('No se pudo eliminar el borrador. Tu texto se conserva; reintenta cancelar.');return;}setText(bolsa.observaciones||'');setError('');};
+  const save=()=>{
+    if(!onSave(bolsa.id,{observaciones:text},{silent:true})){setError('No se pudo guardar. Tu texto sigue aquí; libera almacenamiento y reintenta.');return;}
+    setError('');try{sessionStorage.removeItem(key);}catch{}
+  };
+  return <div className="bag-observation-editor">
+    <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={text} autoComplete="off" aria-describedby={`bag-observation-status-${bolsa.id}`} onChange={e=>{const value=e.target.value;setText(value);setError('');try{sessionStorage.setItem(key,value);}catch{setError('El borrador no se pudo respaldar. Mantén esta pantalla abierta hasta guardarlo.');}}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){e.preventDefault();discard();}}}/>
+    <span id={`bag-observation-status-${bolsa.id}`} role={error?'alert':'status'}>{error||(dirty?'Borrador sin guardar':'Registro local · sincronización independiente')}</span>
+    {dirty&&<div><button type="button" className="inv-btn inv-btn-pri" onClick={save} aria-label={`Guardar observaciones de ${bolsa.codigo}`}>{error?'Reintentar':'Guardar'}</button><button type="button" className="inv-btn inv-btn-sec" onClick={discard} aria-label={`Cancelar observaciones de ${bolsa.codigo}`}>Cancelar</button></div>}
+  </div>;
+}
+
 function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
   const [open,setOpen]=useState(false),[step,setStep]=useState(1),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [form,setForm]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('sdp_experiment_draft')||'{}');}catch{return {};}});
@@ -6548,6 +6566,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const qrLotesRef=useRef(bitLotes);
   qrLotesRef.current=bitLotes;
   const [bitBolsas,setBitBolsas]=useState([]);
+  const bitBolsasEditRef=useRef(bitBolsas);
+  useEffect(()=>{bitBolsasEditRef.current=bitBolsas;},[bitBolsas]);
   const [bitCosechas,setBitCosechas]=useState([]);
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
@@ -8169,7 +8189,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, cos, bol).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     }
   };
-  const updateBitBolsa=(bolsaId,fields)=>{
+  const updateBitBolsa=(bolsaId,fields,options={})=>{
     const fechaKey=['col25','col50','col100'].find(k=>k in fields);
     if(fechaKey&&fields[fechaKey]){
       const bolsa=bitBolsas.find(b=>b.id===bolsaId);
@@ -8179,8 +8199,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
         return;
       }
     }
-    setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    if(!bitBolsasEditRef.current.some(b=>b.id===bolsaId)) return false;
+    const upd=bitBolsasEditRef.current.map(b=>b.id===bolsaId?{...b,...fields}:b);
+    // Persist first: a failed local write must not appear saved or reach sync.
+    try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){if(!options.silent)bitQuotaWarn();return false;}
+    bitBolsasEditRef.current=upd;
+    setBitBolsas(upd);
     encolarSync({type:'actualizarBolsa',key:'bolsa:'+bolsaId,args:[bolsaId,fields]});
+    return true;
   };
   // Fusiona tareas nuevas con las existentes vía SetasTaskEngine.mergeTasks (la
   // idempotencia la da el motor por id determinista: no se reimplementa aquí)
@@ -12179,14 +12205,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       })()}
                       onChange={pct=>{
                         const today=new Date().toISOString().split('T')[0];
-                        bolsas.forEach(b=>{
+                        if(!bolsas.every(b=>{
                           const up={};
                           if(pct>=25&&!b.col25) up.col25=today;
                           if(pct>=50&&!b.col50) up.col50=today;
                           if(pct>=100&&!b.col100) up.col100=today;
                           up.colonizationPct=pct;
-                          updateBitBolsa(b.id,up);
-                        });
+                          return updateBitBolsa(b.id,up);
+                        })) return;
                         if(pct>=100&&lote.estado==='incubacion'){
                           updateBitLote(lote.id,{estado:'fructificacion'});
                         }
@@ -12198,10 +12224,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onQuickAction={act=>{
                         const today=new Date().toISOString().split('T')[0];
                         if(act==='primordios'){
+
+                          if(!bolsas.every(b=>{
+                            return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
+                          })) return;
                           updateBitLote(lote.id,{estado:'fructificacion'});
-                          bolsas.forEach(b=>{
-                            updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
-                          });
                           setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${lote.codigo} actualizado a fructificación.`});
                         } else if(act==='riego'){
                           setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad registrada para ${lote.codigo}.`});
@@ -12232,7 +12259,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </td>
                             ))}
                             <td data-label="Observaciones">
-                              <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/>
+                              <BagObservationEditor bolsa={bolsa} onSave={updateBitBolsa}/>
                             </td>
                             <td data-label="Foto" style={{textAlign:'center'}}>
                               {bolsa.foto
@@ -17411,14 +17438,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onChange={pct=>{
                           const today=new Date().toISOString().split('T')[0];
                           const loteBolsas=bitBolsas.filter(b=>b.loteId===currentLote.id);
-                          loteBolsas.forEach(b=>{
+                          if(!loteBolsas.every(b=>{
                             const up={};
                             if(pct>=25&&!b.col25) up.col25=today;
                             if(pct>=50&&!b.col50) up.col50=today;
                             if(pct>=100&&!b.col100) up.col100=today;
                             up.colonizationPct=pct;
-                            updateBitBolsa(b.id,up);
-                          });
+                            return updateBitBolsa(b.id,up);
+                          })) return;
                           if(pct>=100&&currentLote.estado==='incubacion'){
                             updateBitLote(currentLote.id,{estado:'fructificacion'});
                           }
@@ -17430,11 +17457,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onQuickAction={act=>{
                           const today=new Date().toISOString().split('T')[0];
                           if(act==='primordios'){
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
+
                             const loteBolsas=bitBolsas.filter(b=>b.loteId===currentLote.id);
-                            loteBolsas.forEach(b=>{
-                              updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
-                            });
+                            if(!loteBolsas.every(b=>{
+                              return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
+                            })) return;
+                            updateBitLote(currentLote.id,{estado:'fructificacion'});
                             setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${currentLote.codigo} pasado a etapa de fructificación.`});
                           } else if(act==='riego'){
                             setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad y niebla registrada para ${currentLote.codigo}.`});
