@@ -12,7 +12,7 @@ const base = (overrides = {}) => ({
 });
 
 const evidence = (batchId, recipeId = 'R') => ({
-  schema: 'setas.cycle-evidence.v1', batchId,
+  schema: 'setas.cycle-evidence.v1', batchId, experimentId:'EXP_1',armId:batchId.startsWith('C')?'CTRL':'T10',outcome:{status:'completed-success',verified:true},
   metrics: { be_pct: 85 }, recipeSnapshot: { versionId: recipeId },
   ingredientLots: [{ inventoryLotId: 'INV_1' }],
 });
@@ -32,6 +32,7 @@ test('tres réplicas por brazo + randomización habilitan clase comparative', ()
 test('promotionGate bloquea evidencia incompleta y solo habilita experimento completo y trazable', () => {
   const exp = normalizeExperiment(base({
     status: 'complete', completedAt: '2026-09-01', replicatesPerArm: 3, randomization: true,
+    randomizationExecutedAt:'2026-08-01',randomizationMethod:'recorded draw',assignments:['C1','C2','C3','T1','T2','T3'].map(batchId=>({batchId,armId:batchId.startsWith('C')?'CTRL':'T10'})),
     control: { id: 'CTRL', recipeVersionId: 'R_CTRL', batchIds: ['C1', 'C2', 'C3'] },
     treatments: [{ id: 'T10', recipeVersionId: 'R_T10', change: '10% cascarilla avena', batchIds: ['T1', 'T2', 'T3'] }],
   }));

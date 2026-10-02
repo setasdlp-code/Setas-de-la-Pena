@@ -517,41 +517,14 @@ test('los dos flujos de lanzamiento sólo preguntan por el insumo comprometido, 
   assert.match(launchBlock, /onConfirm:\(\)=>\{launchInFlight\.current=true;setLaunching\(true\);runLanzamientoProduccion\(\);\}/);
 });
 
-test('planificar reserva sin tocar bodega, y preparar la mezcla cierra esas reservas y descuenta', () => {
-  // La brecha que esto cierra: antes "confirmar" y "descontar" eran el mismo
-  // clic, así que una reserva nacía y moría en el mismo instante y "Reservado"
-  // no podía valer otra cosa que cero. Ahora la reserva vive entre planificar y
-  // preparar, que es el intervalo real en la finca.
-  const reservarStart = source.indexOf('const reservarInsumos=({loteId,plan,at=null})=>{');
-  assert.ok(reservarStart > -1, 'falta reservarInsumos');
-  const reservar = source.slice(reservarStart, reservarStart + 1200);
-  assert.match(reservar, /ledgerApi\.reservationsForPlan\(plan,\{batchId:loteId,at:nowIso\}\)/);
-  assert.match(reservar, /ledgerApi\.addReservations\(prev,reservas\)/);
-  // Reservar NO descuenta: nada de FIFO ni de sdp_lotes en este camino.
-  assert.doesNotMatch(reservar, /applyLocal|sdp_lotes|sdp_movimientos/);
-  // Replanificar el mismo lote no duplica kilos comprometidos.
-  assert.match(reservar, /r\.batchId===loteId&&r\.status==='held'/);
-
-  // Los dos caminos de lanzamiento reservan, no consumen, y el lote nace planificado.
+test('planificación y preparación usan la transacción recuperable y autorización explícita', () => {
   assert.match(source, /estado:'planificado'/);
   assert.match(source, /estado: 'planificado'/);
-  assert.match(source, /const registered=reservarInsumos\(\{loteId:lote\.id,plan\}\)/);
-  assert.match(source, /const registered = reservarInsumos\(\{ loteId: lote\.id, plan: f\.plan \}\)/);
-
-  // registrarConsumo pasa a CERRAR las reservas pendientes de ese lote, y sólo
-  // las crea si el lote nunca pasó por planificación (los de antes del cambio).
-  const consumoStart = source.indexOf('const registrarConsumo=({loteId,codigo,plan,fecha,nota})=>{');
-  const consumo = source.slice(consumoStart, consumoStart + 1800);
-  assert.match(consumo, /prev\.filter\(r=>r&&r\.batchId===loteId&&r\.status==='held'\)/);
-  assert.match(consumo, /if\(!pendientes\.length\)\{/);
-  assert.match(consumo, /ledgerApi\.consume\(acc,r\.id,\{eventId:op\.opId,at:nowIso\}\)/);
-
-  // Y "Preparar mezcla" es quien lo llama desde la ficha del lote.
-  const prepStart = source.indexOf("if(action==='prepare_mix'){");
-  assert.ok(prepStart > -1, 'la ficha no ofrece preparar la mezcla');
-  const prep = source.slice(prepStart, prepStart + 2600);
-  assert.match(prep, /registrarConsumo\(\{loteId:lote\.id,codigo:lote\.codigo,plan,fecha/);
-  assert.match(prep, /commitSheetAction\(activeSheet,lote,'prepare_mix',\{recetaId\}\)/);
+  assert.equal((source.match(/SetasPrototype\.planBatch\(localStorage/g)||[]).length, 2);
+  assert.match(source, /SetasPrototype\.prepareBatch\(localStorage/);
+  const prep = source.slice(source.indexOf("if(action==='prepare_mix'){"),source.indexOf("if(action==='close_batch'){"));
+  assert.match(prep, /setReleaseBatchId\(lote.id\)/);
+  assert.doesNotMatch(prep, /registrarConsumo|commitSheetAction/);
 });
 
 test('descartar o eliminar un lote libera sus reservas con releaseForBatch', () => {

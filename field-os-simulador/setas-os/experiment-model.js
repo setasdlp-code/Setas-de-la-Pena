@@ -26,6 +26,11 @@
     const treatments = (input.treatments || []).map(t => normalizeArm({ ...t, plannedReplicates: t.plannedReplicates ?? defaultReplicates }, 'treatment'));
     return {
       schema: 'setas.experiment.v1',
+      design: input.design || 'comparison',
+      experimentalUnit: input.experimentalUnit || 'batch',
+      randomizationExecutedAt: input.randomizationExecutedAt || null,
+      randomizationMethod: input.randomizationMethod || null,
+      assignments: (input.assignments || []).map(a=>({batchId:a.batchId,armId:a.armId})),
       id: String(input.id || '').trim(),
       title: input.title || null,
       hypothesis: input.hypothesis || null,
@@ -65,10 +70,14 @@
     if (!exp.speciesId) errors.push('missing speciesId');
     if (!VALID_METRICS.has(exp.primaryMetric)) errors.push(`invalid primaryMetric: ${exp.primaryMetric}`);
     if (!exp.control.id) errors.push('control arm requires id');
-    if (!exp.treatments.length) errors.push('at least one treatment arm is required');
+    if (exp.design !== 'exploratory' && !exp.treatments.length) errors.push('at least one treatment arm is required');
 
     const arms = [exp.control, ...exp.treatments];
     const ids = arms.map(a => a.id).filter(Boolean);
+    const batches=arms.flatMap(a=>a.batchIds);
+    if(new Set(batches).size!==batches.length)errors.push('batch belongs to multiple arms');
+    if(!['comparison','exploratory'].includes(exp.design))errors.push('invalid design');
+    if(exp.experimentalUnit!=='batch')errors.push('only independent batch units supported');
     if (new Set(ids).size !== ids.length) errors.push('arm ids must be unique');
     arms.forEach((arm) => {
       if (!arm.id) errors.push('arm requires id');
@@ -91,11 +100,26 @@
     if (!exp.randomization) reasons.push('randomization_missing');
     if (classifyExperiment(exp) !== 'comparative') reasons.push('insufficient_planned_replication');
 
-    arms.forEach((arm) => {
-      const armEvidence = evidenceRecords.filter((r) => arm.batchIds.includes(r.batchId));
-      const completed = armEvidence.filter((r) => Number.isFinite(Number(r.metrics?.[exp.primaryMetric])));
-      if (completed.length < (arm.plannedReplicates || 1)) reasons.push(`${arm.id}: incomplete_primary_metric_evidence`);
-      if (completed.some((r) => !r.recipeSnapshot || !(r.ingredientLots || []).length)) reasons.push(`${arm.id}: incomplete_traceability`);
+    if(!exp.randomizationExecutedAt || !Number.isFinite(Date.parse(exp.randomizationExecutedAt)) || !exp.randomizationMethod?.trim())reasons.push('randomization_execution_missing');
+    const assigned=new Map();
+    exp.assignments.forEach(a=>{if(assigned.has(a.batchId))reasons.push('duplicate_assignment');assigned.set(a.batchId,a.armId);});
+    const numeric=v=>(typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&Number.isFinite(Number(v))&&Number(v)>=0;
+    arms.forEach(arm=>{
+      const complete=new Set();
+      for(const id of arm.batchIds){
+        if(assigned.get(id)!==arm.id){reasons.push(`${arm.id}: assignment_mismatch`);continue;}
+        const records=evidenceRecords.filter(r=>r?.batchId===id);
+        const signature=r=>JSON.stringify([r.metrics,r.outcome,r.recipeSnapshot,r.ingredientLots,r.experimentId,r.armId]);
+        if(new Set(records.map(signature)).size>1){reasons.push(`${arm.id}: conflicting_evidence`);continue;}
+        const r=records[0];
+        if(!r||!numeric(r.metrics?.[exp.primaryMetric])||r.outcome?.verified!==true||!['completed-success','completed-zero-yield'].includes(r.outcome?.status))continue;
+        if(r.experimentId!==exp.id||r.armId!==arm.id){reasons.push(`${arm.id}: membership_mismatch`);continue;}
+        const expected=arm.recipeVersionId||arm.recipeSnapshot?.versionId||arm.recipeSnapshot?.id;
+        if(!expected||(r.recipeSnapshot?.versionId||r.recipeSnapshot?.id)!==expected){reasons.push(`${arm.id}: recipe_version_mismatch`);continue;}
+        if(!(r.ingredientLots||[]).length||r.ingredientLots.some(l=>!l.inventoryLotId&&!l.lotId)){reasons.push(`${arm.id}: incomplete_traceability`);continue;}
+        complete.add(id);
+      }
+      if(complete.size<arm.plannedReplicates)reasons.push(`${arm.id}: incomplete_primary_metric_evidence`);
     });
 
     return {

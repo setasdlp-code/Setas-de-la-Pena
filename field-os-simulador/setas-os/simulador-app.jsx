@@ -3,6 +3,52 @@
 
 const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
+// Prototype plans and portable records. Suggestions never become observations.
+function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
+  const [open,setOpen]=useState(false),[step,setStep]=useState(1),[message,setMessage]=useState(''),[error,setError]=useState('');
+  const [form,setForm]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('sdp_experiment_draft')||'{}');}catch{return {};}});
+  const [plans,setPlans]=useState(()=>{try{return SetasPrototype.read(localStorage,SetasPrototype.PLANS);}catch{return [];}});
+  const [importData,setImportData]=useState(null),[preview,setPreview]=useState(null);
+  const set=(key,value)=>setForm(prev=>{const next={...prev,[key]:value};try{sessionStorage.setItem('sdp_experiment_draft',JSON.stringify(next));}catch{setError('El borrador no pudo guardarse en esta pestaña.');}return next;});
+  const recipes=[...(active?[{...active,id:'active',name:'Fórmula activa'}]:[]),...saved].filter(r=>r.recipe?.length&&r.sKey);
+  const selected=id=>recipes.find(r=>String(r.id)===id);
+  const metrics={be_pct:'Eficiencia biológica (%)',contamination_pct:'Contaminación (%)',colonization_days:'Colonización (días)',total_fresh_kg:'Cosecha total (kg)'};
+  const save=()=>{try{
+    const a=selected(form.control),b=selected(form.treatment),comparison=form.design==='comparison';
+    if(!a||comparison&&(!b||a.sKey!==b.sKey))throw Error('Selecciona recetas de la misma especie.');
+    const id='EXP_'+crypto.randomUUID();
+    const arm=(r,key)=>({id:key,label:key==='control'?'Referencia':'Variante',plannedReplicates:Number(form.replicates??1),batchIds:[],recipeVersionId:id+':'+key,recipeSnapshot:{versionId:id+':'+key,sKey:r.sKey,recipe:r.recipe,name:r.name}});
+    SetasPrototype.savePlan(localStorage,{id,title:form.title?.trim(),hypothesis:form.hypothesis?.trim(),speciesId:a.sKey,design:comparison?'comparison':'exploratory',primaryMetric:form.metric||'be_pct',status:'draft',control:arm(a,'control'),treatments:comparison?[arm(b,'treatment')]:[],fixedFactors:{notes:form.fixed||''},plannedAt:new Date().toISOString()});
+    setPlans(SetasPrototype.read(localStorage,SetasPrototype.PLANS));setOpen(false);setMessage('Plan guardado. Aún no se crearon lotes ni se descontó inventario.');setError('');
+  }catch(e){setError(e.message);}};
+  const exportData=async()=>{let db;try{
+    if(window.SetasFieldEventQueue)db=await window.SetasFieldEventQueue.initializeQueue();
+    const data=await SetasPrototype.backup(localStorage,{db,accountId:window.SetasFirebase?.auth?.currentUser?.uid||null});
+    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='setas-ensayos-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setMessage('Respaldo exportado. Conserva también una copia fuera de este equipo.');setError('');
+  }catch(e){setError(e.message);}finally{db?.close();}};
+  const loadFile=async event=>{try{const file=event.target.files?.[0];if(!file)return;const data=JSON.parse(await file.text());setPreview(SetasPrototype.validateBackup(data));setImportData(data);setError('');}catch(e){setImportData(null);setPreview(null);setError(e.message);}finally{event.target.value='';}};
+  const restore=()=>{try{SetasPrototype.restore(localStorage,importData);onReload();}catch(e){setError(e.message);}};
+  return <section className="prototype-panel" aria-label="Ensayos y respaldos">
+    <div className="prototype-actions"><button type="button" className="inv-btn inv-btn-sec" onClick={()=>setOpen(!open)}>Planificar ensayo</button><button type="button" className="inv-btn inv-btn-sec" onClick={exportData}>Exportar respaldo</button></div>
+    {open&&<div role="region" aria-label="Plan del ensayo"><h3>Paso {step} de 3 · {step===1?'Propósito':step===2?'Recetas y unidades':'Revisar'}</h3>
+      <p>Un lote preparado de forma independiente es una unidad experimental. Varias bolsas del mismo lote no equivalen a réplicas independientes.</p>
+      {step===1&&<><label>Nombre del ensayo<input value={form.title||''} onChange={e=>set('title',e.target.value)}/></label><label>Pregunta / hipótesis<textarea value={form.hypothesis||''} onChange={e=>set('hypothesis',e.target.value)}/></label><label>Diseño<select value={form.design||'exploratory'} onChange={e=>set('design',e.target.value)}><option value="exploratory">Exploratorio · una receta</option><option value="comparison">Comparación · referencia y variante</option></select></label><label>Medida principal<select value={form.metric||'be_pct'} onChange={e=>set('metric',e.target.value)}>{Object.entries(metrics).map(([k,v])=><option value={k} key={k}>{v}</option>)}</select></label></>}
+      {step===2&&<><label>Receta de referencia<select value={form.control||''} onChange={e=>set('control',e.target.value)}><option value="">Seleccionar</option>{recipes.map(r=><option value={r.id} key={r.id}>{r.name}</option>)}</select></label>{form.design==='comparison'&&<label>Receta variante<select value={form.treatment||''} onChange={e=>set('treatment',e.target.value)}><option value="">Seleccionar</option>{recipes.map(r=><option value={r.id} key={r.id}>{r.name}</option>)}</select></label>}<label>Lotes independientes por grupo<input type="number" min="1" step="1" value={form.replicates??'1'} onChange={e=>set('replicates',e.target.value)}/></label><label>Condiciones que se mantendrán iguales<textarea value={form.fixed||''} onChange={e=>set('fixed',e.target.value)}/></label></>}
+      {step===3&&<p>{form.title||'Sin nombre'} · {form.hypothesis||'Sin pregunta'} · {metrics[form.metric||'be_pct']} · {form.replicates||'1'} lote(s) por grupo · {selected(form.control)?.name||'Sin referencia'}{form.design==='comparison'?' / '+(selected(form.treatment)?.name||'Sin variante'):''}. Se conservará una copia de cada receta. Este plan no demuestra causalidad ni autoriza ejecución.</p>}
+      <div className="prototype-actions">{step>1&&<button type="button" className="inv-btn inv-btn-sec" onClick={()=>setStep(step-1)}>Anterior</button>}{step<3?<button type="button" className="inv-btn inv-btn-pri" onClick={()=>setStep(step+1)}>Continuar</button>:<button type="button" className="inv-btn inv-btn-pri" onClick={save}>Guardar plan</button>}</div>
+    </div>}
+    {plans.map(plan=><details key={plan.id}><summary>{plan.title} · {plan.status==='draft'?'Planificado':'En ejecución'}</summary><p>{plan.hypothesis}</p>{[plan.control,...plan.treatments].map(arm=><button type="button" key={arm.id} className="inv-btn inv-btn-sec" disabled={arm.batchIds.length>=arm.plannedReplicates} onClick={()=>onPrepare(plan,arm)}>Planificar lote de {arm.label} ({arm.batchIds.length}/{arm.plannedReplicates})</button>)}</details>)}
+    <details><summary>Restaurar respaldo en espacio vacío</summary><p>Se restauran registros locales. Los envíos pendientes quedan archivados para revisión, sin reenvío ni descuento automático.</p><label>Archivo de respaldo<input type="file" accept=".json,application/json" onChange={loadFile}/></label>{preview&&<><p>{preview.batches} lotes · {preview.bags} bolsas · {preview.harvests} cosechas · {preview.pending} pendientes para revisar.</p><button type="button" className="inv-btn inv-btn-sec" onClick={restore}>Confirmar restauración local</button><button type="button" className="inv-btn inv-btn-sec" onClick={()=>{setImportData(null);setPreview(null);}}>Cancelar importación</button></>}</details>
+    {error&&<p role="alert">{error}</p>}{message&&<p role="status">{message}</p>}
+  </section>;
+}
+function PrototypeReleaseDialog({lote,onClose,onAuthorize}) {
+  const [form,setForm]=useState({equipment:'',protocol:lote.tratamiento||'',reviewer:'',acknowledged:false,legacyReviewed:false}),[error,setError]=useState('');
+  const set=(key,value)=>setForm(p=>({...p,[key]:value}));
+  const confirm=()=>{try{const record=SetasPrototype.release(lote,{...form,at:new Date().toISOString()});onAuthorize(record);}catch(e){setError(e.message);}};
+  return <AccessibleModal label="Autorizar ensayo controlado" onClose={onClose} dialogStyle={{width:'min(580px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}><section className="prototype-panel"><h3>Preparar {lote.codigo}</h3><p>Autoriza esta preparación experimental y confirma el consumo de sus insumos. No valida rendimiento ni habilita producción rutinaria. Sin historial, las estimaciones siguen siendo teóricas.</p><p>Especificación: {lote.preparation?.revision||'lote antiguo sin especificación versionada'}.</p><label>Equipo disponible<input value={form.equipment} onChange={e=>set('equipment',e.target.value)}/></label><label>Protocolo a ejecutar<input value={form.protocol} onChange={e=>set('protocol',e.target.value)}/></label><label>Responsable que autoriza<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)}/></label>{!lote.preparation&&<label className="prototype-check"><input type="checkbox" checked={form.legacyReviewed} onChange={e=>set('legacyReviewed',e.target.checked)}/> Revisé receta, cantidades y proceso de este lote antiguo.</label>}<label className="prototype-check"><input type="checkbox" checked={form.acknowledged} onChange={e=>set('acknowledged',e.target.checked)}/> Revisé equipo, insumos y advertencias; acepto las incertidumbres para este ensayo.</label>{error&&<p role="alert">{error}</p>}<div className="prototype-actions"><button type="button" className="inv-btn inv-btn-sec" onClick={onClose}>Cancelar</button><button type="button" className="inv-btn inv-btn-pri" onClick={confirm}>Autorizar, descontar y registrar</button></div></section></AccessibleModal>;
+}
+
 // --- Bio-Check & Lab Extraction storage helpers ---
 const BIO_CHECK_KEY = 'setas_os_bio_check';
 const BATCHES_KEY = 'setas_os_extraction_batches';
@@ -6384,6 +6430,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [faePulseActive,setFaePulseActive]=useState(false);
   const [humidifierOverride,setHumidifierOverride]=useState(null);
   const [showProdLaunchModal,setShowProdLaunchModal]=useState(false);
+  const [selectedTrial,setSelectedTrial]=useState(null);
+  const [releaseBatchId,setReleaseBatchId]=useState(null);
   const [prodLaunchForm,setProdLaunchForm]=useState(null);
   const [showIoTHub,setShowIoTHub]=useState(false);
   const [injectedClimateReadings,setInjectedClimateReadings]=useState({});
@@ -6780,27 +6828,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // ── v4: cargar / seed inventario
   useEffect(()=>{
     try{
-      const seeded=localStorage.getItem('sdp_seeded');
-      if(!seeded){
-        localStorage.setItem('sdp_proveedores',JSON.stringify(SEED_PROVEEDORES));
-        localStorage.setItem('sdp_compras',JSON.stringify(SEED_COMPRAS));
-        localStorage.setItem('sdp_lotes',JSON.stringify(SEED_LOTES));
-        localStorage.setItem('sdp_movimientos',JSON.stringify(SEED_MOVIMIENTOS));
-        localStorage.setItem('sdp_seeded','1');
-        setInvProveedores(SEED_PROVEEDORES);
-        setInvCompras(SEED_COMPRAS);
-        setInvLotes(SEED_LOTES);
-        setInvMovimientos(SEED_MOVIMIENTOS);
-      } else {
-        const p=localStorage.getItem('sdp_proveedores');const c=localStorage.getItem('sdp_compras');
-        const l=localStorage.getItem('sdp_lotes');const m=localStorage.getItem('sdp_movimientos');
-        if(p) setInvProveedores(JSON.parse(p));
-        if(c) setInvCompras(JSON.parse(c));
-        if(l) setInvLotes(JSON.parse(l));
-        if(m) setInvMovimientos(JSON.parse(m));
-      }
+      SetasPrototype.recover(localStorage);
+      setInvProveedores(SetasPrototype.read(localStorage,'sdp_proveedores'));
+      setInvCompras(SetasPrototype.read(localStorage,'sdp_compras'));
+      setInvLotes(SetasPrototype.read(localStorage,'sdp_lotes'));
+      setInvMovimientos(SetasPrototype.read(localStorage,'sdp_movimientos'));
       setPeritoInventoryLoaded(true);
-    }catch(e){}
+    }catch(e){setNoticeDlg({title:"Revisar almacenamiento",msg:e.message});}
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
     try{
@@ -7628,6 +7662,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
   // de confirmarEjecucion para poder llamarlo tanto directo (plan sin faltantes)
   // como desde el "sí, de todas formas" del aviso de disponibilidad (ver abajo),
   // sin volver a evaluar el plan una segunda vez.
+  const applyPrototypeEntries=entries=>{
+    if(!entries)return;
+    if(entries.sdp_bit_lotes)setBitLotes(entries.sdp_bit_lotes);
+    if(entries.sdp_bit_bolsas)setBitBolsas(entries.sdp_bit_bolsas);
+    if(entries.sdp_inv_reservas)setInvReservas(entries.sdp_inv_reservas);
+    if(entries.sdp_sync_queue){syncQueueRef.current=entries.sdp_sync_queue;setSyncQueue(entries.sdp_sync_queue);}
+    if(entries.sdp_lotes){invLotesRef.current=entries.sdp_lotes;setInvLotes(entries.sdp_lotes);}
+    if(entries.sdp_movimientos)setInvMovimientos(entries.sdp_movimientos);
+    if(entries.sdp_inventory_ops)setInvOps(entries.sdp_inventory_ops);
+  };
+  const authorizePrototypePreparation=record=>{
+    const lote=SetasPrototype.read(localStorage,'sdp_bit_lotes').find(l=>l.id===releaseBatchId);
+    const result=SetasPrototype.prepareBatch(localStorage,{loteId:lote.id,trialRelease:record,sheet:buildSheetFor(lote),role:operatorRole,operatorId:lote.operador||'operador-local',at:new Date().toISOString()});
+    applyPrototypeEntries(result.entries);
+    enqueueFieldTransition(result.lote,result.lote.pendingPreparationTransition?.from||'planned',result.transition);
+    if(taskEngine)mergeIntoTasks(taskEngine.tasksFromTransition({batchId:lote.id,toState:result.transition,at:new Date().toISOString()}));
+    runInventorySync();
+    setReleaseBatchId(null);
+    setNoticeDlg({title:'Preparación guardada en este equipo',msg:'Consumo registrado una sola vez. La transición de etapa queda pendiente hasta que el servidor la acepte. Puedes reintentar si se interrumpe la conexión.'});
+  };
   const runEjecucionLote=()=>{
     const{preview,plan,loteNum,fecha}=loteBatchConfirm;
     let consumoRegistrado=false;
@@ -7638,43 +7692,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // descontados: la bodega se toca al registrar "Preparar mezcla", que es
       // cuando el sustrato se pesa de verdad.
       const {lote,bolsas}=SetasLaunchPlanApi.buildLoteRecords({form,plan,analysis:an,treatmentName:tr?.name,recipe,sKey,recipeName:saveName,score:opt?opt.score:0,now,estado:'planificado',objetivo:'Planificado desde el Formulador'});
-      const registered=reservarInsumos({loteId:lote.id,plan});
-      if(!registered){ejecutarLoteInFlight.current=false;setEjecutandoLote(false);return;}
+      applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan,selection:selectedTrial}));
+      setSelectedTrial(null);
       consumoRegistrado=true;
-
-      // Al entrar el lote en bitLotes, el N.º de lote del Formulador pasa a la
-      // siguiente sugerencia (I5b) — un segundo "Ejecutar" no reusa el código.
       refrescarCodigoTrasEjecutar.current=true;
-      setBitLotes(prev=>{const upd=[lote,...prev];try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-      setBitBolsas(prev=>{const upd=[...prev,...bolsas];try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
-      encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
-      encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
-
       setLoteBatchConfirm(null);
       setLoteSyncErr('');
       setEjecutandoLote(false);
-      // El descuento de bodega ya quedó hecho arriba por registrarConsumo: aplicado al
-      // instante en localStorage (sdp_lotes) y encolado en sdp_inventory_ops, cuya
-      // identidad es el loteId — enqueue rechaza un segundo consumo del mismo lote y
-      // el servidor guarda inventory_consumptions/{loteId} append-only. Eso es lo que
-      // evita el doble descuento; aquí solo se crea en segundo plano el registro del
-      // lote de producción en Firestore — un fallo de red no bloquea al operador,
-      // solo se avisa si no sincronizó.
-      if(window.SetasDB){
-        (async()=>{
-          try{
-            await window.SetasDB.crearLoteProduccion({
-              codigo: lote.codigo,
-              especie: SPP[sKey]?.name || sKey,
-              camara: '—',
-              operador: '—',
-              receta: { ingredientes: recipe.map(r=>({id:r.id,pct:parseFloat(r.p)||0})) },
-            });
-          }catch(err){
-            setLoteSyncErr('No se sincronizó con el servidor: '+(err.message||err.code||'error desconocido'));
-          }
-        })();
-      }
     }catch(e){
       console.error('Error al ejecutar lote:',e);
       if(consumoRegistrado){
@@ -7763,7 +7787,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       numBolsas:'',pesoHumedo:'',peseSeco:'',
       spawnPct:'',humedad:'',tratamiento:'',
       costoIngKg:an?Math.round(an.cost):0,operador:'',objetivo:'',notas:'',
-      estado:'incubacion',veredicto:'',
+      estado:'planificado',veredicto:'',
       recipeRef:recipe.length&&balanced?{id:Date.now(),name:saveName||'Receta activa',sKey,recipe:[...recipe],cn:an.cn.toFixed(1),eb:an.eb.toFixed(0),score:opt.score,cost:Math.round(an.cost)}:null,
       // El snapshot congela lo que este lote debe seguir diciendo aunque la
       // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
@@ -7958,24 +7982,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const now = Date.now();
       // Mismo criterio que el otro camino: planificar reserva, preparar descuenta.
       const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: 'planificado', objetivo: 'Planificado desde Producción' });
-      const registered = reservarInsumos({ loteId: lote.id, plan: f.plan });
-      if (!registered) { launchInFlight.current = false; setLaunching(false); return; }
+      applyPrototypeEntries(SetasPrototype.planBatch(localStorage,{lote,bolsas,plan:f.plan,selection:selectedTrial}));
+      setSelectedTrial(null);
       consumoRegistrado = true;
-
-      setBitLotes(prev => {
-        const upd = [lote, ...prev];
-        try { localStorage.setItem('sdp_bit_lotes', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-        return upd;
-      });
-      setBitBolsas(prev => {
-        const upd = [...prev, ...bolsas];
-        try { localStorage.setItem('sdp_bit_bolsas', JSON.stringify(upd)); } catch(e) { bitQuotaWarn(); }
-        return upd;
-      });
-
-      encolarSync({type:'guardarLote',key:'lote:'+lote.id,args:[lote]});
-      encolarSync({type:'guardarBolsas',key:'lote:'+lote.id+':bolsas',args:[bolsas]});
-      window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter(b => b.loteId === lote.id)).catch(e => console.warn('No se publicó la ficha pública del lote:', e));
 
       // 3. Cerrar modal y proceder
       setShowProdLaunchModal(false);
@@ -9753,6 +9762,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(!SHEET||!uid) return;
     try{
       const db=await getFieldDb();
+      const prior=(await window.SetasFieldEventQueue.recoverEventsByAccount(db,uid)).find(({event,queueEntry})=>event.batchId===lote.id&&event.payload?.from===from&&event.payload?.to===to&&event.expectedBatchRevision===(Number.isInteger(lote.revision)?lote.revision:0)&&!['rejected','cancelled'].includes(queueEntry.status));
+      if(prior){await runFieldSync(db,uid,prior.event.id,()=>{});return;}
       const res=await SHEET.confirmTransition({
         db,batch:lote,from,to,accountId:uid,operatorId:uid,
         operatorRole:await getFieldOperatorRole(),
@@ -9875,35 +9886,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return;
     }
     if(action==='prepare_mix'){
-      // Aquí es donde la bodega se mueve de verdad: preparar la mezcla es el
-      // momento en que el sustrato se pesa. Cierra las reservas que dejó la
-      // planificación y descuenta FIFO; `registrarConsumo` es idempotente por
-      // loteId, así que un segundo toque no descuenta dos veces.
-      const activeSheet=sheet||buildSheetFor(lote);
-      const asignaciones=(lote.ingredientLots||[]).map(a=>({...a}));
-      if(!asignaciones.length){
-        setNoticeDlg({title:'Sin plan de insumos',msg:'Este lote no guardó qué insumos consumir, así que no hay nada que descontar. Regístralo a mano en Bodega.'});
-        return;
-      }
-      const plan={allocations:asignaciones,shortfalls:[],preparation:lote.preparation||null};
-      const fecha=lote.fechaMezcla||new Date().toISOString().split('T')[0];
-      setConfirmDlg({
-        title:'Preparar mezcla',
-        msg:`Se descontarán de Bodega los insumos reservados para ${lote.codigo||lote.id} (FIFO, del lote más antiguo al más nuevo). Es el paso que mueve el stock.`,
-        confirmLabel:'Descontar y registrar',
-        onConfirm:()=>{
-          const ok=registrarConsumo({loteId:lote.id,codigo:lote.codigo,plan,fecha,
-            nota:`Preparación de mezcla · ${lote.codigo||lote.id} · ${fecha}`});
-          if(!ok){
-            setNoticeDlg({title:'Ya estaba descontado',msg:'La bodega ya se había descontado para este lote; no se repite el movimiento.'});
-            return;
-          }
-          if(activeSheet){
-            const recetaId=(lote.recipeSnapshot&&lote.recipeSnapshot.recipeId)||(lote.recipeRef&&lote.recipeRef.id)||lote.recetaId||null;
-            commitSheetAction(activeSheet,lote,'prepare_mix',{recetaId});
-          }
-        },
-      });
+      setReleaseBatchId(lote.id);
       return;
     }
     if(action==='close_batch'){
@@ -10164,25 +10147,26 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <section className="os-finance-panel" data-testid="batch-financial-closure">
           <div className="os-finance-header">
             <div>
-              <span className="os-finance-title"><AppIcon name="scale" size={14} style={{marginRight:6}} /> Cierre Financiero & Rendimiento Real</span>
+              <span className="os-finance-title"><AppIcon name="scale" size={14} style={{marginRight:6}} /> Economía de referencia y rendimiento registrado</span>
               <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-1)',marginTop:2}}>
-                Balance económico del lote · Precio venta: ${Math.round(stats.precioVentaKg).toLocaleString('es-CO')} COP/kg
+                Valores estimados · Precio de referencia: ${Math.round(stats.precioVentaKg).toLocaleString('es-CO')} COP/kg
               </div>
             </div>
             {stats.totalFresco>0&&(
               <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:stats.margenRealTotal>=0?'var(--moss-200,#DCE1D1)':'var(--coral-100,#FDE8E8)',color:stats.margenRealTotal>=0?'var(--moss-700,#404D2E)':'var(--coral-700,#A83232)'}}>
-                {stats.margenRealTotal>=0?'+':''}${Math.round(stats.margenRealTotal).toLocaleString('es-CO')} ({stats.margenRealPct.toFixed(1)}% margen)
+                {stats.margenRealTotal>=0?'+':''}${Math.round(stats.margenRealTotal).toLocaleString('es-CO')} ({stats.margenRealPct.toFixed(1)}% margen estimado)
               </span>
             )}
           </div>
+          <p>Los precios de referencia no son gastos ni ventas registrados. Costos documentados: {stats.economics?.costComplete?'$'+stats.economics.recordedCostCop.toLocaleString('es-CO'):'incompletos'}. Ventas registradas: {stats.economics?.recordedRevenueCop!=null?'$'+stats.economics.recordedRevenueCop.toLocaleString('es-CO'):'sin registros'}.</p>
           <div className="os-finance-grid">
             <div className="econ-metric-box">
-              <span className="econ-metric-label">Inversión Incurrida</span>
+              <span className="econ-metric-label">Costo estimado</span>
               <span className="econ-metric-value">${Math.round(stats.costoIncurridoTotal).toLocaleString('es-CO')}</span>
               <span className="econ-metric-sub">${Math.round(stats.costoIncurridoPorBolsa).toLocaleString('es-CO')} / bolsa ({stats.numBolsas} bolsas)</span>
             </div>
             <div className="econ-metric-box">
-              <span className="econ-metric-label">Ingreso Cosechas</span>
+              <span className="econ-metric-label">Valor estimado de cosecha</span>
               <span className="econ-metric-value">${Math.round(stats.ingresoRealTotal).toLocaleString('es-CO')}</span>
               <span className="econ-metric-sub">{stats.totalFresco.toFixed(2)} kg hongo fresco</span>
             </div>
@@ -10194,7 +10178,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="econ-metric-box" style={{background:stats.margenRealTotal>=0?'var(--paper-100,#EFEBE0)':'var(--paper-50)'}}>
               <span className="econ-metric-label">Costo / kg Cosechado</span>
               <span className="econ-metric-value">{stats.costoRealPorKgCosechado!=null?'$'+Math.round(stats.costoRealPorKgCosechado).toLocaleString('es-CO'):'—'}</span>
-              <span className="econ-metric-sub">{stats.totalFresco>0?'Costo unitario real':'Pendiente cosecha'}</span>
+              <span className="econ-metric-sub">{stats.totalFresco>0?'Costo unitario estimado':'Pendiente cosecha'}</span>
             </div>
           </div>
           {stats.flushes&&stats.flushes.length>0&&(
@@ -12020,6 +12004,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const BitacoraSection=()=>(
 <div>
+  <PrototypeTrialsPanel key={bitLotes.length} saved={saved} active={recipe.length&&balanced?{recipe,sKey}:null} onReload={()=>location.reload()} onPrepare={(plan,arm)=>{setSelectedTrial({experimentId:plan.id,armId:arm.id,title:plan.title,label:arm.label});setHasPickedSpecies(true);setSKey(arm.recipeSnapshot.sKey);setRecipe(arm.recipeSnapshot.recipe.map(r=>({...r})));goTab('formular');}}/>
+
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>
               <div className="bit-context-actions" style={{display:'flex',alignItems:'center',gap:6,minHeight:44,paddingBottom:8,flexWrap:'wrap'}}>
                 <button className={'inv-btn inv-btn-sec inv-btn-sm'+(bitTab==='bit_comparador'?' on':'')} onClick={()=>goBitTab('bit_comparador')}>Comparar lotes</button>
@@ -16599,7 +16585,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='inventario'&&BodegaSection()}
+        {tab==='inventario'&&<>{invLotes.length===0&&<section className="prototype-panel"><h3>Bodega sin existencias registradas</h3><p>El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo.</p><button type="button" className="inv-btn inv-btn-pri" onClick={()=>setInvTab('compra')}>Registrar primera compra</button></section>}{BodegaSection()}</>}
 
         {tab==='clima'&&<ClimateDashboardSection/>}
 
@@ -17835,6 +17821,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           );
         })()}
 
+        {selectedTrial&&<aside className="prototype-panel" aria-label="Ensayo seleccionado"><p>Próximo lote: {selectedTrial.title} · {selectedTrial.label}. La receta debe coincidir con la copia del plan.</p><button type="button" className="inv-btn inv-btn-sec" onClick={()=>setSelectedTrial(null)}>Desvincular próximo lote</button></aside>}
+        {releaseBatchId&&bitLotes.find(l=>l.id===releaseBatchId)&&<PrototypeReleaseDialog lote={bitLotes.find(l=>l.id===releaseBatchId)} onClose={()=>setReleaseBatchId(null)} onAuthorize={authorizePrototypePreparation}/>}
         {showProdLaunchModal && prodLaunchForm && (() => {
           const f = prodLaunchForm;
           const allInsumosOk = f.insumos.length > 0 && f.insumos.every(i => i.ok);
