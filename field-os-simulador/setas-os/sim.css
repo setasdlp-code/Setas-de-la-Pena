@@ -5517,7 +5517,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: var(--paper-100);
 }
 
-/* ==========================================================================
+/* ===================================================================
    CATÁLOGO & RECETARIO (vista fusionada, 2026-09)
    La rejilla de especies es el filtro maestro del recetario: la especie
    seleccionada define qué recetas guardadas se listan debajo.
@@ -6525,3 +6525,35 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .bag-observation-editor button { min-height:44px; }
 .sim-root .bag-observation-editor > span { font-size:12px; color:var(--ink-2); }
 .sim-root .bag-observation-editor > [role="alert"] { color:var(--coral-700); }
+
+/* Hub IoT: scoped operational controls and one bounded scroll surface. */
+.sim-root .iot-hub-dialog { display:flex; flex-direction:column; max-height:calc(100dvh - 32px); }
+.sim-root .iot-hub-header, .sim-root .iot-hub-navigation, .sim-root .iot-hub-footer { flex-shrink:0; }
+.sim-root .iot-hub-header > div { min-width:0; }
+.sim-root .iot-hub-navigation { padding:16px 24px 0; }
+.sim-root .iot-hub-dialog .iot-hub-pills { flex-wrap:wrap; overflow:visible; }
+.sim-root .iot-hub-dialog .iot-hub-pill { min-height:44px; white-space:normal; text-align:left; transition:background-color .15s,color .15s,border-color .15s; }
+.sim-root .iot-hub-body { padding:20px 24px; min-height:0; overflow-y:auto; overscroll-behavior:contain; overflow-wrap:anywhere; }
+.sim-root .iot-hub-dialog button { min-height:44px; min-width:44px; flex-shrink:0; }
+.sim-root .iot-hub-dialog .modal-icon-close { width:44px!important; height:44px!important; }
+.sim-root .iot-hub-dialog .field-input { display:block; width:100%; min-width:0; min-height:44px; box-sizing:border-box; padding:10px 12px; font-size:16px!important; color:var(--ink-0); background:var(--paper-0); border:1px solid var(--border-hairline); }
+.sim-root .iot-hub-dialog label { font-size:12px; }
+.sim-root .iot-hub-dialog label[for] { display:block; margin-bottom:6px; font-family:var(--font-mono); font-weight:700; }
+.sim-root .iot-hub-dialog label:has(input[type="checkbox"]) { min-height:44px; padding:4px 0; }
+.sim-root .iot-hub-dialog input[type="checkbox"] { width:20px; height:20px; flex-shrink:0; }
+.sim-root .iot-hub-server-fields { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:12px; }
+.sim-root .iot-hub-export, .sim-root .iot-hub-export > div { flex-wrap:wrap; gap:8px; }
+.sim-root .iot-hub-dialog :is(button,input,select,textarea,[tabindex]):focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+@media(max-width:560px) {
+  .sim-root .iot-hub-header { padding:16px!important; }
+  .sim-root .iot-hub-navigation { padding:12px 16px 0; }
+  .sim-root .iot-hub-dialog .iot-hub-pills { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+  .sim-root .iot-hub-dialog .iot-hub-pill { padding:8px; }
+  .sim-root .iot-hub-body { padding:16px; }
+  .sim-root .iot-hub-body > div > div[style*="grid-template-columns"] { grid-template-columns:minmax(0,1fr)!important; }
+  .sim-root .iot-hub-server-fields { grid-template-columns:minmax(0,1fr); }
+  .sim-root .iot-hub-dialog .iot-node-header { flex-direction:column; }
+}
+
+.sim-root .inv-modal-bg.iot-hub-backdrop { padding:16px!important; align-items:center!important; }
+.sim-root .inv-modal.iot-hub-dialog { padding:0!important; margin:0!important; overflow:hidden!important; }
