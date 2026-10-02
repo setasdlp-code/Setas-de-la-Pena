@@ -61,6 +61,49 @@
 @font-face { font-family:'Gaya';         src:url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight:900; font-style:italic; font-display:swap; }
 @font-face { font-family:'GayaPatched';  src:url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight:900; font-style:italic; font-display:swap; }
 
+/* ---- Relleno de cobertura de Gaya ------------------------------------
+   Gaya Patched no es una fuente completa. Medido con fontTools sobre los
+   doce cortes vendorizados:
+
+     · los doce carecen de  %  °  ²  ₂  ×  €
+     · Regular e Italic (400) traen 280 glifos contra los 328 de los demás,
+       y además carecen de  ·  —  –  “ ”  ¿  ¡  «  …
+
+   Sin esto el navegador resuelve cada uno de esos caracteres por su cuenta,
+   carácter a carácter, con la primera fuente de la pila que los tenga: en
+   mac, Georgia. El resultado es una línea con dos tipografías mezcladas —
+   "91%", "18,4 °C", "CO₂", "2 × 125 g", "¿cuánto?" — con otro color de
+   página, otro ancho y otra altura de x. Se ve roto porque lo está.
+
+   Las reglas de abajo lo hacen determinista: esos puntos de código los sirve
+   IBM Plex Sans, que ya es la voz de prosa del sistema y ya era el recurso
+   documentado para CO₂. Al declararse después de los cortes de Gaya y con
+   unicode-range, ganan solo en su rango y solo donde Gaya no tiene glifo.
+   Si algún día se parchea la fuente de verdad, se borra este bloque.
+   ------------------------------------------------------------------- */
+
+/* Faltan en los doce cortes. Un corte por peso y estilo, con el MISMO peso
+   discreto que el corte real de Gaya: una cara con rango de pesos (100 900)
+   gana el emparejamiento por encima del corte exacto y se lleva la línea
+   entera, no solo su unicode-range. Verificado en Chromium: con rango, la
+   itálica de Gaya dejaba de cargarse y el binomio latino salía en sans. */
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:100; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:100; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:300; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:300; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:500; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:500; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:700; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:700; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:900; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:900; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+
+/* Faltan solo en Regular e Italic, los dos cortes de prosa y de binomio. */
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; unicode-range:U+00A1, U+00AB, U+00BB, U+00BF, U+00B7, U+2013, U+2014, U+2018, U+2019, U+201C, U+201D, U+2026; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:italic; font-display:swap; unicode-range:U+00A1, U+00AB, U+00BB, U+00BF, U+00B7, U+2013, U+2014, U+2018, U+2019, U+201C, U+201D, U+2026; }
+
 /* ---- IBM Plex Sans — body / UI ---- */
 @font-face { font-family:'IBM Plex Sans'; src:url('../assets/fonts/IBMPlexSans-Light.ttf') format('truetype');    font-weight:300; font-style:normal; font-display:swap; }
 @font-face { font-family:'IBM Plex Sans'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype');  font-weight:400; font-style:normal; font-display:swap; }
