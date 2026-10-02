@@ -6518,3 +6518,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .prototype-panel details{padding:12px 0}.prototype-panel summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
 .prototype-check{display:flex!important;align-items:center;gap:12px;padding:12px 0}.prototype-check input{width:24px;height:24px;flex-shrink:0}
 .prototype-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.sim-root .bag-observation-editor { min-width:180px; display:flex; flex-direction:column; gap:6px; }
+.sim-root .bag-observation-editor input { width:100%; box-sizing:border-box; min-height:44px; padding:8px; font-size:16px; border:1px solid var(--border-hairline); background:var(--paper-50); color:var(--ink-0); }
+.sim-root .bag-observation-editor > div { display:flex; flex-wrap:wrap; gap:6px; }
+.sim-root .bag-observation-editor button { min-height:44px; }
+.sim-root .bag-observation-editor > span { font-size:12px; color:var(--ink-2); }
+.sim-root .bag-observation-editor > [role="alert"] { color:var(--coral-700); }
