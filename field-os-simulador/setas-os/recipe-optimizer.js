@@ -370,15 +370,18 @@
   };
 
   // ── solveTargetPct — busca el % exacto que lleva una métrica a su objetivo ──
-  const solveTargetPct = (recipe, sKey, ings, id, metric, target, lockedIds = [], spp = null) => {
+  // `maxPct` (opcional) limita la búsqueda por debajo del tope por rol — se usa
+  // para que un mineral de pH no supere su dosis documentada.
+  const solveTargetPct = (recipe, sKey, ings, id, metric, target, lockedIds = [], spp = null, maxPct = null) => {
     const effectiveINGS = getEffectiveINGS(ings);
     const effectiveSPP = getEffectiveSPP(spp);
     const readM = a => !a ? null : (metric === 'cn' ? a.cn : metric === 'n' ? a.avgN : a.avgPh);
     const g = effectiveINGS.find(i => i.id === id);
     const sp = effectiveSPP[sKey];
-    const vMax = g && (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && sp
+    const roleMax = g && (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && sp
       ? Math.min(55, sp.supplementation_max || 20)
       : (g && ROLE_CAP_INCREASE[g.role] != null ? ROLE_CAP_INCREASE[g.role] : 55);
+    const vMax = Number.isFinite(maxPct) && maxPct > 0 ? Math.min(roleMax, maxPct) : roleMax;
     let best = null, bestDist = Infinity;
     const evalAt = v => {
       const cand = setPctProportional(recipe, id, v, lockedIds);
@@ -387,7 +390,8 @@
       const d = Math.abs(val - target);
       if (d < bestDist) { bestDist = d; best = { pct: Math.round(v * 10) / 10, val, an: a }; }
     };
-    for (let v = 0.5; v <= vMax; v += 1) evalAt(v);
+    for (let v = Math.min(0.5, vMax); v <= vMax; v += 1) evalAt(v);
+    evalAt(vMax);
     if (best) { const c = best.pct; for (let v = Math.max(0, c - 1.5); v <= Math.min(vMax, c + 1.5); v += 0.1) evalAt(v); }
     return best;
   };
@@ -491,6 +495,26 @@
     return Number.isFinite(max) ? Math.floor(max * batchKgWet) : 0;
   };
 
+  // ── Dosis documentadas de minerales de pH ──
+  // Antes la corrección de pH resolvía la cantidad hasta el centro del rango y
+  // proponía carbonato de calcio al 10–12 %. Ahora la cantidad automática de un
+  // aditivo de pH nunca supera su dosis típica documentada en la base de
+  // conocimiento; un mineral sin dosis documentada no recibe cantidad
+  // automática. Solo valores con fuente: no agregar filas sin una.
+  const PH_MINERAL_DOSES = {
+    carbonato_calcio: {
+      min: 0.5, max: 1, label: '0,5–1 %',
+      source: 'knowledge_base/02_substrates/supplementation.md (dosis típica, base seca)',
+    },
+  };
+  const phMineralDose = id => PH_MINERAL_DOSES[id] || null;
+  const isPhMineral = g => !!g && g.role === 'aditivo_ph';
+  // Preferir minerales con dosis documentada; a igualdad, el de mayor pH.
+  const byDocumentedDoseThenPh = (a, b) => ((phMineralDose(b.id) ? 1 : 0) - (phMineralDose(a.id) ? 1 : 0)) || (b.ph - a.ph);
+  // Minerales que amortiguan el pH según la base de conocimiento: yeso y
+  // carbonato (supplementation.md) y cualquier aditivo de pH del catálogo.
+  const BUFFER_MINERAL_IDS = new Set(['yeso', 'carbonato_calcio']);
+
   // ── quantifyItem — reescribe ítem con % objetivo exacto vía solveTargetPct ──
   const quantifyItem = (item, recipe, sKey, ings, lockedIds, spp) => {
     if (!item.apply || !item.apply.id || !item._solve) return item;
@@ -498,9 +522,10 @@
     const effectiveSPP = getEffectiveSPP(spp);
     const { metric, target } = item._solve; const id = item.apply.id;
     const g = effectiveINGS.find(i => i.id === id); if (!g) return item;
+    const cur = recipe.find(r => r.id === id); const curP = cur ? parseFloat(cur.p) || 0 : 0;
+    if (metric === 'ph' && isPhMineral(g)) return quantifyPhMineral(item, recipe, sKey, effectiveINGS, lockedIds, effectiveSPP, g, target, cur, curP);
     const res = solveTargetPct(recipe, sKey, effectiveINGS, id, metric, target, lockedIds, effectiveSPP);
     if (!res) return item;
-    const cur = recipe.find(r => r.id === id); const curP = cur ? parseFloat(cur.p) || 0 : 0;
     const noChange = cur && Math.abs(res.pct - curP) < 0.15;
     const verb = !cur ? 'Agregar' : noChange ? 'Ya está en' : res.pct > curP ? 'Subir' : 'Bajar';
     item.action = `${verb} <b>${g.name}</b> a <b>${res.pct}%</b>${cur ? ` (actual ${curP.toFixed(0)}%)` : ' (nuevo)'}`;
@@ -516,6 +541,44 @@
     if (!inRange) {
       item.capped = true;
       item.riskIfIgnored = (item.riskIfIgnored ? item.riskIfIgnored + ' · ' : '') + `${g.name} solo no alcanza el rango seguro (tope de suplementación) — se necesita un segundo ingrediente o ampliar bodega.`;
+    }
+    return item;
+  };
+
+  // Corrección de pH con un mineral: solo sube, y dentro de la dosis documentada.
+  const quantifyPhMineral = (item, recipe, sKey, ings, lockedIds, spp, g, target, cur, curP) => {
+    const dose = phMineralDose(g.id);
+    if (!dose) {
+      item.action = `Agregar <b>${g.name}</b>: sin dosis de referencia en la base de conocimiento — definir la cantidad con un ensayo y medición de pH`;
+      item.delta = 'Sin dosis documentada';
+      item.apply = null;
+      return item;
+    }
+    const sp = spp[sKey];
+    const inPhRange = v => !sp || !sp.ph_optimal || (v >= sp.ph_optimal.min && v <= sp.ph_optimal.max);
+    const capNote = `${g.name} dentro de su dosis típica documentada (${dose.label}) no lleva el pH estimado al rango — medir el pH del sustrato hidratado antes de subir la dosis; el pH del modelo es una estimación de mezcla.`;
+    if (curP >= dose.max - 0.05) {
+      item.action = `<b>${g.name}</b> ya está en ${curP.toFixed(1)}% (dosis típica documentada ${dose.label})`;
+      item.delta = 'Sin aumento dentro de la dosis documentada';
+      item.apply = null;
+      const a = analyze(recipe, sKey, ings, spp);
+      if (a && !inPhRange(a.avgPh)) {
+        item.capped = true;
+        item.riskIfIgnored = (item.riskIfIgnored ? item.riskIfIgnored + ' · ' : '') + capNote;
+      }
+      return item;
+    }
+    const res = solveTargetPct(recipe, sKey, ings, g.id, 'ph', target, lockedIds, spp, dose.max);
+    if (!res || res.pct <= curP + 0.05) {
+      item.apply = null;
+      return item;
+    }
+    item.action = `${cur ? 'Subir' : 'Agregar'} <b>${g.name}</b> a <b>${res.pct}%</b>${cur ? ` (actual ${curP.toFixed(1)}%)` : ' (nuevo)'} · dosis típica documentada ${dose.label}`;
+    item.delta = `→ pH ${fmtMetric('ph', res.val)}`;
+    item.apply = { mode: 'set', id: g.id, value: res.pct };
+    if (!inPhRange(res.val)) {
+      item.capped = true;
+      item.riskIfIgnored = (item.riskIfIgnored ? item.riskIfIgnored + ' · ' : '') + capNote;
     }
     return item;
   };
@@ -666,11 +729,11 @@
       });
     }
     if (flags.phLow) {
-      const best = bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph);
+      const best = bestStock(g => g.ph > 7.5, byDocumentedDoseThenPh);
       items.push({
         priority: 'critical', icon: '↑pH',
         label: 'pH demasiado ácido',
-        action: best ? `Agregar <b>${best.name}</b> 1–3% (pH ${best.ph})` : 'Agregar carbonato de calcio 1–2%',
+        action: best ? `Agregar <b>${best.name}</b> (pH ${best.ph})` : 'Agregar carbonato de calcio 0,5–1 % (dosis típica documentada)',
         effect: `pH ${an.avgPh.toFixed(1)} < mínimo ${sp.ph_optimal.min} · enzimas del micelio trabajan a rendimiento parcial`,
         delta: `pH ${an.avgPh.toFixed(1)} → objetivo ${((sp.ph_optimal.min + sp.ph_optimal.max) / 2).toFixed(1)}`,
         apply: best ? { mode: 'add', id: best.id, delta: scaledDelta(2, flags.phOverDist) } : null
@@ -741,12 +804,12 @@
       if (phDist > 0.08 && an.avgPh >= sp.ph_optimal.min && an.avgPh <= sp.ph_optimal.max) {
         const subir = an.avgPh < phIdeal;
         const ajuste = subir
-          ? bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph)
+          ? bestStock(g => g.ph > 7.5, byDocumentedDoseThenPh)
           : bestStock(g => g.ph < 6, (a, b) => a.ph - b.ph);
         items.push({
           priority: 'tip', icon: subir ? 'pH+' : 'pH-',
           label: 'Centrar pH',
-          action: ajuste ? `Agregar <b>${ajuste.name}</b> 1–2% adicional` : (subir ? 'Agregar CaCO₃ 0.5–1%' : 'Agregar borra de café 5–8%'),
+          action: ajuste ? `Agregar <b>${ajuste.name}</b>` : (subir ? 'Agregar CaCO₃ 0,5–1 % (dosis típica documentada)' : 'Agregar borra de café 5–8%'),
         effect: `pH estimado ${an.avgPh.toFixed(1)} frente al centro ${phIdeal.toFixed(1)}. Medir pH del sustrato hidratado antes de concluir un efecto operativo.`,
           delta: `pH ${an.avgPh.toFixed(1)} → ${phIdeal.toFixed(1)}`,
           apply: ajuste ? { mode: 'add', id: ajuste.id, delta: 2 } : null
@@ -765,7 +828,8 @@
       });
     }
     const recommendedTreatment = calcTreatment(an, sKey, effectiveSPP);
-    if (calciumPct < 0.6 && recommendedTreatment?.col !== 'autoclave') {
+    const calciumWarning = calciumPct < 0.6 && recommendedTreatment?.col !== 'autoclave';
+    if (calciumWarning) {
       const yeso = bestStock(g => g.id === 'yeso') || effectiveINGS.find(g => g.id === 'yeso' && g.cs && g.cs.includes(sKey));
       items.push({
         priority: 'warning', icon: 'Ca',
@@ -781,15 +845,36 @@
         },
       });
     }
-    if (an.addP < 2 && calciumPct >= 0.6) {
-      const m = bestStock(g => g.role === 'aditivo_ph') || effectiveINGS.find(g => g.role === 'aditivo_ph' && g.cs && g.cs.includes(sKey));
-      if (m) items.push({
+    // Sin mineral buffer: antes la condición era `addP < 2 && calcio >= 0,6`,
+    // así que solo se disparaba cuando SÍ había calcio y decía "no se detecta
+    // mineral". Ahora: ningún mineral buffer en la receta (yeso, CaCO₃ u otro
+    // aditivo de pH) y sin el aviso de calcio, que ya cubre el sustrato no
+    // estéril. Dosis: 1 % CaCO₃, la que supplementation.md indica para
+    // desbalance de pH, dentro de su dosis típica 0,5–1 %.
+    const hasBufferMineral = (recipe || []).some(r => {
+      if ((Number(r.p) || 0) <= 0) return false;
+      if (BUFFER_MINERAL_IDS.has(r.id)) return true;
+      return isPhMineral(effectiveINGS.find(g => g.id === r.id));
+    });
+    // Si otra sugerencia (pH ácido, centrar pH) ya agrega un mineral de pH, no
+    // repetir la misma acción en una segunda tarjeta.
+    const mineralAlreadySuggested = items.some(it => it.apply && it.apply.id && isPhMineral(effectiveINGS.find(g => g.id === it.apply.id)));
+    if (recipe && recipe.length && !hasBufferMineral && !calciumWarning && !mineralAlreadySuggested) {
+      const m = bestStock(g => g.role === 'aditivo_ph' && !!phMineralDose(g.id))
+        || effectiveINGS.find(g => g.role === 'aditivo_ph' && phMineralDose(g.id) && g.cs && g.cs.includes(sKey));
+      const dose = m ? phMineralDose(m.id) : null;
+      if (m && dose) items.push({
         priority: 'tip', icon: 'Ca',
-        label: 'Sin mineral estabilizador',
-        action: `Agregar <b>${m.name}</b> 1–2% · bajo costo, alto impacto`,
-        effect: 'No se detecta mineral en la receta. La posible estabilización de pH es una hipótesis de formulación que debe verificarse con medición del sustrato.',
+        label: 'Sin mineral buffer de pH',
+        action: `Agregar <b>${m.name}</b> ${String(dose.max).replace('.', ',')} % · dosis típica documentada ${dose.label}`,
+        effect: 'La receta no incluye yeso, carbonato de calcio ni otro aditivo de pH. La base de conocimiento los describe como buffer frente a la acidificación por metabolitos; el efecto en este sustrato debe confirmarse midiendo el pH.',
         delta: 'Medir pH antes y después del tratamiento',
-        apply: { mode: 'add', id: m.id, delta: 2 }
+        apply: { mode: 'add', id: m.id, delta: dose.max },
+        evidence: {
+          type: 'literature',
+          confidence: 'low',
+          note: `Base de conocimiento: ${dose.source}. En un ensayo con CaCO₃ 0/1/2 % la respuesta dependió de la cepa (literature_database.md).`,
+        },
       });
     }
     if (an.avgDig < 6) {
@@ -825,7 +910,7 @@
       });
     }
 
-    const WHY_MAP = { '↓C:N': 'El modelo trata C:N como una variable de composición a revisar; la respuesta del cultivo debe confirmarse en lote comparable.', '↑C:N': 'El modelo detecta una relación C:N baja; revisar nitrógeno, tratamiento e higiene antes de inferir contaminación.', '↑N': 'El modelo identifica nitrógeno bajo frente al rango configurado; validar el dato y el desempeño del lote.', '↓N': 'El modelo identifica nitrógeno alto frente al rango configurado; no equivale a una contaminación observada.', '⚠': 'Alerta de riesgo inferida por reglas de composición y tratamiento; requiere inspección y registro de campo.', '↑pH': 'El pH es una estimación direccional de mezcla; confirmar en sustrato hidratado.', '↓pH': 'El pH es una estimación direccional de mezcla; confirmar en sustrato hidratado.', '↑EB': 'La EB mostrada es heurística; usarla para comparar recetas, no para prometer rendimiento.', 'Ca': 'La ausencia de mineral es una señal de formulación, no una medición de estabilidad de pH.', '$↓': 'El ahorro depende de cotización, humedad y rendimiento observados.', 'Dig': 'La digestibilidad es un indicador del catálogo, no una medición de colonización.', '→N': 'N y C:N cambian conjuntamente en esta receta; verificar las métricas después de cualquier ajuste.', '→C': 'La base de carbono cambia estructura y C:N; validar su efecto con el proceso real.' };
+    const WHY_MAP = { '↓C:N': 'El modelo trata C:N como una variable de composición a revisar; la respuesta del cultivo debe confirmarse en lote comparable.', '↑C:N': 'El modelo detecta una relación C:N baja; revisar nitrógeno, tratamiento e higiene antes de inferir contaminación.', '↑N': 'El modelo identifica nitrógeno bajo frente al rango configurado; validar el dato y el desempeño del lote.', '↓N': 'El modelo identifica nitrógeno alto frente al rango configurado; no equivale a una contaminación observada.', '⚠': 'Alerta de riesgo inferida por reglas de composición y tratamiento; requiere inspección y registro de campo.', '↑pH': 'El pH es una estimación direccional de mezcla; confirmar en sustrato hidratado.', '↓pH': 'El pH es una estimación direccional de mezcla; confirmar en sustrato hidratado.', '↑EB': 'La EB mostrada es heurística; usarla para comparar recetas, no para prometer rendimiento.', 'Ca': 'La falta de mineral es una señal de formulación, no una medición de estabilidad de pH.', '$↓': 'El ahorro depende de cotización, humedad y rendimiento observados.', 'Dig': 'La digestibilidad es un indicador del catálogo, no una medición de colonización.', '→N': 'N y C:N cambian conjuntamente en esta receta; verificar las métricas después de cualquier ajuste.', '→C': 'La base de carbono cambia estructura y C:N; validar su efecto con el proceso real.' };
     const RISK_MAP = { '↓C:N': 'Posible menor desempeño o mayor exposición a problemas de proceso; confirmar con observación y trazabilidad del lote.', '↑C:N': 'Posible exceso de nitrógeno; revisar olor, tratamiento e higiene, sin diagnosticar contaminación solo por la receta.', '↑N': 'Posible limitación de desempeño; la magnitud requiere datos de lote comparables.', '↓N': 'Posible incremento de riesgo; requiere verificación de proceso y contaminación observada.', '⚠': 'Riesgo inferido, no diagnóstico de Trichoderma ni pronóstico de pérdida.', '↑pH': 'La desviación estimada requiere medición de pH antes de atribuir efectos en colonización.', '↓pH': 'La desviación estimada requiere medición de pH antes de atribuir efectos en colonización.', '↑EB': 'La diferencia de EB es una hipótesis para ensayo, no una diferencia de rendimiento confirmada.', 'Ca': 'La estabilidad de pH debe medirse entre lotes antes de atribuir variabilidad.', 'Dig': 'La digestibilidad comparativa no permite predecir tiempos de colonización sin historial comparable.', '→N': 'La EB puede variar por múltiples factores además de la composición.', '→C': 'La EB puede variar por múltiples factores además de la composición.' };
     const OVERDIST_BY_ICON = { '↓C:N': flags.cnOverDist, '↑C:N': flags.cnOverDist, '↑N': flags.nOverDist, '↓N': flags.nOverDist, '↑pH': flags.phOverDist, '↓pH': flags.phOverDist };
 
@@ -875,7 +960,7 @@
       cnLow: spC => ({ ing: bestStock(g => g.cn > 60 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'cn', target: spC.cn_optimal.ideal }),
       nLow: spC => ({ ing: bestStock(g => g.n >= 2 && g.role !== 'base_carbono', (a, b) => a.cost - b.cost), metric: 'n', target: spC.n_optimal.ideal }),
       nHigh: spC => ({ ing: bestStock(g => g.cn > 80 && g.role === 'base_carbono', (a, b) => b.cn - a.cn), metric: 'n', target: spC.n_optimal.ideal }),
-      phLow: spC => ({ ing: bestStock(g => g.ph > 7.5, (a, b) => b.ph - a.ph), metric: 'ph', target: phCenter(spC) }),
+      phLow: spC => ({ ing: bestStock(g => g.ph > 7.5, byDocumentedDoseThenPh), metric: 'ph', target: phCenter(spC) }),
       phHigh: spC => ({ ing: bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph), metric: 'ph', target: phCenter(spC) }),
     };
 
@@ -896,8 +981,12 @@
             const fixKey = worsened[0];
             const spC = a2.sp || sp;
             const fix = FLAG_FIX[fixKey] ? FLAG_FIX[fixKey](spC) : null;
-            if (fix && fix.ing && fix.target != null) {
-              const res2 = solveTargetPct(candidate, sKey, effectiveINGS, fix.ing.id, fix.metric, fix.target, lockedIds, e2.spp);
+            // Un mineral de pH en el arreglo combinado respeta la misma regla
+            // que la sugerencia individual: dosis documentada o nada.
+            const fixDose = fix && fix.ing && fix.metric === 'ph' && isPhMineral(fix.ing) ? phMineralDose(fix.ing.id) : null;
+            const fixAllowed = !(fix && fix.ing && fix.metric === 'ph' && isPhMineral(fix.ing) && !fixDose);
+            if (fix && fix.ing && fix.target != null && fixAllowed) {
+              const res2 = solveTargetPct(candidate, sKey, effectiveINGS, fix.ing.id, fix.metric, fix.target, lockedIds, e2.spp, fixDose ? fixDose.max : null);
               if (res2) {
                 const secondApply = { mode: 'set', id: fix.ing.id, value: res2.pct };
                 const candidate2 = applyOptToRecipe(candidate, secondApply, lockedIds, effectiveINGS);
@@ -918,26 +1007,17 @@
     }
 
     const hasTips = items.some(s => s.priority === 'tip');
+    // La rama "Afinar con mineral estabilizador" se retiró: la falta de mineral
+    // ya la cubren el aviso de calcio y "Sin mineral buffer de pH", y su texto
+    // ("+5% consistencia EB") no tenía fuente.
     if (score >= 85 && !hasTips && recipe && recipe.length) {
-      const mineral = effectiveINGS.filter(g => g.role === 'aditivo_ph' && g.cs && g.cs.includes(sKey))[0];
-      if (mineral && !recipe.find(r => r.id === mineral.id)) {
-        items.push({
-          priority: 'tip', icon: 'Ca',
-          label: 'Afinar con mineral estabilizador',
-          action: `Agregar <b>${mineral.name}</b> 1–2% · estabiliza pH durante toda la incubación`,
-          effect: `Receta ya óptima · CaCO₃ amortigua la caída de pH por ácidos del micelio y reduce variabilidad lote-a-lote`,
-          delta: 'pH estable +5% consistencia EB',
-          apply: { mode: 'add', id: mineral.id, delta: 2 }
-        });
-      } else {
-        items.push({
-          priority: 'tip', icon: '$↓',
-          label: 'Refinamiento de costo',
-          action: 'Revisar si algún suplemento se puede sustituir por un residuo local más barato sin perder N',
-          effect: `Receta dentro de óptimo · oportunidad es bajar costo manteniendo C:N y N`,
-          delta: null, apply: null
-        });
-      }
+      items.push({
+        priority: 'tip', icon: '$↓',
+        label: 'Refinamiento de costo',
+        action: 'Revisar si algún suplemento se puede sustituir por un residuo local más barato sin perder N',
+        effect: `Receta dentro de óptimo · oportunidad es bajar costo manteniendo C:N y N`,
+        delta: null, apply: null
+      });
     }
 
     if (stockIds && stockIds.size > 0) {
@@ -1225,6 +1305,7 @@
     quantifyItem,
     generateOptimizer,
     createRecipeEvaluator,
+    PH_MINERAL_DOSES,
     ENERGY_COST,
     energyCostPerKgSeco,
     calcTreatment,

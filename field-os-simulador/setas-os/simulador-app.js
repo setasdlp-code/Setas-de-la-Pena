@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 767b2491aecd0cfe07b9f3668f5c18a2cd76932be71da3eb4d5fbe2e3c8b3d48
+// source-hash: 9ba9f1d8dfb59a60e798b8f00098dda18578c606d69011c12d78c1f1363224d5
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -1458,7 +1458,7 @@ const peritoMainLimiter = (opt, an) => {
   if (!opt || !an) return null;
   const first = opt.items.find((i) => i.priority === "critical") || opt.items.find((i) => i.priority === "warning");
   if (!first) return null;
-  const MAP = { "↓C:N": "C:N demasiado alto — exceso de carbono sin aprovechar", "↑C:N": "C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación", "↑N": "Nitrógeno insuficiente — colonización lenta y EB reducida", "↓N": "Exceso de nitrógeno — riesgo Trichoderma", "!": "Carga sanitaria crítica — Trichoderma probable sin autoclave", "↑pH": "pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial", "↓pH": "pH demasiado alcalino — inhibe el crecimiento y favorece bacterias", "↑EB": "Potencial de EB sin explotar", "Ca": "Sin mineral estabilizador de pH", "Dig": "Sustrato de baja digestibilidad — colonización lenta" };
+  const MAP = { "↓C:N": "C:N demasiado alto — exceso de carbono sin aprovechar", "↑C:N": "C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación", "↑N": "Nitrógeno insuficiente — colonización lenta y EB reducida", "↓N": "Exceso de nitrógeno — riesgo Trichoderma", "!": "Carga sanitaria crítica — Trichoderma probable sin autoclave", "↑pH": "pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial", "↓pH": "pH demasiado alcalino — inhibe el crecimiento y favorece bacterias", "↑EB": "Potencial de EB sin explotar", "Ca": "Calcio mineral bajo el mínimo funcional (≥0,6 % CaCO₃/CaSO₄)", "Dig": "Sustrato de baja digestibilidad — colonización lenta" };
   return MAP[first.icon] || first.label;
 };
 const peritoCorreccionMinima = (opt) => {
