@@ -5139,6 +5139,30 @@ const DEMO_ROOM_METRICS = {
   incubacion_01: { temperature_c: 23.4, rh_pct: 72.0, co2_ppm: 1200, substrate_temperature_c: 24.8 },
 };
 
+// Provenance belongs to each metric: a new T° packet cannot revive old CO₂.
+// Camera props have no observation/source contract, so they remain model data.
+const climateMetricProvenance=({metric,roomLive=null,injected=null})=>{
+  const key={temperature_c:'temp',rh_pct:'rh',co2_ppm:'co2',substrate_temperature_c:'subTemp'}[metric];
+  if(Number.isFinite(roomLive?.sample?.[metric])){
+    const reading=roomLive.latest?.[metric];
+    const entered=reading?.ingest_source==='manual'||reading?.source==='manual'||reading?.source==='iot_hub_webhook';
+    const ageMs=Number.isFinite(roomLive.metricAgeMs?.[metric])?roomLive.metricAgeMs[metric]:null;
+    const freshness=ageMs===null?'unknown':roomLive.freshMetrics?.[metric]===true?'fresh':'stale';
+    return {kind:entered?'entered':'measured',label:entered?'Ingresado · prueba':'Medido',freshness,ageMs};
+  }
+  if(key&&Number.isFinite(injected?.[key])) return {kind:'entered',label:'Ingresado · prueba',freshness:'unknown',ageMs:null,recordedTime:injected.timestamp};
+  return {kind:'model',label:'Modelo · sin lectura',freshness:'unknown',ageMs:null};
+};
+
+const ClimateMetricProvenance=({metric,roomLive,injected})=>{
+  const p=climateMetricProvenance({metric,roomLive,injected});
+  const age=p.kind==='model'?'':p.ageMs===null?(p.recordedTime?`Hora registrada: ${p.recordedTime}`:'Fecha de lectura desconocida'):
+    `${p.freshness==='stale'?'Lectura antigua · ':''}${liveAgeLabel(p.ageMs)}`;
+  return <span className="sdp-provenance" data-testid={`climate-provenance-${metric}`} data-provenance={p.kind} data-freshness={p.freshness} style={{display:'inline-flex',flexDirection:'column',whiteSpace:'normal'}}>
+    <span>{p.label}</span>{age&&<span style={{fontWeight:400,textTransform:'none'}}>{age}</span>}
+  </span>;
+};
+
 const LIVE_TELEMETRY_STORAGE_KEY = 'setas_live_telemetry_config';
 
 // Tenjo está a 2.600 msnm: ~745 hPa. Es el default de toda la compensación NDIR.
@@ -5235,7 +5259,7 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
       const signature = [
         next.status.connectivity,
         next.status.activeSource || '-',
-        Object.values(next.rooms).map(r => `${r.id}@${r.sample && r.sample.lastUpdateAt}`).join(','),
+        Object.values(next.rooms).map(r => `${r.id}@${r.sample && r.sample.lastUpdateAt}:${Object.entries(r.metricAgeMs||{}).map(([m,age])=>`${m}:${Number.isFinite(age)?liveAgeLabel(age):'?'}:${r.freshMetrics?.[m]}`).join(',')}`).join(','),
         activeAlerts.map(a => `${a.key}:${a.severity}`).join(','),
       ].join('|');
       if (signature === signatureRef.current) return;
@@ -7308,10 +7332,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   },[launchRevision]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
-  const lowStockCount=useMemo(()=>{
-    const registeredIds=[...new Set(invLotes.filter(l=>l.activo).map(l=>l.ingredienteId))];
-    return registeredIds.filter(id=>(stockMap[id]||0)<(alertaConfig[id]??2)).length;
-  },[invLotes,stockMap,alertaConfig]);
+  const stockAlerts=window.SetasInventoryLedger.lowStockAlerts({
+    ingredients:INGS,lots:invLotes,ledger:invReservas,
+    incoming:window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[],
+    thresholds:alertaConfig,nowMs:Date.now(),
+  });
+  const lowStockCount=stockAlerts.length;
   useEffect(()=>{if(typeof props.onStockAlertChange==='function')props.onStockAlertChange(lowStockCount);},[lowStockCount]);
 
   const formularConStockBodega=()=>{
@@ -8851,24 +8877,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {invTab==='stock'&&(
                 <div>
                   {(()=>{
-                    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
-                    const aggregatedStock = {};
-                    invLotes.filter(l=>l.activo).forEach(l=>{
-                      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
-                    });
-                    // Las alertas comparan contra DISPONIBLE (físico − reservado), no
-                    // contra el físico: es el único número con el que se decide si hay
-                    // que comprar — el físico puede alcanzar y estar ya comprometido
-                    // por otro lote de producción.
-                    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+                    const ledgerApi=window.SetasInventoryLedger;
                     const incomingCompras=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
-                    const availabilityFor=(ingId)=>ledgerApi?ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date.now()}):null;
-                    const criticalStockItems = INGS.map(ing=>{
-                      const av=availabilityFor(ing.id);
-                      const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
-                      const threshold = lowStockThresholds[ing.type]||5;
-                      return { ing, stockKg, threshold, entranteKg: av?.entrante||0, isLow: stockKg < threshold };
-                    }).filter(item=>item.isLow);
+                    const availabilityFor=(ingId)=>ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date.now()});
+                    const criticalStockItems = stockAlerts;
 
                     // Las bolsas viven en invLotes con el mismo modelo FIFO, pero se
                     // cuentan en unidades, no kg — se excluyen de esta tabla (kg) y se
@@ -11474,14 +11486,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {/* 4 KPI Cards en Vivo */}
+        {/* Provenance per metric; fallback values are model references, not readings. */}
+        {['temperature_c','rh_pct','co2_ppm'].some(metric=>climateMetricProvenance({metric,roomLive,injected}).kind==='model')&&(
+          <p role="status" data-testid="climate-model-warning" style={{fontSize:13,color:'var(--ink-1)'}}>
+            Hay métricas sin lectura de sonda. Los valores del modelo y sus cálculos son referencias; no confirman las condiciones actuales de la sala.
+          </p>
+        )}
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
           <div className="climate-kpi-card sdp-tele">
             <div className="climate-kpi-header sdp-tele__header">
               <span>Temperatura</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                <span className="sdp-provenance">● MEASURED</span>
+                <ClimateMetricProvenance metric="temperature_c" roomLive={roomLive} injected={injected}/>
                 <span>Target: {defaultTargets.temperature_c.target}°C</span>
               </div>
             </div>
@@ -11490,7 +11507,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
             </div>
             <div className="climate-kpi-sub sdp-tele__label">
-              <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
+              <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C</span>
+              {Number.isFinite(currentMetrics.subTemp)?<>
+                <span>Sustrato: {currentMetrics.subTemp}°C</span>
+                <ClimateMetricProvenance metric="substrate_temperature_c" roomLive={roomLive} injected={injected}/>
+              </>:<span data-testid="climate-substrate-missing">Sustrato: sin lectura</span>}
             </div>
           </div>
 
@@ -11499,7 +11520,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-kpi-header sdp-tele__header">
               <span>Humedad Relativa</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                <span className="sdp-provenance">● MEASURED</span>
+                <ClimateMetricProvenance metric="rh_pct" roomLive={roomLive} injected={injected}/>
                 <span>Target: {defaultTargets.rh_pct.target}%</span>
               </div>
             </div>
@@ -11531,13 +11552,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="climate-kpi-header sdp-tele__header">
                   <span>Dióxido de Carbono (NDIR)</span>
                   <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                    <span className="sdp-provenance">● MEASURED</span>
+                    <ClimateMetricProvenance metric="co2_ppm" roomLive={roomLive} injected={injected}/>
                     <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
                   </div>
                 </div>
                 <div className="climate-kpi-value sdp-tele__value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span>{ndirCorr.correctedPpm}</span>
-                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
+                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm compensados</span>
                   <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
                 <div className="climate-kpi-sub sdp-tele__label">
@@ -11552,7 +11573,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="climate-kpi-header sdp-tele__header">
               <span>VPD & Psicrometría</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                <span className="sdp-provenance">○ ESTIMATED</span>
+                <span className="sdp-provenance">Estimado · derivado de T° y HR</span>
                 <span style={{color: vpd >= 0.10 && vpd <= 0.50 ? 'var(--moss-700)' : 'var(--accent-terracotta)'}}>
                   {vpd >= 0.10 && vpd <= 0.50 ? 'Transpiración Óptima' : 'Fuera de Rango'}
                 </span>
@@ -12408,22 +12429,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         {(tab==='home'||tab==='inicio')&&(()=>{
           // Cálculos y Métricas en vivo para el Centro de Mando
           const totalStockKg = invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
-          const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
-          const aggregatedStock = {};
-          invLotes.filter(l=>l.activo).forEach(l=>{
-            aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId]||0) + (Number(l.cantidadKgDisponible)||0);
-          });
-          // Contra DISPONIBLE (físico − reservado), no contra el físico — mismo
-          // criterio que la tabla de Bodega: el físico puede alcanzar y estar
-          // ya comprometido por otro lote de producción confirmado.
-          const homeLedgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-          const homeIncomingCompras=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
-          const criticalStockItems = INGS.map(ing=>{
-            const av=homeLedgerApi?homeLedgerApi.availability(ing.id,{lots:invLotes,ledger:invReservas,incoming:homeIncomingCompras,nowMs:Date.now()}):null;
-            const stockKg = av ? av.disponible : (aggregatedStock[ing.id]||0);
-            const threshold = lowStockThresholds[ing.type]||5;
-            return { ing, stockKg, threshold, entranteKg: av?.entrante||0, isLow: stockKg < threshold };
-          }).filter(item=>item.isLow);
+          const criticalStockItems = stockAlerts;
           const lowStockCount = criticalStockItems.length;
           const totalBolsasCount = bitBolsas.length;
           const bolsasIncubacion = bitBolsas.filter(b=>b.estado==='sana'&&!b.col100).length;
