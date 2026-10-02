@@ -449,6 +449,11 @@
     const effectiveINGS = getEffectiveINGS(ings);
     if (Array.isArray(apply)) return apply.reduce((r, a) => applyOptToRecipe(r, a, locked, effectiveINGS), rec);
     const { mode, id, delta, value } = apply;
+    // Un ingrediente bloqueado no se toca, tampoco cuando es el objetivo del
+    // ajuste: antes set/increase/decrease le cambiaban el % igual. La vista
+    // previa de la tarjeta ya muestra "no cambia la receta con los bloqueos
+    // actuales" y deshabilita el botón cuando el resultado es idéntico.
+    if (id && locked.includes(id)) return rec;
     const existing = rec.find(r => r.id === id);
     if (mode === 'set') {
       return setPctProportional(rec, id, value, locked);

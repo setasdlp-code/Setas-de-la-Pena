@@ -17,7 +17,7 @@ globalThis.applyOptToRecipe = RO.applyOptToRecipe;
 globalThis.calcTreatment = RO.calcTreatment;
 globalThis.createRecipeEvaluator = RO.createRecipeEvaluator;
 
-const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'blendEBWithHistory', 'autoImproveRecipe']);
+const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'blendEBWithHistory', 'autoImproveIsBetter', 'AUTO_IMPROVE_PAIR_POOL', 'autoImproveOps', 'autoImproveRecipeDetailed', 'autoImproveRecipe']);
 const SK = 'p_ostreatus_gris';
 const NO_STOCK = new Set();
 const resolveSpp = r => T.applyToSpp(X.SPP, SK, r, X.INGS);

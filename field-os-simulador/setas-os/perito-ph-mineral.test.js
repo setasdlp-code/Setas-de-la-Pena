@@ -14,7 +14,7 @@ globalThis.generateOptimizer = RO.generateOptimizer;
 globalThis.applyOptToRecipe = RO.applyOptToRecipe;
 globalThis.calcTreatment = RO.calcTreatment;
 globalThis.createRecipeEvaluator = RO.createRecipeEvaluator;
-const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'blendEBWithHistory', 'autoImproveRecipe']);
+const X = extractConsts(['SPP', 'INGS', 'EB_PENALTY_BALANCE_BAND', 'analyze', 'blendEBWithHistory', 'autoImproveIsBetter', 'AUTO_IMPROVE_PAIR_POOL', 'autoImproveOps', 'autoImproveRecipeDetailed', 'autoImproveRecipe']);
 
 const byId = new Map(X.INGS.map(g => [g.id, g]));
 const isPhMineral = id => byId.get(id)?.role === 'aditivo_ph';

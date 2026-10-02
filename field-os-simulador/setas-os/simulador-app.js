@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 9ba9f1d8dfb59a60e798b8f00098dda18578c606d69011c12d78c1f1363224d5
+// source-hash: 2ee281662dc422f08eec00af770052a2a9c7689326a525bccfe78bb211a5a44e
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -1499,6 +1499,13 @@ const ClassChangeNote = ({ change, testId = "perito-item-class-change" }) => {
   if (!change) return null;
   const cite = classCitation(change.to);
   return /* @__PURE__ */ React.createElement("div", { "data-testid": testId, "data-from": change.from.resolvedClass, "data-to": change.to.resolvedClass, style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Cambia la clase de sustrato:"), " ", change.from.label, " → ", change.to.label, ".", fmtClassRanges(change.to) ? ` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite ? ` (${cite})` : ""}.` : "", " El índice estimado ya usa esos rangos.");
+};
+const recipeKeyOf = (r) => JSON.stringify((r || []).map((x) => [x.id, Number(x.p) || 0]));
+const AutoImproveSummary = ({ result, onUndo, canUndo }) => {
+  if (!result) return null;
+  const { steps, before, after } = result;
+  if (!steps.length) return /* @__PURE__ */ React.createElement("div", { "data-testid": "auto-improve-summary", "data-steps": "0", role: "status", "aria-live": "polite", className: "os-provenance-notice", style: { marginBottom: 10 } }, "Auto-mejorar no encontró un ajuste que quite críticos o suba el score con los ingredientes y bloqueos actuales", before ? ` (score ${before.score}, ${before.criticals} crítico${before.criticals === 1 ? "" : "s"})` : "", ".");
+  return /* @__PURE__ */ React.createElement("div", { "data-testid": "auto-improve-summary", "data-steps": steps.length, role: "status", "aria-live": "polite", className: "os-provenance-notice", style: { marginBottom: 10, display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 240px", minWidth: 0 } }, /* @__PURE__ */ React.createElement("b", null, "Auto-mejorar aplicó ", steps.length, " ajuste", steps.length === 1 ? "" : "s"), " para: ", steps.map((st) => st.labels.join(" + ")).join(" → "), ".", before && after && /* @__PURE__ */ React.createElement(React.Fragment, null, " Score ", before.score, " → ", after.score, " · críticos ", before.criticals, " → ", after.criticals, ".")), canUndo && /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--secondary", onClick: onUndo, style: { flexShrink: 0, padding: "6px 12px" } }, "Deshacer Auto-mejorar"));
 };
 const PeritoItem = React.memo(({ item, onApply, baseScore, recipe, lockedIds, ingredients, evaluate, onMorph }) => {
   const changes = describePeritoChanges(recipe, item.apply, lockedIds, ingredients);
@@ -3178,39 +3185,55 @@ const runHybridRecipeSearch = ({
     lockedIds: new Set(lockedIds || [])
   });
 };
-const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, resolveSpp = null, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+const autoImproveIsBetter = (next, cur) => next.criticals < cur.criticals && next.score >= cur.score || next.criticals === cur.criticals && next.score > cur.score;
+const AUTO_IMPROVE_PAIR_POOL = 8;
+const autoImproveOps = (apply) => Array.isArray(apply) ? apply : apply ? [apply] : [];
+const autoImproveRecipeDetailed = ({ recipe, sKey, ings, optimizerINGS, spp, resolveSpp = null, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
   const evaluate = createRecipeEvaluator({ sKey, ings, spp, resolveSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze });
   const sppFor = (r) => typeof resolveSpp === "function" && resolveSpp(r) || spp;
+  const progressOf = (r) => {
+    const e = evaluate(r);
+    if (!e) return null;
+    return { score: e.score, status: e.status, criticals: SetasScoring.assessSeverity(e.an).criticals };
+  };
   let cur = recipe;
-  let bestScore = -1;
+  let curP = progressOf(cur);
+  const before = curP;
+  const steps = [];
+  if (!curP) return { recipe, steps, before: null, after: null };
   for (let i = 0; i < maxIter; i++) {
     const curSpp = sppFor(cur);
     const a = analyze(cur, sKey, ings, curSpp);
     if (!a) break;
     const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, curSpp, usageCounts, evaluate);
-    if (o.score <= bestScore) break;
-    bestScore = o.score;
-    const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
-    if (!candidates.length) break;
-    let bestCandScore = -1, bestCandidate = null, bestO2 = null;
-    for (const cand of candidates) {
-      const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
-      const trySpp = sppFor(tryRec);
-      const tryA = analyze(tryRec, sKey, ings, trySpp);
-      if (!tryA) continue;
-      const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), useStock, void 0, trySpp, usageCounts, evaluate);
-      if (tryO.score > bestCandScore) {
-        bestCandScore = tryO.score;
-        bestCandidate = tryRec;
-        bestO2 = tryO;
+    const moves = [];
+    o.items.filter((it) => it.priority === "critical" || it.priority === "warning").forEach((it) => {
+      if (it.apply) moves.push({ apply: it.apply, icons: [it.icon], labels: [it.label] });
+      if (it.comboApply) moves.push({ apply: it.comboApply, icons: [it.icon], labels: [it.comboLabel || it.label] });
+    });
+    if (!moves.length) break;
+    let best = null;
+    const tryMove = (apply, meta) => {
+      const next = applyOptToRecipe(cur, apply, lockedIds, optimizerINGS);
+      const p = progressOf(next);
+      if (p && autoImproveIsBetter(p, curP) && (!best || autoImproveIsBetter(p, best.after))) best = { recipe: next, apply, after: p, ...meta };
+    };
+    moves.forEach((m) => tryMove(m.apply, { icons: m.icons, labels: m.labels }));
+    if (!best) {
+      const pool = moves.slice(0, AUTO_IMPROVE_PAIR_POOL);
+      for (let x = 0; x < pool.length; x++) for (let y = 0; y < pool.length; y++) {
+        if (x === y) continue;
+        tryMove([...autoImproveOps(pool[x].apply), ...autoImproveOps(pool[y].apply)], { icons: [...pool[x].icons, ...pool[y].icons], labels: [...pool[x].labels, ...pool[y].labels] });
       }
     }
-    if (!bestCandidate) break;
-    if (bestO2.score <= o.score) break;
-    cur = bestCandidate;
+    if (!best) break;
+    steps.push({ labels: best.labels, icons: best.icons, ingredientIds: [...new Set(autoImproveOps(best.apply).map((op) => op && op.id).filter(Boolean))], before: curP, after: best.after });
+    cur = best.recipe;
+    curP = best.after;
   }
-  return cur;
+  return { recipe: cur, steps, before, after: curP };
 };
+const autoImproveRecipe = (args) => autoImproveRecipeDetailed(args).recipe;
 const launchMoisture = ({ touched, manual, target }) => touched ? manual : target ?? manual ?? 65;
 const launchSpawn = (bags, kgPerBag, dynSpawn) => dynSpawn ? { ingredientId: "spawn_grano", kg: bags * kgPerBag * (dynSpawn / 100) } : null;
 const moistureInTargetRange = (h, m) => m?.min != null && m?.max != null ? h >= m.min && h <= m.max : h >= 67;
@@ -5885,9 +5908,32 @@ function SimuladorShell(props) {
     setRecipe(recipeHistory[recipeHistory.length - 1]);
     setRecipeHistory((h) => h.slice(0, -1));
   };
+  const [autoImproveResult, setAutoImproveResult] = React.useState(null);
   const autoImprove = () => {
-    setRecipe(autoImproveRecipe({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, resolveSpp: resolvePeritoSpp, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats }));
+    const res = autoImproveRecipeDetailed({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, resolveSpp: resolvePeritoSpp, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats });
+    if (!res.steps.length) {
+      setAutoImproveResult({ recipeKey: recipeKeyOf(recipe), steps: [], before: res.before, after: res.before });
+      return;
+    }
+    setRecipeHistory((h) => [...h, recipe]);
+    setRecipe(res.recipe);
+    setAppliedIcons((s) => {
+      const next = { ...s };
+      res.steps.forEach((st) => st.icons.forEach((ic) => {
+        next[ic] = (next[ic] || 0) + 1;
+      }));
+      return next;
+    });
+    setUsageCounts((s) => {
+      const next = { ...s };
+      res.steps.forEach((st) => st.ingredientIds.forEach((id) => {
+        next[id] = (next[id] || 0) + 1;
+      }));
+      return next;
+    });
+    setAutoImproveResult({ recipeKey: recipeKeyOf(res.recipe), steps: res.steps, before: res.before, after: res.after });
   };
+  const autoImproveSummary = autoImproveResult && autoImproveResult.recipeKey === recipeKeyOf(recipe) ? autoImproveResult : null;
   const openPrintWindow = (mode2) => {
     const el = document.querySelector(".prod-sheet[data-preparation-revision]");
     if (!el) {
@@ -10104,7 +10150,7 @@ Click para ver análisis completo`
         }
         setNoticeDlg({ msg: `Guardada como prueba: ${nm}` });
       } });
-    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: sm.badge, border: `1px solid ${sm.border}`, borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, "+ Crear prueba"))), hasPer && /* @__PURE__ */ React.createElement("div", { style: { marginTop: -8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(SubstrateClassNote, { info: substrateClassInfo })), /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 12 } }, [
+    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: sm.badge, border: `1px solid ${sm.border}`, borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, "+ Crear prueba"))), hasPer && /* @__PURE__ */ React.createElement("div", { style: { marginTop: -8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(SubstrateClassNote, { info: substrateClassInfo })), hasPer && /* @__PURE__ */ React.createElement(AutoImproveSummary, { result: autoImproveSummary, onUndo: undoLastRec, canUndo: recipeHistory.length > 0 }), /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 12 } }, [
       { l: "C:N", v: an.cn > 0 ? `${an.cn.toFixed(1)}:1` : "—", ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max, prov: an.cn > 0 ? procedenciaNutriente("cn") : procedenciaSinMatrizNutritiva() },
       { l: "Nitrógeno", v: an.avgN > 0 ? `${an.avgN.toFixed(2)}%` : "—", ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max, prov: an.avgN > 0 ? procedenciaNutriente("n") : procedenciaSinMatrizNutritiva() },
       { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
@@ -10306,7 +10352,7 @@ Click para ver análisis completo`
       setShowAIFormModal(true);
       setAiFormResult(null);
       setAiFormError("");
-    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "7px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wand", size: 13, color: "var(--paper-0)" }), " Consultar IA"))), hasPer && /* @__PURE__ */ React.createElement("div", { style: { marginTop: -8, marginBottom: 14 } }, /* @__PURE__ */ React.createElement(SubstrateClassNote, { info: substrateClassInfo })), restrictiveFactor && restrictiveFactor.factor !== "none" && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.08)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.08)" : "rgba(77,98,53,.08)", border: `1px solid ${restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.3)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.3)" : "rgba(77,98,53,.3)"}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center" } }, restrictiveFactor.severity === "critical" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 16, color: "#C53030" }) : restrictiveFactor.severity === "warning" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 16, color: "#7A5A10" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 16, color: "#2F4A24" })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: restrictiveFactor.severity === "critical" ? "#C53030" : restrictiveFactor.severity === "warning" ? "#7A5A10" : "#2F4A24" } }, "Factor Restrictivo Estimado: ", restrictiveFactor.label)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)", marginBottom: 4, lineHeight: 1.5 } }, /* @__PURE__ */ React.createElement("b", null, "Diagnóstico Causal:"), " ", restrictiveFactor.rationale), restrictiveFactor.counterfactualOpportunity && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-800)", marginBottom: 4, background: "rgba(77,98,53,.08)", padding: "4px 8px", borderRadius: 3 } }, /* @__PURE__ */ React.createElement("b", null, "Oportunidad Contrafactual:"), " ", restrictiveFactor.counterfactualOpportunity.description), restrictiveFactor.actionRequired && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: restrictiveFactor.severity === "critical" ? "#9B2C2C" : "#5A4008", fontWeight: 700 } }, "→ Acción correctiva: ", restrictiveFactor.actionRequired)), /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: "rgba(43,76,126,.06)", border: "1px solid rgba(43,76,126,.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: "var(--slate-800)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 14, style: { marginRight: 6 } }), " Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", background: "var(--slate-700)", color: "#fff", padding: "2px 8px", borderRadius: 3, fontWeight: 700 } }, "All American 1941X: ", reqPsi.toFixed(2), " psig")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Presión manométrica:"), " ", /* @__PURE__ */ React.createElement("span", { style: { color: "#C53030", fontWeight: 700 } }, reqPsi.toFixed(2), " psig"), " (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Tiempo de meseta (Hold):"), " ", optHold?.holdTimeMin || 90, " min en bolsa de ", kgBag || 2, " kg a ", hObj || 65, "% HR."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Letalidad F₀:"), " ≥ 12.0 min (inactivación probada de ", /* @__PURE__ */ React.createElement("i", null, "G. stearothermophilus"), ")."))), an && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 14 } }, [
+    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "7px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wand", size: 13, color: "var(--paper-0)" }), " Consultar IA"))), hasPer && /* @__PURE__ */ React.createElement("div", { style: { marginTop: -8, marginBottom: 14 } }, /* @__PURE__ */ React.createElement(SubstrateClassNote, { info: substrateClassInfo })), hasPer && /* @__PURE__ */ React.createElement(AutoImproveSummary, { result: autoImproveSummary, onUndo: undoLastRec, canUndo: recipeHistory.length > 0 }), restrictiveFactor && restrictiveFactor.factor !== "none" && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.08)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.08)" : "rgba(77,98,53,.08)", border: `1px solid ${restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.3)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.3)" : "rgba(77,98,53,.3)"}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center" } }, restrictiveFactor.severity === "critical" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 16, color: "#C53030" }) : restrictiveFactor.severity === "warning" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 16, color: "#7A5A10" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 16, color: "#2F4A24" })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: restrictiveFactor.severity === "critical" ? "#C53030" : restrictiveFactor.severity === "warning" ? "#7A5A10" : "#2F4A24" } }, "Factor Restrictivo Estimado: ", restrictiveFactor.label)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)", marginBottom: 4, lineHeight: 1.5 } }, /* @__PURE__ */ React.createElement("b", null, "Diagnóstico Causal:"), " ", restrictiveFactor.rationale), restrictiveFactor.counterfactualOpportunity && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-800)", marginBottom: 4, background: "rgba(77,98,53,.08)", padding: "4px 8px", borderRadius: 3 } }, /* @__PURE__ */ React.createElement("b", null, "Oportunidad Contrafactual:"), " ", restrictiveFactor.counterfactualOpportunity.description), restrictiveFactor.actionRequired && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: restrictiveFactor.severity === "critical" ? "#9B2C2C" : "#5A4008", fontWeight: 700 } }, "→ Acción correctiva: ", restrictiveFactor.actionRequired)), /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: "rgba(43,76,126,.06)", border: "1px solid rgba(43,76,126,.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: "var(--slate-800)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 14, style: { marginRight: 6 } }), " Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", background: "var(--slate-700)", color: "#fff", padding: "2px 8px", borderRadius: 3, fontWeight: 700 } }, "All American 1941X: ", reqPsi.toFixed(2), " psig")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Presión manométrica:"), " ", /* @__PURE__ */ React.createElement("span", { style: { color: "#C53030", fontWeight: 700 } }, reqPsi.toFixed(2), " psig"), " (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Tiempo de meseta (Hold):"), " ", optHold?.holdTimeMin || 90, " min en bolsa de ", kgBag || 2, " kg a ", hObj || 65, "% HR."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Letalidad F₀:"), " ≥ 12.0 min (inactivación probada de ", /* @__PURE__ */ React.createElement("i", null, "G. stearothermophilus"), ")."))), an && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 14 } }, [
       { l: "C:N", v: an.cn > 0 ? `${an.cn.toFixed(1)}:1` : "—", ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max, prov: an.cn > 0 ? procedenciaNutriente("cn") : procedenciaSinMatrizNutritiva() },
       { l: "Nitrógeno", v: an.avgN > 0 ? `${an.avgN.toFixed(2)}%` : "—", ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max, prov: an.avgN > 0 ? procedenciaNutriente("n") : procedenciaSinMatrizNutritiva() },
       { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },

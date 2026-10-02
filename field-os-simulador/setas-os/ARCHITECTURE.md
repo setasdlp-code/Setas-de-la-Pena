@@ -93,6 +93,8 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 **Dosis de minerales de pH.** La cantidad automática de un aditivo de pH (`role: 'aditivo_ph'`) nunca supera su dosis típica documentada en `PH_MINERAL_DOSES` (`recipe-optimizer.js`; hoy solo CaCO₃ 0,5–1 %, `knowledge_base/02_substrates/supplementation.md`), y la corrección de pH nunca baja un mineral presente. Un mineral sin dosis documentada (ceniza vegetal, cascarilla de huevo) se sugiere sin cantidad. Agregar una fila exige fuente en la base de conocimiento. "Sin mineral buffer de pH" solo aparece si la receta no tiene yeso, CaCO₃ ni otro aditivo de pH y el aviso de calcio (sustrato no estéril) no aplica. Pruebas: `perito-ph-mineral.test.js`.
 
+**Auto-mejorar.** `autoImproveRecipeDetailed` (en `simulador-app.jsx`) mide el progreso con el evaluador del Perito: un paso se acepta si quita críticos sin bajar el score, o si sube el score con los mismos críticos (`autoImproveIsBetter`); nunca si agrega críticos. Evalúa todos los ajustes accionables y sus correcciones combinadas y, si ninguno avanza solo, pares de ajustes. En la UI entra al historial como un solo paso ("Deshacer Auto-mejorar") y deja un resumen (`AutoImproveSummary`) mientras la receta sea la que produjo. `applyOptToRecipe` no modifica un ingrediente bloqueado aunque sea el objetivo del ajuste. Pruebas: `perito-auto-improve.test.js` y `e2e/perito-auto-improve.browser.cjs`.
+
 ## 3b. El modelo agronómico vive fuera del JSX
 
 Desde la extracción de Fase 2, el catálogo y el modelo ya no están dentro de

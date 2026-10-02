@@ -1946,6 +1946,27 @@ const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
     </div>
   );
 };
+const recipeKeyOf=r=>JSON.stringify((r||[]).map(x=>[x.id,Number(x.p)||0]));
+// Resumen de Auto-mejorar: qué aplicó, cómo cambió el veredicto y cómo
+// volver atrás. Sin cambios, lo dice en vez de no hacer nada visible.
+const AutoImproveSummary=({result,onUndo,canUndo})=>{
+  if(!result) return null;
+  const {steps,before,after}=result;
+  if(!steps.length) return(
+    <div data-testid="auto-improve-summary" data-steps="0" role="status" aria-live="polite" className="os-provenance-notice" style={{marginBottom:10}}>
+      Auto-mejorar no encontró un ajuste que quite críticos o suba el score con los ingredientes y bloqueos actuales{before?` (score ${before.score}, ${before.criticals} crítico${before.criticals===1?'':'s'})`:''}.
+    </div>
+  );
+  return(
+    <div data-testid="auto-improve-summary" data-steps={steps.length} role="status" aria-live="polite" className="os-provenance-notice" style={{marginBottom:10,display:'flex',gap:10,alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap'}}>
+      <div style={{flex:'1 1 240px',minWidth:0}}>
+        <b>Auto-mejorar aplicó {steps.length} ajuste{steps.length===1?'':'s'}</b> para: {steps.map(st=>st.labels.join(' + ')).join(' → ')}.
+        {before&&after&&<> Score {before.score} → {after.score} · críticos {before.criticals} → {after.criticals}.</>}
+      </div>
+      {canUndo&&<button type="button" className="sdp-btn sdp-btn--secondary" onClick={onUndo} style={{flexShrink:0,padding:'6px 12px'}}>Deshacer Auto-mejorar</button>}
+    </div>
+  );
+};
 const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,evaluate,onMorph})=>{
   const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
   const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
@@ -4721,47 +4742,75 @@ const runHybridRecipeSearch=({
     lockedIds:new Set(lockedIds||[]),
   });
 };
-// ── Auto-mejorar: aplica en cadena la sugerencia crítica/advertencia que de
-//    verdad mejora el score global (hasta maxIter pasos) — prueba las 3 de
-//    mayor score predicho y se queda con la mejor tras aplicarla, no solo con la
-//    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
+// ── Auto-mejorar: aplica en cadena (hasta maxIter pasos) el ajuste crítico o
+//    de advertencia que más avanza — evalúa todos los ajustes accionables y
+//    sus correcciones combinadas, y si ninguno avanza solo, pares de ajustes.
+//    `spp` son los objetivos resueltos del Formulador: el
 //    análisis y las cantidades de cada paso usan los mismos rangos que la UI
 //    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
 // `resolveSpp` (receta → objetivos) hace que cada paso use los objetivos de la
 // receta en ese momento: aplicar un ajuste puede cambiar la clase de sustrato,
 // y puntuar el paso siguiente con los rangos de la receta inicial lo aceptaría
 // o rechazaría con el contexto equivocado. Sin él, `spp` fijo como antes.
-const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,resolveSpp=null,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+// Progreso de Auto-mejorar: primero menos críticos, después más score. Con
+// varios críticos, el tope de severidad deja el score igual al corregir solo
+// uno, y la regla anterior ("solo si sube el score") se detenía ahí con la
+// receta en "No ejecutar". Ahora un paso que quita un crítico sin bajar el
+// score es progreso; uno que no quita críticos tiene que subir el score; uno
+// que agrega críticos nunca se acepta.
+const autoImproveIsBetter=(next,cur)=>(next.criticals<cur.criticals&&next.score>=cur.score)||(next.criticals===cur.criticals&&next.score>cur.score);
+const AUTO_IMPROVE_PAIR_POOL=8;
+const autoImproveOps=apply=>Array.isArray(apply)?apply:(apply?[apply]:[]);
+const autoImproveRecipeDetailed=({recipe,sKey,ings,optimizerINGS,spp,resolveSpp=null,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
   const evaluate=createRecipeEvaluator({sKey,ings,spp,resolveSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze});
   const sppFor=r=>(typeof resolveSpp==='function'&&resolveSpp(r))||spp;
-  let cur=recipe;let bestScore=-1;
+  // Mismo evaluador que el veredicto: el score de cada candidato es el que el
+  // Perito mostrará después de aplicarlo.
+  const progressOf=r=>{
+    const e=evaluate(r);
+    if(!e) return null;
+    return{score:e.score,status:e.status,criticals:SetasScoring.assessSeverity(e.an).criticals};
+  };
+  let cur=recipe;
+  let curP=progressOf(cur);
+  const before=curP;
+  const steps=[];
+  if(!curP) return{recipe,steps,before:null,after:null};
   for(let i=0;i<maxIter;i++){
     const curSpp=sppFor(cur);
     const a=analyze(cur,sKey,ings,curSpp);
     if(!a) break;
     const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,curSpp,usageCounts,evaluate);
-    if(o.score<=bestScore) break;
-    bestScore=o.score;
-    const candidates=o.items
-      .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
-      .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
-      .slice(0,3);
-    if(!candidates.length) break;
-    let bestCandScore=-1,bestCandidate=null,bestO2=null;
-    for(const cand of candidates){
-      const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-      const trySpp=sppFor(tryRec);
-      const tryA=analyze(tryRec,sKey,ings,trySpp);
-      if(!tryA) continue;
-      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,trySpp,usageCounts,evaluate);
-      if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
+    const moves=[];
+    o.items.filter(it=>it.priority==='critical'||it.priority==='warning').forEach(it=>{
+      if(it.apply) moves.push({apply:it.apply,icons:[it.icon],labels:[it.label]});
+      if(it.comboApply) moves.push({apply:it.comboApply,icons:[it.icon],labels:[it.comboLabel||it.label]});
+    });
+    if(!moves.length) break;
+    let best=null;
+    const tryMove=(apply,meta)=>{
+      const next=applyOptToRecipe(cur,apply,lockedIds,optimizerINGS);
+      const p=progressOf(next);
+      if(p&&autoImproveIsBetter(p,curP)&&(!best||autoImproveIsBetter(p,best.after))) best={recipe:next,apply,after:p,...meta};
+    };
+    moves.forEach(m=>tryMove(m.apply,{icons:m.icons,labels:m.labels}));
+    // Ningún ajuste suelto avanza: probar dos a la vez (p. ej. N y pH), que es
+    // lo que hace falta cuando cada crítico por separado no cambia el score.
+    if(!best){
+      const pool=moves.slice(0,AUTO_IMPROVE_PAIR_POOL);
+      for(let x=0;x<pool.length;x++) for(let y=0;y<pool.length;y++){
+        if(x===y) continue;
+        tryMove([...autoImproveOps(pool[x].apply),...autoImproveOps(pool[y].apply)],{icons:[...pool[x].icons,...pool[y].icons],labels:[...pool[x].labels,...pool[y].labels]});
+      }
     }
-    if(!bestCandidate) break;
-    if(bestO2.score<=o.score) break; // no aceptar si no mejora el score global
-    cur=bestCandidate;
+    if(!best) break;
+    steps.push({labels:best.labels,icons:best.icons,ingredientIds:[...new Set(autoImproveOps(best.apply).map(op=>op&&op.id).filter(Boolean))],before:curP,after:best.after});
+    cur=best.recipe;
+    curP=best.after;
   }
-  return cur;
+  return{recipe:cur,steps,before,after:curP};
 };
+const autoImproveRecipe=args=>autoImproveRecipeDetailed(args).recipe;
 // ── Entradas del plan de lanzamiento compartidas por "Lanzar Lote" y
 //    "Ejecutar Lote" (I4/I5). La humedad que el operador editó a mano manda;
 //    si no la tocó, el objetivo resuelto de la especie. El spawn es grano
@@ -7647,9 +7696,24 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // accionables con mejor predictedScore (generateOptimizer ya lo calcula) y
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
+  // Auto-mejorar entra al historial como un solo paso: "Deshacer" devuelve la
+  // receta de antes de todos sus ajustes. Registra ingredientes e íconos igual
+  // que "Aplicar ajuste" y deja un resumen visible mientras la receta sea la
+  // que produjo (autoImproveResult.recipeKey).
+  const [autoImproveResult,setAutoImproveResult]=React.useState(null);
   const autoImprove=()=>{
-    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
+    const res=autoImproveRecipeDetailed({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats});
+    if(!res.steps.length){
+      setAutoImproveResult({recipeKey:recipeKeyOf(recipe),steps:[],before:res.before,after:res.before});
+      return;
+    }
+    setRecipeHistory(h=>[...h,recipe]);
+    setRecipe(res.recipe);
+    setAppliedIcons(s=>{const next={...s};res.steps.forEach(st=>st.icons.forEach(ic=>{next[ic]=(next[ic]||0)+1;}));return next;});
+    setUsageCounts(s=>{const next={...s};res.steps.forEach(st=>st.ingredientIds.forEach(id=>{next[id]=(next[id]||0)+1;}));return next;});
+    setAutoImproveResult({recipeKey:recipeKeyOf(res.recipe),steps:res.steps,before:res.before,after:res.after});
   };
+  const autoImproveSummary=autoImproveResult&&autoImproveResult.recipeKey===recipeKeyOf(recipe)?autoImproveResult:null;
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
   // Usa getComputedStyle para resolver variables CSS (oklab, etc.) antes de escribir la ventana.
@@ -14740,6 +14804,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
                   {hasPer&&<div style={{marginTop:-8,marginBottom:12}}><SubstrateClassNote info={substrateClassInfo}/></div>}
+                  {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
 
                   {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
                   <div className="mgrid" style={{marginBottom:12}}>
@@ -15244,6 +15309,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                   {hasPer&&<div style={{marginTop:-8,marginBottom:14}}><SubstrateClassNote info={substrateClassInfo}/></div>}
+                  {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
 
                   {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
