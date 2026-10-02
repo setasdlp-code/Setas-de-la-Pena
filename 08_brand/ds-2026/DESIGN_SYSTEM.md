@@ -112,20 +112,20 @@ Mineral pigment roles and functional semantic mappings.
 
 | Primitive Token | Hex | Role |
 |---|---|---|
-| `PAPER` (`paper-100`) | `#F6F4EC` | Warm ivory paper ground. Natural cellulose foundation. |
-| `PAPER_50` | `#FCFBF6` | Ultra-light paper ground for high-contrast cards. |
-| `PAPER_200` | `#EDE8DB` | Darker warm paper for recessed wells and table alternating rows. |
+| `PAPER` (`paper-100`) | `#FAF8F3` | Warm ivory paper ground. Natural cellulose foundation. |
+| `PAPER_50` | `#FEFDFB` | Ultra-light paper ground for high-contrast cards. |
+| `PAPER_200` | `#EFE9DE` | Darker warm paper for recessed wells and table alternating rows. |
 | `INK` (`ink-900`) | `#1A1410` | Deep carbon black. Primary text, heavy rules. |
 | `INK_700` | `#3A2F26` | Dark bistre. Secondary text, structural labels. |
 | `INK_MUTED` (`ink-500`) | `#6B5B4A` | Muted umber. Captions, metadata keys, tertiary notes. |
-| `RULE` | `#BFA98B` | Mineral rule hairline (`sand-500` / sand tint). |
-| `MOSS` (`moss-900`) | `#1E2A16` | Deep pine/forest green. In-spec status, successful batch events. |
+| `RULE` | `#888888` (`rule-500`) | Mineral hairline, specimen frames, table rules. 3.34:1 contrast on paper. |
+| `MOSS` (`moss-700`) | `#2E3B2F` | Primary brand moss. OK status, wordmark, active operations. |
 | `MOSS_700` | `#2E3B2F` | Forest floor green. Intermediate vegetative status. |
 | `CORAL_500` | `#B8614D` | Terracotta / Coral. Non-text brand accent, focus rings, timeline markers. |
-| `CORAL_700` | `#8A3E2D` | Deep cinnabar / dark coral. **AA Compliant brand accent text** on paper (6.79:1). |
+| `CORAL_700` | `#8A3E2D` | Deep cinnabar / dark coral. **AA Compliant brand accent text** on paper (7.05:1). |
 | `RUST` | `#8A3E2D` | Deep mineral rust. Error, contamination, and critical alert text. |
-| `WARNING` | `#C49A4C` | Muted ochre. Caution and quarantine. **Non-text use only** (2.36:1). |
-| `WARNING_TEXT` | `#866629` | Darkened ochre. **AA Compliant caution text** on paper (4.83:1). |
+| `WARNING` | `#C49A4C` | Muted ochre. Caution and quarantine fills. **Non-text use only** (2.45:1). |
+| `WARNING_TEXT` | `#866629` | Darkened ochre. **AA Compliant caution text** on paper (5.01:1). |
 | `SLATE_500` | `#4E6A7A` | Blue slate. Secondary telemetry, humidity & moisture metrics. |
 | `BARK_700` | `#594631` | Dark oak bark. Structural wood substrate tags and dark framing. |
 
@@ -133,57 +133,62 @@ Derived surfaces & semantic roles:
 
 | Semantic Token | Value / Hex | Derivation / Purpose |
 |---|---|---|
-| `--surface-page` | `#F6F4EC` | Primary page foundation |
-| `--surface-panel` | `#FCFBF6` | Elevated cards, table headers, panels |
-| `--surface-recessed` | `#EDE8DB` | Wells, input backgrounds, alternating table rows |
-| `--text-primary` | `#1A1410` | High contrast body and titles (16.56:1 AA) |
-| `--text-secondary` | `#3A2F26` | Section headers and structural UI (11.41:1 AA) |
-| `--text-tertiary` | `#6B5B4A` | Captions and metadata keys (5.92:1 AA) |
-| `--brand-accent` | `#B8614D` | Fills, badges, rule highlights (non-text, 3.93:1) |
-| `--brand-accent-text` | `#8A3E2D` | Accessible brand text on paper (6.79:1 AA) |
-| `--status-ok` | `#1E2A16` | Operational success, in-spec (10.70:1 AA) |
-| `--status-warn` | `#866629` | Caution, pending sync, quarantine (4.83:1 AA) |
-| `--status-err` | `#8A3E2D` | Critical alarm, batch loss (6.79:1 AA) |
+| `--surface-page` | `#FAF8F3` | Primary page foundation |
+| `--surface-panel` | `#FEFDFB` | Elevated cards, table headers, panels |
+| `--surface-recessed` | `#EFE9DE` | Wells, input backgrounds, alternating table rows |
+| `--text-primary` | `#1A1410` | High contrast body and titles (17.18:1 AA) |
+| `--text-secondary` | `#3A2F26` | Section headers and structural UI (12.26:1 AA) |
+| `--text-tertiary` | `#6B5B4A` | Captions and metadata keys (6.14:1 AA) |
+| `--brand-accent` | `#B8614D` | Fills, badges, rule highlights (non-text, 4.08:1) |
+| `--brand-accent-text` | `#8A3E2D` | Accessible brand text on paper (7.05:1 AA) |
+| `--status-ok` | `#2E3B2F` | Operational success, in-spec (11.10:1 AA) |
+| `--status-warn` | `#866629` | Caution, pending sync, quarantine (5.01:1 AA) |
+| `--status-err` | `#8A3E2D` | Critical alarm, batch loss (7.05:1 AA) |
 
 **Coral Taxonomy:**
 - `--brand-accent` (`coral-500` #B8614D): Strictly for non-text fills, active indicators, and graphical rules. Never used for text on paper.
-- `--brand-accent-text` (`coral-700` #8A3E2D): Strictly for text on paper requiring the terracotta brand signature, clearing WCAG AA at 6.79:1.
+- `--brand-accent-text` (`coral-700` #8A3E2D): Strictly for text on paper requiring the terracotta brand signature, clearing WCAG AA at 7.05:1.
 
-### 1.4 Contrast audit — WCAG AA compliance (27/27)
+### 1.4 Contrast audit — WCAG AA compliance (30/30)
 
 `scripts/contrast-audit.py` enforces normative color contracts. Any regression exits non-zero:
 
 | Foreground | Background | Purpose | Needs | Ratio | Rule |
 |---|---|---|---|---|---|
-| `INK` | `PAPER` | Body, headings, species names | 4.5:1 | 16.56:1 | Sanctioned |
-| `INK` | `PAPER_PANEL` | Text on panels | 4.5:1 | 17.60:1 | Sanctioned |
-| `INK` | `PAPER_RECESSED` | Text in recessed wells | 4.5:1 | 14.91:1 | Sanctioned |
-| `INK_MUTED` | `PAPER` | Captions, metadata values | 4.5:1 | 5.92:1 | Sanctioned |
-| `INK_MUTED` | `PAPER_PANEL` | Metadata on panels | 4.5:1 | 6.29:1 | Sanctioned |
-| `MOSS` | `PAPER` | OK status text | 4.5:1 | 10.70:1 | Sanctioned |
-| `MOSS` | `MOSS_TINT` | OK text on OK banner | 4.5:1 | 10.09:1 | Sanctioned |
-| `CORAL_700` | `PAPER` | Brand accent text / error status text (AA) | 4.5:1 | 6.79:1 | Sanctioned |
-| `RUST` | `PAPER` | Error status text | 4.5:1 | 6.79:1 | Sanctioned |
-| `RUST` | `RUST_TINT` | Error text on error banner | 4.5:1 | 6.49:1 | Sanctioned |
-| `SOIL` | `PAPER` | Infill label text | 4.5:1 | 8.13:1 | Sanctioned |
-| `PAPER` | `SOIL` | Inverse text on soil block (signage) | 4.5:1 | 8.13:1 | Sanctioned |
-| `PAPER` | `MOSS` | Text on solid moss fill | 4.5:1 | 10.70:1 | Sanctioned |
-| `PAPER` | `RUST` | Text on solid rust fill | 4.5:1 | 6.79:1 | Sanctioned |
-| `INK` | `WARNING` | Text on solid ochre fill | 4.5:1 | 7.01:1 | Sanctioned |
-| `WARNING_TEXT` | `PAPER` | Caution text (sanctioned ochre) | 4.5:1 | 4.83:1 | Sanctioned |
-| `INK` | `WARNING_TINT` | Caution banner text (sanctioned) | 4.5:1 | 16.32:1 | Sanctioned |
-| `RULE` | `PAPER` | Hairlines, specimen frames (non-text) | 3.0:1 | 3.22:1 | Sanctioned |
-| `MOSS` | `PAPER` | Meter fill (non-text) | 3.0:1 | 10.70:1 | Sanctioned |
-| `CORAL_500` | `PAPER` | Terracotta brand accent fill / rule (non-text) | 3.0:1 | 3.93:1 | Sanctioned |
-| `ACCENT_WARM` | `PAPER` | Archive accent fill / rule (non-text) | 3.0:1 | 3.93:1 | Sanctioned |
-| `WARNING` | `PAPER` | Ochre as TEXT — use WARNING_TEXT | 4.5:1 | 2.36:1 | **Banned** |
-| `WARNING` | `WARNING_TINT` | Ochre text on its own tint — use INK | 4.5:1 | 2.33:1 | **Banned** |
-| `PAPER` | `WARNING` | Paper on ochre fill — use INK | 4.5:1 | 2.36:1 | **Banned** |
-| `WARNING` | `PAPER` | Ochre hairline/meter alone — needs INK | 3.0:1 | 2.36:1 | **Banned** |
-| `CORAL_500` | `PAPER` | Coral 500 as body TEXT — fails AA (3.93:1) | 4.5:1 | 3.93:1 | **Banned** |
-| `ACCENT_WARM` | `PAPER` | Archive accent as TEXT — never; fails AA | 4.5:1 | 3.93:1 | **Banned** |
+| `INK` | `PAPER` | Primary body and headings | 4.5:1 | 17.18:1 | Sanctioned |
+| `INK` | `PAPER_PANEL` | Text on panels | 4.5:1 | 17.94:1 | Sanctioned |
+| `INK` | `PAPER_RECESSED` | Text in recessed wells | 4.5:1 | 15.09:1 | Sanctioned |
+| `INK_700` | `PAPER` | Strong secondary text | 4.5:1 | 12.26:1 | Sanctioned |
+| `INK_MUTED` | `PAPER` | Metadata and captions | 4.5:1 | 6.14:1 | Sanctioned |
+| `INK_MUTED` | `PAPER_PANEL` | Metadata on panels | 4.5:1 | 6.41:1 | Sanctioned |
+| `MOSS` | `PAPER` | OK / active status text | 4.5:1 | 11.10:1 | Sanctioned |
+| `MOSS` | `MOSS_TINT` | OK text on OK tint | 4.5:1 | 10.09:1 | Sanctioned |
+| `SLATE` | `PAPER` | Information text | 4.5:1 | 5.40:1 | Sanctioned |
+| `CORAL_700` | `PAPER` | Terracotta text and error state | 4.5:1 | 7.05:1 | Sanctioned |
+| `CORAL_700` | `CORAL_TINT` | Error text on error tint | 4.5:1 | 6.49:1 | Sanctioned |
+| `PAPER_PANEL` | `CORAL_700` | Small text on accessible terracotta action fill | 4.5:1 | 7.36:1 | Sanctioned |
+| `SOIL` | `PAPER` | Earth/infill text | 4.5:1 | 8.44:1 | Sanctioned |
+| `PAPER_PANEL` | `SOIL` | Inverse text on bark surface | 4.5:1 | 8.81:1 | Sanctioned |
+| `PAPER_PANEL` | `MOSS` | Text on primary moss action fill | 4.5:1 | 11.59:1 | Sanctioned |
+| `INK` | `WARNING` | Dark text on solid caution fill | 4.5:1 | 7.01:1 | Sanctioned |
+| `WARNING_TEXT` | `PAPER` | Caution text / thin caution marker | 4.5:1 | 5.01:1 | Sanctioned |
+| `WARNING_TEXT` | `WARNING_TINT` | Caution text on caution tint | 4.5:1 | 4.76:1 | Sanctioned |
+| `INK` | `WARNING_TINT` | Body text on caution tint | 4.5:1 | 16.32:1 | Sanctioned |
+| `RULE` | `PAPER` | Legacy specimen rule (non-text) | 3.0:1 | 3.34:1 | Sanctioned |
+| `MOSS` | `PAPER` | OK graphical marker | 3.0:1 | 11.10:1 | Sanctioned |
+| `MOSS_500` | `PAPER` | OK bar/meter fill (graphic) | 3.0:1 | 4.23:1 | Sanctioned |
+| `MOSS_500` | `PAPER_RECESSED` | OK bar over recessed track | 3.0:1 | 3.71:1 | Sanctioned |
+| `CORAL_500` | `PAPER` | Decorative terracotta rule/fill | 3.0:1 | 4.08:1 | Sanctioned |
+| `WARNING` | `PAPER` | Ochre as small text | 4.5:1 | 2.45:1 | **Banned** |
+| `WARNING` | `PAPER` | Ochre as standalone thin marker | 3.0:1 | 2.45:1 | **Banned** |
+| `PAPER` | `WARNING` | Light text on ochre fill | 4.5:1 | 2.45:1 | **Banned** |
+| `CORAL_500` | `PAPER` | Coral 500 as small text | 4.5:1 | 4.08:1 | **Banned** |
+| `PAPER_PANEL` | `CORAL_500` | Light small text on Coral 500 button | 4.5:1 | 4.25:1 | **Banned** |
+| `INK` | `CORAL_500` | Dark small text on Coral 500 button | 4.5:1 | 4.22:1 | **Banned** |
 
-27/27 expectations hold
+30/30 expectations hold
+
+Esta tabla se genera desde `scripts/contrast-audit.py`: si cambias un par alli, regenerala, no la edites a mano.
 
 ---
 
@@ -395,7 +400,7 @@ marker and target/status relation only. The numeric value always stays
 `--text-primary`. Provenance uses `data-provenance="measured|calculated|estimated|target|manual|simulated|pending"`;
 the symbol is emitted from domain tokens while visible labels remain localized.
 
-**Signage.** `SOIL` header band with `PAPER` text (9.74:1) → 3 stat cells →
+**Signage.** `SOIL` header band with `PAPER` text (8.44:1) → 3 stat cells →
 footer lot line. Printed at A2; the room name is `display-02` in Gaya.
 
 **Packaging.** Front is a 3-row grid (brand / plate / naming block) centred.
@@ -597,8 +602,8 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
 └── scripts/
     ├── build-tokens.mjs          ← JSON sources → tokens.css compiler
     ├── validate.py               ← structural gate: tokens, fonts, assets, parity
-    ├── contrast-audit.py         ← WCAG gate; exits non-zero on violation (27/27)
-    ├── visual-contract.mjs       ← anti-slop visual gate (10 checks)
+    ├── contrast-audit.py         ← WCAG gate; exits non-zero on violation (30/30)
+    ├── visual-contract.mjs       ← anti-slop visual gate (15 checks)
     ├── sync-consumers.mjs        ← deterministic sync to Setas OS package
     ├── gen-textures.py           ← tileable paper textures, no image library
     └── make-cutout.mjs           ← studio ground → transparent PNG (edge flood fill)
@@ -644,13 +649,13 @@ Where they differ materially:
 
 | | DS-2026 | FOS |
 |---|---|---|
-| Paper | `#FAF5E9` | `#F7F4EC` |
-| Ink | `#222222` | `#1E1D19` |
-| Rule | `#888888` (3.26:1) | `#988C6C` (3.03:1) |
-| Green | `MOSS #4E6B3F` | `--accent-olive #5B6B44` |
-| Error | `RUST #8E2C14` | `--accent-rust #8C3223` |
+| Paper | `#FAF8F3` (paper-100) | `#F7F4EC` |
+| Ink | `#1A1410` (ink-900) | `#1E1D19` |
+| Rule | `#888888` (3.34:1) | `#988C6C` (3.03:1) |
+| Green | `MOSS #2E3B2F` | `--accent-olive #5B6B44` |
+| Error | `RUST #8A3E2D` | `--accent-rust #8C3223` |
 | Caution | `WARNING #C49A4C` + `WARNING_TEXT` | routed through terracotta `#A85C32` |
-| Earth | `SOIL #4A3C31` | `--accent-mushroom #7A6A52` |
+| Earth | `SOIL #594631` | `--accent-mushroom #7A6A52` |
 | Editorial face | Gaya Patched | Gaya |
 | Body face | IBM Plex Sans | *(`--font-sans` is set to Gaya — see below)* |
 | Baseline | 8px | 4px |

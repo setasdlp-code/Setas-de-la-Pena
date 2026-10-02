@@ -33,7 +33,6 @@
    carried by a strong left rule and spacing, never by color alone. */
 .sdp-band {
   background: var(--surface-page);
-  border: var(--rule-frame);
   border-left: var(--band-rule) solid var(--border-heavy);
   padding: var(--space-2);
 }

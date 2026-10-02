@@ -1,5 +1,5 @@
 /* DS-2026 · Shared Metadata atoms */
-.sdp-plateline { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
+.sdp-plateline { margin-top: var(--space-half); font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-metadata); }
 
 .sdp-statusline { font: var(--t-data); text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--text-secondary); }
 

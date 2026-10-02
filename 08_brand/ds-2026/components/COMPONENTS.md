@@ -23,7 +23,7 @@ Prefer one public bundle: `operations.css` for Setas OS, `market.css` for commer
 The archive object: one specimen, fully documented.
 
 ```
-.sdp-ficha                    border: 2px INK
+.sdp-ficha                    border: hairline (`--rule-hairline`)
 ├── .sdp-ficha__hd            species block  ‖  plate line + brand
 │                             border-bottom: 2px INK
 ├── .sdp-ficha__body          2 columns, gap 32px
@@ -49,7 +49,7 @@ The field object: one production lot at a glance.
 
 ```
 .sdp-lote--{ok|warn|error}    border: 1px RULE
-├── .sdp-lote__media          3:2 photo   (or __media--plate, 148px, for line art)
+├── .sdp-lote__media          3:2 photo   (or __media--plate, 148px (`--plate-height`), for line art)
 └── .sdp-lote__body
     ├── .sdp-species--compact common (22px) + latin
     ├── .sdp-lote__id         mono 16px — "LOTE 026 · HER-01"
@@ -61,7 +61,7 @@ The field object: one production lot at a glance.
 
 **States** · `--ok` moss · `--warn` dark ochre marker (`--status-warn-marker`) + `--status-warn-text` · `--error` Coral 700. Raw Ochre 500 never carries a thin status rule.
 
-**Rules.** The status bar is a 4px rule — never a pill, badge, or rounded chip.
+**Rules.** The status bar is a 4px rule (`--bar-height`) — never a pill, badge, or rounded chip.
 Line-art specimens use `--plate` (fixed height, `contain`, paper ground); photos
 use the default 3:2 `cover`. Metadata is always exactly three cells.
 
@@ -72,7 +72,7 @@ use the default 3:2 `cover`. Metadata is always exactly three cells.
 ```
 .sdp-receta                   border: 1px RULE, padding 24px
 ├── .sdp-receta__hd           label + title  ‖  code + C:N
-├── figure.sdp-fig--ingredient 64px 1:1 + micro caption
+├── figure.sdp-fig--ingredient 64px (`--ingredient-size`) 1:1 + micro caption
 ├── .sdp-receta__ing          ingredient rows
 │   └── .sdp-receta__row      64px key | name | %
 │       + .sdp-receta__prop   2px rule, width = share
@@ -114,7 +114,7 @@ appears on field print at that size.
 **Span** 4–12 · **Mode** any · **States** `--ok`, `--warn`, `--error`.
 
 **Rules.** There is no "info" state — informational text is body text. In
-`--warn` the label uses `WARNING_TEXT #826326`, never raw ochre (2.39:1). The message always sits in `INK` on the tint. Warning rules use `--status-warn-marker`, not low-contrast Ochre 500.
+`--warn` the label uses `WARNING_TEXT #866629`, never raw ochre (2.45:1). The message always sits in `INK` on the tint. Warning rules use `--status-warn-marker`, not low-contrast Ochre 500.
 
 ---
 
@@ -141,11 +141,11 @@ that is fine. Unit is a small mono span inside the value, never a separate row.
 
 ```
 .sdp-sign                     border: 3px INK
-├── .sdp-sign__hd             SOIL ground, PAPER text (9.74:1)
+├── .sdp-sign__hd             SOIL ground, PAPER text (8.44:1)
 │   ├── .sdp-sign__fn         brand / function, mono upper
 │   └── .sdp-sign__room       display-02, 44px Gaya Bold
 ├── .sdp-sign__stats          3 cells, hairline dividers
-│   └── __sk (label) + __sv (36px mono) + 4px meter
+│   └── __sk (label) + __sv (36px [`--size-data-xl`] mono) + 4px meter
 └── .sdp-sign__ft             lot line  ‖  pictogram + count
 ```
 
@@ -184,7 +184,7 @@ texture (`.grain`) is permitted on packaging and print only.
 .sdp-sop
 ├── .sdp-sop__hd              SOP code + title + species  ‖  revision + origin
 ├── .sdp-table                conditions by phase
-├── .sdp-sop__step ×n         40px mono numeral | __st title + __sb body
+├── .sdp-sop__step ×n         40px (`--step-index`) mono numeral | __st title + __sb body
 ├── .sdp-alert--error         stop condition
 └── footer                    folio, micro
 ```
