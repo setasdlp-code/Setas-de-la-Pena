@@ -95,6 +95,8 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 **Auto-mejorar.** `autoImproveRecipeDetailed` (en `simulador-app.jsx`) mide el progreso con el evaluador del Perito: un paso se acepta si quita críticos sin bajar el score, o si sube el score con los mismos críticos (`autoImproveIsBetter`); nunca si agrega críticos. Evalúa todos los ajustes accionables y sus correcciones combinadas y, si ninguno avanza solo, pares de ajustes. En la UI entra al historial como un solo paso ("Deshacer Auto-mejorar") y deja un resumen (`AutoImproveSummary`) mientras la receta sea la que produjo. `applyOptToRecipe` no modifica un ingrediente bloqueado aunque sea el objetivo del ajuste. Pruebas: `perito-auto-improve.test.js` y `e2e/perito-auto-improve.browser.cjs`.
 
+**Un solo panel del Perito.** El Formulador (`#bl-perito`) y la Mesa del Perito (subpestaña Generador, `.perito-standalone-panel`) renderizan `renderPeritoPanel(variant)` (`'formulador'` | `'workbench'`). La variante solo agrega lo propio de cada lugar: siguiente paso del flujo, crear prueba, gráficos y evaluación técnica en el Formulador; factor restrictivo y contexto físico de Tenjo en la Mesa. No volver a copiar el panel: cualquier cambio de encabezado, métricas o tarjetas va en esa función. Pruebas: `e2e/perito-panel-unified.browser.cjs`.
+
 ## 3b. El modelo agronómico vive fuera del JSX
 
 Desde la extracción de Fase 2, el catálogo y el modelo ya no están dentro de
