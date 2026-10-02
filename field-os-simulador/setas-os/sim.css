@@ -5517,7 +5517,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: var(--paper-100);
 }
 
-/* ===================================================================
+/* ============================================================
    CATÁLOGO & RECETARIO (vista fusionada, 2026-09)
    La rejilla de especies es el filtro maestro del recetario: la especie
    seleccionada define qué recetas guardadas se listan debajo.
@@ -6525,6 +6525,29 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .bag-observation-editor button { min-height:44px; }
 .sim-root .bag-observation-editor > span { font-size:12px; color:var(--ink-2); }
 .sim-root .bag-observation-editor > [role="alert"] { color:var(--coral-700); }
+
+/* Clima: operational controls for narrow screens and keyboards. */
+.sim-root .climate-dashboard { min-width:0; overflow-wrap:anywhere; }
+.sim-root .climate-dashboard button { min-height:44px!important; min-width:44px; touch-action:manipulation; white-space:normal; }
+.sim-root .climate-dashboard select { min-height:44px; font-size:16px!important; max-width:100%; }
+.sim-root .climate-dashboard input[type="range"] { min-height:44px; margin:0; touch-action:pan-y; }
+.sim-root .climate-dashboard :is(button,select,input,[role="button"]):focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
+.sim-root .climate-dashboard canvas { max-width:100%; height:auto; }
+.sim-root .climate-dashboard .climate-range-pills { flex-wrap:wrap; }
+.sim-root .climate-dashboard .climate-actuator-head { flex-wrap:wrap; gap:8px; }
+.sim-root .climate-dashboard .climate-actuator-card > div:has(> button) { flex-wrap:wrap; }
+.sim-root .climate-dashboard .climate-cycle-banner > div { min-width:0; }
+@media(max-width:560px) {
+ .sim-root .climate-dashboard .climate-actuators-grid { grid-template-columns:minmax(0,1fr); }
+ .sim-root .climate-dashboard .climate-cycle-banner { flex-direction:column; align-items:stretch; }
+ .sim-root .climate-dashboard .climate-cycle-banner button { flex:1 1 100%; }
+ .sim-root .climate-dashboard .climate-log-row { flex-wrap:wrap; gap:4px; }
+}
+.sim-root .climate-dashboard input[type="range"] { background:transparent; }
+.sim-root .climate-dashboard input[type="range"]::-webkit-slider-runnable-track { height:6px; background:var(--line-1); }
+.sim-root .climate-dashboard input[type="range"]::-webkit-slider-thumb { width:24px; height:24px; margin-top:-9px; }
+.sim-root .climate-dashboard input[type="range"]::-moz-range-track { height:6px; background:var(--line-1); }
+.sim-root .climate-dashboard input[type="range"]::-moz-range-thumb { width:24px; height:24px; }
 
 /* Hub IoT: scoped operational controls and one bounded scroll surface. */
 .sim-root .iot-hub-dialog { display:flex; flex-direction:column; max-height:calc(100dvh - 32px); }

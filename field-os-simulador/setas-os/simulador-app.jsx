@@ -10671,7 +10671,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     );
   };
   if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
-  const ClimateDashboardSection = () => {
+  // Keep the operator projection across telemetry-driven panel remounts.
+    const [activeCulinaryKey, setActiveCulinaryKey] = useState('firme');
+    const [tempProj, setTempProj] = useState(14.0);
+    const [rhProj, setRhProj] = useState(82.0);
+    const [co2Proj, setCo2Proj] = useState(700);
+  const useClimateDashboardView = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
     // Tablero de salas: toda la proyección (ocupación, ambiente, alertas,
     // próxima acción) la calcula SetasRoomState.buildRoomBoard — aquí sólo se
@@ -10805,10 +10810,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
     };
 
-    const [activeCulinaryKey, setActiveCulinaryKey] = useState('firme');
-    const [tempProj, setTempProj] = useState(14.0);
-    const [rhProj, setRhProj] = useState(82.0);
-    const [co2Proj, setCo2Proj] = useState(700);
     const [dragNode, setDragNode] = useState(null);
 
     const canvasRef = useRef(null);
@@ -11683,7 +11684,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
           
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:20,marginTop:16}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',gap:20,marginTop:16}}>
             {/* Controles y Sliders */}
             <div style={{display:'flex',flexDirection:'column',gap:16}}>
               {/* Selector Culinario */}
@@ -11756,8 +11757,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     max="32" 
                     step="0.5" 
                     value={tempProj} 
-                    onChange={(e) => setTempProj(parseFloat(e.target.value))}
-                    aria-label="Proyección de temperatura (°C)"
+                    onChange={e => setTempProj(parseFloat(e.target.value))}
+                    id="climate-temp-projection" name="climate-temp-projection" aria-label="Proyección de temperatura (°C)" aria-valuetext={`${tempProj} °C`}
                     style={{width:'100%'}}
                   />
                 </div>
@@ -11774,8 +11775,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     max="99" 
                     step="1" 
                     value={rhProj} 
-                    onChange={(e) => setRhProj(parseInt(e.target.value))}
-                    aria-label="Proyección de humedad relativa (%)"
+                    onChange={e => setRhProj(parseInt(e.target.value))}
+                    id="climate-rh-projection" name="climate-rh-projection" aria-label="Proyección de humedad relativa (%)" aria-valuetext={`${rhProj} %`}
                     style={{width:'100%'}}
                   />
                 </div>
@@ -11792,8 +11793,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     max="2200" 
                     step="25" 
                     value={co2Proj} 
-                    onChange={(e) => setCo2Proj(parseInt(e.target.value))}
-                    aria-label="Proyección de nivel de CO₂ (ppm)"
+                    onChange={e => setCo2Proj(parseInt(e.target.value))}
+                    id="climate-co2-projection" name="climate-co2-projection" aria-label="Proyección de nivel de CO₂ (ppm)" aria-valuetext={`${co2Proj} ppm`}
                     style={{width:'100%'}}
                   />
                 </div>
@@ -11836,6 +11837,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 Interactivo (Arrastra los puntos)
               </span>
               <canvas 
+                role="img" aria-label="Comparación visual de temperatura, humedad y CO₂. Ajusta la proyección con los controles anteriores."
                 ref={canvasRef} 
                 width="220" 
                 height="220" 
@@ -11867,12 +11869,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
 
-            <div className="climate-range-pills">
+            <div className="climate-range-pills" role="group" aria-label="Intervalo de las series ambientales">
               {['1h', '6h', '24h'].map(rng => (
                 <button
                   key={rng}
                   type="button"
                   className={`climate-range-pill ${climateTimeRange === rng ? 'on' : ''}`}
+                  aria-pressed={climateTimeRange === rng}
+                  aria-label={`${rng === '1h' ? 'Última hora' : rng === '6h' ? 'Últimas 6 horas' : 'Últimas 24 horas'}`}
                   onClick={() => setClimateTimeRange(rng)}
                 >
                   {rng}
@@ -11881,7 +11885,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
 
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:14,marginTop:8}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',gap:14,marginTop:8}}>
             {/* Gráfico 1: Temperatura */}
             <div>
               <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
@@ -11889,7 +11893,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Banda: {defaultTargets.temperature_c.min}°C - {defaultTargets.temperature_c.max}°C</span>
               </div>
               <div className="climate-svg-wrap">
-                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                <svg role="img" aria-label={`Temperatura: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
                   <rect x="0" y="40" width="500" height="45" fill="rgba(74, 110, 66, 0.12)" />
                   <line x1="0" y1="62.5" x2="500" y2="62.5" stroke="rgba(74, 110, 66, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
@@ -11905,7 +11909,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Banda: {defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%</span>
               </div>
               <div className="climate-svg-wrap">
-                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                <svg role="img" aria-label={`Humedad relativa: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
                   <rect x="0" y="20" width="500" height="60" fill="rgba(56, 120, 180, 0.12)" />
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
@@ -11921,7 +11925,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Límite FAE: &lt; {defaultTargets.co2_ppm.max} ppm</span>
               </div>
               <div className="climate-svg-wrap">
-                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                <svg role="img" aria-label={`CO₂: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />
                   <polyline fill="none" stroke="var(--accent-terracotta)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
                 </svg>
@@ -11967,7 +11971,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   className="climate-actuator-btn"
                   onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
                 >
-                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '<AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)'}
+                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : <><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)</>}
                 </button>
                 {humidifierOverride !== null && (
                   <button
@@ -12035,6 +12039,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
     );
   };
+
+  // Invoke unconditionally so React preserves the panel DOM and hook state.
+  const climateDashboardView = useClimateDashboardView();
 
   const BitacoraSection=()=>(
 <div>
@@ -16622,7 +16629,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='inventario'&&<>{invLotes.length===0&&<section className="prototype-panel"><h3>Bodega sin existencias registradas</h3><p>El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo.</p><button type="button" className="inv-btn inv-btn-pri" onClick={()=>setInvTab('compra')}>Registrar primera compra</button></section>}{BodegaSection()}</>}
 
-        {tab==='clima'&&<ClimateDashboardSection/>}
+        {tab==='clima'&&climateDashboardView}
 
         {tab==='bitacora'&&BitacoraSection()}
 
