@@ -89,6 +89,8 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 **Contexto único de score del Perito.** El veredicto, el "Índice estimado" de cada sugerencia, el ΔScore de la tarjeta (`simulateSuggestionDelta`), el Morphing y Auto-mejorar puntúan con el mismo evaluador: `createRecipeEvaluator` (en el componente, `peritoEvaluate`). Para cada receta resuelve sus propios objetivos (`species-targets.js`; la clase de sustrato puede cambiar al aplicar un ajuste), toma el tratamiento recomendado, mezcla la EB con el histórico y puntúa con el mismo stock. No llamar `scoreAn` con un contexto armado a mano para mostrar un score del Perito: pasar por el evaluador. Pruebas: `perito-score-context.test.js` y `e2e/perito-score-context.browser.cjs`.
 
+**Clase de sustrato visible.** La clase (`classifySubstrate`) decide los rangos objetivo y cruzar el umbral de suplementación (`SUPPLEMENTED_MIN_PCT`, 2 %, criterio de diseño sin fuente publicada) los cambia de golpe: en orellana, C:N 50–100 → 25–50 (Bellettini 2019). No se interpola ni se suaviza: un rango intermedio no tendría fuente (ADR-0006) y movería la EB predicha sin corpus para validarla. En su lugar el Perito lo declara: `describeSubstrateClass` (clase vigente, rangos, cita y aviso dentro de `THRESHOLD_NOTICE_BAND_PP` del umbral, banda de interfaz sin valor agronómico) y `describeClassChange` (tarjetas cuyo ajuste cambia la clase). Ninguna de las dos altera clasificación ni rangos. Pruebas: `species-targets-class-note.test.js`.
+
 ## 3b. El modelo agronómico vive fuera del JSX
 
 Desde la extracción de Fase 2, el catálogo y el modelo ya no están dentro de

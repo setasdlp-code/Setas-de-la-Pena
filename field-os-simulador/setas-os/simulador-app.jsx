@@ -1898,6 +1898,54 @@ const PeritoChangePreview=({changes})=>(
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
   </details>
 );
+// ── Clase de sustrato en el Perito ──
+// La clase (species-targets.js) decide los rangos objetivo, y cruzar el umbral
+// de suplementación los cambia de golpe: en orellana, 1,5 % de salvado se
+// evalúa como paja sin suplementar (C:N 50–100) y 2 % como bolsa suplementada
+// (C:N 25–50). Estos componentes no cambian ningún número: dicen qué clase
+// rige, de dónde salen sus rangos y cuándo un ajuste o un punto de suplemento
+// la cambia. El umbral es un criterio del modelo sin fuente publicada, y así se
+// declara.
+const fmtClassRanges=c=>[
+  c?.cn?`C:N ${c.cn.min}–${c.cn.max}:1`:null,
+  c?.nPct?`N ${c.nPct.min}–${c.nPct.max} %`:null,
+].filter(Boolean).join(', ');
+const classCitation=c=>c?.cn?.citation||c?.nPct?.citation||null;
+const SubstrateClassNote=({info})=>{
+  if(!info) return null;
+  const alt=info.alternative;
+  const cite=classCitation(info);
+  return(
+    <div data-testid="perito-substrate-class" data-class={info.resolvedClass} data-near-threshold={info.nearThreshold?'true':'false'} style={{marginTop:6}}>
+      <div className="os-provenance-line" style={{textTransform:'none',letterSpacing:0}}>
+        {[
+          `Clase de sustrato: ${info.fallback&&info.substrateLabel&&info.substrateLabel!==info.label?`${info.substrateLabel} (sin objetivos propios; se usan los de ${info.label})`:info.label}`,
+          `suplemento ${info.supplementPct} %${info.hasMediumSupplement?' ponderado (los suplementos medios cuentan al 60 %)':''}`,
+          fmtClassRanges(info)?`objetivos ${fmtClassRanges(info)}`:null,
+          cite,
+        ].filter(Boolean).join(' · ')}
+      </div>
+      {info.nearThreshold&&alt&&(
+        <div data-testid="perito-class-threshold" className="os-provenance-notice os-provenance-notice--estimated" style={{marginTop:4}}>
+          {alt.direction==='above'
+            ?`Si el suplemento llega a ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt)?` (${fmtClassRanges(alt)})`:''} y el veredicto se recalcula con esos rangos.`
+            :`Si el suplemento baja de ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt)?` (${fmtClassRanges(alt)})`:''} y el veredicto se recalcula con esos rangos.`}
+          {' '}El umbral de {info.thresholdPct} % es un criterio de clasificación del modelo, sin fuente publicada.
+        </div>
+      )}
+    </div>
+  );
+};
+const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
+  if(!change) return null;
+  const cite=classCitation(change.to);
+  return(
+    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'#7A5A10',fontFamily:'var(--font-mono)',marginTop:3}}>
+      <span style={{fontWeight:700}}>Cambia la clase de sustrato:</span> {change.from.label} → {change.to.label}.
+      {fmtClassRanges(change.to)?` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite?` (${cite})`:''}.`:''} El índice estimado ya usa esos rangos.
+    </div>
+  );
+};
 const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,evaluate,onMorph})=>{
   const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
   const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
@@ -1923,6 +1971,18 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       return null;
     }
   },[recipe,item.apply,lockedIds,ingredients,evaluate,baseScore]);
+  const classChange=React.useMemo(()=>{
+    if(typeof evaluate!=='function'||!SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from=evaluate(recipe)?.an?.targets;
+    const to=deltaSim?.resultingAn?.targets;
+    return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
+  },[evaluate,recipe,deltaSim]);
+  const comboClassChange=React.useMemo(()=>{
+    if(!item.comboApply||typeof evaluate!=='function'||!SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from=evaluate(recipe)?.an?.targets;
+    const to=evaluate(applyOptToRecipe(recipe,item.comboApply,lockedIds,ingredients))?.an?.targets;
+    return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
+  },[evaluate,recipe,item.comboApply,lockedIds,ingredients]);
 
   return(
   <div className={`perito-item pi-${item.priority}`}>
@@ -1945,7 +2005,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
-            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({deltaSim.diff.newEb}%)
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({Math.round(deltaSim.diff.newEb)}%)
           </span>
           {deltaSim.diff.confidence&&(
             <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>
@@ -1959,7 +2019,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           )}
           {deltaSim.diff.deltaCn!==0&&(
             <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:'var(--paper-200)',color:'var(--ink-700)'}}>
-              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({deltaSim.diff.newCn}:1)
+              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({Number(deltaSim.diff.newCn).toFixed(1)}:1)
             </span>
           )}
         </div>
@@ -1969,11 +2029,13 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+      <ClassChangeNote change={classChange}/>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600,#B5451F)" /> {item.sideEffect}</span></div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
+        <ClassChangeNote change={comboClassChange} testId="perito-combo-class-change"/>
         <PeritoChangePreview changes={comboChanges}/>
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
@@ -7463,6 +7525,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // de un ajuste ya refleja si cambia la clase de sustrato.
   const resolvePeritoSpp=React.useCallback(r=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,r,effectiveINGS),[sKey,effectiveINGS]);
   const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
+  const substrateClassInfo=useMemo(()=>SetasSpeciesTargetsApi.describeSubstrateClass?SetasSpeciesTargetsApi.describeSubstrateClass({speciesId:sKey,recipe,ings:effectiveINGS,legacySpp:SPP}):null,[sKey,recipe,effectiveINGS]);
   const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
@@ -14676,6 +14739,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     </div>
                   )}
+                  {hasPer&&<div style={{marginTop:-8,marginBottom:12}}><SubstrateClassNote info={substrateClassInfo}/></div>}
 
                   {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
                   <div className="mgrid" style={{marginBottom:12}}>
@@ -15179,6 +15243,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="wand" size={13} color="var(--paper-0)" /> Consultar IA</button>
                     </div>
                   </div>
+                  {hasPer&&<div style={{marginTop:-8,marginBottom:14}}><SubstrateClassNote info={substrateClassInfo}/></div>}
 
                   {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(

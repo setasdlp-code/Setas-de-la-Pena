@@ -42,13 +42,32 @@ const root=path.resolve(__dirname,'..');
   const withBoth=cards.filter(c=>c.predicted!=null&&c.deltaNew!=null);
   assert.ok(withBoth.length>=2,`tarjetas con ambas predicciones: ${JSON.stringify(cards)}`);
   for(const c of withBoth) assert.equal(Math.round(c.deltaNew),c.predicted,`${c.label}: ΔScore ${c.deltaNew} ≠ Índice ${c.predicted}`);
+  // Clase de sustrato vigente y tarjeta que cambia la clase (punto 2).
+  const classNote=panel.getByTestId('perito-substrate-class');
+  await expect(classNote).toHaveAttribute('data-class','straw_unsupplemented');
+  await expect(classNote).toContainText('paja sin suplementar');
+  await expect(classNote).toContainText('Bellettini et al. 2019');
+  const nCard=panel.locator('.perito-item',{hasText:'Afinar Nitrógeno'});
+  await expect(nCard.getByTestId('perito-item-class-change')).toHaveAttribute('data-to','bag_supplemented');
+  await expect(nCard.getByTestId('perito-item-class-change')).toContainText('C:N 25–50:1');
   const target=withBoth.find(c=>c.label==='Afinar Nitrógeno');
   assert.ok(target,`falta "Afinar Nitrógeno": ${JSON.stringify(cards)}`);
   await panel.locator('.perito-item',{hasText:'Afinar Nitrógeno'}).getByRole('button',{name:/^Aplicar ajuste/}).click();
   await expect(panel.getByText(`${target.predicted}/100`).first()).toBeVisible();
   const header=await panel.locator('span',{hasText:/^SCORE$/}).locator('xpath=preceding-sibling::span[1]').textContent();
   assert.equal(Number(header),target.predicted,`veredicto ${header} ≠ predicho ${target.predicted}`);
+  await expect(classNote).toHaveAttribute('data-class','bag_supplemented');
+  // Cerca del umbral: 1,5 % de salvado avisa del cambio a bolsa suplementada.
+  await page.evaluate(recipe=>window.SetasFormulatorAPI.applyRecipe(recipe),[{id:'paja_trigo',p:98.5},{id:'salvado_trigo',p:1.5}]);
+  await expect(classNote).toHaveAttribute('data-near-threshold','true');
+  const notice=panel.getByTestId('perito-class-threshold');
+  await expect(notice).toContainText('Si el suplemento llega a 2 %');
+  await expect(notice).toContainText('bolsa suplementada (C:N 25–50:1');
+  await expect(notice).toContainText('sin fuente publicada');
+  await page.setViewportSize({width:390,height:844});
+  assert.ok(await classNote.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'la nota de clase no debe desbordar en móvil');
+  if(process.env.SETAS_PERITO_SCREENSHOT)await panel.screenshot({path:process.env.SETAS_PERITO_SCREENSHOT});
   assert.deepEqual(errors,[]);
-  console.log(`PASS: ΔScore = Índice estimado en ${withBoth.length} tarjetas; "Afinar Nitrógeno" predijo ${target.predicted} y el veredicto quedó en ${header}.`);
+  console.log(`PASS: ΔScore = Índice estimado en ${withBoth.length} tarjetas; "Afinar Nitrógeno" predijo ${target.predicted} y el veredicto quedó en ${header}; clase de sustrato, cambio de clase y aviso de umbral visibles.`);
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
