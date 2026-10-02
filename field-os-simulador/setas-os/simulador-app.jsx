@@ -14137,7 +14137,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
                 <AppIcon name="wand" size={13} />
-                <span>Perito & Generador de Recetas</span>
+                <span>Generador de Recetas</span>
               </button>
             </nav>
             <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
@@ -14270,176 +14270,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
 
-          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
-              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
-              teórico o de uno mezclado con el historial real de la finca, y
-              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
-              procedencia. Una etiqueta fija que no sigue al dato es peor que
-              no tener etiqueta: afirma algo que puede ser falso. */}
-          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
-          {recipe.length>0&&(
-            <section className="form-summary-strip" aria-label="Resumen de receta activa">
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Especie</span>
-                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
-                <span className="os-provenance-line">Manual</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Objetivo</span>
-                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
-                <span className="os-provenance-line">Modo activo</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Peso total</span>
-                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
-                <span className="os-provenance-line">Calculado</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Humedad objetivo</span>
-                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">BE estimada</span>
-                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  if(!prov) return 'Estimado';
-                  // El número que se muestra pasa por blendEBWithHistory, así que
-                  // la etiqueta tiene que decir si de verdad entró historial de la
-                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
-                  // le sirve a nadie para decidir. No se pinta ningún nivel de
-                  // confianza aquí porque la banda de predicción la calcula
-                  // scoring.js y no está en alcance en esta franja — inventarle un
-                  // nivel sería exactamente el defecto que esto viene a corregir.
-                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
-                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
-                  if(!d) return 'Estimado';
-                  const muestra=conHistorial
-                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
-                    : '';
-                  return `${d.label} · ${d.detail}${muestra}`;
-                })()}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-costo">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  // El valor de esta celda es an.cost, que es SIEMPRE el precio de
-                  // catálogo. El costo real ponderado de los lotes en bodega se
-                  // calcula aparte (realCostPerKg) y no es lo que se muestra aquí,
-                  // así que la línea lo dice y, cuando los dos se separan, enseña
-                  // el de bodega en vez de dejar creer que el de arriba lo es.
-                  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
-                  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
-                  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an?.cost||0))>=20;
-                  return hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base;
-                })()}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Revisión</span>
-                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
-                  Perito {Math.round(opt?.score||0)}/100
-                </span>
-                <span className="os-provenance-line">Perito · Requiere revisión</span>
-              </div>
-            </section>
-          )}
-
-          {/* 5.2 Recorrido en 5 pasos visibles con estados explícitos */}
-          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label="Recorrido de formulación en 5 pasos">
-            <div className="form-flow-head">
-              <div>
-                <span className="form-flow-eyebrow">Recorrido metodológico</span>
-                <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
-                  01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
-                </div>
-              </div>
-              <span className="form-flow-progress" aria-live="polite">
-                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
-              </span>
-            </div>
-            <ol className="form-flow-grid form-flow-grid--5">
-              {/* Paso 01: Especie */}
-              <li className={`form-step ${hasPickedSpecies?'is-ready':''}`}>
-                <span className="form-step-num">01</span>
-                <span className="form-step-label">Especie</span>
-                <div className="form-step-species-state">
-                  <strong>{hasPickedSpecies?(sp?.name||'Pendiente'):'Pendiente'}</strong>
-                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
-                </div>
-                <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
-                  {hasPickedSpecies?'Completado':'Activo'}
-                </span>
-                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
-              </li>
-
-              {/* Paso 02: Objetivo */}
-              <li className="form-step is-ready">
-                <span className="form-step-num">02</span>
-                <span className="form-step-label">Objetivo</span>
-                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
-                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
-                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
-                </div>
-                <span className="form-step-state-badge is-completado">Completado</span>
-                <span className="form-step-help">{globalMode==='produccion'?'Stock físico de Bodega Tenjo.':'Paleta exploratoria de investigación.'}</span>
-              </li>
-
-              {/* Paso 03: Ingredientes */}
-              <li className={`form-step ${recipe.length>0?'is-ready':''}`}>
-                <span className="form-step-num">03</span>
-                <span className="form-step-label">Ingredientes</span>
-                <div className="form-step-actions">
-                  <button type="button" onClick={focusIngredientCatalog}>Manual</button>
-                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Generador</button>
-                </div>
-                <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
-                  {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
-                </span>
-                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
-              </li>
-
-              {/* Paso 04: Balance */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
-                <span className="form-step-num">04</span>
-                <span className="form-step-label">Balance</span>
-                <div className="form-step-species-state">
-                  <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
-                  <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
-                </div>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
-                </span>
-                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
-              </li>
-
-              {/* Paso 05: Revisión */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
-                <span className="form-step-num">05</span>
-                <span className="form-step-label">Revisión</span>
-                <button
-                  type="button"
-                  className="form-step-primary"
-                  disabled={recipe.length===0}
-                  onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
-                  Dictamen Perito
-                </button>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(opt?.score||0)>=70?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt?.score||0)}/100`}
-                </span>
-                <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
-              </li>
-            </ol>
-          </section>
-
           <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
             <div className="form-species-identity">
               <span className="form-species-kicker">Especie activa</span>
@@ -14462,12 +14292,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
               </div>
             </div>
-            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
-              <span><small>C:N objetivo</small><b>{hasPickedSpecies&&sp?.cn_optimal?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
-              <span><small>N objetivo</small><b>{hasPickedSpecies&&sp?.n_optimal?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
-              <span><small>EB meta</small><b>{hasPickedSpecies&&sp?.eb_optimal!=null?`${sp.eb_optimal}%`:'—'}</b></span>
-              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
-            </div>
+
           </section>
 
 
@@ -14727,6 +14552,190 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })()}
           </div>
+          {recipe.length>0&&(
+          <details className="form-support-details" data-testid="formulator-provenance-details">
+            <summary>Resumen y procedencia de la receta</summary>
+          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
+              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
+              teórico o de uno mezclado con el historial real de la finca, y
+              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
+              procedencia. Una etiqueta fija que no sigue al dato es peor que
+              no tener etiqueta: afirma algo que puede ser falso. */}
+          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
+          {recipe.length>0&&(
+            <section className="form-summary-strip" aria-label="Resumen de receta activa">
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Especie</span>
+                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
+                <span className="os-provenance-line">Manual</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Objetivo</span>
+                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
+                <span className="os-provenance-line">Modo activo</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Peso total</span>
+                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">C:N</span>
+                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">BE estimada</span>
+                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  if(!prov) return 'Estimado';
+                  // El número que se muestra pasa por blendEBWithHistory, así que
+                  // la etiqueta tiene que decir si de verdad entró historial de la
+                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
+                  // le sirve a nadie para decidir. No se pinta ningún nivel de
+                  // confianza aquí porque la banda de predicción la calcula
+                  // scoring.js y no está en alcance en esta franja — inventarle un
+                  // nivel sería exactamente el defecto que esto viene a corregir.
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
+                  if(!d) return 'Estimado';
+                  const muestra=conHistorial
+                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
+                    : '';
+                  return `${d.label} · ${d.detail}${muestra}`;
+                })()}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Costo/kg</span>
+                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-costo">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  // El valor de esta celda es an.cost, que es SIEMPRE el precio de
+                  // catálogo. El costo real ponderado de los lotes en bodega se
+                  // calcula aparte (realCostPerKg) y no es lo que se muestra aquí,
+                  // así que la línea lo dice y, cuando los dos se separan, enseña
+                  // el de bodega en vez de dejar creer que el de arriba lo es.
+                  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
+                  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
+                  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an?.cost||0))>=20;
+                  return hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base;
+                })()}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Revisión</span>
+                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
+                  Perito {Math.round(opt?.score||0)}/100
+                </span>
+                <span className="os-provenance-line">Perito · Requiere revisión</span>
+              </div>
+            </section>
+          )}
+
+          </details>
+          )}
+          <details className="form-support-details form-method-details" data-testid="formulator-method-details">
+            <summary>Guía de formulación · cinco pasos</summary>
+            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
+              <span><small>C:N objetivo</small><b>{hasPickedSpecies&&sp?.cn_optimal?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+              <span><small>N objetivo</small><b>{hasPickedSpecies&&sp?.n_optimal?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+              <span><small>EB meta</small><b>{hasPickedSpecies&&sp?.eb_optimal!=null?`${sp.eb_optimal}%`:'—'}</b></span>
+              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
+            </div>
+          {/* 5.2 Recorrido en 5 pasos visibles con estados explícitos */}
+          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label="Recorrido de formulación en 5 pasos">
+            <div className="form-flow-head">
+              <div>
+                <span className="form-flow-eyebrow">Recorrido metodológico</span>
+                <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
+                  01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
+                </div>
+              </div>
+              <span className="form-flow-progress" aria-live="polite">
+                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
+              </span>
+            </div>
+            <ol className="form-flow-grid form-flow-grid--5">
+              {/* Paso 01: Especie */}
+              <li className={`form-step ${hasPickedSpecies?'is-ready':''}`}>
+                <span className="form-step-num">01</span>
+                <span className="form-step-label">Especie</span>
+                <div className="form-step-species-state">
+                  <strong>{hasPickedSpecies?(sp?.name||'Pendiente'):'Pendiente'}</strong>
+                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
+                </div>
+                <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
+                  {hasPickedSpecies?'Completado':'Activo'}
+                </span>
+                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
+              </li>
+
+              {/* Paso 02: Objetivo */}
+              <li className="form-step is-ready">
+                <span className="form-step-num">02</span>
+                <span className="form-step-label">Objetivo</span>
+                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+                </div>
+                <span className="form-step-state-badge is-completado">Completado</span>
+                <span className="form-step-help">{globalMode==='produccion'?'Stock físico de Bodega Tenjo.':'Paleta exploratoria de investigación.'}</span>
+              </li>
+
+              {/* Paso 03: Ingredientes */}
+              <li className={`form-step ${recipe.length>0?'is-ready':''}`}>
+                <span className="form-step-num">03</span>
+                <span className="form-step-label">Ingredientes</span>
+                <div className="form-step-actions">
+                  <button type="button" onClick={focusIngredientCatalog}>Manual</button>
+                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Generador</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
+                  {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
+                </span>
+                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
+              </li>
+
+              {/* Paso 04: Balance */}
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
+                <span className="form-step-num">04</span>
+                <span className="form-step-label">Balance</span>
+                <div className="form-step-species-state">
+                  <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
+                  <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
+                </span>
+                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
+              </li>
+
+              {/* Paso 05: Revisión */}
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
+                <span className="form-step-num">05</span>
+                <span className="form-step-label">Revisión</span>
+                <button
+                  type="button"
+                  className="form-step-primary"
+                  disabled={recipe.length===0}
+                  onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                  Dictamen Perito
+                </button>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(opt?.score||0)>=70?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt?.score||0)}/100`}
+                </span>
+                <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
+              </li>
+            </ol>
+          </section>
+
+          </details>
           <section className="builder-cols form-recipe-workspace" aria-labelledby="active-recipe-workspace-title">
             <header className="active-recipe-workspace-head">
               <div>
