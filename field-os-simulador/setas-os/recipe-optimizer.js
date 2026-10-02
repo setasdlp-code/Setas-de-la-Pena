@@ -388,7 +388,7 @@
       const a = analyze(cand, sKey, effectiveINGS, effectiveSPP);
       const val = readM(a); if (val == null) return;
       const d = Math.abs(val - target);
-      if (d < bestDist) { bestDist = d; best = { pct: Math.round(v * 10) / 10, val, an: a }; }
+      if (d < bestDist) { bestDist = d; best = { pct: Math.round(v * 10) / 10, val, an: a, vMax }; }
     };
     for (let v = Math.min(0.5, vMax); v <= vMax; v += 1) evalAt(v);
     evalAt(vMax);
@@ -531,6 +531,21 @@
     if (metric === 'ph' && isPhMineral(g)) return quantifyPhMineral(item, recipe, sKey, effectiveINGS, lockedIds, effectiveSPP, g, target, cur, curP);
     const res = solveTargetPct(recipe, sKey, effectiveINGS, id, metric, target, lockedIds, effectiveSPP);
     if (!res) return item;
+    // Guarda de dirección: el buscador limita el % al tope del ingrediente. Si
+    // ya está sobre ese tope, lo "más cercano" que encuentra es bajarlo, y la
+    // tarjeta proponía mover la métrica en contra del objetivo ("C:N demasiado
+    // alto → bajar rastrojo de soya": C:N 52 → 59). Ahora, si dentro de su tope
+    // el ingrediente no acerca la métrica, no se propone y se busca otro.
+    const a0 = analyze(recipe, sKey, effectiveINGS, effectiveSPP);
+    const cur0 = !a0 ? null : (metric === 'cn' ? a0.cn : metric === 'n' ? a0.avgN : a0.avgPh);
+    if (cur0 != null && Math.abs(res.val - target) >= Math.abs(cur0 - target) - 1e-6) {
+      item.action = `<b>${g.name}</b>${cur ? ` está en ${curP.toFixed(1)}%` : ''}: dentro de su tope en esta receta (${res.vMax}%) no acerca ${METRIC_LABEL[metric]} al objetivo`;
+      item.delta = `${METRIC_LABEL[metric]} ${fmtMetric(metric, cur0)} · objetivo ${fmtMetric(metric, target)}`;
+      item.apply = null;
+      item.capped = true;
+      item.needsAlternative = { metric, target, excludeId: id, current: cur0 };
+      return item;
+    }
     const noChange = cur && Math.abs(res.pct - curP) < 0.15;
     const verb = !cur ? 'Agregar' : noChange ? 'Ya está en' : res.pct > curP ? 'Subir' : 'Bajar';
     item.action = `${verb} <b>${g.name}</b> a <b>${res.pct}%</b>${cur ? ` (actual ${curP.toFixed(0)}%)` : ' (nuevo)'}`;
@@ -969,6 +984,128 @@
       phHigh: spC => ({ ing: bestStock(g => g.ph < 6 && g.n >= 0.5, (a, b) => a.ph - b.ph), metric: 'ph', target: phCenter(spC) }),
     };
 
+    // ── Alternativa cuando el ingrediente sugerido ya no puede corregir ──
+    // Busca otro ingrediente compatible (bodega primero si se trabaja con
+    // bodega; sin tocar bloqueados ni aditivos) que mueva C:N o N hacia el
+    // objetivo. Cada candidato se evalúa con el mismo contexto del veredicto y
+    // solo se acepta si acerca la métrica sin agregar críticos ni bajar el
+    // score. Sin números nuevos: topes y objetivos son los existentes.
+    const ALTERNATIVE_POOL = 8;
+    if (recipe && recipe.length) {
+      const baseE = baseEval || evalCandidate(recipe);
+      const critOf = e => (e && SetasScoring.assessSeverity ? SetasScoring.assessSeverity(e.an).criticals : 0);
+      const baseCrit = critOf(baseE);
+      const baseScore = baseE ? baseE.scoreObj.score : 0;
+      const readMetric = (a, m) => (m === 'cn' ? a.cn : a.avgN);
+      // Mejor ingrediente (distinto de `excludeIds`) para mover `metric` desde
+      // `fromRecipe` hacia `target`, sin agregar críticos ni bajar el score
+      // respecto de `floor` (y del veredicto actual).
+      const searchMetricFix = ({ fromRecipe, metric, target, current, excludeIds, floor }) => {
+        const down = target < current;
+        const potency = g => (metric === 'cn' ? g.cn : g.n);
+        const useful = g => {
+          if (!g || excludeIds.includes(g.id) || lockedIds.includes(g.id)) return false;
+          if (!g.cs || !g.cs.includes(sKey) || String(g.role || '').startsWith('aditivo')) return false;
+          const v = potency(g);
+          if (!(v > 0)) return false;
+          return down ? v < target : v > target;
+        };
+        let pool = effectiveINGS.filter(useful);
+        if (useStock && stockIds && stockIds.size > 0) {
+          const inStock = pool.filter(g => stockIds.has(g.id));
+          if (inStock.length) pool = inStock;
+        }
+        pool = pool
+          .sort((a, b) => (down ? potency(a) - potency(b) : potency(b) - potency(a)) || a.id.localeCompare(b.id))
+          .slice(0, ALTERNATIVE_POOL);
+        const dist0 = Math.abs(current - target);
+        const minCrit = Math.min(baseCrit, floor.crit);
+        const minScore = Math.max(baseScore, floor.score);
+        let best = null;
+        for (const g of pool) {
+          try {
+            const res = solveTargetPct(fromRecipe, sKey, effectiveINGS, g.id, metric, target, lockedIds, effectiveSPP);
+            if (!res) continue;
+            const apply = { mode: 'set', id: g.id, value: res.pct };
+            const e = evalCandidate(applyOptToRecipe(fromRecipe, apply, lockedIds, effectiveINGS));
+            if (!e) continue;
+            const val = readMetric(e.an, metric);
+            const dist = Math.abs(val - target);
+            if (dist >= dist0 - 1e-6) continue;
+            const crit = critOf(e);
+            const sc = e.scoreObj.score;
+            if (crit > minCrit || sc < minScore) continue;
+            const better = !best || crit < best.crit || (crit === best.crit && (sc > best.sc || (sc === best.sc && dist < best.dist)));
+            if (better) best = { g, res, apply, val, crit, sc, dist, from: fromRecipe };
+          } catch (e) { /* candidato inválido */ }
+        }
+        return best;
+      };
+      const nameOf = id => (effectiveINGS.find(g => g.id === id) || {}).name || id;
+      const actionFor = (best) => {
+        const cur = best.from.find(r => r.id === best.g.id);
+        const curP = cur ? parseFloat(cur.p) || 0 : 0;
+        const verb = !cur ? 'agregar' : best.res.pct > curP ? 'subir' : 'bajar';
+        return `${verb} <b>${best.g.name}</b> a <b>${best.res.pct}%</b>${cur ? ` (actual ${curP.toFixed(1)}%)` : ' (nuevo)'}`;
+      };
+      items.forEach(it => {
+        if (it.priority !== 'critical' && it.priority !== 'warning') return;
+        const need = it.needsAlternative;
+        // 1) El ingrediente sugerido no puede acercar la métrica: alternativa.
+        if (need) {
+          delete it.needsAlternative;
+          if (it.apply || (need.metric !== 'cn' && need.metric !== 'n')) return;
+          const best = searchMetricFix({ fromRecipe: recipe, metric: need.metric, target: need.target, current: need.current, excludeIds: [need.excludeId], floor: { crit: baseCrit, score: baseScore } });
+          if (best) {
+            it.apply = best.apply;
+            it.alternativeFor = need.excludeId;
+            it.action = `<b>${nameOf(need.excludeId)}</b> ya no acerca ${METRIC_LABEL[need.metric]} al objetivo dentro de su tope. Alternativa: ${actionFor(best)}`;
+            it.delta = `→ ${METRIC_LABEL[need.metric]} ${fmtMetric(need.metric, best.val)}`;
+            // "tope alcanzado" solo si la alternativa tampoco deja la métrica en rango.
+            const range = need.metric === 'cn' ? sp && sp.cn_optimal : sp && sp.n_optimal;
+            it.capped = !!range && !(best.val >= range.min && best.val <= range.max);
+          } else {
+            it.riskIfIgnored = (it.riskIfIgnored ? it.riskIfIgnored + ' · ' : '') + `Ningún otro ingrediente compatible${useStock && stockIds && stockIds.size > 0 ? ' en bodega' : ''} acerca ${METRIC_LABEL[need.metric]} al objetivo sin empeorar el veredicto — revisar la base de la receta o ampliar ingredientes.`;
+          }
+          return;
+        }
+        // 2) El ajuste llega a su tope sin entrar en rango: completar con un
+        //    segundo ingrediente aplicado junto con el primero.
+        if (it.capped && it.apply && !Array.isArray(it.apply) && it.apply.id && sp) {
+          const ic = it.icon || '';
+          const metric = (ic === '→N' || ic === '→C' || ic.indexOf('C:N') >= 0) ? 'cn' : (ic.toLowerCase().indexOf('ph') < 0 && ic.indexOf('N') >= 0 ? 'n' : null);
+          if (!metric) return;
+          const target = metric === 'cn' ? sp.cn_optimal.ideal : sp.n_optimal.ideal;
+          const first = applyOptToRecipe(recipe, it.apply, lockedIds, effectiveINGS);
+          const e1 = evalCandidate(first);
+          if (!e1) return;
+          const best = searchMetricFix({ fromRecipe: first, metric, target, current: readMetric(e1.an, metric), excludeIds: [it.apply.id], floor: { crit: critOf(e1), score: e1.scoreObj.score } });
+          if (best) {
+            it.comboApply = [it.apply, best.apply];
+            it.comboPredictedScore = best.sc;
+            it.comboLabel = `Completar con ${best.g.name}: ${nameOf(it.apply.id)} solo no lleva ${METRIC_LABEL[metric]} al rango (${actionFor(best).replace(/<[^>]+>/g, '')})`;
+            it.comboFromCap = true;
+          }
+        }
+      });
+      // Dos tarjetas con el mismo ajuste (p. ej. "C:N demasiado alto" y
+      // "Nitrógeno insuficiente" resueltos con el mismo ingrediente): el
+      // botón queda en la primera y la segunda la remite.
+      const seenApply = new Map();
+      items.forEach(it => {
+        if (!it.apply || (it.priority !== 'critical' && it.priority !== 'warning')) return;
+        const key = JSON.stringify(it.apply);
+        const first = seenApply.get(key);
+        if (!first) { seenApply.set(key, it); return; }
+        it.apply = null;
+        it.comboApply = null;
+        it.comboFromCap = false;
+        delete it.alternativeFor;
+        it.sameAdjustmentAs = first.label;
+        it.action = `Se corrige con el mismo ajuste que «${first.label}»: ${first.action}`;
+      });
+    }
+
     if (recipe && recipe.length) {
       items.forEach(it => {
         if (!it.apply || (it.priority !== 'critical' && it.priority !== 'warning')) return;
@@ -1000,6 +1137,7 @@
                   const s3 = e3.scoreObj;
                   if (s3.score > it.predictedScore) {
                     it.comboApply = [it.apply, secondApply];
+                    it.comboFromCap = false;
                     it.comboPredictedScore = s3.score;
                     it.comboLabel = `Aplicar junto con ${fix.ing.name} — evita ${FLAG_LABEL[fixKey]}`;
                   }

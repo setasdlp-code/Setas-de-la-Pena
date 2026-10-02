@@ -52,7 +52,7 @@ const root=path.resolve(__dirname,'..');
   await expect(summary).toHaveCount(0);
 
   // Sin ajuste aplicable que avance: lo dice y no toca la receta.
-  const stuck=[{id:'paja_trigo',p:80},{id:'borra_cafe',p:20}];
+  const stuck=[{id:'guadua',p:70},{id:'borra_cafe',p:30}];
   await page.evaluate(recipe=>window.SetasFormulatorAPI.applyRecipe(recipe),stuck);
   await expect(panel.locator('.perito-item').first()).toBeVisible();
   const stuckBefore=await getRecipe();

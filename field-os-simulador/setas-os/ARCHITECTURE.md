@@ -97,6 +97,8 @@ El runtime parsea el documento, genera el árbol y lo monta con React/`ReactDOM`
 
 **Un solo panel del Perito.** El Formulador (`#bl-perito`) y la Mesa del Perito (subpestaña Generador, `.perito-standalone-panel`) renderizan `renderPeritoPanel(variant)` (`'formulador'` | `'workbench'`). La variante solo agrega lo propio de cada lugar: siguiente paso del flujo, crear prueba, gráficos y evaluación técnica en el Formulador; factor restrictivo y contexto físico de Tenjo en la Mesa. No volver a copiar el panel: cualquier cambio de encabezado, métricas o tarjetas va en esa función. Pruebas: `e2e/perito-panel-unified.browser.cjs`.
 
+**Dirección y alternativas de las sugerencias.** `quantifyItem` no propone un % que aleje C:N o N de su objetivo: si dentro de su tope el ingrediente no acerca la métrica, la tarjeta lo dice y `generateOptimizer` busca otro ingrediente compatible (bodega primero con bodega activa; sin bloqueados ni aditivos), evaluado con el mismo contexto del veredicto y aceptado solo si acerca la métrica sin agregar críticos ni bajar el score (`alternativeFor`). Si el ajuste llega a su tope sin entrar en rango, ofrece completar con un segundo ingrediente (`comboApply`, `comboFromCap`). Dos tarjetas con el mismo ajuste dejan el botón en la primera (`sameAdjustmentAs`). Sin salida, la tarjeta lo dice. No agrega topes ni objetivos nuevos. Pruebas: `perito-alternatives.test.js` y `e2e/perito-alternatives.browser.cjs`.
+
 ## 3b. El modelo agronómico vive fuera del JSX
 
 Desde la extracción de Fase 2, el catálogo y el modelo ya no están dentro de
