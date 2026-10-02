@@ -7687,7 +7687,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     let consumoRegistrado=false;
     try{
       const now=Date.now();
-      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
+      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',strainId:'',spawnLotId:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
       // El lote NACE planificado y sus insumos quedan reservados, no
       // descontados: la bodega se toca al registrar "Preparar mezcla", que es
       // cuando el sustrato se pesa de verdad.
@@ -7782,7 +7782,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
     return{
       codigo:sugerirCodigoLote(sKey),
-      especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',
+      especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',strainId:'',spawnLotId:'',
       fechaMezcla:'',fechaInoculacion:'',
       numBolsas:'',pesoHumedo:'',peseSeco:'',
       spawnPct:'',humedad:'',tratamiento:'',
@@ -7921,6 +7921,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       especie: sp?.name || '',
       especieCientifico: sp?.scientific || '',
       cepa: '',
+      strainId: '',
+      spawnLotId: '',
       fechaMezcla: today,
       fechaInoculacion: today,
       numBolsas: nb,
@@ -16640,8 +16642,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" aria-invalid={!!captureErrors["bit-codigo"]} aria-describedby={captureErrors["bit-codigo"]?"bit-codigo-error":undefined} onBlur={()=>validateCaptureField("bit-codigo")} name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/>{captureErrorNode("bit-codigo")}</div>
                 <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" aria-invalid={!!captureErrors["bit-especie"]} aria-describedby={captureErrors["bit-especie"]?"bit-especie-error":undefined} onBlur={()=>validateCaptureField("bit-especie")} name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/>{captureErrorNode("bit-especie")}</div>
               </div>
+              {/* `strainId` es identidad; `cepa` sigue siendo la nota libre del
+                  proveedor. Separados a propósito: dos operarios escriben el
+                  mismo proveedor de tres formas, así que la prosa no puede
+                  ascender a identidad. Sin identidad no se puede separar
+                  genética de ambiente, que es lo que bloquea la clase térmica de
+                  cepa (ADR-0008). No se modela una clase aquí: las clases
+                  comerciales de ostreatus se solapan. */}
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
+                <div><label className="inv-label" htmlFor="bit-strain-id">ID de cepa</label><input id="bit-strain-id" name="strainId" autoComplete="off" className="inv-input" placeholder="Ej. STR-OST-001…" value={bitNuevoForm.strainId||''} onChange={e=>setBitNuevoForm(p=>({...p,strainId:e.target.value}))}/><span style={{display:'block',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',paddingTop:3}}>Mismo ID para lotes de la misma cepa. Sin él, el lote no entra en comparaciones por cepa.</span></div>
+                <div><label className="inv-label" htmlFor="bit-spawn-lot-id">Lote de semilla</label><input id="bit-spawn-lot-id" name="spawnLotId" autoComplete="off" className="inv-input" placeholder="Ej. SPW-260101-01…" value={bitNuevoForm.spawnLotId||''} onChange={e=>setBitNuevoForm(p=>({...p,spawnLotId:e.target.value}))}/></div>
+              </div>
+              <div className="inv-row inv-row-2" style={{marginBottom:12}}>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor (nota)</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
                 <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" aria-invalid={!!captureErrors["bit-operador"]} aria-describedby={captureErrors["bit-operador"]?"bit-operador-error":undefined} onBlur={()=>validateCaptureField("bit-operador")} name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/>{captureErrorNode("bit-operador")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
@@ -16680,6 +16693,40 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
               <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>{n}</button>))}</div></div>
+              {/* Fenotipo · phenotype_dictionary_v0.1. Todo opcional: es la
+                  variable de respuesta que falta para relacionar la exposición a
+                  CO₂ con la morfología, y ninguna fuente publicada trae la curva
+                  dosis-respuesta. Un campo obligatorio aquí se llenaría con
+                  cualquier cosa, y un dato inventado es peor que un hueco. */}
+              <details style={{marginBottom:12,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',padding:'8px 10px'}}>
+                <summary style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-700)',cursor:'pointer'}}>Fenotipo · opcional (medición experimental)</summary>
+                <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',margin:'6px 0 10px'}}>
+                  Vocabulario <code>phenotype_dictionary_v0.1</code>. Aún no canónico: estas medidas se usan para construir evidencia propia, no como objetivo de cultivo.
+                </p>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                  <div><label className="inv-label" htmlFor="harvest-cap-diameter">Diámetro de píleo (mm)</label><input id="harvest-cap-diameter" name="harvestCapDiameter" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 60…" value={bitCosechaForm.capDiameterMm??''} onChange={e=>setBitCosechaForm(p=>({...p,capDiameterMm:e.target.value}))}/></div>
+                  <div><label className="inv-label" htmlFor="harvest-stipe-length">Largo de estípite (mm)</label><input id="harvest-stipe-length" name="harvestStipeLength" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 30…" value={bitCosechaForm.stipeLengthMm??''} onChange={e=>setBitCosechaForm(p=>({...p,stipeLengthMm:e.target.value}))}/></div>
+                </div>
+                <div style={{marginBottom:10}}>
+                  <span className="inv-label">Códigos de defecto</span>
+                  <div role="group" aria-label="Códigos de defecto del fenotipo" style={{display:'flex',flexWrap:'wrap',gap:6,paddingTop:4}}>
+                    {['abort','surface_dryness','cracking_excess','yellowing','deformation','mechanical_damage','water_damage','bacterial_suspect','mold_suspect','overmature','undersized','other_declared'].map(code=>{
+                      const on=(bitCosechaForm.defectCodes||[]).includes(code);
+                      return (<button key={code} type="button" aria-pressed={on} onClick={()=>setBitCosechaForm(p=>{const cur=p.defectCodes||[];return {...p,defectCodes:on?cur.filter(c=>c!==code):[...cur,code]};})} style={{padding:'4px 9px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',cursor:'pointer',background:on?'var(--ochre-500)':'var(--paper-50)',color:on?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s'}}>{code}</button>);
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="inv-label" htmlFor="harvest-phenotype-stage">Etapa de la observación</label>
+                  {/* Enum del diccionario de fenotipo, que NO es el de etapas de
+                      sala: uno describe el desarrollo del carpóforo, el otro el
+                      estado de la cámara. Se mantienen separados a propósito. */}
+                  <select id="harvest-phenotype-stage" name="harvestPhenotypeStage" className="inv-input" value={bitCosechaForm.phenotypeStage||''} onChange={e=>setBitCosechaForm(p=>({...p,phenotypeStage:e.target.value}))}>
+                    <option value="">— sin declarar —</option>
+                    {['initiation','early_development','maturation','harvest'].map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </details>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" aria-invalid={!!captureErrors["harvest-observations"]} aria-describedby={captureErrors["harvest-observations"]?"harvest-observations-error":undefined} onBlur={()=>validateCaptureField("harvest-observations")} name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/>{captureErrorNode("harvest-observations")}</div>
 
               {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
