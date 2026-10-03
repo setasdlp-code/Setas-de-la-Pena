@@ -85,6 +85,37 @@ test('el estado de sincronización se ve desde la pantalla de inicio', () => {
   assert.match(cockpit, /retryStuck\(syncQueue,Date\.now\(\)\)[\s\S]{0,260}minHeight:48/);
 });
 
+test('el ciclo de vida de recetas está cableado: no se edita una aprobada, se versiona', () => {
+  // La regla que hace útil el versionado: editar en sitio una receta aprobada
+  // dejaría a los lotes ya producidos con ella sin poder compararse. `loadR`
+  // consulta assertEditable y, si lanza, abre el diálogo de versión nueva en
+  // vez de cargarla — la fricción es deliberada.
+  assert.match(source, /lifecycle\.assertEditable\(e\)/);
+  assert.match(source, /catch\(err\)\{ setNewVersionFor\(e\); return; \}/);
+  assert.match(source, /const NewRecipeVersionModal=/);
+  assert.match(source, /newVersionFor&&<NewRecipeVersionModal/);
+  assert.match(source, /lifecycle\.newVersionFrom\(newVersionFor/);
+
+  // Las recetas que ya existen se marcan `legacy`, no `draft` ni `approved`.
+  assert.match(source, /lifecycle\.migrateLegacyRecipe\(r\)/);
+
+  // El rol de autorización tiene una sola procedencia (client-invariants).
+  assert.match(source, /role:fieldOperatorRole/);
+  assert.doesNotMatch(source, /role:props\.isAdmin\?'direccion'/);
+
+  // Una receta en ensayo no puede leerse igual que una aprobada (§9).
+  assert.match(source, /data-testid="recipe-lifecycle-badge"/);
+  assert.match(source, /RECIPE_LIFECYCLE_COLOR=\{/);
+  assert.match(source, /data-testid=\{`recipe-promote-\$\{to\}`\}/);
+
+  // El lote guarda el snapshot y la ficha lo muestra; los lotes anteriores al
+  // versionado conservan lo de siempre y no reciben una versión inventada.
+  assert.match(source, /recipeSnapshot:\(\(\)=>\{/);
+  assert.match(source, /lc\.buildProductionSnapshot\(/);
+  assert.match(source, /data-testid="batch-recipe-label"/);
+  assert.match(source, /lc\.describeSnapshot\(lote\.recipeSnapshot\)/);
+});
+
 test('marcar una tarea en el cockpit registra el evento que la cierra', () => {
   // El contrato del motor es que una tarea sólo se cierra con el evento que la
   // cumple. La casilla no puede saltárselo: registra un evento manual y cierra
@@ -157,13 +188,13 @@ test('bitácora writes are enqueued through SetasSyncQueue instead of fired and 
 test('la cola de sincronización se rehidrata desde localStorage junto con la bitácora', () => {
   const loadStart = source.indexOf("const bl=localStorage.getItem('sdp_bit_lotes')");
   assert.ok(loadStart > -1);
-  const loadBlock = source.slice(loadStart, loadStart + 600);
+  const loadBlock = source.slice(loadStart, loadStart + 1500);
   assert.match(loadBlock, /localStorage\.getItem\('sdp_sync_queue'\)/);
   assert.match(loadBlock, /syncQueueApi\.deserialize\(sq\)/);
 });
 
 test('el drenador de la cola de sincronización es un hook de nivel superior con limpieza', () => {
-  assert.match(source, /const drainAll=async\(\)=>\{/);
+  assert.match(source, /const drainOnce=async\(\)=>\{/);
   assert.match(source, /syncQueueApi\.nextPending\(syncQueueRef\.current,Date\.now\(\)\)/);
   assert.match(source, /syncQueueApi\.markSynced\(syncQueueRef\.current,op\.id\)/);
   assert.match(source, /syncQueueApi\.markFailed\(syncQueueRef\.current,op\.id,err,Date\.now\(\)\)/);
@@ -171,6 +202,8 @@ test('el drenador de la cola de sincronización es un hook de nivel superior con
   assert.match(source, /window\.addEventListener\('online',onOnline\)/);
   assert.match(source, /cancelled=true;\s*\n\s*clearInterval\(intervalId\);\s*\n\s*window\.removeEventListener\('online',onOnline\);/);
   assert.match(source, /navigator\.onLine===false/);
+  // I2: un solo drainAll en vuelo — mismo patrón inFlight/again que runInventorySync.
+  assert.match(source, /if\(drainRef\.inFlight\)\{drainRef\.again=true;return drainRef\.inFlight;\}/);
 });
 
 test('el indicador de sincronización usa describeForOperator y ofrece reintentar los atascados', () => {
@@ -356,7 +389,7 @@ test('restaurant tasting dossier modal provides organoleptic notes and chef pair
 
 test('home cockpit computes FIFO stock aggregations and displays critical substrate alerts with direct purchase CTA', () => {
   assert.match(source, /criticalStockItems/);
-  assert.match(source, /lowStockThresholds/);
+  assert.match(source, /const criticalStockItems = stockAlerts;/);
   assert.match(source, /Alerta de Stock Crítico/);
   assert.match(source, /Registrar Compra \+/);
   assert.match(styles, /\.sim-root \.stock-critical-card/);
@@ -422,4 +455,118 @@ test('home lot cards scope colonizado properly without ReferenceError', () => {
   assert.match(source, /return \{lote,stats,columna,age,colonizado\};/);
   assert.match(source, /items\.map\(\(\{lote:lt,stats,age,colonizado\}\)=>\{/);
   assert.match(source, /width: colonizado \? '100%' : '65%'/);
+});
+
+// ── Libro de reservas de inventario (inventory-ledger.js) ──────────────────
+
+test('inventory-ledger.js carga tras el gate de Auth y en el banco de pruebas, después de inventory-consumption.js', () => {
+  assert.match(
+    authGate,
+    /"\.\.\/inventory-consumption\.js",\s*\n\s*"\.\.\/inventory-ledger\.js",/,
+    'inventory-ledger.js debe estar en PROTECTED_APP_SCRIPTS, justo después de inventory-consumption.js',
+  );
+  const harness = fs.readFileSync(path.join(root, '__harness.html'), 'utf8');
+  assert.match(
+    harness,
+    /<script src="inventory-consumption\.js"><\/script><script src="inventory-ledger\.js"><\/script>/,
+    'el banco debe cargar inventory-ledger.js en el mismo punto que el gate real',
+  );
+});
+
+test('el estado invReservas se rehidrata desde localStorage y se limpia con expireDue', () => {
+  assert.match(source, /const \[invReservas,setInvReservas\]=useState\(\[\]\)/);
+  // Rehidratado en el mismo try/catch donde ya se leen las demás claves de
+  // bitácora (sdp_bit_lotes, ...), no en un efecto aparte.
+  const loadStart = source.indexOf("const bl=localStorage.getItem('sdp_bit_lotes')");
+  assert.ok(loadStart > -1);
+  const loadBlock = source.slice(loadStart, loadStart + 1500);
+  assert.match(loadBlock, /localStorage\.getItem\('sdp_inv_reservas'\)/);
+  assert.match(loadBlock, /ledgerApi\.expireDue\(parsedReservas,Date\.now\(\)\)/);
+  assert.match(loadBlock, /setInvReservas\(vigentes\)/);
+});
+
+test('mergeReservas fusiona vía addReservations y persiste en sdp_inv_reservas', () => {
+  const start = source.indexOf('const mergeReservas=(nuevas=[])=>{');
+  assert.ok(start > -1);
+  const block = source.slice(start, start + 400);
+  assert.match(block, /ledgerApi\.addReservations\(prev,nuevas\)/);
+  assert.match(block, /localStorage\.setItem\('sdp_inv_reservas',JSON\.stringify\(upd\)\)/);
+});
+
+test('los dos flujos de lanzamiento sólo preguntan por el insumo comprometido, no por el que ya falta en bodega', () => {
+  // El modal de lanzamiento ya declara el faltante contra el stock físico
+  // ("se descontará lo disponible y el faltante quedará a 0"). Cuando el libro
+  // de reservas repetía esa misma pregunta, un solo clic en "Confirmar y
+  // descontar" dejaba de lanzar el lote: aparecía un segundo diálogo idéntico.
+  // Lo detectó e2e/preparation-snapshot.browser.cjs montando la app de verdad;
+  // esto ancla el criterio para que no vuelva.
+  assert.match(source, /const faltantePorReservaDeOtroLote=\(plan\)=>\{/);
+  const helper = source.slice(source.indexOf('const faltantePorReservaDeOtroLote'), source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento'));
+  // Sólo cuenta como aviso el faltante que el físico SÍ cubría: si no hay
+  // kilos, eso no es una reserva de otro lote, es bodega vacía y ya está dicho.
+  assert.match(helper, /availability\(l\.ingredienteId,ctx\)\.fisico>=l\.necesario/);
+
+  // Y sigue sin bloquear: se avisa con setConfirmDlg y el operario puede seguir.
+  const confirmBlock = source.slice(source.indexOf('const confirmarEjecucion=conGuardaEjecucion'), source.indexOf('const confirmarEjecucion=conGuardaEjecucion') + 1600);
+  assert.match(confirmBlock, /const comprometido=faltantePorReservaDeOtroLote\(loteBatchConfirm\.plan\);/);
+  assert.match(confirmBlock, /if\(comprometido\)\{/);
+  assert.match(confirmBlock, /confirmLabel:'Confirmar y reservar'/);
+  assert.match(confirmBlock, /onConfirm:\(\)=>\{ejecutarLoteInFlight\.current=true;setEjecutandoLote\(true\);runEjecucionLote\(\);\}/);
+  const launchBlock = source.slice(source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento'), source.indexOf('const ejecutarLanzamientoProduccion = conGuardaLanzamiento') + 1300);
+  assert.match(launchBlock, /const comprometido=faltantePorReservaDeOtroLote\(f\.plan\);/);
+  assert.match(launchBlock, /onConfirm:\(\)=>\{launchInFlight\.current=true;setLaunching\(true\);runLanzamientoProduccion\(\);\}/);
+});
+
+test('planificación y preparación usan la transacción recuperable y autorización explícita', () => {
+  assert.match(source, /estado:'planificado'/);
+  assert.match(source, /estado: 'planificado'/);
+  assert.equal((source.match(/SetasPrototype\.planBatch\(localStorage/g)||[]).length, 2);
+  assert.match(source, /SetasPrototype\.prepareBatch\(localStorage/);
+  const prep = source.slice(source.indexOf("if(action==='prepare_mix'){"),source.indexOf("if(action==='close_batch'){"));
+  assert.match(prep, /setReleaseBatchId\(lote.id\)/);
+  assert.doesNotMatch(prep, /registrarConsumo|commitSheetAction/);
+});
+
+test('descartar o eliminar un lote libera sus reservas con releaseForBatch', () => {
+  // updateBitLote es el único punto por el que un lote pasa a 'descartado'
+  // (selector manual y flujo de bioseguridad convergen ahí).
+  const updateStart = source.indexOf('const updateBitLote=(loteId,fields)=>{');
+  assert.ok(updateStart > -1);
+  const updateBlock = source.slice(updateStart, updateStart + 700);
+  assert.match(updateBlock, /fields\.estado==='descartado'/);
+  assert.match(updateBlock, /ledgerApi\.releaseForBatch\(prev,loteId,\{reason:'Lote de producción descartado',at:new Date\(\)\.toISOString\(\)\}\)/);
+
+  const deleteStart = source.indexOf('const deleteBitLote=(loteId)=>{');
+  assert.ok(deleteStart > -1);
+  const deleteBlock = source.slice(deleteStart, deleteStart + 900);
+  assert.match(deleteBlock, /ledgerApi\.releaseForBatch\(prev,loteId,\{reason:'Lote de producción eliminado',at:new Date\(\)\.toISOString\(\)\}\)/);
+});
+
+test('la Bodega muestra físico, reservado y disponible ahora que el intervalo existe', () => {
+  // Estas columnas estuvieron ocultas a propósito: mientras confirmar un
+  // lanzamiento descontaba en el mismo clic, una reserva nacía y moría a la vez
+  // y "Reservado" no podía valer otra cosa que cero. Con planificar y preparar
+  // separados el intervalo es real, así que las tres cifras dicen cosas
+  // distintas: qué hay, qué está comprometido y con qué se puede contar.
+  assert.match(source, /<th>Físico \(kg\)<\/th>/);
+  assert.match(source, /<th>Reservado \(kg\)<\/th>/);
+  assert.match(source, /<th>Disponible \(kg\)<\/th>/);
+  assert.match(source, /data-label="Reservado"/);
+  assert.match(source, /data-label="Disponible"/);
+  // Y un sobrecompromiso (más reservado que físico) no se esconde tras un 0.
+  assert.match(source, /sobrecomprometido/);
+});
+
+test('las alertas de stock bajo (crítico/bajo/OK y el banner de Stock Crítico) comparan contra el disponible, no el físico', () => {
+  assert.match(source, /r\.disponible<r\.alertaMin/);
+  assert.match(source, /r\.disponible<r\.alertaMin\*2\.5/);
+  // Badge, Bodega and Hoy share one reservation-aware alert policy.
+  // Domain behavior (scope, thresholds, incoming and expiry) is covered in
+  // inventory-alerts.test.js; this test only guards the UI wiring.
+  assert.match(source, /stockAlerts=window\.SetasInventoryLedger\.lowStockAlerts\(\{/);
+  assert.match(source, /ingredients:INGS,lots:invLotes,ledger:invReservas/);
+  assert.match(source, /thresholds:alertaConfig,nowMs:Date\.now\(\)/);
+  assert.match(source, /incoming:window\.SetasPurchases\?window\.SetasPurchases\.incomingFromCompras\(invCompras\)/);
+  assert.equal((source.match(/const criticalStockItems = stockAlerts;/g)||[]).length,2);
+  assert.match(source, /const lowStockCount=stockAlerts\.length/);
 });

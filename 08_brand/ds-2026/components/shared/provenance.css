@@ -18,26 +18,27 @@
 
 .sdp-provenance { white-space: nowrap; }
 
-/* El pictograma es una máscara sobre currentColor: no depende de que la
-   fuente tenga el glifo, y hereda el color del rótulo. */
-.sdp-provenance[data-provenance]::before {
+/* The mark is an SVG mask filled with currentColor, never a font glyph:
+   ● ◆ ◇ ◎ △ ⬡ ◌ are not in Plex or Gaya, so each device would substitute
+   its own font. --provenance-*-symbol remains for plain-text contexts. */
+.sdp-provenance:is([data-provenance="measured"], [data-provenance="calculated"], [data-provenance="estimated"], [data-provenance="target"], [data-provenance="manual"], [data-provenance="simulated"], [data-provenance="pending"])::before {
   content: "";
   flex: none;
   width: 1em;
   height: 1em;
-  background: currentColor;
-  -webkit-mask: var(--provenance-icon) center / contain no-repeat;
-  mask: var(--provenance-icon) center / contain no-repeat;
+  background-color: currentColor;
+  -webkit-mask: var(--provenance-mark) center / contain no-repeat;
+          mask: var(--provenance-mark) center / contain no-repeat;
 }
 
-/* Canonical attribute API: symbol + semantic marker. */
-.sdp-provenance[data-provenance="measured"]   { --provenance-icon: var(--provenance-measured-icon);   --provenance-marker: var(--status-ok-marker); }
-.sdp-provenance[data-provenance="calculated"] { --provenance-icon: var(--provenance-calculated-icon); --provenance-marker: var(--text-secondary); }
-.sdp-provenance[data-provenance="estimated"]  { --provenance-icon: var(--provenance-estimated-icon);  --provenance-marker: var(--status-warn-marker); }
-.sdp-provenance[data-provenance="target"]     { --provenance-icon: var(--provenance-target-icon);     --provenance-marker: var(--brand-accent); }
-.sdp-provenance[data-provenance="manual"]     { --provenance-icon: var(--provenance-manual-icon);     --provenance-marker: var(--text-primary); }
-.sdp-provenance[data-provenance="simulated"]  { --provenance-icon: var(--provenance-simulated-icon);  --provenance-marker: var(--text-secondary); border-left-style: dashed; }
-.sdp-provenance[data-provenance="pending"]    { --provenance-icon: var(--provenance-pending-icon);    --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }
+/* Canonical attribute API: mark + semantic marker. */
+.sdp-provenance[data-provenance="measured"]   { --provenance-mark: var(--provenance-measured-mark);        --provenance-marker: var(--status-ok-marker); }
+.sdp-provenance[data-provenance="calculated"] { --provenance-mark: var(--provenance-calculated-mark);      --provenance-marker: var(--text-secondary); }
+.sdp-provenance[data-provenance="estimated"]  { --provenance-mark: var(--provenance-estimated-mark);       --provenance-marker: var(--status-warn-marker); }
+.sdp-provenance[data-provenance="target"]     { --provenance-mark: var(--provenance-target-mark);          --provenance-marker: var(--brand-accent); }
+.sdp-provenance[data-provenance="manual"]     { --provenance-mark: var(--provenance-manual-mark);          --provenance-marker: var(--text-primary); }
+.sdp-provenance[data-provenance="simulated"]  { --provenance-mark: var(--provenance-simulated-mark);       --provenance-marker: var(--text-secondary); border-left-style: dashed; }
+.sdp-provenance[data-provenance="pending"]    { --provenance-mark: var(--provenance-pending-mark);         --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }
 
 /* Legacy modifier aliases: styling only; migrate markup to data-provenance. */
 .sdp-provenance--measured   { --provenance-marker: var(--status-ok-marker); }

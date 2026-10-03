@@ -33,6 +33,8 @@
 }
 .sdp-btn--secondary:hover { background: var(--action-secondary-hover); }
 
+/* Accent is outlined: coral signs the action without reading as an alarm.
+   A filled coral button is reserved for .sdp-btn--danger. */
 .sdp-btn--accent {
   background: var(--action-secondary);
   border-color: var(--action-accent);

@@ -3,12 +3,12 @@
     "setas": {
       "type": "stdio",
       "command": "sh",
-      "args": ["${CLAUDE_PROJECT_DIR}/mcp/run_server.sh", "setas_mcp.py"]
+      "args": ["mcp/run_server.sh", "setas_mcp.py"]
     },
     "setas-bridge": {
       "type": "stdio",
       "command": "sh",
-      "args": ["${CLAUDE_PROJECT_DIR}/mcp/run_server.sh", "setas_bridge_mcp.py"]
+      "args": ["mcp/run_server.sh", "setas_bridge_mcp.py"]
     }
   }
 }

@@ -36,13 +36,13 @@
   width: 1em;
   height: 1em;
   background: currentColor;
-  -webkit-mask: var(--sync-icon, var(--sync-synced-icon)) center / contain no-repeat;
-  mask: var(--sync-icon, var(--sync-synced-icon)) center / contain no-repeat;
+  -webkit-mask: var(--sync-mark, var(--sync-synced-mark)) center / contain no-repeat;
+  mask: var(--sync-mark, var(--sync-synced-mark)) center / contain no-repeat;
 }
-.sdp-sync-chip--synced  { --sync-icon: var(--sync-synced-icon); }
-.sdp-sync-chip--pending { --sync-icon: var(--sync-pending-icon); }
-.sdp-sync-chip--error   { --sync-icon: var(--sync-error-icon); }
-.sdp-sync-chip--offline { --sync-icon: var(--sync-offline-icon); }
+.sdp-sync-chip--synced  { --sync-mark: var(--sync-synced-mark); }
+.sdp-sync-chip--pending { --sync-mark: var(--sync-pending-mark); }
+.sdp-sync-chip--error   { --sync-mark: var(--sync-error-mark); }
+.sdp-sync-chip--offline { --sync-mark: var(--sync-offline-mark); }
 
 .sdp-offline-banner {
   display: flex;

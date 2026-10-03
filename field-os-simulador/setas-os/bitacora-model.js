@@ -15,6 +15,19 @@
     nameko: 32000
   };
 
+  const knownNumber=v=>(typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&Number.isFinite(Number(v))&&Number(v)>=0?Number(v):null;
+  const economicEvidence=(lote,estimatedCost,harvestValue,totalFresh)=>{
+    const components=['sustrato','spawn','energia','consumibles'].map(id=>{
+      const row=lote.recordedCosts?.[id],amount=knownNumber(row?.amountCop);
+      return {id,amountCop:amount,source:row?.source||null,recorded:amount!==null&&typeof row?.source==='string'&&row.source.trim()!==''};
+    });
+    const complete=components.every(c=>c.recorded);
+    const partialTotal=components.filter(c=>c.recorded).reduce((n,c)=>n+c.amountCop,0);
+    const sales=Array.isArray(lote.sales)?lote.sales:null;
+    const validSales=sales&&sales.every(s=>s.id&&knownNumber(s.amountCop)!==null&&s.recordedAt)&&new Set(sales.map(s=>s.id)).size===sales.length;
+    const revenue=validSales?sales.reduce((n,s)=>n+Number(s.amountCop),0):null;
+    return {schema:'setas.batch-economics.v2',estimatedCostCop:estimatedCost,estimatedHarvestValueCop:harvestValue,components,recordedCostCop:complete?partialTotal:null,partialRecordedCostCop:partialTotal,costComplete:complete,recordedRevenueCop:revenue,recordedMarginCop:complete&&revenue!==null?revenue-partialTotal:null,totalCostPerFreshKgCop:complete&&totalFresh>0?partialTotal/totalFresh:null};
+  };
   const calcLoteStats = (lote, bolsas = [], cosechas = []) => {
     if (!lote) return null;
     if (!bolsas.length) return null;
@@ -35,18 +48,18 @@
     // Costeo económico e inversión real incurrida del lote
     const sustCost = lote.costoIngKg > 0 && peseSeco > 0 ? lote.costoIngKg * peseSeco : (peseSeco * 1200);
     const spawnKg = lote.spawnKg != null ? parseFloat(lote.spawnKg) : (peseSeco > 0 ? (peseSeco / (1 - 0.67)) * 0.08 : bolsas.length * 0.16);
-    const spawnCostKg = parseFloat(lote.spawnCostKg) || 12000;
+    const spawnCostKg = knownNumber(lote.spawnCostKg) ?? 12000;
     const spawnCostTotal = spawnKg * spawnCostKg;
-    const energyCopKg = parseFloat(lote.energyCopKg) || 350;
+    const energyCopKg = knownNumber(lote.energyCopKg) ?? 350;
     const energyCostTotal = peseSeco * energyCopKg;
-    const bagConsumableCostUnit = parseFloat(lote.bagConsumableCostUnit) || 300;
+    const bagConsumableCostUnit = knownNumber(lote.bagConsumableCostUnit) ?? 300;
     const bagConsumableCostTotal = bolsas.length * bagConsumableCostUnit;
     const costoIncurridoTotal = sustCost + spawnCostTotal + energyCostTotal + bagConsumableCostTotal;
     const costoIncurridoPorBolsa = bolsas.length > 0 ? costoIncurridoTotal / bolsas.length : 0;
 
     // Ingresos de cosecha y margen real en COP
     const sKey = lote.sKey || 'p_ostreatus_gris';
-    const precioVentaKg = parseFloat(lote.precioVentaKg) || DEFAULT_FRESH_PRICES[sKey] || 22000;
+    const precioVentaKg = knownNumber(lote.precioVentaKg) ?? DEFAULT_FRESH_PRICES[sKey] ?? 22000;
     const ingresoRealTotal = totalFresco * precioVentaKg;
     const margenRealTotal = totalFresco > 0 ? ingresoRealTotal - costoIncurridoTotal : 0;
     const margenRealPct = ingresoRealTotal > 0 ? (margenRealTotal / ingresoRealTotal) * 100 : 0;
@@ -78,6 +91,7 @@
     const costoKg = totalFresco > 0 && lote.costoIngKg > 0 ? (lote.costoIngKg * peseSeco) / totalFresco : null;
 
     return {
+      economics: economicEvidence(lote,costoIncurridoTotal,ingresoRealTotal,totalFresco),
       bolsasSanas, bolsasContaminadas, contPct,
       totalFresco, be, diasCol, costoKg,
       numBolsas: bolsas.length,
@@ -186,7 +200,7 @@
     try { entries.forEach(([key,value])=>storage.setItem(key,JSON.stringify(value))); }
     catch(error) { before.forEach(([key,value])=>{try{value===null?storage.removeItem(key):storage.setItem(key,value);}catch{}}); throw error; }
   };
-  const api = { calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture };
+  const api = { economicEvidence, calcLoteStats, calcLoteScore, isFechaColValida, captureNumber, captureError, normalizeTrialCapture, normalizeHarvestCapture, persistCapture };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasBitacora = api;
 })();

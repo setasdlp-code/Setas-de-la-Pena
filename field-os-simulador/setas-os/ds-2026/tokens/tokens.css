@@ -63,6 +63,7 @@
   --brand-secondary: var(--slate-500);
   --brand-accent-tint: var(--coral-tint);
   --status-ok: var(--moss-700);
+  --status-ok-marker: var(--moss-500);
   --status-warn: var(--warning);
   --status-warn-text: var(--warning-text);
   --status-error: var(--coral-700);
@@ -71,7 +72,6 @@
   --status-warn-bg: var(--warning-tint);
   --status-warn-marker: var(--warning-text);
   --status-error-bg: var(--coral-tint);
-  --status-ok-marker: var(--moss-500);
   --action-primary: var(--moss-700);
   --action-secondary: var(--paper-50);
   --focus-ring: var(--moss-700);
@@ -167,19 +167,19 @@
   --rule-heavy: 2px solid var(--border-heavy);
   --rule-frame: 1px solid var(--border-hairline);
   --rule-editorial: 1px solid var(--ink);
-  --shadow-none: none;
-  --tap-target-min: 44px;
-  --field-cell-min-height: 48px;
-  --print-code-x-height: 3mm;
   --thermal-width: 50mm;
   --thermal-height: 30mm;
   --thermal-padding: 1.5mm;
   --thermal-frame: 0.5mm;
   --thermal-bar: 1.5mm;
+  --shadow-none: none;
+  --tap-target-min: 44px;
+  --field-cell-min-height: 48px;
+  --print-code-x-height: 3mm;
   --pictogram-grid: 48;
   --pictogram-stroke: 1.5px;
 
-  /* Component measures — fixed dimensions the components used to hard-code */
+  /* Component measurements (spacing.json → structure.component) */
   --bar-height: 4px;
   --marker-width: 3px;
   --band-rule: 5px;
@@ -188,8 +188,9 @@
   --size-data-xl: 36px;
   --ingredient-size: 64px;
   --step-index: 40px;
-  --step-key: 28px;
+  --step-index-sm: 28px;
   --plate-height: 148px;
+  --rule-offset: 3px;
 
   /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */
   --provenance-measured-symbol: "●";
@@ -204,19 +205,18 @@
   --sync-error-symbol: "✕";
   --sync-offline-symbol: "⚡";
 
-  /* 6b · DOMAIN PICTOGRAMS — mask sources inlined as data URIs so the token
-      resolves identically from any consumer's stylesheet path */
-  --provenance-measured-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-measured'%3E %3Ccircle cx='24' cy='24' r='9' fill='currentColor' stroke='none'/%3E %3C/svg%3E");
-  --provenance-calculated-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-calculated'%3E %3Cpath d='M24 9 39 24 24 39 9 24Z' fill='currentColor' stroke='none'/%3E %3C/svg%3E");
-  --provenance-estimated-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-estimated'%3E %3Cpath d='M24 10 38 24 24 38 10 24Z'/%3E %3C/svg%3E");
-  --provenance-target-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-target'%3E %3Ccircle cx='24' cy='24' r='14'/%3E%3Ccircle cx='24' cy='24' r='6' fill='currentColor' stroke='none'/%3E %3C/svg%3E");
-  --provenance-manual-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-manual'%3E %3Cpath d='M24 11 38 36H10Z'/%3E %3C/svg%3E");
-  --provenance-simulated-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-simulated'%3E %3Cpath d='M24 9 37 16.5v15L24 39 11 31.5v-15Z'/%3E %3C/svg%3E");
-  --provenance-pending-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='provenance-pending'%3E %3Ccircle cx='24' cy='24' r='13' stroke-dasharray='4 4'/%3E %3C/svg%3E");
-  --sync-synced-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-synced'%3E %3Cpath d='M11 25l8 9 18-20'/%3E %3C/svg%3E");
-  --sync-pending-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-pending'%3E %3Ccircle cx='24' cy='24' r='13' stroke-dasharray='4 4'/%3E %3C/svg%3E");
-  --sync-error-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-error'%3E %3Cpath d='M13 13l22 22M35 13L13 35'/%3E %3C/svg%3E");
-  --sync-offline-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' width='48' height='48' fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='butt' stroke-linejoin='miter' role='img' aria-label='sync-offline'%3E %3Cpath d='M26 8 13 27h9l-2 13 15-20h-9Z'/%3E %3C/svg%3E");
+  /* Domain marks: SVG drawn via mask + currentColor, identical on every device */
+  --provenance-measured-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.5'/%3E%3C/svg%3E");
+  --provenance-calculated-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1 11 6 6 11 1 6Z'/%3E%3C/svg%3E");
+  --provenance-estimated-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1.75 10.25 6 6 10.25 1.75 6Z' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+  --provenance-target-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.25' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Ccircle cx='6' cy='6' r='1.75'/%3E%3C/svg%3E");
+  --provenance-manual-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1.9 10.6 10.1H1.4Z' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+  --provenance-simulated-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1.4 9.98 3.7V8.3L6 10.6 2.02 8.3V3.7Z' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+  --provenance-pending-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.25' fill='none' stroke='%23000' stroke-width='1.5' stroke-dasharray='1.6 1.74'/%3E%3C/svg%3E");
+  --sync-synced-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.5 4.75 9.25 10 3' fill='none' stroke='%23000' stroke-width='1.75'/%3E%3C/svg%3E");
+  --sync-pending-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='4.25' fill='none' stroke='%23000' stroke-width='1.5' stroke-dasharray='1.6 1.74'/%3E%3C/svg%3E");
+  --sync-error-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5' fill='none' stroke='%23000' stroke-width='1.75'/%3E%3C/svg%3E");
+  --sync-offline-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M7 .75 2.5 7H6L5 11.25 9.5 5H6Z'/%3E%3C/svg%3E");
   --status-quarantine-border-style: dashed;
 }
 

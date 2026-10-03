@@ -87,6 +87,72 @@ def check_live_kb_has_no_fabricated_values(m) -> None:
             raise AssertionError(f"masters_mix BE volvió a fabricar un valor desde: {value[:70]!r}")
 
 
+def check_be_reference_is_found(m) -> None:
+    """Los tres umbrales de BE deben leer la frase que el KB sí documenta.
+
+    Apuntaban a filas de tabla inexistentes, así que salían como "no hay
+    fuente" mientras production_schedule.md documenta 40–70% y el app usa
+    80/100/70. Un hueco de cobertura y una divergencia real se triagean
+    distinto; esto fija que se reporte la segunda.
+    """
+    point = next(p for p in m.KPI_SYNC_POINTS if p.app_source == "KPI.beTarget")
+    candidates, _ = m.kb_candidates_for(point.kb_file, point.kb_section_pattern, point.kb_row_pattern)
+    if not candidates:
+        raise AssertionError("la BE de referencia del KB dejó de encontrarse")
+    if not any(c.lo == 40 and c.hi == 70 for c in candidates):
+        raise AssertionError(f"se esperaba leer 40–70 de la BE de referencia, se leyó {[c.raw for c in candidates]}")
+
+
+def check_yield_per_block_stays_unsourced(m) -> None:
+    """800 g/bloque no tiene fuente, y el rango de empaque no es su fuente.
+
+    "Empacar en bolsas (500–1,000 g por bloque)" es masa de sustrato empacado,
+    no cosecha fresca. Apuntar ahí el KPI haría que el checker declarara que
+    coincide comparando magnitudes distintas — daría por validado un número
+    que nadie midió. El punto debe seguir existiendo (para que el hueco se
+    reporte) y seguir sin candidatos.
+    """
+    point = next(p for p in m.KPI_SYNC_POINTS if p.app_source == "KPI.yieldPerBlock")
+    candidates, combined = m.kb_candidates_for(point.kb_file, point.kb_section_pattern, point.kb_row_pattern)
+    if candidates or combined:
+        raise AssertionError(
+            f"yieldPerBlock quedó con fuente: {[c.raw for c in candidates]} — "
+            "verificar que no se cableó al rango de empaque"
+        )
+
+
+def check_latex_ranges_are_read_as_ranges(m) -> None:
+    """`$85\\text{–}90\\text{ °C}$` es un rango, no dos valores sueltos.
+
+    09_research escribe números en LaTeX. Sin desenvolver \\text{}, el guion
+    del rango queda oculto y 85–90 se lee como 85 y 90: suficiente para
+    reportar 88 °C como divergencia estando dentro del rango documentado.
+    """
+    got = m.extract_candidates(r"a $85\text{–}90\text{ °C}$ durante 2 a 3 horas")
+    if not any(c.lo == 85 and c.hi == 90 for c in got):
+        raise AssertionError(f"rango LaTeX no leído como rango: {[c.raw for c in got]}")
+
+
+def check_documented_extractions_are_compared(m) -> None:
+    """Hericium/Reishi sí tienen cinética de extracción documentada.
+
+    El checker afirmaba en bloque que extraction-factors.json no tiene
+    contraparte en knowledge_base/. deep_research_synthesis_2026.md §1 la tiene
+    para Hericium/Reishi, y el app la contradice en varios parámetros.
+    """
+    if not m.EXTRACTION_SYNC_POINTS:
+        raise AssertionError("se perdieron los puntos de extracción documentados")
+    for point in m.EXTRACTION_SYNC_POINTS:
+        candidates, _ = m.kb_candidates_for(point.kb_file, point.kb_section_pattern, point.kb_row_pattern)
+        if not candidates:
+            raise AssertionError(f"sin candidatos para {point.entity} / {point.parameter}")
+    # Las especies sin fuente no deben quedar cubiertas por accidente.
+    covered = {s for (s, _m) in m.EXTRACTION_COVERED_PARAMS}
+    for species in ("p_ostreatus_gris", "shiitake"):
+        if species in covered:
+            raise AssertionError(f"{species} no tiene fuente documentada y quedó marcada como cubierta")
+
+
 def main() -> int:
     m = load_checker()
     for check in (
@@ -94,6 +160,10 @@ def main() -> int:
         check_declining_prose_yields_no_value,
         check_co2_label_is_not_substring_of_words,
         check_live_kb_has_no_fabricated_values,
+        check_be_reference_is_found,
+        check_yield_per_block_stays_unsourced,
+        check_latex_ranges_are_read_as_ranges,
+        check_documented_extractions_are_compared,
     ):
         check(m)
     print("check_kb_sync parsing: OK")

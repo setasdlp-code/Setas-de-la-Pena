@@ -33,10 +33,11 @@
    carried by a strong left rule and spacing, never by color alone. */
 .sdp-band {
   background: var(--surface-page);
+  border: var(--rule-frame);
   border-left: var(--band-rule) solid var(--border-heavy);
   padding: var(--space-2);
 }
 .sdp-band + .sdp-band { margin-top: var(--space-3); }
 .sdp-band--atencion { border-left-color: var(--status-error); }
-.sdp-band--ahora     { border-left-color: var(--status-ok); }
+.sdp-band--ahora     { border-left-color: var(--status-ok-marker); }
 .sdp-band--despues   { border-left-color: var(--text-secondary); }

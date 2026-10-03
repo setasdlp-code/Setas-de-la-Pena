@@ -162,6 +162,14 @@ test.describe('desktop navigation contract', () => {
     expect(layoutBefore.ingredientsTop).toBeGreaterThan(layoutBefore.evaluationTop);
     expect(layoutBefore.advancedTop).toBeGreaterThan(layoutBefore.ingredientsTop);
 
+    // A fresh workspace has no physical inventory. Recipe exploration must
+    // explicitly use the catalog instead of relying on seeded Bodega stock.
+    const origin = (await page.getByRole('group', { name: 'Origen de ingredientes', exact: true }).isVisible())
+      ? page.getByRole('group', { name: 'Origen de ingredientes', exact: true })
+      : page.getByRole('group', { name: 'Origen de ingredientes en la receta activa', exact: true });
+    const catalogBtn = origin.getByRole('button', { name: 'Catálogo', exact: true });
+    await catalogBtn.click();
+    await expect(catalogBtn).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true }).click();
     await expect(liveSummary).toBeVisible();
     await expect(liveSummary).toContainText('Paja de trigo');

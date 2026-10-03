@@ -855,6 +855,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .bgood{ color:var(--moss-500); border-color:var(--moss-300); background:var(--paper-50); }
 .sim-root .bwarn{ color:var(--ochre-700); border-color:var(--ochre-500); background:var(--paper-50); }
 .sim-root .bbad{ color:var(--coral-700); border-color:var(--coral-300); background:var(--paper-50); }
+/* Métrica sin objetivo con fuente (p. ej. costo): se muestra sin calificar. */
+.sim-root .bneutral{ color:var(--ink-500); border-color:var(--border-soft); background:var(--paper-50); }
 
 /* ── C:N GAUGE (field measurement) ──────────────────────────────── */
 .sim-root .gauge-wrap{ margin:0 0 24px; }
@@ -4723,6 +4725,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .climate-kpi-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 14px 16px;
   background: var(--paper-0);
   border: 1px solid var(--border-hairline, var(--color-species-name));
@@ -4732,6 +4736,21 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   gap: 6px;
 }
 
+@media (max-width: 560px) {
+  .sim-root .climate-kpi-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .sim-root .climate-kpi-grid > .climate-kpi-card { grid-column: auto !important; }
+}
+
+.sim-root .climate-kpi-value > span:first-child {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.sim-root .climate-kpi-grid [data-freshness="stale"] {
+  color: var(--warning-text, #8C6B2E);
+  border-color: currentColor;
+}
+
 .sim-root .climate-kpi-card.out-of-band {
   border-left: 4px solid var(--accent-terracotta, var(--color-terracotta));
   background: var(--surface-cream-alt);
@@ -4739,6 +4758,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .climate-kpi-header {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   /* Arriba, no al centro: cuando el titulo ocupa dos lineas (HUMEDAD
      RELATIVA, VPD & PSICROMETRIA) centrar deja el chip de procedencia a
@@ -4752,6 +4773,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   letter-spacing: .05em;
 }
 
+.sim-root .climate-kpi-header > div {
+  min-width: 0;
+  flex-wrap: wrap;
+}
 /* Sin esto el titulo no puede encogerse por debajo de su contenido y se
    solapa con el bloque de la derecha en vez de partirse en dos lineas. */
 .sim-root .climate-kpi-header > :first-child { min-width: 0; }
@@ -5501,7 +5526,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: var(--paper-100);
 }
 
-/* ==========================================================================
+/* ============================================================
    CATÁLOGO & RECETARIO (vista fusionada, 2026-09)
    La rejilla de especies es el filtro maestro del recetario: la especie
    seleccionada define qué recetas guardadas se listan debajo.
@@ -5949,6 +5974,28 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   text-transform: uppercase;
   color: var(--ink-muted, #666666);
   margin-top: 2px;
+}
+
+/* La franja del formulador usa una nota de 8 px, que es correcta como pie de
+   dato pero ilegible en un modal que el operario debe leer ANTES de descontar
+   bodega. Ahí la procedencia se lee al tamaño del resto del texto, y si algún
+   insumo va con estimación de catálogo toma el mismo tono de aviso que el
+   resto de advertencias del modal. */
+.sim-root .os-provenance-notice {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--ink-700);
+  border-left: 2px solid var(--paper-300);
+  padding: 4px 0 4px 8px;
+}
+
+.sim-root .os-provenance-notice--estimated {
+  color: var(--coral-700);
+  border-left-color: var(--coral-700);
+  background: color-mix(in oklab, var(--coral-100) 45%, var(--paper-50));
+  padding: 6px 8px;
 }
 
 .sim-root .os-provenance-line::before {
@@ -6469,4 +6516,127 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     background: var(--paper-2);
     color: var(--ink-0);
   }
+}
+
+/* Prototype operational forms use the existing typographic and color system. */
+.prototype-panel{padding:16px;border:1px solid var(--border-soft);margin:12px 0;min-width:0}
+.prototype-panel p{line-height:1.5;overflow-wrap:anywhere}
+.prototype-panel label{display:block;font-size:14px}
+.prototype-panel input:not([type=checkbox]),.prototype-panel select,.prototype-panel textarea{display:block;width:100%;box-sizing:border-box;min-height:44px;font:inherit;font-size:16px;margin:6px 0 12px;padding:8px;border:1px solid var(--border-soft);background:var(--paper-50);color:var(--ink-900)}
+.prototype-panel button{min-height:44px;min-width:44px;white-space:normal;margin:4px}
+.prototype-panel details{padding:12px 0}.prototype-panel summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+.prototype-check{display:flex!important;align-items:center;gap:12px;padding:12px 0}.prototype-check input{width:24px;height:24px;flex-shrink:0}
+.prototype-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.sim-root .bag-observation-editor { min-width:180px; display:flex; flex-direction:column; gap:6px; }
+.sim-root .bag-observation-editor input { width:100%; box-sizing:border-box; min-height:44px; padding:8px; font-size:16px; border:1px solid var(--border-hairline); background:var(--paper-50); color:var(--ink-0); }
+.sim-root .bag-observation-editor > div { display:flex; flex-wrap:wrap; gap:6px; }
+.sim-root .bag-observation-editor button { min-height:44px; }
+.sim-root .bag-observation-editor > span { font-size:12px; color:var(--ink-2); }
+.sim-root .bag-observation-editor > [role="alert"] { color:var(--coral-700); }
+
+/* Clima: operational controls for narrow screens and keyboards. */
+.sim-root .climate-dashboard { min-width:0; overflow-wrap:anywhere; }
+.sim-root .climate-dashboard button { min-height:44px!important; min-width:44px; touch-action:manipulation; white-space:normal; }
+.sim-root .climate-dashboard select { min-height:44px; font-size:16px!important; max-width:100%; }
+.sim-root .climate-dashboard input[type="range"] { min-height:44px; margin:0; touch-action:pan-y; }
+.sim-root .climate-dashboard :is(button,select,input,[role="button"]):focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
+.sim-root .climate-dashboard canvas { max-width:100%; height:auto; }
+.sim-root .climate-dashboard .climate-range-pills { flex-wrap:wrap; }
+.sim-root .climate-dashboard .climate-actuator-head { flex-wrap:wrap; gap:8px; }
+.sim-root .climate-dashboard .climate-actuator-card > div:has(> button) { flex-wrap:wrap; }
+.sim-root .climate-dashboard .climate-cycle-banner > div { min-width:0; }
+@media(max-width:560px) {
+ .sim-root .climate-dashboard .climate-actuators-grid { grid-template-columns:minmax(0,1fr); }
+ .sim-root .climate-dashboard .climate-cycle-banner { flex-direction:column; align-items:stretch; }
+ .sim-root .climate-dashboard .climate-cycle-banner button { flex:1 1 100%; }
+ .sim-root .climate-dashboard .climate-log-row { flex-wrap:wrap; gap:4px; }
+}
+.sim-root .climate-dashboard input[type="range"] { background:transparent; }
+.sim-root .climate-dashboard input[type="range"]::-webkit-slider-runnable-track { height:6px; background:var(--line-1); }
+.sim-root .climate-dashboard input[type="range"]::-webkit-slider-thumb { width:24px; height:24px; margin-top:-9px; }
+.sim-root .climate-dashboard input[type="range"]::-moz-range-track { height:6px; background:var(--line-1); }
+.sim-root .climate-dashboard input[type="range"]::-moz-range-thumb { width:24px; height:24px; }
+
+/* Hub IoT: scoped operational controls and one bounded scroll surface. */
+.sim-root .iot-hub-dialog { display:flex; flex-direction:column; max-height:calc(100dvh - 32px); }
+.sim-root .iot-hub-header, .sim-root .iot-hub-navigation, .sim-root .iot-hub-footer { flex-shrink:0; }
+.sim-root .iot-hub-header > div { min-width:0; }
+.sim-root .iot-hub-navigation { padding:16px 24px 0; }
+.sim-root .iot-hub-dialog .iot-hub-pills { flex-wrap:wrap; overflow:visible; }
+.sim-root .iot-hub-dialog .iot-hub-pill { min-height:44px; white-space:normal; text-align:left; transition:background-color .15s,color .15s,border-color .15s; }
+.sim-root .iot-hub-body { padding:20px 24px; min-height:0; overflow-y:auto; overscroll-behavior:contain; overflow-wrap:anywhere; }
+.sim-root .iot-hub-dialog button { min-height:44px; min-width:44px; flex-shrink:0; }
+.sim-root .iot-hub-dialog .modal-icon-close { width:44px!important; height:44px!important; }
+.sim-root .iot-hub-dialog .field-input { display:block; width:100%; min-width:0; min-height:44px; box-sizing:border-box; padding:10px 12px; font-size:16px!important; color:var(--ink-0); background:var(--paper-0); border:1px solid var(--border-hairline); }
+.sim-root .iot-hub-dialog label { font-size:12px; }
+.sim-root .iot-hub-dialog label[for] { display:block; margin-bottom:6px; font-family:var(--font-mono); font-weight:700; }
+.sim-root .iot-hub-dialog label:has(input[type="checkbox"]) { min-height:44px; padding:4px 0; }
+.sim-root .iot-hub-dialog input[type="checkbox"] { width:20px; height:20px; flex-shrink:0; }
+.sim-root .iot-hub-server-fields { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:12px; }
+.sim-root .iot-hub-export, .sim-root .iot-hub-export > div { flex-wrap:wrap; gap:8px; }
+.sim-root .iot-hub-dialog :is(button,input,select,textarea,[tabindex]):focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+@media(max-width:560px) {
+  .sim-root .iot-hub-header { padding:16px!important; }
+  .sim-root .iot-hub-navigation { padding:12px 16px 0; }
+  .sim-root .iot-hub-dialog .iot-hub-pills { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+  .sim-root .iot-hub-dialog .iot-hub-pill { padding:8px; }
+  .sim-root .iot-hub-body { padding:16px; }
+  .sim-root .iot-hub-body > div > div[style*="grid-template-columns"] { grid-template-columns:minmax(0,1fr)!important; }
+  .sim-root .iot-hub-server-fields { grid-template-columns:minmax(0,1fr); }
+  .sim-root .iot-hub-dialog .iot-node-header { flex-direction:column; }
+}
+
+.sim-root .inv-modal-bg.iot-hub-backdrop { padding:16px!important; align-items:center!important; }
+.sim-root .inv-modal.iot-hub-dialog { padding:0!important; margin:0!important; overflow:hidden!important; }
+
+/* Hoy keeps turn actions ahead of optional summaries. */
+.sim-root .home-secondary-summary { border:1px solid var(--border-hairline); padding:0 16px; min-width:0; }
+.sim-root .home-secondary-summary summary { min-height:48px; display:flex; align-items:center; cursor:pointer; font-size:14px; font-weight:600; }
+.sim-root .home-secondary-summary summary::before { content:'+'; margin-right:10px; font-family:var(--font-mono); }
+.sim-root .home-secondary-summary[open] summary::before { content:'−'; }
+.sim-root .home-secondary-summary summary:focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
+.sim-root .home-secondary-summary .home-registro-row, .sim-root .home-secondary-summary .home-live-telemetry { margin-top:0!important; padding-top:12px!important; padding-bottom:16px; }
+@media(max-width:560px) {
+ .sim-root .home-header-cockpit { padding:14px 16px; }
+ .sim-root .home-cockpit { gap:12px; }
+ .sim-root .home-quick-actions-strip { grid-template-columns:minmax(0,1fr)!important; }
+}
+
+/* Formulador: composición primero; metodología y procedencia a un paso. */
+.sim-root .form-support-details{margin:0 0 12px;border:1px solid var(--border-soft);background:var(--paper-panel);}
+.sim-root .form-support-details > summary{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 14px;cursor:pointer;color:var(--ink-800);font:600 var(--text-sm)/1.4 var(--font-body);list-style:none;}
+.sim-root .form-support-details > summary::-webkit-details-marker{display:none;}
+.sim-root .form-support-details > summary::before{content:'+';font:700 18px/1 var(--font-mono);}
+.sim-root .form-support-details[open] > summary::before{content:'−';}
+.sim-root .form-support-details > summary:focus-visible{outline:2px solid var(--accent-olive);outline-offset:2px;}
+.sim-root .form-support-details .form-summary-strip,.sim-root .form-support-details .form-flow{margin:0;border:0;}
+.sim-root .form-species-context{grid-template-columns:minmax(0,1fr) minmax(190px,1fr) minmax(190px,1fr);gap:12px;}
+
+.sim-root .form-species-context .form-species-picker select{min-height:44px;}
+@media(max-width:900px){
+ .sim-root .form-species-context{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .sim-root .form-species-context .form-species-identity{grid-column:1/-1;}
+}
+@media(max-width:560px){
+ .sim-root .form-species-context.has-recipe{grid-template-columns:minmax(0,1fr);}
+ .sim-root .form-method-details .form-flow{display:block;}
+}
+
+.sim-root .form-species-context .form-species-origin-toggle{display:grid;gap:5px;}
+.sim-root .form-species-origin-toggle > span{color:rgba(255,255,255,.65);font:700 var(--text-2xs)/1.2 var(--font-mono);}
+.sim-root .form-species-origin-toggle > div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.sim-root .form-species-origin-toggle button{min-height:44px;border:1px solid rgba(255,255,255,.42);background:transparent;color:var(--paper-0);font:700 var(--text-xs)/1.2 var(--font-body);cursor:pointer;}
+.sim-root .form-species-origin-toggle button.is-active{background:var(--paper-0);color:var(--ink-900);}
+.sim-root .form-species-origin-toggle button:focus-visible{outline:2px solid var(--paper-0);outline-offset:2px;}
+.sim-root .form-method-details .form-species-targets{padding:12px 14px;border:0;border-bottom:1px solid var(--border-soft);}
+.sim-root .form-method-details .form-species-targets small{color:var(--ink-600);}
+.sim-root .form-method-details .form-species-targets b{color:var(--ink-900);}
+@media(max-width:560px){.sim-root .form-method-details .form-species-targets{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}}
+
+@media(max-width:560px){
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;}
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-left{grid-column:1/-1;min-width:0;}
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-metrics{margin:0;flex-wrap:nowrap;}
+ .sim-root .builder-wrap > .sim-live-dashboard .live-dash-actions{grid-column:2;grid-row:2;justify-content:flex-end;}
 }

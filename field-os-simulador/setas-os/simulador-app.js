@@ -1,7 +1,164 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 99576c87b1c5c6dd9afc690fa8738428436f077ce39fc9222091fc2ec6444a26
+// source-hash: 692a661c8e6bca3dd735cc6dbc3f146b2cbac2005cb856edd6b07e6acc982e8e
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
+function BagObservationEditor({ bolsa, onSave }) {
+  const key = "setas_bag_observation_draft:" + bolsa.id;
+  const [text, setText] = useState(() => {
+    try {
+      return sessionStorage.getItem(key) ?? (bolsa.observaciones || "");
+    } catch {
+      return bolsa.observaciones || "";
+    }
+  });
+  const [error, setError] = useState("");
+  const dirty = text !== (bolsa.observaciones || "");
+  const discard = () => {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      setError("No se pudo eliminar el borrador. Tu texto se conserva; reintenta cancelar.");
+      return;
+    }
+    setText(bolsa.observaciones || "");
+    setError("");
+  };
+  const save = () => {
+    if (!onSave(bolsa.id, { observaciones: text }, { silent: true })) {
+      setError("No se pudo guardar. Tu texto sigue aquí; libera almacenamiento y reintenta.");
+      return;
+    }
+    setError("");
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+    }
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "bag-observation-editor" }, /* @__PURE__ */ React.createElement("input", { name: `bagObservations-${bolsa.id}`, "aria-label": `Observaciones de la bolsa ${bolsa.codigo}`, type: "text", value: text, autoComplete: "off", "aria-describedby": `bag-observation-status-${bolsa.id}`, onChange: (e) => {
+    const value = e.target.value;
+    setText(value);
+    setError("");
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      setError("El borrador no se pudo respaldar. Mantén esta pantalla abierta hasta guardarlo.");
+    }
+  }, onKeyDown: (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      discard();
+    }
+  } }), /* @__PURE__ */ React.createElement("span", { id: `bag-observation-status-${bolsa.id}`, role: error ? "alert" : "status" }, error || (dirty ? "Borrador sin guardar" : "Registro local · sincronización independiente")), dirty && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save, "aria-label": `Guardar observaciones de ${bolsa.codigo}` }, error ? "Reintentar" : "Guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: discard, "aria-label": `Cancelar observaciones de ${bolsa.codigo}` }, "Cancelar")));
+}
+function PrototypeTrialsPanel({ saved, active, onPrepare, onReload }) {
+  const [open, setOpen] = useState(false), [step, setStep] = useState(1), [message, setMessage] = useState(""), [error, setError] = useState("");
+  const [form, setForm] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("sdp_experiment_draft") || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const [plans, setPlans] = useState(() => {
+    try {
+      return SetasPrototype.read(localStorage, SetasPrototype.PLANS);
+    } catch {
+      return [];
+    }
+  });
+  const [importData, setImportData] = useState(null), [preview, setPreview] = useState(null);
+  const set = (key, value) => setForm((prev) => {
+    const next = { ...prev, [key]: value };
+    try {
+      sessionStorage.setItem("sdp_experiment_draft", JSON.stringify(next));
+    } catch {
+      setError("El borrador no pudo guardarse en esta pestaña.");
+    }
+    return next;
+  });
+  const recipes = [...active ? [{ ...active, id: "active", name: "Fórmula activa" }] : [], ...saved].filter((r) => r.recipe?.length && r.sKey);
+  const selected = (id) => recipes.find((r) => String(r.id) === id);
+  const metrics = { be_pct: "Eficiencia biológica (%)", contamination_pct: "Contaminación (%)", colonization_days: "Colonización (días)", total_fresh_kg: "Cosecha total (kg)" };
+  const save = () => {
+    try {
+      const a = selected(form.control), b = selected(form.treatment), comparison = form.design === "comparison";
+      if (!a || comparison && (!b || a.sKey !== b.sKey)) throw Error("Selecciona recetas de la misma especie.");
+      const id = "EXP_" + crypto.randomUUID();
+      const arm = (r, key) => ({ id: key, label: key === "control" ? "Referencia" : "Variante", plannedReplicates: Number(form.replicates ?? 1), batchIds: [], recipeVersionId: id + ":" + key, recipeSnapshot: { versionId: id + ":" + key, sKey: r.sKey, recipe: r.recipe, name: r.name } });
+      SetasPrototype.savePlan(localStorage, { id, title: form.title?.trim(), hypothesis: form.hypothesis?.trim(), speciesId: a.sKey, design: comparison ? "comparison" : "exploratory", primaryMetric: form.metric || "be_pct", status: "draft", control: arm(a, "control"), treatments: comparison ? [arm(b, "treatment")] : [], fixedFactors: { notes: form.fixed || "" }, plannedAt: (/* @__PURE__ */ new Date()).toISOString() });
+      setPlans(SetasPrototype.read(localStorage, SetasPrototype.PLANS));
+      setOpen(false);
+      setMessage("Plan guardado. Aún no se crearon lotes ni se descontó inventario.");
+      setError("");
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+  const exportData = async () => {
+    let db;
+    try {
+      if (window.SetasFieldEventQueue) db = await window.SetasFieldEventQueue.initializeQueue();
+      const data = await SetasPrototype.backup(localStorage, { db, accountId: window.SetasFirebase?.auth?.currentUser?.uid || null });
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "setas-ensayos-" + (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) + ".json";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1e3);
+      setMessage("Respaldo exportado. Conserva también una copia fuera de este equipo.");
+      setError("");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      db?.close();
+    }
+  };
+  const loadFile = async (event) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const data = JSON.parse(await file.text());
+      setPreview(SetasPrototype.validateBackup(data));
+      setImportData(data);
+      setError("");
+    } catch (e) {
+      setImportData(null);
+      setPreview(null);
+      setError(e.message);
+    } finally {
+      event.target.value = "";
+    }
+  };
+  const restore = () => {
+    try {
+      SetasPrototype.restore(localStorage, importData);
+      onReload();
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+  return /* @__PURE__ */ React.createElement("section", { className: "prototype-panel", "aria-label": "Ensayos y respaldos" }, /* @__PURE__ */ React.createElement("div", { className: "prototype-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setOpen(!open) }, "Planificar ensayo"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportData }, "Exportar respaldo")), open && /* @__PURE__ */ React.createElement("div", { role: "region", "aria-label": "Plan del ensayo" }, /* @__PURE__ */ React.createElement("h3", null, "Paso ", step, " de 3 · ", step === 1 ? "Propósito" : step === 2 ? "Recetas y unidades" : "Revisar"), /* @__PURE__ */ React.createElement("p", null, "Un lote preparado de forma independiente es una unidad experimental. Varias bolsas del mismo lote no equivalen a réplicas independientes."), step === 1 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Nombre del ensayo", /* @__PURE__ */ React.createElement("input", { value: form.title || "", onChange: (e) => set("title", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Pregunta / hipótesis", /* @__PURE__ */ React.createElement("textarea", { value: form.hypothesis || "", onChange: (e) => set("hypothesis", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Diseño", /* @__PURE__ */ React.createElement("select", { value: form.design || "exploratory", onChange: (e) => set("design", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "exploratory" }, "Exploratorio · una receta"), /* @__PURE__ */ React.createElement("option", { value: "comparison" }, "Comparación · referencia y variante"))), /* @__PURE__ */ React.createElement("label", null, "Medida principal", /* @__PURE__ */ React.createElement("select", { value: form.metric || "be_pct", onChange: (e) => set("metric", e.target.value) }, Object.entries(metrics).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { value: k, key: k }, v))))), step === 2 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Receta de referencia", /* @__PURE__ */ React.createElement("select", { value: form.control || "", onChange: (e) => set("control", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar"), recipes.map((r) => /* @__PURE__ */ React.createElement("option", { value: r.id, key: r.id }, r.name)))), form.design === "comparison" && /* @__PURE__ */ React.createElement("label", null, "Receta variante", /* @__PURE__ */ React.createElement("select", { value: form.treatment || "", onChange: (e) => set("treatment", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar"), recipes.map((r) => /* @__PURE__ */ React.createElement("option", { value: r.id, key: r.id }, r.name)))), /* @__PURE__ */ React.createElement("label", null, "Lotes independientes por grupo", /* @__PURE__ */ React.createElement("input", { type: "number", min: "1", step: "1", value: form.replicates ?? "1", onChange: (e) => set("replicates", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Condiciones que se mantendrán iguales", /* @__PURE__ */ React.createElement("textarea", { value: form.fixed || "", onChange: (e) => set("fixed", e.target.value) }))), step === 3 && /* @__PURE__ */ React.createElement("p", null, form.title || "Sin nombre", " · ", form.hypothesis || "Sin pregunta", " · ", metrics[form.metric || "be_pct"], " · ", form.replicates || "1", " lote(s) por grupo · ", selected(form.control)?.name || "Sin referencia", form.design === "comparison" ? " / " + (selected(form.treatment)?.name || "Sin variante") : "", ". Se conservará una copia de cada receta. Este plan no demuestra causalidad ni autoriza ejecución."), /* @__PURE__ */ React.createElement("div", { className: "prototype-actions" }, step > 1 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setStep(step - 1) }, "Anterior"), step < 3 ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: () => setStep(step + 1) }, "Continuar") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save }, "Guardar plan"))), plans.map((plan) => /* @__PURE__ */ React.createElement("details", { key: plan.id }, /* @__PURE__ */ React.createElement("summary", null, plan.title, " · ", plan.status === "draft" ? "Planificado" : "En ejecución"), /* @__PURE__ */ React.createElement("p", null, plan.hypothesis), [plan.control, ...plan.treatments].map((arm) => /* @__PURE__ */ React.createElement("button", { type: "button", key: arm.id, className: "inv-btn inv-btn-sec", disabled: arm.batchIds.length >= arm.plannedReplicates, onClick: () => onPrepare(plan, arm) }, "Planificar lote de ", arm.label, " (", arm.batchIds.length, "/", arm.plannedReplicates, ")")))), /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Restaurar respaldo en espacio vacío"), /* @__PURE__ */ React.createElement("p", null, "Se restauran registros locales. Los envíos pendientes quedan archivados para revisión, sin reenvío ni descuento automático."), /* @__PURE__ */ React.createElement("label", null, "Archivo de respaldo", /* @__PURE__ */ React.createElement("input", { type: "file", accept: ".json,application/json", onChange: loadFile })), preview && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", null, preview.batches, " lotes · ", preview.bags, " bolsas · ", preview.harvests, " cosechas · ", preview.pending, " pendientes para revisar."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: restore }, "Confirmar restauración local"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => {
+    setImportData(null);
+    setPreview(null);
+  } }, "Cancelar importación"))), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message));
+}
+function PrototypeReleaseDialog({ lote, onClose, onAuthorize }) {
+  const [form, setForm] = useState({ equipment: "", protocol: lote.tratamiento || "", reviewer: "", acknowledged: false, legacyReviewed: false }), [error, setError] = useState("");
+  const set = (key, value) => setForm((p) => ({ ...p, [key]: value }));
+  const confirm = () => {
+    try {
+      const record = SetasPrototype.release(lote, { ...form, at: (/* @__PURE__ */ new Date()).toISOString() });
+      onAuthorize(record);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+  return /* @__PURE__ */ React.createElement(AccessibleModal, { label: "Autorizar ensayo controlado", onClose, dialogStyle: { width: "min(580px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("section", { className: "prototype-panel" }, /* @__PURE__ */ React.createElement("h3", null, "Preparar ", lote.codigo), /* @__PURE__ */ React.createElement("p", null, "Autoriza esta preparación experimental y confirma el consumo de sus insumos. No valida rendimiento ni habilita producción rutinaria. Sin historial, las estimaciones siguen siendo teóricas."), /* @__PURE__ */ React.createElement("p", null, "Especificación: ", lote.preparation?.revision || "lote antiguo sin especificación versionada", "."), /* @__PURE__ */ React.createElement("label", null, "Equipo disponible", /* @__PURE__ */ React.createElement("input", { value: form.equipment, onChange: (e) => set("equipment", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Protocolo a ejecutar", /* @__PURE__ */ React.createElement("input", { value: form.protocol, onChange: (e) => set("protocol", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Responsable que autoriza", /* @__PURE__ */ React.createElement("input", { value: form.reviewer, onChange: (e) => set("reviewer", e.target.value) })), !lote.preparation && /* @__PURE__ */ React.createElement("label", { className: "prototype-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: form.legacyReviewed, onChange: (e) => set("legacyReviewed", e.target.checked) }), " Revisé receta, cantidades y proceso de este lote antiguo."), /* @__PURE__ */ React.createElement("label", { className: "prototype-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: form.acknowledged, onChange: (e) => set("acknowledged", e.target.checked) }), " Revisé equipo, insumos y advertencias; acepto las incertidumbres para este ensayo."), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), /* @__PURE__ */ React.createElement("div", { className: "prototype-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: confirm }, "Autorizar, descontar y registrar"))));
+}
 const BIO_CHECK_KEY = "setas_os_bio_check";
 const BATCHES_KEY = "setas_os_extraction_batches";
 function loadBioCheck() {
@@ -855,8 +1012,8 @@ if (typeof globalThis !== "undefined") {
   globalThis.SPP = SPP;
   globalThis.analyze = analyze;
 }
-const SetasRecipeVersionApi = typeof SetasRecipeVersion !== "undefined" ? SetasRecipeVersion : typeof require !== "undefined" ? require("./recipe-version.js") : null;
-const MASS_BALANCE_TOL = SetasRecipeVersionApi.MASS_BALANCE_TOLERANCE_PP;
+const SetasMassBalanceApi = typeof SetasMassBalance !== "undefined" ? SetasMassBalance : typeof require !== "undefined" ? require("./mass-balance.js") : null;
+const MASS_BALANCE_TOL = SetasMassBalanceApi.MASS_BALANCE_TOLERANCE_PP;
 const isMassBalanced = (a) => !!a && Math.abs(a.tot - 100) <= MASS_BALANCE_TOL;
 const massBalanceMsg = (a) => {
   if (!a) return "";
@@ -878,6 +1035,7 @@ const {
   calcMaxBatchFromStock,
   quantifyItem,
   generateOptimizer,
+  createRecipeEvaluator,
   ENERGY_COST,
   energyCostPerKgSeco,
   calcTreatment,
@@ -1287,13 +1445,20 @@ const PERITO_STATUS = {
   critical: { label: "No ejecutar", veredicto: "No ejecutar — Riesgo alto", accion: "Corregir problemas críticos antes de cualquier producción.", bg: "#FBE8E8", border: "#C53030", badge: "#8B1A1A", txt: "#6A0000" },
   sin_receta: { label: "—", veredicto: "—", accion: "", bg: "var(--paper-50)", border: "var(--border-soft)", badge: "var(--ink-500)", txt: "var(--ink-500)" }
 };
+const RECIPE_LIFECYCLE_COLOR = {
+  draft: "var(--ink-500)",
+  trial: "var(--ochre-500)",
+  approved: "var(--moss-700)",
+  retired: "var(--coral-700)",
+  legacy: "var(--ink-400)"
+};
 const FORM_ROLE_LABELS = { base_carbono: "Base C", suplemento_n: "Supl. N", suplemento_medio: "Supl. Medio", aireador: "Aireador", aditivo_ph: "pH", aditivo_estructura: "Estructura", aditivo_micronutriente: "Micronut.", aditivo_arrancador: "Arrancador" };
 const FORM_ROLE_COLORS = { base_carbono: "#5A7042", suplemento_n: "#C68F2C", suplemento_medio: "#D4A838", aireador: "#4E7A6A", aditivo_ph: "#8B5C28", aditivo_estructura: "#7A6B58", aditivo_micronutriente: "#2A6A7A", aditivo_arrancador: "#9B4F3A" };
 const peritoMainLimiter = (opt, an) => {
   if (!opt || !an) return null;
   const first = opt.items.find((i) => i.priority === "critical") || opt.items.find((i) => i.priority === "warning");
   if (!first) return null;
-  const MAP = { "↓C:N": "C:N demasiado alto — exceso de carbono sin aprovechar", "↑C:N": "C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación", "↑N": "Nitrógeno insuficiente — colonización lenta y EB reducida", "↓N": "Exceso de nitrógeno — riesgo Trichoderma", "!": "Carga sanitaria crítica — Trichoderma probable sin autoclave", "↑pH": "pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial", "↓pH": "pH demasiado alcalino — inhibe el crecimiento y favorece bacterias", "↑EB": "Potencial de EB sin explotar", "Ca": "Sin mineral estabilizador de pH", "Dig": "Sustrato de baja digestibilidad — colonización lenta" };
+  const MAP = { "↓C:N": "C:N demasiado alto — exceso de carbono sin aprovechar", "↑C:N": "C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación", "↑N": "Nitrógeno insuficiente — colonización lenta y EB reducida", "↓N": "Exceso de nitrógeno — riesgo Trichoderma", "!": "Carga sanitaria crítica — Trichoderma probable sin autoclave", "↑pH": "pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial", "↓pH": "pH demasiado alcalino — inhibe el crecimiento y favorece bacterias", "↑EB": "Potencial de EB sin explotar", "Ca": "Calcio mineral bajo el mínimo funcional (≥0,6 % CaCO₃/CaSO₄)", "Dig": "Sustrato de baja digestibilidad — colonización lenta" };
   return MAP[first.icon] || first.label;
 };
 const peritoCorreccionMinima = (opt) => {
@@ -1314,41 +1479,78 @@ const describePeritoChanges = (recipe, apply, lockedIds, ingredients) => {
   })).filter((row) => Math.abs(row.after - row.before) > 1e-6);
 };
 const PeritoChangePreview = ({ changes }) => /* @__PURE__ */ React.createElement("details", { style: { marginTop: 6, fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("summary", { style: { cursor: "pointer", fontWeight: 700 } }, "Ver cambios de la receta (", changes.length, ")"), /* @__PURE__ */ React.createElement("p", { style: { margin: "5px 0", color: "var(--ink-600)" } }, "Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo."), /* @__PURE__ */ React.createElement("ul", { style: { margin: 0, paddingLeft: 18 } }, changes.map((row) => /* @__PURE__ */ React.createElement("li", { key: row.id, style: { overflowWrap: "anywhere" } }, row.name, ": ", Number(row.before.toFixed(2)), "% → ", Number(row.after.toFixed(2)), "%"))), !changes.length && /* @__PURE__ */ React.createElement("p", null, "Esta propuesta no cambia la receta con los bloqueos actuales."));
-const PeritoItem = React.memo(({ item, onApply, baseScore, recipe, lockedIds, ingredients, speciesKey, onMorph }) => {
+const fmtClassRanges = (c) => [
+  c?.cn ? `C:N ${c.cn.min}–${c.cn.max}:1` : null,
+  c?.nPct ? `N ${c.nPct.min}–${c.nPct.max} %` : null
+].filter(Boolean).join(", ");
+const classCitation = (c) => c?.cn?.citation || c?.nPct?.citation || null;
+const SubstrateClassNote = ({ info }) => {
+  if (!info) return null;
+  const alt = info.alternative;
+  const cite = classCitation(info);
+  return /* @__PURE__ */ React.createElement("div", { "data-testid": "perito-substrate-class", "data-class": info.resolvedClass, "data-near-threshold": info.nearThreshold ? "true" : "false", style: { marginTop: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "os-provenance-line", style: { textTransform: "none", letterSpacing: 0 } }, [
+    `Clase de sustrato: ${info.fallback && info.substrateLabel && info.substrateLabel !== info.label ? `${info.substrateLabel} (sin objetivos propios; se usan los de ${info.label})` : info.label}`,
+    `suplemento ${info.supplementPct} %${info.hasMediumSupplement ? " ponderado (los suplementos medios cuentan al 60 %)" : ""}`,
+    fmtClassRanges(info) ? `objetivos ${fmtClassRanges(info)}` : null,
+    cite
+  ].filter(Boolean).join(" · ")), info.nearThreshold && alt && /* @__PURE__ */ React.createElement("div", { "data-testid": "perito-class-threshold", className: "os-provenance-notice os-provenance-notice--estimated", style: { marginTop: 4 } }, alt.direction === "above" ? `Si el suplemento llega a ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt) ? ` (${fmtClassRanges(alt)})` : ""} y el veredicto se recalcula con esos rangos.` : `Si el suplemento baja de ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt) ? ` (${fmtClassRanges(alt)})` : ""} y el veredicto se recalcula con esos rangos.`, " ", "El umbral de ", info.thresholdPct, " % es un criterio de clasificación del modelo, sin fuente publicada."));
+};
+const ClassChangeNote = ({ change, testId = "perito-item-class-change" }) => {
+  if (!change) return null;
+  const cite = classCitation(change.to);
+  return /* @__PURE__ */ React.createElement("div", { "data-testid": testId, "data-from": change.from.resolvedClass, "data-to": change.to.resolvedClass, style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Cambia la clase de sustrato:"), " ", change.from.label, " → ", change.to.label, ".", fmtClassRanges(change.to) ? ` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite ? ` (${cite})` : ""}.` : "", " El índice estimado ya usa esos rangos.");
+};
+const recipeKeyOf = (r) => JSON.stringify((r || []).map((x) => [x.id, Number(x.p) || 0]));
+const AutoImproveSummary = ({ result, onUndo, canUndo }) => {
+  if (!result) return null;
+  const { steps, before, after } = result;
+  if (!steps.length) return /* @__PURE__ */ React.createElement("div", { "data-testid": "auto-improve-summary", "data-steps": "0", role: "status", "aria-live": "polite", className: "os-provenance-notice", style: { marginBottom: 10 } }, "Auto-mejorar no encontró un ajuste que quite críticos o suba el score con los ingredientes y bloqueos actuales", before ? ` (score ${before.score}, ${before.criticals} crítico${before.criticals === 1 ? "" : "s"})` : "", ".");
+  return /* @__PURE__ */ React.createElement("div", { "data-testid": "auto-improve-summary", "data-steps": steps.length, role: "status", "aria-live": "polite", className: "os-provenance-notice", style: { marginBottom: 10, display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 240px", minWidth: 0 } }, /* @__PURE__ */ React.createElement("b", null, "Auto-mejorar aplicó ", steps.length, " ajuste", steps.length === 1 ? "" : "s"), " para: ", steps.map((st) => st.labels.join(" + ")).join(" → "), ".", before && after && /* @__PURE__ */ React.createElement(React.Fragment, null, " Score ", before.score, " → ", after.score, " · críticos ", before.criticals, " → ", after.criticals, ".")), canUndo && /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--secondary", onClick: onUndo, style: { flexShrink: 0, padding: "6px 12px" } }, "Deshacer Auto-mejorar"));
+};
+const PeritoItem = React.memo(({ item, onApply, baseScore, recipe, lockedIds, ingredients, evaluate, onMorph }) => {
   const changes = describePeritoChanges(recipe, item.apply, lockedIds, ingredients);
   const comboChanges = describePeritoChanges(recipe, item.comboApply, lockedIds, ingredients);
   const hasPrediction = item.predictedScore != null && baseScore != null;
   const scoreDelta = hasPrediction ? Math.round(item.predictedScore - baseScore) : null;
   const deltaSim = React.useMemo(() => {
-    if (!item.apply || !engineSimulateSuggestionDelta || !recipe?.length) return null;
+    if (!item.apply || !engineSimulateSuggestionDelta || !recipe?.length || typeof evaluate !== "function") return null;
     try {
-      const sK = speciesKey || item.speciesKey || "p_ostreatus_gris";
-      const curAn = analyze(recipe, sK, ingredients, SPP);
       return engineSimulateSuggestionDelta({
         recipe,
         apply: item.apply,
         lockedIds,
         ingredients,
         applyOptToRecipe,
-        analyze: (r) => analyze(r, sK, ingredients, SPP),
-        score: (anObj, extra) => scoreAn(anObj, extra),
-        baseAn: curAn,
+        evaluate,
+        baseAn: evaluate(recipe)?.an,
         baseScore
       });
     } catch (_) {
       return null;
     }
-  }, [recipe, item.apply, lockedIds, ingredients, speciesKey, baseScore]);
-  return /* @__PURE__ */ React.createElement("div", { className: `perito-item pi-${item.priority}` }, /* @__PURE__ */ React.createElement("div", { className: "pi-icon-col" }, /* @__PURE__ */ React.createElement("span", { className: "pi-icon" }, item.icon)), /* @__PURE__ */ React.createElement("div", { className: "pi-body" }, /* @__PURE__ */ React.createElement("div", { className: "pi-head" }, /* @__PURE__ */ React.createElement("span", { className: "pi-label" }, item.label), item.capped && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#8C4020", background: "rgba(200,112,64,.12)", border: "1px solid rgba(200,112,64,.3)", borderRadius: 3, padding: "1px 6px" } }, "tope alcanzado"), item.notInStock && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#7A5A10", background: "rgba(160,120,40,.12)", border: "1px solid rgba(160,120,40,.3)", borderRadius: 3, padding: "1px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "cart", size: 10 }), " no en bodega — a comprar")), item.delta && /* @__PURE__ */ React.createElement("span", { className: "pi-delta" }, item.delta)), item.repeatedApply && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginBottom: 2 } }, "↻ Ya aplicaste esto ", item.repeatedApply, "x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”."), /* @__PURE__ */ React.createElement("div", { className: "pi-action", dangerouslySetInnerHTML: { __html: item.action } }), /* @__PURE__ */ React.createElement("div", { className: "pi-effect" }, item.effect), deltaSim?.diff && /* @__PURE__ */ React.createElement("div", { className: "pi-deltas", style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaScore >= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaScore >= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔScore: ", deltaSim.diff.deltaScore >= 0 ? `+${deltaSim.diff.deltaScore}` : deltaSim.diff.deltaScore, " pts (", deltaSim.diff.newScore, ")"), /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaEb >= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaEb >= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔEB: ", deltaSim.diff.deltaEb >= 0 ? `+${deltaSim.diff.deltaEb}%` : `${deltaSim.diff.deltaEb}%`, " ", deltaSim.diff.deltaEbRange ? `[${deltaSim.diff.deltaEbRange[0] >= 0 ? "+" : ""}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1] >= 0 ? "+" : ""}${deltaSim.diff.deltaEbRange[1]}%]` : "", " (", deltaSim.diff.newEb, "%)"), deltaSim.diff.confidence && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 6px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 600, background: "rgba(43,76,126,.1)", color: "var(--slate-800)" } }, "confianza: ", deltaSim.diff.confidence === "high" ? "alta" : deltaSim.diff.confidence === "low" ? "baja" : "media"), deltaSim.diff.deltaCost !== 0 && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaCost <= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaCost <= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔCosto: ", deltaSim.diff.deltaCost <= 0 ? `-$${Math.abs(deltaSim.diff.deltaCost)}/kg` : `+$${deltaSim.diff.deltaCost}/kg`), deltaSim.diff.deltaCn !== 0 && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: "var(--paper-200)", color: "var(--ink-700)" } }, "ΔC:N: ", deltaSim.diff.deltaCn >= 0 ? `+${deltaSim.diff.deltaCn}` : deltaSim.diff.deltaCn, " (", deltaSim.diff.newCn, ":1)")), item.evidence && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Evidencia:"), " ", item.evidence.type === "heuristic-model" ? "heurística de composición" : "sin fuente específica", " · confianza ", item.evidence.confidence === "low" ? "baja" : item.evidence.confidence || "baja", " · ", item.evidence.note), item.why && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3, opacity: 0.85 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Por qué:"), " ", item.why), item.riskIfIgnored && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Riesgo:"), " ", item.riskIfIgnored), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: scoreDelta > 0 ? "var(--accent-olive)" : "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "Índice estimado: ", Math.round(baseScore), "/100 → ", Math.round(item.predictedScore), "/100 (", scoreDelta >= 0 ? "+" : "", scoreDelta, ")"), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Comparación del modelo; no garantiza rendimiento en producción."), item.apply && /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes }), item.sideEffect && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--coral-600,#B5451F)" }), " ", item.sideEffect)), item.comboApply && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, padding: "6px 8px", background: "rgba(74,107,74,.08)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, item.comboLabel), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)" } }, "Índice estimado con ambos cambios: ", Math.round(item.comboPredictedScore), "/100"), /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes: comboChanges }), /* @__PURE__ */ React.createElement("button", { disabled: !comboChanges.length, "aria-label": `Aplicar corrección combinada: ${item.label}`, onClick: () => onApply(item.comboApply, item.icon), className: "pi-apply", style: { marginTop: 4 } }, "Aplicar corrección combinada"))), /* @__PURE__ */ React.createElement("div", { className: "pi-actions", style: { display: "flex", gap: 6, alignItems: "center", flexDirection: "column" } }, item.apply ? /* @__PURE__ */ React.createElement("button", { disabled: !changes.length, "aria-label": `Aplicar ajuste: ${item.label}`, onClick: () => onApply(item.apply, item.icon), className: "pi-apply" }, "Aplicar ajuste") : /* @__PURE__ */ React.createElement("div", { className: "pi-spacer" }), deltaSim?.resultingRecipe && onMorph && /* @__PURE__ */ React.createElement(
+  }, [recipe, item.apply, lockedIds, ingredients, evaluate, baseScore]);
+  const classChange = React.useMemo(() => {
+    if (typeof evaluate !== "function" || !SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from = evaluate(recipe)?.an?.targets;
+    const to = deltaSim?.resultingAn?.targets;
+    return from && to ? SetasSpeciesTargetsApi.describeClassChange(from, to) : null;
+  }, [evaluate, recipe, deltaSim]);
+  const comboClassChange = React.useMemo(() => {
+    if (!item.comboApply || typeof evaluate !== "function" || !SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from = evaluate(recipe)?.an?.targets;
+    const to = evaluate(applyOptToRecipe(recipe, item.comboApply, lockedIds, ingredients))?.an?.targets;
+    return from && to ? SetasSpeciesTargetsApi.describeClassChange(from, to) : null;
+  }, [evaluate, recipe, item.comboApply, lockedIds, ingredients]);
+  return /* @__PURE__ */ React.createElement("div", { className: `perito-item pi-${item.priority}` }, /* @__PURE__ */ React.createElement("div", { className: "pi-icon-col" }, /* @__PURE__ */ React.createElement("span", { className: "pi-icon" }, item.icon)), /* @__PURE__ */ React.createElement("div", { className: "pi-body" }, /* @__PURE__ */ React.createElement("div", { className: "pi-head" }, /* @__PURE__ */ React.createElement("span", { className: "pi-label" }, item.label), item.capped && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#8C4020", background: "rgba(200,112,64,.12)", border: "1px solid rgba(200,112,64,.3)", borderRadius: 3, padding: "1px 6px" } }, "tope alcanzado"), item.notInStock && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-2xs)", fontWeight: 700, color: "#7A5A10", background: "rgba(160,120,40,.12)", border: "1px solid rgba(160,120,40,.3)", borderRadius: 3, padding: "1px 6px" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "cart", size: 10 }), " no en bodega — a comprar")), item.delta && /* @__PURE__ */ React.createElement("span", { className: "pi-delta" }, item.delta)), item.repeatedApply && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "#7A5A10", fontFamily: "var(--font-mono)", marginBottom: 2 } }, "↻ Ya aplicaste esto ", item.repeatedApply, "x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”."), /* @__PURE__ */ React.createElement("div", { className: "pi-action", dangerouslySetInnerHTML: { __html: item.action } }), /* @__PURE__ */ React.createElement("div", { className: "pi-effect" }, item.effect), deltaSim?.diff && /* @__PURE__ */ React.createElement("div", { className: "pi-deltas", style: { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaScore >= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaScore >= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔScore: ", deltaSim.diff.deltaScore >= 0 ? `+${deltaSim.diff.deltaScore}` : deltaSim.diff.deltaScore, " pts (", deltaSim.diff.newScore, ")"), /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaEb >= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaEb >= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔEB: ", deltaSim.diff.deltaEb >= 0 ? `+${deltaSim.diff.deltaEb}%` : `${deltaSim.diff.deltaEb}%`, " ", deltaSim.diff.deltaEbRange ? `[${deltaSim.diff.deltaEbRange[0] >= 0 ? "+" : ""}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1] >= 0 ? "+" : ""}${deltaSim.diff.deltaEbRange[1]}%]` : "", " (", Math.round(deltaSim.diff.newEb), "%)"), deltaSim.diff.confidence && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 6px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 600, background: "rgba(43,76,126,.1)", color: "var(--slate-800)" } }, "confianza: ", deltaSim.diff.confidence === "high" ? "alta" : deltaSim.diff.confidence === "low" ? "baja" : "media"), deltaSim.diff.deltaCost !== 0 && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: deltaSim.diff.deltaCost <= 0 ? "rgba(77,98,53,.15)" : "rgba(197,48,48,.15)", color: deltaSim.diff.deltaCost <= 0 ? "var(--moss-800)" : "var(--coral-700)" } }, "ΔCosto: ", deltaSim.diff.deltaCost <= 0 ? `-$${Math.abs(deltaSim.diff.deltaCost)}/kg` : `+$${deltaSim.diff.deltaCost}/kg`), deltaSim.diff.deltaCn !== 0 && /* @__PURE__ */ React.createElement("span", { style: { padding: "2px 7px", borderRadius: 3, fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", fontWeight: 700, background: "var(--paper-200)", color: "var(--ink-700)" } }, "ΔC:N: ", deltaSim.diff.deltaCn >= 0 ? `+${deltaSim.diff.deltaCn}` : deltaSim.diff.deltaCn, " (", Number(deltaSim.diff.newCn).toFixed(1), ":1)")), item.evidence && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Evidencia:"), " ", item.evidence.type === "heuristic-model" ? "heurística de composición" : "sin fuente específica", " · confianza ", item.evidence.confidence === "low" ? "baja" : item.evidence.confidence || "baja", " · ", item.evidence.note), item.why && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 3, opacity: 0.85 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Por qué:"), " ", item.why), item.riskIfIgnored && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Riesgo:"), " ", item.riskIfIgnored), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: scoreDelta > 0 ? "var(--accent-olive)" : "var(--ink-600)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, "Índice estimado: ", Math.round(baseScore), "/100 → ", Math.round(item.predictedScore), "/100 (", scoreDelta >= 0 ? "+" : "", scoreDelta, ")"), hasPrediction && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-xs)", color: "var(--ink-600)" } }, "Comparación del modelo; no garantiza rendimiento en producción."), /* @__PURE__ */ React.createElement(ClassChangeNote, { change: classChange }), item.apply && /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes }), item.sideEffect && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--coral-600,#B5451F)", fontFamily: "var(--font-mono)", marginTop: 2, fontWeight: 700 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--coral-600,#B5451F)" }), " ", item.sideEffect)), item.comboApply && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, padding: "6px 8px", background: "rgba(74,107,74,.08)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)", fontWeight: 700 } }, item.comboLabel), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "var(--text-sm)", color: "var(--accent-olive)", fontFamily: "var(--font-mono)" } }, "Índice estimado con ambos cambios: ", Math.round(item.comboPredictedScore), "/100"), /* @__PURE__ */ React.createElement(ClassChangeNote, { change: comboClassChange, testId: "perito-combo-class-change" }), /* @__PURE__ */ React.createElement(PeritoChangePreview, { changes: comboChanges }), /* @__PURE__ */ React.createElement("button", { disabled: !comboChanges.length, "aria-label": `Aplicar corrección combinada: ${item.label}`, onClick: () => onApply(item.comboApply, item.icon), className: "pi-apply", style: { marginTop: 4 } }, "Aplicar corrección combinada"))), /* @__PURE__ */ React.createElement("div", { className: "pi-actions", style: { display: "flex", gap: 6, alignItems: "center", flexDirection: "column" } }, item.apply ? /* @__PURE__ */ React.createElement("button", { disabled: !changes.length, "aria-label": `Aplicar ajuste: ${item.label}`, onClick: () => onApply(item.apply, item.icon), className: "pi-apply" }, "Aplicar ajuste") : /* @__PURE__ */ React.createElement("div", { className: "pi-spacer" }), deltaSim?.resultingRecipe && onMorph && /* @__PURE__ */ React.createElement(
     "button",
     {
       type: "button",
-      title: "Hibridar interactivamente la receta activa con esta sugerencia",
+      title: "Comparar y mezclar la receta activa con el resultado de esta sugerencia",
       onClick: () => onMorph(deltaSim.resultingRecipe),
       style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "5px 8px", background: "transparent", color: "var(--slate-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer" }
     },
     /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 13, style: { marginRight: 4 } }),
-    " Morph"
+    " Comparar"
   )));
 });
 const useDialogA11y = (onClose) => {
@@ -1899,7 +2101,7 @@ const generateCurlPayload = ({ roomId = "martha_01", temp = 18.2, rh = 89.5, co2
     "substrate_temperature_c": ${subTemp}
   }'`;
 };
-const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg) => {
+const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, firestoreEnabled = true) => {
   try {
     const data = JSON.parse(rawJson);
     const roomId = data.room_id || data.roomId || "martha_01";
@@ -1920,7 +2122,7 @@ const handleTestWebhook = (rawJson, onInjectReading, setSelectedClimateRoom, set
     if (typeof setSelectedClimateRoom === "function") {
       setSelectedClimateRoom(roomId);
     }
-    if (typeof window !== "undefined" && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === "function") {
+    if (firestoreEnabled && typeof window !== "undefined" && window.SetasFirebase && typeof window.SetasFirebase.pushClimateReading === "function") {
       window.SetasFirebase.pushClimateReading({
         roomId,
         temperature_c: temp,
@@ -1986,11 +2188,27 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
     {
       onClose,
       label: "Hub de Integración IoT & Telemetría",
+      dialogClassName: "inv-modal iot-hub-dialog",
+      backdropClassName: "inv-modal-bg iot-hub-backdrop",
       dialogStyle: { width: "min(860px, 94vw)", padding: 0, background: "var(--paper-0, #F7F4EC)", border: "1px solid var(--border-hairline, #8C7F5B)", borderRadius: "var(--radius-sm, 2px)", overflow: "hidden", boxShadow: "0 12px 40px rgba(26,20,16,0.18)" }
     },
-    /* @__PURE__ */ React.createElement("div", { style: { background: "var(--ink-0, #1A1410)", color: "#FAF8F5", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 20, color: "var(--accent-olive, #5B6B44)" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 18, margin: 0, fontWeight: 700 } }, "Hub de Integración IoT & Hardware de Bajo Costo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--paper-300, #C8C3B5)", marginTop: 2 } }, "Setas de la Peña · Tenjo (2.587 msnm) · ESP32 / Sonoff / SHT3x / SCD30"))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", style: { color: "#FAF8F5", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer" }, onClick: onClose }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))),
-    /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 0", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { className: "iot-hub-pills" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "nodos" ? "on" : ""}`, onClick: () => setTab("nodos") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "radio", size: 12, style: { marginRight: 6 } }), " Nodos en Finca (", nodes.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "firmware" ? "on" : ""}`, onClick: () => setTab("firmware") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 12, style: { marginRight: 6 } }), " Generador de Firmware"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "webhook" ? "on" : ""}`, onClick: () => setTab("webhook") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "flask", size: 12, style: { marginRight: 6 } }), " Consola Webhook / Test"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "conexion" ? "on" : ""}`, onClick: () => setTab("conexion") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "plug", size: 12, style: { marginRight: 6 } }), " Conexión en Vivo"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${tab === "reglas" ? "on" : ""}`, onClick: () => setTab("reglas") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "gear", size: 12, style: { marginRight: 6 } }), " Reglas de Automatización"))),
-    /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 24px", maxHeight: "68vh", overflowY: "auto" } }, tab === "nodos" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)" } }, "Nodos ESP32 y microcontroladores transmitiendo telemetría activa en las carpas de Tenjo:"), /* @__PURE__ */ React.createElement(
+    /* @__PURE__ */ React.createElement("div", { className: "iot-hub-header", style: { background: "var(--ink-0, #1A1410)", color: "#FAF8F5", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 20, color: "var(--accent-olive, #5B6B44)" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 18, margin: 0, fontWeight: 700 } }, "Hub de Integración IoT & Hardware de Bajo Costo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--paper-300, #C8C3B5)", marginTop: 2 } }, "Setas de la Peña · Tenjo (2.587 msnm) · ESP32 / Sonoff / SHT3x / SCD30"))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "modal-icon-close", "aria-label": "Cerrar Hub IoT", style: { color: "#FAF8F5", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer" }, onClick: onClose }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))),
+    /* @__PURE__ */ React.createElement("div", { className: "iot-hub-navigation" }, /* @__PURE__ */ React.createElement("div", { className: "iot-hub-pills", role: "tablist", "aria-label": "Secciones del Hub IoT", onKeyDown: (e) => {
+      const keys = ["nodos", "firmware", "webhook", "conexion", "reglas"];
+      const index = keys.indexOf(tab);
+      const next = e.key === "ArrowRight" ? (index + 1) % keys.length : e.key === "ArrowLeft" ? (index + keys.length - 1) % keys.length : e.key === "Home" ? 0 : e.key === "End" ? keys.length - 1 : null;
+      if (next === null) return;
+      e.preventDefault();
+      setTab(keys[next]);
+      e.currentTarget.querySelector(`#iot-hub-tab-${keys[next]}`)?.focus();
+    } }, [
+      ["nodos", `Nodos en Finca (${nodes.length})`, "radio"],
+      ["firmware", "Generador de Firmware", "bolt"],
+      ["webhook", "Consola Webhook / Test", "flask"],
+      ["conexion", "Conexión en Vivo", "plug"],
+      ["reglas", "Reglas de Automatización", "gear"]
+    ].map(([key, label, icon]) => /* @__PURE__ */ React.createElement("button", { key, type: "button", id: `iot-hub-tab-${key}`, role: "tab", "aria-selected": tab === key, "aria-controls": "iot-hub-panel", tabIndex: tab === key ? 0 : -1, className: `iot-hub-pill ${tab === key ? "on" : ""}`, onClick: () => setTab(key) }, /* @__PURE__ */ React.createElement(AppIcon, { name: icon, size: 14, style: { marginRight: 6 } }), label)))),
+    /* @__PURE__ */ React.createElement("div", { className: "iot-hub-body", role: "tabpanel", id: "iot-hub-panel", "aria-labelledby": `iot-hub-tab-${tab}`, tabIndex: 0 }, tab === "nodos" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)" } }, "Nodos ESP32 y microcontroladores transmitiendo telemetría activa en las carpas de Tenjo:"), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -2004,14 +2222,14 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
       {
         type: "button",
         className: "btn btn--sm",
-        style: { fontSize: 10.5, padding: "3px 8px" },
+        style: { fontSize: 11, padding: "3px 8px" },
         onClick: () => {
           if (typeof setSelectedClimateRoom === "function") setSelectedClimateRoom(n.roomId);
           onClose();
         }
       },
       "Ver Sala en Clima"
-    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8, marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", textTransform: "uppercase" } }, "Temperatura"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.temp.toFixed(1), "°C")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", textTransform: "uppercase" } }, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.rh.toFixed(1), "%")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", textTransform: "uppercase" } }, "Dióxido de Carbono"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.co2, " ppm")), n.metrics.subTemp != null && /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", textTransform: "uppercase" } }, "Sonda Sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.subTemp.toFixed(1), "°C")))))), tab === "firmware" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Microcontrolador"), /* @__PURE__ */ React.createElement("select", { className: "field-input", value: fwMcu, onChange: (e) => setFwMcu(e.target.value), style: { width: "100%", fontSize: 12 } }, /* @__PURE__ */ React.createElement("option", { value: "esp32dev" }, "ESP32 NodeMCU / WROOM-32 (Recomendado)"), /* @__PURE__ */ React.createElement("option", { value: "esp32c3" }, "ESP32-C3 SuperMini (Compacto)"), /* @__PURE__ */ React.createElement("option", { value: "esp8266" }, "ESP8266 Wemos D1 Mini"), /* @__PURE__ */ React.createElement("option", { value: "sonoff_th16" }, "Sonoff TH16 / DualR3 (Tasmota)"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Sala Asignada"), /* @__PURE__ */ React.createElement("select", { className: "field-input", value: fwRoom, onChange: (e) => setFwRoom(e.target.value), style: { width: "100%", fontSize: 12 } }, /* @__PURE__ */ React.createElement("option", { value: "martha_01" }, "Carpa 01 · Fructificación Orellanas"), /* @__PURE__ */ React.createElement("option", { value: "martha_02" }, "Carpa 02 · Fructificación Shiitake"), /* @__PURE__ */ React.createElement("option", { value: "incubacion_01" }, "Sala 03 · Incubación Térmica"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Servidor Setas OS (Host : Puerto)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("input", { type: "text", className: "field-input", value: fwServerHost, onChange: (e) => setFwServerHost(e.target.value), style: { flex: 2, fontSize: 12 } }), /* @__PURE__ */ React.createElement("input", { type: "text", className: "field-input", value: fwServerPort, onChange: (e) => setFwServerPort(e.target.value), style: { flex: 1, fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 12, borderRadius: 4, marginBottom: 16, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" } }, "Sensores Conectados:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 14 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("sht3xd"), onChange: () => toggleSensor("sht3xd") }), "SHT3x / SHT45 (T/HR I2C)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("scd30"), onChange: () => toggleSensor("scd30") }), "SCD30 NDIR CO2 (I2C · 2.587 msnm)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("ds18b20"), onChange: () => toggleSensor("ds18b20") }), "DS18B20 Sonda de Sustrato (OneWire)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("dht22"), onChange: () => toggleSensor("dht22") }), "DHT22 Sensor Digital")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, margin: "12px 0 8px", textTransform: "uppercase" } }, "Actuadores / Relés:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 14 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwRelays.includes("ch1_humidifier"), onChange: () => toggleRelay("ch1_humidifier") }), "Relé Ch1: Humidificador Ultrasónico T7"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwRelays.includes("ch2_fae"), onChange: () => toggleRelay("ch2_fae") }), "Relé Ch2: Extractor FAE Cloudline H4"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${fwFormat === "esphome" ? "on" : ""}`, onClick: () => setFwFormat("esphome") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "file", size: 12, style: { marginRight: 6 } }), " ESPHome (YAML)"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${fwFormat === "arduino" ? "on" : ""}`, onClick: () => setFwFormat("arduino") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wrench", size: 12, style: { marginRight: 6 } }), " Arduino C++ (.ino)"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${fwFormat === "curl" ? "on" : ""}`, onClick: () => setFwFormat("curl") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 12, style: { marginRight: 6 } }), " cURL / Webhook")), /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8, marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase" } }, "Temperatura"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.temp.toFixed(1), "°C")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase" } }, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.rh.toFixed(1), "%")), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase" } }, "Dióxido de Carbono"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.co2, " ppm")), n.metrics.subTemp != null && /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase" } }, "Sonda Sustrato"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)", marginTop: 2 } }, n.metrics.subTemp.toFixed(1), "°C")))))), tab === "firmware" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-fw-mcu", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Microcontrolador"), /* @__PURE__ */ React.createElement("select", { id: "iot-fw-mcu", name: "iot-fw-mcu", className: "field-input", value: fwMcu, onChange: (e) => setFwMcu(e.target.value), style: { width: "100%", fontSize: 12 } }, /* @__PURE__ */ React.createElement("option", { value: "esp32dev" }, "ESP32 NodeMCU / WROOM-32 (Recomendado)"), /* @__PURE__ */ React.createElement("option", { value: "esp32c3" }, "ESP32-C3 SuperMini (Compacto)"), /* @__PURE__ */ React.createElement("option", { value: "esp8266" }, "ESP8266 Wemos D1 Mini"), /* @__PURE__ */ React.createElement("option", { value: "sonoff_th16" }, "Sonoff TH16 / DualR3 (Tasmota)"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-fw-room", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Sala Asignada"), /* @__PURE__ */ React.createElement("select", { id: "iot-fw-room", name: "iot-fw-room", className: "field-input", value: fwRoom, onChange: (e) => setFwRoom(e.target.value), style: { width: "100%", fontSize: 12 } }, /* @__PURE__ */ React.createElement("option", { value: "martha_01" }, "Carpa 01 · Fructificación Orellanas"), /* @__PURE__ */ React.createElement("option", { value: "martha_02" }, "Carpa 02 · Fructificación Shiitake"), /* @__PURE__ */ React.createElement("option", { value: "incubacion_01" }, "Sala 03 · Incubación Térmica"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "iot-hub-server-fields" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-fw-host" }, "Host del servidor Setas OS"), /* @__PURE__ */ React.createElement("input", { id: "iot-fw-host", name: "iot-fw-host", type: "text", className: "field-input", autoComplete: "off", spellCheck: false, value: fwServerHost, onChange: (e) => setFwServerHost(e.target.value) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-fw-port" }, "Puerto del servidor"), /* @__PURE__ */ React.createElement("input", { id: "iot-fw-port", name: "iot-fw-port", type: "text", inputMode: "numeric", className: "field-input", autoComplete: "off", value: fwServerPort, onChange: (e) => setFwServerPort(e.target.value) }))))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 12, borderRadius: 4, marginBottom: 16, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" } }, "Sensores Conectados:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 14 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("sht3xd"), onChange: () => toggleSensor("sht3xd") }), "SHT3x / SHT45 (T/HR I2C)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("scd30"), onChange: () => toggleSensor("scd30") }), "SCD30 NDIR CO2 (I2C · 2.587 msnm)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("ds18b20"), onChange: () => toggleSensor("ds18b20") }), "DS18B20 Sonda de Sustrato (OneWire)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwSensors.includes("dht22"), onChange: () => toggleSensor("dht22") }), "DHT22 Sensor Digital")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, margin: "12px 0 8px", textTransform: "uppercase" } }, "Actuadores / Relés:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 14 } }, /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwRelays.includes("ch1_humidifier"), onChange: () => toggleRelay("ch1_humidifier") }), "Relé Ch1: Humidificador Ultrasónico T7"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: fwRelays.includes("ch2_fae"), onChange: () => toggleRelay("ch2_fae") }), "Relé Ch2: Extractor FAE Cloudline H4"))), /* @__PURE__ */ React.createElement("div", { className: "iot-hub-export", style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${fwFormat === "esphome" ? "on" : ""}`, onClick: () => setFwFormat("esphome") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "file", size: 12, style: { marginRight: 6 } }), " ESPHome (YAML)"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${fwFormat === "arduino" ? "on" : ""}`, onClick: () => setFwFormat("arduino") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wrench", size: 12, style: { marginRight: 6 } }), " Arduino C++ (.ino)"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `iot-hub-pill ${fwFormat === "curl" ? "on" : ""}`, onClick: () => setFwFormat("curl") }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 12, style: { marginRight: 6 } }), " cURL / Webhook")), /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -2069,9 +2287,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
 }`)
       },
       "Cargar Alerta Incubación (Sustrato 29.1°C)"
-    )), /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-webhook-json" }, "JSON de telemetría de prueba"), /* @__PURE__ */ React.createElement(
       "textarea",
       {
+        id: "iot-webhook-json",
+        name: "iot-webhook-json",
+        spellCheck: false,
         className: "field-input",
         rows: 8,
         style: { width: "100%", fontFamily: "var(--font-mono)", fontSize: 12, background: "#181512", color: "#E6E1D8", padding: 12, borderRadius: 4, boxSizing: "border-box" },
@@ -2084,16 +2305,18 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         type: "button",
         className: "btn btn--primary",
         onClick: () => {
-          const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg);
+          const res = handleTestWebhook(webhookJson, onInjectReading, setSelectedClimateRoom, setNoticeDlg, connFirestore);
           setWebhookFeedback(res);
         }
       },
       /* @__PURE__ */ React.createElement(AppIcon, { name: "rocket", size: 13, style: { marginRight: 6 } }),
       " Inyectar Telemetría de Prueba"
-    ), webhookFeedback && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: webhookFeedback.success ? "var(--moss-800)" : "var(--accent-terracotta)", fontWeight: 700 } }, webhookFeedback.success ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, style: { marginRight: 4 } }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 11, style: { marginRight: 4 } }), " ", webhookFeedback.msg))), tab === "conexion" && /* @__PURE__ */ React.createElement("div", { "data-testid": "iot-hub-conexion" }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginBottom: 14 } }, "El puente ingiere por los tres transportes a la vez y deduplica las lecturas repetidas: si el WebSocket cae, Firestore ya venía llenando el mismo buffer y la curva no queda con un hueco. El de mayor prioridad con datos frescos es el que se reporta como fuente activa."), liveTelemetry && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginBottom: 16 } }, (liveTelemetry.status.transports || []).map((t) => /* @__PURE__ */ React.createElement("div", { key: t.kind, style: { padding: "8px 10px", border: "1px solid var(--border-hairline)", borderRadius: 4, background: "var(--paper-100)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" } }, t.kind), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, t.state, t.fresh ? " · datos frescos" : t.lastDataAt ? " · sin datos recientes" : ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, t.readingsIn, " lecturas · ", t.attempts, " reintento", t.attempts === 1 ? "" : "s"), t.lastError && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--accent-terracotta)" } }, t.lastError))), (liveTelemetry.status.transports || []).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Ningún transporte configurado todavía.")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "WebSocket del gateway (prioridad 1 · menor latencia)"), /* @__PURE__ */ React.createElement(
+    ), webhookFeedback && /* @__PURE__ */ React.createElement("div", { role: "status", "aria-live": "polite", style: { fontFamily: "var(--font-mono)", fontSize: 11, color: webhookFeedback.success ? "var(--moss-800)" : "var(--accent-terracotta)", fontWeight: 700 } }, webhookFeedback.success ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, style: { marginRight: 4 } }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 11, style: { marginRight: 4 } }), " ", webhookFeedback.msg))), tab === "conexion" && /* @__PURE__ */ React.createElement("div", { "data-testid": "iot-hub-conexion" }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-2)", marginBottom: 14 } }, "El puente ingiere por los tres transportes a la vez y deduplica las lecturas repetidas: si el WebSocket cae, Firestore ya venía llenando el mismo buffer y la curva no queda con un hueco. El de mayor prioridad con datos frescos es el que se reporta como fuente activa."), liveTelemetry && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginBottom: 16 } }, (liveTelemetry.status.transports || []).map((t) => /* @__PURE__ */ React.createElement("div", { key: t.kind, style: { padding: "8px 10px", border: "1px solid var(--border-hairline)", borderRadius: 4, background: "var(--paper-100)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" } }, t.kind), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, t.state, t.fresh ? " · datos frescos" : t.lastDataAt ? " · sin datos recientes" : ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, t.readingsIn, " lecturas · ", t.attempts, " reintento", t.attempts === 1 ? "" : "s"), t.lastError && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--accent-terracotta)" } }, t.lastError))), (liveTelemetry.status.transports || []).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "Ningún transporte configurado todavía.")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-conn-ws", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "WebSocket del gateway (prioridad 1 · menor latencia)"), /* @__PURE__ */ React.createElement(
       "input",
       {
         type: "text",
+        id: "iot-conn-ws",
+        name: "iot-conn-ws",
         className: "field-input",
         value: connWs,
         onChange: (e) => {
@@ -2103,10 +2326,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         placeholder: "wss://gateway.setasdelapena.local/telemetry",
         style: { width: "100%", fontSize: 12 }
       }
-    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Broker MQTT sobre WebSocket (prioridad 2)"), /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-conn-mqtt", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Broker MQTT sobre WebSocket (prioridad 2)"), /* @__PURE__ */ React.createElement(
       "input",
       {
         type: "text",
+        id: "iot-conn-mqtt",
+        name: "iot-conn-mqtt",
         className: "field-input",
         value: connMqtt,
         onChange: (e) => {
@@ -2116,10 +2341,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         placeholder: "wss://broker.setasdelapena.local:9001",
         style: { width: "100%", fontSize: 12 }
       }
-    ), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", marginTop: 3 } }, "Mosquitto necesita ", /* @__PURE__ */ React.createElement("code", null, "listener 9001"), " + ", /* @__PURE__ */ React.createElement("code", null, "protocol websockets"), ". Topics: ", /* @__PURE__ */ React.createElement("code", null, "setas/<sala>/<nodo>/<métrica>"), ".")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Topics suscritos"), /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)", marginTop: 3 } }, "Mosquitto necesita ", /* @__PURE__ */ React.createElement("code", null, "listener 9001"), " + ", /* @__PURE__ */ React.createElement("code", null, "protocol websockets"), ". Topics: ", /* @__PURE__ */ React.createElement("code", null, "setas/<sala>/<nodo>/<métrica>"), ".")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-conn-topics", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Topics suscritos"), /* @__PURE__ */ React.createElement(
       "input",
       {
         type: "text",
+        id: "iot-conn-topics",
+        name: "iot-conn-topics",
         className: "field-input",
         value: connTopics,
         onChange: (e) => {
@@ -2131,10 +2358,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
     )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: connFirestore, onChange: () => {
       setConnFirestore((v) => !v);
       setConnSaved(false);
-    } }), "Firestore (prioridad 3 · sobrevive a NAT y firewalls)"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Presión barométrica local (hPa)"), /* @__PURE__ */ React.createElement(
+    } }), "Firestore (prioridad 3 · sobrevive a NAT y firewalls)"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-conn-pressure", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, marginBottom: 4 } }, "Presión barométrica local (hPa)"), /* @__PURE__ */ React.createElement(
       "input",
       {
         type: "number",
+        id: "iot-conn-pressure",
+        name: "iot-conn-pressure",
         className: "field-input",
         value: connPressure,
         onChange: (e) => {
@@ -2143,7 +2372,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         },
         style: { width: 120, fontSize: 12 }
       }
-    ))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-2)" } }, "745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -2161,7 +2390,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
         }
       },
       "Guardar y reconectar"
-    ), connSaved && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--moss-800)", fontWeight: 700 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, style: { marginRight: 4 } }), " Puente reiniciado con la configuración nueva")))), tab === "reglas" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1)", marginBottom: 14 } }, "Configura los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "droplet", size: 13, style: { marginRight: 6 } }), " Humidificación (Bang-Bang con Histéresis)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Mínima de Arranque (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoRhMin, onChange: (e) => setAutoRhMin(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Target de Reposo (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoRhTarget, onChange: (e) => setAutoRhTarget(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 6 } }), " Renovación de Aire FAE (Extractor Cloudline)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Límite Máximo CO2 (ppm)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoCo2Max, onChange: (e) => setAutoCo2Max(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Duración Pulso FAE (segundos)"), /* @__PURE__ */ React.createElement("input", { type: "number", className: "field-input", value: autoFaeDuration, onChange: (e) => setAutoFaeDuration(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 13, style: { marginRight: 6 } }), " Seguridad Biológica de Sustrato"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Temperatura Crítica de Sustrato (°C)"), /* @__PURE__ */ React.createElement("input", { type: "number", step: "0.5", className: "field-input", value: autoSubTempMax, onChange: (e) => setAutoSubTempMax(Number(e.target.value)), style: { width: "100%", fontSize: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 4 } }, "Si $T_", "{sustrato}", " > 28^\\circ\\text", C, "$ durante incubación, se dispara alerta de riesgo de daño al micelio.")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
+    ), connSaved && /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--moss-800)", fontWeight: 700 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, style: { marginRight: 4 } }), " Puente reiniciado con la configuración nueva")))), tab === "reglas" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1)", marginBottom: 14 } }, "Configura los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "droplet", size: 13, style: { marginRight: 6 } }), " Humidificación (Bang-Bang con Histéresis)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-rule-rh-min", style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Mínima de Arranque (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", id: "iot-rule-rh-min", name: "iot-rule-rh-min", className: "field-input", value: autoRhMin, onChange: (e) => setAutoRhMin(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-rule-rh-target", style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "HR Target de Reposo (%)"), /* @__PURE__ */ React.createElement("input", { type: "number", id: "iot-rule-rh-target", name: "iot-rule-rh-target", className: "field-input", value: autoRhTarget, onChange: (e) => setAutoRhTarget(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 6 } }), " Renovación de Aire FAE (Extractor Cloudline)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-rule-co2-max", style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Límite Máximo CO2 (ppm)"), /* @__PURE__ */ React.createElement("input", { type: "number", id: "iot-rule-co2-max", name: "iot-rule-co2-max", className: "field-input", value: autoCo2Max, onChange: (e) => setAutoCo2Max(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-rule-fae-duration", style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Duración Pulso FAE (segundos)"), /* @__PURE__ */ React.createElement("input", { type: "number", id: "iot-rule-fae-duration", name: "iot-rule-fae-duration", className: "field-input", value: autoFaeDuration, onChange: (e) => setAutoFaeDuration(Number(e.target.value)), style: { width: "100%", fontSize: 12 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--paper-100)", padding: 14, borderRadius: 4, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "temp", size: 13, style: { marginRight: 6 } }), " Seguridad Biológica de Sustrato"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "iot-rule-sub-temp", style: { fontFamily: "var(--font-mono)", fontSize: 11, display: "block" } }, "Temperatura Crítica de Sustrato (°C)"), /* @__PURE__ */ React.createElement("input", { type: "number", step: "0.5", id: "iot-rule-sub-temp", name: "iot-rule-sub-temp", className: "field-input", value: autoSubTempMax, onChange: (e) => setAutoSubTempMax(Number(e.target.value)), style: { width: "100%", fontSize: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 4 } }, "Si la temperatura de sustrato supera 28 °C durante incubación, se dispara alerta de riesgo de daño al micelio.")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -2175,7 +2404,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = "martha_01", onInjectRe
       },
       "Guardar Parámetros de Automatización"
     )))),
-    /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 24px", background: "var(--paper-100)", borderTop: "1px solid var(--border-hairline)", display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: onClose, style: { fontSize: 11 } }, "Cerrar"))
+    /* @__PURE__ */ React.createElement("div", { className: "iot-hub-footer", style: { padding: "12px 24px", background: "var(--paper-100)", borderTop: "1px solid var(--border-hairline)", display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: onClose, style: { fontSize: 11 } }, "Cerrar"))
   );
 };
 const useCaptureDraft = (key, initial) => {
@@ -2238,11 +2467,39 @@ const PromptModal = ({ dlg, onClose }) => {
     if (e.target === e.currentTarget) onClose();
   } }, /* @__PURE__ */ React.createElement("div", { ref: dialogRef, tabIndex: -1, className: "inv-modal", role: "dialog", "aria-modal": "true", "aria-label": dlg.title || "Nombre", style: { width: "min(420px, calc(100vw - 24px))", boxSizing: "border-box" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, dlg.title || "Nombre"), dlg.label && /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "setas-prompt-input" }, dlg.label), /* @__PURE__ */ React.createElement("input", { "data-autofocus": true, id: "setas-prompt-input", name: "promptValue", className: "inv-input", value: val, placeholder: dlg.placeholder || "", autoComplete: "off", onChange: (e) => setVal(e.target.value), onKeyDown: (e) => e.key === "Enter" && submit(), style: { marginBottom: 18 } }), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: submit, disabled: !val.trim(), className: "inv-btn inv-btn-pri" }, dlg.confirmLabel || "Guardar"))));
 };
+const MoveRoomModal = ({ dlg, onClose }) => {
+  const dialogRef = useDialogA11y(onClose);
+  const destinos = dlg.rooms.filter((r) => r.id !== dlg.currentRoomId);
+  return /* @__PURE__ */ React.createElement("div", { className: "inv-modal-bg", onClick: (e) => {
+    if (e.target === e.currentTarget) onClose();
+  } }, /* @__PURE__ */ React.createElement("div", { ref: dialogRef, tabIndex: -1, className: "inv-modal", role: "dialog", "aria-modal": "true", "aria-label": "Mover lote de sala", "data-testid": "move-room-modal", style: { width: "min(420px, calc(100vw - 24px))", boxSizing: "border-box" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Mover ", dlg.loteCodigo), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14, lineHeight: 1.5 } }, "Ahora en ", /* @__PURE__ */ React.createElement("strong", null, dlg.currentRoomName || "sala sin asignar"), ". ¿A qué sala pasa?"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 18 } }, destinos.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, "No hay otra sala configurada."), destinos.map((r) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: r.id,
+      type: "button",
+      className: "inv-btn inv-btn-sec",
+      "data-room-id": r.id,
+      style: { minHeight: 48, textAlign: "left", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2, padding: "8px 12px" },
+      onClick: () => {
+        dlg.onSelect(r.id);
+        onClose();
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600 } }, r.name),
+    r.spec && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, r.spec)
+  ))), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "inv-btn inv-btn-sec" }, "Cancelar"))));
+};
 const NoticeModal = ({ dlg, onClose }) => {
   const dialogRef = useDialogA11y(onClose);
   return /* @__PURE__ */ React.createElement("div", { className: "inv-modal-bg", onClick: (e) => {
     if (e.target === e.currentTarget) onClose();
   } }, /* @__PURE__ */ React.createElement("div", { ref: dialogRef, tabIndex: -1, className: "inv-modal", role: "dialog", "aria-modal": "true", "aria-label": dlg.title || "Aviso", style: { width: "min(420px, calc(100vw - 24px))", boxSizing: "border-box" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, dlg.title || "Aviso"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 18, lineHeight: 1.5 } }, dlg.msg), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "inv-btn inv-btn-pri" }, "Aceptar"))));
+};
+const NewRecipeVersionModal = ({ recipe, onClose, onConfirm }) => {
+  const lifecycle = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+  const identity = lifecycle ? lifecycle.recipeIdentity(recipe) : { recipeId: recipe.recipeId || recipe.name, version: recipe.version || 1 };
+  const label = lifecycle ? lifecycle.LIFECYCLE_LABELS[recipe.status] || recipe.status : recipe.status;
+  return /* @__PURE__ */ React.createElement(AccessibleModal, { onClose, label: "Receta aprobada — crear versión nueva", dialogStyle: { width: "min(460px, calc(100vw - 24px))", boxSizing: "border-box" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Receta aprobada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 18, lineHeight: 1.5 } }, "«", recipe.name, "» está ", /* @__PURE__ */ React.createElement("b", null, label), " (", identity.recipeId, " v", identity.version, ") y no se puede editar directamente: cambiarla en sitio haría que los lotes ya producidos con ella dejen de poder compararse honestamente. Crea la versión siguiente a partir de ella — nace en borrador, y esta versión aprobada sigue intacta para los lotes que ya la usan."), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "inv-btn inv-btn-sec", style: { minHeight: 44 } }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: onConfirm, className: "inv-btn inv-btn-pri", style: { minHeight: 44 } }, "Crear versión ", identity.version + 1)));
 };
 const FieldActionModal = ({
   onClose,
@@ -2624,7 +2881,7 @@ const EBDial = ({ an, sp }) => {
     return /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("line", { x1: a0, y1: b0, x2: a1, y2: b1, stroke: "var(--ink-700)", strokeWidth: "1.2" }), /* @__PURE__ */ React.createElement("text", { x: lx, y: ly, textAnchor: "middle", dominantBaseline: "middle", fontFamily: "var(--font-mono)", fontSize: "9.5", fill: "var(--ink-500)" }, tv));
   }), /* @__PURE__ */ React.createElement("line", { x1: cx, y1: cy, x2: nx, y2: ny, stroke: needleCol, strokeWidth: "3", strokeLinecap: "round", style: { transition: "transform .5s cubic-bezier(0.32,0.72,0.36,1)" } }), /* @__PURE__ */ React.createElement("circle", { cx, cy, r: "7", fill: "var(--paper-50)", stroke: "var(--ink-900)", strokeWidth: "1.6" }), /* @__PURE__ */ React.createElement("circle", { cx, cy, r: "2.4", fill: "var(--ink-900)" }), /* @__PURE__ */ React.createElement("text", { x: cx, y: cy + 36, textAnchor: "middle", fontFamily: "var(--font-num)", fontSize: "32", fill: "#9C3F1F" }, an.ebLow, "–", an.ebHigh), /* @__PURE__ */ React.createElement("text", { x: cx, y: cy + 52, textAnchor: "middle", fontFamily: "var(--font-mono)", fontSize: "10", fill: "var(--ink-400)" }, "% RANGO ESPERADO"), /* @__PURE__ */ React.createElement("text", { x: cx, y: cy + 66, textAnchor: "middle", fontFamily: "var(--font-mono)", fontSize: "9", fill: "var(--ink-300)" }, "central ", eb.toFixed(0), "% · índice ", an.ebIndex, "/100")), /* @__PURE__ */ React.createElement("div", { className: "ebdial-note" }, stLabel, " · franja óptima ", base, "–", opt, "%"));
 };
-const BandGauge = ({ label, unit, min, max, ideal, value, reference, scaleMin, scaleMax, color = "var(--accent-olive)", warnColor = "#A8432A" }) => {
+const BandGauge = ({ label, unit, min, max, ideal, value, reference, scaleMin, scaleMax, color = "var(--accent-olive)", warnColor = "#A8432A", provenance }) => {
   const sMin = scaleMin ?? min * 0.5;
   const sMax = scaleMax ?? max * 1.5;
   const range = sMax - sMin;
@@ -2636,11 +2893,37 @@ const BandGauge = ({ label, unit, min, max, ideal, value, reference, scaleMin, s
   const inRange = value != null && value >= min && value <= max;
   const cursorCol = inRange ? color : warnColor;
   const fmtVal = (v) => typeof v === "number" ? v < 10 ? v.toFixed(2) : v.toFixed(1) : "—";
-  return /* @__PURE__ */ React.createElement("div", { className: "bg-row" }, /* @__PURE__ */ React.createElement("div", { className: "bg-header" }, /* @__PURE__ */ React.createElement("span", { className: "bg-label" }, label), /* @__PURE__ */ React.createElement("span", { className: "bg-val", style: { color: cursorCol } }, fmtVal(value), unit)), /* @__PURE__ */ React.createElement("div", { className: "bg-track" }, /* @__PURE__ */ React.createElement("div", { className: "bg-band", style: { left: `${bandLeft}%`, width: `${bandW}%`, background: `${color}28` } }), /* @__PURE__ */ React.createElement("div", { className: "bg-ideal", style: { left: `${idealPos}%`, background: `${color}66` } }), reference != null && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${toPos(reference)}%`, top: 0, bottom: 0, width: "1.5px", background: "rgba(191,169,139,0.7)", borderLeft: "1.5px dashed rgba(191,169,139,0.8)", pointerEvents: "none" }, title: `Referencia óptima: ${reference}${unit}` }), valPos != null && /* @__PURE__ */ React.createElement("div", { className: "bg-cursor", style: { left: `${valPos}%`, background: cursorCol, boxShadow: `0 0 0 1.5px ${cursorCol}` } })), /* @__PURE__ */ React.createElement("div", { className: "bg-foot" }, /* @__PURE__ */ React.createElement("span", null, min, unit), /* @__PURE__ */ React.createElement("span", { style: { color: `${color}99` } }, "ideal ", ideal, unit), /* @__PURE__ */ React.createElement("span", null, max, unit)));
+  return /* @__PURE__ */ React.createElement("div", { className: "bg-row" }, /* @__PURE__ */ React.createElement("div", { className: "bg-header" }, /* @__PURE__ */ React.createElement("span", { className: "bg-label" }, label), /* @__PURE__ */ React.createElement("span", { className: "bg-val", style: { color: cursorCol } }, fmtVal(value), unit)), /* @__PURE__ */ React.createElement("div", { className: "bg-track" }, /* @__PURE__ */ React.createElement("div", { className: "bg-band", style: { left: `${bandLeft}%`, width: `${bandW}%`, background: `${color}28` } }), /* @__PURE__ */ React.createElement("div", { className: "bg-ideal", style: { left: `${idealPos}%`, background: `${color}66` } }), reference != null && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${toPos(reference)}%`, top: 0, bottom: 0, width: "1.5px", background: "rgba(191,169,139,0.7)", borderLeft: "1.5px dashed rgba(191,169,139,0.8)", pointerEvents: "none" }, title: `Referencia óptima: ${reference}${unit}` }), valPos != null && /* @__PURE__ */ React.createElement("div", { className: "bg-cursor", style: { left: `${valPos}%`, background: cursorCol, boxShadow: `0 0 0 1.5px ${cursorCol}` } })), /* @__PURE__ */ React.createElement("div", { className: "bg-foot" }, /* @__PURE__ */ React.createElement("span", null, min, unit), /* @__PURE__ */ React.createElement("span", { style: { color: `${color}99` } }, "ideal ", ideal, unit), /* @__PURE__ */ React.createElement("span", null, max, unit)), provenance && /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", title: provenance.title || void 0 }, provenance.texto));
 };
 const blendEBWithHistory = (an, historical) => {
   const hasHist = historical && historical.n > 0 && historical.avg != null;
   return hasHist ? an.eb * (1 - historical.weight) + historical.avg * historical.weight : an.eb;
+};
+const NUTRIENT_METRIC_VOCAB = Object.freeze({ cn: "catalog-lignocellulosic", n: "catalog-lignocellulosic", dig: "catalog-whole-mix", ph: "catalog-whole-mix-unbuffered" });
+const procedenciaNutriente = (metrica) => {
+  const prov = typeof window !== "undefined" ? window.SetasProvenance : null;
+  const value = NUTRIENT_METRIC_VOCAB[metrica];
+  const d = prov && value ? prov.describe({ vocabulary: "nutrient", value }) : null;
+  if (!d) return { texto: "Calculado", title: null };
+  return { texto: d.label, title: `${d.detail}. ${d.caveat}` };
+};
+const procedenciaSinMatrizNutritiva = () => ({ texto: "Sin matriz nutritiva", title: "Esta receta no tiene fracción lignocelulósica: no hay carbono ni nitrógeno que ponderar, así que C:N y Nitrógeno no son 0, simplemente no existen para esta mezcla" });
+const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const COST_NO_TARGET_TITLE = "Sin objetivo de costo con fuente: la base de conocimiento aún no tiene costo por kg vendible de lotes reales. El valor sirve para comparar recetas entre sí.";
+const procedenciaCosto = (cost, realCostPerKg) => {
+  const prov = typeof window !== "undefined" ? window.SetasProvenance : null;
+  const d = prov ? prov.describe({ vocabulary: "cost", value: "catalog" }) : null;
+  const base = d ? `${d.label} · ${d.detail}` : "Precio de catálogo";
+  const hayReal = realCostPerKg != null && Math.abs(realCostPerKg - Math.round(cost || 0)) >= 20;
+  return { texto: hayReal ? `${base} · bodega: $${realCostPerKg.toLocaleString("es-CO")}/kg seco` : base, title: COST_NO_TARGET_TITLE };
+};
+const procedenciaNutrientesResumen = () => {
+  const prov = typeof window !== "undefined" ? window.SetasProvenance : null;
+  const ligno = prov ? prov.describe({ vocabulary: "nutrient", value: "catalog-lignocellulosic" }) : null;
+  const whole = prov ? prov.describe({ vocabulary: "nutrient", value: "catalog-whole-mix" }) : null;
+  const ph = prov ? prov.describe({ vocabulary: "nutrient", value: "catalog-whole-mix-unbuffered" }) : null;
+  if (!ligno || !whole || !ph) return "Las cuatro métricas (C:N, Nitrógeno, pH, Digestibilidad) son calculadas.";
+  return `${cap(ligno.caveat)}. C:N y Nitrógeno: ${ligno.detail}. pH y Digestibilidad: ${whole.detail}. pH: ${ph.caveat}.`;
 };
 const IconTarget = ({ size = 12, color = "currentColor" }) => /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 16 16", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("circle", { cx: "8", cy: "8", r: "7" }), /* @__PURE__ */ React.createElement("circle", { cx: "8", cy: "8", r: "3" }), /* @__PURE__ */ React.createElement("path", { d: "M8 1v2M8 13v2M1 8h2M13 8h2" }));
 const IconBolt = ({ size = 12, color = "currentColor" }) => /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 16 16", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("polygon", { points: "9 1 2 9 8 9 7 15 14 7 8 7 9 1", fill: "currentColor", stroke: "none" }));
@@ -2691,7 +2974,8 @@ const RecipeGauges = ({ an, sp, optimalAn, historical }) => {
       scaleMin: 10,
       scaleMax: 90,
       color: "var(--accent-olive)",
-      warnColor: "#A8432A"
+      warnColor: "#A8432A",
+      provenance: procedenciaNutriente("cn")
     }
   ), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: -6, marginBottom: 8, paddingLeft: 2, fontWeight: 500 } }, "Calculado en base seca · corrige H₂O por insumo"), /* @__PURE__ */ React.createElement(
     BandGauge,
@@ -2705,7 +2989,8 @@ const RecipeGauges = ({ an, sp, optimalAn, historical }) => {
       scaleMin: 0,
       scaleMax: 3.5,
       color: "var(--accent-blue-grey)",
-      warnColor: "#A8432A"
+      warnColor: "#A8432A",
+      provenance: procedenciaNutriente("n")
     }
   ), /* @__PURE__ */ React.createElement(
     BandGauge,
@@ -2731,6 +3016,9 @@ const precioPonderado = (ingredienteId, lotes) => {
   if (!totalKg) return null;
   return active.reduce((s, l) => s + l.precioPorKgCOP * l.cantidadKgDisponible, 0) / totalKg;
 };
+if (typeof globalThis !== "undefined" && !globalThis.SetasInventario) {
+  globalThis.SetasInventario = { stockActual, precioPonderado };
+}
 const realCostPerKgSeco = (recipe, invLotes, ings) => {
   if (!recipe || !recipe.length) return null;
   let known = false;
@@ -2905,43 +3193,63 @@ const runHybridRecipeSearch = ({
     lockedIds: new Set(lockedIds || [])
   });
 };
-const autoImproveRecipe = ({ recipe, sKey, ings, optimizerINGS, spp, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+const autoImproveIsBetter = (next, cur) => next.criticals < cur.criticals && next.score >= cur.score || next.criticals === cur.criticals && next.score > cur.score;
+const AUTO_IMPROVE_PAIR_POOL = 8;
+const autoImproveOps = (apply) => Array.isArray(apply) ? apply : apply ? [apply] : [];
+const autoImproveRecipeDetailed = ({ recipe, sKey, ings, optimizerINGS, spp, resolveSpp = null, stockIds, lockedIds, useStock, usageCounts, histStats, maxIter = 6 }) => {
+  const evaluate = createRecipeEvaluator({ sKey, ings, spp, resolveSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze });
+  const sppFor = (r) => typeof resolveSpp === "function" && resolveSpp(r) || spp;
+  const progressOf = (r) => {
+    const e = evaluate(r);
+    if (!e) return null;
+    return { score: e.score, status: e.status, criticals: SetasScoring.assessSeverity(e.an).criticals };
+  };
   let cur = recipe;
-  let bestScore = -1;
+  let curP = progressOf(cur);
+  const before = curP;
+  const steps = [];
+  if (!curP) return { recipe, steps, before: null, after: null };
   for (let i = 0; i < maxIter; i++) {
-    const a = analyze(cur, sKey, ings, spp);
+    const curSpp = sppFor(cur);
+    const a = analyze(cur, sKey, ings, curSpp);
     if (!a) break;
-    const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, spp, usageCounts);
-    if (o.score <= bestScore) break;
-    bestScore = o.score;
-    const candidates = o.items.filter((it) => it.apply && (it.priority === "critical" || it.priority === "warning")).sort((x, y) => (y.predictedScore ?? -1) - (x.predictedScore ?? -1)).slice(0, 3);
-    if (!candidates.length) break;
-    let bestCandScore = -1, bestCandidate = null, bestO2 = null;
-    for (const cand of candidates) {
-      const tryRec = applyOptToRecipe(cur, cand.apply, lockedIds, optimizerINGS);
-      const tryA = analyze(tryRec, sKey, ings, spp);
-      if (!tryA) continue;
-      const tryO = generateOptimizer(tryA, sKey, stockIds, tryRec, optimizerINGS, lockedIds, blendEBWithHistory(tryA, histStats), useStock, void 0, spp, usageCounts);
-      if (tryO.score > bestCandScore) {
-        bestCandScore = tryO.score;
-        bestCandidate = tryRec;
-        bestO2 = tryO;
+    const o = generateOptimizer(a, sKey, stockIds, cur, optimizerINGS, lockedIds, blendEBWithHistory(a, histStats), useStock, void 0, curSpp, usageCounts, evaluate);
+    const moves = [];
+    o.items.filter((it) => it.priority === "critical" || it.priority === "warning").forEach((it) => {
+      if (it.apply) moves.push({ apply: it.apply, icons: [it.icon], labels: [it.label] });
+      if (it.comboApply) moves.push({ apply: it.comboApply, icons: [it.icon], labels: [it.comboLabel || it.label] });
+    });
+    if (!moves.length) break;
+    let best = null;
+    const tryMove = (apply, meta) => {
+      const next = applyOptToRecipe(cur, apply, lockedIds, optimizerINGS);
+      const p = progressOf(next);
+      if (p && autoImproveIsBetter(p, curP) && (!best || autoImproveIsBetter(p, best.after))) best = { recipe: next, apply, after: p, ...meta };
+    };
+    moves.forEach((m) => tryMove(m.apply, { icons: m.icons, labels: m.labels }));
+    if (!best) {
+      const pool = moves.slice(0, AUTO_IMPROVE_PAIR_POOL);
+      for (let x = 0; x < pool.length; x++) for (let y = 0; y < pool.length; y++) {
+        if (x === y) continue;
+        tryMove([...autoImproveOps(pool[x].apply), ...autoImproveOps(pool[y].apply)], { icons: [...pool[x].icons, ...pool[y].icons], labels: [...pool[x].labels, ...pool[y].labels] });
       }
     }
-    if (!bestCandidate) break;
-    if (bestO2.score <= o.score) break;
-    cur = bestCandidate;
+    if (!best) break;
+    steps.push({ labels: best.labels, icons: best.icons, ingredientIds: [...new Set(autoImproveOps(best.apply).map((op) => op && op.id).filter(Boolean))], before: curP, after: best.after });
+    cur = best.recipe;
+    curP = best.after;
   }
-  return cur;
+  return { recipe: cur, steps, before, after: curP };
 };
+const autoImproveRecipe = (args) => autoImproveRecipeDetailed(args).recipe;
 const launchMoisture = ({ touched, manual, target }) => touched ? manual : target ?? manual ?? 65;
 const launchSpawn = (bags, kgPerBag, dynSpawn) => dynSpawn ? { ingredientId: "spawn_grano", kg: bags * kgPerBag * (dynSpawn / 100) } : null;
 const moistureInTargetRange = (h, m) => m?.min != null && m?.max != null ? h >= m.min && h <= m.max : h >= 67;
 const launchDiscountSummary = (plan, ings = []) => {
   const sf = plan?.shortfalls || [];
-  if (!sf.length) return "Las materias primas fueron descontadas de Bodega.";
+  if (!sf.length) return "Las materias primas quedaron reservadas en Bodega; se descontarán al registrar la mezcla.";
   const nameOf = (id) => (ings || []).find((g) => g.id === id)?.name || id;
-  return `Se descontó lo disponible; faltaron: ${sf.map((x) => `${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(", ")}.`;
+  return `Se reservó lo disponible; faltaron: ${sf.map((x) => `${nameOf(x.ingredientId)} (${x.missing} ${x.unidad})`).join(", ")}.`;
 };
 const hybridOptimizerRow = (candidate, targetKey, ingredients, stockMap, profileKey) => {
   const an = candidate?.evaluation?.analysis;
@@ -3301,6 +3609,23 @@ const DEMO_ROOM_METRICS = {
   cloudlab_844: { temperature_c: 18.4, rh_pct: 88, co2_ppm: 750, substrate_temperature_c: 18.9 },
   incubacion_01: { temperature_c: 23.4, rh_pct: 72, co2_ppm: 1200, substrate_temperature_c: 24.8 }
 };
+const climateMetricProvenance = ({ metric, roomLive = null, injected = null }) => {
+  const key = { temperature_c: "temp", rh_pct: "rh", co2_ppm: "co2", substrate_temperature_c: "subTemp" }[metric];
+  if (Number.isFinite(roomLive?.sample?.[metric])) {
+    const reading = roomLive.latest?.[metric];
+    const entered = reading?.ingest_source === "manual" || reading?.source === "manual" || reading?.source === "iot_hub_webhook";
+    const ageMs = Number.isFinite(roomLive.metricAgeMs?.[metric]) ? roomLive.metricAgeMs[metric] : null;
+    const freshness = ageMs === null ? "unknown" : roomLive.freshMetrics?.[metric] === true ? "fresh" : "stale";
+    return { kind: entered ? "entered" : "measured", label: entered ? "Ingresado · prueba" : "Medido", freshness, ageMs };
+  }
+  if (key && Number.isFinite(injected?.[key])) return { kind: "entered", label: "Ingresado · prueba", freshness: "unknown", ageMs: null, recordedTime: injected.timestamp };
+  return { kind: "model", label: "Modelo · sin lectura", freshness: "unknown", ageMs: null };
+};
+const ClimateMetricProvenance = ({ metric, roomLive, injected }) => {
+  const p = climateMetricProvenance({ metric, roomLive, injected });
+  const age = p.kind === "model" ? "" : p.ageMs === null ? p.recordedTime ? `Hora registrada: ${p.recordedTime}` : "Fecha de lectura desconocida" : `${p.freshness === "stale" ? "Lectura antigua · " : ""}${liveAgeLabel(p.ageMs)}`;
+  return /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance", "data-testid": `climate-provenance-${metric}`, "data-provenance": p.kind, "data-freshness": p.freshness, style: { display: "inline-flex", flexDirection: "column", whiteSpace: "normal" } }, /* @__PURE__ */ React.createElement("span", null, p.label), age && /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 400, textTransform: "none" } }, age));
+};
 const LIVE_TELEMETRY_STORAGE_KEY = "setas_live_telemetry_config";
 const DEFAULT_LIVE_TELEMETRY_CONFIG = {
   websocketUrl: "",
@@ -3376,7 +3701,7 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
       const signature = [
         next.status.connectivity,
         next.status.activeSource || "-",
-        Object.values(next.rooms).map((r) => `${r.id}@${r.sample && r.sample.lastUpdateAt}`).join(","),
+        Object.values(next.rooms).map((r) => `${r.id}@${r.sample && r.sample.lastUpdateAt}:${Object.entries(r.metricAgeMs || {}).map(([m, age]) => `${m}:${Number.isFinite(age) ? liveAgeLabel(age) : "?"}:${r.freshMetrics?.[m]}`).join(",")}`).join(","),
         activeAlerts.map((a) => `${a.key}:${a.severity}`).join(",")
       ].join("|");
       if (signature === signatureRef.current) return;
@@ -4409,12 +4734,18 @@ function SimuladorShell(props) {
     }
   };
   const [selectedClimateRoom, setSelectedClimateRoom] = useState("martha_01");
+  const [copilotVisionResult, setCopilotVisionResult] = useState(null);
+  const [copilotVisionError, setCopilotVisionError] = useState(null);
+  const [copilotVisionBusy, setCopilotVisionBusy] = useState(false);
   const [climateTimeRange, setClimateTimeRange] = useState("24h");
   const [faePulseActive, setFaePulseActive] = useState(false);
   const [humidifierOverride, setHumidifierOverride] = useState(null);
   const [showProdLaunchModal, setShowProdLaunchModal] = useState(false);
+  const [selectedTrial, setSelectedTrial] = useState(null);
+  const [releaseBatchId, setReleaseBatchId] = useState(null);
   const [prodLaunchForm, setProdLaunchForm] = useState(null);
   const [showIoTHub, setShowIoTHub] = useState(false);
+  const iotHubTriggerRef = useRef(null);
   const [injectedClimateReadings, setInjectedClimateReadings] = useState({});
   const liveTelemetry = useLiveTelemetry({ bands: ROOM_TARGET_BANDS });
   const [globalMode, setGlobalMode] = useState(() => {
@@ -4516,7 +4847,9 @@ function SimuladorShell(props) {
   const [checkedSteps, setCheckedSteps] = useCaptureDraft("checkedSteps", {});
   const [loteBatchConfirm, setLoteBatchConfirm] = useState(null);
   const [confirmDlg, setConfirmDlg] = useState(null);
+  const [moveDlg, setMoveDlg] = useState(null);
   const [promptDlg, setPromptDlg] = useState(null);
+  const [versionDlg, setVersionDlg] = useState(null);
   const [noticeDlg, setNoticeDlg] = useState(null);
   const [bitLotes, setBitLotes] = useState([]);
   const [bitLotesLoaded, setBitLotesLoaded] = useState(false);
@@ -4525,8 +4858,13 @@ function SimuladorShell(props) {
   const qrLotesRef = useRef(bitLotes);
   qrLotesRef.current = bitLotes;
   const [bitBolsas, setBitBolsas] = useState([]);
+  const bitBolsasEditRef = useRef(bitBolsas);
+  useEffect(() => {
+    bitBolsasEditRef.current = bitBolsas;
+  }, [bitBolsas]);
   const [bitCosechas, setBitCosechas] = useState([]);
   const [bitTasks, setBitTasks] = useState([]);
+  const [roomEvents, setRoomEvents] = useState([]);
   const [syncQueue, setSyncQueue] = React.useState([]);
   const [showDayClose, setShowDayClose] = useState(false);
   const [dayCloseNote, setDayCloseNote] = useState(null);
@@ -4633,8 +4971,13 @@ function SimuladorShell(props) {
   const [invProveedores, setInvProveedores] = useState([]);
   const [invCompras, setInvCompras] = useState([]);
   const [invLotes, setInvLotes] = useState([]);
+  const invLotesRef = useRef([]);
+  useEffect(() => {
+    invLotesRef.current = invLotes;
+  }, [invLotes]);
   const [peritoInventoryLoaded, setPeritoInventoryLoaded] = useState(false);
   const [invMovimientos, setInvMovimientos] = useState([]);
+  const [invReservas, setInvReservas] = useState([]);
   const [invTab, setInvTab] = useState("stock");
   const [stockAlertsExpanded, setStockAlertsExpanded] = useState(false);
   const [formularMode, setFormularMode] = useState("auto");
@@ -4685,6 +5028,7 @@ function SimuladorShell(props) {
   })());
   const [cmpProvId, setCmpProvId] = useState("");
   const [cmpFuente, setCmpFuente] = useState("manual");
+  const [cmpRecibida, setCmpRecibida] = useState(true);
   const [cmpItems, setCmpItems] = useState([{ uid: 1, ingId: "", kg: "", precio: "" }]);
   const [cmpMode, setCmpMode] = useState("manual");
   const [cmpPasteText, setCmpPasteText] = useState("");
@@ -4705,14 +5049,14 @@ function SimuladorShell(props) {
     }
   });
   React.useEffect(() => {
-    const anyModalOpen = !!(confirmDlg || promptDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showTriageModal || showAIFormModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId);
+    const anyModalOpen = !!(confirmDlg || moveDlg || promptDlg || versionDlg || noticeDlg || loteBatchConfirm || showBitNuevo || showBitCosecha || showQrSheet || showThermalModal || showDiagModal || showTriageModal || showAIFormModal || showProvModal || catalogModalOpen || showProdLaunchModal || publicTraceModalLoteId || showIoTHub);
     if (!anyModalOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [confirmDlg, promptDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showTriageModal, showAIFormModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId]);
+  }, [confirmDlg, moveDlg, promptDlg, versionDlg, noticeDlg, loteBatchConfirm, showBitNuevo, showBitCosecha, showQrSheet, showThermalModal, showDiagModal, showTriageModal, showAIFormModal, showProvModal, catalogModalOpen, showProdLaunchModal, publicTraceModalLoteId, showIoTHub]);
   const [collapsedMonths, setCollapsedMonths] = useState({});
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ stock: "", precio: "", proveedorId: "", alertaMin: "", ingredienteNuevoId: "" });
@@ -4740,7 +5084,8 @@ function SimuladorShell(props) {
         updated = updated.map((l) => {
           if (!l.activo || l.ingredienteId !== targetId) return l;
           const fraccion = totalActual > 0 ? l.cantidadKgDisponible / totalActual : 1 / activos.length;
-          return { ...l, cantidadKgDisponible: Math.round(kg * fraccion * 100) / 100, precioPorKgCOP: pr };
+          const nuevoDisponible = Math.round(kg * fraccion * 1e3) / 1e3;
+          return { ...l, cantidadKgDisponible: nuevoDisponible, cantidadKgTotal: Math.max(l.cantidadKgTotal, nuevoDisponible), precioPorKgCOP: pr };
         });
       }
       try {
@@ -4824,29 +5169,14 @@ function SimuladorShell(props) {
   };
   useEffect(() => {
     try {
-      const seeded = localStorage.getItem("sdp_seeded");
-      if (!seeded) {
-        localStorage.setItem("sdp_proveedores", JSON.stringify(SEED_PROVEEDORES));
-        localStorage.setItem("sdp_compras", JSON.stringify(SEED_COMPRAS));
-        localStorage.setItem("sdp_lotes", JSON.stringify(SEED_LOTES));
-        localStorage.setItem("sdp_movimientos", JSON.stringify(SEED_MOVIMIENTOS));
-        localStorage.setItem("sdp_seeded", "1");
-        setInvProveedores(SEED_PROVEEDORES);
-        setInvCompras(SEED_COMPRAS);
-        setInvLotes(SEED_LOTES);
-        setInvMovimientos(SEED_MOVIMIENTOS);
-      } else {
-        const p = localStorage.getItem("sdp_proveedores");
-        const c = localStorage.getItem("sdp_compras");
-        const l = localStorage.getItem("sdp_lotes");
-        const m = localStorage.getItem("sdp_movimientos");
-        if (p) setInvProveedores(JSON.parse(p));
-        if (c) setInvCompras(JSON.parse(c));
-        if (l) setInvLotes(JSON.parse(l));
-        if (m) setInvMovimientos(JSON.parse(m));
-      }
+      SetasPrototype.recover(localStorage);
+      setInvProveedores(SetasPrototype.read(localStorage, "sdp_proveedores"));
+      setInvCompras(SetasPrototype.read(localStorage, "sdp_compras"));
+      setInvLotes(SetasPrototype.read(localStorage, "sdp_lotes"));
+      setInvMovimientos(SetasPrototype.read(localStorage, "sdp_movimientos"));
       setPeritoInventoryLoaded(true);
     } catch (e) {
+      setNoticeDlg({ title: "Revisar almacenamiento", msg: e.message });
     }
     try {
       const bl = localStorage.getItem("sdp_bit_lotes");
@@ -4857,6 +5187,21 @@ function SimuladorShell(props) {
       if (bb) setBitBolsas(JSON.parse(bb));
       if (bc) setBitCosechas(JSON.parse(bc));
       if (bt) setBitTasks(JSON.parse(bt));
+      const bre = localStorage.getItem("sdp_room_events");
+      if (bre) setRoomEvents(JSON.parse(bre));
+      const ir = localStorage.getItem("sdp_inv_reservas");
+      if (ir) {
+        const parsedReservas = JSON.parse(ir);
+        const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+        const vigentes = ledgerApi ? ledgerApi.expireDue(parsedReservas, Date.now()) : parsedReservas;
+        setInvReservas(vigentes);
+        if (ledgerApi && JSON.stringify(vigentes) !== JSON.stringify(parsedReservas)) {
+          try {
+            localStorage.setItem("sdp_inv_reservas", JSON.stringify(vigentes));
+          } catch (e) {
+          }
+        }
+      }
       const sq = localStorage.getItem("sdp_sync_queue");
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       if (sq && syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
@@ -4872,7 +5217,8 @@ function SimuladorShell(props) {
   }, [syncQueue]);
   useEffect(() => {
     let cancelled = false;
-    const drainAll = async () => {
+    const drainRef = { inFlight: null, again: false };
+    const drainOnce = async () => {
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       const bitacoraDb = typeof window !== "undefined" ? window.SetasBitacoraDB : null;
       if (!syncQueueApi || !bitacoraDb) return;
@@ -4897,6 +5243,20 @@ function SimuladorShell(props) {
         } catch (e) {
         }
       }
+    };
+    const drainAll = () => {
+      if (drainRef.inFlight) {
+        drainRef.again = true;
+        return drainRef.inFlight;
+      }
+      drainRef.inFlight = drainOnce().finally(() => {
+        drainRef.inFlight = null;
+        if (drainRef.again) {
+          drainRef.again = false;
+          drainAll();
+        }
+      });
+      return drainRef.inFlight;
     };
     drainAll();
     const intervalId = setInterval(drainAll, 15e3);
@@ -4965,10 +5325,24 @@ function SimuladorShell(props) {
   useEffect(() => {
     try {
       const s = localStorage.getItem("setas_v6");
-      if (s) setSaved(JSON.parse(s));
+      if (!s) return;
+      const crudas = JSON.parse(s);
+      const lifecycle = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+      if (!lifecycle) {
+        setSaved(crudas);
+        return;
+      }
+      const migradas = crudas.map((r) => lifecycle.migrateLegacyRecipe(r));
+      setSaved(migradas);
+      const cambio = migradas.some((r, i) => r !== crudas[i]);
+      if (cambio) {
+        try {
+          localStorage.setItem("setas_v6", JSON.stringify(migradas));
+        } catch (e2) {
+        }
+      }
     } catch (e) {
     }
-    ;
   }, []);
   useEffect(() => {
     if (props.onSavedChange) props.onSavedChange(saved);
@@ -5051,6 +5425,15 @@ function SimuladorShell(props) {
         eb: an ? an.eb : null,
         cost: an ? Math.round(an.cost) : null,
         score: opt.score
+      }).then((docRef) => {
+        setSaved((prev) => {
+          const upd = prev.map((r) => r.id === e.id ? { ...r, firestoreId: docRef.id } : r);
+          try {
+            localStorage.setItem("setas_v6", JSON.stringify(upd));
+          } catch (e3) {
+          }
+          return upd;
+        });
       }).catch((err) => setSaveSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido")));
     }
   };
@@ -5104,20 +5487,75 @@ function SimuladorShell(props) {
     }
   };
   const loadR = (e) => {
-    const apply = () => {
-      setSKey(e.sKey);
-      setRecipe(e.recipe);
+    const apply = (receta = e) => {
+      setSKey(receta.sKey);
+      setRecipe(receta.recipe);
       setLockedIds([]);
       openBuilderSubTab("formular");
       goTab("formular");
       setLoadedFlash(true);
       setTimeout(() => setLoadedFlash(false), 2200);
     };
+    const lifecycle = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+    if (lifecycle) {
+      try {
+        lifecycle.assertEditable(e);
+      } catch (err) {
+        setNewVersionFor(e);
+        return;
+      }
+    }
     if (recipe.length > 0) {
-      setConfirmDlg({ title: "Reemplazar receta activa", msg: `¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`, onConfirm: apply });
+      setConfirmDlg({ title: "Reemplazar receta activa", msg: `¿Reemplazar la receta activa con "${e.name}"? Se perderán los cambios sin guardar.`, onConfirm: () => apply() });
       return;
     }
     apply();
+  };
+  const [newVersionFor, setNewVersionFor] = useState(null);
+  const confirmNewRecipeVersion = () => {
+    const lifecycle = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+    if (!lifecycle || !newVersionFor) return;
+    try {
+      const nueva = lifecycle.newVersionFrom(newVersionFor, {}, { actor: fieldOperatorRole, at: (/* @__PURE__ */ new Date()).toISOString() });
+      const u = [{ ...nueva, id: Date.now() }, ...saved];
+      setSaved(u);
+      try {
+        localStorage.setItem("setas_v6", JSON.stringify(u));
+      } catch (e) {
+      }
+      setNewVersionFor(null);
+      setSKey(nueva.sKey);
+      setRecipe(nueva.recipe);
+      setLockedIds([]);
+      openBuilderSubTab("formular");
+      goTab("formular");
+      setNoticeDlg({ title: `Versión ${nueva.version} creada`, msg: `«${nueva.name}» v${nueva.version} nace en borrador y ya está cargada para editar. La versión aprobada anterior queda intacta.` });
+    } catch (err) {
+      setNewVersionFor(null);
+      setNoticeDlg({ title: "No se pudo crear la versión", msg: err.message });
+    }
+  };
+  const promoteRecipe = (receta, toState) => {
+    const lifecycle = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+    if (!lifecycle) return;
+    try {
+      const actualizada = lifecycle.promote(receta, toState, {
+        actor: props.operatorName || "operador-local",
+        // El rol tiene una sola procedencia: getFieldOperatorRole(), que lee
+        // usuarios/{uid}.rol de la sesión. props.isAdmin es el selector del
+        // encabezado y no es autorización (client-invariants.test.js lo exige).
+        role: fieldOperatorRole,
+        at: (/* @__PURE__ */ new Date()).toISOString()
+      });
+      const u = saved.map((s) => s.id === receta.id ? { ...actualizada, id: receta.id } : s);
+      setSaved(u);
+      try {
+        localStorage.setItem("setas_v6", JSON.stringify(u));
+      } catch (e) {
+      }
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo cambiar el estado", msg: err.message });
+    }
   };
   const requireAdmin = (fn) => (...args) => {
     if (!props.isAdmin) {
@@ -5128,11 +5566,15 @@ function SimuladorShell(props) {
   };
   const delR = (id) => {
     setConfirmDlg({ title: "Eliminar receta", msg: "¿Eliminar esta receta guardada? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: () => {
+      const receta = saved.find((r) => r.id === id);
       const u = saved.filter((r) => r.id !== id);
       setSaved(u);
       try {
         localStorage.setItem("setas_v6", JSON.stringify(u));
       } catch (e) {
+      }
+      if (receta?.firestoreId && window.SetasDB?.deleteReceta) {
+        window.SetasDB.deleteReceta(receta.firestoreId).catch((err) => console.warn("No se pudo borrar la receta en Firestore:", err));
       }
     } });
   };
@@ -5270,10 +5712,15 @@ function SimuladorShell(props) {
     });
     return m;
   }, [invLotes]);
-  const lowStockCount = useMemo(() => {
-    const registeredIds = [...new Set(invLotes.filter((l) => l.activo).map((l) => l.ingredienteId))];
-    return registeredIds.filter((id) => (stockMap[id] || 0) < (alertaConfig[id] ?? 2)).length;
-  }, [invLotes, stockMap, alertaConfig]);
+  const stockAlerts = window.SetasInventoryLedger.lowStockAlerts({
+    ingredients: INGS,
+    lots: invLotes,
+    ledger: invReservas,
+    incoming: window.SetasPurchases ? window.SetasPurchases.incomingFromCompras(invCompras) : [],
+    thresholds: alertaConfig,
+    nowMs: Date.now()
+  });
+  const lowStockCount = stockAlerts.length;
   useEffect(() => {
     if (typeof props.onStockAlertChange === "function") props.onStockAlertChange(lowStockCount);
   }, [lowStockCount]);
@@ -5350,7 +5797,10 @@ function SimuladorShell(props) {
   React.useEffect(() => {
     setUsageCounts({});
   }, [sKey]);
-  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts]);
+  const resolvePeritoSpp = React.useCallback((r) => SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, r, effectiveINGS), [sKey, effectiveINGS]);
+  const peritoEvaluate = useMemo(() => createRecipeEvaluator({ sKey, ings: effectiveINGS, resolveSpp: resolvePeritoSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze }), [sKey, effectiveINGS, resolvePeritoSpp, stockIds, histStats]);
+  const substrateClassInfo = useMemo(() => SetasSpeciesTargetsApi.describeSubstrateClass ? SetasSpeciesTargetsApi.describeSubstrateClass({ speciesId: sKey, recipe, ings: effectiveINGS, legacySpp: SPP }) : null, [sKey, recipe, effectiveINGS]);
+  const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate]);
   const peritoRevisionRef = React.useRef(0);
   useEffect(() => {
     const input = {
@@ -5466,8 +5916,93 @@ function SimuladorShell(props) {
     setRecipe(recipeHistory[recipeHistory.length - 1]);
     setRecipeHistory((h) => h.slice(0, -1));
   };
+  const [autoImproveResult, setAutoImproveResult] = React.useState(null);
   const autoImprove = () => {
-    setRecipe(autoImproveRecipe({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats }));
+    const res = autoImproveRecipeDetailed({ recipe, sKey, ings: effectiveINGS, optimizerINGS, spp: effectiveSPP, resolveSpp: resolvePeritoSpp, stockIds, lockedIds, useStock: optUseStock, usageCounts, histStats });
+    if (!res.steps.length) {
+      setAutoImproveResult({ recipeKey: recipeKeyOf(recipe), steps: [], before: res.before, after: res.before });
+      return;
+    }
+    setRecipeHistory((h) => [...h, recipe]);
+    setRecipe(res.recipe);
+    setAppliedIcons((s) => {
+      const next = { ...s };
+      res.steps.forEach((st) => st.icons.forEach((ic) => {
+        next[ic] = (next[ic] || 0) + 1;
+      }));
+      return next;
+    });
+    setUsageCounts((s) => {
+      const next = { ...s };
+      res.steps.forEach((st) => st.ingredientIds.forEach((id) => {
+        next[id] = (next[id] || 0) + 1;
+      }));
+      return next;
+    });
+    setAutoImproveResult({ recipeKey: recipeKeyOf(res.recipe), steps: res.steps, before: res.before, after: res.after });
+  };
+  const autoImproveSummary = autoImproveResult && autoImproveResult.recipeKey === recipeKeyOf(recipe) ? autoImproveResult : null;
+  const peritoItemKeys = (list) => {
+    const seen = /* @__PURE__ */ new Map();
+    return list.map((it) => {
+      const base = `${it.priority}|${it.icon}|${it.label}`;
+      const n = seen.get(base) || 0;
+      seen.set(base, n + 1);
+      return n ? `${base}#${n}` : base;
+    });
+  };
+  const renderPeritoPanel = (variant) => {
+    const isWorkbench = variant === "workbench";
+    if (!an) return isWorkbench ? /* @__PURE__ */ React.createElement("section", { className: "panel perito-standalone-panel", "data-perito-variant": variant, style: { background: "var(--paper-50)", border: "1.5px solid var(--border-soft)", marginBottom: 24, padding: 20, borderRadius: "var(--r-md)" } }, /* @__PURE__ */ React.createElement("div", { className: "os-provenance-notice" }, "Agrega ingredientes en la Mesa de Mezcla para ver el diagnóstico del Perito.")) : null;
+    const hasPer = recipe.length > 0;
+    const { score, status, items } = hasPer ? opt : { score: 0, status: "sin_receta", items: [] };
+    const criticals = items.filter((s) => s.priority === "critical");
+    const warnings = items.filter((s) => s.priority === "warning");
+    const tips = items.filter((s) => s.priority === "tip");
+    const infos = items.filter((s) => s.priority === "info");
+    const sm = PERITO_STATUS[status] || PERITO_STATUS.sin_receta;
+    const max = 150, oMin = sp?.cn_optimal?.min, oMax = sp?.cn_optimal?.max;
+    const cur = sp ? Math.min(an.cn, max) : 0;
+    const cnOk = sp && an.cn >= oMin && an.cn <= oMax;
+    const restrictiveFactor = isWorkbench ? engineCalcRestrictiveFactor ? engineCalcRestrictiveFactor(an, sp, { treatment: tr }) : engineCalcLiebigBottleneck ? engineCalcLiebigBottleneck(an, sp) : null : null;
+    const reqPsi = isWorkbench ? engineTenjoPhysicalContext?.requiredGaugePressurePsi || (engineCalcRequiredGaugePressurePsi ? engineCalcRequiredGaugePressurePsi(2600) : 19.03) : null;
+    const optHold = isWorkbench && engineCalcOptimalHoldTime ? engineCalcOptimalHoldTime({ weightKg: kgBag || 2, moisturePct: hObj || 65, altitudeM: 2600, gaugePressurePsi: reqPsi }) : null;
+    const onMorph = (tgt) => {
+      setMorphTargetRecipe(tgt);
+      setWorkbenchMode("morphing");
+      if (!isWorkbench) openBuilderSubTab("generador");
+    };
+    const renderItems = (list) => {
+      const keys = peritoItemKeys(list);
+      return list.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: keys[i], item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, evaluate: peritoEvaluate, onMorph }));
+    };
+    return /* @__PURE__ */ React.createElement("section", { className: `panel print-panel${isWorkbench ? " perito-standalone-panel" : ""}`, id: isWorkbench ? void 0 : "bl-perito", "data-perito-variant": variant, "aria-label": "Perito", style: { background: hasPer ? sm.bg : "var(--paper-50)", border: `1.5px solid ${hasPer ? sm.border : "var(--border-soft)"}`, marginBottom: isWorkbench ? 24 : 12, transition: "background .3s,border-color .3s", ...isWorkbench ? { padding: 20, borderRadius: "var(--r-md)" } : {} } }, hasPer && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${sm.border}40`, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 62, height: 62, borderRadius: "50%", background: sm.badge, flexShrink: 0, transition: "background .3s" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 24, fontWeight: 900, color: "var(--paper-0)", lineHeight: 1 } }, score), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", color: "rgba(255,255,255,.7)", letterSpacing: "var(--tracking-button)", marginTop: 1 } }, "SCORE")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: sm.badge, marginBottom: 2 } }, "Perito · Veredicto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: 20, fontWeight: 800, color: sm.txt, lineHeight: 1, transition: "color .3s" } }, sm.veredicto), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, marginTop: 4, lineHeight: 1.4 } }, sm.accion && /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700 } }, sm.accion), (() => {
+      const causa = peritoMainLimiter(opt, an);
+      return causa ? /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.8, marginTop: 2 } }, /* @__PURE__ */ React.createElement("b", null, "Causa:"), " ", causa) : null;
+    })(), an.trichoderma && /* @__PURE__ */ React.createElement("div", { style: { color: "#C53030", fontWeight: 700, marginTop: 2 } }, "Autoclave 121°C × 90 min obligatorio"), !an.trichoderma && tr && /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.6, marginTop: 2 } }, "Trat.: ", tr.name)), isWorkbench && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4 } }, "Especie: ", /* @__PURE__ */ React.createElement("b", null, sp?.name || "Sin especie"), " (", recipe.length, " ingrediente", recipe.length !== 1 ? "s" : "", ")")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } }, (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sparkles", size: 11, color: "var(--paper-0)" }), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"), !isWorkbench && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { onClick: runFormNextAction, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-600,var(--accent-olive))", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, formNextLabel), (status === "needs_work" || status === "critical") && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setPromptDlg({ title: "Nueva prueba experimental", label: "Nombre de la prueba", placeholder: "ej. Ostra gris — ajuste C:N lote 12", confirmLabel: "Guardar prueba", onSubmit: (nm) => {
+        const trSave = calcTreatment(an, sKey, effectiveSPP);
+        const e = { id: Date.now(), name: nm, sKey, recipe: [...recipe], date: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO"), eb: an.eb.toFixed(0), cn: an.cn.toFixed(1), score: opt.score, cost: Math.round(an.cost), treatCol: trSave?.col || null, energyCopKg: trSave?.energy?.cop_per_kg_seco || 0 };
+        const u = [e, ...saved];
+        setSaved(u);
+        try {
+          localStorage.setItem("setas_v6", JSON.stringify(u));
+        } catch (e2) {
+        }
+        setNoticeDlg({ msg: `Guardada como prueba: ${nm}` });
+      } });
+    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: sm.badge, border: `1px solid ${sm.border}`, borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, "+ Crear prueba")), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      setShowAIFormModal(true);
+      setAiFormResult(null);
+      setAiFormError("");
+    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-700)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wand", size: 13 }), " Asistente IA (Gemini)"))), hasPer && /* @__PURE__ */ React.createElement("div", { style: { marginTop: -8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(SubstrateClassNote, { info: substrateClassInfo })), hasPer && /* @__PURE__ */ React.createElement(AutoImproveSummary, { result: autoImproveSummary, onUndo: undoLastRec, canUndo: recipeHistory.length > 0 }), isWorkbench && /* @__PURE__ */ React.createElement(React.Fragment, null, restrictiveFactor && restrictiveFactor.factor !== "none" && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.08)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.08)" : "rgba(77,98,53,.08)", border: `1px solid ${restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.3)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.3)" : "rgba(77,98,53,.3)"}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center" } }, restrictiveFactor.severity === "critical" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 16, color: "#C53030" }) : restrictiveFactor.severity === "warning" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 16, color: "#7A5A10" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 16, color: "#2F4A24" })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: restrictiveFactor.severity === "critical" ? "#C53030" : restrictiveFactor.severity === "warning" ? "#7A5A10" : "#2F4A24" } }, "Factor Restrictivo Estimado: ", restrictiveFactor.label)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)", marginBottom: 4, lineHeight: 1.5 } }, /* @__PURE__ */ React.createElement("b", null, "Diagnóstico Causal:"), " ", restrictiveFactor.rationale), restrictiveFactor.counterfactualOpportunity && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-800)", marginBottom: 4, background: "rgba(77,98,53,.08)", padding: "4px 8px", borderRadius: 3 } }, /* @__PURE__ */ React.createElement("b", null, "Oportunidad Contrafactual:"), " ", restrictiveFactor.counterfactualOpportunity.description), restrictiveFactor.actionRequired && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: restrictiveFactor.severity === "critical" ? "#9B2C2C" : "#5A4008", fontWeight: 700 } }, "→ Acción correctiva: ", restrictiveFactor.actionRequired)), /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: "rgba(43,76,126,.06)", border: "1px solid rgba(43,76,126,.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: "var(--slate-800)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 14, style: { marginRight: 6 } }), " Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", background: "var(--slate-700)", color: "#fff", padding: "2px 8px", borderRadius: 3, fontWeight: 700 } }, "All American 1941X: ", reqPsi.toFixed(2), " psig")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Presión manométrica:"), " ", /* @__PURE__ */ React.createElement("span", { style: { color: "#C53030", fontWeight: 700 } }, reqPsi.toFixed(2), " psig"), " (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Tiempo de meseta (Hold):"), " ", optHold?.holdTimeMin || 90, " min en bolsa de ", kgBag || 2, " kg a ", hObj || 65, "% HR."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Letalidad F₀:"), " ≥ 12.0 min (inactivación probada de ", /* @__PURE__ */ React.createElement("i", null, "G. stearothermophilus"), ").")))), /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 12 } }, [
+      { l: "C:N", v: an.cn > 0 ? `${an.cn.toFixed(1)}:1` : "—", ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max, prov: an.cn > 0 ? procedenciaNutriente("cn") : procedenciaSinMatrizNutritiva() },
+      { l: "Nitrógeno", v: an.avgN > 0 ? `${an.avgN.toFixed(2)}%` : "—", ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max, prov: an.avgN > 0 ? procedenciaNutriente("n") : procedenciaSinMatrizNutritiva() },
+      { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
+      { l: "Costo / kg seco", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, neutral: true, prov: procedenciaCosto(an.cost, realCostPerKg), sub: an.eb > 0 ? `≈ $${Math.round((an.cost || 0) / (an.eb / 100)).toLocaleString("es-CO")} por kg de hongo con la EB estimada` : null },
+      { l: "pH estimado", v: an.avgPh?.toFixed(1) || "—", ok: sp && an.avgPh >= sp.ph_optimal?.min && an.avgPh <= sp.ph_optimal?.max, w: false, prov: procedenciaNutriente("ph") },
+      { l: "Digestibilidad", v: `${an.avgDig?.toFixed(1) || "—"}/10`, ok: an.avgDig >= 7, w: an.avgDig >= 4 && an.avgDig < 7, prov: procedenciaNutriente("dig") }
+    ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "mc" }, /* @__PURE__ */ React.createElement("div", { className: "mlbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "mval" }, m.v), m.neutral ? /* @__PURE__ */ React.createElement("span", { className: "mbadge bneutral", "data-testid": "metric-no-target", title: COST_NO_TARGET_TITLE }, "Sin objetivo") : /* @__PURE__ */ React.createElement("span", { className: `mbadge ${m.ok ? "bgood" : m.w ? "bwarn" : "bbad"}` }, m.ok ? "Óptimo" : m.w ? "Aceptable" : "Ajustar"), m.prov && /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", title: m.prov.title || void 0 }, m.prov.texto), m.sub && /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", "data-testid": "metric-sub" }, m.sub)))), /* @__PURE__ */ React.createElement("div", { className: "os-provenance-notice", "data-testid": "prov-nutrientes" }, procedenciaNutrientesResumen()), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, margin: "12px 0" } }, /* @__PURE__ */ React.createElement(EBDial, { an, sp }), sp && an.cn > 0 && /* @__PURE__ */ React.createElement("div", { className: "gauge-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-hdr" }, /* @__PURE__ */ React.createElement("span", { className: "gauge-cur" }, "C:N ", an.cn.toFixed(1), ":1"), /* @__PURE__ */ React.createElement("span", { className: "gauge-tgt" }, "objetivo ", oMin, "–", oMax, ":1")), /* @__PURE__ */ React.createElement("div", { className: "gauge-tr" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-zn", style: { left: `${oMin / max * 100}%`, width: `${(oMax - oMin) / max * 100}%` } }), /* @__PURE__ */ React.createElement("div", { className: "gauge-nd", style: { left: `${cur / max * 100}%`, background: cnOk ? "var(--accent-olive)" : an.cn < oMin ? "var(--coral-500)" : "var(--ochre-500,#A07828)" } })), /* @__PURE__ */ React.createElement("div", { className: "gauge-ft" }, /* @__PURE__ */ React.createElement("span", null, "0"), /* @__PURE__ */ React.createElement("span", null, oMin, "–", oMax), /* @__PURE__ */ React.createElement("span", null, "150+")))), /* @__PURE__ */ React.createElement(NitrogenChart, { recipe }), hasPer && /* @__PURE__ */ React.createElement(React.Fragment, null, histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), !isMassBalanced(an) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", { id: isWorkbench ? void 0 : "perito-recommendations" }, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), renderItems(criticals)), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), renderItems(warnings)), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), renderItems(tips)), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-700)", marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), !isWorkbench && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx))))));
   };
   const openPrintWindow = (mode2) => {
     const el = document.querySelector(".prod-sheet[data-preparation-revision]");
@@ -5575,6 +6110,65 @@ body{margin:0;padding:20px 24px;background:#fff;}
       console.error("Error en operación protegida por conGuardaEjecucion:", e);
     }
   };
+  const applyPrototypeEntries = (entries) => {
+    if (!entries) return;
+    if (entries.sdp_bit_lotes) setBitLotes(entries.sdp_bit_lotes);
+    if (entries.sdp_bit_bolsas) setBitBolsas(entries.sdp_bit_bolsas);
+    if (entries.sdp_inv_reservas) setInvReservas(entries.sdp_inv_reservas);
+    if (entries.sdp_sync_queue) {
+      syncQueueRef.current = entries.sdp_sync_queue;
+      setSyncQueue(entries.sdp_sync_queue);
+    }
+    if (entries.sdp_lotes) {
+      invLotesRef.current = entries.sdp_lotes;
+      setInvLotes(entries.sdp_lotes);
+    }
+    if (entries.sdp_movimientos) setInvMovimientos(entries.sdp_movimientos);
+    if (entries.sdp_inventory_ops) setInvOps(entries.sdp_inventory_ops);
+  };
+  const authorizePrototypePreparation = (record) => {
+    const lote = SetasPrototype.read(localStorage, "sdp_bit_lotes").find((l) => l.id === releaseBatchId);
+    const result = SetasPrototype.prepareBatch(localStorage, { loteId: lote.id, trialRelease: record, sheet: buildSheetFor(lote), role: operatorRole, operatorId: lote.operador || "operador-local", at: (/* @__PURE__ */ new Date()).toISOString() });
+    applyPrototypeEntries(result.entries);
+    enqueueFieldTransition(result.lote, result.lote.pendingPreparationTransition?.from || "planned", result.transition);
+    if (taskEngine) mergeIntoTasks(taskEngine.tasksFromTransition({ batchId: lote.id, toState: result.transition, at: (/* @__PURE__ */ new Date()).toISOString() }));
+    runInventorySync();
+    setReleaseBatchId(null);
+    setNoticeDlg({ title: "Preparación guardada en este equipo", msg: "Consumo registrado una sola vez. La transición de etapa queda pendiente hasta que el servidor la acepte. Puedes reintentar si se interrumpe la conexión." });
+  };
+  const runEjecucionLote = () => {
+    const { preview, plan, loteNum, fecha } = loteBatchConfirm;
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const form = { codigo: loteNum, especie: SPP[sKey]?.name || sKey, especieCientifico: SPP[sKey]?.scientific || "", cepa: "", fechaMezcla: fecha, fechaInoculacion: fecha, numBolsas: parseInt(prodBags) || 1, pesoHumedo: prodKg || 1.5, humedad: prodH || an?.moistureTarget || 65, sala: selectedClimateRoom || "martha_01", operador: "Operario Granja Tenjo", notas: "Hoja de producción" };
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form, plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: "planificado", objetivo: "Planificado desde el Formulador" });
+      applyPrototypeEntries(SetasPrototype.planBatch(localStorage, { lote, bolsas, plan, selection: selectedTrial }));
+      setSelectedTrial(null);
+      consumoRegistrado = true;
+      refrescarCodigoTrasEjecutar.current = true;
+      setLoteBatchConfirm(null);
+      setLoteSyncErr("");
+      setEjecutandoLote(false);
+    } catch (e) {
+      console.error("Error al ejecutar lote:", e);
+      if (consumoRegistrado) {
+        setLoteBatchConfirm(null);
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title: "Lote planificado con errores",
+          msg: `Los insumos de ${loteNum} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
+        });
+      } else {
+        ejecutarLoteInFlight.current = false;
+        setEjecutandoLote(false);
+        setNoticeDlg({
+          title: "No se pudo ejecutar el lote",
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || "error desconocido"}. Intenta de nuevo.`
+        });
+      }
+    }
+  };
   const confirmarEjecucion = conGuardaEjecucion(() => {
     if (!loteBatchConfirm) {
       ejecutarLoteInFlight.current = false;
@@ -5587,76 +6181,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
       setEjecutandoLote(false);
       return;
     }
-    const { preview, plan, loteNum, fecha } = loteBatchConfirm;
-    let consumoRegistrado = false;
-    try {
-      const now = Date.now();
-      const form = { codigo: loteNum, especie: SPP[sKey]?.name || sKey, especieCientifico: SPP[sKey]?.scientific || "", cepa: "", fechaMezcla: fecha, fechaInoculacion: fecha, numBolsas: parseInt(prodBags) || 1, pesoHumedo: prodKg || 1.5, humedad: prodH || an?.moistureTarget || 65, sala: selectedClimateRoom || "martha_01", operador: "Operario Granja Tenjo", notas: "Hoja de producción" };
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form, plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan, fecha, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${fecha}` });
-      if (!registered) {
-        ejecutarLoteInFlight.current = false;
-        setEjecutandoLote(false);
-        return;
-      }
-      consumoRegistrado = true;
-      refrescarCodigoTrasEjecutar.current = true;
-      setBitLotes((prev) => {
-        const upd = [lote, ...prev];
-        try {
-          localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
-        } catch (e) {
-          bitQuotaWarn();
-        }
-        return upd;
-      });
-      setBitBolsas((prev) => {
-        const upd = [...prev, ...bolsas];
-        try {
-          localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-        } catch (e) {
-          bitQuotaWarn();
-        }
-        return upd;
-      });
-      encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
-      encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
-      setLoteBatchConfirm(null);
-      setLoteSyncErr("");
+    const comprometido = faltantePorReservaDeOtroLote(loteBatchConfirm.plan);
+    if (comprometido) {
+      ejecutarLoteInFlight.current = false;
       setEjecutandoLote(false);
-      if (window.SetasDB) {
-        (async () => {
-          try {
-            await window.SetasDB.crearLoteProduccion({
-              codigo: lote.codigo,
-              especie: SPP[sKey]?.name || sKey,
-              camara: "—",
-              operador: "—",
-              receta: { ingredientes: recipe.map((r) => ({ id: r.id, pct: parseFloat(r.p) || 0 })) }
-            });
-          } catch (err) {
-            setLoteSyncErr("No se sincronizó con el servidor: " + (err.message || err.code || "error desconocido"));
-          }
-        })();
-      }
-    } catch (e) {
-      console.error("Error al ejecutar lote:", e);
-      if (consumoRegistrado) {
-        setLoteBatchConfirm(null);
-        setEjecutandoLote(false);
-        setNoticeDlg({
-          title: "Lote ejecutado con errores",
-          msg: `El consumo de bodega ya se registró para ${loteNum}; revisa la Bitácora antes de relanzar.`
-        });
-      } else {
-        ejecutarLoteInFlight.current = false;
-        setEjecutandoLote(false);
-        setNoticeDlg({
-          title: "No se pudo ejecutar el lote",
-          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || "error desconocido"}. Intenta de nuevo.`
-        });
-      }
+      setConfirmDlg({
+        title: "Insumo comprometido con otro lote",
+        msg: comprometido + ". Puedes confirmar de todas formas si sabes que llega a tiempo.",
+        confirmLabel: "Confirmar y reservar",
+        onConfirm: () => {
+          ejecutarLoteInFlight.current = true;
+          setEjecutandoLote(true);
+          runEjecucionLote();
+        }
+      });
+      return;
     }
+    runEjecucionLote();
   });
   const SPP_CODE2 = { p_ostreatus_gris: "OST", p_ostreatus_blanco: "OBL", p_djamor_rosa: "ROS", p_eryngii: "ERY", shiitake: "SHI", lions_mane: "MEL", reishi: "REI", enoki: "ENO", nameko: "NAM" };
   const sugerirCodigoLote = (key) => {
@@ -5699,9 +6240,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
       operador: "",
       objetivo: "",
       notas: "",
-      estado: "incubacion",
+      estado: "planificado",
       veredicto: "",
-      recipeRef: recipe.length && balanced ? { id: Date.now(), name: saveName || "Receta activa", sKey, recipe: [...recipe], cn: an.cn.toFixed(1), eb: an.eb.toFixed(0), score: opt.score, cost: Math.round(an.cost) } : null
+      recipeRef: recipe.length && balanced ? { id: Date.now(), name: saveName || "Receta activa", sKey, recipe: [...recipe], cn: an.cn.toFixed(1), eb: an.eb.toFixed(0), score: opt.score, cost: Math.round(an.cost) } : null,
+      // El snapshot congela lo que este lote debe seguir diciendo aunque la
+      // receta cambie mañana. Va JUNTO a recipeRef, que otros sitios leen.
+      recipeSnapshot: (() => {
+        const lc = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+        if (!lc || !recipe.length || !balanced) return null;
+        const base = saved.find((r) => r.name === saveName) || { name: saveName || "Receta activa", sKey, recipe: [...recipe], status: "legacy", version: 1 };
+        try {
+          return lc.buildProductionSnapshot({ ...base, sKey, recipe: [...recipe], cn: an.cn.toFixed(1), eb: an.eb.toFixed(0), cost: Math.round(an.cost) }, { at: (/* @__PURE__ */ new Date()).toISOString() });
+        } catch (e) {
+          return null;
+        }
+      })()
     };
   };
   const openThermalForLote = (loteId, options = {}) => {
@@ -5847,6 +6400,94 @@ ${errors.slice(0, 5).join("\n")}` : "");
       console.error("Error en operación protegida por conGuardaLanzamiento:", e);
     }
   };
+  const runLanzamientoProduccion = () => {
+    const f = prodLaunchForm;
+    let consumoRegistrado = false;
+    try {
+      const now = Date.now();
+      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: "planificado", objetivo: "Planificado desde Producción" });
+      applyPrototypeEntries(SetasPrototype.planBatch(localStorage, { lote, bolsas, plan: f.plan, selection: selectedTrial }));
+      setSelectedTrial(null);
+      consumoRegistrado = true;
+      setShowProdLaunchModal(false);
+      if (f.printQr) {
+        setThermalLote(lote);
+        setThermalBagEnd(lote.numBolsas || 12);
+        setThermalScope("all");
+        setShowThermalModal(true);
+      } else {
+        setBitActiveLoteId(lote.id);
+        goTab("bitacora");
+      }
+      setNoticeDlg({
+        title: "Lote planificado",
+        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
+      });
+    } catch (e) {
+      console.error("Error al lanzar producción de lote:", e);
+      if (consumoRegistrado) {
+        setShowProdLaunchModal(false);
+        setLaunching(false);
+        setNoticeDlg({
+          title: "Lote planificado con errores",
+          msg: `Los insumos de ${f.codigo} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
+        });
+      } else {
+        launchInFlight.current = false;
+        setLaunching(false);
+        setNoticeDlg({
+          title: "No se pudo lanzar el lote",
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || "error desconocido"}. Intenta de nuevo.`
+        });
+      }
+    }
+  };
+  const procedenciaHumedades = (preparation2) => {
+    const prov = typeof window !== "undefined" ? window.SetasProvenance : null;
+    const items = preparation2 && preparation2.items || [];
+    if (!prov || !items.length) return null;
+    const estimados = [];
+    let medidos = 0;
+    items.forEach((it) => {
+      const d = prov.describe({ vocabulary: "moisture", value: it.moisture && it.moisture.source });
+      if (!d) return;
+      if (d.kind === prov.KINDS.measured) medidos += 1;
+      else estimados.push(it.name || it.ingredientId);
+    });
+    const total = medidos + estimados.length;
+    if (!total) return null;
+    if (!estimados.length) return { estimados, medidos, total, texto: `Humedad medida en los ${total} insumos de esta preparación.` };
+    return {
+      estimados,
+      medidos,
+      total,
+      texto: `Humedad: ${medidos} de ${total} medidos. ${estimados.join(", ")} usa${estimados.length === 1 ? "" : "n"} la estimación del catálogo, así que los kg requeridos de es${estimados.length === 1 ? "e insumo" : "os insumos"} también lo son.`
+    };
+  };
+  const faltantePorReservaDeOtroLote = (plan) => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi || !plan) return null;
+    const nowMs = Date.now();
+    const incoming = window.SetasPurchases ? window.SetasPurchases.incomingFromCompras(invCompras) : [];
+    const ctx = { lots: invLotes, ledger: invReservas, incoming, nowMs };
+    let check = null;
+    try {
+      check = ledgerApi.checkPlan(plan, ctx);
+    } catch (e) {
+      return null;
+    }
+    if (!check || check.ok) return null;
+    const porReserva = (check.lines || []).filter((l) => {
+      if (!(l.faltante > 0)) return false;
+      try {
+        return ledgerApi.availability(l.ingredienteId, ctx).fisico >= l.necesario;
+      } catch (e) {
+        return false;
+      }
+    });
+    if (!porReserva.length) return null;
+    return porReserva.map((l) => `Faltan ${l.faltante} ${l.unidad} de ${l.ingredienteId} por estar comprometidos con otro lote`).join(" · ");
+  };
   const ejecutarLanzamientoProduccion = conGuardaLanzamiento(() => {
     if (!prodLaunchForm) {
       launchInFlight.current = false;
@@ -5860,70 +6501,23 @@ ${errors.slice(0, 5).join("\n")}` : "");
       setLaunching(false);
       return;
     }
-    let consumoRegistrado = false;
-    try {
-      const now = Date.now();
-      const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form: f, plan: f.plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now });
-      const registered = registrarConsumo({ loteId: lote.id, codigo: lote.codigo, plan: f.plan, fecha: f.fechaInoculacion, nota: `Lote ${lote.codigo} (${lote.numBolsas} bolsas × ${lote.pesoHumedo} kg) · ${f.fechaInoculacion}` });
-      if (!registered) {
-        launchInFlight.current = false;
-        setLaunching(false);
-        return;
-      }
-      consumoRegistrado = true;
-      setBitLotes((prev) => {
-        const upd = [lote, ...prev];
-        try {
-          localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
-        } catch (e) {
-          bitQuotaWarn();
+    const comprometido = faltantePorReservaDeOtroLote(f.plan);
+    if (comprometido) {
+      launchInFlight.current = false;
+      setLaunching(false);
+      setConfirmDlg({
+        title: "Insumo comprometido con otro lote",
+        msg: comprometido + ". Puedes confirmar de todas formas si sabes que llega a tiempo.",
+        confirmLabel: "Confirmar y reservar",
+        onConfirm: () => {
+          launchInFlight.current = true;
+          setLaunching(true);
+          runLanzamientoProduccion();
         }
-        return upd;
       });
-      setBitBolsas((prev) => {
-        const upd = [...prev, ...bolsas];
-        try {
-          localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-        } catch (e) {
-          bitQuotaWarn();
-        }
-        return upd;
-      });
-      encolarSync({ type: "guardarLote", key: "lote:" + lote.id, args: [lote] });
-      encolarSync({ type: "guardarBolsas", key: "lote:" + lote.id + ":bolsas", args: [bolsas] });
-      window.SetasPublicTraceDB?.publicarLote(lote, [], bitBolsas.filter((b) => b.loteId === lote.id)).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
-      setShowProdLaunchModal(false);
-      if (f.printQr) {
-        setThermalLote(lote);
-        setThermalBagEnd(lote.numBolsas || 12);
-        setThermalScope("all");
-        setShowThermalModal(true);
-      } else {
-        setBitActiveLoteId(lote.id);
-        goTab("bitacora");
-      }
-      setNoticeDlg({
-        title: "Producción de Lote Lanzada",
-        msg: `El lote "${lote.codigo}" (${lote.numBolsas} bolsas de ${lote.pesoHumedo} kg) ha sido creado exitosamente en Bitácora. ${launchDiscountSummary(f.plan, effectiveINGS)} El lote quedó asignado a la sala "${ROOMS_CONFIG[lote.sala]?.name || lote.sala}".`
-      });
-    } catch (e) {
-      console.error("Error al lanzar producción de lote:", e);
-      if (consumoRegistrado) {
-        setShowProdLaunchModal(false);
-        setLaunching(false);
-        setNoticeDlg({
-          title: "Lote lanzado con errores",
-          msg: `El consumo de bodega ya se registró para ${f.codigo}; revisa la Bitácora antes de relanzar.`
-        });
-      } else {
-        launchInFlight.current = false;
-        setLaunching(false);
-        setNoticeDlg({
-          title: "No se pudo lanzar el lote",
-          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || "error desconocido"}. Intenta de nuevo.`
-        });
-      }
+      return;
     }
+    runLanzamientoProduccion();
   });
   const bitQuotaWarn = () => setNoticeDlg({ title: "No se pudo guardar", msg: "El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar." });
   const encolarSync = ({ type, key, args }) => {
@@ -5968,6 +6562,20 @@ ${errors.slice(0, 5).join("\n")}` : "");
     return lote.id;
   };
   const updateBitLote = (loteId, fields) => {
+    if (fields.estado === "descartado") {
+      const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+      const loteEraDescartado = bitLotes.find((l) => l.id === loteId)?.estado === "descartado";
+      if (ledgerApi && !loteEraDescartado) {
+        setInvReservas((prev) => {
+          const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción descartado", at: (/* @__PURE__ */ new Date()).toISOString() });
+          try {
+            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+          } catch (e) {
+          }
+          return upd;
+        });
+      }
+    }
     setBitLotes((prev) => {
       const upd = prev.map((l) => l.id === loteId ? { ...l, ...fields } : l);
       try {
@@ -5985,7 +6593,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
       window.SetasPublicTraceDB?.publicarLote({ ...loteActual, ...fields }, cos, bol).catch((e) => console.warn("No se publicó la ficha pública del lote:", e));
     }
   };
-  const updateBitBolsa = (bolsaId, fields) => {
+  const updateBitBolsa = (bolsaId, fields, options = {}) => {
     const fechaKey = ["col25", "col50", "col100"].find((k) => k in fields);
     if (fechaKey && fields[fechaKey]) {
       const bolsa = bitBolsas.find((b) => b.id === bolsaId);
@@ -5995,16 +6603,18 @@ ${errors.slice(0, 5).join("\n")}` : "");
         return;
       }
     }
-    setBitBolsas((prev) => {
-      const upd = prev.map((b) => b.id === bolsaId ? { ...b, ...fields } : b);
-      try {
-        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-      } catch (e) {
-        bitQuotaWarn();
-      }
-      return upd;
-    });
+    if (!bitBolsasEditRef.current.some((b) => b.id === bolsaId)) return false;
+    const upd = bitBolsasEditRef.current.map((b) => b.id === bolsaId ? { ...b, ...fields } : b);
+    try {
+      localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+    } catch (e) {
+      if (!options.silent) bitQuotaWarn();
+      return false;
+    }
+    bitBolsasEditRef.current = upd;
+    setBitBolsas(upd);
     encolarSync({ type: "actualizarBolsa", key: "bolsa:" + bolsaId, args: [bolsaId, fields] });
+    return true;
   };
   const mergeIntoTasks = (nuevasTareas = []) => {
     if (!nuevasTareas.length) return;
@@ -6039,6 +6649,49 @@ ${errors.slice(0, 5).join("\n")}` : "");
       return upd;
     });
   };
+  const roomEventId = (roomId, type, at) => `${roomId}-${type}-${at}`;
+  const pushRoomEvents = (nuevosEventos = []) => {
+    if (!nuevosEventos.length) return;
+    setRoomEvents((prev) => {
+      const upd = [...prev, ...nuevosEventos];
+      try {
+        localStorage.setItem("sdp_room_events", JSON.stringify(upd));
+      } catch (e) {
+        bitQuotaWarn();
+      }
+      return upd;
+    });
+  };
+  useEffect(() => {
+    const roomStateApi = typeof window !== "undefined" ? window.SetasRoomState : null;
+    if (!roomStateApi) return;
+    const nowMs = Date.now();
+    const atIso = new Date(nowMs).toISOString();
+    const nuevos = [];
+    Object.values(ROOMS_CONFIG).forEach((room) => {
+      let ocupada = false;
+      try {
+        ocupada = roomStateApi.buildRoomState({
+          room,
+          lotes: bitLotes,
+          bolsas: bitBolsas,
+          events: roomEvents,
+          telemetry: null,
+          nowMs
+        }).batchCount > 0;
+      } catch (e) {
+        return;
+      }
+      const ultimaOcupacion = roomEvents.filter((e) => e && e.roomId === room.id && (e.type === "room_emptied" || e.type === "room_occupied")).sort((a, b) => (Date.parse(a.at) || 0) - (Date.parse(b.at) || 0)).slice(-1)[0] || null;
+      const ultimoTipo = ultimaOcupacion ? ultimaOcupacion.type : null;
+      if (ocupada && ultimoTipo !== "room_occupied") {
+        nuevos.push({ id: roomEventId(room.id, "room_occupied", atIso), roomId: room.id, type: "room_occupied", at: atIso, operatorId: "derivado" });
+      } else if (!ocupada && ultimoTipo === "room_occupied") {
+        nuevos.push({ id: roomEventId(room.id, "room_emptied", atIso), roomId: room.id, type: "room_emptied", at: atIso, operatorId: "derivado" });
+      }
+    });
+    if (nuevos.length) pushRoomEvents(nuevos);
+  }, [bitLotes, bitBolsas, roomEvents]);
   const addBitCosecha = (cosecha) => {
     const e = { ...cosecha, id: cosecha.id || "COS_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) };
     try {
@@ -6056,6 +6709,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
     return true;
   };
   const deleteBitCosecha = (id) => {
+    const cosecha = bitCosechas.find((c) => c.id === id);
+    const lote = cosecha && bitLotes.find((l) => l.id === cosecha.loteId);
     setBitCosechas((prev) => {
       const upd = prev.filter((c) => c.id !== id);
       try {
@@ -6065,11 +6720,26 @@ ${errors.slice(0, 5).join("\n")}` : "");
       return upd;
     });
     encolarSync({ type: "eliminarCosecha", key: "cosecha:" + id, args: [id] });
+    if (lote?.codigo) {
+      window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, id).catch((err) => console.warn("No se pudo quitar la cosecha de la ficha pública:", err));
+    }
   };
   const deleteBitLote = (loteId) => {
     const doDelete = () => {
+      const lote = bitLotes.find((l) => l.id === loteId);
       const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
       const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
+      const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+      if (ledgerApi) {
+        setInvReservas((prev) => {
+          const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() });
+          try {
+            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+          } catch (e) {
+          }
+          return upd;
+        });
+      }
       setBitLotes((prev) => {
         const upd = prev.filter((l) => l.id !== loteId);
         try {
@@ -6098,7 +6768,24 @@ ${errors.slice(0, 5).join("\n")}` : "");
         setBitActiveLoteId(null);
         goBitTab("bit_dash");
       }
+      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+      if (syncQueueApi) {
+        setSyncQueue((prev) => {
+          const purged = syncQueueApi.purgeKeys(prev, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
+          try {
+            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
+          } catch (e) {
+          }
+          return purged;
+        });
+      }
       encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
+      if (lote?.codigo) {
+        cosechaIds.forEach((cid) => {
+          window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, cid).catch((err) => console.warn("No se pudo quitar una cosecha de la ficha pública:", err));
+        });
+        window.SetasPublicTraceDB?.eliminarLote(lote.codigo).catch((err) => console.warn("No se pudo quitar la ficha pública del lote:", err));
+      }
     };
     setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });
   };
@@ -6126,7 +6813,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
         setLockedIds([]);
       } else setNoticeDlg({ msg: "No se encontró una combinación óptima para esta especie con los ingredientes disponibles." });
     } catch (e) {
-      setNoticeDlg({ msg: "No se pudo ejecutar el optimizador híbrido: " + (e.message || "error desconocido") });
+      setNoticeDlg({ msg: "No se pudieron calcular los Escenarios: " + (e.message || "error desconocido") });
     }
   };
   const updP = (id, p) => {
@@ -6213,28 +6900,86 @@ ${errors.slice(0, 5).join("\n")}` : "");
     })();
     return st.inFlight;
   }, []);
+  const mergeReservas = (nuevas = []) => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi || !nuevas.length) return;
+    setInvReservas((prev) => {
+      const upd = ledgerApi.addReservations(prev, nuevas);
+      try {
+        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+  };
+  const reservarInsumos = ({ loteId, plan, at = null }) => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi || !plan || !loteId) return false;
+    const nowIso = at || (/* @__PURE__ */ new Date()).toISOString();
+    let reservas;
+    try {
+      reservas = ledgerApi.reservationsForPlan(plan, { batchId: loteId, at: nowIso });
+    } catch (e) {
+      return false;
+    }
+    if (!reservas.length) return false;
+    setInvReservas((prev) => {
+      const yaTiene = prev.some((r) => r && r.batchId === loteId && r.status === "held");
+      if (yaTiene) return prev;
+      const upd = ledgerApi.addReservations(prev, reservas);
+      try {
+        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+    return true;
+  };
   const registrarConsumo = ({ loteId, codigo, plan, fecha, nota }) => {
     const op = SetasInventoryConsumptionApi.buildConsumptionOp({ loteId, codigo, plan, createdAt: Date.now() });
     const { queue, added } = SetasInventoryConsumptionApi.enqueue(readInvOps(), op);
     if (!added) return false;
-    const { movimientos } = SetasInventoryConsumptionApi.applyLocal([], op, { fecha, nota });
-    setInvLotes((prev) => {
-      const r = SetasInventoryConsumptionApi.applyLocal(prev, op, { fecha, nota });
-      try {
-        localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
-      } catch (e) {
-      }
-      return r.lotes;
-    });
+    const r = SetasInventoryConsumptionApi.applyLocal(invLotesRef.current, op, { fecha, nota });
+    invLotesRef.current = r.lotes;
+    setInvLotes(r.lotes);
+    try {
+      localStorage.setItem("sdp_lotes", JSON.stringify(r.lotes));
+    } catch (e) {
+      bitQuotaWarn();
+    }
     setInvMovimientos((prev) => {
-      const upd = [...prev, ...movimientos];
+      const upd = [...prev, ...r.movimientos];
       try {
         localStorage.setItem("sdp_movimientos", JSON.stringify(upd));
       } catch (e) {
       }
       return upd;
     });
-    saveInvOps(queue);
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (ledgerApi) {
+      const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+      setInvReservas((prev) => {
+        const pendientes = prev.filter((r2) => r2 && r2.batchId === loteId && r2.status === "held");
+        let upd = prev;
+        let aCerrar = pendientes;
+        if (!pendientes.length) {
+          const reservas = ledgerApi.reservationsForPlan(plan, { batchId: loteId, at: nowIso });
+          upd = ledgerApi.addReservations(prev, reservas);
+          aCerrar = reservas;
+        }
+        upd = aCerrar.reduce((acc, r2) => ledgerApi.consume(acc, r2.id, { eventId: op.opId, at: nowIso }), upd);
+        try {
+          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+        } catch (e) {
+        }
+        return upd;
+      });
+    }
+    if (r.shortfalls.length) {
+      console.warn("Consumo de inventario con faltante frente al plan (stock cambió entre planificar y confirmar):", r.shortfalls);
+    }
+    const finalQueue = queue.map((o) => o.opId === r.appliedOp.opId ? r.appliedOp : o);
+    saveInvOps(finalQueue);
     runInventorySync();
     return true;
   };
@@ -6259,6 +7004,11 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setShowProvModal(false);
   };
   const eliminarProveedor = (id) => {
+    const tieneCompras = invCompras.some((c) => c.proveedorId === id);
+    if (tieneCompras) {
+      setNoticeDlg({ title: "No se puede eliminar", msg: "Este proveedor tiene compras registradas en el historial — no se puede eliminar sin perder la trazabilidad de esas compras." });
+      return;
+    }
     setConfirmDlg({ title: "Eliminar proveedor", msg: "¿Eliminar este proveedor? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: () => saveProveedores(invProveedores.filter((p) => p.id !== id)) });
   };
   const addCmpItem = () => setCmpItems((prev) => [...prev, { uid: Date.now(), ingId: "", kg: "", precio: "" }]);
@@ -6444,6 +7194,15 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
     }
     setCmpParsing(false);
   };
+  const resetCmpForm = () => {
+    setCmpItems([{ uid: Date.now(), ingId: "", kg: "", precio: "" }]);
+    setCmpMode("manual");
+    setCmpPasteText("");
+    setCmpFuente("manual");
+    setHuboParseIA(false);
+    setCmpLastFoto(null);
+    setCmpRecibida(true);
+  };
   const registrarCompra = () => {
     const valid = cmpItems.filter((it) => it.ingId && parseFloat(it.kg) > 0);
     if (!cmpProvId || valid.length === 0) {
@@ -6451,49 +7210,83 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
       return;
     }
     const cId = "compra_" + Date.now();
-    const nuevaCompra = {
+    const prov = invProveedores.find((p) => p.id === cmpProvId);
+    const compraPendiente = {
       id: cId,
       fecha: cmpFecha,
       proveedorId: cmpProvId,
       items: valid.map((it) => ({ ingredienteId: it.ingId, kg: parseFloat(it.kg), precio: parseFloat(it.precio) || 0 })),
       fuenteCaptura: cmpFuente,
-      revisadoManualmente: true
+      revisadoManualmente: true,
+      estado: "pendiente",
+      fechaEsperada: cmpFecha
     };
-    const newLotes = valid.map((it, i) => ({
-      id: "lote_" + Date.now() + "_" + i,
-      compraId: cId,
-      ingredienteId: it.ingId,
-      cantidadKgTotal: parseFloat(it.kg),
-      precioPorKgCOP: parseFloat(it.precio) || 0,
-      fechaIngreso: cmpFecha,
-      cantidadKgDisponible: parseFloat(it.kg),
-      activo: true
-    }));
-    const newMovs = newLotes.map((l) => ({
-      id: "mov_" + Date.now() + "_" + l.id,
-      loteId: l.id,
-      ingredienteId: l.ingredienteId,
-      tipo: "entrada",
-      cantidadKg: l.cantidadKgTotal,
-      fecha: cmpFecha,
-      referencia: cId
-    }));
-    saveCompras([...invCompras, nuevaCompra]);
-    saveLotes([...invLotes, ...newLotes]);
-    saveMovimientos([...invMovimientos, ...newMovs]);
-    const prov = invProveedores.find((p) => p.id === cmpProvId);
+    if (!cmpRecibida) {
+      saveCompras([...invCompras, compraPendiente]);
+      const resumen2 = valid.map((it) => {
+        const g = INGS.find((x) => x.id === it.ingId);
+        return { nombre: g ? g.name : it.ingId, kgComprado: parseFloat(it.kg) };
+      });
+      setCmpConfirm({ proveedor: prov ? prov.nombre : "", fecha: cmpFecha, total: valid.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0), items: resumen2, pendiente: true });
+      resetCmpForm();
+      return;
+    }
+    if (!window.SetasPurchases) {
+      setNoticeDlg({ title: "No se pudo registrar", msg: "Falta el módulo de compras (purchases.js), así que no se puede recibir nada de forma confiable. No se registró la compra — recarga la página o avisa al equipo técnico." });
+      return;
+    }
+    let rec;
+    try {
+      rec = window.SetasPurchases.receiveCompra(compraPendiente, { at: cmpFecha });
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo registrar", msg: `No se pudo recibir la compra: ${err.message}` });
+      return;
+    }
+    saveCompras([...invCompras, rec.compra]);
+    saveLotes([...invLotes, ...rec.lots]);
+    saveMovimientos([...invMovimientos, ...rec.movements]);
     const resumen = valid.map((it) => {
       const g = INGS.find((x) => x.id === it.ingId);
       const stockPrevio = invLotes.filter((l) => l.activo && l.ingredienteId === it.ingId).reduce((s, l) => s + l.cantidadKgDisponible, 0);
       return { nombre: g ? g.name : it.ingId, kgComprado: parseFloat(it.kg), stockNuevo: stockPrevio + parseFloat(it.kg) };
     });
-    setCmpConfirm({ proveedor: prov ? prov.nombre : "", fecha: cmpFecha, total: valid.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0), items: resumen });
-    setCmpItems([{ uid: Date.now(), ingId: "", kg: "", precio: "" }]);
-    setCmpMode("manual");
-    setCmpPasteText("");
-    setCmpFuente("manual");
-    setHuboParseIA(false);
-    setCmpLastFoto(null);
+    setCmpConfirm({ proveedor: prov ? prov.nombre : "", fecha: cmpFecha, total: valid.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0), items: resumen, pendiente: false });
+    resetCmpForm();
+  };
+  const recibirCompra = (compraId) => {
+    const compra = invCompras.find((c) => c.id === compraId);
+    if (!compra) return;
+    const prov = invProveedores.find((p) => p.id === compra.proveedorId);
+    const kgTotal = (compra.items || []).reduce((s, it) => s + (Number(it.kg ?? it.cantidadKg) || 0), 0);
+    setConfirmDlg({
+      title: "Registrar recepción",
+      msg: `¿Confirmar que llegaron ${kgTotal.toFixed(1)} kg de ${prov ? prov.nombre : "proveedor sin nombre"}? Esto sí mueve el físico de bodega.`,
+      confirmLabel: "Confirmar recepción",
+      onConfirm: () => {
+        if (!window.SetasPurchases) {
+          setNoticeDlg({ title: "No se pudo recibir", msg: "Falta el módulo de compras (purchases.js). No se registró nada — recarga la página o avisa al equipo técnico." });
+          return;
+        }
+        const hoy = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        let rec;
+        try {
+          rec = window.SetasPurchases.receiveCompra(compra, { at: hoy });
+        } catch (err) {
+          setNoticeDlg({ title: "No se pudo recibir", msg: `No se pudo recibir la compra: ${err.message}` });
+          return;
+        }
+        saveCompras(invCompras.map((c) => c.id === compraId ? rec.compra : c));
+        saveLotes([...invLotes, ...rec.lots]);
+        saveMovimientos([...invMovimientos, ...rec.movements]);
+        const resumen = (compra.items || []).map((it) => {
+          const g = INGS.find((x) => x.id === it.ingredienteId);
+          const kg = Number(it.kg ?? it.cantidadKg) || 0;
+          const stockPrevio = invLotes.filter((l) => l.activo && l.ingredienteId === it.ingredienteId).reduce((s, l) => s + l.cantidadKgDisponible, 0);
+          return `${g ? g.name : it.ingredienteId}: ${(stockPrevio + kg).toFixed(1)} kg`;
+        }).join(" · ");
+        setNoticeDlg({ title: "Recepción registrada", msg: `Se recibieron ${kgTotal.toFixed(1)} kg de ${prov ? prov.nombre : "proveedor"}. Stock nuevo — ${resumen}.` });
+      }
+    });
   };
   const autoBalance = (mode2 = balanceMode) => {
     if (recipe.length === 0) return;
@@ -6586,33 +7379,32 @@ BATCH (${numBags}×${kgBag} kg):
     saveInvOps(readInvOps().map((o) => o.status === "failed" ? { ...o, nextAttemptAt: 0 } : o));
     runInventorySync();
   } }, "Reintentar ahora")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, [["stock", "Stock"], ["compra", "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k) }, l))), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
-    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
-    const aggregatedStock = {};
-    invLotes.filter((l) => l.activo).forEach((l) => {
-      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId] || 0) + (Number(l.cantidadKgDisponible) || 0);
-    });
-    const criticalStockItems = INGS.map((ing) => {
-      const stockKg = aggregatedStock[ing.id] || 0;
-      const threshold = lowStockThresholds[ing.type] || 5;
-      return { ing, stockKg, threshold, isLow: stockKg < threshold };
-    }).filter((item) => item.isLow);
+    const ledgerApi = window.SetasInventoryLedger;
+    const incomingCompras = window.SetasPurchases ? window.SetasPurchases.incomingFromCompras(invCompras) : [];
+    const availabilityFor = (ingId) => ledgerApi.availability(ingId, { lots: invLotes, ledger: invReservas, incoming: incomingCompras, nowMs: Date.now() });
+    const criticalStockItems = stockAlerts;
     const ingIds = [...new Set(invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))];
-    if (!ingIds.length) return /* @__PURE__ */ React.createElement("div", null, criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setInvTab("compra"), style: { background: "none", border: "none", color: "color-mix(in oklab, var(--coral-700) 70%, black)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, (stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0, 4)).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)"))), criticalStockItems.length > 4 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "stock-alert-toggle", "aria-expanded": stockAlertsExpanded, onClick: () => setStockAlertsExpanded((v) => !v) }, stockAlertsExpanded ? "Ocultar alertas" : "Ver las " + (criticalStockItems.length - 4) + " alertas restantes")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)", border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)" } }, "Sin inventario.", /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", style: { marginTop: 12 }, onClick: () => setInvTab("compra") }, "Registrar primera compra →"))));
+    if (!ingIds.length) return /* @__PURE__ */ React.createElement("div", null, criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setInvTab("compra"), style: { background: "none", border: "none", color: "color-mix(in oklab, var(--coral-700) 70%, black)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, (stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0, 4)).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : ""))), criticalStockItems.length > 4 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "stock-alert-toggle", "aria-expanded": stockAlertsExpanded, onClick: () => setStockAlertsExpanded((v) => !v) }, stockAlertsExpanded ? "Ocultar alertas" : "Ver las " + (criticalStockItems.length - 4) + " alertas restantes")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)", border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)" } }, "Sin inventario.", /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", style: { marginTop: 12 }, onClick: () => setInvTab("compra") }, "Registrar primera compra →"))));
     const rows = ingIds.map((id) => {
       const g = INGS.find((i) => i.id === id);
       const stock = stockActual(id, invLotes);
+      const av = availabilityFor(id);
+      const disponible = av ? av.disponible : stock;
+      const reservado = av ? av.reservado : 0;
+      const sobrereservado = av?.sobrereservado || 0;
+      const entrante = av?.entrante || 0;
       const pp = precioPonderado(id, invLotes);
       const alertaMin = alertaConfig[id] ?? 2;
       const alertaAm = alertaMin * 2.5;
-      const dotColor = stock < alertaMin ? "var(--coral-500)" : stock < alertaAm ? "var(--ochre-500,#A07828)" : "var(--accent-olive)";
+      const dotColor = disponible < alertaMin ? "var(--coral-500)" : disponible < alertaAm ? "var(--ochre-500,#A07828)" : "var(--accent-olive)";
       const provId = provOverride[id] || invProveedores.find((p) => p.id === invCompras.find((c) => c.id === invLotes.filter((l) => l.activo && l.ingredienteId === id).sort((a, b) => new Date(b.fechaIngreso) - new Date(a.fechaIngreso))[0]?.compraId)?.proveedorId)?.id || "";
       const prov = invProveedores.find((p) => p.id === provId);
-      return { id, name: g?.name || id, stock, pp, prov, dotColor, alertaMin, provId };
-    }).sort((a, b) => b.stock - a.stock);
+      return { id, name: g?.name || id, stock, disponible, reservado, sobrereservado, entrante, pp, prov, dotColor, alertaMin, provId };
+    }).sort((a, b) => b.disponible - a.disponible);
     const INP = { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", border: "1px solid var(--coral-500)", borderRadius: "var(--r-xs)", padding: "4px 6px", background: "var(--paper-50)", color: "var(--ink-900)", outline: "none", width: "100%", boxSizing: "border-box" };
-    return /* @__PURE__ */ React.createElement("div", null, criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setInvTab("compra"), style: { background: "none", border: "none", color: "color-mix(in oklab, var(--coral-700) 70%, black)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, (stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0, 4)).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)"))), criticalStockItems.length > 4 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "stock-alert-toggle", "aria-expanded": stockAlertsExpanded, onClick: () => setStockAlertsExpanded((v) => !v) }, stockAlertsExpanded ? "Ocultar alertas" : "Ver las " + (criticalStockItems.length - 4) + " alertas restantes")), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table inventory-stock-table sdp-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Ingrediente"), /* @__PURE__ */ React.createElement("th", null, "Stock (kg)"), /* @__PURE__ */ React.createElement("th", null, "Precio / kg"), /* @__PURE__ */ React.createElement("th", null, "Proveedor"), /* @__PURE__ */ React.createElement("th", null, "Alerta mín. (kg)"), /* @__PURE__ */ React.createElement("th", null, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 80 } }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Acciones")))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((r) => {
+    return /* @__PURE__ */ React.createElement("div", null, criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setInvTab("compra"), style: { background: "none", border: "none", color: "color-mix(in oklab, var(--coral-700) 70%, black)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: 0 } }, "Registrar Compra +")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, (stockAlertsExpanded ? criticalStockItems : criticalStockItems.slice(0, 4)).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : ""))), criticalStockItems.length > 4 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "stock-alert-toggle", "aria-expanded": stockAlertsExpanded, onClick: () => setStockAlertsExpanded((v) => !v) }, stockAlertsExpanded ? "Ocultar alertas" : "Ver las " + (criticalStockItems.length - 4) + " alertas restantes")), /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, /* @__PURE__ */ React.createElement("table", { className: "inv-table inventory-stock-table sdp-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Ingrediente"), /* @__PURE__ */ React.createElement("th", null, "Físico (kg)"), /* @__PURE__ */ React.createElement("th", null, "Reservado (kg)"), /* @__PURE__ */ React.createElement("th", null, "Disponible (kg)"), /* @__PURE__ */ React.createElement("th", null, "Entrante (kg)"), /* @__PURE__ */ React.createElement("th", null, "Precio / kg"), /* @__PURE__ */ React.createElement("th", null, "Proveedor"), /* @__PURE__ */ React.createElement("th", null, "Alerta mín. (kg)"), /* @__PURE__ */ React.createElement("th", null, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 80 } }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Acciones")))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((r) => {
       const isEditing = editingRowId === r.id;
-      return /* @__PURE__ */ React.createElement("tr", { key: r.id, style: { background: isEditing ? "var(--paper-200)" : "" } }, /* @__PURE__ */ React.createElement("td", { "data-label": "Ingrediente", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", minWidth: 160 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockIngredient-${r.id}`, "aria-label": `Ingrediente de la fila ${r.name}`, value: editingRowData.ingredienteNuevoId || r.id, onChange: (e) => setEditingRowData((p) => ({ ...p, ingredienteNuevoId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, INGS.sort((a, b) => a.name.localeCompare(b.name, "es")).map((i) => /* @__PURE__ */ React.createElement("option", { key: i.id, value: i.id }, i.name))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "stock-dot", style: { background: r.dotColor } }), r.name)), /* @__PURE__ */ React.createElement("td", { "data-label": "Stock", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 600, color: r.dotColor, minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
+      return /* @__PURE__ */ React.createElement("tr", { key: r.id, style: { background: isEditing ? "var(--paper-200)" : "" } }, /* @__PURE__ */ React.createElement("td", { "data-label": "Ingrediente", style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", minWidth: 160 } }, isEditing ? /* @__PURE__ */ React.createElement("select", { name: `stockIngredient-${r.id}`, "aria-label": `Ingrediente de la fila ${r.name}`, value: editingRowData.ingredienteNuevoId || r.id, onChange: (e) => setEditingRowData((p) => ({ ...p, ingredienteNuevoId: e.target.value })), style: { ...INP, fontSize: "var(--text-sm)" } }, INGS.sort((a, b) => a.name.localeCompare(b.name, "es")).map((i) => /* @__PURE__ */ React.createElement("option", { key: i.id, value: i.id }, i.name))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "stock-dot", style: { background: r.dotColor } }), r.name)), /* @__PURE__ */ React.createElement("td", { "data-label": "Físico", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 600, minWidth: 90 } }, isEditing ? /* @__PURE__ */ React.createElement(
         "input",
         {
           name: `stockKg-${r.id}`,
@@ -6628,7 +7420,7 @@ BATCH (${numBags}×${kgBag} kg):
           },
           style: { ...INP, width: 80, fontWeight: 600 }
         }
-      ) : /* @__PURE__ */ React.createElement("span", null, r.stock.toFixed(1), " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Precio / kg", style: { color: "var(--ink-500)", minWidth: 100 } }, isEditing ? /* @__PURE__ */ React.createElement(
+      ) : /* @__PURE__ */ React.createElement("span", null, r.stock.toFixed(1), " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Reservado", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", minWidth: 90, color: r.reservado > 0 ? "var(--coral-700)" : "var(--ink-500)" } }, r.reservado > 0 ? `${r.reservado.toFixed(1)} kg` : "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Disponible", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 600, minWidth: 90 } }, r.disponible.toFixed(1), " kg", r.sobrereservado > 0 && /* @__PURE__ */ React.createElement("span", { title: `Hay ${r.sobrereservado.toFixed(1)} kg comprometidos por encima de lo que existe físicamente`, style: { display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-700)" } }, "sobrecomprometido ", r.sobrereservado.toFixed(1), " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Entrante", style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", minWidth: 90, color: r.entrante > 0 ? "var(--ochre-700,#A07828)" : "var(--ink-500)" } }, r.entrante > 0 ? `${r.entrante.toFixed(1)} kg` : "—"), /* @__PURE__ */ React.createElement("td", { "data-label": "Precio / kg", style: { color: "var(--ink-500)", minWidth: 100 } }, isEditing ? /* @__PURE__ */ React.createElement(
         "input",
         {
           name: `stockPrice-${r.id}`,
@@ -6654,7 +7446,7 @@ BATCH (${numBags}×${kgBag} kg):
           style: INP,
           placeholder: "kg"
         }
-      ) : /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, r.alertaMin, " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, r.stock < r.alertaMin ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--error", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, "Crítico") : r.stock < r.alertaMin * 2.5 ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--warn", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "Bajo") : /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "OK")), /* @__PURE__ */ React.createElement("td", { "data-label": "Acciones" }, isEditing ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", onClick: () => saveRowEdit(r.id), title: "Guardar", "aria-label": `Guardar cambios de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => setEditingRowId(null), title: "Cancelar", "aria-label": `Cancelar edición de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement(
+      ) : /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, r.alertaMin, " kg")), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, r.disponible < r.alertaMin ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--error", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, "Crítico") : r.disponible < r.alertaMin * 2.5 ? /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--warn", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "Bajo") : /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, "OK")), /* @__PURE__ */ React.createElement("td", { "data-label": "Acciones" }, isEditing ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", onClick: () => saveRowEdit(r.id), title: "Guardar", "aria-label": `Guardar cambios de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => setEditingRowId(null), title: "Cancelar", "aria-label": `Cancelar edición de ${r.name}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4 } }, /* @__PURE__ */ React.createElement(
         "button",
         {
           className: "inv-btn inv-btn-sec inv-btn-sm",
@@ -6690,7 +7482,17 @@ BATCH (${numBags}×${kgBag} kg):
     setShowAddStockForm(false);
     setAddStockId("");
     setAddStockKg("");
-  } }, "Cancelar")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "≥5 kg · 2–5 kg · <2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar."))), invTab === "compra" && /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 560 } }, cmpConfirm ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px", background: "var(--moss-50,#F0F4EB)", border: "1px solid var(--moss-300,#B8C9A0)", borderRadius: "var(--r-sm)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)", marginBottom: 2, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--ink-800)" }), " Compra registrada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, cmpConfirm.proveedor || "Sin proveedor", " · ", cmpConfirm.fecha, " · $", cmpConfirm.total.toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { className: "inv-section", style: { marginBottom: 14 } }, cmpConfirm.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderBottom: i < cmpConfirm.items.length - 1 ? "1px solid var(--border-soft)" : "none" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", fontWeight: 600, color: "var(--ink-800)" } }, it.nombre), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "+", it.kgComprado, " kg comprados")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--accent-olive)" } }, it.stockNuevo.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, "stock actual"))))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setCmpConfirm(null) }, "＋ Registrar otra compra")) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [["manual", /* @__PURE__ */ React.createElement(AppIcon, { name: "edit", size: 14 }), "Manual"], ["foto", /* @__PURE__ */ React.createElement(IconCamera, { size: 16 }), "Foto / PDF"], ["texto", /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 14 }), "Pegar texto"]].map(([v, icon, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: "inv-btn inv-btn-sec", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 8px", ...cmpMode === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} }, onClick: () => {
+  } }, "Cancelar")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "≥5 kg · 2–5 kg · <2 kg — Clic en el número de kg para editar directamente. Enter para guardar, Esc para cancelar."))), invTab === "compra" && /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 560 } }, cmpConfirm ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { "data-testid": "purchase-confirm-banner", style: { padding: "14px 16px", background: cmpConfirm.pendiente ? "#FBF6E8" : "var(--moss-50,#F0F4EB)", border: `1px solid ${cmpConfirm.pendiente ? "var(--status-attention)" : "var(--moss-300,#B8C9A0)"}`, borderRadius: "var(--r-sm)", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)", marginBottom: 2, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: cmpConfirm.pendiente ? "clipboard" : "check", size: 13, color: "var(--ink-800)" }), " ", cmpConfirm.pendiente ? "Pedido registrado" : "Compra registrada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, cmpConfirm.proveedor || "Sin proveedor", " · ", cmpConfirm.fecha, " · $", cmpConfirm.total.toLocaleString("es-CO"), " COP"), cmpConfirm.pendiente && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 6 } }, "El stock físico de bodega NO cambió. Estos kilos quedan en camino hasta que confirmes la recepción.")), /* @__PURE__ */ React.createElement("div", { className: "inv-section", style: { marginBottom: 14 } }, cmpConfirm.items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", borderBottom: i < cmpConfirm.items.length - 1 ? "1px solid var(--border-soft)" : "none" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-base)", fontWeight: 600, color: "var(--ink-800)" } }, it.nombre), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "+", it.kgComprado, " kg ", cmpConfirm.pendiente ? "en camino" : "comprados")), !cmpConfirm.pendiente && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-base)", fontWeight: 700, color: "var(--accent-olive)" } }, it.stockNuevo.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)" } }, "stock actual"))))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setCmpConfirm(null) }, "＋ Registrar otra compra")) : /* @__PURE__ */ React.createElement("div", null, (() => {
+    const pendientes = window.SetasPurchases ? window.SetasPurchases.pendingCompras(invCompras) : [];
+    if (!pendientes.length) return null;
+    return /* @__PURE__ */ React.createElement("div", { "data-testid": "pending-purchases", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Pedidos por recibir (", pendientes.length, ")"), pendientes.map((c) => {
+      const prov = invProveedores.find((p) => p.id === c.proveedorId);
+      return /* @__PURE__ */ React.createElement("div", { key: c.id, "data-testid": "pending-purchase", style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", marginTop: 6, border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-800)" } }, prov?.nombre || "Proveedor eliminado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Esperado: ", c.fechaEsperada || c.fecha), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3, marginTop: 4 } }, (c.items || []).map((it, i) => {
+        const g = INGS.find((x) => x.id === it.ingredienteId);
+        return /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "1px 5px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", color: "var(--ink-500)", borderRadius: 2 } }, g?.name || it.ingredienteId, " ", it.kg, "kg");
+      }))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri sdp-btn--field", onClick: () => recibirCompra(c.id) }, "Registrar recepción"));
+    }));
+  })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [["manual", /* @__PURE__ */ React.createElement(AppIcon, { name: "edit", size: 14 }), "Manual"], ["foto", /* @__PURE__ */ React.createElement(IconCamera, { size: 16 }), "Foto / PDF"], ["texto", /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 14 }), "Pegar texto"]].map(([v, icon, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: "inv-btn inv-btn-sec", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 8px", ...cmpMode === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} }, onClick: () => {
     setCmpMode(v);
     setCmpParseErr("");
     setCmpLastFoto(null);
@@ -6699,10 +7501,21 @@ BATCH (${numBags}×${kgBag} kg):
     const total = cmpItems.length;
     const sinMatch = cmpItems.filter((it) => !it.ingId).length;
     return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14, padding: "10px 12px", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", background: sinMatch ? "#FBF6E8" : "var(--moss-50,#F0F4EB)", border: `1px solid ${sinMatch ? "var(--status-attention)" : "var(--moss-300,#B8C9A0)"}`, color: "var(--ink-800)" } }, "Se ", total === 1 ? "detectó 1 ítem" : `detectaron ${total} ítems`, sinMatch > 0 ? ` — ${sinMatch} sin coincidencia automática, revísalos abajo.` : " — revisa cantidades y precios antes de registrar.");
-  })(), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "purchase-provider" }, "Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("select", { id: "purchase-provider", name: "purchaseProvider", className: "inv-input", value: cmpProvId, onChange: (e) => setCmpProvId(e.target.value), style: { flex: 1 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar…"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre, " — ", p.municipio))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { flexShrink: 0, padding: "9px 12px" }, onClick: () => setShowProvModal(true) }, "＋ Nuevo"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "purchase-date" }, "Fecha de compra"), /* @__PURE__ */ React.createElement("input", { id: "purchase-date", name: "purchaseDate", type: "date", className: "inv-input", value: cmpFecha, onChange: (e) => setCmpFecha(e.target.value) }))), /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Ítems"), cmpItems.map((it) => {
+  })(), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "purchase-provider" }, "Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("select", { id: "purchase-provider", name: "purchaseProvider", className: "inv-input", value: cmpProvId, onChange: (e) => setCmpProvId(e.target.value), style: { flex: 1 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar…"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre, " — ", p.municipio))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { flexShrink: 0, padding: "9px 12px" }, onClick: () => setShowProvModal(true) }, "＋ Nuevo"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "purchase-date" }, cmpRecibida ? "Fecha de compra" : "Fecha esperada"), /* @__PURE__ */ React.createElement("input", { id: "purchase-date", name: "purchaseDate", type: "date", className: "inv-input", value: cmpFecha, onChange: (e) => setCmpFecha(e.target.value) }))), /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Ítems"), cmpItems.map((it) => {
     const g = INGS.find((x) => x.id === it.ingId);
     return /* @__PURE__ */ React.createElement("div", { key: it.uid, style: { border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", padding: "10px 12px", marginBottom: 8, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("select", { name: `purchaseIngredient-${it.uid}`, "aria-label": "Ingrediente de la compra", className: "inv-input", style: { flex: 1, fontSize: "var(--text-sm)" }, value: it.ingId, onChange: (e) => updCmpItem(it.uid, "ingId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar ingrediente…"), INGS.map((gg) => /* @__PURE__ */ React.createElement("option", { key: gg.id, value: gg.id }, gg.name))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => remCmpItem(it.uid), disabled: cmpItems.length === 1, "aria-label": `Quitar ${g?.name || "ítem"} de la compra` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))), !it.ingId && (it.kg || it.precio) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--coral-500)" }), " Sin coincidencia automática — elige el ingrediente."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String(Math.max(0, (parseFloat(it.kg) || 0) - 1))), "aria-label": `Reducir cantidad de ${g?.name || "ingrediente"} en 1 kg` }, "−"), /* @__PURE__ */ React.createElement("input", { name: `purchaseKg-${it.uid}`, "aria-label": `Cantidad en kg de ${g?.name || "ingrediente"}`, type: "number", className: "inv-input", style: { width: 64, textAlign: "center", fontSize: "var(--text-sm)" }, min: "0", step: "0.5", value: it.kg, onChange: (e) => updCmpItem(it.uid, "kg", e.target.value), placeholder: "kg" }), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String((parseFloat(it.kg) || 0) + 1)), "aria-label": `Aumentar cantidad de ${g?.name || "ingrediente"} en 1 kg` }, "＋"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg")), /* @__PURE__ */ React.createElement("input", { name: `purchasePrice-${it.uid}`, "aria-label": `Precio por kg de ${g?.name || "ingrediente"} en pesos colombianos`, type: "number", className: "inv-input", style: { width: 90, fontSize: "var(--text-sm)" }, min: "0", step: "100", value: it.precio, onChange: (e) => updCmpItem(it.uid, "precio", e.target.value), placeholder: "$/kg" }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginLeft: "auto", whiteSpace: "nowrap" } }, "$", ((parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0)).toLocaleString("es-CO"))));
-  }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: addCmpItem }, "＋ Agregar ítem"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)" } }, "Total: $", cmpItems.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0).toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: registrarCompra }, "Registrar compra"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => {
+  }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: addCmpItem }, "＋ Agregar ítem"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)" } }, "Total: $", cmpItems.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0).toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { className: "inv-label" }, "¿Ya llegó a bodega?"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [[true, "Ya la recibí"], [false, "Por recibir"]].map(([v, l]) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: String(v),
+      type: "button",
+      className: "inv-btn inv-btn-sec sdp-btn--field",
+      "data-testid": `cmp-estado-${v ? "recibida" : "pendiente"}`,
+      style: { flex: 1, ...cmpRecibida === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} },
+      onClick: () => setCmpRecibida(v)
+    },
+    l
+  ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: registrarCompra }, cmpRecibida ? "Registrar compra" : "Registrar pedido"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => {
     setCmpItems([{ uid: Date.now(), ingId: "", kg: "", precio: "" }]);
     setCmpProvId("");
     setCmpFecha((/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
@@ -6712,6 +7525,7 @@ BATCH (${numBags}×${kgBag} kg):
     setHuboParseIA(false);
     setCmpLastFoto(null);
     setCmpParseErr("");
+    setCmpRecibida(true);
   } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }), " Limpiar")))), invTab === "historial" && /* @__PURE__ */ React.createElement("div", null, invCompras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)", border: "1px dashed var(--border-soft)", borderRadius: "var(--r-sm)" } }, "Sin compras registradas.", /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", style: { marginTop: 12 }, onClick: () => setInvTab("compra") }, "Registrar primera compra →"))) : (() => {
     const byMonth = {};
     [...invCompras].sort((a, b) => b.fecha.localeCompare(a.fecha)).forEach((c) => {
@@ -6724,13 +7538,15 @@ BATCH (${numBags}×${kgBag} kg):
       const collapsed = !!collapsedMonths[mes];
       const [yr, mo] = mes.split("-");
       const label = new Date(parseInt(yr), parseInt(mo) - 1, 1).toLocaleDateString("es-CO", { month: "long", year: "numeric" });
-      return /* @__PURE__ */ React.createElement("div", { key: mes, className: "inv-month-group" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-month-head", "aria-expanded": !collapsed, onClick: () => setCollapsedMonths((prev) => ({ ...prev, [mes]: !prev[mes] })) }, /* @__PURE__ */ React.createElement("span", { className: "inv-month-label" }, label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-month-total" }, "$", totalMes.toLocaleString("es-CO"), " COP"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, collapsed ? "▸" : "▾"))), !collapsed && /* @__PURE__ */ React.createElement("table", { className: "inv-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Fecha"), /* @__PURE__ */ React.createElement("th", null, "Proveedor"), /* @__PURE__ */ React.createElement("th", null, "Ítems"), /* @__PURE__ */ React.createElement("th", null, "Total COP"), /* @__PURE__ */ React.createElement("th", null, "Fuente"))), /* @__PURE__ */ React.createElement("tbody", null, cmpras.map((c) => {
+      return /* @__PURE__ */ React.createElement("div", { key: mes, className: "inv-month-group" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-month-head", "aria-expanded": !collapsed, onClick: () => setCollapsedMonths((prev) => ({ ...prev, [mes]: !prev[mes] })) }, /* @__PURE__ */ React.createElement("span", { className: "inv-month-label" }, label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-month-total" }, "$", totalMes.toLocaleString("es-CO"), " COP"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, collapsed ? "▸" : "▾"))), !collapsed && /* @__PURE__ */ React.createElement("table", { className: "inv-table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Fecha"), /* @__PURE__ */ React.createElement("th", null, "Proveedor"), /* @__PURE__ */ React.createElement("th", null, "Ítems"), /* @__PURE__ */ React.createElement("th", null, "Total COP"), /* @__PURE__ */ React.createElement("th", null, "Fuente"), /* @__PURE__ */ React.createElement("th", null, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, cmpras.map((c) => {
         const prov = invProveedores.find((p) => p.id === c.proveedorId);
         const tot = c.items.reduce((s, it) => s + (it.kg || 0) * (it.precio || 0), 0);
-        return /* @__PURE__ */ React.createElement("tr", { key: c.id }, /* @__PURE__ */ React.createElement("td", null, c.fecha), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" } }, prov?.nombre || c.proveedorId), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3 } }, c.items.map((it, i) => {
+        const estado = window.SetasPurchases ? window.SetasPurchases.compraEstado(c) : "recibida";
+        const pendiente = estado === "pendiente";
+        return /* @__PURE__ */ React.createElement("tr", { key: c.id }, /* @__PURE__ */ React.createElement("td", null, c.fecha), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)" } }, prov?.nombre || "Proveedor eliminado"), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3 } }, c.items.map((it, i) => {
           const g = INGS.find((x) => x.id === it.ingredienteId);
           return /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "1px 5px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", color: "var(--ink-500)", borderRadius: 2 } }, g?.name || it.ingredienteId, " ", it.kg, "kg");
-        }))), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--ink-900)" } }, "$", tot.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, c.fuenteCaptura));
+        }))), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--ink-900)" } }, "$", tot.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, c.fuenteCaptura), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge ${pendiente ? "sdp-badge--warn" : "sdp-badge--ok"}`, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, window.SetasPurchases ? window.SetasPurchases.COMPRA_ESTADO_LABELS[estado] : estado)));
       }))));
     });
   })()), invTab === "proveedores" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setShowProvModal(true) }, "＋ Agregar proveedor")), invProveedores.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: 24, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "Sin proveedores. Agrega el primero.") : /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, invProveedores.map((p) => /* @__PURE__ */ React.createElement("div", { key: p.id, className: "prov-row" }, /* @__PURE__ */ React.createElement("span", { className: "prov-tipo-chip" }, p.tipo), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "prov-name" }, p.nombre), /* @__PURE__ */ React.createElement("div", { className: "prov-muni" }, p.municipio)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => requireAdmin(eliminarProveedor)(p.id), "aria-label": `Eliminar proveedor ${p.nombre}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))))))), showProvModal && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowProvModal(false), label: "Nuevo proveedor" }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nuevo Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-name" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { id: "provider-name", name: "providerName", autoComplete: "organization", className: "inv-input", value: newProv.nombre, onChange: (e) => setNewProv((p) => ({ ...p, nombre: e.target.value })), placeholder: "Ej. Distribuidora Agro Sabana" })), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-type" }, "Tipo"), /* @__PURE__ */ React.createElement("select", { id: "provider-type", name: "providerType", className: "inv-input", value: newProv.tipo, onChange: (e) => setNewProv((p) => ({ ...p, tipo: e.target.value })) }, [["plaza", "Plaza de mercado"], ["industrial", "Industrial"], ["artesanal", "Artesanal"], ["directo", "Directo / Finca"], ["otro", "Otro"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-city" }, "Municipio"), /* @__PURE__ */ React.createElement("input", { id: "provider-city", name: "providerCity", autoComplete: "address-level2", className: "inv-input", value: newProv.municipio, onChange: (e) => setNewProv((p) => ({ ...p, municipio: e.target.value })), placeholder: "Ej. Tenjo" }))), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => setShowProvModal(false) }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: agregarProveedor }, "Guardar proveedor"))));
@@ -6744,7 +7560,7 @@ BATCH (${numBags}×${kgBag} kg):
   const contaminationWorkflow = typeof window !== "undefined" ? window.SetasContaminationWorkflow : null;
   const lifecycleLabel = { incubation: "Incubación", fruiting: "Fructificación", closed: "Cerrado", discarded: "Descartado", quarantine: "Cuarentena" };
   const lifecycleColor = { incubation: "var(--status-info)", fruiting: "var(--status-active)", closed: "var(--status-archived)", discarded: "var(--status-error)", quarantine: "var(--accent-terracotta, #B24C27)" };
-  const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close: "Cerrar lote", discard: "Descartar lote" };
+  const actionLabel = { inspection: "Inspeccionar", move: "Mover lote", contamination: "Reportar contaminación", note: "Foto / nota", advance_stage: "Avanzar etapa", harvest: "Registrar cosecha", close_batch: "Finalizar lote", close: "Cerrar lote", discard: "Descartar lote" };
   const openBatchDetail = (id) => {
     setBitActiveLoteId(id);
     goTab("bitacora");
@@ -6784,6 +7600,59 @@ BATCH (${numBags}×${kgBag} kg):
     };
   }, []);
   const operatorRole = fieldOperatorRole;
+  const peritoContextFor = (lote, sheet) => {
+    const api = typeof window !== "undefined" ? window.SetasPeritoContext : null;
+    if (!api || !sheet || !lote) return null;
+    const snapshot = lote.recipeSnapshot || null;
+    let restrictive = null;
+    let cnRecalculado = null;
+    if (snapshot && snapshot.sKey && Array.isArray(snapshot.ingredients) && snapshot.ingredients.length) {
+      try {
+        const receta = snapshot.ingredients.map((i) => ({ id: i.id, p: i.pct }));
+        const an2 = analyze(receta, snapshot.sKey, INGS, SPP);
+        cnRecalculado = an2 && Number.isFinite(an2.cn) ? an2.cn : null;
+        const sp2 = SPP[snapshot.sKey];
+        if (an2 && sp2 && typeof engineCalcRestrictiveFactor === "function") {
+          restrictive = engineCalcRestrictiveFactor(an2, sp2, { treatment: snapshot.tratamientoTermico || null });
+        }
+      } catch (e) {
+        restrictive = null;
+      }
+    }
+    let history = null;
+    if (snapshot && snapshot.sKey) {
+      try {
+        const receta = (snapshot.ingredients || []).map((i) => ({ id: i.id, p: i.pct }));
+        const h = historicalEB(snapshot.sKey, histRows, receta);
+        if (h && h.n > 0 && h.avg != null) history = { n: h.n, avg: h.avg, similarity: h.similarity };
+      } catch (e) {
+        history = null;
+      }
+    }
+    let ctx = null;
+    try {
+      ctx = api.explainBatch({ sheet, snapshot, restrictive, history, nowMs: Date.now() });
+    } catch (e) {
+      return null;
+    }
+    const derivaCatalogo = snapshot && Number.isFinite(snapshot.cn) && cnRecalculado != null && Math.abs(snapshot.cn - cnRecalculado) > 0.5 ? `El C:N guardado con el lote era ${Number(snapshot.cn).toFixed(1)}:1 y con el catálogo de hoy da ${cnRecalculado.toFixed(1)}:1 — el catálogo de insumos cambió desde que se produjo.` : null;
+    return { ...ctx, derivaCatalogo };
+  };
+  const PeritoContextPanel = ({ lote, sheet, onAction }) => {
+    const ctx = peritoContextFor(lote, sheet);
+    if (!ctx) return null;
+    return /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "perito-context", "data-available": ctx.available ? "true" : "false" }, /* @__PURE__ */ React.createElement("h2", null, "Contexto del Perito"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900)", marginBottom: 8 } }, ctx.headline), ctx.findings.length > 0 && /* @__PURE__ */ React.createElement("ul", { style: { listStyle: "none", padding: 0, margin: "0 0 10px", display: "flex", flexDirection: "column", gap: 6 } }, ctx.findings.map((f, i) => /* @__PURE__ */ React.createElement("li", { key: `${f.code}-${i}`, "data-finding": f.code, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", lineHeight: 1.45, borderLeft: "2px solid var(--paper-300)", paddingLeft: 8 } }, f.text))), ctx.derivaCatalogo && /* @__PURE__ */ React.createElement("div", { "data-testid": "perito-context-deriva", className: "os-provenance-notice os-provenance-notice--estimated", style: { marginBottom: 10 } }, ctx.derivaCatalogo), ctx.question && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "sdp-btn sdp-btn--secondary sdp-btn--field",
+        "data-testid": "perito-context-question",
+        style: { width: "100%", fontWeight: 600 },
+        onClick: () => onAction && onAction(ctx.question.action)
+      },
+      ctx.question.text
+    ), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 10, lineHeight: 1.4 } }, ctx.disclaimer));
+  };
   const buildSheetFor = (lote) => {
     if (!batchSheetApi || !lote) return null;
     const room = ROOMS_CONFIG[lote.sala || lote.ubicacion || ""] || null;
@@ -6967,6 +7836,12 @@ BATCH (${numBags}×${kgBag} kg):
     if (!SHEET || !uid) return;
     try {
       const db = await getFieldDb();
+      const prior = (await window.SetasFieldEventQueue.recoverEventsByAccount(db, uid)).find(({ event, queueEntry }) => event.batchId === lote.id && event.payload?.from === from && event.payload?.to === to && event.expectedBatchRevision === (Number.isInteger(lote.revision) ? lote.revision : 0) && !["rejected", "cancelled"].includes(queueEntry.status));
+      if (prior) {
+        await runFieldSync(db, uid, prior.event.id, () => {
+        });
+        return;
+      }
       const res = await SHEET.confirmTransition({
         db,
         batch: lote,
@@ -7080,6 +7955,24 @@ BATCH (${numBags}×${kgBag} kg):
       }
       return;
     }
+    if (action === "prepare_mix") {
+      setReleaseBatchId(lote.id);
+      return;
+    }
+    if (action === "close_batch") {
+      const activeSheet = sheet || buildSheetFor(lote);
+      const enPie = bitBolsas.filter((b) => b.loteId === lote.id && b.estado === "sana").length;
+      setConfirmDlg({
+        title: "Finalizar lote",
+        msg: `¿Cerrar ${lote.codigo || lote.id}? El lote queda cerrado y no admite más acciones de campo.` + (enPie > 0 ? ` Quedan ${enPie} bolsa${enPie === 1 ? "" : "s"} sana${enPie === 1 ? "" : "s"} sin cosechar.` : ""),
+        danger: enPie > 0,
+        confirmLabel: "Finalizar",
+        onConfirm: () => {
+          if (activeSheet) commitSheetAction(activeSheet, lote, "close_batch");
+        }
+      });
+      return;
+    }
     if (action === "close") {
       updateBitLote(lote.id, { estado: "completado" });
       return;
@@ -7094,8 +7987,19 @@ BATCH (${numBags}×${kgBag} kg):
       return;
     }
     if (action === "move") {
-      setSelectedClimateRoom(lote.sala || lote.ubicacion || selectedClimateRoom);
-      goTab("control");
+      const activeSheet = sheet || buildSheetFor(lote);
+      const actualId = lote.sala || lote.ubicacion || "";
+      setMoveDlg({
+        loteCodigo: lote.codigo || lote.id,
+        currentRoomId: actualId,
+        currentRoomName: (ROOMS_CONFIG[actualId] || {}).name || actualId,
+        rooms: Object.values(ROOMS_CONFIG),
+        onSelect: (salaDestinoId) => {
+          if (activeSheet && commitSheetAction(activeSheet, lote, "move", { salaDestinoId })) {
+            setSelectedClimateRoom(salaDestinoId);
+          }
+        }
+      });
       return;
     }
     if (action === "inspection" || action === "colonization" || action === "photo") {
@@ -7108,7 +8012,7 @@ BATCH (${numBags}×${kgBag} kg):
     }
     setNoticeDlg({ title: actionLabel[action] || "Acción de lote", msg: "Esta captura conserva el flujo operativo existente del lote." });
   };
-  const LiveTelemetryStatusBar = () => /* @__PURE__ */ React.createElement("div", { className: "live-telemetry-status", "data-testid": "live-telemetry-status" }, /* @__PURE__ */ React.createElement("span", { className: `live-telemetry-dot live-telemetry-dot--${liveTelemetry.status.connectivity}`, "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__label" }, "Telemetría · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—"), liveTelemetry.status.activeSource && /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__source" }, "vía ", liveTelemetry.status.activeSource), /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__alt", title: "Los sensores NDIR subestiman el CO₂ ~26 % a esta altitud; el puente corrige cada lectura antes de evaluarla." }, "CO₂ compensado · ", liveTelemetry.status.altitudeM || 2600, " msnm"), /* @__PURE__ */ React.createElement("button", { className: "os-action live-telemetry-status__cfg", type: "button", onClick: () => setShowIoTHub(true) }, "Configurar"));
+  const LiveTelemetryStatusBar = () => /* @__PURE__ */ React.createElement("div", { className: "live-telemetry-status", "data-testid": "live-telemetry-status" }, /* @__PURE__ */ React.createElement("span", { className: `live-telemetry-dot live-telemetry-dot--${liveTelemetry.status.connectivity}`, "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__label" }, "Telemetría · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—"), liveTelemetry.status.activeSource && /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__source" }, "vía ", liveTelemetry.status.activeSource), /* @__PURE__ */ React.createElement("span", { className: "live-telemetry-status__alt", title: "Los sensores NDIR subestiman el CO₂ ~26 % a esta altitud; el puente corrige cada lectura antes de evaluarla." }, "CO₂ compensado · ", liveTelemetry.status.altitudeM || 2600, " msnm"), /* @__PURE__ */ React.createElement("button", { ref: iotHubTriggerRef, className: "os-action live-telemetry-status__cfg", type: "button", onClick: () => setShowIoTHub(true) }, "Configurar"));
   const LiveAlertsSection = () => /* @__PURE__ */ React.createElement(React.Fragment, null, liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "os-live-alerts", "data-testid": "hoy-live-alerts" }, /* @__PURE__ */ React.createElement("div", { className: "os-section-head" }, /* @__PURE__ */ React.createElement("h2", null, "Alertas de cámara en vivo"), /* @__PURE__ */ React.createElement("span", null, liveTelemetry.alerts.length)), liveTelemetry.alerts.slice(0, 6).map((a) => /* @__PURE__ */ React.createElement("div", { key: a.key, className: `os-live-alert os-live-alert--${a.severity}`, "data-severity": a.severity }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__title" }, (ROOMS_CONFIG[a.roomId] || {}).name || a.roomId, " · ", a.metricLabel), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.msg)), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__side" }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__age" }, liveAgeLabel(a.ageMs)), /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -7172,7 +8076,16 @@ BATCH (${numBags}×${kgBag} kg):
     return /* @__PURE__ */ React.createElement("article", { className: "os-batch-detail-v2", "data-testid": "ux-v2-batch-detail", "data-batch-state": state, "data-batch-completeness": sheet ? sheet.completenessPct : null }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action os-detail-back", type: "button", onClick: () => goBitTab("bit_dash") }, "Volver a lotes"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", "data-testid": "btn-field-action-sheet", onClick: () => {
       setQrSelectedLoteId(lote.id);
       setShowFieldActionModal(true);
-    }, style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }, title: "Abrir hoja de acción de campo para registrar transiciones de estado" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 13, color: "var(--accent-olive,#5B6B44)" }), " Hoja de Acción (QR)"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, sheet ? sheet.code : lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie, lote.especieCientifico && /* @__PURE__ */ React.createElement(React.Fragment, null, " · ", /* @__PURE__ */ React.createElement("i", null, lote.especieCientifico)))), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, sheet ? sheet.stateLabel : lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, sheet && sheet.daysInStage != null && /* @__PURE__ */ React.createElement("span", null, "Día ", sheet.daysInStage, " en ", sheet.stateLabel.toLowerCase()), /* @__PURE__ */ React.createElement("span", null, sheet ? `Sala ${sheet.room ? sheet.room.name : "sin asignar"}` : lote.sala || "Sala sin asignar"), /* @__PURE__ */ React.createElement("span", null, sheet ? `${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas` : `${lote.numBolsas} bolsas`), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", null, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` v${sheet.recipe.version}` : ""}` : lote.recipeRef?.name || "Receta sin vincular"), /* @__PURE__ */ React.createElement("span", null, sheet && sheet.spawnLot && sheet.spawnLot.id ? `Semilla ${sheet.spawnLot.id}` : "Semilla sin vincular"), sheet && sheet.consumedInventory.length > 0 && /* @__PURE__ */ React.createElement("span", null, sheet.consumedInventory.length, " lote(s) de insumo"), sheet && /* @__PURE__ */ React.createElement("span", { title: "Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos" }, "Trazabilidad ", sheet.completenessPct, "%")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, sheet && sheet.nextAction && sheet.nextAction.label || actionLabel[actions[0] && actions[0].action] || "Sin acciones pendientes"))), sheet && (sheet.blocks.length > 0 || sheet.anomalies.length > 0) && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("h2", null, "Bloqueos y anomalías"), sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: `anom-${i}` }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, a.severity === "critical" ? "Crítico" : "Atención", " · ", a.detail), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, a.kind)))), sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: b.code }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, "Bloqueo · ", b.detail), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, b.code))))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 14, style: { marginRight: 6 } }), " Cierre Financiero & Rendimiento Real"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Balance económico del lote · Precio venta: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen)")), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Inversión Incurrida"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Ingreso Cosechas"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario real" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte Histórico por Oleada (Flushes Cosechados)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), (() => {
+    }, style: { display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }, title: "Abrir hoja de acción de campo para registrar transiciones de estado" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 13, color: "var(--accent-olive,#5B6B44)" }), " Hoja de Acción (QR)"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => setPublicTraceModalLoteId(lote.id), style: { display: "flex", alignItems: "center", gap: 6 }, title: "Ver ficha pública de trazabilidad botánica" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 13, color: "var(--moss-700)" }), " Ver Ficha Pública QR"), /* @__PURE__ */ React.createElement("button", { className: "os-action", type: "button", onClick: () => openThermalForLote(lote.id), style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 13 }), " Imprimir Etiquetas Térmicas"))), /* @__PURE__ */ React.createElement("header", { className: "os-batch-header", "data-testid": "active-lote", "data-lote-id": lote.id }, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__top" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__code" }, sheet ? sheet.code : lote.codigo), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__species" }, lote.especie, lote.especieCientifico && /* @__PURE__ */ React.createElement(React.Fragment, null, " · ", /* @__PURE__ */ React.createElement("i", null, lote.especieCientifico)))), /* @__PURE__ */ React.createElement("span", { className: "os-lifecycle-state", style: { borderTopColor: lifecycleColor[state] || "var(--text-metadata)", color: lifecycleColor[state] || "var(--text-metadata)" } }, sheet ? sheet.stateLabel : lifecycleLabel[state] || state)), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__meta" }, sheet && sheet.daysInStage != null && /* @__PURE__ */ React.createElement("span", null, "Día ", sheet.daysInStage, " en ", sheet.stateLabel.toLowerCase()), /* @__PURE__ */ React.createElement("span", null, sheet ? `Sala ${sheet.room ? sheet.room.name : "sin asignar"}` : lote.sala || "Sala sin asignar"), /* @__PURE__ */ React.createElement("span", null, sheet ? `${sheet.bagsActive}/${sheet.bagsTotal} bolsas activas` : `${lote.numBolsas} bolsas`), /* @__PURE__ */ React.createElement("span", null, "Inoculación ", lote.fechaInoculacion), /* @__PURE__ */ React.createElement("span", { "data-testid": "batch-recipe-label" }, (() => {
+      const lc = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+      if (lc && lote.recipeSnapshot) {
+        try {
+          return lc.describeSnapshot(lote.recipeSnapshot);
+        } catch (e) {
+        }
+      }
+      return sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` v${sheet.recipe.version}` : ""}` : lote.recipeRef?.name || "Receta sin vincular";
+    })()), /* @__PURE__ */ React.createElement("span", null, sheet && sheet.spawnLot && sheet.spawnLot.id ? `Semilla ${sheet.spawnLot.id}` : "Semilla sin vincular"), sheet && sheet.consumedInventory.length > 0 && /* @__PURE__ */ React.createElement("span", null, sheet.consumedInventory.length, " lote(s) de insumo"), sheet && /* @__PURE__ */ React.createElement("span", { title: "Porcentaje de vínculos por id resueltos: receta, sala, semilla, inventario, cosechas y eventos" }, "Trazabilidad ", sheet.completenessPct, "%")), /* @__PURE__ */ React.createElement("div", { className: "os-batch-header__next" }, /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-label" }, "Siguiente acción válida"), /* @__PURE__ */ React.createElement("span", { className: "os-batch-header__next-value" }, sheet && sheet.nextAction && sheet.nextAction.label || actionLabel[actions[0] && actions[0].action] || "Sin acciones pendientes"))), /* @__PURE__ */ React.createElement(PeritoContextPanel, { lote, sheet, onAction: (a) => runBatchAction(a, lote, sheet) }), sheet && (sheet.blocks.length > 0 || sheet.anomalies.length > 0) && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("h2", null, "Bloqueos y anomalías"), sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: `anom-${i}` }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, a.severity === "critical" ? "Crítico" : "Atención", " · ", a.detail), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, a.kind)))), sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "os-event-row", key: b.code }, /* @__PURE__ */ React.createElement("span", { className: "os-task-marker", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "os-event-row__title" }, "Bloqueo · ", b.detail), /* @__PURE__ */ React.createElement("div", { className: "os-event-row__meta" }, b.code))))), /* @__PURE__ */ React.createElement("div", { className: "os-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Bolsas sanas"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? `${stats.bolsasSanas}/${stats.numBolsas}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Contaminación"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.contPct.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--calculated" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "os-metric" }, /* @__PURE__ */ React.createElement("span", { className: "os-metric__label" }, "Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "os-metric__value" }, stats ? stats.totalFresco.toFixed(3) + " kg" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance os-provenance--measured" }, "Medido"))), stats && /* @__PURE__ */ React.createElement("section", { className: "os-finance-panel", "data-testid": "batch-financial-closure" }, /* @__PURE__ */ React.createElement("div", { className: "os-finance-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "os-finance-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 14, style: { marginRight: 6 } }), " Economía de referencia y rendimiento registrado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-1)", marginTop: 2 } }, "Valores estimados · Precio de referencia: $", Math.round(stats.precioVentaKg).toLocaleString("es-CO"), " COP/kg")), stats.totalFresco > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 2, background: stats.margenRealTotal >= 0 ? "var(--moss-200,#DCE1D1)" : "var(--coral-100,#FDE8E8)", color: stats.margenRealTotal >= 0 ? "var(--moss-700,#404D2E)" : "var(--coral-700,#A83232)" } }, stats.margenRealTotal >= 0 ? "+" : "", "$", Math.round(stats.margenRealTotal).toLocaleString("es-CO"), " (", stats.margenRealPct.toFixed(1), "% margen estimado)")), /* @__PURE__ */ React.createElement("p", null, "Los precios de referencia no son gastos ni ventas registrados. Costos documentados: ", stats.economics?.costComplete ? "$" + stats.economics.recordedCostCop.toLocaleString("es-CO") : "incompletos", ". Ventas registradas: ", stats.economics?.recordedRevenueCop != null ? "$" + stats.economics.recordedRevenueCop.toLocaleString("es-CO") : "sin registros", "."), /* @__PURE__ */ React.createElement("div", { className: "os-finance-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo estimado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.costoIncurridoTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "$", Math.round(stats.costoIncurridoPorBolsa).toLocaleString("es-CO"), " / bolsa (", stats.numBolsas, " bolsas)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Valor estimado de cosecha"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(stats.ingresoRealTotal).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco.toFixed(2), " kg hongo fresco")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "EB Real vs Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.varianzaEB != null ? `${stats.varianzaEB >= 0 ? "+" : ""}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)` : "Sin receta base")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: stats.margenRealTotal >= 0 ? "var(--paper-100,#EFEBE0)" : "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Cosechado"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, stats.costoRealPorKgCosechado != null ? "$" + Math.round(stats.costoRealPorKgCosechado).toLocaleString("es-CO") : "—"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, stats.totalFresco > 0 ? "Costo unitario estimado" : "Pendiente cosecha"))), stats.flushes && stats.flushes.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)" } }, "Aporte Histórico por Oleada (Flushes Cosechados)"), /* @__PURE__ */ React.createElement("div", { className: "os-flush-bar-container" }, stats.flushes.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.flush, style: { width: `${f.pctTotal}%`, height: "100%", background: ["#5B6B44", "#8C7F5B", "#A85C32"][i % 3] || "#555" }, title: `Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)` }))), /* @__PURE__ */ React.createElement("div", { className: "os-flush-list" }, stats.flushes.map((f) => /* @__PURE__ */ React.createElement("div", { className: "os-flush-item", key: f.flush }, /* @__PURE__ */ React.createElement("span", null, "Flush ", f.flush), /* @__PURE__ */ React.createElement("span", null, f.kg.toFixed(2), " kg (", f.pctTotal.toFixed(1), "%)"), /* @__PURE__ */ React.createElement("span", null, "+$", Math.round(f.ingreso).toLocaleString("es-CO"))))))), (() => {
       const validHarvests = cosechas.filter((c) => c && c.fecha);
       const lastHarvest = [...validHarvests].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())[0];
       const maxFlush = cosechas.reduce((m, c) => Math.max(m, parseInt(c.flush, 10) || 0), 0);
@@ -7355,7 +8268,7 @@ BATCH (${numBags}×${kgBag} kg):
         }
       },
       "Hoja de acción (QR)"
-    ), /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--secondary sdp-btn--field", onClick: () => setPublicTraceModalLoteId(lote.id) }, "Ver ficha pública QR")));
+    ), /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--secondary sdp-btn--field", onClick: () => setPublicTraceModalLoteId(lote.id) }, "Ver ficha pública QR")), /* @__PURE__ */ React.createElement(PeritoContextPanel, { lote, sheet, onAction: (a) => runBatchAction(a, lote, sheet) }));
   };
   const BatchSheetModal = ({ isOpen, onClose, lote }) => {
     if (!isOpen || !lote) return null;
@@ -7371,8 +8284,30 @@ BATCH (${numBags}×${kgBag} kg):
     );
   };
   if (typeof window !== "undefined") window.BatchSheetModal = BatchSheetModal;
-  const ClimateDashboardSection = () => {
+  const [activeCulinaryKey, setActiveCulinaryKey] = useState("firme");
+  const [tempProj, setTempProj] = useState(14);
+  const [rhProj, setRhProj] = useState(82);
+  const [co2Proj, setCo2Proj] = useState(700);
+  const useClimateDashboardView = () => {
     const climateMath = typeof window !== "undefined" ? window.SetasClimate : null;
+    const roomStateApi = typeof window !== "undefined" ? window.SetasRoomState : null;
+    const roomBoardNowMs = Date.now();
+    const roomBoardTelemetry = {};
+    Object.keys(liveTelemetry.snapshot && liveTelemetry.snapshot.rooms || {}).forEach((roomId) => {
+      const sample = liveTelemetry.snapshot.rooms[roomId].sample || {};
+      roomBoardTelemetry[roomId] = {
+        latest: { temperature_c: sample.temperature_c, rh_pct: sample.rh_pct, co2_ppm: sample.co2_ppm },
+        lastUpdateAt: sample.lastUpdateAt
+      };
+    });
+    const roomBoard = roomStateApi ? roomStateApi.buildRoomBoard({
+      rooms: Object.values(ROOMS_CONFIG),
+      lotes: bitLotes,
+      bolsas: bitBolsas,
+      events: roomEvents,
+      telemetry: roomBoardTelemetry,
+      nowMs: roomBoardNowMs
+    }) : [];
     let cameras = [];
     try {
       cameras = JSON.parse(props.hoyCamarasJson || "[]");
@@ -7472,10 +8407,6 @@ BATCH (${numBags}×${kgBag} kg):
         morphology: "Superficie del sombrero deshidratada y sellada contra la oxidación. Resistente a la manipulación en cocina."
       }
     };
-    const [activeCulinaryKey, setActiveCulinaryKey] = useState("firme");
-    const [tempProj, setTempProj] = useState(14);
-    const [rhProj, setRhProj] = useState(82);
-    const [co2Proj, setCo2Proj] = useState(700);
     const [dragNode, setDragNode] = useState(null);
     const canvasRef = useRef(null);
     const ptCO2Proj = useRef({ x: 0, y: 0 });
@@ -7758,11 +8689,61 @@ BATCH (${numBags}×${kgBag} kg):
     const tempPoints = climateMath ? climateMath.generateSvgPolyline(tempSeries, null, { width: 500, height: 120, padding: 8, yMin: 12, yMax: 24 }) : "";
     const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : "";
     const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : "";
-    return /* @__PURE__ */ React.createElement("div", { className: "climate-dashboard", "data-testid": "climate-dashboard" }, /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
+    const ROOM_ALERT_SEVERITY_CLASS = { critical: "critico", warning: "alarma", info: "aviso" };
+    return /* @__PURE__ */ React.createElement("div", { className: "climate-dashboard", "data-testid": "climate-dashboard" }, roomBoard.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "data-testid": "room-board", "aria-labelledby": "room-board-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Estado en vivo"), /* @__PURE__ */ React.createElement("h2", { id: "room-board-title" }, "Tablero de salas"))), /* @__PURE__ */ React.createElement("div", { className: "climate-module-grid" }, roomBoard.map((rs) => {
+      const isSelected = rs.roomId === selectedClimateRoom;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: rs.roomId,
+          "data-testid": "room-card",
+          "data-room-id": rs.roomId,
+          "data-room-status": rs.status,
+          role: "button",
+          tabIndex: 0,
+          "aria-pressed": isSelected,
+          "aria-label": `Sala ${rs.name}, ${rs.statusLabel}`,
+          onClick: () => setSelectedClimateRoom(rs.roomId),
+          onKeyDown: (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setSelectedClimateRoom(rs.roomId);
+            }
+          },
+          className: `climate-module-card ${isSelected ? "on" : ""}`,
+          style: { minHeight: 48, cursor: "pointer" }
+        },
+        /* @__PURE__ */ React.createElement("span", { className: "climate-module-top" }, /* @__PURE__ */ React.createElement("span", null, rs.name), /* @__PURE__ */ React.createElement("b", null, rs.statusLabel)),
+        /* @__PURE__ */ React.createElement("span", { className: "climate-module-meta" }, rs.batchCount, " lote", rs.batchCount === 1 ? "" : "s", " · ", rs.bagsActive, " bolsa", rs.bagsActive === 1 ? "" : "s", " activa", rs.bagsActive === 1 ? "" : "s", rs.bagsIsolated > 0 ? ` · ${rs.bagsIsolated} bolsa${rs.bagsIsolated === 1 ? "" : "s"} aislada${rs.bagsIsolated === 1 ? "" : "s"}` : ""),
+        rs.dominantStageLabel && /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, "Etapa dominante: ", rs.dominantStageLabel),
+        rs.environmentFreshness === "none" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert", "data-testid": "room-card-env-freshness", "data-freshness": "none" }, "Sin lecturas ambientales"),
+        rs.environmentFreshness !== "none" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-readings" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "Temp."), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(rs.environment.temperature_c) ? `${rs.environment.temperature_c}°` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "HR"), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(rs.environment.rh_pct) ? `${rs.environment.rh_pct}%` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "CO₂"), /* @__PURE__ */ React.createElement("strong", null, Number.isFinite(rs.environment.co2_ppm) ? rs.environment.co2_ppm : "—"))),
+        rs.environmentFreshness === "live" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches", "data-testid": "room-card-env-freshness", "data-freshness": "live" }, "Lectura en vivo"),
+        rs.environmentFreshness === "stale" && /* @__PURE__ */ React.createElement("span", { className: "climate-module-alert", "data-testid": "room-card-env-freshness", "data-freshness": "stale" }, "Lectura vieja · ", liveAgeLabel(rs.environmentAgeMin * 6e4)),
+        rs.alerts.filter((a) => a.code !== "sin_telemetria" && a.code !== "telemetria_vieja").length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, marginTop: 10 } }, rs.alerts.filter((a) => a.code !== "sin_telemetria" && a.code !== "telemetria_vieja").map((a) => /* @__PURE__ */ React.createElement("div", { key: a.code, className: `os-live-alert os-live-alert--${ROOM_ALERT_SEVERITY_CLASS[a.severity] || "aviso"}`, "data-severity": a.severity, style: { padding: "6px 8px" } }, /* @__PURE__ */ React.createElement("span", { className: "os-live-alert__dot", "aria-hidden": "true" }), /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__body" }, /* @__PURE__ */ React.createElement("div", { className: "os-live-alert__meta" }, a.detail))))),
+        rs.nextAction && /* @__PURE__ */ React.createElement("span", { className: "climate-module-batches" }, rs.nextAction.label, rs.nextAction.reason && !rs.alerts.some((a) => a.detail === rs.nextAction.reason) ? ` · ${rs.nextAction.reason}` : ""),
+        rs.nextAction && rs.nextAction.action === "sanitize_room" && /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "inv-btn inv-btn-sec",
+            style: { marginTop: 10, minHeight: 44, width: "100%" },
+            onClick: (e) => {
+              e.stopPropagation();
+              const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+              const sanitizeOperatorId = props.operatorKey || typeof window !== "undefined" && window.__setasOperatorKey || "operador-local";
+              pushRoomEvents([{ id: roomEventId(rs.roomId, "room_sanitized", nowIso), roomId: rs.roomId, type: "room_sanitized", at: nowIso, operatorId: sanitizeOperatorId }]);
+            }
+          },
+          "Sanitizar sala"
+        )
+      );
+    }))), /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
         className: "btn btn--sm btn--secondary",
+        ref: iotHubTriggerRef,
         onClick: () => setShowIoTHub(true),
         style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", fontSize: 11 }
       },
@@ -7887,10 +8868,10 @@ BATCH (${numBags}×${kgBag} kg):
       display: "flex",
       alignItems: "center",
       gap: 8
-    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-error)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)" })), /* @__PURE__ */ React.createElement("span", null, al.msg)))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "● MEASURED"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C · Sustrato: ", currentMetrics.subTemp, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "● MEASURED"), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), (() => {
+    } }, /* @__PURE__ */ React.createElement("span", null, al.level === "alert" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-error)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)" })), /* @__PURE__ */ React.createElement("span", null, al.msg)))), ["temperature_c", "rh_pct", "co2_ppm"].some((metric) => climateMetricProvenance({ metric, roomLive, injected }).kind === "model") && /* @__PURE__ */ React.createElement("p", { role: "status", "data-testid": "climate-model-warning", style: { fontSize: 13, color: "var(--ink-1)" } }, "Hay métricas sin lectura de sonda. Los valores del modelo y sus cálculos son referencias; no confirman las condiciones actuales de la sala."), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Temperatura"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "temperature_c", roomLive, injected }), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.temperature_c.target, "°C"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.temp), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", tempMin, "°C – ", tempMax, "°C"), Number.isFinite(currentMetrics.subTemp) ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", null, "Sustrato: ", currentMetrics.subTemp, "°C"), /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "substrate_temperature_c", roomLive, injected })) : /* @__PURE__ */ React.createElement("span", { "data-testid": "climate-substrate-missing" }, "Sustrato: sin lectura"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Humedad Relativa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "rh_pct", roomLive, injected }), /* @__PURE__ */ React.createElement("span", null, "Target: ", defaultTargets.rh_pct.target, "%"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, currentMetrics.rh), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, climateTimeRange, ": ", rhMin, "% – ", rhMax, "% · Banda: [", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%]"))), (() => {
       const ndirCorr = co2Correction ? { correctedPpm: co2Correction.correctedPpm, baroFactor: co2Correction.baroFactor, deltaPpm: co2Correction.deltaPpm, rawPpm: co2Correction.rawPpm, live: true } : climateMath && typeof climateMath.calcBarometricCO2Correction === "function" ? Object.assign(climateMath.calcBarometricCO2Correction(currentMetrics.co2, liveTelemetry.config.pressureHpa || 745, currentMetrics.temp), { live: false }) : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
-      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele", "data-testid": "climate-co2-card", "data-co2-live": ndirCorr.live ? "true" : "false" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "● MEASURED"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "ppm real"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", ndirCorr.rawPpm, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert ", co2Correction && co2Correction.pressureHpa || liveTelemetry.config.pressureHpa || 745, " hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
-    })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "○ ESTIMATED"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
+      return /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele", "data-testid": "climate-co2-card", "data-co2-live": ndirCorr.live ? "true" : "false" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "Dióxido de Carbono (NDIR)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(ClimateMetricProvenance, { metric: "co2_ppm", roomLive, injected }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--accent-olive)" } }, "Comp. 2.600m"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, ndirCorr.correctedPpm), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "ppm compensados"), /* @__PURE__ */ React.createElement("small", { style: { fontSize: 11, color: "var(--ink-2)", fontWeight: 400 } }, "(", ndirCorr.rawPpm, " raw)")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Beer-Lambert ", co2Correction && co2Correction.pressureHpa || liveTelemetry.config.pressureHpa || 745, " hPa: ", /* @__PURE__ */ React.createElement("strong", null, ndirCorr.baroFactor, "x"), " (+", ndirCorr.deltaPpm, " ppm) · Max: ", defaultTargets.co2_ppm.max, " ppm")));
+    })(), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-card sdp-tele" }, /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-header" }, /* @__PURE__ */ React.createElement("span", null, "VPD & Psicrometría"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Estimado · derivado de T° y HR"), /* @__PURE__ */ React.createElement("span", { style: { color: vpd >= 0.1 && vpd <= 0.5 ? "var(--moss-700)" : "var(--accent-terracotta)" } }, vpd >= 0.1 && vpd <= 0.5 ? "Transpiración Óptima" : "Fuera de Rango"))), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-value sdp-tele__v" }, /* @__PURE__ */ React.createElement("span", null, vpd), /* @__PURE__ */ React.createElement("span", { className: "sdp-tele__u" }, "kPa")), /* @__PURE__ */ React.createElement("div", { className: "climate-kpi-sub" }, /* @__PURE__ */ React.createElement("span", null, "Punto de Rocío (Tdp): ", dewPoint, "°C · ΔT anti-rocío: ", (currentMetrics.temp - dewPoint).toFixed(1), "°C"))), (() => {
       const activeBiomassKg = mainLote?.pesoLote ? mainLote.pesoLote * 0.22 : 25;
       const faeCalc = climateMath && typeof climateMath.calcDynamicFAE === "function" ? climateMath.calcDynamicFAE(activeBiomassKg, mainLote?.especieKey || "orellana_gris", {
         targetPpm: defaultTargets.co2_ppm.target || 800,
@@ -7907,7 +8888,7 @@ BATCH (${numBags}×${kgBag} kg):
         fontSize: 11,
         fontWeight: 700
       } }, "Duty Cycle: ", faeCalc ? faeCalc.dutyCyclePct : 18, "%"))));
-    })()), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "target", size: 13, style: { marginRight: 4 } }), " Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "active-culinary-profile", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-1)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
+    })()), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel", style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "target", size: 13, style: { marginRight: 4 } }), " Sintonizador Culinario & Vector de Balance de la Trinidad"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Sintoniza el clima ideal de la carpa para efectos morfológicos culinarios con chefs"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "active-culinary-profile", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, color: "var(--ink-1)", textTransform: "uppercase" } }, "Efecto Gastronómico Deseado:"), /* @__PURE__ */ React.createElement(
       "select",
       {
         id: "active-culinary-profile",
@@ -7944,7 +8925,10 @@ BATCH (${numBags}×${kgBag} kg):
         step: "0.5",
         value: tempProj,
         onChange: (e) => setTempProj(parseFloat(e.target.value)),
+        id: "climate-temp-projection",
+        name: "climate-temp-projection",
         "aria-label": "Proyección de temperatura (°C)",
+        "aria-valuetext": `${tempProj} °C`,
         style: { width: "100%" }
       }
     )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "HUMEDAD: ", rhProj.toFixed(0), " %"), /* @__PURE__ */ React.createElement("span", null, "Meta: ", CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0), "%")), /* @__PURE__ */ React.createElement(
@@ -7956,7 +8940,10 @@ BATCH (${numBags}×${kgBag} kg):
         step: "1",
         value: rhProj,
         onChange: (e) => setRhProj(parseInt(e.target.value)),
+        id: "climate-rh-projection",
+        name: "climate-rh-projection",
         "aria-label": "Proyección de humedad relativa (%)",
+        "aria-valuetext": `${rhProj} %`,
         style: { width: "100%" }
       }
     )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "CO₂: ", co2Proj, " ppm"), /* @__PURE__ */ React.createElement("span", null, "Meta: ", CULINARY_PROFILES[activeCulinaryKey].co2Ideal, " ppm")), /* @__PURE__ */ React.createElement(
@@ -7968,7 +8955,10 @@ BATCH (${numBags}×${kgBag} kg):
         step: "25",
         value: co2Proj,
         onChange: (e) => setCo2Proj(parseInt(e.target.value)),
+        id: "climate-co2-projection",
+        name: "climate-co2-projection",
         "aria-label": "Proyección de nivel de CO₂ (ppm)",
+        "aria-valuetext": `${co2Proj} ppm`,
         style: { width: "100%" }
       }
     ))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontFamily: "var(--font-sans)", color: "var(--ink-1)", borderTop: "1px dashed var(--line-0)", paddingTop: 8 } }, /* @__PURE__ */ React.createElement("strong", null, "Predicción de Morfología:"), " ", CULINARY_PROFILES[activeCulinaryKey].morphology), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, borderTop: "1px dashed var(--line-0)", paddingTop: 10 } }, /* @__PURE__ */ React.createElement(
@@ -7998,6 +8988,8 @@ BATCH (${numBags}×${kgBag} kg):
     ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid var(--line-0)", background: "var(--paper-0)", padding: 12, borderRadius: "var(--radius-sm)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)", textTransform: "uppercase", marginBottom: 8 } }, "Interactivo (Arrastra los puntos)"), /* @__PURE__ */ React.createElement(
       "canvas",
       {
+        role: "img",
+        "aria-label": "Comparación visual de temperatura, humedad y CO₂. Ajusta la proyección con los controles anteriores.",
         ref: canvasRef,
         width: "220",
         height: "220",
@@ -8007,23 +8999,25 @@ BATCH (${numBags}×${kgBag} kg):
         onTouchStart: handleTouchStart,
         onTouchMove: handleTouchMove
       }
-    ), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 9, fontFamily: "var(--font-sans)", color: "var(--ink-2)", textAlign: "center", maxWidth: 240 } }, "Triángulo sólido: Sensores en vivo (Compensados).", /* @__PURE__ */ React.createElement("br", null), "Línea discontinua: Proyección del simulador.")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel" }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "chart", size: 14, style: { marginRight: 6 } }), " Series Temporales de Telemetría Ambiental"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 }, "data-testid": "climate-series-provenance", "data-series-live": seriesAreLive ? "true" : "false" }, seriesAreLive ? `Serie medida · ${(roomLive && roomLive.series && roomLive.series.temperature_c || []).length} muestras del buffer en vivo, comparadas con las bandas del RoomCycle activo` : "Sin serie medida todavía · curva de referencia comparada con las bandas del RoomCycle activo")), /* @__PURE__ */ React.createElement("div", { className: "climate-range-pills" }, ["1h", "6h", "24h"].map((rng) => /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 9, fontFamily: "var(--font-sans)", color: "var(--ink-2)", textAlign: "center", maxWidth: 240 } }, "Triángulo sólido: Sensores en vivo (Compensados).", /* @__PURE__ */ React.createElement("br", null), "Línea discontinua: Proyección del simulador.")))), /* @__PURE__ */ React.createElement("div", { className: "climate-chart-panel" }, /* @__PURE__ */ React.createElement("div", { className: "climate-chart-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "chart", size: 14, style: { marginRight: 6 } }), " Series Temporales de Telemetría Ambiental"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 }, "data-testid": "climate-series-provenance", "data-series-live": seriesAreLive ? "true" : "false" }, seriesAreLive ? `Serie medida · ${(roomLive && roomLive.series && roomLive.series.temperature_c || []).length} muestras del buffer en vivo, comparadas con las bandas del RoomCycle activo` : "Sin serie medida todavía · curva de referencia comparada con las bandas del RoomCycle activo")), /* @__PURE__ */ React.createElement("div", { className: "climate-range-pills", role: "group", "aria-label": "Intervalo de las series ambientales" }, ["1h", "6h", "24h"].map((rng) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: rng,
         type: "button",
         className: `climate-range-pill ${climateTimeRange === rng ? "on" : ""}`,
+        "aria-pressed": climateTimeRange === rng,
+        "aria-label": `${rng === "1h" ? "Última hora" : rng === "6h" ? "Últimas 6 horas" : "Últimas 24 horas"}`,
         onClick: () => setClimateTimeRange(rng)
       },
       rng
-    )))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", null, "TEMPERATURA (°C)"), /* @__PURE__ */ React.createElement("span", null, "Banda: ", defaultTargets.temperature_c.min, "°C - ", defaultTargets.temperature_c.max, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-svg-wrap" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 500 120", preserveAspectRatio: "none", style: { width: "100%", height: "100%", display: "block" } }, /* @__PURE__ */ React.createElement("rect", { x: "0", y: "40", width: "500", height: "45", fill: "rgba(74, 110, 66, 0.12)" }), /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "62.5", x2: "500", y2: "62.5", stroke: "rgba(74, 110, 66, 0.4)", strokeDasharray: "4 4", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("polyline", { fill: "none", stroke: "var(--moss-700)", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", points: tempPoints })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", null, "HUMEDAD RELATIVA (%RH)"), /* @__PURE__ */ React.createElement("span", null, "Banda: ", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-svg-wrap" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 500 120", preserveAspectRatio: "none", style: { width: "100%", height: "100%", display: "block" } }, /* @__PURE__ */ React.createElement("rect", { x: "0", y: "20", width: "500", height: "60", fill: "rgba(56, 120, 180, 0.12)" }), /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "40", x2: "500", y2: "40", stroke: "rgba(56, 120, 180, 0.4)", strokeDasharray: "4 4", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("polyline", { fill: "none", stroke: "#2563EB", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", points: rhPoints })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", null, "CO₂ (PPM)"), /* @__PURE__ */ React.createElement("span", null, "Límite FAE: < ", defaultTargets.co2_ppm.max, " ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-svg-wrap" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 500 120", preserveAspectRatio: "none", style: { width: "100%", height: "100%", display: "block" } }, /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "40", x2: "500", y2: "40", stroke: "rgba(168, 92, 50, 0.5)", strokeDasharray: "4 4", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("polyline", { fill: "none", stroke: "var(--accent-terracotta)", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", points: co2Points })))))), /* @__PURE__ */ React.createElement("div", { className: "climate-actuators-panel", "data-testid": "climate-actuators-panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14, style: { marginRight: 6 } }), " Actuadores y Relés de Potencia (Hosyond 2ch)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--moss-700)", fontWeight: 700 } }, "● Lógica Local Activa (ESP32)")), /* @__PURE__ */ React.createElement("div", { className: "climate-actuators-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-head" }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "droplet", size: 13, style: { marginRight: 4 } }), " Humidificador (Relay Ch1 · T7/H05)"), /* @__PURE__ */ React.createElement("span", { className: `climate-actuator-badge ${humidifierOverride === "ON" || humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min ? "on" : "off"}` }, humidifierOverride === "ON" ? "OVERRIDE [ON]" : humidifierOverride === "OFF" ? "OVERRIDE [OFF]" : currentMetrics.rh < defaultTargets.rh_pct.min ? "AUTO [ENCENDIDO]" : "AUTO [REPOSO]")), /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-meta" }, /* @__PURE__ */ React.createElement("b", null, "Potencia:"), " 100% · ", /* @__PURE__ */ React.createElement("b", null, "Modo:"), " ", humidifierOverride ? "Manual" : "Bang-Bang con Histéresis", " (Min idle: 120s)", /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("b", null, "Diagnóstico:"), " ", humidifierOverride === "ON" ? "Forzado manualmente por el operario." : currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4 } }, /* @__PURE__ */ React.createElement(
+    )))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 14, marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", null, "TEMPERATURA (°C)"), /* @__PURE__ */ React.createElement("span", null, "Banda: ", defaultTargets.temperature_c.min, "°C - ", defaultTargets.temperature_c.max, "°C")), /* @__PURE__ */ React.createElement("div", { className: "climate-svg-wrap" }, /* @__PURE__ */ React.createElement("svg", { role: "img", "aria-label": `Temperatura: ${climateTimeRange} · ${seriesAreLive ? "serie medida" : "curva de referencia"}`, viewBox: "0 0 500 120", preserveAspectRatio: "none", style: { width: "100%", height: "100%", display: "block" } }, /* @__PURE__ */ React.createElement("rect", { x: "0", y: "40", width: "500", height: "45", fill: "rgba(74, 110, 66, 0.12)" }), /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "62.5", x2: "500", y2: "62.5", stroke: "rgba(74, 110, 66, 0.4)", strokeDasharray: "4 4", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("polyline", { fill: "none", stroke: "var(--moss-700)", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", points: tempPoints })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", null, "HUMEDAD RELATIVA (%RH)"), /* @__PURE__ */ React.createElement("span", null, "Banda: ", defaultTargets.rh_pct.min, "% - ", defaultTargets.rh_pct.max, "%")), /* @__PURE__ */ React.createElement("div", { className: "climate-svg-wrap" }, /* @__PURE__ */ React.createElement("svg", { role: "img", "aria-label": `Humedad relativa: ${climateTimeRange} · ${seriesAreLive ? "serie medida" : "curva de referencia"}`, viewBox: "0 0 500 120", preserveAspectRatio: "none", style: { width: "100%", height: "100%", display: "block" } }, /* @__PURE__ */ React.createElement("rect", { x: "0", y: "20", width: "500", height: "60", fill: "rgba(56, 120, 180, 0.12)" }), /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "40", x2: "500", y2: "40", stroke: "rgba(56, 120, 180, 0.4)", strokeDasharray: "4 4", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("polyline", { fill: "none", stroke: "#2563EB", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", points: rhPoints })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-1)", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", null, "CO₂ (PPM)"), /* @__PURE__ */ React.createElement("span", null, "Límite FAE: < ", defaultTargets.co2_ppm.max, " ppm")), /* @__PURE__ */ React.createElement("div", { className: "climate-svg-wrap" }, /* @__PURE__ */ React.createElement("svg", { role: "img", "aria-label": `CO₂: ${climateTimeRange} · ${seriesAreLive ? "serie medida" : "curva de referencia"}`, viewBox: "0 0 500 120", preserveAspectRatio: "none", style: { width: "100%", height: "100%", display: "block" } }, /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "40", x2: "500", y2: "40", stroke: "rgba(168, 92, 50, 0.5)", strokeDasharray: "4 4", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("polyline", { fill: "none", stroke: "var(--accent-terracotta)", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", points: co2Points })))))), /* @__PURE__ */ React.createElement("div", { className: "climate-actuators-panel", "data-testid": "climate-actuators-panel" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 15, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14, style: { marginRight: 6 } }), " Actuadores y Relés de Potencia (Hosyond 2ch)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ink-2)", marginTop: 2 } }, "Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--moss-700)", fontWeight: 700 } }, "● Lógica Local Activa (ESP32)")), /* @__PURE__ */ React.createElement("div", { className: "climate-actuators-grid" }, /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-card" }, /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-head" }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 13, color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "droplet", size: 13, style: { marginRight: 4 } }), " Humidificador (Relay Ch1 · T7/H05)"), /* @__PURE__ */ React.createElement("span", { className: `climate-actuator-badge ${humidifierOverride === "ON" || humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min ? "on" : "off"}` }, humidifierOverride === "ON" ? "OVERRIDE [ON]" : humidifierOverride === "OFF" ? "OVERRIDE [OFF]" : currentMetrics.rh < defaultTargets.rh_pct.min ? "AUTO [ENCENDIDO]" : "AUTO [REPOSO]")), /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-meta" }, /* @__PURE__ */ React.createElement("b", null, "Potencia:"), " 100% · ", /* @__PURE__ */ React.createElement("b", null, "Modo:"), " ", humidifierOverride ? "Manual" : "Bang-Bang con Histéresis", " (Min idle: 120s)", /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("b", null, "Diagnóstico:"), " ", humidifierOverride === "ON" ? "Forzado manualmente por el operario." : currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
         className: "climate-actuator-btn",
         onClick: () => setHumidifierOverride((prev) => prev === "ON" ? null : "ON")
       },
-      humidifierOverride === "ON" ? "↺ Modo Auto" : '<AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)'
+      humidifierOverride === "ON" ? "↺ Modo Auto" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 13, style: { marginRight: 4 } }), " Forzar Humidificación (1m)")
     ), humidifierOverride !== null && /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -8046,7 +9040,14 @@ BATCH (${numBags}×${kgBag} kg):
       faePulseActive ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(AppIcon, { name: "clock", size: 13, style: { marginRight: 4 } }), " Pulso en Curso...") : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(AppIcon, { name: "wind", size: 13, style: { marginRight: 4 } }), " Disparar Pulso FAE (35s)")
     )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-1)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 13, style: { marginRight: 4 } }), " Historial Reciente de Conmutación de Relés"), /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-logs" }, /* @__PURE__ */ React.createElement("div", { className: "climate-log-row" }, /* @__PURE__ */ React.createElement("span", null, "[Ch2 · Extractor H4] Pulso periódico FAE completado (35s a vel. 1)"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-2)" } }, "hace 14m")), /* @__PURE__ */ React.createElement("div", { className: "climate-log-row" }, /* @__PURE__ */ React.createElement("span", null, "[Ch1 · Humidificador T7] Apagado al alcanzar HR target (91.5% >= 90%)"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-2)" } }, "hace 22m")), /* @__PURE__ */ React.createElement("div", { className: "climate-log-row" }, /* @__PURE__ */ React.createElement("span", null, "[Ch1 · Humidificador T7] Encendido por banda mínima (84.2% < 85%)"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-2)" } }, "hace 26m"))))));
   };
-  const BitacoraSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel", style: { paddingBottom: 0, marginBottom: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bit-context-actions", style: { display: "flex", alignItems: "center", gap: 6, minHeight: 44, paddingBottom: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_comparador" ? " on" : ""), onClick: () => goBitTab("bit_comparador") }, "Comparar lotes"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_ficha" ? " on" : ""), onClick: () => goBitTab("bit_ficha"), disabled: !bitActiveLoteId, style: { opacity: bitActiveLoteId ? 1 : 0.45 } }, "Ficha experimental"), bitActiveLoteId && /* @__PURE__ */ React.createElement(
+  const climateDashboardView = useClimateDashboardView();
+  const BitacoraSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(PrototypeTrialsPanel, { key: bitLotes.length, saved, active: recipe.length && balanced ? { recipe, sKey } : null, onReload: () => location.reload(), onPrepare: (plan, arm) => {
+    setSelectedTrial({ experimentId: plan.id, armId: arm.id, title: plan.title, label: arm.label });
+    setHasPickedSpecies(true);
+    setSKey(arm.recipeSnapshot.sKey);
+    setRecipe(arm.recipeSnapshot.recipe.map((r) => ({ ...r })));
+    goTab("formular");
+  } }), /* @__PURE__ */ React.createElement("div", { className: "panel", style: { paddingBottom: 0, marginBottom: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bit-context-actions", style: { display: "flex", alignItems: "center", gap: 6, minHeight: 44, paddingBottom: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_comparador" ? " on" : ""), onClick: () => goBitTab("bit_comparador") }, "Comparar lotes"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm" + (bitTab === "bit_ficha" ? " on" : ""), onClick: () => goBitTab("bit_ficha"), disabled: !bitActiveLoteId, style: { opacity: bitActiveLoteId ? 1 : 0.45 } }, "Ficha experimental"), bitActiveLoteId && /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "inv-btn inv-btn-sec inv-btn-sm",
@@ -8191,14 +9192,14 @@ BATCH (${numBags}×${kgBag} kg):
         })(),
         onChange: (pct) => {
           const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-          bolsas.forEach((b) => {
+          if (!bolsas.every((b) => {
             const up = {};
             if (pct >= 25 && !b.col25) up.col25 = today;
             if (pct >= 50 && !b.col50) up.col50 = today;
             if (pct >= 100 && !b.col100) up.col100 = today;
             up.colonizationPct = pct;
-            updateBitBolsa(b.id, up);
-          });
+            return updateBitBolsa(b.id, up);
+          })) return;
           if (pct >= 100 && lote.estado === "incubacion") {
             updateBitLote(lote.id, { estado: "fructificacion" });
           }
@@ -8210,10 +9211,10 @@ BATCH (${numBags}×${kgBag} kg):
         onQuickAction: (act) => {
           const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
           if (act === "primordios") {
+            if (!bolsas.every((b) => {
+              return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
+            })) return;
             updateBitLote(lote.id, { estado: "fructificacion" });
-            bolsas.forEach((b) => {
-              updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
-            });
             setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${lote.codigo} actualizado a fructificación.` });
           } else if (act === "riego") {
             setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad registrada para ${lote.codigo}.` });
@@ -8226,7 +9227,7 @@ BATCH (${numBags}×${kgBag} kg):
       const cosBolsa = bitCosechas.filter((c) => c.bolsaId === bolsa.id);
       const totalBolsa = cosBolsa.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0);
       const est = EB[bolsa.estado] || EB[""];
-      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement("input", { name: `bagObservations-${bolsa.id}`, "aria-label": `Observaciones de la bolsa ${bolsa.codigo}`, type: "text", value: bolsa.observaciones || "", placeholder: "…", onChange: (e) => updateBitBolsa(bolsa.id, { observaciones: e.target.value }), style: { width: "100%", padding: "2px 5px", fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => updateBitBolsa(bolsa.id, { foto: null }), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
+      return /* @__PURE__ */ React.createElement("tr", { key: bolsa.id }, /* @__PURE__ */ React.createElement("td", { "data-label": "Código", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", whiteSpace: "nowrap" } }, bolsa.codigo), /* @__PURE__ */ React.createElement("td", { "data-label": "Estado" }, /* @__PURE__ */ React.createElement("select", { name: `bagStatus-${bolsa.id}`, "aria-label": `Estado de la bolsa ${bolsa.codigo}`, value: bolsa.estado ?? "", onChange: (e) => updateBitBolsa(bolsa.id, { estado: e.target.value || null }), style: { width: "100%", padding: "3px 4px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: `1px solid ${est.c}`, borderRadius: 3, background: "var(--paper-50)", color: est.c, cursor: "pointer" } }, Object.entries(EB).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.l)))), [["col25", "Col 25%"], ["col50", "Col 50%"], ["col100", "Col 100%"]].map(([f, lbl]) => /* @__PURE__ */ React.createElement("td", { key: f, "data-label": lbl }, /* @__PURE__ */ React.createElement("input", { name: `${f}-${bolsa.id}`, "aria-label": `${lbl} de la bolsa ${bolsa.codigo}`, type: "date", value: bolsa[f] || "", onChange: (e) => updateBitBolsa(bolsa.id, { [f]: e.target.value }), style: { width: "100%", padding: "2px 3px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", border: "1px solid var(--paper-300)", borderRadius: 3, background: "var(--paper-50)" } }))), /* @__PURE__ */ React.createElement("td", { "data-label": "Observaciones" }, /* @__PURE__ */ React.createElement(BagObservationEditor, { bolsa, onSave: updateBitBolsa })), /* @__PURE__ */ React.createElement("td", { "data-label": "Foto", style: { textAlign: "center" } }, bolsa.foto ? /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-photo-remove", onClick: () => updateBitBolsa(bolsa.id, { foto: null }), "aria-label": `Quitar foto de la bolsa ${bolsa.codigo}`, title: "Quitar foto" }, /* @__PURE__ */ React.createElement("img", { src: bolsa.foto, alt: "", "aria-hidden": "true", width: "28", height: "28" })) : /* @__PURE__ */ React.createElement("label", { className: "inv-photo-upload" }, "+foto", /* @__PURE__ */ React.createElement("input", { name: `bagPhoto-${bolsa.id}`, "aria-label": `Agregar foto a la bolsa ${bolsa.codigo}`, type: "file", accept: "image/*", onChange: (e) => {
         const f = e.target.files?.[0];
         if (!f) return;
         compressImageToDataURL(f).then((dataUrl) => updateBitBolsa(bolsa.id, { foto: dataUrl })).catch(() => setNoticeDlg({ title: "No se pudo procesar la foto", msg: "Intenta con otra imagen." }));
@@ -8296,16 +9297,7 @@ BATCH (${numBags}×${kgBag} kg):
     return /* @__PURE__ */ React.createElement("div", { className: "fos-chips" }, activeGroup.tabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t, className: t === tab ? "on" : "", onClick: () => goTab(t) }, TAB_LABELS[t])));
   })(), (tab === "home" || tab === "inicio") && (() => {
     const totalStockKg = invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + (Number(l.cantidadKgDisponible) || 0), 0);
-    const lowStockThresholds = { base: 20, suplemento: 5, corrector: 2 };
-    const aggregatedStock = {};
-    invLotes.filter((l) => l.activo).forEach((l) => {
-      aggregatedStock[l.ingredienteId] = (aggregatedStock[l.ingredienteId] || 0) + (Number(l.cantidadKgDisponible) || 0);
-    });
-    const criticalStockItems = INGS.map((ing) => {
-      const stockKg = aggregatedStock[ing.id] || 0;
-      const threshold = lowStockThresholds[ing.type] || 5;
-      return { ing, stockKg, threshold, isLow: stockKg < threshold };
-    }).filter((item) => item.isLow);
+    const criticalStockItems = stockAlerts;
     const lowStockCount2 = criticalStockItems.length;
     const totalBolsasCount = bitBolsas.length;
     const bolsasIncubacion = bitBolsas.filter((b) => b.estado === "sana" && !b.col100).length;
@@ -8361,6 +9353,109 @@ BATCH (${numBags}×${kgBag} kg):
       recentActivity = [];
     }
     const prioColor = (p) => p === "alta" ? "var(--coral-700)" : p === "media" ? "var(--ochre-500)" : "var(--ink-400)";
+    const copilotLots = activeLotes.map((l) => ({
+      id: l.id || l.codigo || null,
+      especie: l.especie || l.speciesKey || l.sKey || null,
+      estado: l.estado || null,
+      fechaInoculacion: l.fechaInoculacion || l.inocDate || null,
+      sala: l.sala || l.ubicacion || null
+    }));
+    const copilotSeriesByRoom = {};
+    try {
+      const camIdToRoomId = {};
+      Object.keys(ROOMS_CONFIG).forEach((rid) => {
+        camIdToRoomId[ROOMS_CONFIG[rid].cameraId] = rid;
+      });
+      camaras.forEach((cam) => {
+        if (!cam || !cam.id) return;
+        const roomId = camIdToRoomId[cam.id] || cam.id;
+        const temps = Array.isArray(cam.tempSeries) ? cam.tempSeries : [];
+        const hums = Array.isArray(cam.humSeries) ? cam.humSeries : [];
+        const co2s = Array.isArray(cam.co2Series) ? cam.co2Series : [];
+        const n = Math.max(temps.length, hums.length, co2s.length);
+        if (!n) return;
+        const stepMs = 36e5;
+        const series = [];
+        for (let i = 0; i < n; i++) {
+          const idxFromEnd = n - 1 - i;
+          series.push({ t: operationalNow - idxFromEnd * stepMs, temperature_c: temps[i], rh_pct: hums[i], co2_ppm: co2s[i] });
+        }
+        copilotSeriesByRoom[roomId] = series;
+      });
+    } catch (e) {
+    }
+    let copilotBriefing = null;
+    try {
+      const CopilotApi = typeof window !== "undefined" ? window.SetasCultivationCopilot : null;
+      if (CopilotApi && typeof CopilotApi.buildCopilotBriefing === "function") {
+        copilotBriefing = CopilotApi.buildCopilotBriefing({
+          lots: copilotLots,
+          seriesByRoom: copilotSeriesByRoom,
+          commitments: [],
+          now: operationalNow
+        });
+      }
+    } catch (e) {
+      copilotBriefing = null;
+    }
+    const copilotTopActions = copilotBriefing ? copilotBriefing.actions.slice(0, 5) : [];
+    const copilotActionColor = (priority) => priority === "critical" ? "var(--status-error,#B53A25)" : priority === "high" ? "var(--ochre-700,#A66A1E)" : priority === "normal" ? "var(--ink-1,#3A362E)" : "var(--ink-2,#6B6759)";
+    const copilotConfidenceLabel = (c) => c === "medium" ? "confianza media" : "confianza baja";
+    const handleCopilotExportIcs = () => {
+      try {
+        const HarvestApi = typeof window !== "undefined" ? window.SetasHarvestCalendar : null;
+        if (!HarvestApi || typeof HarvestApi.buildHarvestEvents !== "function") return;
+        const events = HarvestApi.buildHarvestEvents(copilotLots, { now: operationalNow, horizonDays: 60 });
+        const icsText = HarvestApi.toICS(events, { now: operationalNow, calendarName: "Setas OS · Cosechas" });
+        const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "setas-os-cosechas.ics";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2e3);
+      } catch (e) {
+      }
+    };
+    const handleCopilotPhotoChange = (ev) => {
+      try {
+        const file = ev && ev.target && ev.target.files && ev.target.files[0];
+        ev.target.value = "";
+        if (!file) return;
+        setCopilotVisionError(null);
+        setCopilotVisionResult(null);
+        const VisionApi = typeof window !== "undefined" ? window.SetasVisionDiagnosis : null;
+        if (!VisionApi || typeof VisionApi.analyzeImageElement !== "function") {
+          setCopilotVisionError("El cribado de foto no está disponible en este dispositivo.");
+          return;
+        }
+        setCopilotVisionBusy(true);
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const result = VisionApi.analyzeImageElement(img);
+            setCopilotVisionResult(result);
+          } catch (err) {
+            setCopilotVisionError("No se pudo analizar la foto. Intenta de nuevo con buena luz y foco.");
+          } finally {
+            setCopilotVisionBusy(false);
+            URL.revokeObjectURL(objectUrl);
+          }
+        };
+        img.onerror = () => {
+          setCopilotVisionError("No se pudo cargar la imagen seleccionada.");
+          setCopilotVisionBusy(false);
+          URL.revokeObjectURL(objectUrl);
+        };
+        img.src = objectUrl;
+      } catch (e) {
+        setCopilotVisionError("No se pudo procesar la foto.");
+        setCopilotVisionBusy(false);
+      }
+    };
     return /* @__PURE__ */ React.createElement("div", { className: "home-cockpit" }, /* @__PURE__ */ React.createElement("div", { className: "home-header-cockpit" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 240 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 0, background: operationStatus.color, display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-widest, 0.12em)", textTransform: "uppercase", color: operationStatus.color } }, "CONTROL · TURNO ACTUAL"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2, #6B6759)" } }, "· Tenjo · 2.592 msnm")), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: 'var(--font-serif, "Gaya", serif)', fontWeight: 700, fontSize: "var(--text-2xl)", lineHeight: 1.1, letterSpacing: "-0.01em", color: "var(--ink-0, #1E1D19)", margin: 0 } }, "Tablero de Control")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" } }, [
       { value: activeLotes.length, label: "Lotes activos", icon: IconMicroscope, tone: "neutral" },
       { value: pendingTaskCount, label: "Tareas pendientes", icon: IconClipboard, tone: pendingTaskCount > 0 ? "attention" : "neutral" },
@@ -8373,16 +9468,10 @@ BATCH (${numBags}×${kgBag} kg):
       };
       const t = tones[kpi.tone];
       return /* @__PURE__ */ React.createElement("span", { key: kpi.label, style: { display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", padding: "6px 10px", background: t.bg, border: `1px solid ${t.border}`, borderRadius: 0, color: t.ink, fontWeight: t.weight } }, /* @__PURE__ */ React.createElement(kpi.icon, { size: 12 }), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: t.ink } }, kpi.value), " ", kpi.label);
-    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-0)", border: `1px solid ${operationStatus.color}`, borderRadius: 0, color: operationStatus.color } }, operationStatus.label))), /* @__PURE__ */ React.createElement("div", { className: "home-registro-row", style: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-widest, 0.12em)", textTransform: "uppercase", color: "var(--ink-2, #6B6759)", flexShrink: 0 } }, "Registro de cultivo · vista previa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, flex: 1 } }, [
-      { label: "Eventos", value: props.hoyPreviewEventos, onClick: props.onGoRevEventos },
-      { label: "Rendimiento (EB)", value: `${props.hoyPreviewBe}%`, onClick: props.onGoRevRendimiento },
-      { label: "Trabajo", value: `${props.hoyPreviewHoras} h`, onClick: props.onGoRevTrabajo },
-      { label: "Supervisión", value: props.hoyPreviewAnomalias, onClick: props.onGoRevSuper, color: props.hoyPreviewAnomaliasColor },
-      { label: "Salidas", value: `${props.hoyPreviewSalidas} kg`, onClick: props.onGoRevSalidas }
-    ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), className: "home-registro-chip", style: { cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "6px 12px", minHeight: 44, minWidth: 44 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: m.color || "var(--ink-0)" } }, m.value)))), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--accent-terracotta)", flexShrink: 0, whiteSpace: "nowrap" } }, "Ver registro completo →")), /* @__PURE__ */ React.createElement("div", { className: "home-live-telemetry", style: { marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveAlertsSection, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null)), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "SCD30 · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-0)", border: `1px solid ${operationStatus.color}`, borderRadius: 0, color: operationStatus.color } }, operationStatus.label))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "SCD30 · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : "")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
       setInvTab("compra");
       goTab("inventario");
-    }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center" } }, "Registrar Compra +")), criticalLots.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, criticalLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--critical", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-error)", border: "1px solid var(--status-error)", padding: "1px 5px" } }, item.bucket === "critical" ? "Crítico" : "Bloqueo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Abrir lote →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))) : liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", padding: "4px 0" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--status-ok)" }), " Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal."))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--ahora", "aria-label": "Banda 2: Ahora Turno en Curso", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-ok,#2E3B2F)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-ok,#2E3B2F)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-ok,#2E3B2F)" } }, "Banda 2 · Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Acciones directas ≥ 44px")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, nowLots.length + tasksHoy.filter((t) => !t.done).length, " pendiente", nowLots.length + tasksHoy.filter((t) => !t.done).length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "home-quick-actions-strip", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 14 } }, [
+    }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center" } }, "Registrar Compra +")), criticalLots.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, criticalLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--critical", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-error)", border: "1px solid var(--status-error)", padding: "1px 5px" } }, item.bucket === "critical" ? "Crítico" : "Bloqueo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Abrir lote →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))) : liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", padding: "4px 0" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--status-ok)" }), " Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal."))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--ahora", "aria-label": "Banda 2: Ahora Turno en Curso", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-ok,#2E3B2F)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-ok,#2E3B2F)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-ok,#2E3B2F)" } }, "Banda 2 · Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Registro de campo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, nowLots.length + tasksHoy.filter((t) => !t.done).length, " pendiente", nowLots.length + tasksHoy.filter((t) => !t.done).length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "home-quick-actions-strip", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 14 } }, [
       { label: props.sessionLabel || "Iniciar jornada", sub: props.sessionSub || "Registro de campo", icon: IconFlame, onClick: () => {
         const hasActiveSession = props.hasActiveSession === true || props.hasActiveSession === "true";
         if (hasActiveSession) props.onContinueSession && props.onContinueSession();
@@ -8467,7 +9556,13 @@ BATCH (${numBags}×${kgBag} kg):
         style: { cursor: "pointer", minHeight: 40, padding: "0 16px", background: "var(--paper-0)", color: "var(--ink-0)", border: "1px solid var(--line-0)", borderRadius: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-button)" }
       },
       "Cerrar jornada"
-    ))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), /* @__PURE__ */ React.createElement("div", { style: {
+    ))), /* @__PURE__ */ React.createElement("details", { className: "home-secondary-summary", "data-testid": "today-record-summary" }, /* @__PURE__ */ React.createElement("summary", null, "Resumen del registro de cultivo"), /* @__PURE__ */ React.createElement("div", { className: "home-registro-row", style: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-widest, 0.12em)", textTransform: "uppercase", color: "var(--ink-2, #6B6759)", flexShrink: 0 } }, "Registro de cultivo · vista previa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, flex: 1 } }, [
+      { label: "Eventos", value: props.hoyPreviewEventos, onClick: props.onGoRevEventos },
+      { label: "Rendimiento (EB)", value: `${props.hoyPreviewBe}%`, onClick: props.onGoRevRendimiento },
+      { label: "Trabajo", value: `${props.hoyPreviewHoras} h`, onClick: props.onGoRevTrabajo },
+      { label: "Supervisión", value: props.hoyPreviewAnomalias, onClick: props.onGoRevSuper, color: props.hoyPreviewAnomaliasColor },
+      { label: "Salidas", value: `${props.hoyPreviewSalidas} kg`, onClick: props.onGoRevSalidas }
+    ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), className: "home-registro-chip", style: { cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "6px 12px", minHeight: 44, minWidth: 44 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: m.color || "var(--ink-0)" } }, m.value)))), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--accent-terracotta)", flexShrink: 0, whiteSpace: "nowrap" } }, "Ver registro completo →"))), /* @__PURE__ */ React.createElement("details", { className: "home-secondary-summary", "data-testid": "today-telemetry-summary" }, /* @__PURE__ */ React.createElement("summary", null, "Lecturas de salas y conexión"), /* @__PURE__ */ React.createElement("div", { className: "home-live-telemetry", style: { marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), (copilotBriefing || typeof window !== "undefined" && window.SetasVisionDiagnosis) && /* @__PURE__ */ React.createElement("div", { className: "home-cultivation-copilot", style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: 0, padding: "20px", marginTop: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-2)" } }, "Copiloto de cultivo · sugerencias heurísticas"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", letterSpacing: "-0.01em", color: "var(--ink-0)", marginTop: 2, marginBottom: 0 } }, "Próximas mejores acciones")), copilotBriefing && copilotBriefing.harvestCalendar && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Próx. 14 días"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-lg)", color: "var(--ink-0)" } }, copilotBriefing.harvestCalendar.kgNext14d, " kg"))), copilotBriefing && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-1)", marginTop: 0, marginBottom: 14, lineHeight: 1.4 } }, copilotBriefing.headline), copilotTopActions.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 } }, copilotTopActions.map((action) => /* @__PURE__ */ React.createElement("div", { key: action.id, style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "10px 12px", border: "1px solid var(--border-hairline)", borderLeft: `4px solid ${copilotActionColor(action.priority)}`, borderRadius: 0, background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: copilotActionColor(action.priority), border: `1px solid ${copilotActionColor(action.priority)}`, padding: "1px 5px" } }, action.kind), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, action.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)", border: "1px solid var(--border-hairline)", padding: "1px 5px" } }, copilotConfidenceLabel(action.confidence))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)", marginTop: 4, lineHeight: 1.4 } }, action.why))))) : /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", marginBottom: 14 } }, "Sin sugerencias del copiloto por ahora."), copilotBriefing.harvestCalendar && copilotBriefing.harvestCalendar.nextDeficitWeek && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ochre-700)", marginBottom: 14 } }, "Déficit proyectado en ", copilotBriefing.harvestCalendar.nextDeficitWeek.week, ": ", copilotBriefing.harvestCalendar.nextDeficitWeek.deficitKg, " kg (oferta ", copilotBriefing.harvestCalendar.nextDeficitWeek.supply, " kg vs. demanda ", copilotBriefing.harvestCalendar.nextDeficitWeek.demand, " kg)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: handleCopilotExportIcs, style: { cursor: "pointer", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 12px", minHeight: 44, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-0)" } }, "Exportar calendario (.ics)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)" } }, "Motores: ", copilotBriefing.enginesUsed.join(", ") || "ninguno disponible", copilotBriefing.enginesMissing.length > 0 ? ` · faltan: ${copilotBriefing.enginesMissing.join(", ")}` : "")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "11px", color: "var(--ink-2)", marginTop: 10, lineHeight: 1.4, fontStyle: "italic" } }, copilotBriefing.disclaimer)), typeof window !== "undefined" && window.SetasVisionDiagnosis && /* @__PURE__ */ React.createElement("div", { style: { marginTop: copilotBriefing ? 18 : 0, paddingTop: copilotBriefing ? 16 : 0, borderTop: copilotBriefing ? "1px solid var(--border-hairline)" : "none" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "Cribado de foto (bolsa/bloque)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 12px", minHeight: 44, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-0)" } }, copilotVisionBusy ? "Analizando…" : "Tomar/elegir foto", /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", capture: "environment", onChange: handleCopilotPhotoChange, style: { display: "none" }, disabled: copilotVisionBusy })), copilotVisionError && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error,#B53A25)", marginTop: 8 } }, copilotVisionError), copilotVisionResult && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: "10px 12px", border: "1px solid var(--border-hairline)", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, "Colonización estimada: ", copilotVisionResult.colonizationPct, "%"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)", border: "1px solid var(--border-hairline)", padding: "1px 5px" } }, copilotConfidenceLabel(copilotVisionResult.confidence))), copilotVisionResult.flags.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 } }, copilotVisionResult.flags.map((flag, i) => /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "2px 6px", border: "1px solid var(--ochre-700)", color: "var(--ochre-700)" } }, flag.pathogenId, " · ", flag.severity))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 8 } }, copilotVisionResult.recommendation), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "11px", color: "var(--ink-2)", marginTop: 6, fontStyle: "italic" } }, copilotVisionResult.disclaimer)))), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
       borderRadius: 0,
@@ -8687,7 +9782,7 @@ BATCH (${numBags}×${kgBag} kg):
       onClick: () => openBuilderSubTab("generador")
     },
     /* @__PURE__ */ React.createElement(AppIcon, { name: "wand", size: 13 }),
-    /* @__PURE__ */ React.createElement("span", null, "Perito & Generador de Recetas")
+    /* @__PURE__ */ React.createElement("span", null, "Generador de Recetas")
   )), /* @__PURE__ */ React.createElement("div", { className: "formular-coform-control", role: "group", "aria-label": "Co-Formulación" }, /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -8743,21 +9838,7 @@ BATCH (${numBags}×${kgBag} kg):
     },
     formNextState === "species" ? /* @__PURE__ */ React.createElement(IconTarget, { size: 15, color: "currentColor" }) : formNextState === "balance" ? /* @__PURE__ */ React.createElement(IconBolt, { size: 15, color: "currentColor" }) : /* @__PURE__ */ React.createElement(IconBox, { size: 15, color: "currentColor" }),
     /* @__PURE__ */ React.createElement("span", null, formNextLabel)
-  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Receta cargada en Mesa de Mezcla"), recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "form-summary-strip", "aria-label": "Resumen de receta activa" }, /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, hasPickedSpecies ? sp?.name || "—" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Manual")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, globalMode === "produccion" ? "Producción" : "Investigación"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Modo activo")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Peso total"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0%"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cn != null ? `${an.cn.toFixed(1)}:1` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Humedad objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.moistureTarget != null ? `${an.moistureTarget}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, [SetasSpeciesTargetsApi.targetSourceLabel(an?.targets, "moisture"), bd ? `agua a añadir ${bd.agua.toFixed(1)} kg` : null].filter(Boolean).join(" · "))), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "BE estimada"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.eb != null ? `${Math.round(blendEBWithHistory(an, histStats))}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Hipótesis")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Costo/kg"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cost != null ? `$${Math.round(an.cost).toLocaleString("es-CO")}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "COP / kg seco")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Revisión"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v", style: { fontSize: "var(--text-xs)" } }, "Perito ", Math.round(opt?.score || 0), "/100"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Perito · Requiere revisión"))), /* @__PURE__ */ React.createElement("section", { className: `form-flow${recipe.length > 0 ? " has-recipe" : ""}`, "aria-label": "Recorrido de formulación en 5 pasos" }, /* @__PURE__ */ React.createElement("div", { className: "form-flow-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "form-flow-eyebrow" }, "Recorrido metodológico"), /* @__PURE__ */ React.createElement("h2", null, "Especie → Origen → Ingredientes → Validar y guardar"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-600)", marginTop: 2, letterSpacing: "var(--tracking-label)", textTransform: "uppercase" } }, "01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión")), /* @__PURE__ */ React.createElement("span", { className: "form-flow-progress", "aria-live": "polite" }, hasPickedSpecies ? recipe.length > 0 ? Math.abs((an?.tot || 0) - 100) <= MASS_BALANCE_TOL ? "Paso 5: Listo para validar" : "Paso 4: Balance en curso" : "Paso 3: Agregar insumos" : "Paso 1: Seleccionar especie")), /* @__PURE__ */ React.createElement("ol", { className: "form-flow-grid form-flow-grid--5" }, /* @__PURE__ */ React.createElement("li", { className: `form-step ${hasPickedSpecies ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "01"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Especie"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, hasPickedSpecies ? sp?.name || "Pendiente" : "Pendiente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
-    document.querySelector(".form-species-context")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    setTimeout(() => document.getElementById("form-species-context-select")?.focus(), 250);
-  } }, hasPickedSpecies ? "Cambiar" : "Seleccionar")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${hasPickedSpecies ? "is-completado" : "is-activo"}` }, hasPickedSpecies ? "Completado" : "Activo"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Define rangos C:N, pH y EB biológica.")), /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "02"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Objetivo"), /* @__PURE__ */ React.createElement("div", { className: "form-step-options", role: "group", "aria-label": "Origen de ingredientes" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")), /* @__PURE__ */ React.createElement("span", { className: "form-step-state-badge is-completado" }, "Completado"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, globalMode === "produccion" ? "Stock físico de Bodega Tenjo." : "Paleta exploratoria de investigación.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${recipe.length > 0 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "03"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Ingredientes"), /* @__PURE__ */ React.createElement("div", { className: "form-step-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: focusIngredientCatalog }, "Manual"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Generador")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length > 0 ? "is-completado" : hasPickedSpecies ? "is-activo" : "is-pendiente"}` }, recipe.length > 0 ? `${recipe.length} insumos` : hasPickedSpecies ? "Activo" : "Pendiente"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Agrega sustratos, suplementos y correctores.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "04"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Balance"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0.0%"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
-    if (autoBalance) autoBalance();
-  } }, "Cerrar 100%")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "Completado" : "Requiere atención"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Cierra la materia seca exactamente al 100%.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL && (opt?.score || 0) >= 70 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "05"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Revisión"), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      className: "form-step-primary",
-      disabled: recipe.length === 0,
-      onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" })
-    },
-    "Dictamen Perito"
-  ), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : (opt?.score || 0) >= 70 ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : `Score ${Math.round(opt?.score || 0)}/100`), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Auditoría agronómica, riesgo y tratamiento.")))), /* @__PURE__ */ React.createElement("section", { className: `form-species-context ${recipe.length > 0 ? "has-recipe" : "is-empty"}`, "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp?.name || "Especie activa" : "Selecciona una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp?.scientific || "Sin clasificar" : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-origin-toggle" }, /* @__PURE__ */ React.createElement("span", null, "Origen de ingredientes"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Origen de ingredientes en la receta activa" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo"))), /* @__PURE__ */ React.createElement("div", { className: "form-species-targets", "aria-label": "Objetivos de la especie activa" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "C:N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies && sp?.cn_optimal ? `${sp.cn_optimal.min}–${sp.cn_optimal.max}:1` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies && sp?.n_optimal ? `${sp.n_optimal.min}–${sp.n_optimal.max}%` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "EB meta"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies && sp?.eb_optimal != null ? `${sp.eb_optimal}%` : "—")), /* @__PURE__ */ React.createElement("span", { className: `form-species-mode is-${globalMode}` }, /* @__PURE__ */ React.createElement("small", null, "Origen"), /* @__PURE__ */ React.createElement("b", null, globalMode === "produccion" ? "Bodega" : "Paleta completa")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Aún no hay ingredientes en la receta" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "sin ingredientes"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Añade insumos manualmente o genera una primera mezcla."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: () => {
+  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Receta cargada en Mesa de Mezcla"), /* @__PURE__ */ React.createElement("section", { className: `form-species-context ${recipe.length > 0 ? "has-recipe" : "is-empty"}`, "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp?.name || "Especie activa" : "Selecciona una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp?.scientific || "Sin clasificar" : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-origin-toggle" }, /* @__PURE__ */ React.createElement("span", null, "Origen de ingredientes"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Origen de ingredientes en la receta activa" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Aún no hay ingredientes en la receta" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "sin ingredientes"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Añade insumos manualmente o genera una primera mezcla."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: () => {
     setShowOptimizer(true);
     openBuilderSubTab("generador");
   } }, "Abrir Generador")))) : (() => {
@@ -8894,7 +9975,32 @@ Click para ver análisis completo`
         setLockedIds((l) => l.filter((x) => x !== r.id));
       }, "aria-label": `Quitar ${g?.name || "ingrediente"} de la receta`, style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 })));
     })), an && /* @__PURE__ */ React.createElement("div", { className: `tbar ${isMassBalanced(an) ? "ok" : an.tot < EB_PENALTY_BALANCE_BAND.min || an.tot > EB_PENALTY_BALANCE_BAND.max ? "err" : "warn"}` }, /* @__PURE__ */ React.createElement("span", null, "Total"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600 } }, an.tot.toFixed(1), "% / 100%")), normMode && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "norm-bar" }, /* @__PURE__ */ React.createElement("span", null, "⇌"), /* @__PURE__ */ React.createElement("span", null, "Auto-ajustar activo — al cambiar un %, los demás se reescalan proporcionalmente"), lockedIds.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: "auto", opacity: 0.8 } }, "● ", lockedIds.length, " fijado", lockedIds.length !== 1 ? "s" : ""))));
-  })()), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Área de trabajo principal"), /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Puntaje, gauges y lote"), /* @__PURE__ */ React.createElement("p", null, "Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.")), /* @__PURE__ */ React.createElement("span", { className: "active-recipe-count", "aria-live": "polite" }, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "builder-left" }, /* @__PURE__ */ React.createElement("div", { className: "panel", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("div", { className: "ingredient-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Paso 03 · Selección manual"), /* @__PURE__ */ React.createElement("h2", null, "Ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.")), /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-count", "aria-live": "polite" }, visibleIngredients.length, " de ", effectiveINGS.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("input", { name: "ingredientSearch", type: "search", className: "search", "aria-label": "Buscar ingrediente o etiqueta", autoComplete: "off", style: { marginBottom: 0, flex: "1 1 auto", minWidth: "200px" }, placeholder: "Buscar ingrediente o etiqueta…", value: search, onChange: (e) => setSearch(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  })()), recipe.length > 0 && /* @__PURE__ */ React.createElement("details", { className: "form-support-details", "data-testid": "formulator-provenance-details" }, /* @__PURE__ */ React.createElement("summary", null, "Resumen y procedencia de la receta"), recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "form-summary-strip", "aria-label": "Resumen de receta activa" }, /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, hasPickedSpecies ? sp?.name || "—" : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Manual")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, globalMode === "produccion" ? "Producción" : "Investigación"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Modo activo")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Peso total"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0%"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Calculado")), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "C:N"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.cn > 0 ? `${an.cn.toFixed(1)}:1` : "—"), (() => {
+    const p = an?.cn > 0 ? procedenciaNutriente("cn") : procedenciaSinMatrizNutritiva();
+    return /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", "data-testid": "prov-cn", title: p.title || void 0 }, p.texto);
+  })()), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Humedad objetivo"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.moistureTarget != null ? `${an.moistureTarget}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", title: "Es la humedad a la que se apunta, no una medición del sustrato" }, ["Objetivo", SetasSpeciesTargetsApi.targetSourceLabel(an?.targets, "moisture"), bd ? `agua a añadir ${bd.agua.toFixed(1)} kg` : null].filter(Boolean).join(" · "))), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "BE estimada"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v" }, an?.eb != null ? `${Math.round(blendEBWithHistory(an, histStats))}%` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", "data-testid": "prov-eb" }, (() => {
+    const prov = typeof window !== "undefined" ? window.SetasProvenance : null;
+    if (!prov) return "Estimado";
+    const conHistorial = !!(histStats && histStats.n > 0 && histStats.avg != null);
+    const d = prov.describe({ vocabulary: "ebType", value: conHistorial ? "model+field-data" : "heuristic-model" });
+    if (!d) return "Estimado";
+    const muestra = conHistorial ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity) ? ` · similitud ${histStats.similarity.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""})` : "";
+    return `${d.label} · ${d.detail}${muestra}`;
+  })())), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Costo/kg"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v", title: "COP por kg seco" }, an?.cost != null ? `$${Math.round(an.cost).toLocaleString("es-CO")}` : "—"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line", "data-testid": "prov-costo" }, procedenciaCosto(an?.cost, realCostPerKg).texto)), /* @__PURE__ */ React.createElement("div", { className: "form-summary-cell" }, /* @__PURE__ */ React.createElement("span", { className: "form-summary-k" }, "Revisión"), /* @__PURE__ */ React.createElement("span", { className: "form-summary-v", style: { fontSize: "var(--text-xs)" } }, "Perito ", Math.round(opt?.score || 0), "/100"), /* @__PURE__ */ React.createElement("span", { className: "os-provenance-line" }, "Perito · Requiere revisión")))), /* @__PURE__ */ React.createElement("details", { className: "form-support-details form-method-details", "data-testid": "formulator-method-details" }, /* @__PURE__ */ React.createElement("summary", null, "Guía de formulación · cinco pasos"), /* @__PURE__ */ React.createElement("div", { className: "form-species-targets", "aria-label": "Objetivos de la especie activa" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "C:N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies && sp?.cn_optimal ? `${sp.cn_optimal.min}–${sp.cn_optimal.max}:1` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "N objetivo"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies && sp?.n_optimal ? `${sp.n_optimal.min}–${sp.n_optimal.max}%` : "—")), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("small", null, "EB meta"), /* @__PURE__ */ React.createElement("b", null, hasPickedSpecies && sp?.eb_optimal != null ? `${sp.eb_optimal}%` : "—")), /* @__PURE__ */ React.createElement("span", { className: `form-species-mode is-${globalMode}` }, /* @__PURE__ */ React.createElement("small", null, "Origen"), /* @__PURE__ */ React.createElement("b", null, globalMode === "produccion" ? "Bodega" : "Paleta completa"))), /* @__PURE__ */ React.createElement("section", { className: `form-flow${recipe.length > 0 ? " has-recipe" : ""}`, "aria-label": "Recorrido de formulación en 5 pasos" }, /* @__PURE__ */ React.createElement("div", { className: "form-flow-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "form-flow-eyebrow" }, "Recorrido metodológico"), /* @__PURE__ */ React.createElement("h2", null, "Especie → Origen → Ingredientes → Validar y guardar"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", color: "var(--ink-600)", marginTop: 2, letterSpacing: "var(--tracking-label)", textTransform: "uppercase" } }, "01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión")), /* @__PURE__ */ React.createElement("span", { className: "form-flow-progress", "aria-live": "polite" }, hasPickedSpecies ? recipe.length > 0 ? Math.abs((an?.tot || 0) - 100) <= MASS_BALANCE_TOL ? "Paso 5: Listo para validar" : "Paso 4: Balance en curso" : "Paso 3: Agregar insumos" : "Paso 1: Seleccionar especie")), /* @__PURE__ */ React.createElement("ol", { className: "form-flow-grid form-flow-grid--5" }, /* @__PURE__ */ React.createElement("li", { className: `form-step ${hasPickedSpecies ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "01"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Especie"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, hasPickedSpecies ? sp?.name || "Pendiente" : "Pendiente"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    document.querySelector(".form-species-context")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => document.getElementById("form-species-context-select")?.focus(), 250);
+  } }, hasPickedSpecies ? "Cambiar" : "Seleccionar")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${hasPickedSpecies ? "is-completado" : "is-activo"}` }, hasPickedSpecies ? "Completado" : "Activo"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Define rangos C:N, pH y EB biológica.")), /* @__PURE__ */ React.createElement("li", { className: "form-step is-ready" }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "02"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Objetivo"), /* @__PURE__ */ React.createElement("div", { className: "form-step-options", role: "group", "aria-label": "Origen de ingredientes" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")), /* @__PURE__ */ React.createElement("span", { className: "form-step-state-badge is-completado" }, "Completado"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, globalMode === "produccion" ? "Stock físico de Bodega Tenjo." : "Paleta exploratoria de investigación.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${recipe.length > 0 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "03"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Ingredientes"), /* @__PURE__ */ React.createElement("div", { className: "form-step-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: focusIngredientCatalog }, "Manual"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Generador")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length > 0 ? "is-completado" : hasPickedSpecies ? "is-activo" : "is-pendiente"}` }, recipe.length > 0 ? `${recipe.length} insumos` : hasPickedSpecies ? "Activo" : "Pendiente"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Agrega sustratos, suplementos y correctores.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "04"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Balance"), /* @__PURE__ */ React.createElement("div", { className: "form-step-species-state" }, /* @__PURE__ */ React.createElement("strong", null, an?.tot != null ? `${an.tot.toFixed(1)}%` : "0.0%"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    if (autoBalance) autoBalance();
+  } }, "Cerrar 100%")), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : an?.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL ? "Completado" : "Requiere atención"), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Cierra la materia seca exactamente al 100%.")), /* @__PURE__ */ React.createElement("li", { className: `form-step ${an && an.tot != null && Math.abs(an.tot - 100) <= MASS_BALANCE_TOL && (opt?.score || 0) >= 70 ? "is-ready" : ""}` }, /* @__PURE__ */ React.createElement("span", { className: "form-step-num" }, "05"), /* @__PURE__ */ React.createElement("span", { className: "form-step-label" }, "Revisión"), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "form-step-primary",
+      disabled: recipe.length === 0,
+      onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    },
+    "Dictamen Perito"
+  ), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : (opt?.score || 0) >= 70 ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : `Score ${Math.round(opt?.score || 0)}/100`), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Auditoría agronómica, riesgo y tratamiento."))))), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Área de trabajo principal"), /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Puntaje, gauges y lote"), /* @__PURE__ */ React.createElement("p", null, "Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.")), /* @__PURE__ */ React.createElement("span", { className: "active-recipe-count", "aria-live": "polite" }, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "builder-left" }, /* @__PURE__ */ React.createElement("div", { className: "panel", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("div", { className: "ingredient-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Paso 03 · Selección manual"), /* @__PURE__ */ React.createElement("h2", null, "Ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.")), /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-count", "aria-live": "polite" }, visibleIngredients.length, " de ", effectiveINGS.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("input", { name: "ingredientSearch", type: "search", className: "search", "aria-label": "Buscar ingrediente o etiqueta", autoComplete: "off", style: { marginBottom: 0, flex: "1 1 auto", minWidth: "200px" }, placeholder: "Buscar ingrediente o etiqueta…", value: search, onChange: (e) => setSearch(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setPriceOverrides({});
     try {
       localStorage.removeItem("setas_prices_v1");
@@ -8984,8 +10090,8 @@ Click para ver análisis completo`
             e.stopPropagation();
             toggleDisabledIng(ing.id);
           },
-          title: disabledIngIds.includes(ing.id) ? "Habilitar para el optimizador" : "Excluir del optimizador",
-          "aria-label": disabledIngIds.includes(ing.id) ? `Habilitar ${ing.name} para el optimizador` : `Excluir ${ing.name} del optimizador`,
+          title: disabledIngIds.includes(ing.id) ? "Volver a usar en las sugerencias del Perito" : "Excluir de las sugerencias del Perito",
+          "aria-label": disabledIngIds.includes(ing.id) ? `Volver a usar ${ing.name} en las sugerencias del Perito` : `Excluir ${ing.name} de las sugerencias del Perito`,
           style: { width: "clamp(13px,3vw,15px)", height: "clamp(13px,3vw,15px)", borderRadius: "50%", background: disabledIngIds.includes(ing.id) ? "var(--coral-500)" : "var(--border-soft)", color: disabledIngIds.includes(ing.id) ? "var(--paper-0)" : "rgba(26,20,16,.5)", border: "none", cursor: "pointer", fontSize: "clamp(7px,1.5vw,8px)", lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }
         },
         disabledIngIds.includes(ing.id) ? "⊘" : "–"
@@ -9092,62 +10198,7 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement("div", { className: "role-group-summary" }, /* @__PURE__ */ React.createElement("span", { className: "role-group-compatible" }, compatCount, " compatible", compatCount === 1 ? "" : "s"), /* @__PURE__ */ React.createElement("span", { className: "role-group-chevron", "aria-hidden": "true" }, "⌄"))
       ), /* @__PURE__ */ React.createElement("div", { id: `role-group-${grp.key}`, className: "role-group-content", hidden: isCollapsed }, grpIngs.map(renderIngRow)));
     });
-  })()))), /* @__PURE__ */ React.createElement("div", { className: "builder-right" }, /* @__PURE__ */ React.createElement("header", { className: "form-advanced-tools-head", id: "form-advanced-tools-title" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Herramientas avanzadas"), /* @__PURE__ */ React.createElement("h2", null, "Perito + Automejora"), /* @__PURE__ */ React.createElement("p", null, "Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.")), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Abrir generador")), an && (() => {
-    const hasPer = recipe.length > 0;
-    const { score, status, items } = hasPer ? opt : { score: 0, status: "sin_receta", items: [] };
-    const criticals = items.filter((s) => s.priority === "critical");
-    const warnings = items.filter((s) => s.priority === "warning");
-    const tips = items.filter((s) => s.priority === "tip");
-    const infos = items.filter((s) => s.priority === "info");
-    const sm = PERITO_STATUS[status] || PERITO_STATUS.sin_receta;
-    const max = 150, oMin = sp?.cn_optimal?.min, oMax = sp?.cn_optimal?.max;
-    const cur = sp ? Math.min(an.cn, max) : 0;
-    const cnOk = sp && an.cn >= oMin && an.cn <= oMax;
-    return /* @__PURE__ */ React.createElement("div", { className: "panel print-panel", id: "bl-perito", style: { background: hasPer ? sm.bg : "var(--paper-50)", border: `1.5px solid ${hasPer ? sm.border : "var(--border-soft)"}`, marginBottom: 12, transition: "background .3s,border-color .3s" } }, hasPer && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${sm.border}40`, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 62, height: 62, borderRadius: "50%", background: sm.badge, flexShrink: 0, transition: "background .3s" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 24, fontWeight: 900, color: "var(--paper-0)", lineHeight: 1 } }, score), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", color: "rgba(255,255,255,.7)", letterSpacing: "var(--tracking-button)", marginTop: 1 } }, "SCORE")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: sm.badge, marginBottom: 2 } }, "Perito · Veredicto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: 20, fontWeight: 800, color: sm.txt, lineHeight: 1, transition: "color .3s" } }, sm.veredicto), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, marginTop: 4, lineHeight: 1.4 } }, sm.accion && /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700 } }, sm.accion), (() => {
-      const causa = peritoMainLimiter(opt, an);
-      return causa ? /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.8, marginTop: 2 } }, /* @__PURE__ */ React.createElement("b", null, "Causa:"), " ", causa) : null;
-    })(), an.trichoderma && /* @__PURE__ */ React.createElement("div", { style: { color: "#C53030", fontWeight: 700, marginTop: 2 } }, "Autoclave 121°C × 90 min obligatorio"), !an.trichoderma && tr && /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.6, marginTop: 2 } }, "Trat.: ", tr.name))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
-      setShowAIFormModal(true);
-      setAiFormResult(null);
-      setAiFormError("");
-    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wand", size: 13 }), " Asistente IA (Gemini)"), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sparkles", size: 11, color: "var(--paper-0)" }), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", width: "10", height: "10", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" }, /* @__PURE__ */ React.createElement("path", { d: "M3 7v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M3 13C5.5 7 12 4 18 7a9 9 0 010 10" })), "Deshacer (", recipeHistory.length, ")"), /* @__PURE__ */ React.createElement("button", { onClick: runFormNextAction, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "var(--moss-600,var(--accent-olive))", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, formNextLabel), (status === "needs_work" || status === "critical") && /* @__PURE__ */ React.createElement("button", { onClick: () => {
-      setPromptDlg({ title: "Nueva prueba experimental", label: "Nombre de la prueba", placeholder: "ej. Ostra gris — ajuste C:N lote 12", confirmLabel: "Guardar prueba", onSubmit: (nm) => {
-        const trSave = calcTreatment(an, sKey, effectiveSPP);
-        const e = { id: Date.now(), name: nm, sKey, recipe: [...recipe], date: (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO"), eb: an.eb.toFixed(0), cn: an.cn.toFixed(1), score: opt.score, cost: Math.round(an.cost), treatCol: trSave?.col || null, energyCopKg: trSave?.energy?.cop_per_kg_seco || 0 };
-        const u = [e, ...saved];
-        setSaved(u);
-        try {
-          localStorage.setItem("setas_v6", JSON.stringify(u));
-        } catch (e2) {
-        }
-        setNoticeDlg({ msg: `Guardada como prueba: ${nm}` });
-      } });
-    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "6px 10px", background: "transparent", color: sm.badge, border: `1px solid ${sm.border}`, borderRadius: "var(--r-sm)", cursor: "pointer", whiteSpace: "nowrap" } }, "+ Crear prueba"))), /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 12 } }, [
-      { l: "C:N", v: `${an.cn.toFixed(1)}:1`, ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max },
-      { l: "Nitrógeno", v: `${an.avgN.toFixed(2)}%`, ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max },
-      { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
-      { l: "Costo / kg", v: `$${Math.round(an.cost)}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
-      { l: "pH estimado", v: an.avgPh?.toFixed(1) || "—", ok: sp && an.avgPh >= sp.ph_optimal?.min && an.avgPh <= sp.ph_optimal?.max, w: false },
-      { l: "Digestibilidad", v: `${an.avgDig?.toFixed(1) || "—"}/10`, ok: an.avgDig >= 7, w: an.avgDig >= 4 && an.avgDig < 7 }
-    ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "mc" }, /* @__PURE__ */ React.createElement("div", { className: "mlbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "mval" }, m.v), /* @__PURE__ */ React.createElement("span", { className: `mbadge ${m.ok ? "bgood" : m.w ? "bwarn" : "bbad"}` }, m.ok ? "Óptimo" : m.w ? "Aceptable" : "Ajustar")))), /* @__PURE__ */ React.createElement(EBDial, { an, sp }), sp && an.cn > 0 && /* @__PURE__ */ React.createElement("div", { className: "gauge-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-hdr" }, /* @__PURE__ */ React.createElement("span", { className: "gauge-cur" }, "C:N ", an.cn.toFixed(1), ":1"), /* @__PURE__ */ React.createElement("span", { className: "gauge-tgt" }, "objetivo ", oMin, "–", oMax, ":1")), /* @__PURE__ */ React.createElement("div", { className: "gauge-tr" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-zn", style: { left: `${oMin / max * 100}%`, width: `${(oMax - oMin) / max * 100}%` } }), /* @__PURE__ */ React.createElement("div", { className: "gauge-nd", style: { left: `${cur / max * 100}%`, background: cnOk ? "var(--accent-olive)" : an.cn < oMin ? "var(--coral-500)" : "var(--ochre-500,#A07828)" } })), /* @__PURE__ */ React.createElement("div", { className: "gauge-ft" }, /* @__PURE__ */ React.createElement("span", null, "0"), /* @__PURE__ */ React.createElement("span", null, oMin, "–", oMax), /* @__PURE__ */ React.createElement("span", null, "150+"))), /* @__PURE__ */ React.createElement(NitrogenChart, { recipe }), hasPer && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, margin: "10px 0 8px", border: "1px solid rgba(26,20,16,.1)", borderRadius: 6, overflow: "hidden", background: "var(--paper-100)" } }, [
-      { l: "Calificación", v: `${opt?.score ?? "—"}/100`, ok: (opt?.score || 0) >= 85, w: (opt?.score || 0) >= 60 },
-      { l: "EB estimada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb?.toFixed(0) || "—"}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
-      { l: "Costo / kg Seco", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
-      { l: "Costo / kg Hongo", v: an.eb > 0 ? `$${Math.round((an.cost || 0) / (an.eb / 100)).toLocaleString("es-CO")}` : "—", ok: (an.cost || 0) / (an.eb / 100) < 1600, w: (an.cost || 0) / (an.eb / 100) < 3200 }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.l, style: { flex: 1, padding: "7px 8px", borderLeft: i > 0 ? "1px solid rgba(26,20,16,.08)" : "none", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", fontWeight: 700, fontSize: "var(--text-md)", color: m.ok ? "#3D5A38" : m.w ? "#7A5A10" : "var(--coral-500)", lineHeight: 1 } }, m.v)))), realCostPerKg != null && Math.abs(realCostPerKg - Math.round(an.cost || 0)) >= 20 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Costo real de bodega (precio ponderado de tus lotes): ", /* @__PURE__ */ React.createElement("b", null, "$", realCostPerKg.toLocaleString("es-CO"), "/kg seco"), " · catálogo: $", Math.round(an.cost || 0).toLocaleString("es-CO"), "/kg seco"), histStats && histStats.n > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Score ajustado con ", histStats.n, " lote", histStats.n !== 1 ? "s" : "", " real", histStats.n !== 1 ? "es" : "", histStats.matched ? " con receta similar" : " de la especie", " (", histStats.subs.join(", "), ") — peso ", Math.round(histStats.weight * 100), "% histórico / ", Math.round((1 - histStats.weight) * 100), "% fórmula"), modelAccuracy != null && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginBottom: 8 } }, "Precisión del modelo para ", sp?.name || "esta especie", " en tu bodega: ±", modelAccuracy, "% EB (basado en ", trialsWithReal.length, " prueba", trialsWithReal.length !== 1 ? "s" : "", " con EB real registrado)"), similarTrial && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#7A5A10", background: "rgba(160,120,40,.08)", border: "1px solid rgba(160,120,40,.2)", borderRadius: 4, padding: "6px 9px", marginBottom: 8 } }, "Ya probaste algo parecido (", /* @__PURE__ */ React.createElement("b", null, Math.round(similarTrial.similarity * 100), "%"), ' de ingredientes en común, "', similarTrial.name, '"): dio ', /* @__PURE__ */ React.createElement("b", null, "EB real ", similarTrial.ebReal, "%"), " (estimado entonces: ", similarTrial.eb, "%)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 } }, criticals.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.12)", border: "1px solid rgba(197,48,48,.3)", borderRadius: 3, color: "#C53030", fontWeight: 700 } }, criticals.length, " crítico", criticals.length !== 1 ? "s" : ""), warnings.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(160,120,40,.1)", border: "1px solid rgba(160,120,40,.25)", borderRadius: 3, color: "#7A5A10", fontWeight: 700 } }, warnings.length, " ajuste", warnings.length !== 1 ? "s" : ""), criticals.length === 0 && warnings.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(74,107,74,.1)", border: "1px solid rgba(74,107,74,.2)", borderRadius: 3, color: "#3D5A38" } }, "Todos los parámetros en rango"), !isMassBalanced(an) && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "3px 9px", background: "rgba(197,48,48,.1)", border: "1px solid rgba(197,48,48,.25)", borderRadius: 3, color: "#C53030", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " Total ", an.tot.toFixed(1), "%")), (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: sm.badge, padding: "6px 10px", background: "rgba(0,0,0,.04)", borderLeft: `2px solid ${sm.border}`, marginBottom: 8, lineHeight: 1.4 } }, /* @__PURE__ */ React.createElement("b", { id: "perito-recommendations" }, "Aplica una sugerencia a la vez"), " — cada cambio recalcula. Usa ", /* @__PURE__ */ React.createElement("b", null, "Auto-mejorar"), " para automatizar."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)" } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, speciesKey: sKey, onMorph: (tgt) => {
-      setMorphTargetRecipe(tgt);
-      setWorkbenchMode("morphing");
-      openBuilderSubTab("generador");
-    } }))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)" } }, "Mejoras (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, speciesKey: sKey, onMorph: (tgt) => {
-      setMorphTargetRecipe(tgt);
-      setWorkbenchMode("morphing");
-      openBuilderSubTab("generador");
-    } }))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { open: true, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "5px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), tips.map((item, i) => /* @__PURE__ */ React.createElement(PeritoItem, { key: i, item, onApply: applyOptStep, baseScore: opt.score, recipe, lockedIds, ingredients: optimizerINGS, speciesKey: sKey, onMorph: (tgt) => {
-      setMorphTargetRecipe(tgt);
-      setWorkbenchMode("morphing");
-      openBuilderSubTab("generador");
-    } }))), infos.map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 8, padding: "7px 12px", background: "rgba(74,90,58,.06)", borderTop: "1px solid rgba(74,90,58,.12)", alignItems: "flex-start", marginTop: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: item.color, flexShrink: 0 } }, item.icon), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, color: item.color, marginRight: 6 } }, item.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-sm)", color: "var(--ink-500)", fontFamily: "var(--font-mono)" } }, item.action))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: `tog${showFlush ? " on" : ""}`, "aria-pressed": showFlush, onClick: () => setShowFlush(!showFlush) }, "Cosechas"), /* @__PURE__ */ React.createElement("button", { className: `tog${showCompChart ? " on" : ""}`, "aria-pressed": showCompChart, onClick: () => setShowCompChart(!showCompChart) }, "Composición"), /* @__PURE__ */ React.createElement("button", { className: `tog${showSpeciesRec ? " on" : ""}`, "aria-pressed": showSpeciesRec, onClick: () => setShowSpeciesRec(!showSpeciesRec) }, "Compat. especies")), showFlush && /* @__PURE__ */ React.createElement(FlushChart, { an }), showCompChart && /* @__PURE__ */ React.createElement(CompositionChart, { recipe }), showSpeciesRec && /* @__PURE__ */ React.createElement(SpeciesRecommender, { recipe }), /* @__PURE__ */ React.createElement("div", { className: "dbox", style: { marginTop: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "dttl" }, "Evaluación"), /* @__PURE__ */ React.createElement("div", { className: "dtxt" }, dg.main)), dg.sugs.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginTop: 8 } }, "A considerar"), dg.sugs.map((s2, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: `sug ${s2.t}` }, /* @__PURE__ */ React.createElement("span", { className: "sug-mark" }, s2.t === "success" ? "Ok" : s2.t === "error" ? "Rev" : "—"), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700, flexShrink: 0, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)" } }, s2.i), /* @__PURE__ */ React.createElement("span", null, s2.t === "warning" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--ink-400)", fontStyle: "italic" } }, "Podrías considerar — "), s2.tx) : s2.tx)))));
-  })(), /* @__PURE__ */ React.createElement(RecipeGauges, { an, sp, optimalAn, historical: histStats }), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent", id: "bl-receta-summary" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.12)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 20, color: "var(--ink-900)", lineHeight: 1 } }, "Puntaje y lote"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", recipe.length, ")"))), an && an.sp && opt?.score > 0 && (() => {
+  })()))), /* @__PURE__ */ React.createElement("div", { className: "builder-right" }, /* @__PURE__ */ React.createElement("header", { className: "form-advanced-tools-head", id: "form-advanced-tools-title" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Herramientas avanzadas"), /* @__PURE__ */ React.createElement("h2", null, "Perito + Automejora"), /* @__PURE__ */ React.createElement("p", null, "Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.")), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => openBuilderSubTab("generador") }, "Abrir generador")), renderPeritoPanel("formulador"), "            ", /* @__PURE__ */ React.createElement(RecipeGauges, { an, sp, optimalAn, historical: histStats }), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel panel-accent", id: "bl-receta-summary" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.12)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 20, color: "var(--ink-900)", lineHeight: 1 } }, "Puntaje y lote"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", recipe.length, ")"))), an && an.sp && opt?.score > 0 && (() => {
     const sc = opt.score;
     const col = sc >= 80 ? "var(--moss-500)" : sc >= 60 ? "var(--ochre-500,#A07828)" : "var(--coral-500)";
     const bg = sc >= 80 ? "#F2F5EE" : sc >= 60 ? "#FBF6E8" : "#F9EDEA";
@@ -9249,8 +10300,28 @@ Click para ver análisis completo`
   } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↑"), " Importar")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "sbar" }, /* @__PURE__ */ React.createElement("input", { name: "recipeName", "aria-label": "Nombre de la receta", autoComplete: "off", placeholder: "Nombre de la receta…", value: saveName, onChange: (e) => setSaveName(e.target.value), onKeyDown: (e) => e.key === "Enter" && saveR(), maxLength: 60 }), /* @__PURE__ */ React.createElement("button", { className: `sbtn${flash ? " fl" : ""}`, onClick: saveR, disabled: !saveName.trim() || !readyForProduction, title: readyForProduction ? "" : productionBlockMsg }, flash ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, style: { marginRight: 4 } }), " Guardada") : "Guardar"), recipe.length > 0 && an && /* @__PURE__ */ React.createElement("button", { className: "btn-launch-prod", type: "button", onClick: openProdLauncher, disabled: !readyForProduction, title: readyForProduction ? "Lanzar producción de lote con descuento en bodega y asignación de sala" : productionBlockMsg, style: { padding: "7px 14px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "rocket", size: 13 }), " Lanzar Lote"), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", display: "inline-flex", alignItems: "center", gap: 4 }, title: saveSyncErr }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " sin sincronizar")), !readyForProduction && /* @__PURE__ */ React.createElement("div", { role: "status", "aria-live": "polite", style: { marginTop: 6, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " ", productionBlockMsg), !balanced && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", padding: "5px 10px", background: "var(--coral-500)", color: "#fff", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sparkles", size: 11, color: "#fff" }), " Auto-mejorar")))))), tab === "formular" && tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 13, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento recomendado"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía paso a paso")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.alt && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-200)", border: "1px solid var(--paper-300)", padding: "6px 10px", borderLeft: "2px solid var(--border-soft)" } }, tr.alt), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14 }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString("es-CO")} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", opacity: 0.7, marginTop: 2 } }, tr.energy.detalle)), an && an.cost > 0 && tr.energy.cop_per_kg_seco > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 700 } }, "$", (Math.round(an.cost) + tr.energy.cop_per_kg_seco).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", opacity: 0.7 } }, "COP/kg total")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), /* @__PURE__ */ React.createElement("div", { className: "panel rec-panel", style: { display: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Recetario ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", saved.length, ")"))), showSaved && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, saved.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "sempty" }, "Sin recetas en el recetario aún.") : /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 15, top: 0, bottom: 0, width: "1px", background: "var(--border-soft)", opacity: 0 } }), saved.map((e, idx) => {
     const s2 = SPP[e.sKey];
     const isEven = idx % 2 === 0;
-    return /* @__PURE__ */ React.createElement("div", { key: e.id, style: { display: "flex", alignItems: "flex-start", marginBottom: 20, paddingLeft: 40 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 8, top: 6, width: 14, height: 14, background: "var(--coral-500)", border: "2px solid var(--paper-50)", borderRadius: "50%", zIndex: "var(--z-sticky)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-900)", marginBottom: 2 } }, e.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", background: "var(--paper-200)", padding: "2px 7px", borderRadius: 3, fontWeight: 600 } }, s2?.name), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 600 } }, "C:N ", e.cn, ":1"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: e.eb >= 100 ? "var(--accent-olive)" : e.eb >= 70 ? "var(--ochre-500,#A07828)" : "#C53030" } }, "EB estimada ", e.eb, "%"), e.ebReal != null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: Math.abs(e.ebReal - parseFloat(e.eb)) <= 10 ? "var(--accent-olive)" : "#C53030" } }, "EB real ", e.ebReal, "% (", e.ebReal >= parseFloat(e.eb) ? "+" : "", Math.round((e.ebReal - parseFloat(e.eb)) * 10) / 10, ")"), liveScoreFor(e) > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", fontWeight: 600 } }, "Score ", liveScoreFor(e), "/100"), e.cost && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 500 } }, "$", e.cost, "/kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, e.date), /* @__PURE__ */ React.createElement("button", { className: "sload", onClick: () => loadR(e), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { className: "sebreal", onClick: () => setEbRealFor(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--ink-700)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, e.ebReal != null ? "Editar EB real" : "+ EB real"), /* @__PURE__ */ React.createElement("button", { className: "sdel", onClick: () => delR(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--coral-500)", border: "1px solid var(--coral-200)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Eliminar"))));
-  }))))), tab === "formular" && builderSubTab === "generador" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-generador", className: "formular-workspace", role: "tabpanel", "aria-labelledby": "formular-tab-generador" }, /* @__PURE__ */ React.createElement("div", { className: "workbench-top-bar", style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, margin: "12px 0 16px", flexWrap: "wrap", paddingBottom: 12, borderBottom: "1.5px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--moss-700)" } }, "Setas OS · Intelligence & Optimization Suite"), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 700, color: "var(--ink-900)", margin: "2px 0 0" } }, "Workbench Perito & Generador de Recetas")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "btn sm", onClick: () => openBuilderSubTab("formular") }, "← Volver a Mesa de Mezcla"))), /* @__PURE__ */ React.createElement("div", { className: "seg-row perito-workbench-modes", style: { marginBottom: 18, display: "flex", gap: 6, background: "var(--paper-200)", padding: 4, borderRadius: "var(--r-sm)", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { key: e.id, style: { display: "flex", alignItems: "flex-start", marginBottom: 20, paddingLeft: 40 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 8, top: 6, width: 14, height: 14, background: "var(--coral-500)", border: "2px solid var(--paper-50)", borderRadius: "50%", zIndex: "var(--z-sticky)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-900)", marginBottom: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, e.name, e.status && (() => {
+      const lc = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+      const label = lc ? lc.LIFECYCLE_LABELS[e.status] || e.status : e.status;
+      const color = RECIPE_LIFECYCLE_COLOR[e.status] || "var(--ink-500)";
+      const ident = lc ? lc.recipeIdentity(e) : { version: e.version || 1 };
+      return /* @__PURE__ */ React.createElement("span", { "data-testid": "recipe-lifecycle-badge", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--tracking-label)", color, border: `1px solid ${color}`, padding: "1px 7px", borderRadius: 0 } }, label, " · v", ident.version);
+    })()), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", background: "var(--paper-200)", padding: "2px 7px", borderRadius: 3, fontWeight: 600 } }, s2?.name), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 600 } }, "C:N ", e.cn, ":1"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: e.eb >= 100 ? "var(--accent-olive)" : e.eb >= 70 ? "var(--ochre-500,#A07828)" : "#C53030" } }, "EB estimada ", e.eb, "%"), e.ebReal != null && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: Math.abs(e.ebReal - parseFloat(e.eb)) <= 10 ? "var(--accent-olive)" : "#C53030" } }, "EB real ", e.ebReal, "% (", e.ebReal >= parseFloat(e.eb) ? "+" : "", Math.round((e.ebReal - parseFloat(e.eb)) * 10) / 10, ")"), liveScoreFor(e) > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", fontWeight: 600 } }, "Score ", liveScoreFor(e), "/100"), e.cost && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", fontWeight: 500 } }, "$", e.cost, "/kg")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", fontWeight: 500 } }, e.date), /* @__PURE__ */ React.createElement("button", { className: "sload", onClick: () => loadR(e), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Cargar"), /* @__PURE__ */ React.createElement("button", { className: "sebreal", onClick: () => setEbRealFor(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--ink-700)", border: "1px solid var(--paper-300)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, e.ebReal != null ? "Editar EB real" : "+ EB real"), /* @__PURE__ */ React.createElement("button", { className: "sdel", onClick: () => delR(e.id), style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: "var(--coral-500)", border: "1px solid var(--coral-200)", borderRadius: "var(--r-xs)", cursor: "pointer" } }, "Eliminar"), (() => {
+      const lc = typeof window !== "undefined" ? window.SetasRecipeLifecycle : null;
+      if (!lc || !e.status) return null;
+      const destinos = [["trial", "A ensayo"], ["approved", "Aprobar"], ["retired", "Retirar"]].filter(([to]) => lc.canTransition(e.status, to));
+      return destinos.map(([to, label]) => /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: to,
+          "data-testid": `recipe-promote-${to}`,
+          onClick: () => promoteRecipe(e, to),
+          style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "3px 8px", background: "transparent", color: RECIPE_LIFECYCLE_COLOR[to], border: `1px solid ${RECIPE_LIFECYCLE_COLOR[to]}`, borderRadius: "var(--r-xs)", cursor: "pointer" }
+        },
+        label
+      ));
+    })())));
+  }))))), tab === "formular" && builderSubTab === "generador" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-generador", className: "formular-workspace", role: "tabpanel", "aria-labelledby": "formular-tab-generador" }, /* @__PURE__ */ React.createElement("div", { className: "workbench-top-bar", style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, margin: "12px 0 16px", flexWrap: "wrap", paddingBottom: 12, borderBottom: "1.5px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--moss-700)" } }, "Setas OS · Perito"), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 700, color: "var(--ink-900)", margin: "2px 0 0" } }, "Mesa del Perito")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "btn sm", onClick: () => openBuilderSubTab("formular") }, "← Volver a Mesa de Mezcla"))), /* @__PURE__ */ React.createElement("div", { className: "seg-row perito-workbench-modes", style: { marginBottom: 18, display: "flex", gap: 6, background: "var(--paper-200)", padding: 4, borderRadius: "var(--r-sm)", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       type: "button",
@@ -9267,7 +10338,7 @@ Click para ver análisis completo`
       onClick: () => setWorkbenchMode("perito")
     },
     /* @__PURE__ */ React.createElement(AppIcon, { name: "scan", size: 13, style: { marginRight: 4 } }),
-    " Perito Diagnóstico Vivo"
+    " Diagnóstico"
   ), /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -9276,7 +10347,7 @@ Click para ver análisis completo`
       onClick: () => setWorkbenchMode("optimizador")
     },
     /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 13, style: { marginRight: 4 } }),
-    " Optimizador Generativo"
+    " Escenarios"
   ), /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -9285,100 +10356,27 @@ Click para ver análisis completo`
       onClick: () => setWorkbenchMode("morphing")
     },
     /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 13, style: { marginRight: 4 } }),
-    " Comparador & Morphing ",
-    morphTargetRecipe ? "(1 activo)" : ""
-  )), ["all", "perito"].includes(workbenchMode) && (() => {
-    const hasPer = recipe.length > 0;
-    const { score, status, items } = hasPer ? opt : { score: 0, status: "sin_receta", items: [] };
-    const criticals = items.filter((s) => s.priority === "critical");
-    const warnings = items.filter((s) => s.priority === "warning");
-    const tips = items.filter((s) => s.priority === "tip");
-    const sm = PERITO_STATUS[status] || PERITO_STATUS.sin_receta;
-    const restrictiveFactor = engineCalcRestrictiveFactor ? engineCalcRestrictiveFactor(an, sp, { treatment: tr }) : engineCalcLiebigBottleneck ? engineCalcLiebigBottleneck(an, sp) : null;
-    const max = 150, oMin = sp?.cn_optimal?.min, oMax = sp?.cn_optimal?.max;
-    const cur = sp ? Math.min(an?.cn || 0, max) : 0;
-    const cnOk = sp && an && an.cn >= oMin && an.cn <= oMax;
-    const reqPsi = engineTenjoPhysicalContext?.requiredGaugePressurePsi || (engineCalcRequiredGaugePressurePsi ? engineCalcRequiredGaugePressurePsi(2600) : 19.03);
-    const optHold = engineCalcOptimalHoldTime ? engineCalcOptimalHoldTime({ weightKg: kgBag || 2, moisturePct: hObj || 65, altitudeM: 2600, gaugePressurePsi: reqPsi }) : null;
-    return /* @__PURE__ */ React.createElement("section", { className: "panel perito-standalone-panel", style: { background: "var(--paper-50)", border: `1.5px solid ${hasPer ? sm.border : "var(--border-soft)"}`, marginBottom: 24, padding: 20, borderRadius: "var(--r-md)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid var(--border-soft)", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 68, height: 68, borderRadius: "50%", background: sm.badge, flexShrink: 0, boxShadow: "0 4px 10px rgba(0,0,0,.1)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 26, fontWeight: 900, color: "var(--paper-0)", lineHeight: 1 } }, score), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", color: "rgba(255,255,255,.8)", letterSpacing: "var(--tracking-button)", marginTop: 2 } }, "PERITO")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: sm.badge, fontWeight: 800 } }, "Dictamen Pericial Dinámico · Receta Activa"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 700, color: sm.txt, margin: "2px 0 4px" } }, sm.veredicto), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)" } }, sm.accion, " · Especie: ", /* @__PURE__ */ React.createElement("b", null, sp?.name || "Sin especie"), " (", recipe.length, " ingrediente", recipe.length !== 1 ? "s" : "", ")"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, (criticals.length > 0 || warnings.length > 0) && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "7px 12px", background: "var(--coral-500)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sparkles", size: 11, color: "var(--paper-0)" }), " Auto-mejorar"), recipeHistory.length > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: undoLastRec, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "7px 12px", background: "transparent", color: "var(--ink-600)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", cursor: "pointer" } }, "Deshacer (", recipeHistory.length, ")"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
-      setShowAIFormModal(true);
-      setAiFormResult(null);
-      setAiFormError("");
-    }, style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", fontWeight: 700, padding: "7px 12px", background: "var(--moss-700)", color: "var(--paper-0)", border: "none", borderRadius: "var(--r-sm)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "wand", size: 13, color: "var(--paper-0)" }), " Consultar IA"))), restrictiveFactor && restrictiveFactor.factor !== "none" && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.08)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.08)" : "rgba(77,98,53,.08)", border: `1px solid ${restrictiveFactor.severity === "critical" ? "rgba(197,48,48,.3)" : restrictiveFactor.severity === "warning" ? "rgba(160,120,40,.3)" : "rgba(77,98,53,.3)"}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center" } }, restrictiveFactor.severity === "critical" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 16, color: "#C53030" }) : restrictiveFactor.severity === "warning" ? /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 16, color: "#7A5A10" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 16, color: "#2F4A24" })), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: restrictiveFactor.severity === "critical" ? "#C53030" : restrictiveFactor.severity === "warning" ? "#7A5A10" : "#2F4A24" } }, "Factor Restrictivo Estimado: ", restrictiveFactor.label)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)", marginBottom: 4, lineHeight: 1.5 } }, /* @__PURE__ */ React.createElement("b", null, "Diagnóstico Causal:"), " ", restrictiveFactor.rationale), restrictiveFactor.counterfactualOpportunity && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-800)", marginBottom: 4, background: "rgba(77,98,53,.08)", padding: "4px 8px", borderRadius: 3 } }, /* @__PURE__ */ React.createElement("b", null, "Oportunidad Contrafactual:"), " ", restrictiveFactor.counterfactualOpportunity.description), restrictiveFactor.actionRequired && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: restrictiveFactor.severity === "critical" ? "#9B2C2C" : "#5A4008", fontWeight: 700 } }, "→ Acción correctiva: ", restrictiveFactor.actionRequired)), /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 16px", padding: "12px 16px", borderRadius: "var(--r-sm)", background: "rgba(43,76,126,.06)", border: "1px solid rgba(43,76,126,.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-wide)", color: "var(--slate-800)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "globe", size: 14, style: { marginRight: 6 } }), " Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-micro)", background: "var(--slate-700)", color: "#fff", padding: "2px 8px", borderRadius: 3, fontWeight: 700 } }, "All American 1941X: ", reqPsi.toFixed(2), " psig")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Presión manométrica:"), " ", /* @__PURE__ */ React.createElement("span", { style: { color: "#C53030", fontWeight: 700 } }, reqPsi.toFixed(2), " psig"), " (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Tiempo de meseta (Hold):"), " ", optHold?.holdTimeMin || 90, " min en bolsa de ", kgBag || 2, " kg a ", hObj || 65, "% HR."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("b", null, "Letalidad F₀:"), " ≥ 12.0 min (inactivación probada de ", /* @__PURE__ */ React.createElement("i", null, "G. stearothermophilus"), ")."))), an && /* @__PURE__ */ React.createElement("div", { className: "mgrid", style: { marginBottom: 14 } }, [
-      { l: "C:N", v: `${an.cn.toFixed(1)}:1`, ok: sp && an.cn >= sp.cn_optimal.min && an.cn <= sp.cn_optimal.max },
-      { l: "Nitrógeno", v: `${an.avgN.toFixed(2)}%`, ok: sp && an.avgN >= sp.n_optimal.min && an.avgN <= sp.n_optimal.max },
-      { l: "EB esperada", v: an.ebLow && an.ebHigh ? `${an.ebLow}–${an.ebHigh}%` : `${an.eb.toFixed(0)}%`, ok: an.eb > 100, w: an.eb > 70 && an.eb <= 100 },
-      { l: "Costo / kg Seco", v: `$${Math.round(an.cost || 0).toLocaleString("es-CO")}`, ok: an.cost < 800, w: an.cost < 2e3 && an.cost >= 800 },
-      { l: "Costo / kg Hongo", v: an.eb > 0 ? `$${Math.round((an.cost || 0) / (an.eb / 100)).toLocaleString("es-CO")}` : "—", ok: (an.cost || 0) / (an.eb / 100) < 1600, w: (an.cost || 0) / (an.eb / 100) < 3200 },
-      { l: "pH estimado", v: an.avgPh?.toFixed(1) || "—", ok: sp && an.avgPh >= sp.ph_optimal?.min && an.avgPh <= sp.ph_optimal?.max, w: false },
-      { l: "Digestibilidad", v: `${an.avgDig?.toFixed(1) || "—"}/10`, ok: an.avgDig >= 7, w: an.avgDig >= 4 && an.avgDig < 7 }
-    ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.l, className: "mc" }, /* @__PURE__ */ React.createElement("div", { className: "mlbl" }, m.l), /* @__PURE__ */ React.createElement("div", { className: "mval" }, m.v), /* @__PURE__ */ React.createElement("span", { className: `mbadge ${m.ok ? "bgood" : m.w ? "bwarn" : "bbad"}` }, m.ok ? "Óptimo" : m.w ? "Aceptable" : "Ajustar")))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 16 } }, /* @__PURE__ */ React.createElement(EBDial, { an, sp }), sp && an?.cn > 0 && /* @__PURE__ */ React.createElement("div", { className: "gauge-wrap", style: { marginTop: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "gauge-hdr" }, /* @__PURE__ */ React.createElement("span", { className: "gauge-cur" }, "C:N ", an.cn.toFixed(1), ":1"), /* @__PURE__ */ React.createElement("span", { className: "gauge-tgt" }, "objetivo ", oMin, "–", oMax, ":1")), /* @__PURE__ */ React.createElement("div", { className: "gauge-tr" }, /* @__PURE__ */ React.createElement("div", { className: "gauge-zn", style: { left: `${oMin / max * 100}%`, width: `${(oMax - oMin) / max * 100}%` } }), /* @__PURE__ */ React.createElement("div", { className: "gauge-nd", style: { left: `${cur / max * 100}%`, background: cnOk ? "var(--accent-olive)" : an.cn < oMin ? "var(--coral-500)" : "var(--ochre-500,#A07828)" } })), /* @__PURE__ */ React.createElement("div", { className: "gauge-ft" }, /* @__PURE__ */ React.createElement("span", null, "0"), /* @__PURE__ */ React.createElement("span", null, oMin, "–", oMax), /* @__PURE__ */ React.createElement("span", null, "150+")), /* @__PURE__ */ React.createElement(NitrogenChart, { recipe }))), /* @__PURE__ */ React.createElement("div", { className: "perito-suggestions-deck", style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-700)" } }, "Sugerencias Inteligentes con Simulación Delta (", items.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "Simulación de impacto en vivo sin mutar mesa")), criticals.length === 0 && warnings.length === 0 && tips.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px", background: "rgba(74,107,74,.08)", border: "1px solid rgba(74,107,74,.2)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#2F4A24" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Todos los parámetros se encuentran en rango óptimo para ", sp?.name || "la especie seleccionada", "."), criticals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "#C53030", padding: "5px 10px", background: "rgba(197,48,48,.07)", borderBottom: "1px solid rgba(197,48,48,.2)", marginBottom: 6 } }, "Críticos (", criticals.length, ")"), criticals.map((item, i) => /* @__PURE__ */ React.createElement(
-      PeritoItem,
-      {
-        key: i,
-        item,
-        onApply: applyOptStep,
-        baseScore: opt.score,
-        recipe,
-        lockedIds,
-        ingredients: optimizerINGS,
-        speciesKey: sKey,
-        onMorph: (tgt) => {
-          setMorphTargetRecipe(tgt);
-          setWorkbenchMode("morphing");
-        }
-      }
-    ))), warnings.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", padding: "5px 10px", background: "rgba(160,120,40,.07)", borderBottom: "1px solid rgba(160,120,40,.2)", marginBottom: 6 } }, "Mejoras y Balance (", warnings.length, ")"), warnings.map((item, i) => /* @__PURE__ */ React.createElement(
-      PeritoItem,
-      {
-        key: i,
-        item,
-        onApply: applyOptStep,
-        baseScore: opt.score,
-        recipe,
-        lockedIds,
-        ingredients: optimizerINGS,
-        speciesKey: sKey,
-        onMorph: (tgt) => {
-          setMorphTargetRecipe(tgt);
-          setWorkbenchMode("morphing");
-        }
-      }
-    ))), tips.length > 0 && /* @__PURE__ */ React.createElement("details", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-sans)", fontWeight: 600, fontSize: "var(--text-sm)", padding: "6px 10px", background: "rgba(74,107,74,.05)", borderBottom: "1px solid rgba(74,107,74,.15)", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", null, "Opcionales & Ajustes Finos (", tips.length, ")"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "var(--text-xs)" } }, "▾")), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6 } }, tips.map((item, i) => /* @__PURE__ */ React.createElement(
-      PeritoItem,
-      {
-        key: i,
-        item,
-        onApply: applyOptStep,
-        baseScore: opt.score,
-        recipe,
-        lockedIds,
-        ingredients: optimizerINGS,
-        speciesKey: sKey,
-        onMorph: (tgt) => {
-          setMorphTargetRecipe(tgt);
-          setWorkbenchMode("morphing");
-        }
-      }
-    ))))));
-  })(), ["all", "morphing"].includes(workbenchMode) && (() => {
+    " Comparar recetas ",
+    morphTargetRecipe ? "(1 activa)" : ""
+  )), ["all", "perito"].includes(workbenchMode) && renderPeritoPanel("workbench"), ["all", "morphing"].includes(workbenchMode) && (() => {
     const activeCandidate = morphTargetRecipe || optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe || [];
     const hasCandidate = activeCandidate && activeCandidate.length > 0;
     const hasBase = recipe && recipe.length > 0;
     const morphedRec = hasBase && hasCandidate && engineMorphRecipes ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds) : recipe || [];
-    const anMorph = hasBase && hasCandidate ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP) : an;
-    const scoreMorphObj = hasBase && hasCandidate && anMorph ? scoreAn(anMorph, { recipe: morphedRec }) : opt;
+    const evalMorph = hasBase && hasCandidate ? peritoEvaluate(morphedRec) : null;
+    const anMorph = hasBase && hasCandidate ? evalMorph?.an || null : an;
+    const scoreMorphObj = evalMorph ? evalMorph.scoreObj : opt;
     const scoreMorph = Math.round(scoreMorphObj?.score || 0);
     const trajectoryAnalysis = hasBase && hasCandidate && engineAnalyzeMorphTrajectory ? engineAnalyzeMorphTrajectory({
       recipeA: recipe,
       recipeB: activeCandidate,
       lockedIds,
       species: sp,
-      analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+      analyzeFn: (r) => peritoEvaluate(r)?.an || null,
       requestedAlpha: morphAlpha
     }) : null;
     const isMorphFeasible = trajectoryAnalysis ? trajectoryAnalysis.isFeasibleAtRequestedAlpha : true;
-    return /* @__PURE__ */ React.createElement("section", { className: "panel perito-morph-panel", style: { background: "var(--paper-50)", border: "1.5px solid var(--border-soft)", marginBottom: 24, padding: 20, borderRadius: "var(--r-md)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid var(--border-soft)", flexWrap: "wrap", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--slate-700)" } }, "Interpolación Convexa Lineal R(α) = (1-α)R₀ + αR₁"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)", margin: "2px 0 0" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 13, style: { marginRight: 4 } }), " Comparador & Morphing de Recetas")), hasCandidate && hasBase && /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("section", { className: "panel perito-morph-panel", style: { background: "var(--paper-50)", border: "1.5px solid var(--border-soft)", marginBottom: 24, padding: 20, borderRadius: "var(--r-md)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid var(--border-soft)", flexWrap: "wrap", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--slate-700)" } }, "Mezcla gradual entre dos recetas"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--ink-900)", margin: "2px 0 0" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 13, style: { marginRight: 4 } }), " Comparar y mezclar recetas")), hasCandidate && hasBase && /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -9388,13 +10386,13 @@ Click para ver análisis completo`
         onClick: () => {
           setRecipe(morphedRec);
           openBuilderSubTab("formular");
-          setNoticeDlg({ msg: isMorphFeasible ? "Receta morfeada aplicada exitosamente en la Mesa de Mezcla" : "Receta aplicada (Atención: se encuentra fuera de rango óptimo)" });
+          setNoticeDlg({ msg: isMorphFeasible ? "Mezcla aplicada en la Mesa de Mezcla" : "Receta aplicada (Atención: se encuentra fuera de rango óptimo)" });
         }
       },
       /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 13, style: { marginRight: 4 } }),
       " Aplicar en Mesa de Mezcla ",
       !isMorphFeasible ? "(Atención: fuera de rango)" : ""
-    )), !hasBase || !hasCandidate ? /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 20px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, !hasBase ? "Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación." : "Calcula escenarios en el Optimizador o selecciona una sugerencia del Perito para activar el Morphing.") : /* @__PURE__ */ React.createElement("div", null, !isMorphFeasible && trajectoryAnalysis && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 14px", padding: "10px 14px", borderRadius: "var(--r-sm)", background: "rgba(197,48,48,.08)", border: "1px solid rgba(197,48,48,.3)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#9B2C2C" } }, /* @__PURE__ */ React.createElement("b", null, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "#9B2C2C", style: { marginRight: 4 } }), " Estado agronómicamente no permitido en α = ", morphAlpha.toFixed(2), ":"), " ", trajectoryAnalysis.requestedViolations?.join(", "), trajectoryAnalysis.feasibleInterval && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, color: "var(--ink-800)" } }, "→ Intervalo seguro para esta especie: ", /* @__PURE__ */ React.createElement("b", null, "α ∈ [", trajectoryAnalysis.feasibleInterval[0].toFixed(2), ", ", trajectoryAnalysis.feasibleInterval[1].toFixed(2), "]"))), /* @__PURE__ */ React.createElement("div", { style: { margin: "14px 0 20px", background: "var(--paper-100)", padding: 16, borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, "Receta Activa en Mesa (", (100 - morphAlpha * 100).toFixed(0), "%)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 800, fontSize: "var(--text-md)", color: isMorphFeasible ? "var(--moss-800)" : "#C53030" } }, "α = ", morphAlpha.toFixed(2), " ", !isMorphFeasible ? "(Inválido)" : ""), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, "Candidato Objetivo (", (morphAlpha * 100).toFixed(0), "%)")), /* @__PURE__ */ React.createElement(
+    )), !hasBase || !hasCandidate ? /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 20px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-600)" } }, !hasBase ? "Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación." : "Calcula Escenarios o usa «Comparar» en una sugerencia del Perito para mezclar recetas.") : /* @__PURE__ */ React.createElement("div", null, !isMorphFeasible && trajectoryAnalysis && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 0 14px", padding: "10px 14px", borderRadius: "var(--r-sm)", background: "rgba(197,48,48,.08)", border: "1px solid rgba(197,48,48,.3)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#9B2C2C" } }, /* @__PURE__ */ React.createElement("b", null, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "#9B2C2C", style: { marginRight: 4 } }), " Esta mezcla (", (morphAlpha * 100).toFixed(0), " % de la candidata) no cumple los criterios agronómicos:"), " ", trajectoryAnalysis.requestedViolations?.join(", "), trajectoryAnalysis.feasibleInterval && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, color: "var(--ink-800)" } }, "→ Mezclas que sí cumplen para esta especie: ", /* @__PURE__ */ React.createElement("b", null, "entre ", (trajectoryAnalysis.feasibleInterval[0] * 100).toFixed(0), " % y ", (trajectoryAnalysis.feasibleInterval[1] * 100).toFixed(0), " % de la candidata"))), /* @__PURE__ */ React.createElement("div", { style: { margin: "14px 0 20px", background: "var(--paper-100)", padding: 16, borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, "Receta Activa en Mesa (", (100 - morphAlpha * 100).toFixed(0), "%)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 800, fontSize: "var(--text-md)", color: isMorphFeasible ? "var(--moss-800)" : "#C53030" } }, (morphAlpha * 100).toFixed(0), " % candidata ", !isMorphFeasible ? "(fuera de criterio)" : ""), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, "Receta candidata (", (morphAlpha * 100).toFixed(0), "%)")), /* @__PURE__ */ React.createElement(
       "input",
       {
         type: "range",
@@ -9403,10 +10401,10 @@ Click para ver análisis completo`
         step: "0.05",
         value: morphAlpha,
         onChange: (e) => setMorphAlpha(parseFloat(e.target.value) || 0),
-        "aria-label": "Factor de interpolación convexa de recetas",
+        "aria-label": "Proporción de la receta candidata en la mezcla",
         style: { width: "100%", accentColor: "var(--moss-600)", cursor: "pointer" }
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Score Morfeado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 700, color: "var(--ink-900)" } }, scoreMorph, "/100")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "EB Morfeada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 700, color: "var(--moss-700)" } }, anMorph?.eb?.toFixed(0) || "—", "%")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "C:N Morfeado"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, anMorph?.cn?.toFixed(1) || "—", ":1")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Costo / kg Seco"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, "$", Math.round(anMorph?.cost || 0).toLocaleString("es-CO")))), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--paper-100)", borderBottom: "1px solid var(--border-soft)", textAlign: "left" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right" } }, "Receta Activa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right", background: "rgba(77,98,53,.08)" } }, "% Morfeado"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right" } }, "Candidato"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "center" } }, "Candado"))), /* @__PURE__ */ React.createElement("tbody", null, morphedRec.map((mItem, mIdx) => {
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Score de la mezcla"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 700, color: "var(--ink-900)" } }, scoreMorph, "/100")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "EB de la mezcla"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 22, fontWeight: 700, color: "var(--moss-700)" } }, anMorph?.eb?.toFixed(0) || "—", "%")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "C:N de la mezcla"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, anMorph?.cn?.toFixed(1) || "—", ":1")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", background: "var(--paper-100)", borderRadius: "var(--r-sm)", border: "1px solid var(--border-soft)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-micro)", textTransform: "uppercase", color: "var(--ink-500)" } }, "Costo / kg Seco"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--ink-900)", marginTop: 2 } }, "$", Math.round(anMorph?.cost || 0).toLocaleString("es-CO")))), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--paper-100)", borderBottom: "1px solid var(--border-soft)", textAlign: "left" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right" } }, "Receta Activa"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right", background: "rgba(77,98,53,.08)" } }, "% en la mezcla"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right" } }, "Candidata"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "center" } }, "Candado"))), /* @__PURE__ */ React.createElement("tbody", null, morphedRec.map((mItem, mIdx) => {
       const ingDef = INGS.find((g) => g.id === mItem.id);
       const pA = recipe.find((r) => r.id === mItem.id)?.p || 0;
       const pB = activeCandidate.find((r) => r.id === mItem.id)?.p || 0;
@@ -9529,7 +10527,7 @@ Click para ver análisis completo`
     } }, "Producir"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "opt-load", style: { background: "var(--slate-800)", borderColor: "var(--slate-900)", color: "#fff" }, onClick: () => {
       setMorphTargetRecipe(r.recipe);
       setWorkbenchMode("morphing");
-    } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 12, style: { marginRight: 4 } }), " Hibridar / Morph"))), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
+    } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 12, style: { marginRight: 4 } }), " Comparar"))), /* @__PURE__ */ React.createElement("div", { className: "opt-metrics" }, (() => {
       const tOpt = calcTreatment(r.an, optTarget, { [optTarget]: r.an.sp });
       const eCost = tOpt?.energy?.cop_per_kg_seco || 0;
       const totalCost = Math.round(r.an.cost) + eCost;
@@ -9635,8 +10633,8 @@ Click para ver análisis completo`
     { l: "C:N logrado", v: `${invResult.an.cn.toFixed(1)}:1`, ok: sp && invResult.an.cn >= sp.cn_optimal.min && invResult.an.cn <= sp.cn_optimal.max },
     { l: "Nitrógeno", v: `${invResult.an.avgN.toFixed(2)}%`, ok: sp && invResult.an.avgN >= sp.n_optimal.min && invResult.an.avgN <= sp.n_optimal.max },
     { l: "EB esperada", v: invResult.an.ebLow && invResult.an.ebHigh ? `${invResult.an.ebLow}–${invResult.an.ebHigh}%` : `${invResult.an.eb.toFixed(0)}%`, ok: invResult.an.eb >= 90 },
-    { l: "Costo/kg", v: `${Math.round(invResult.an.cost)}`, ok: invResult.an.cost < 1e3 }
-  ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: "var(--paper-50)", border: `1px solid ${m.ok ? "var(--moss-500)" : "var(--border-soft)"}`, padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: m.ok ? "var(--moss-500)" : "var(--coral-500)" } }, m.v)))), /* @__PURE__ */ React.createElement("button", { className: "btn pri", style: { width: "100%", minHeight: 44 }, onClick: () => {
+    { l: "Costo/kg seco", v: `$${Math.round(invResult.an.cost).toLocaleString("es-CO")}`, neutral: true }
+  ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: i, title: m.neutral ? COST_NO_TARGET_TITLE : void 0, style: { background: "var(--paper-50)", border: `1px solid ${!m.neutral && m.ok ? "var(--moss-500)" : "var(--border-soft)"}`, padding: "10px 12px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 4 } }, m.l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: m.neutral ? "var(--ink-700)" : m.ok ? "var(--moss-500)" : "var(--coral-500)" } }, m.v)))), /* @__PURE__ */ React.createElement("button", { className: "btn pri", style: { width: "100%", minHeight: 44 }, onClick: () => {
     setSKey(sKey);
     setRecipe(invResult.recipe);
     openBuilderSubTab("formular");
@@ -9743,7 +10741,7 @@ Click para ver análisis completo`
   })()), /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)" } }, "Hoja de Producción — Lote")), !recipe.length ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "14px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "color-mix(in oklab, var(--status-attention) 80%, black)", background: "var(--status-attention-bg)", border: "1px solid var(--status-attention)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("span", null, "No hay receta activa. Crea o carga una receta antes de preparar el lote."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: () => goTab("formular") }, "Ir al Formulador")) : /* @__PURE__ */ React.createElement(React.Fragment, null, an && !balanced && /* @__PURE__ */ React.createElement("div", { style: { padding: "14px", marginBottom: 14, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "#C53030", background: "rgba(197,48,48,.08)", border: "1px solid #C53030", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "#C53030", style: { marginRight: 4 } }), " ", balMsg, " — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±", MASS_BALANCE_TOL, "%). Ajusta los porcentajes en el ", /* @__PURE__ */ React.createElement("strong", null, "Formulador"), "."), /* @__PURE__ */ React.createElement("div", { className: "prod-batch-grid", style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1.2fr 1fr auto", gap: 10, alignItems: "end" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-skey", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Especie"), /* @__PURE__ */ React.createElement("select", { id: "prod-skey", value: sKey, onChange: (e) => setSKey(e.target.value), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-body)", fontSize: "var(--text-base)" } }, Object.entries(SPP).map(([k, s]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, s.name)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-bags", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "# Bolsas"), /* @__PURE__ */ React.createElement(CaptureInput, { id: "prod-bags", type: "number", min: "1", step: "1", value: prodBags, onChange: (e) => setProdBags(e.target.value), rules: { required: true, min: 1, integer: true }, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-kg", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "kg / bolsa"), /* @__PURE__ */ React.createElement(CaptureInput, { id: "prod-kg", type: "number", min: "0.1", step: "0.1", value: prodKg, onChange: (e) => setProdKg(e.target.value), rules: { required: true, min: 0.1 }, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-h", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Humedad % · Inóculo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement(CaptureInput, { id: "prod-h", type: "number", min: "55", max: "75", step: "1", value: prodH, onChange: (e) => {
     moistureTouched.current.hObj = true;
     setProdH(e.target.value);
-  }, rules: { required: true, min: 55, max: 75 }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !balanced || !readyForProduction, title: prodRows && readyForProduction ? "Descontar insumos y bolsas del inventario (FIFO)" : !balanced ? balMsg : !hasPickedSpecies ? productionBlockMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows && readyForProduction ? "var(--moss-700)" : "var(--paper-300)", color: prodRows && readyForProduction ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced && readyForProduction ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 13, style: { marginRight: 4 } }), " Ejecutar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9, display: "inline-flex", alignItems: "center", gap: 4 }, title: loteSyncErr }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " sin sincronizar"))))), recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { "aria-label": "Humedad de preparación", style: { margin: "16px 0", padding: 16, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("p", null, "Una preparación compartida con Formulador. Ingresa humedad medida para este lote; vacío conserva la estimación del catálogo."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,240px),1fr))", gap: 12 } }, recipe.map((r) => {
+  }, rules: { required: true, min: 55, max: 75 }, style: { width: "50%", padding: "9px 8px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }), /* @__PURE__ */ React.createElement("input", { type: "date", name: "fechaInoculo", "aria-label": "Fecha de inóculo", value: prodDate, onChange: (e) => setProdDate(e.target.value), style: { width: "50%", padding: "9px 6px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-scale", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "Báscula (g)"), /* @__PURE__ */ React.createElement("select", { id: "prod-scale", value: prodScaleG, onChange: (e) => setProdScaleG(parseFloat(e.target.value)), style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-base)" } }, [["0.1", "0.1 g (100 mg)"], ["1", "1 g"], ["5", "5 g"], ["10", "10 g"], ["50", "50 g"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 140 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-lote", style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-500)", display: "block", marginBottom: 5 } }, "N.º lote"), /* @__PURE__ */ React.createElement("input", { id: "prod-lote", name: "numeroLote", autoComplete: "off", type: "text", value: prodLoteNum, onChange: (e) => setProdLoteNum(e.target.value), placeholder: "Ej. L-2026-047…", maxLength: 24, style: { width: "100%", padding: "9px 11px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", background: "var(--paper-50)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", boxSizing: "border-box" } })), Object.keys(prodMoist).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => setProdMoist({}), title: "Volver a las humedades de la base de datos", style: { padding: "9px 12px", background: "var(--paper-50)", color: "var(--ink-500)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", cursor: "pointer", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↺ H₂O"), /* @__PURE__ */ React.createElement("button", { onClick: exportPDF, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--ink-900)" : "var(--paper-300)", color: balanced ? "var(--paper-50)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "↓ PDF"), /* @__PURE__ */ React.createElement("button", { onClick: printProdSheet, disabled: !balanced, title: balanced ? "" : balMsg, style: { padding: "9px 14px", background: balanced ? "var(--coral-500)" : "var(--paper-300)", color: balanced ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end" } }, "Imprimir"), /* @__PURE__ */ React.createElement("button", { onClick: () => ejecutarLote(prodRows, prodLoteNum, prodDate), disabled: !balanced || !readyForProduction, title: prodRows && readyForProduction ? "Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla" : !balanced ? balMsg : !hasPickedSpecies ? productionBlockMsg : "Completa # bolsas y kg/bolsa para generar la ficha", style: { padding: "9px 14px", background: prodRows && readyForProduction ? "var(--moss-700)" : "var(--paper-300)", color: prodRows && readyForProduction ? "var(--paper-0)" : "var(--ink-500)", border: "none", borderRadius: "var(--r-sm)", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-sm)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", cursor: balanced && readyForProduction ? "pointer" : "not-allowed", whiteSpace: "nowrap", alignSelf: "flex-end", transition: "background .15s" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 13, style: { marginRight: 4 } }), " Planificar lote"), loteSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "#C53030", alignSelf: "flex-end", marginBottom: 9, display: "inline-flex", alignItems: "center", gap: 4 }, title: loteSyncErr }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "#C53030" }), " sin sincronizar"))))), recipe.length > 0 && /* @__PURE__ */ React.createElement("section", { "aria-label": "Humedad de preparación", style: { margin: "16px 0", padding: 16, border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("p", null, "Una preparación compartida con Formulador. Ingresa humedad medida para este lote; vacío conserva la estimación del catálogo."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,240px),1fr))", gap: 12 } }, recipe.map((r) => {
     const g = effectiveINGS.find((g2) => g2.id === r.id);
     return /* @__PURE__ */ React.createElement("label", { key: r.id, htmlFor: `ingredient-moisture-${r.id}` }, g?.name || r.id, " · catálogo: ", g?.moisture ?? "sin dato", "%", /* @__PURE__ */ React.createElement(CaptureInput, { id: `ingredient-moisture-${r.id}`, name: `ingredientMoisture-${r.id}`, rules: { min: 0, max: 92 }, placeholder: g?.moisture != null ? String(g.moisture) : "", "aria-label": `Humedad real de ${g?.name || r.id}, porcentaje`, type: "number", min: "0", max: "92", step: "0.1", value: prodMoist[r.id] ?? "", onChange: (e) => setProdMoist((prev) => ({ ...prev, [r.id]: e.target.value })), style: { display: "block", width: "100%" } }));
   })), !prepValid && /* @__PURE__ */ React.createElement("p", { role: "alert" }, preparationResult.error)), recipe.length > 0 && an && balanced && prepValid && (() => {
@@ -9797,14 +10795,20 @@ Click para ver análisis completo`
       ["Costo/kg", "$" + Math.round(an.cost).toLocaleString("es-CO"), "estimado"]
     ].map(([l, v, s]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "var(--paper-50)", padding: "10px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 3 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, color: "var(--ink-900)", lineHeight: 1, marginBottom: 2 } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-400)" } }, s)))), /* @__PURE__ */ React.createElement("div", { className: "economic-summary-card", style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2,#6B6759)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "scale", size: 14, style: { marginRight: 6 } }), " Análisis Económico & Rentabilidad por Bolsa"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--ink-1,#3C392F)", marginTop: 2 } }, "Costeo unitario real en Tenjo para bolsa de ", prodKg, " kg húmedo al ", prodH, "% H₂O")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Precio venta fresco:"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-0)" } }, "$", Math.round(pb.freshPriceKg).toLocaleString("es-CO"), " COP/kg"))), /* @__PURE__ */ React.createElement("div", { className: "economics-metric-grid" }, /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo por Bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(pb.costPerBag).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "Sustrato + Spawn + Autoclave + Bolsa")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Cosecha Estimada"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, pb.projectedFreshKgPerBag.toFixed(2), " kg"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "Hongo fresco (EB ", Math.round(pb.ebRate * 100), "%)")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box" }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label" }, "Costo / kg Fresco"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value" }, "$", Math.round(pb.productionCostPerKgFresh).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub" }, "Costo unitario de cosecha")), /* @__PURE__ */ React.createElement("div", { className: "econ-metric-box", style: { background: "var(--accent-olive-dim, #DCE1D1)", borderColor: "var(--accent-olive, #5B6B44)" } }, /* @__PURE__ */ React.createElement("span", { className: "econ-metric-label", style: { color: "var(--accent-olive, #5B6B44)" } }, "Margen Bruto / Bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-value", style: { color: "var(--accent-olive, #5B6B44)" } }, "+$", Math.round(pb.projectedGrossMarginPerBag).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("span", { className: "econ-metric-sub", style: { fontWeight: 700, color: "var(--accent-olive, #5B6B44)" } }, pb.projectedMarginPct.toFixed(1), "% margen"))), /* @__PURE__ */ React.createElement("div", { className: "econ-pills-row" }, /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#5E7080" } }), "Sustrato: $", Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString("es-CO"), "/bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#5B6B44" } }), "Micelio: $", Math.round(pb.costBreakdownPerBag.spawn).toLocaleString("es-CO"), "/bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#A85C32" } }), "Tratamiento Térmico: $", Math.round(pb.costBreakdownPerBag.energia).toLocaleString("es-CO"), "/bolsa"), /* @__PURE__ */ React.createElement("span", { className: "econ-pill" }, /* @__PURE__ */ React.createElement("span", { className: "econ-dot", style: { background: "#7A6A52" } }), "Bolsa PP: $", Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString("es-CO"), "/bolsa"))), /* @__PURE__ */ React.createElement("div", { id: "ps-sec-1", style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8, scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "1"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Pesado de ingredientes"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 1 } }, "báscula · res. ", resG, " g"))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginBottom: 8 } }, "Masa seca tras redondeo: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, dryR.toFixed(2), " kg"), " · objetivo seco: ", preparation.target.dryKg.toFixed(3), " kg. Gramos redondeados a la báscula (", resG, " g). Edita la humedad del insumo del día en los controles de preparación. Vacío: usa referencia del catálogo para el cálculo, no registra una medición."), /* @__PURE__ */ React.createElement("div", { className: "ps-tbl-wrap" }, /* @__PURE__ */ React.createElement("table", { className: "prod-tbl", style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Ingrediente"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "%"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center", width: 62 } }, "H₂O%"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Gramos"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Kg"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Seco kg"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center", width: 46 } }, "Hecho"))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((x, i) => {
       const id = x.r.id;
-      const ov = prodMoist[id] != null && prodMoist[id] !== "";
+      const provApi = typeof window !== "undefined" ? window.SetasProvenance : null;
+      const src = preparation.items[i] && preparation.items[i].moisture && preparation.items[i].moisture.source;
+      const dProv = provApi ? provApi.describe({ vocabulary: "moisture", value: src }) : null;
+      const ov = dProv ? dProv.kind === provApi.KINDS.measured : prodMoist[id] != null && prodMoist[id] !== "";
       return /* @__PURE__ */ React.createElement("tr", { key: i }, /* @__PURE__ */ React.createElement("td", null, x.g ? x.g.name : id, ov ? /* @__PURE__ */ React.createElement("span", { style: { color: "var(--coral-500)", fontSize: "var(--text-xs)" } }, " · medido") : null), /* @__PURE__ */ React.createElement("td", { className: "num" }, parseFloat(x.r.p).toFixed(1)), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center" } }, preparation.items[i].moisture.pct, "% · ", ov ? "medido" : "estimación catálogo"), /* @__PURE__ */ React.createElement("td", { className: "num" }, x.grR.toLocaleString("es-CO", { maximumFractionDigits: 3 })), /* @__PURE__ */ React.createElement("td", { className: "num" }, x.grR >= 500 ? (x.grR / 1e3).toFixed(2) : "—"), /* @__PURE__ */ React.createElement("td", { className: "num", style: { color: "var(--ink-500)" } }, x.masaSecaR.toFixed(2)), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("input", { name: `ingredientDone-${id}`, type: "checkbox", "aria-label": `${x.g ? x.g.name : id} pesado`, checked: !!checkedSteps["ing_" + i], onChange: (e) => setCheckedSteps((prev) => ({ ...prev, ["ing_" + i]: e.target.checked })), style: { accentColor: "var(--coral-500)", width: 14, height: 14, cursor: "pointer" } })));
     }), /* @__PURE__ */ React.createElement("tr", { className: "tot" }, /* @__PURE__ */ React.createElement("td", null, "Total a pesar (húmedo comercial)"), /* @__PURE__ */ React.createElement("td", { className: "num" }, "100"), /* @__PURE__ */ React.createElement("td", null), /* @__PURE__ */ React.createElement("td", { className: "num" }, Math.round(kgComR * 1e3).toLocaleString()), /* @__PURE__ */ React.createElement("td", { className: "num" }, kgComR.toFixed(2)), /* @__PURE__ */ React.createElement("td", { className: "num" }, dryR.toFixed(2)), /* @__PURE__ */ React.createElement("td", null))))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: cnDrift > 0.5 ? "var(--coral-600,#B5451F)" : "var(--ink-500)", marginBottom: 16, padding: "5px 9px", background: cnDrift > 0.5 ? "var(--coral-50,#FCEEE9)" : "var(--paper-50)", border: `1px solid ${cnDrift > 0.5 ? "var(--coral-300,#E8B4A0)" : "var(--paper-300)"}` } }, "C:N teórico ", an.cn.toFixed(1), " → ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, "efectivo ", anR.cn.toFixed(1)), " · N ", anR.avgN.toFixed(2), "% · EB ~", anR.eb.toFixed(0), "%", cnDrift > 0.5 ? " · el redondeo desvía el C:N: considera un lote más grande" : " · desvío despreciable a esta resolución"), /* @__PURE__ */ React.createElement("div", { className: "ps-3col", style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 18 } }, [
       ["Agua neta a inyectar", `${aguaR.toFixed(2)} L`, `req. ${aguaTotR.toFixed(1)} L − ${aguaInhR.toFixed(1)} L ya en insumos`],
       [`Spawn (${spn}%)`, `${pb.spawn.toFixed(2)} kg`, `micelio en grano · ${spn}% del húmedo objetivo`],
       ["Sustrato húmedo objetivo", `${pb.wet.toFixed(1)} kg`, `${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`]
     ].map(([l, v, s]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { border: "1px solid var(--paper-300)", padding: "10px 12px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 3, fontWeight: 700 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: "var(--ink-900,#222)" } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1, fontWeight: 500 } }, s)))), ptr && /* @__PURE__ */ React.createElement("div", { id: "ps-sec-2", style: { border: "1px solid var(--paper-300)", padding: "10px 14px", marginBottom: 18, background: "var(--paper-50)", scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 20, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "2"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Tratamiento — ", ptr.name)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ptr.temp, " · ", ptr.time, " · Spawn ", ptr.spawn, "%"), ptr.reasons?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 4 } }, ptr.reasons.join(" · "))), /* @__PURE__ */ React.createElement("div", { id: "ps-sec-3", style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8, scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "3"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Procedimiento")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, steps.map((t, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "prod-step", style: { opacity: checkedSteps["step_" + i] ? 0.4 : 1, transition: "opacity .2s" } }, /* @__PURE__ */ React.createElement("input", { name: `procedureStep-${i}`, type: "checkbox", "aria-label": `Paso ${i + 1} completado: ${t}`, checked: !!checkedSteps["step_" + i], onChange: (e) => setCheckedSteps((prev) => ({ ...prev, ["step_" + i]: e.target.checked })), style: { accentColor: "var(--coral-500)", width: 14, height: 14, cursor: "pointer", flexShrink: 0, marginTop: 3 } }), /* @__PURE__ */ React.createElement("div", { className: "prod-step-n" }, i + 1), /* @__PURE__ */ React.createElement("div", { className: "prod-step-t", style: { textDecoration: checkedSteps["step_" + i] ? "line-through" : "none" } }, t)))), fechas.length > 0 && /* @__PURE__ */ React.createElement("div", { id: "ps-sec-4", style: { scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "4"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Fechas clave"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 1 } }, "estimadas · EB ", an.eb.toFixed(0), "%"))), /* @__PURE__ */ React.createElement("div", { className: "ps-fechas-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "ps-fechas", style: { display: "grid", gridTemplateColumns: `repeat(${fechas.length},1fr)`, gap: 1, background: "var(--paper-300)", border: "1px solid var(--paper-300)" } }, fechas.map(([l, v]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "var(--paper-0)", padding: "8px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900,#222)" } }, v)))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, paddingTop: 14, borderTop: "2px solid var(--ink-900)" } }, /* @__PURE__ */ React.createElement("div", { className: "ps-sig", style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 18 } }, [["Operario"], ["Hora inicio"], ["Verificado por"]].map(([l]) => /* @__PURE__ */ React.createElement("div", { key: l }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 6 } }, l), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--ink-600)", height: 26 } })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 6 } }, "Observaciones del lote"), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--paper-400)", height: 22, marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--paper-400)", height: 22 } })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)", textAlign: "right", letterSpacing: "var(--tracking-label)" } }, "Setas de la Pe\\u00f1a · Tenjo 2.600 msnm · simulador v9.1"))));
-  })()), tab === "inventario" && BodegaSection(), tab === "clima" && /* @__PURE__ */ React.createElement(ClimateDashboardSection, null), tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Ejecutar lote", dialogStyle: { width: "min(520px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14, style: { marginRight: 6 } }), " Ejecutar lote — confirmar descuento de inventario"), /* @__PURE__ */ React.createElement("p", null, loteBatchConfirm.plan.preparation.revision, " · agua ", loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4), " L · pesaje ", loteBatchConfirm.plan.preparation.weighing.resolutionG, " g · Bodega a 1 g."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se descontarán los insumos y bolsas del inventario (FIFO, del lote más antiguo al más nuevo)."), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-table-wrap" }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", minWidth: 340, borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 0 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido", "Stock", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido" || h === "Stock" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px", whiteSpace: "nowrap" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.krKg : row.krKg.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.stockActual : row.stockActual.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--status-ok)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--status-warn-marker)" }))))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--coral-700)" }), " Uno o más ingredientes no tienen stock suficiente — se descontará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), disabled: ejecutandoLote, className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, disabled: ejecutandoLote, className: "inv-btn inv-btn-pri" }, ejecutandoLote ? "Descontando…" : "Confirmar y descontar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: "min(560px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("style", null, `[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), captureSaveError && /* @__PURE__ */ React.createElement("p", { role: "alert" }, captureSaveError), /* @__PURE__ */ React.createElement("p", null, "Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña."), /* @__PURE__ */ React.createElement("p", null, "Plan de preparación: ", prodBags, " bolsas × ", prodKg, " kg · ", prodH, "% humedad. No confirma medidas."), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", "aria-invalid": !!captureErrors["bit-codigo"], "aria-describedby": captureErrors["bit-codigo"] ? "bit-codigo-error" : void 0, onBlur: () => validateCaptureField("bit-codigo"), name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) }), captureErrorNode("bit-codigo")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", "aria-invalid": !!captureErrors["bit-especie"], "aria-describedby": captureErrors["bit-especie"] ? "bit-especie-error" : void 0, onBlur: () => validateCaptureField("bit-especie"), name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }), captureErrorNode("bit-especie"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", "aria-invalid": !!captureErrors["bit-cepa"], "aria-describedby": captureErrors["bit-cepa"] ? "bit-cepa-error" : void 0, onBlur: () => validateCaptureField("bit-cepa"), name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) }), captureErrorNode("bit-cepa")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", "aria-invalid": !!captureErrors["bit-operador"], "aria-describedby": captureErrors["bit-operador"] ? "bit-operador-error" : void 0, onBlur: () => validateCaptureField("bit-operador"), name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }), captureErrorNode("bit-operador"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", "aria-invalid": !!captureErrors["bit-fecha-mezcla"], "aria-describedby": captureErrors["bit-fecha-mezcla"] ? "bit-fecha-mezcla-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-mezcla"), name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) }), captureErrorNode("bit-fecha-mezcla")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", "aria-invalid": !!captureErrors["bit-fecha-inoculacion"], "aria-describedby": captureErrors["bit-fecha-inoculacion"] ? "bit-fecha-inoculacion-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-inoculacion"), name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }), captureErrorNode("bit-fecha-inoculacion"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", "aria-invalid": !!captureErrors["bit-bags"], "aria-describedby": captureErrors["bit-bags"] ? "bit-bags-error" : void 0, onBlur: () => validateCaptureField("bit-bags"), name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: e.target.value })) }), captureErrorNode("bit-bags")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa medidos · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", "aria-invalid": !!captureErrors["bit-wet-kg"], "aria-describedby": captureErrors["bit-wet-kg"] ? "bit-wet-kg-error" : void 0, onBlur: () => validateCaptureField("bit-wet-kg"), name: "wetKgPerBag", type: "number", className: "inv-input", min: 0, step: 0.1, value: bitNuevoForm.pesoHumedo ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: e.target.value })) }), captureErrorNode("bit-wet-kg")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn confirmado · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", "aria-invalid": !!captureErrors["bit-spawn"], "aria-describedby": captureErrors["bit-spawn"] ? "bit-spawn-error" : void 0, onBlur: () => validateCaptureField("bit-spawn"), name: "spawnPercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.spawnPct ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: e.target.value })) }), captureErrorNode("bit-spawn")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad medida % · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", "aria-invalid": !!captureErrors["bit-moisture"], "aria-describedby": captureErrors["bit-moisture"] ? "bit-moisture-error" : void 0, onBlur: () => validateCaptureField("bit-moisture"), name: "moisturePercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.humedad ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: e.target.value })) }), captureErrorNode("bit-moisture"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", "aria-invalid": !!captureErrors["bit-treatment"], "aria-describedby": captureErrors["bit-treatment"] ? "bit-treatment-error" : void 0, onBlur: () => validateCaptureField("bit-treatment"), name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t))), captureErrorNode("bit-treatment")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco medido total (kg) · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", "aria-invalid": !!captureErrors["bit-dry-weight"], "aria-describedby": captureErrors["bit-dry-weight"] ? "bit-dry-weight-error" : void 0, onBlur: () => validateCaptureField("bit-dry-weight"), name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco ?? "", min: 0, placeholder: "Sin medición", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: e.target.value })) }), captureErrorNode("bit-dry-weight"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", "aria-invalid": !!captureErrors["bit-objective"], "aria-describedby": captureErrors["bit-objective"] ? "bit-objective-error" : void 0, onBlur: () => validateCaptureField("bit-objective"), name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) }), captureErrorNode("bit-objective")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  })()), tab === "inventario" && /* @__PURE__ */ React.createElement(React.Fragment, null, invLotes.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "prototype-panel" }, /* @__PURE__ */ React.createElement("h3", null, "Bodega sin existencias registradas"), /* @__PURE__ */ React.createElement("p", null, "El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: () => setInvTab("compra") }, "Registrar primera compra")), BodegaSection()), tab === "clima" && climateDashboardView, tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), moveDlg && /* @__PURE__ */ React.createElement(MoveRoomModal, { dlg: moveDlg, onClose: () => setMoveDlg(null) }), newVersionFor && /* @__PURE__ */ React.createElement(NewRecipeVersionModal, { recipe: newVersionFor, onClose: () => setNewVersionFor(null), onConfirm: confirmNewRecipeVersion }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), versionDlg && /* @__PURE__ */ React.createElement(NewRecipeVersionModal, { recipe: versionDlg.recipe, onClose: () => setVersionDlg(null), onConfirm: () => confirmNewRecipeVersion(versionDlg.recipe) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Planificar lote", dialogStyle: { width: "min(520px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14, style: { marginRight: 6 } }), " Planificar lote — reservar insumos"), /* @__PURE__ */ React.createElement("p", null, loteBatchConfirm.plan.preparation.revision, " · agua ", loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4), " L · pesaje ", loteBatchConfirm.plan.preparation.weighing.resolutionG, " g · Bodega a 1 g."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se RESERVARÁN los insumos y bolsas. La bodega no se descuenta todavía: eso pasa al registrar «Preparar mezcla», que es cuando el sustrato se pesa (FIFO, del lote más antiguo al más nuevo)."), (() => {
+    const h = procedenciaHumedades(loteBatchConfirm.plan.preparation);
+    return h ? /* @__PURE__ */ React.createElement("div", { "data-testid": "confirm-humedad-procedencia", className: "os-provenance-notice" + (h.estimados.length ? " os-provenance-notice--estimated" : ""), style: { marginBottom: 14 } }, h.texto) : null;
+  })(), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-table-wrap" }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", minWidth: 340, borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 0 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido", "Stock", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido" || h === "Stock" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px", whiteSpace: "nowrap" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.krKg : row.krKg.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.stockActual : row.stockActual.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--status-ok)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--status-warn-marker)" }))))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--coral-700)" }), " Uno o más ingredientes no tienen stock suficiente — se reservará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), disabled: ejecutandoLote, className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, disabled: ejecutandoLote, className: "inv-btn inv-btn-pri" }, ejecutandoLote ? "Reservando…" : "Confirmar y reservar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: "min(560px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("style", null, `[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), captureSaveError && /* @__PURE__ */ React.createElement("p", { role: "alert" }, captureSaveError), /* @__PURE__ */ React.createElement("p", null, "Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña."), /* @__PURE__ */ React.createElement("p", null, "Plan de preparación: ", prodBags, " bolsas × ", prodKg, " kg · ", prodH, "% humedad. No confirma medidas."), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", "aria-invalid": !!captureErrors["bit-codigo"], "aria-describedby": captureErrors["bit-codigo"] ? "bit-codigo-error" : void 0, onBlur: () => validateCaptureField("bit-codigo"), name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) }), captureErrorNode("bit-codigo")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", "aria-invalid": !!captureErrors["bit-especie"], "aria-describedby": captureErrors["bit-especie"] ? "bit-especie-error" : void 0, onBlur: () => validateCaptureField("bit-especie"), name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }), captureErrorNode("bit-especie"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", "aria-invalid": !!captureErrors["bit-cepa"], "aria-describedby": captureErrors["bit-cepa"] ? "bit-cepa-error" : void 0, onBlur: () => validateCaptureField("bit-cepa"), name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) }), captureErrorNode("bit-cepa")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", "aria-invalid": !!captureErrors["bit-operador"], "aria-describedby": captureErrors["bit-operador"] ? "bit-operador-error" : void 0, onBlur: () => validateCaptureField("bit-operador"), name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }), captureErrorNode("bit-operador"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", "aria-invalid": !!captureErrors["bit-fecha-mezcla"], "aria-describedby": captureErrors["bit-fecha-mezcla"] ? "bit-fecha-mezcla-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-mezcla"), name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) }), captureErrorNode("bit-fecha-mezcla")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", "aria-invalid": !!captureErrors["bit-fecha-inoculacion"], "aria-describedby": captureErrors["bit-fecha-inoculacion"] ? "bit-fecha-inoculacion-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-inoculacion"), name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }), captureErrorNode("bit-fecha-inoculacion"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", "aria-invalid": !!captureErrors["bit-bags"], "aria-describedby": captureErrors["bit-bags"] ? "bit-bags-error" : void 0, onBlur: () => validateCaptureField("bit-bags"), name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: e.target.value })) }), captureErrorNode("bit-bags")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa medidos · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", "aria-invalid": !!captureErrors["bit-wet-kg"], "aria-describedby": captureErrors["bit-wet-kg"] ? "bit-wet-kg-error" : void 0, onBlur: () => validateCaptureField("bit-wet-kg"), name: "wetKgPerBag", type: "number", className: "inv-input", min: 0, step: 0.1, value: bitNuevoForm.pesoHumedo ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: e.target.value })) }), captureErrorNode("bit-wet-kg")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn confirmado · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", "aria-invalid": !!captureErrors["bit-spawn"], "aria-describedby": captureErrors["bit-spawn"] ? "bit-spawn-error" : void 0, onBlur: () => validateCaptureField("bit-spawn"), name: "spawnPercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.spawnPct ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: e.target.value })) }), captureErrorNode("bit-spawn")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad medida % · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", "aria-invalid": !!captureErrors["bit-moisture"], "aria-describedby": captureErrors["bit-moisture"] ? "bit-moisture-error" : void 0, onBlur: () => validateCaptureField("bit-moisture"), name: "moisturePercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.humedad ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: e.target.value })) }), captureErrorNode("bit-moisture"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", "aria-invalid": !!captureErrors["bit-treatment"], "aria-describedby": captureErrors["bit-treatment"] ? "bit-treatment-error" : void 0, onBlur: () => validateCaptureField("bit-treatment"), name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t))), captureErrorNode("bit-treatment")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco medido total (kg) · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", "aria-invalid": !!captureErrors["bit-dry-weight"], "aria-describedby": captureErrors["bit-dry-weight"] ? "bit-dry-weight-error" : void 0, onBlur: () => validateCaptureField("bit-dry-weight"), name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco ?? "", min: 0, placeholder: "Sin medición", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: e.target.value })) }), captureErrorNode("bit-dry-weight"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", "aria-invalid": !!captureErrors["bit-objective"], "aria-describedby": captureErrors["bit-objective"] ? "bit-objective-error" : void 0, onBlur: () => validateCaptureField("bit-objective"), name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) }), captureErrorNode("bit-objective")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     if (!validateCapture("trial")) return;
     const newId = crearBitLote(SetasBitacora.normalizeTrialCapture(bitNuevoForm));
     if (!newId) return;
@@ -9951,7 +10955,7 @@ Click para ver análisis completo`
         operatorId,
         accountId,
         onTransitionConfirmed: (batchId, nextState) => {
-          setBitLotes((prev) => prev.map((l) => l.id === batchId ? { ...l, estado: nextState, workflowState: nextState } : l));
+          updateBitLote(batchId, { estado: nextState, workflowState: nextState });
         }
       }
     );
@@ -10379,14 +11383,14 @@ Click para ver análisis completo`
           onChange: (pct) => {
             const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
             const loteBolsas = bitBolsas.filter((b) => b.loteId === currentLote.id);
-            loteBolsas.forEach((b) => {
+            if (!loteBolsas.every((b) => {
               const up = {};
               if (pct >= 25 && !b.col25) up.col25 = today;
               if (pct >= 50 && !b.col50) up.col50 = today;
               if (pct >= 100 && !b.col100) up.col100 = today;
               up.colonizationPct = pct;
-              updateBitBolsa(b.id, up);
-            });
+              return updateBitBolsa(b.id, up);
+            })) return;
             if (pct >= 100 && currentLote.estado === "incubacion") {
               updateBitLote(currentLote.id, { estado: "fructificacion" });
             }
@@ -10398,11 +11402,11 @@ Click para ver análisis completo`
           onQuickAction: (act) => {
             const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
             if (act === "primordios") {
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
               const loteBolsas = bitBolsas.filter((b) => b.loteId === currentLote.id);
-              loteBolsas.forEach((b) => {
-                updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
-              });
+              if (!loteBolsas.every((b) => {
+                return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
+              })) return;
+              updateBitLote(currentLote.id, { estado: "fructificacion" });
               setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${currentLote.codigo} pasado a etapa de fructificación.` });
             } else if (act === "riego") {
               setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad y niebla registrada para ${currentLote.codigo}.` });
@@ -10693,7 +11697,7 @@ Click para ver análisis completo`
         return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date))));
       }))
     );
-  })(), showProdLaunchModal && prodLaunchForm && (() => {
+  })(), selectedTrial && /* @__PURE__ */ React.createElement("aside", { className: "prototype-panel", "aria-label": "Ensayo seleccionado" }, /* @__PURE__ */ React.createElement("p", null, "Próximo lote: ", selectedTrial.title, " · ", selectedTrial.label, ". La receta debe coincidir con la copia del plan."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setSelectedTrial(null) }, "Desvincular próximo lote")), releaseBatchId && bitLotes.find((l) => l.id === releaseBatchId) && /* @__PURE__ */ React.createElement(PrototypeReleaseDialog, { lote: bitLotes.find((l) => l.id === releaseBatchId), onClose: () => setReleaseBatchId(null), onAuthorize: authorizePrototypePreparation }), showProdLaunchModal && prodLaunchForm && (() => {
     const f = prodLaunchForm;
     const allInsumosOk = f.insumos.length > 0 && f.insumos.every((i) => i.ok);
     const room = ROOMS_CONFIG[f.sala] || ROOMS_CONFIG.martha_01;
@@ -10705,7 +11709,10 @@ Click para ver análisis completo`
         label: "Lanzador de producción de lote",
         dialogStyle: { width: 680, maxWidth: "calc(100vw - 32px)" }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "prod-launch-modal", "data-testid": "prod-launch-modal" }, /* @__PURE__ */ React.createElement("h2", { className: "inv-modal-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "rocket", size: 15, style: { marginRight: 6 } }), " Lanzador de Producción de Lote"), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-summary" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Lote"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontFamily: "var(--font-mono)", fontSize: 14 } }, f.codigo)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontSize: 14 } }, f.especie)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Tamaño"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.numBolsas, " bolsas (", (f.numBolsas * f.pesoHumedo).toFixed(1), " kg)")), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Humedad"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.humedad, "%"))), /* @__PURE__ */ React.createElement("p", null, f.plan.preparation.revision, " · agua ", f.plan.preparation.totals.waterToAddKg.toFixed(4), " L · pesaje ", f.plan.preparation.weighing.resolutionG, " g · Bodega a 1 g."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "box", size: 14, style: { marginRight: 6 } }), " Insumos a Descontar de Bodega"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: allInsumosOk ? "var(--moss-700)" : "var(--coral-500)" } }, allInsumosOk ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, color: "var(--moss-700)" }), " Stock suficiente para todo el batch") : /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--coral-500)" }), " Algunos insumos requieren compra"))), f.plan?.shortfalls?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--coral-500)", background: "#FFF5F5", border: "1px solid var(--coral-200)", borderRadius: "var(--radius-sm)", padding: "8px 10px", marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--coral-500)", style: { marginRight: 4 } }), " Faltan insumos en bodega: ", f.plan.shortfalls.map((s) => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(", "), ". Se descontará lo disponible."), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", overflowX: "auto", WebkitOverflowScrolling: "touch" } }, /* @__PURE__ */ React.createElement("table", { className: "prod-launch-table", style: { minWidth: 360 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Requerido"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Stock Actual"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center" } }, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, f.insumos.map((ins, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { background: ins.ok ? "transparent" : "#FFF5F5" } }, /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 600 } }, ins.name), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)" } }, ins.krKg.toFixed(2), " ", ins.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)", color: ins.ok ? "var(--ink-1)" : "var(--coral-500)" } }, ins.stockActual.toFixed(1), " ", ins.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: ins.ok ? "var(--moss-700)" : "var(--coral-500)" } }, ins.ok ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--status-ok)" }), " OK") : /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--status-warn-marker)" }), " Escaso")))))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-launch-sala", style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)", display: "block", marginBottom: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 14, style: { marginRight: 6 } }), " Sala / Carpa de Destino"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.values(ROOMS_CONFIG).map((r) => /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { className: "prod-launch-modal", "data-testid": "prod-launch-modal" }, /* @__PURE__ */ React.createElement("h2", { className: "inv-modal-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "rocket", size: 15, style: { marginRight: 6 } }), " Lanzador de Producción de Lote"), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-summary" }, /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Lote"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontFamily: "var(--font-mono)", fontSize: 14 } }, f.codigo)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Especie"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val", style: { fontSize: 14 } }, f.especie)), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Tamaño"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.numBolsas, " bolsas (", (f.numBolsas * f.pesoHumedo).toFixed(1), " kg)")), /* @__PURE__ */ React.createElement("div", { className: "prod-launch-stat" }, /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-lbl" }, "Humedad"), /* @__PURE__ */ React.createElement("span", { className: "prod-launch-stat-val" }, f.humedad, "%"))), (() => {
+        const h = procedenciaHumedades(f.plan && f.plan.preparation);
+        return h ? /* @__PURE__ */ React.createElement("div", { "data-testid": "launch-humedad-procedencia", className: "os-provenance-notice" + (h.estimados.length ? " os-provenance-notice--estimated" : ""), style: { marginBottom: 12 } }, h.texto) : null;
+      })(), /* @__PURE__ */ React.createElement("p", null, f.plan.preparation.revision, " · agua ", f.plan.preparation.totals.waterToAddKg.toFixed(4), " L · pesaje ", f.plan.preparation.weighing.resolutionG, " g · Bodega a 1 g."), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "box", size: 14, style: { marginRight: 6 } }), " Insumos a Descontar de Bodega"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: allInsumosOk ? "var(--moss-700)" : "var(--coral-500)" } }, allInsumosOk ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, color: "var(--moss-700)" }), " Stock suficiente para todo el batch") : /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--coral-500)" }), " Algunos insumos requieren compra"))), f.plan?.shortfalls?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--coral-500)", background: "#FFF5F5", border: "1px solid var(--coral-200)", borderRadius: "var(--radius-sm)", padding: "8px 10px", marginBottom: 8 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--coral-500)", style: { marginRight: 4 } }), " Faltan insumos en bodega: ", f.plan.shortfalls.map((s) => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(", "), ". Se descontará lo disponible."), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-sm)", overflowX: "auto", WebkitOverflowScrolling: "touch" } }, /* @__PURE__ */ React.createElement("table", { className: "prod-launch-table", style: { minWidth: 360 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Insumo"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Requerido"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Stock Actual"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "center" } }, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, f.insumos.map((ins, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { background: ins.ok ? "transparent" : "#FFF5F5" } }, /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 600 } }, ins.name), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)" } }, ins.krKg.toFixed(2), " ", ins.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontFamily: "var(--font-num)", color: ins.ok ? "var(--ink-1)" : "var(--coral-500)" } }, ins.stockActual.toFixed(1), " ", ins.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: ins.ok ? "var(--moss-700)" : "var(--coral-500)" } }, ins.ok ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--status-ok)" }), " OK") : /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--status-warn-marker)" }), " Escaso")))))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "prod-launch-sala", style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--ink-1)", display: "block", marginBottom: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sprout", size: 14, style: { marginRight: 6 } }), " Sala / Carpa de Destino"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.values(ROOMS_CONFIG).map((r) => /* @__PURE__ */ React.createElement(
         "button",
         {
           key: r.id,
@@ -11822,7 +12829,10 @@ interval:
     IoTHubModal,
     {
       isOpen: showIoTHub,
-      onClose: () => setShowIoTHub(false),
+      onClose: () => {
+        setShowIoTHub(false);
+        requestAnimationFrame(() => iotHubTriggerRef.current?.focus());
+      },
       liveTelemetry,
       selectedRoomId: selectedClimateRoom,
       onInjectReading: (r) => {

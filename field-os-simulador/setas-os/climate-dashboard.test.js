@@ -71,13 +71,8 @@ test('simulador-app.jsx integrates live telemetry dashboard and Today widget', (
   assert.match(jsx, /data-testid="today-climate-strip"/);
   assert.match(jsx, /martha_01/);
   assert.match(jsx, /cloudlab_844/);
-  // Debe renderizarse como elemento JSX (<ClimateDashboardSection/>), no como
-  // llamada de función directa (ClimateDashboardSection()): el componente usa
-  // useState/useRef/useEffect internamente, y llamarlo como función plana
-  // dentro de un `tab==='clima'&&` hace que esos hooks se ejecuten solo en
-  // algunos renders del componente padre — viola las Reglas de los Hooks y
-  // provoca un crash real (React error #310) al entrar a la pestaña Clima.
-  assert.match(jsx, /tab==='clima'&&<ClimateDashboardSection\/>/);
+  assert.match(jsx, /const climateDashboardView = useClimateDashboardView\(\);/);
+  assert.match(jsx, /tab==='clima'&&climateDashboardView/);
   assert.match(jsx, /clima:'Cámaras & Telemetría IoT'/);
 });
 
@@ -115,11 +110,8 @@ test('simulador-app.jsx renders relay actuator controls and interactive override
   assert.match(jsx, /Forzar Humidificación/);
 });
 
-test('ClimateDashboardSection solo se monta como componente, nunca se invoca como función', () => {
-  // Tiene 5 useState, 4 useRef y 2 useEffect: llamarla en el cuerpo del padre
-  // ejecuta esos 11 hooks en cada render del padre y descarta el JSX.
-  // PR #181 introdujo `const climateDashboardContent = ClimateDashboardSection();`
-  // sin ningún consumidor. Ver docs/triage/2026-08-30-merge-backlog.md.
-  assert.doesNotMatch(jsx, /ClimateDashboardSection\s*\(\s*\)/);
-  assert.match(jsx, /<ClimateDashboardSection\s*\/>/);
+test('Clima ejecuta su hook sin condición y consume la vista sin remontar el panel', () => {
+  assert.match(jsx, /const climateDashboardView = useClimateDashboardView\(\);/);
+  assert.match(jsx, /tab==='clima'&&climateDashboardView/);
+  assert.doesNotMatch(jsx, /tab==='clima'&&useClimateDashboardView\(/);
 });

@@ -192,3 +192,53 @@ The repository write gate additionally protects:
 - critical semantic contrast remains AA.
 
 Selecting a repository folder remains a permission step and is informational until the user invokes **Aplicar JSON al Repo**; it does not disable the button before the folder picker can be opened.
+
+
+## Gaya Patched Italic
+
+The vendored Gaya Patched family includes six real weights and matching italic faces:
+
+| Weight | Normal | Italic |
+| --- | --- | --- |
+| 100 Thin | GayaPatched-Thin.otf | GayaPatched-ThinItalic.otf |
+| 300 Light | GayaPatched-Light.otf | GayaPatched-LightItalic.otf |
+| 400 Regular | GayaPatched-Regular.otf | GayaPatched-Italic.otf |
+| 500 Medium | GayaPatched-Medium.otf | GayaPatched-MediumItalic.otf |
+| 700 Bold | GayaPatched-Bold.otf | GayaPatched-BoldItalic.otf |
+| 900 Black | GayaPatched-Black.otf | GayaPatched-BlackItalic.otf |
+
+There is **no vendored Gaya Semibold 600**. Theme Lab therefore never presents 600 as a real Gaya face.
+
+Typography authoring is modeled as three separate properties:
+
+```json
+{
+  "family": "editorial",
+  "style": "italic",
+  "weight": 700
+}
+```
+
+This is deliberately not modeled as a separate fake family called “Gaya Patched Italic”. The CSS font family remains `Gaya Patched`; `font-style: italic` selects the matching vendored face at the requested real weight.
+
+In **Tipografía → Familia & Estilo**, every typography role can choose its family and supported style. When a role uses Gaya Patched, the Style control exposes **Normal / Italic** and the Weight control is restricted to:
+
+```text
+100 Thin
+300 Light
+400 Regular
+500 Medium
+700 Bold
+900 Black
+```
+
+The **Gaya Patched · 12 Faces Reales** matrix renders every normal/italic face side by side for visual comparison.
+
+Two bulk helpers are available:
+
+- **Aplicar Italic a roles Gaya**
+- **Aplicar Normal a roles Gaya**
+
+They preserve each role’s current supported weight and only change `style`.
+
+The click-to-edit Inspector uses the same family-aware constraints. Pre-flight blocks repository writes if a role requests a weight/style combination that is not supported by the vendored family metadata.

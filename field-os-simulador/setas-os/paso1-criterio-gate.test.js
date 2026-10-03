@@ -285,10 +285,15 @@ test('gate 10: DS canonical/package drift: 0 including asset trees', () => {
   }
 });
 
-test('gate 11: visual contract: 15/15', () => {
+// Every gate must pass, and the count may grow but never shrink below 16.
+const MIN_VISUAL_CONTRACT_GATES = 16;
+test(`gate 11: visual contract: all gates pass (>= ${MIN_VISUAL_CONTRACT_GATES})`, () => {
   const proc = spawnSync(process.execPath, [path.join(CANON_DS, 'scripts', 'visual-contract.mjs')], {
     encoding: 'utf8',
   });
   assert.equal(proc.status, 0, `visual-contract.mjs failed: ${proc.stderr || proc.stdout}`);
-  assert.match(proc.stdout, /Results: 15\/15 gates passed \(0 failed\)/);
+  const m = proc.stdout.match(/Results: (\d+)\/(\d+) gates passed \(0 failed\)/);
+  assert.ok(m, 'visual-contract.mjs did not report a clean result line');
+  assert.equal(m[1], m[2], 'every visual-contract gate must pass');
+  assert.ok(Number(m[2]) >= MIN_VISUAL_CONTRACT_GATES, `expected >= ${MIN_VISUAL_CONTRACT_GATES} gates, got ${m[2]}`);
 });

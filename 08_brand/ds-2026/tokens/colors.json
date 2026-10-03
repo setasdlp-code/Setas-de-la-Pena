@@ -210,6 +210,9 @@
       "statusOk": {
         "value": "{color.primitive.moss-700}"
       },
+      "statusOkMarker": {
+        "value": "{color.primitive.moss-500}"
+      },
       "statusWarning": {
         "value": "{color.primitive.warning}"
       },
@@ -233,9 +236,6 @@
       },
       "statusErrorBg": {
         "value": "{color.derived.coral-tint}"
-      },
-      "statusOkMarker": {
-        "value": "{color.primitive.moss-500}"
       },
       "actionPrimary": {
         "value": "{color.primitive.moss-700}"

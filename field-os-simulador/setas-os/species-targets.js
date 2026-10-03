@@ -65,23 +65,30 @@ const legacyTargets = sp => ({
 
 const FIELDS = ['cn', 'nPct', 'ph', 'moisture', 'supplementationMaxPct', 'eb'];
 
-function classifySubstrate(recipe = [], ings = []) {
-  if (!Array.isArray(recipe) || recipe.length === 0) return null;
+function compositionShares(recipe = [], ings = []) {
   const byId = new Map((ings || []).map(i => [i.id, i]));
-  let supp = 0, base = 0, hardwood = 0;
+  let supp = 0, base = 0, hardwood = 0, medium = 0;
   for (const r of recipe) {
     const g = byId.get(r.id);
     if (!g) continue;
     const p = parseFloat(r.p ?? r.pct) || 0;
     supp += p * (SUPPLEMENT_WEIGHT[g.role] || 0);
+    if (g.role === 'suplemento_medio' && p > 0) medium += p;
     if (g.role === 'base_carbono') {
       base += p;
       if (HARDWOOD_IDS.has(g.id)) hardwood += p;
     }
   }
-  if (supp >= SUPPLEMENTED_MIN_PCT) return 'bag_supplemented';
-  if (base > 0 && hardwood / base > 0.5) return 'hardwood_block';
-  return 'straw_unsupplemented';
+  return { supp, base, hardwood, medium };
+}
+
+const unsupplementedClass = ({ base, hardwood }) => (base > 0 && hardwood / base > 0.5 ? 'hardwood_block' : 'straw_unsupplemented');
+
+function classifySubstrate(recipe = [], ings = []) {
+  if (!Array.isArray(recipe) || recipe.length === 0) return null;
+  const shares = compositionShares(recipe, ings);
+  if (shares.supp >= SUPPLEMENTED_MIN_PCT) return 'bag_supplemented';
+  return unsupplementedClass(shares);
 }
 
 function resolveTargets({ speciesId, substrateClass = null, treatmentClass = 'any', legacySpp } = {}) {
@@ -137,7 +144,88 @@ function targetSourceLabel(targets, field) {
   return 'Objetivo con fuente';
 }
 
-const api = { BASIS, SUPPLEMENTED_MIN_PCT, CITATIONS, classifySubstrate, resolveTargets, toSppEntry, applyToSpp, targetSourceLabel };
+// ── Descripción legible de la clase de sustrato ──
+// La clase decide qué rangos objetivo se usan, y cruzar el umbral de
+// suplementación los cambia de golpe (en orellana, C:N 50–100 → 25–50). Estas
+// funciones no clasifican distinto ni alteran ningún rango: solo describen la
+// clase vigente, la del otro lado del umbral y el cambio que produce un
+// ajuste, para que el Perito lo diga en vez de dejar un salto sin explicar.
+const CLASS_LABELS = {
+  straw_unsupplemented: 'paja sin suplementar',
+  bag_supplemented: 'bolsa suplementada',
+  hardwood_block: 'bloque de madera dura',
+};
+// Banda de AVISO de interfaz alrededor del umbral (puntos porcentuales). No es
+// un objetivo agronómico ni tiene fuente: solo decide cuándo advertir que la
+// receta está cerca de cambiar de clase.
+const THRESHOLD_NOTICE_BAND_PP = 1;
+
+const classLabel = cls => CLASS_LABELS[cls] || cls || null;
+
+function citationText(rec) {
+  if (!rec || !Array.isArray(rec.citations) || !rec.citations.length) return null;
+  return rec.citations.map(id => {
+    const c = CITATIONS[id];
+    return c ? `${c.authors} ${c.year}` : id;
+  }).join('; ');
+}
+
+const pickRange = rec => (rec ? { min: rec.min, max: rec.max, ideal: rec.ideal, source: rec.source, tier: rec.tier, citation: citationText(rec) } : null);
+
+// Objetivos de una clase tal como los usa el modelo. null cuando la especie no
+// tiene registros por clase (todo heredado o común): ahí el umbral no cambia
+// ningún objetivo y no hay nada que explicar.
+function classTargetsSummary(resolved) {
+  if (!resolved || !resolved.resolvedClass) return null;
+  return {
+    substrateClass: resolved.substrateClass,
+    resolvedClass: resolved.resolvedClass,
+    label: classLabel(resolved.resolvedClass),
+    substrateLabel: classLabel(resolved.substrateClass),
+    fallback: resolved.fallback === true,
+    cn: pickRange(resolved.cn),
+    nPct: pickRange(resolved.nPct),
+  };
+}
+
+function describeSubstrateClass({ speciesId, recipe, ings, legacySpp, treatmentClass = 'any' } = {}) {
+  if (!Array.isArray(recipe) || !recipe.length) return null;
+  const shares = compositionShares(recipe, ings);
+  const substrateClass = classifySubstrate(recipe, ings);
+  const current = classTargetsSummary(resolveTargets({ speciesId, substrateClass, treatmentClass, legacySpp }));
+  if (!current) return null;
+  const above = shares.supp >= SUPPLEMENTED_MIN_PCT;
+  const otherClass = above ? unsupplementedClass(shares) : 'bag_supplemented';
+  const other = classTargetsSummary(resolveTargets({ speciesId, substrateClass: otherClass, treatmentClass, legacySpp }));
+  const alternative = other && other.resolvedClass !== current.resolvedClass
+    ? { ...other, direction: above ? 'below' : 'above' }
+    : null;
+  const distancePp = Math.abs(shares.supp - SUPPLEMENTED_MIN_PCT);
+  return {
+    ...current,
+    supplementPct: Math.round(shares.supp * 10) / 10,
+    hasMediumSupplement: shares.medium > 0,
+    thresholdPct: SUPPLEMENTED_MIN_PCT,
+    distancePp: Math.round(distancePp * 10) / 10,
+    nearThreshold: !!alternative && distancePp <= THRESHOLD_NOTICE_BAND_PP,
+    alternative,
+  };
+}
+
+// Cambio de clase entre dos objetivos resueltos (p. ej. receta actual y la que
+// deja una sugerencia). null si la clase que fija los rangos no cambia.
+function describeClassChange(fromTargets, toTargets) {
+  const from = classTargetsSummary(fromTargets);
+  const to = classTargetsSummary(toTargets);
+  if (!from || !to || from.resolvedClass === to.resolvedClass) return null;
+  return { from, to };
+}
+
+const api = {
+  BASIS, SUPPLEMENTED_MIN_PCT, THRESHOLD_NOTICE_BAND_PP, CITATIONS, CLASS_LABELS,
+  classifySubstrate, resolveTargets, toSppEntry, applyToSpp, targetSourceLabel,
+  describeSubstrateClass, describeClassChange,
+};
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

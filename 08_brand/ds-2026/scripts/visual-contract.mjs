@@ -358,8 +358,18 @@ check('public bundle contract is non-nested', () => {
   }
 });
 
+// Gate 16: The legacy components.css facade carries every component module index.css does.
+// It had silently dropped provenance, reading, capture, sync and archive.
+check('components.css facade covers every index.css component module', () => {
+  const mods = (css, re) => new Set([...css.matchAll(re)].map(m => m[1].replace(/^shared\/action\.css$/, 'shared/actions.css')));
+  const index = mods(fs.readFileSync(path.join(DS_ROOT, 'index.css'), 'utf8'), /@import\s+["']components\/((?:shared|operations|market)\/[\w-]+\.css)["']/g);
+  const facade = mods(fs.readFileSync(path.join(DS_ROOT, 'components/components.css'), 'utf8'), /@import\s+["']\.\/((?:shared|operations|market)\/[\w-]+\.css)["']/g);
+  const missing = [...index].filter(m => !facade.has(m));
+  if (missing.length) throw new Error('components/components.css is missing: ' + missing.join(', '));
 
-// Gate 16: every sdp-*/ed-* class a mockup writes has a rule in the CSS it loads.
+});
+
+// Gate 17: every sdp-*/ed-* class a mockup writes has a rule in the CSS it loads.
 // Las demas compuertas comparan documentacion contra CSS; esta compara MARCADO
 // contra CSS, que es por donde se colaron .sdp-btn--subtle, .sdp-label,
 // .sdp-input--field y los chips de procedencia sin reglas. Resuelve la cadena

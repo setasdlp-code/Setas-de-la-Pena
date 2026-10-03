@@ -10,11 +10,11 @@
   let nativeAdapter = null;
   let lastTransaction = null;
 
-  // Se lee al validar: recipe-version.js carga después de este archivo en el runtime protegido.
+  // Se lee al validar: mass-balance.js carga después de este archivo en el runtime protegido.
   const balanceTolerance = () => {
-    const rv = globalThis.SetasRecipeVersion
-      || (typeof require !== 'undefined' ? require('./recipe-version.js') : null);
-    if (!rv) throw new Error('recipe-version.js no está cargado');
+    const rv = globalThis.SetasMassBalance
+      || (typeof require !== 'undefined' ? require('./mass-balance.js') : null);
+    if (!rv) throw new Error('mass-balance.js no está cargado');
     return rv.MASS_BALANCE_TOLERANCE_PP;
   };
   const NO_ADAPTER = { ok: false, code: 'no_native_adapter', message: 'El Formulador no está listo para aplicar recetas.', adapter: null };

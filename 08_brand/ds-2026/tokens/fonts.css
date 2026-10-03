@@ -53,24 +53,25 @@
 
 @font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight:900; font-style:italic; font-display:swap; }
 @font-face { font-family:'Gaya';         src:url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight:900; font-style:italic; font-display:swap; }
+@font-face { font-family:'Gaya';         src:url('../assets/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:'GayaPatched';  src:url('../assets/fonts/GayaPatched-Regular.otf') format('opentype'); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:'Gaya';         src:url('../assets/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight:400; font-style:italic; font-display:swap; }
+@font-face { font-family:'GayaPatched';  src:url('../assets/fonts/GayaPatched-Italic.otf') format('opentype'); font-weight:400; font-style:italic; font-display:swap; }
 @font-face { font-family:'GayaPatched';  src:url('../assets/fonts/GayaPatched-BlackItalic.otf') format('opentype'); font-weight:900; font-style:italic; font-display:swap; }
 
 /* ---- Relleno de cobertura de Gaya ------------------------------------
-   Gaya Patched son CINCO pesos con sus itálicas —Thin, Light, Medium, Bold y
-   Black— según el suplemento normativo de la marca,
-   08_brand/field-os-identity/guidelines/typography-gaya-patched.md.
-   No existe un corte Regular 400.
+   Gaya Patched son seis pesos con sus itálicas: Thin, Light, Regular,
+   Medium, Bold y Black.
 
-   Durante un tiempo este directorio declaró además GayaPatched-Regular.otf y
-   GayaPatched-Italic.otf, que no son de la familia: traían 280 glifos contra
-   los 328 de los diez cortes legítimos, sin · — – “ ” ¿ ¡ « … Al ocupar el
-   peso 400 se llevaban el binomio latino, y la línea salía con dos
-   tipografías mezcladas. Ya no se declaran.
+   El corte Regular 400 y su itálica son un parche local sobre una Gaya de
+   prueba: traen 280 glifos contra los 328 de los otros cinco pesos. Les
+   faltan  ·  —  –  “  ”  ¿  ¡  «  »  además de  %  °  ²  ₂  ×  €  . Sin el
+   relleno de abajo el navegador sustituye esos signos por la fuente del
+   sistema y el binomio latino sale con dos tipografías mezcladas.
 
-   Lo que sigue faltando en los diez cortes reales es  %  °  ²  ₂  ×  €
-   Esos seis los sirve IBM Plex Sans por unicode-range. Peso discreto, nunca
-   rango: una cara 100 900 gana el emparejamiento por encima del corte exacto
-   y se lleva la línea entera.
+   El relleno lo sirve IBM Plex Sans por unicode-range, en peso discreto y
+   nunca en rango: una cara 100 900 gana el emparejamiento por encima del
+   corte exacto y se lleva la línea entera.
    ------------------------------------------------------------------- */
 
 @font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:100; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
@@ -83,6 +84,10 @@
 @font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:700; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
 @font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:900; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
 @font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:900; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082; }
+/* El 400 necesita un rango mas ancho: es el unico corte al que le faltan
+   tambien los signos de puntuacion. */
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:normal; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082, U+00A1, U+00AB, U+00B7, U+00BB, U+00BF, U+2013, U+2014, U+201C, U+201D; }
+@font-face { font-family:'Gaya Patched'; src:url('../assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight:400; font-style:italic; font-display:swap; unicode-range:U+0025, U+00B0, U+00B2, U+00D7, U+20AC, U+2082, U+00A1, U+00AB, U+00B7, U+00BB, U+00BF, U+2013, U+2014, U+201C, U+201D; }
 
 /* ---- IBM Plex Sans — body / UI ---- */
 @font-face { font-family:'IBM Plex Sans'; src:url('../assets/fonts/IBMPlexSans-Light.ttf') format('truetype');    font-weight:300; font-style:normal; font-display:swap; }

@@ -137,7 +137,15 @@ function buildLaunchPlan({
 
 // Construye el lote de Bitácora y sus bolsas a partir del plan de lanzamiento.
 // Puro: no toca localStorage ni Firestore — eso lo hace el componente.
-function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now }) {
+// `estado` decide en qué etapa NACE el lote. Por defecto sigue siendo
+// 'incubacion', que es como nacía siempre: el lote aparecía ya inoculado y en
+// incubación, saltándose mezcla, tratamiento térmico, enfriado e inoculación —
+// cuatro etapas que sí ocurren en la finca y que nadie registraba. El camino de
+// planificación pasa 'planificado' (→ `planned` vía LEGACY_STATE_ALIASES) para
+// que esas etapas se registren cuando de verdad pasan. Se escribe `estado`, el
+// campo legado, y nunca `lifecycleState`: ese lo escribe el servidor
+// (client-invariants.test.js lo vigila).
+function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, recipe = [], sKey, recipeName = '', score = 0, now, estado = 'incubacion', objetivo = null }) {
   const spec=plan.preparation;
   const nb = spec ? spec.target.bags : Number(form.numBolsas) || 0;
   const kb = spec ? spec.target.kgPerBag : Number(form.pesoHumedo) || 0;
@@ -153,19 +161,21 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
     fechaInoculacion: form.fechaInoculacion,
     numBolsas: nb,
     pesoHumedo: kb,
-    peseSeco: parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+    peseSeco: spec ? spec.totals.dryKg : parseFloat((nb * kb * (1 - hm / 100)).toFixed(3)),
+    dryWeightProvenance: 'planned-calculated',
     spawnPct: spec ? spec.spawn.pct : analysis?.dynSpawn || 8,
     ...(spec?{preparation:JSON.parse(JSON.stringify(spec)),spawnKg:spec.spawn.kg}:{}),
     humedad: hm,
     tratamiento: treatmentName || 'Pasteurización Térmica',
     costoIngKg: analysis ? Math.round(analysis.cost) : 0,
     operador: form.operador,
-    objetivo: 'Lanzamiento directo desde Formulador',
+    objetivo: objetivo || 'Lanzamiento directo desde Formulador',
     notas: form.notas,
-    estado: 'incubacion',
+    estado,
     veredicto: '',
     sala: form.sala,
     ubicacion: form.sala,
+    ingredientShortfalls: (plan.shortfalls || []).map(s => ({ ...s })),
     ingredientLots: (plan.allocations || []).map(a => ({ ...a })),
     recipeRef: {
       id: now,

@@ -66,15 +66,37 @@ const PROTECTED_APP_SCRIPTS = [
   "../anomaly-thresholds.js",
   "../live-telemetry-bridge.js",
   "../flush-forecast-engine.js",
+  // Copiloto de cultivo y sus 4 motores base. biological-clock.js y
+  // harvest-calendar.js requieren flush-forecast-engine.js (ya cargado
+  // arriba) en tiempo de carga (harvest-calendar.js incluso lanza si falta).
+  // contamination-risk.js referencia contamination-workflow.js, pero ese
+  // script vive en DC_RUNTIME_SCRIPTS y carga DESPUÉS de esta lista — por
+  // eso contamination-risk.js resuelve ese catálogo de forma perezosa (en
+  // cada llamada, no al cargarse) en vez de capturarlo aquí. cultivation-
+  // copilot.js depende de los 4 y de task-engine.js (ya cargado arriba), así
+  // que va al final del grupo.
+  "../biological-clock.js",
+  "../contamination-risk.js",
+  "../vision-diagnosis.js",
+  "../harvest-calendar.js",
+  "../cultivation-copilot.js",
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
   "../post-harvest-engine.js",
   "../perito-workbench-core.js",
   "../historical-calibration.js",
   "../species-targets.js",
-  "../recipe-version.js",
+  "../mass-balance.js",
+  "../recipe-lifecycle.js",
   "../launch-plan.js",
+  "../experiment-model.js",
+  "../prototype-readiness.js",
   "../inventory-consumption.js",
+  "../inventory-ledger.js",
+  "../purchases.js",
+  "../room-state.js",
+  "../provenance.js",
+  "../perito-context.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
   // Cuaderno de campo offline. setas-os-workflow.js llega después, en

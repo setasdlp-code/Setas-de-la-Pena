@@ -114,7 +114,8 @@
         contamination_pct: stats.contPct,
         colonization_days: stats.diasCol,
         total_fresh_kg: stats.totalFresco,
-        cost_per_kg_cop: stats.costoKg,
+        cost_per_kg_cop: stats.economics?.totalCostPerFreshKgCop ?? null,
+        substrate_cost_per_kg_cop: stats.costoKg,
         bags_total: stats.numBolsas,
         bags_contaminated: stats.bolsasContaminadas,
         bags_healthy: stats.bolsasSanas,
@@ -127,6 +128,9 @@
         metricsWithValidData: completeEnvironmentMetrics,
         reliabilityGrade: telemetryHealth?.reliabilityGrade || 'NONE',
       },
+      economics: stats?.economics || null,
+      experimentId: lote.experimentId || null,
+      armId: lote.armId || null,
       provenance: {
         biological: 'measured_calculated_from_bitacora',
         environment: !cycleReadings.length ? 'missing'

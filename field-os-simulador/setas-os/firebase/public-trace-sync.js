@@ -10,7 +10,7 @@
 // no depender solo del servidor como única defensa.
 import { db } from "./firebase-init.js";
 import {
-  doc, setDoc, serverTimestamp,
+  doc, setDoc, deleteDoc, serverTimestamp,
 } from "../vendor/firebase/firebase-firestore.js";
 
 // Solo estos campos del lote son seguros para mostrar a cualquiera que
@@ -121,8 +121,25 @@ export async function publicarCosecha(loteCodigo, cosecha) {
   }
 }
 
+// Borrar un lote en Bitácora nunca tocaba esta colección: el QR de la
+// etiqueta térmica seguía resolviendo a una ficha pública de un lote que ya
+// no existe. deleteDoc del lote no borra su subcolección "cosechas" — eso
+// exigiría una Cloud Function (o un batch de N deletes desde el cliente,
+// que además necesitaría permiso de lectura sobre esa subcolección solo
+// para poder borrarla), así que cada cosecha eliminada en Bitácora debe
+// llamar eliminarCosecha() por su cuenta antes o después de eliminarLote().
+export async function eliminarLote(codigo) {
+  if (!codigo) return;
+  return deleteDoc(doc(db, "public_lotes", codigo));
+}
+
+export async function eliminarCosecha(loteCodigo, cosechaId) {
+  if (!loteCodigo || !cosechaId) return;
+  return deleteDoc(doc(db, "public_lotes", loteCodigo, "cosechas", String(cosechaId)));
+}
+
 // simulador.html es un <script type="text/babel"> clásico (no un módulo
 // ES), así que no puede hacer `import` de este archivo — se expone en
 // window igual que bitacora-sync.js hace con window.SetasBitacoraDB.
-window.SetasPublicTraceDB = { publicarLote, publicarCosecha };
+window.SetasPublicTraceDB = { publicarLote, publicarCosecha, eliminarLote, eliminarCosecha };
 window.dispatchEvent(new CustomEvent("setas-public-trace-db-ready"));

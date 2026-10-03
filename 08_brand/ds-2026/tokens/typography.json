@@ -4,15 +4,65 @@
   "families": {
     "editorial": {
       "stack": "'Gaya Patched', 'Iowan Old Style', Georgia, serif",
-      "use": "Species names, titles, latin binomials, packaging. The voice of the brand."
+      "use": "Species names, titles, latin binomials, packaging. The voice of the brand.",
+      "styles": [
+        "normal",
+        "italic"
+      ],
+      "weights": [
+        100,
+        300,
+        400,
+        500,
+        700,
+        900
+      ],
+      "weightNames": {
+        "100": "Thin",
+        "300": "Light",
+        "400": "Regular",
+        "500": "Medium",
+        "700": "Bold",
+        "900": "Black"
+      }
     },
     "sans": {
       "stack": "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif",
-      "use": "Body copy, UI, navigation. Everything read as prose."
+      "use": "Body copy, UI, navigation. Everything read as prose.",
+      "styles": [
+        "normal"
+      ],
+      "weights": [
+        300,
+        400,
+        500,
+        600,
+        700
+      ],
+      "weightNames": {
+        "300": "Light",
+        "400": "Regular",
+        "500": "Medium",
+        "600": "Semibold",
+        "700": "Bold"
+      }
     },
     "mono": {
       "stack": "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
-      "use": "Measurements and data use tabular figures without tracking. Labels and metadata use uppercase with tracking >= 0.15em."
+      "use": "Measurements and data use tabular figures without tracking. Labels and metadata use uppercase with tracking >= 0.15em.",
+      "styles": [
+        "normal"
+      ],
+      "weights": [
+        400,
+        500,
+        600
+      ],
+      "weightNames": {
+        "400": "Regular",
+        "500": "Medium",
+        "600": "Semibold"
+      }
     }
   },
   "weights": {

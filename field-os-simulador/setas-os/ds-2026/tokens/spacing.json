@@ -69,8 +69,10 @@
       "dataXl": "36px",
       "ingredient": "64px",
       "stepIndex": "40px",
-      "stepKey": "28px",
-      "plateHeight": "148px"
+      "stepIndexSm": "28px",
+      "plateHeight": "148px",
+      "ruleOffset": "3px",
+      "description": "Fixed component measurements. Consumed as CSS variables; never repeat these literals in components/."
     },
     "thermal": {
       "width": "50mm",

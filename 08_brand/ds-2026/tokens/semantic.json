@@ -72,6 +72,10 @@
       "ok": {
         "value": "{color.primitive.moss-700}"
       },
+      "ok-marker": {
+        "value": "{color.primitive.moss-500}",
+        "description": "OK bars, rules and markers (3:1 graphic). Moss 700 reads as ink at bar weight. Never text."
+      },
       "warning": {
         "value": "{color.primitive.warning}",
         "usage": "Solid fills and bars only with dark text on top. Never small text on paper."
@@ -115,11 +119,11 @@
       },
       "accent": {
         "value": "{color.primitive.coral-700}",
-        "description": "Terracotta action border and label colour. Never a fill: a coral fill is indistinguishable from the danger action."
+        "description": "Terracotta action border and text (outlined). Never a fill: a filled coral button reads as danger."
       },
       "accent-text": {
         "value": "{color.primitive.coral-700}",
-        "description": "Terracotta action text. The accent button is an outline, so its label sits on paper, never on a coral fill."
+        "description": "Outlined accent: coral 700 text and border on paper. Filled coral is reserved for danger."
       },
       "danger": {
         "value": "{color.primitive.coral-700}"

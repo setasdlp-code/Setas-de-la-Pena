@@ -77,7 +77,20 @@ class Candidate:
     raw: str
 
 
+# Varios documentos de 09_research escriben los números en LaTeX:
+# `$85\text{–}90\text{ °C}$`. El guion del rango queda envuelto en \text{}, así
+# que RANGE_RE no lo ve y 85–90 se lee como dos valores sueltos — suficiente
+# para reportar 88 °C como divergencia cuando está dentro del rango
+# documentado. Desenvolver \text{} y soltar los $ antes de extraer.
+LATEX_TEXT_RE = re.compile(r"\\text\{([^}]*)\}")
+
+
+def strip_latex(text: str) -> str:
+    return LATEX_TEXT_RE.sub(r"\1", text).replace("$", "")
+
+
 def extract_candidates(text: str) -> list[Candidate]:
+    text = strip_latex(text)
     """Extract every plausible numeric range/bound reading from a text cell.
 
     KB prose often states a headline figure alongside a parenthetical
@@ -266,6 +279,12 @@ def load_app_data() -> dict:
         "KB_SPP": extract_js_object(text, "KB_SPP"),
         "KB_SUB": extract_js_object(text, "KB_SUB"),
         "KPI": extract_js_object(text, "KPI"),
+        # extraction-factors.json entra al mismo dict para que sus parámetros
+        # documentados pasen por evaluate_sync_point como todo lo demás, en vez
+        # de por una rama aparte con su propia lógica de comparación.
+        "EXTRACTION": json.loads(EXTRACTION_FACTORS.read_text(encoding="utf-8"))
+        if EXTRACTION_FACTORS.exists()
+        else {},
     }
 
 
@@ -532,24 +551,40 @@ def kpi_point(label: str, unit: str, kb_file: str, section: str, row: str, app_k
     )
 
 
+# Los tres umbrales de BE apuntan a la misma frase de production_schedule.md
+# ("La BE de referencia del repositorio es 40–70%, pero la capacidad y el
+# rendimiento de Setas de la Peña permanecen sin validar"), porque es lo único
+# que el KB documenta sobre BE a nivel de proyecto. Antes buscaban filas de
+# tabla que nunca existieron ("BE total objetivo", "BE óptimo"), así que los
+# tres salían como present_in_app_absent_from_kb: el reporte decía "no hay
+# fuente" cuando sí la hay y el app la contradice. Un hueco de cobertura y una
+# divergencia real se triagean distinto, y confundirlos esconde la segunda.
+BE_REFERENCE_ROW = r"BE de referencia"
+
 KPI_SYNC_POINTS: list[SyncPoint] = [
     kpi_point("BE objetivo", "%", "06_operations/production_schedule.md",
-              r".", r"BE total objetivo", "beTarget"),
-    kpi_point("Yield por bloque", "g", "06_operations/production_schedule.md",
-              r".", r"Yield fresco por bloque", "yieldPerBlock"),
+              r".", BE_REFERENCE_ROW, "beTarget"),
+    kpi_point("BE óptimo", "%", "06_operations/production_schedule.md",
+              r".", BE_REFERENCE_ROW, "beOptimal"),
+    kpi_point("BE de alerta", "%", "06_operations/production_schedule.md",
+              r".", BE_REFERENCE_ROW, "beAlert"),
     kpi_point("Umbral de contaminación", "%", "02_substrates/contamination.md",
               r"Best Practices", r"contaminaci", "contamMax"),
-    # No known KB source for these three as of this writing — routed through
-    # the same empty-candidates path as everything else (instead of a
-    # special-cased footnote) so they surface as regular
-    # present_in_app_absent_from_kb findings, and so a future KB edit that
-    # adds a matching row is picked up automatically.
-    kpi_point("BE óptimo", "%", "06_operations/production_schedule.md",
-              r".", r"BE.*[oó]ptim|[oó]ptim.*BE", "beOptimal"),
-    kpi_point("BE de alerta", "%", "06_operations/production_schedule.md",
-              r".", r"BE.*alert|alert.*BE", "beAlert"),
     kpi_point("Umbral de alerta de contaminación", "%", "02_substrates/contamination.md",
-              r"Best Practices", r"15%|alerta", "contamAlert"),
+              r"Best Practices", r"contaminaci", "contamAlert"),
+    # yieldPerBlock (800 g) sigue sin fuente, y su patrón de fila apunta a
+    # propósito a una etiqueta que el KB no tiene: así cae por el camino normal
+    # de candidatos vacíos y se reporta como present_in_app_absent_from_kb, en
+    # vez de desaparecer del reporte. Si algún día se documenta el rendimiento
+    # por bloque bajo esa etiqueta, el punto lo levanta solo.
+    #
+    # Lo que NO hay que hacer es apuntarlo a "Empacar en bolsas (500–1,000 g por
+    # bloque)" (04_facility/comprehensive_guide.md): 800 cae dentro de ese rango
+    # y el checker declararía que coincide, pero ese rango es masa de SUSTRATO
+    # EMPACADO, no cosecha fresca. Daría por validado un KPI que nadie midió,
+    # comparando dos magnitudes distintas — peor que reportar el hueco.
+    kpi_point("Yield por bloque", "g", "06_operations/production_schedule.md",
+              r".", r"Yield fresco por bloque", "yieldPerBlock"),
 ]
 
 
@@ -564,12 +599,15 @@ def check_extraction_factors(findings: list[Finding]) -> None:
     data = json.loads(EXTRACTION_FACTORS.read_text(encoding="utf-8"))
     for species_key, species_data in data.items():
         for method_key, method_data in species_data.get("methods", {}).items():
+            covered = EXTRACTION_COVERED_PARAMS.get((species_key, method_key), frozenset())
             params = [
                 k
                 for k in ("yield_factor", "cost_per_liter_solvent", "optimal_alcohol_pct",
                           "optimal_time_hrs", "optimal_temp_c")
-                if k in method_data
+                if k in method_data and k not in covered
             ]
+            if not params:
+                continue
             findings.append(
                 Finding(
                     category="present_in_app_absent_from_kb",
@@ -582,11 +620,80 @@ def check_extraction_factors(findings: list[Finding]) -> None:
                     app_value=", ".join(f"{p}={method_data[p]}" for p in params),
                     app_source=f"extraction-factors.json:{species_key}.methods.{method_key}",
                     note=(
-                        "extraction-factors.json has no known counterpart anywhere in "
-                        "knowledge_base/; these numbers are not traceable to a canonical source."
+                        "Sin contraparte conocida en knowledge_base/ para estos parámetros: "
+                        "no son trazables a una fuente canónica. "
+                        "(Los de Hericium/Reishi que sí lo son se comparan por separado — "
+                        "ver EXTRACTION_SYNC_POINTS.)"
                     ),
                 )
             )
+
+
+# ---------------------------------------------------------------------------
+# Extracciones con fuente documentada
+#
+# 09_research/deep_research_synthesis_2026.md §1 documenta cinética de
+# extracción, y su diagrama declara la materia prima explícitamente:
+# "MATERIA PRIMA (Hericium / Reishi)". Eso cubre lions_mane y reishi; NO cubre
+# p_ostreatus_gris ni shiitake, que siguen sin fuente.
+#
+# Antes el checker afirmaba en bloque que extraction-factors.json "no tiene
+# contraparte en ningún lado de knowledge_base/", lo cual era falso para estas
+# dos especies: la fuente existe y el app la contradice en varios parámetros.
+#
+# Solo se cablean temperatura y % de alcohol: las dos magnitudes que el KB y el
+# app expresan en la misma unidad. Deliberadamente NO se cablean:
+#   - optimal_time_hrs: el KB da la UAE en minutos ("30 a 45 minutos") y el app
+#     en horas (0.75). El extractor compara números crudos, así que enfrentar
+#     0.75 contra 30–45 produciría un mismatch inventado por unidades.
+#   - yield_factor: el KB reporta "recuperación 18–25% p/p sobre biomasa seca"
+#     de la fracción hidrosoluble. Que eso sea la misma magnitud que
+#     yield_factor no está establecido en ningún lado, y asumirlo es
+#     exactamente la sustitución de clases que agronomic-claims prohíbe.
+# ---------------------------------------------------------------------------
+
+EXTRACTION_SYNTHESIS = "09_research/deep_research_synthesis_2026.md"
+# Bullet de §1.1: "Extracción en agua desmineralizada a 85–90 °C durante 2 a 3 horas…"
+ACUOSA_ROW = r"Cinética óptima"
+# Bullet de §1.2: "…sonda ultrasónica (20–40 kHz, 200–400 W) con etanol al 75–95% a 45–50 °C…"
+UAE_ROW = r"sonda ultrasónica"
+
+
+def extraction_point(species: str, method: str, param: str, label: str, unit: str,
+                     section: str, row: str) -> SyncPoint:
+    return SyncPoint(
+        entity=species,
+        parameter=f"{method} · {label}",
+        unit=unit,
+        kb_file=KB / EXTRACTION_SYNTHESIS,
+        kb_section_pattern=section,
+        kb_row_pattern=row,
+        app_source=f"extraction-factors.json:{species}.methods.{method}.{param}",
+        app_getter=lambda d, s=species, m=method, p=param: d["EXTRACTION"][s]["methods"][m][p],
+    )
+
+
+EXTRACTION_SYNC_POINTS: list[SyncPoint] = [
+    point
+    for species in ("lions_mane", "reishi")
+    for point in (
+        extraction_point(species, "acuosa", "optimal_temp_c", "temperatura", "°C",
+                         r"Fracci[óo]n Hidrosoluble", ACUOSA_ROW),
+        extraction_point(species, "ultrasonido", "optimal_temp_c", "temperatura", "°C",
+                         r"Fracci[óo]n Liposoluble", UAE_ROW),
+        extraction_point(species, "ultrasonido", "optimal_alcohol_pct", "% de alcohol", "%",
+                         r"Fracci[óo]n Liposoluble", UAE_ROW),
+    )
+]
+
+# Qué (especie, método) ya se compara arriba, para que check_extraction_factors
+# no vuelva a reportar esos parámetros como "sin fuente".
+EXTRACTION_COVERED_PARAMS: dict[tuple[str, str], frozenset[str]] = {
+    ("lions_mane", "acuosa"): frozenset({"optimal_temp_c"}),
+    ("lions_mane", "ultrasonido"): frozenset({"optimal_temp_c", "optimal_alcohol_pct"}),
+    ("reishi", "acuosa"): frozenset({"optimal_temp_c"}),
+    ("reishi", "ultrasonido"): frozenset({"optimal_temp_c", "optimal_alcohol_pct"}),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -675,7 +782,8 @@ def main() -> int:
     app_data = load_app_data()
     findings: list[Finding] = []
 
-    for point in SPECIES_SYNC_POINTS + SUBSTRATE_SYNC_POINTS + KPI_SYNC_POINTS:
+    for point in (SPECIES_SYNC_POINTS + SUBSTRATE_SYNC_POINTS + KPI_SYNC_POINTS
+                  + EXTRACTION_SYNC_POINTS):
         evaluate_sync_point(point, app_data, findings)
 
     check_extraction_factors(findings)
