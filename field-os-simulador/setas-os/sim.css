@@ -855,6 +855,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .bgood{ color:var(--moss-500); border-color:var(--moss-300); background:var(--paper-50); }
 .sim-root .bwarn{ color:var(--ochre-700); border-color:var(--ochre-500); background:var(--paper-50); }
 .sim-root .bbad{ color:var(--coral-700); border-color:var(--coral-300); background:var(--paper-50); }
+/* Métrica sin objetivo con fuente (p. ej. costo): se muestra sin calificar. */
+.sim-root .bneutral{ color:var(--ink-500); border-color:var(--border-soft); background:var(--paper-50); }
 
 /* ── C:N GAUGE (field measurement) ──────────────────────────────── */
 .sim-root .gauge-wrap{ margin:0 0 24px; }
