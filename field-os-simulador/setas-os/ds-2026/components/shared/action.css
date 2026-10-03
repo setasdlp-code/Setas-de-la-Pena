@@ -1,2 +1,5 @@
-/* DS-2026 · Shared: Action Facade */
+/* DS-2026 · Shared: Action [FACHADA LEGADA]
+   Solo existe para consumidores v1 que importan el nombre en singular, por
+   components.css e instrument.css. Los tres entrypoints públicos importan
+   shared/actions.css directamente. No agregar reglas aquí. */
 @import "./actions.css";

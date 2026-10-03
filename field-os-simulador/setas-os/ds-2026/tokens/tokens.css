@@ -99,6 +99,7 @@
   --size-heading-03: 19px;
   --size-species: 28px;
   --size-latin: 18px;
+  --size-cartouche: 17px;
   --size-body: 16px;
   --size-small: 14px;
   --size-data: 13px;
@@ -127,6 +128,7 @@
   --t-heading-03: var(--weight-semibold) var(--size-heading-03)/var(--leading-snug) var(--font-sans);
   --t-species: var(--weight-bold) var(--size-species)/var(--leading-tight) var(--font-editorial);
   --t-latin: italic var(--weight-medium) var(--size-latin)/var(--leading-snug) var(--font-editorial);
+  --t-cartouche: italic var(--weight-regular) var(--size-cartouche)/var(--leading-snug) var(--font-editorial);
   --t-body: var(--weight-regular) var(--size-body)/var(--leading-normal) var(--font-sans);
   --t-small: var(--weight-regular) var(--size-small)/var(--leading-normal) var(--font-sans);
   --t-data: var(--weight-regular) var(--size-data)/var(--leading-data) var(--font-mono);
@@ -164,10 +166,16 @@
   --rule-hairline: 1px solid var(--border-hairline);
   --rule-heavy: 2px solid var(--border-heavy);
   --rule-frame: 1px solid var(--border-hairline);
+  --rule-editorial: 1px solid var(--ink);
   --shadow-none: none;
   --tap-target-min: 44px;
   --field-cell-min-height: 48px;
   --print-code-x-height: 3mm;
+  --thermal-width: 50mm;
+  --thermal-height: 30mm;
+  --thermal-padding: 1.5mm;
+  --thermal-frame: 0.5mm;
+  --thermal-bar: 1.5mm;
   --pictogram-grid: 48;
   --pictogram-stroke: 1.5px;
 

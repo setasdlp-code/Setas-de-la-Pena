@@ -7,7 +7,6 @@
   --t-prose-archive: var(--weight-light) 17.5px/1.62 var(--font-editorial);
   --t-eyebrow-ed: var(--weight-medium) 12px/1.2 var(--font-editorial);
 
-  --rule-editorial: 1px solid var(--ink);
 
   --size-display-cover: 88px;
   --t-display-cover: var(--weight-black) var(--size-display-cover)/var(--leading-solid) var(--font-editorial);
@@ -66,7 +65,7 @@
 
 .ed-cartouche { border-top: var(--rule-editorial); padding-top: var(--space-1); display: grid; gap: var(--space-half); }
 .ed-cartouche__n { font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase; color: var(--text-metadata); }
-.ed-cartouche__l { font-family: var(--font-editorial); font-style: italic; font-size: 17px; color: var(--text-primary); }
+.ed-cartouche__l { font: var(--t-cartouche); color: var(--text-primary); }
 .ed-cartouche__d { font: var(--t-small); color: var(--text-secondary); }
 
 .ed-cols { column-count: 2; column-gap: var(--space-4); column-rule: var(--rule-hairline); }
@@ -74,10 +73,7 @@
 
 /* Voz de pie de figura en superficie de archivo. */
 [data-mode="archive"] .sdp-fig__ref {
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-weight: var(--weight-regular);
-  font-size: 17px;
+  font: var(--t-cartouche);
   letter-spacing: 0;
   text-transform: none;
   color: var(--text-primary);

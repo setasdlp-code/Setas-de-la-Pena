@@ -4,21 +4,23 @@
    Texto: mono, x-height >= --print-code-x-height; rol lot-code-print (6 mm, x ~ 0.5em), nunca micro-print. */
 /* Pagina con nombre: el tamano 50 x 30 mm solo aplica a quien declara page: thermal.
    Un @page global cambiaria la impresion de cualquier consumidor que cargue este bundle. */
+/* @page no admite var(): el tamaño va literal y los tokens --thermal-* lo
+   reflejan para el resto del componente. Si cambia el rollo, cambian los dos. */
 @page thermal { size: 50mm 30mm; margin: 0; }
 
 .sdp-thermal,
 [data-print="thermal"] {
   page: thermal;
   box-sizing: border-box;
-  width: 50mm; height: 30mm;
-  padding: 1.5mm;
+  width: var(--thermal-width); height: var(--thermal-height);
+  padding: var(--thermal-padding);
   display: grid;
   grid-template-rows: auto auto auto 1fr;
   align-content: start;
   overflow: hidden;
   background: white;
   color: black;
-  border: 0.5mm solid black;
+  border: var(--thermal-frame) solid black;
   border-radius: 0;
   font: var(--t-lot-code-print);
   letter-spacing: 0.04em;
@@ -48,12 +50,12 @@
 }
 .sdp-thermal__lot { font-weight: 800; }
 .sdp-thermal__species,
-.sdp-thermal__date { border-top: 0.5mm solid black; }
+.sdp-thermal__date { border-top: var(--thermal-frame) solid black; }
 
 /* Barra de estado: relleno negro sólido, sin tinte */
 .sdp-thermal__bar {
   align-self: end;
-  height: 1.5mm;
+  height: var(--thermal-bar);
   background: black;
   border: 0;
 }
