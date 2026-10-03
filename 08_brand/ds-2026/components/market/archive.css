@@ -79,9 +79,21 @@
   color: var(--text-primary);
 }
 
+/* Folio: cabecera y pie de hoja, como en un pliego impreso. El filete va
+   abajo porque se usa como <header>; --foot lo pasa arriba. La base conserva
+   la voz micro para el marcado suelto que no usa __t ni __n. */
 .ed-folio {
-  display: flex; justify-content: space-between; align-items: baseline;
-  border-top: var(--rule-editorial); padding-top: var(--space-1);
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2);
+  border-bottom: var(--rule-hairline); padding-bottom: var(--space-half);
   font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
   color: var(--text-metadata);
 }
+.ed-folio__t {
+  font: var(--t-eyebrow-ed); letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ed-folio__n {
+  font: var(--t-micro); letter-spacing: var(--tracking-micro); text-transform: uppercase;
+  color: var(--text-metadata);
+}
+.ed-folio--foot { border-bottom: 0; border-top: var(--rule-hairline); padding: var(--space-half) 0 0; }
