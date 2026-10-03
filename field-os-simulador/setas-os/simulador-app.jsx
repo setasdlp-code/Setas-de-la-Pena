@@ -2068,10 +2068,10 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {deltaSim?.resultingRecipe&&onMorph&&(
         <button
           type="button"
-          title="Hibridar interactivamente la receta activa con esta sugerencia"
+          title="Comparar y mezclar la receta activa con el resultado de esta sugerencia"
           onClick={()=>onMorph(deltaSim.resultingRecipe)}
           style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>
-          <AppIcon name="scale" size={13} style={{marginRight:4}} /> Morph
+          <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparar
         </button>
       )}
     </div>
@@ -8775,7 +8775,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       if(r.ranked?.length){setRecipe(r.ranked[0].recipe);setLockedIds([]);}
       else setNoticeDlg({msg:'No se encontró una combinación óptima para esta especie con los ingredientes disponibles.'});
     }catch(e){
-      setNoticeDlg({msg:'No se pudo ejecutar el optimizador híbrido: '+(e.message||'error desconocido')});
+      setNoticeDlg({msg:'No se pudieron calcular los Escenarios: '+(e.message||'error desconocido')});
     }
   };
   const updP=(id,p)=>{
@@ -14873,8 +14873,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                         <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:6,padding:'4px 4px 6px'}}>
                           <button className="qa-mini-btn" onClick={e=>{e.stopPropagation();toggleDisabledIng(ing.id);}}
-                            title={disabledIngIds.includes(ing.id)?'Habilitar para el optimizador':'Excluir del optimizador'}
-                            aria-label={disabledIngIds.includes(ing.id)?`Habilitar ${ing.name} para el optimizador`:`Excluir ${ing.name} del optimizador`}
+                            title={disabledIngIds.includes(ing.id)?'Volver a usar en las sugerencias del Perito':'Excluir de las sugerencias del Perito'}
+                            aria-label={disabledIngIds.includes(ing.id)?`Volver a usar ${ing.name} en las sugerencias del Perito`:`Excluir ${ing.name} de las sugerencias del Perito`}
                             style={{width:'clamp(13px,3vw,15px)',height:'clamp(13px,3vw,15px)',borderRadius:'50%',background:disabledIngIds.includes(ing.id)?'var(--coral-500)':'var(--border-soft)',color:disabledIngIds.includes(ing.id)?'var(--paper-0)':'rgba(26,20,16,.5)',border:'none',cursor:'pointer',fontSize:'clamp(7px,1.5vw,8px)',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,flexShrink:0}}>
                             {disabledIngIds.includes(ing.id)?'⊘':'–'}
                           </button>
@@ -15327,11 +15327,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='formular'&&builderSubTab==='generador'&&(
           <div id="formular-panel-generador" className="formular-workspace" role="tabpanel" aria-labelledby="formular-tab-generador">
-            {/* ── WORKBENCH PERITO & OPTIMIZADOR BAR ── */}
+            {/* ── MESA DEL PERITO: encabezado y modos ── */}
             <div className="workbench-top-bar" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,margin:'12px 0 16px',flexWrap:'wrap',paddingBottom:12,borderBottom:'1.5px solid var(--border-soft)'}}>
               <div>
-                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Intelligence & Optimization Suite</div>
-                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Workbench Perito & Generador de Recetas</h1>
+                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Perito</div>
+                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Mesa del Perito</h1>
               </div>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
                 <button type="button" className="btn sm" onClick={()=>openBuilderSubTab('formular')}>← Volver a Mesa de Mezcla</button>
@@ -15349,19 +15349,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 type="button"
                 className={`seg${workbenchMode==='perito'?' on':''}`}
                 onClick={()=>setWorkbenchMode('perito')}>
-                <AppIcon name="scan" size={13} style={{marginRight:4}} /> Perito Diagnóstico Vivo
+                <AppIcon name="scan" size={13} style={{marginRight:4}} /> Diagnóstico
               </button>
               <button
                 type="button"
                 className={`seg${workbenchMode==='optimizador'?' on':''}`}
                 onClick={()=>setWorkbenchMode('optimizador')}>
-                <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Optimizador Generativo
+                <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Escenarios
               </button>
               <button
                 type="button"
                 className={`seg${workbenchMode==='morphing'?' on':''}`}
                 onClick={()=>setWorkbenchMode('morphing')}>
-                <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparador & Morphing {morphTargetRecipe?'(1 activo)':''}
+                <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparar recetas {morphTargetRecipe?'(1 activa)':''}
               </button>
             </div>
 
@@ -15399,10 +15399,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap',gap:12}}>
                     <div>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
-                        Interpolación Convexa Lineal R(α) = (1-α)R₀ + αR₁
+                        Mezcla gradual entre dos recetas
                       </div>
                       <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
-                        <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparador & Morphing de Recetas
+                        <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparar y mezclar recetas
                       </h2>
                     </div>
                     {hasCandidate&&hasBase&&(
@@ -15414,7 +15414,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onClick={()=>{
                           setRecipe(morphedRec);
                           openBuilderSubTab('formular');
-                          setNoticeDlg({msg:isMorphFeasible?'Receta morfeada aplicada exitosamente en la Mesa de Mezcla':'Receta aplicada (Atención: se encuentra fuera de rango óptimo)'});
+                          setNoticeDlg({msg:isMorphFeasible?'Mezcla aplicada en la Mesa de Mezcla':'Receta aplicada (Atención: se encuentra fuera de rango óptimo)'});
                         }}>
                         <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Aplicar en Mesa de Mezcla {!isMorphFeasible?'(Atención: fuera de rango)':''}
                       </button>
@@ -15425,16 +15425,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
                       {!hasBase
                         ? 'Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
-                        : 'Calcula escenarios en el Optimizador o selecciona una sugerencia del Perito para activar el Morphing.'}
+                        : 'Calcula Escenarios o usa «Comparar» en una sugerencia del Perito para mezclar recetas.'}
                     </div>
                   ):(
                     <div>
                       {!isMorphFeasible&&trajectoryAnalysis&&(
                         <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
-                          <b><AppIcon name="alert" size={13} color="#9B2C2C" style={{marginRight:4}} /> Estado agronómicamente no permitido en α = {morphAlpha.toFixed(2)}:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                          <b><AppIcon name="alert" size={13} color="#9B2C2C" style={{marginRight:4}} /> Esta mezcla ({(morphAlpha*100).toFixed(0)} % de la candidata) no cumple los criterios agronómicos:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
                           {trajectoryAnalysis.feasibleInterval&&(
                             <div style={{marginTop:4,color:'var(--ink-800)'}}>
-                              → Intervalo seguro para esta especie: <b>α ∈ [{trajectoryAnalysis.feasibleInterval[0].toFixed(2)}, {trajectoryAnalysis.feasibleInterval[1].toFixed(2)}]</b>
+                              → Mezclas que sí cumplen para esta especie: <b>entre {(trajectoryAnalysis.feasibleInterval[0]*100).toFixed(0)} % y {(trajectoryAnalysis.feasibleInterval[1]*100).toFixed(0)} % de la candidata</b>
                             </div>
                           )}
                         </div>
@@ -15445,10 +15445,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
                           </span>
                           <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'#C53030'}}>
-                            α = {morphAlpha.toFixed(2)} {!isMorphFeasible?'(Inválido)':''}
+                            {(morphAlpha*100).toFixed(0)} % candidata {!isMorphFeasible?'(fuera de criterio)':''}
                           </span>
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
-                            Candidato Objetivo ({(morphAlpha * 100).toFixed(0)}%)
+                            Receta candidata ({(morphAlpha * 100).toFixed(0)}%)
                           </span>
                         </div>
                         <input
@@ -15458,22 +15458,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           step="0.05"
                           value={morphAlpha}
                           onChange={(e)=>setMorphAlpha(parseFloat(e.target.value)||0)}
-                          aria-label="Factor de interpolación convexa de recetas"
+                          aria-label="Proporción de la receta candidata en la mezcla"
                           style={{width:'100%',accentColor:'var(--moss-600)',cursor:'pointer'}}
                         />
                       </div>
 
                       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))',gap:10,marginBottom:18}}>
                         <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Score Morfeado</div>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Score de la mezcla</div>
                           <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--ink-900)'}}>{scoreMorph}/100</div>
                         </div>
                         <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>EB Morfeada</div>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>EB de la mezcla</div>
                           <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--moss-700)'}}>{anMorph?.eb?.toFixed(0)||'—'}%</div>
                         </div>
                         <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N Morfeado</div>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N de la mezcla</div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{anMorph?.cn?.toFixed(1)||'—'}:1</div>
                         </div>
                         <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
@@ -15488,8 +15488,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
                               <th style={{padding:'8px 12px'}}>Insumo</th>
                               <th style={{padding:'8px 12px',textAlign:'right'}}>Receta Activa</th>
-                              <th style={{padding:'8px 12px',textAlign:'right',background:'rgba(77,98,53,.08)'}}>% Morfeado</th>
-                              <th style={{padding:'8px 12px',textAlign:'right'}}>Candidato</th>
+                              <th style={{padding:'8px 12px',textAlign:'right',background:'rgba(77,98,53,.08)'}}>% en la mezcla</th>
+                              <th style={{padding:'8px 12px',textAlign:'right'}}>Candidata</th>
                               <th style={{padding:'8px 12px',textAlign:'center'}}>Candado</th>
                             </tr>
                           </thead>
@@ -15685,7 +15685,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
-                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Hibridar / Morph</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">

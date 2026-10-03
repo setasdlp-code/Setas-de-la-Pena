@@ -54,7 +54,10 @@ const root=path.resolve(__dirname,'..');
   assert.ok(buttons.findIndex(t=>/Auto-mejorar/.test(t))<buttons.findIndex(t=>/Asistente IA/.test(t)),buttons.join(' | '));
 
   await page.locator('#formular-tab-generador').click();
-  await page.getByRole('button',{name:/Perito Diagnóstico Vivo/}).click();
+  // Vocabulario del dominio en la Mesa del Perito (sin "Workbench", "Optimizador Generativo" ni "Morphing").
+  await expect(page.getByRole('heading',{name:'Mesa del Perito',level:1})).toBeVisible();
+  for(const mode of ['Escenarios','Comparar recetas']) await expect(page.getByRole('button',{name:new RegExp(`^${mode}`)})).toBeVisible();
+  await page.getByRole('button',{name:'Diagnóstico',exact:true}).click();
   const wb=page.locator('.perito-standalone-panel');
   await expect(wb.locator('.perito-item').first()).toBeVisible();
   assert.equal(await wb.getAttribute('data-perito-variant'),'workbench');
@@ -65,6 +68,9 @@ const root=path.resolve(__dirname,'..');
   assert.doesNotMatch(b.text,/sin mutar mesa|Sugerencias Inteligentes/i);
   assert.match(b.text,/Contexto Físico y Capacidad de Proceso/i);
   assert.equal(await page.locator('#bl-perito').count(),0,'el id del Formulador no se duplica en la Mesa del Perito');
+  await page.getByRole('button',{name:/^Comparar recetas/}).click();
+  await expect(page.locator('.perito-morph-panel')).toContainText('Comparar y mezclar recetas');
+  await page.getByRole('button',{name:'Diagnóstico',exact:true}).click();
 
   // Aplicar desde la Mesa del Perito cambia la receta y se refleja al volver.
   const before=await page.evaluate(()=>window.SetasFormulatorAPI.getRecipe());
