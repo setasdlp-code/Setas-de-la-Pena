@@ -4,6 +4,24 @@
 const {useState,useMemo,useEffect,useRef,useCallback}=React;
 
 // Prototype plans and portable records. Suggestions never become observations.
+// Observation drafts are separate from durable bag records and survive panel remounts.
+function BagObservationEditor({bolsa,onSave}) {
+  const key='setas_bag_observation_draft:'+bolsa.id;
+  const [text,setText]=useState(()=>{try{return sessionStorage.getItem(key)??(bolsa.observaciones||'');}catch{return bolsa.observaciones||'';}});
+  const [error,setError]=useState('');
+  const dirty=text!==(bolsa.observaciones||'');
+  const discard=()=>{try{sessionStorage.removeItem(key);}catch{setError('No se pudo eliminar el borrador. Tu texto se conserva; reintenta cancelar.');return;}setText(bolsa.observaciones||'');setError('');};
+  const save=()=>{
+    if(!onSave(bolsa.id,{observaciones:text},{silent:true})){setError('No se pudo guardar. Tu texto sigue aquí; libera almacenamiento y reintenta.');return;}
+    setError('');try{sessionStorage.removeItem(key);}catch{}
+  };
+  return <div className="bag-observation-editor">
+    <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={text} autoComplete="off" aria-describedby={`bag-observation-status-${bolsa.id}`} onChange={e=>{const value=e.target.value;setText(value);setError('');try{sessionStorage.setItem(key,value);}catch{setError('El borrador no se pudo respaldar. Mantén esta pantalla abierta hasta guardarlo.');}}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){e.preventDefault();discard();}}}/>
+    <span id={`bag-observation-status-${bolsa.id}`} role={error?'alert':'status'}>{error||(dirty?'Borrador sin guardar':'Registro local · sincronización independiente')}</span>
+    {dirty&&<div><button type="button" className="inv-btn inv-btn-pri" onClick={save} aria-label={`Guardar observaciones de ${bolsa.codigo}`}>{error?'Reintentar':'Guardar'}</button><button type="button" className="inv-btn inv-btn-sec" onClick={discard} aria-label={`Cancelar observaciones de ${bolsa.codigo}`}>Cancelar</button></div>}
+  </div>;
+}
+
 function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
   const [open,setOpen]=useState(false),[step,setStep]=useState(1),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [form,setForm]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('sdp_experiment_draft')||'{}');}catch{return {};}});
@@ -1198,6 +1216,7 @@ const {
   calcMaxBatchFromStock,
   quantifyItem,
   generateOptimizer,
+  createRecipeEvaluator,
   ENERGY_COST,
   energyCostPerKgSeco,
   calcTreatment,
@@ -1852,7 +1871,7 @@ const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
   if(!first) return null;
-  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','!':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Sin mineral estabilizador de pH','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
+  const MAP={'↓C:N':'C:N demasiado alto — exceso de carbono sin aprovechar','↑C:N':'C:N demasiado bajo — exceso de nitrógeno, riesgo contaminación','↑N':'Nitrógeno insuficiente — colonización lenta y EB reducida','↓N':'Exceso de nitrógeno — riesgo Trichoderma','!':'Carga sanitaria crítica — Trichoderma probable sin autoclave','↑pH':'pH demasiado ácido — enzimas del micelio trabajan a rendimiento parcial','↓pH':'pH demasiado alcalino — inhibe el crecimiento y favorece bacterias','↑EB':'Potencial de EB sin explotar','Ca':'Calcio mineral bajo el mínimo funcional (≥0,6 % CaCO₃/CaSO₄)','Dig':'Sustrato de baja digestibilidad — colonización lenta'};
   return MAP[first.icon]||first.label;
 };
 const peritoCorreccionMinima=(opt)=>{
@@ -1879,32 +1898,112 @@ const PeritoChangePreview=({changes})=>(
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
   </details>
 );
-const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,speciesKey,onMorph})=>{
+// ── Clase de sustrato en el Perito ──
+// La clase (species-targets.js) decide los rangos objetivo, y cruzar el umbral
+// de suplementación los cambia de golpe: en orellana, 1,5 % de salvado se
+// evalúa como paja sin suplementar (C:N 50–100) y 2 % como bolsa suplementada
+// (C:N 25–50). Estos componentes no cambian ningún número: dicen qué clase
+// rige, de dónde salen sus rangos y cuándo un ajuste o un punto de suplemento
+// la cambia. El umbral es un criterio del modelo sin fuente publicada, y así se
+// declara.
+const fmtClassRanges=c=>[
+  c?.cn?`C:N ${c.cn.min}–${c.cn.max}:1`:null,
+  c?.nPct?`N ${c.nPct.min}–${c.nPct.max} %`:null,
+].filter(Boolean).join(', ');
+const classCitation=c=>c?.cn?.citation||c?.nPct?.citation||null;
+const SubstrateClassNote=({info})=>{
+  if(!info) return null;
+  const alt=info.alternative;
+  const cite=classCitation(info);
+  return(
+    <div data-testid="perito-substrate-class" data-class={info.resolvedClass} data-near-threshold={info.nearThreshold?'true':'false'} style={{marginTop:6}}>
+      <div className="os-provenance-line" style={{textTransform:'none',letterSpacing:0}}>
+        {[
+          `Clase de sustrato: ${info.fallback&&info.substrateLabel&&info.substrateLabel!==info.label?`${info.substrateLabel} (sin objetivos propios; se usan los de ${info.label})`:info.label}`,
+          `suplemento ${info.supplementPct} %${info.hasMediumSupplement?' ponderado (los suplementos medios cuentan al 60 %)':''}`,
+          fmtClassRanges(info)?`objetivos ${fmtClassRanges(info)}`:null,
+          cite,
+        ].filter(Boolean).join(' · ')}
+      </div>
+      {info.nearThreshold&&alt&&(
+        <div data-testid="perito-class-threshold" className="os-provenance-notice os-provenance-notice--estimated" style={{marginTop:4}}>
+          {alt.direction==='above'
+            ?`Si el suplemento llega a ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt)?` (${fmtClassRanges(alt)})`:''} y el veredicto se recalcula con esos rangos.`
+            :`Si el suplemento baja de ${info.thresholdPct} %, la receta pasa a evaluarse como ${alt.label}${fmtClassRanges(alt)?` (${fmtClassRanges(alt)})`:''} y el veredicto se recalcula con esos rangos.`}
+          {' '}El umbral de {info.thresholdPct} % es un criterio de clasificación del modelo, sin fuente publicada.
+        </div>
+      )}
+    </div>
+  );
+};
+const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
+  if(!change) return null;
+  const cite=classCitation(change.to);
+  return(
+    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'#7A5A10',fontFamily:'var(--font-mono)',marginTop:3}}>
+      <span style={{fontWeight:700}}>Cambia la clase de sustrato:</span> {change.from.label} → {change.to.label}.
+      {fmtClassRanges(change.to)?` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite?` (${cite})`:''}.`:''} El índice estimado ya usa esos rangos.
+    </div>
+  );
+};
+const recipeKeyOf=r=>JSON.stringify((r||[]).map(x=>[x.id,Number(x.p)||0]));
+// Resumen de Auto-mejorar: qué aplicó, cómo cambió el veredicto y cómo
+// volver atrás. Sin cambios, lo dice en vez de no hacer nada visible.
+const AutoImproveSummary=({result,onUndo,canUndo})=>{
+  if(!result) return null;
+  const {steps,before,after}=result;
+  if(!steps.length) return(
+    <div data-testid="auto-improve-summary" data-steps="0" role="status" aria-live="polite" className="os-provenance-notice" style={{marginBottom:10}}>
+      Auto-mejorar no encontró un ajuste que quite críticos o suba el score con los ingredientes y bloqueos actuales{before?` (score ${before.score}, ${before.criticals} crítico${before.criticals===1?'':'s'})`:''}.
+    </div>
+  );
+  return(
+    <div data-testid="auto-improve-summary" data-steps={steps.length} role="status" aria-live="polite" className="os-provenance-notice" style={{marginBottom:10,display:'flex',gap:10,alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap'}}>
+      <div style={{flex:'1 1 240px',minWidth:0}}>
+        <b>Auto-mejorar aplicó {steps.length} ajuste{steps.length===1?'':'s'}</b> para: {steps.map(st=>st.labels.join(' + ')).join(' → ')}.
+        {before&&after&&<> Score {before.score} → {after.score} · críticos {before.criticals} → {after.criticals}.</>}
+      </div>
+      {canUndo&&<button type="button" className="sdp-btn sdp-btn--secondary" onClick={onUndo} style={{flexShrink:0,padding:'6px 12px'}}>Deshacer Auto-mejorar</button>}
+    </div>
+  );
+};
+const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredients,evaluate,onMorph})=>{
   const changes=describePeritoChanges(recipe,item.apply,lockedIds,ingredients);
   const comboChanges=describePeritoChanges(recipe,item.comboApply,lockedIds,ingredients);
   const hasPrediction=item.predictedScore!=null&&baseScore!=null;
   const scoreDelta=hasPrediction?Math.round(item.predictedScore-baseScore):null;
 
+  // Mismo evaluador que el veredicto (peritoEvaluate): el ΔScore y el
+  // "Índice estimado" de abajo salen del mismo contexto y coinciden.
   const deltaSim=React.useMemo(()=>{
-    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length) return null;
+    if(!item.apply||!engineSimulateSuggestionDelta||!recipe?.length||typeof evaluate!=='function') return null;
     try{
-      const sK=speciesKey||(item.speciesKey)||'p_ostreatus_gris';
-      const curAn=analyze(recipe,sK,ingredients,SPP);
       return engineSimulateSuggestionDelta({
         recipe,
         apply:item.apply,
         lockedIds,
         ingredients,
         applyOptToRecipe,
-        analyze:(r)=>analyze(r,sK,ingredients,SPP),
-        score:(anObj,extra)=>scoreAn(anObj,extra),
-        baseAn:curAn,
+        evaluate,
+        baseAn:evaluate(recipe)?.an,
         baseScore,
       });
     }catch(_){
       return null;
     }
-  },[recipe,item.apply,lockedIds,ingredients,speciesKey,baseScore]);
+  },[recipe,item.apply,lockedIds,ingredients,evaluate,baseScore]);
+  const classChange=React.useMemo(()=>{
+    if(typeof evaluate!=='function'||!SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from=evaluate(recipe)?.an?.targets;
+    const to=deltaSim?.resultingAn?.targets;
+    return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
+  },[evaluate,recipe,deltaSim]);
+  const comboClassChange=React.useMemo(()=>{
+    if(!item.comboApply||typeof evaluate!=='function'||!SetasSpeciesTargetsApi?.describeClassChange) return null;
+    const from=evaluate(recipe)?.an?.targets;
+    const to=evaluate(applyOptToRecipe(recipe,item.comboApply,lockedIds,ingredients))?.an?.targets;
+    return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
+  },[evaluate,recipe,item.comboApply,lockedIds,ingredients]);
 
   return(
   <div className={`perito-item pi-${item.priority}`}>
@@ -1927,7 +2026,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
-            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({deltaSim.diff.newEb}%)
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({Math.round(deltaSim.diff.newEb)}%)
           </span>
           {deltaSim.diff.confidence&&(
             <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>
@@ -1941,7 +2040,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           )}
           {deltaSim.diff.deltaCn!==0&&(
             <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:'var(--paper-200)',color:'var(--ink-700)'}}>
-              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({deltaSim.diff.newCn}:1)
+              ΔC:N: {deltaSim.diff.deltaCn>=0?`+${deltaSim.diff.deltaCn}`:deltaSim.diff.deltaCn} ({Number(deltaSim.diff.newCn).toFixed(1)}:1)
             </span>
           )}
         </div>
@@ -1951,11 +2050,13 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+      <ClassChangeNote change={classChange}/>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600,#B5451F)" /> {item.sideEffect}</span></div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
+        <ClassChangeNote change={comboClassChange} testId="perito-combo-class-change"/>
         <PeritoChangePreview changes={comboChanges}/>
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
@@ -2982,10 +3083,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
     <AccessibleModal
       onClose={onClose}
       label="Hub de Integración IoT & Telemetría"
+      dialogClassName="inv-modal iot-hub-dialog"
+      backdropClassName="inv-modal-bg iot-hub-backdrop"
       dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
     >
       {/* Header */}
-      <div style={{ background: 'var(--ink-0, #1A1410)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="iot-hub-header" style={{ background: 'var(--ink-0, #1A1410)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppIcon name="temp" size={20} color="var(--accent-olive, #5B6B44)" />
           <div>
@@ -2997,32 +3100,31 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
           </div>
         </div>
-        <button type="button" className="modal-icon-close" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
+        <button type="button" className="modal-icon-close" aria-label="Cerrar Hub IoT" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
       </div>
 
-      {/* Navigation Pills */}
-      <div style={{ padding: '16px 24px 0', background: 'var(--paper-50)' }}>
-        <div className="iot-hub-pills">
-          <button type="button" className={`iot-hub-pill ${tab === 'nodos' ? 'on' : ''}`} onClick={() => setTab('nodos')}>
-            <AppIcon name="radio" size={12} style={{marginRight:6}} /> Nodos en Finca ({nodes.length})
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'firmware' ? 'on' : ''}`} onClick={() => setTab('firmware')}>
-            <AppIcon name="bolt" size={12} style={{marginRight:6}} /> Generador de Firmware
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'webhook' ? 'on' : ''}`} onClick={() => setTab('webhook')}>
-            <AppIcon name="flask" size={12} style={{marginRight:6}} /> Consola Webhook / Test
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'conexion' ? 'on' : ''}`} onClick={() => setTab('conexion')}>
-            <AppIcon name="plug" size={12} style={{marginRight:6}} /> Conexión en Vivo
-          </button>
-          <button type="button" className={`iot-hub-pill ${tab === 'reglas' ? 'on' : ''}`} onClick={() => setTab('reglas')}>
-            <AppIcon name="gear" size={12} style={{marginRight:6}} /> Reglas de Automatización
-          </button>
+      <div className="iot-hub-navigation">
+        <div className="iot-hub-pills" role="tablist" aria-label="Secciones del Hub IoT" onKeyDown={e=>{
+          const keys=['nodos','firmware','webhook','conexion','reglas'];
+          const index=keys.indexOf(tab);
+          const next=e.key==='ArrowRight'?(index+1)%keys.length:e.key==='ArrowLeft'?(index+keys.length-1)%keys.length:e.key==='Home'?0:e.key==='End'?keys.length-1:null;
+          if(next===null)return;
+          e.preventDefault();setTab(keys[next]);
+          e.currentTarget.querySelector(`#iot-hub-tab-${keys[next]}`)?.focus();
+        }}>
+          {[
+            ['nodos',`Nodos en Finca (${nodes.length})`,'radio'],
+            ['firmware','Generador de Firmware','bolt'],
+            ['webhook','Consola Webhook / Test','flask'],
+            ['conexion','Conexión en Vivo','plug'],
+            ['reglas','Reglas de Automatización','gear'],
+          ].map(([key,label,icon])=><button key={key} type="button" id={`iot-hub-tab-${key}`} role="tab" aria-selected={tab===key} aria-controls="iot-hub-panel" tabIndex={tab===key?0:-1} className={`iot-hub-pill ${tab===key?'on':''}`} onClick={()=>setTab(key)}>
+            <AppIcon name={icon} size={14} style={{marginRight:6}}/>{label}
+          </button>)}
         </div>
       </div>
 
-      {/* Body */}
-      <div style={{ padding: '20px 24px', maxHeight: '68vh', overflowY: 'auto' }}>
+      <div className="iot-hub-body" role="tabpanel" id="iot-hub-panel" aria-labelledby={`iot-hub-tab-${tab}`} tabIndex={0}>
         {tab === 'nodos' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -3059,7 +3161,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                     <button
                       type="button"
                       className="btn btn--sm"
-                      style={{ fontSize: 10.5, padding: '3px 8px' }}
+                      style={{ fontSize: 11, padding: '3px 8px' }}
                       onClick={() => {
                         if (typeof setSelectedClimateRoom === 'function') setSelectedClimateRoom(n.roomId);
                         onClose();
@@ -3072,20 +3174,20 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginTop: 10 }}>
                   <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Temperatura</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Temperatura</div>
                     <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.temp.toFixed(1)}°C</div>
                   </div>
                   <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Humedad Relativa</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Humedad Relativa</div>
                     <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.rh.toFixed(1)}%</div>
                   </div>
                   <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Dióxido de Carbono</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Dióxido de Carbono</div>
                     <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.co2} ppm</div>
                   </div>
                   {n.metrics.subTemp != null && (
                     <div style={{ background: 'var(--paper-100)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Sonda Sustrato</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Sonda Sustrato</div>
                       <div style={{ fontFamily: 'var(--font-num)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>{n.metrics.subTemp.toFixed(1)}°C</div>
                     </div>
                   )}
@@ -3099,8 +3201,8 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 16 }}>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Microcontrolador</label>
-                <select className="field-input" value={fwMcu} onChange={e => setFwMcu(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
+                <label htmlFor="iot-fw-mcu" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Microcontrolador</label>
+                <select id="iot-fw-mcu" name="iot-fw-mcu" className="field-input" value={fwMcu} onChange={e => setFwMcu(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
                   <option value="esp32dev">ESP32 NodeMCU / WROOM-32 (Recomendado)</option>
                   <option value="esp32c3">ESP32-C3 SuperMini (Compacto)</option>
                   <option value="esp8266">ESP8266 Wemos D1 Mini</option>
@@ -3109,8 +3211,8 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </div>
 
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Sala Asignada</label>
-                <select className="field-input" value={fwRoom} onChange={e => setFwRoom(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
+                <label htmlFor="iot-fw-room" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Sala Asignada</label>
+                <select id="iot-fw-room" name="iot-fw-room" className="field-input" value={fwRoom} onChange={e => setFwRoom(e.target.value)} style={{ width: '100%', fontSize: 12 }}>
                   <option value="martha_01">Carpa 01 · Fructificación Orellanas</option>
                   <option value="martha_02">Carpa 02 · Fructificación Shiitake</option>
                   <option value="incubacion_01">Sala 03 · Incubación Térmica</option>
@@ -3118,10 +3220,13 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </div>
 
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Servidor Setas OS (Host : Puerto)</label>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <input type="text" className="field-input" value={fwServerHost} onChange={e => setFwServerHost(e.target.value)} style={{ flex: 2, fontSize: 12 }} />
-                  <input type="text" className="field-input" value={fwServerPort} onChange={e => setFwServerPort(e.target.value)} style={{ flex: 1, fontSize: 12 }} />
+                <div className="iot-hub-server-fields">
+                  <div><label htmlFor="iot-fw-host">Host del servidor Setas OS</label>
+                    <input id="iot-fw-host" name="iot-fw-host" type="text" className="field-input" autoComplete="off" spellCheck={false} value={fwServerHost} onChange={e=>setFwServerHost(e.target.value)}/>
+                  </div>
+                  <div><label htmlFor="iot-fw-port">Puerto del servidor</label>
+                    <input id="iot-fw-port" name="iot-fw-port" type="text" inputMode="numeric" className="field-input" autoComplete="off" value={fwServerPort} onChange={e=>setFwServerPort(e.target.value)}/>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3162,7 +3267,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
 
             {/* Selector de formato de exportación */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div className="iot-hub-export" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button type="button" className={`iot-hub-pill ${fwFormat === 'esphome' ? 'on' : ''}`} onClick={() => setFwFormat('esphome')}>
                   <AppIcon name="file" size={12} style={{marginRight:6}} /> ESPHome (YAML)
@@ -3227,7 +3332,9 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </button>
             </div>
 
+            <label htmlFor="iot-webhook-json">JSON de telemetría de prueba</label>
             <textarea
+              id="iot-webhook-json" name="iot-webhook-json" spellCheck={false}
               className="field-input"
               rows={8}
               style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: '#181512', color: '#E6E1D8', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
@@ -3248,7 +3355,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </button>
 
               {webhookFeedback && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
+                <div role="status" aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: webhookFeedback.success ? 'var(--moss-800)' : 'var(--accent-terracotta)', fontWeight: 700 }}>
                   {webhookFeedback.success ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : <AppIcon name="close" size={11} style={{marginRight:4}} />} {webhookFeedback.msg}
                 </div>
               )}
@@ -3272,10 +3379,10 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                       {t.state}{t.fresh ? ' · datos frescos' : t.lastDataAt ? ' · sin datos recientes' : ''}
                     </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                       {t.readingsIn} lecturas · {t.attempts} reintento{t.attempts === 1 ? '' : 's'}
                     </div>
-                    {t.lastError && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-terracotta)' }}>{t.lastError}</div>}
+                    {t.lastError && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-terracotta)' }}>{t.lastError}</div>}
                   </div>
                 ))}
                 {(liveTelemetry.status.transports || []).length === 0 && (
@@ -3288,25 +3395,25 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
 
             <div style={{ display: 'grid', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                <label htmlFor="iot-conn-ws" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                   WebSocket del gateway (prioridad 1 · menor latencia)
                 </label>
-                <input type="text" className="field-input" value={connWs} onChange={e => { setConnWs(e.target.value); setConnSaved(false); }}
+                <input type="text" id="iot-conn-ws" name="iot-conn-ws" className="field-input" value={connWs} onChange={e => { setConnWs(e.target.value); setConnSaved(false); }}
                   placeholder="wss://gateway.setasdelapena.local/telemetry" style={{ width: '100%', fontSize: 12 }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                <label htmlFor="iot-conn-mqtt" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                   Broker MQTT sobre WebSocket (prioridad 2)
                 </label>
-                <input type="text" className="field-input" value={connMqtt} onChange={e => { setConnMqtt(e.target.value); setConnSaved(false); }}
+                <input type="text" id="iot-conn-mqtt" name="iot-conn-mqtt" className="field-input" value={connMqtt} onChange={e => { setConnMqtt(e.target.value); setConnSaved(false); }}
                   placeholder="wss://broker.setasdelapena.local:9001" style={{ width: '100%', fontSize: 12 }} />
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)', marginTop: 3 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>
                   Mosquitto necesita <code>listener 9001</code> + <code>protocol websockets</code>. Topics: <code>setas/&lt;sala&gt;/&lt;nodo&gt;/&lt;métrica&gt;</code>.
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Topics suscritos</label>
-                <input type="text" className="field-input" value={connTopics} onChange={e => { setConnTopics(e.target.value); setConnSaved(false); }}
+                <label htmlFor="iot-conn-topics" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Topics suscritos</label>
+                <input type="text" id="iot-conn-topics" name="iot-conn-topics" className="field-input" value={connTopics} onChange={e => { setConnTopics(e.target.value); setConnSaved(false); }}
                   style={{ width: '100%', fontSize: 12 }} />
               </div>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -3315,14 +3422,14 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   Firestore (prioridad 3 · sobrevive a NAT y firewalls)
                 </label>
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                  <label htmlFor="iot-conn-pressure" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
                     Presión barométrica local (hPa)
                   </label>
-                  <input type="number" className="field-input" value={connPressure} onChange={e => { setConnPressure(e.target.value); setConnSaved(false); }}
+                  <input type="number" id="iot-conn-pressure" name="iot-conn-pressure" className="field-input" value={connPressure} onChange={e => { setConnPressure(e.target.value); setConnSaved(false); }}
                     style={{ width: 120, fontSize: 12 }} />
                 </div>
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                 745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación
                 de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico.
               </div>
@@ -3341,7 +3448,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   Guardar y reconectar
                 </button>
                 {connSaved && (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
+                  <span role="status" aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--moss-800)', fontWeight: 700 }}>
                     <AppIcon name="check" size={12} style={{marginRight:4}} /> Puente reiniciado con la configuración nueva
                   </span>
                 )}
@@ -3363,12 +3470,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Mínima de Arranque (%)</label>
-                    <input type="number" className="field-input" value={autoRhMin} onChange={e => setAutoRhMin(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-rh-min" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Mínima de Arranque (%)</label>
+                    <input type="number" id="iot-rule-rh-min" name="iot-rule-rh-min" className="field-input" value={autoRhMin} onChange={e => setAutoRhMin(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Target de Reposo (%)</label>
-                    <input type="number" className="field-input" value={autoRhTarget} onChange={e => setAutoRhTarget(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-rh-target" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>HR Target de Reposo (%)</label>
+                    <input type="number" id="iot-rule-rh-target" name="iot-rule-rh-target" className="field-input" value={autoRhTarget} onChange={e => setAutoRhTarget(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                 </div>
               </div>
@@ -3379,12 +3486,12 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Límite Máximo CO2 (ppm)</label>
-                    <input type="number" className="field-input" value={autoCo2Max} onChange={e => setAutoCo2Max(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-co2-max" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Límite Máximo CO2 (ppm)</label>
+                    <input type="number" id="iot-rule-co2-max" name="iot-rule-co2-max" className="field-input" value={autoCo2Max} onChange={e => setAutoCo2Max(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                   <div>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Duración Pulso FAE (segundos)</label>
-                    <input type="number" className="field-input" value={autoFaeDuration} onChange={e => setAutoFaeDuration(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                    <label htmlFor="iot-rule-fae-duration" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Duración Pulso FAE (segundos)</label>
+                    <input type="number" id="iot-rule-fae-duration" name="iot-rule-fae-duration" className="field-input" value={autoFaeDuration} onChange={e => setAutoFaeDuration(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   </div>
                 </div>
               </div>
@@ -3394,10 +3501,10 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
                   <AppIcon name="temp" size={13} style={{marginRight:6}} /> Seguridad Biológica de Sustrato
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
-                  <input type="number" step="0.5" className="field-input" value={autoSubTempMax} onChange={e => setAutoSubTempMax(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
+                  <label htmlFor="iot-rule-sub-temp" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, display: 'block' }}>Temperatura Crítica de Sustrato (°C)</label>
+                  <input type="number" step="0.5" id="iot-rule-sub-temp" name="iot-rule-sub-temp" className="field-input" value={autoSubTempMax} onChange={e => setAutoSubTempMax(Number(e.target.value))} style={{ width: '100%', fontSize: 12 }} />
                   <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--ink-2)', marginTop: 4 }}>
-                    Si $T_{'{sustrato}'} &gt; 28^\circ\text{C}$ durante incubación, se dispara alerta de riesgo de daño al micelio.
+                    Si la temperatura de sustrato supera 28 °C durante incubación, se dispara alerta de riesgo de daño al micelio.
                   </div>
                 </div>
               </div>
@@ -3422,7 +3529,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '12px 24px', background: 'var(--paper-100)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="iot-hub-footer" style={{ padding: '12px 24px', background: 'var(--paper-100)', borderTop: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'flex-end' }}>
         <button type="button" className="inv-btn inv-btn-pri" onClick={onClose} style={{ fontSize: 11 }}>
           Cerrar
         </button>
@@ -4167,6 +4274,21 @@ const procedenciaSinMatrizNutritiva=()=>({texto:'Sin matriz nutritiva',title:'Es
 // arma el texto a partir de detail/caveat de describe(), no de cadenas escritas
 // a mano, para que si el vocabulario cambia la pantalla cambie con él.
 const cap=(s)=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+// ── Procedencia del costo y ausencia de objetivo ──
+// El costo que muestran el Perito y el resumen es an.cost: SIEMPRE el precio de
+// catálogo por kg seco. No hay objetivo de costo con fuente (knowledge_base/
+// 07_business/pricing.md: costo por kg aún desconocido; la comparación válida
+// es COP/kg vendible con lotes reales), así que la métrica no lleva calificación
+// Óptimo/Ajustar — antes se juzgaba contra $800/$2.000, umbrales sin fuente que
+// marcaban "Ajustar" en dos de cada tres recetas del catálogo.
+const COST_NO_TARGET_TITLE='Sin objetivo de costo con fuente: la base de conocimiento aún no tiene costo por kg vendible de lotes reales. El valor sirve para comparar recetas entre sí.';
+const procedenciaCosto=(cost,realCostPerKg)=>{
+  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
+  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
+  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(cost||0))>=20;
+  return{texto:hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base,title:COST_NO_TARGET_TITLE};
+};
 const procedenciaNutrientesResumen=()=>{
   const prov=typeof window!=='undefined'?window.SetasProvenance:null;
   const ligno=prov?prov.describe({vocabulary:'nutrient',value:'catalog-lignocellulosic'}):null;
@@ -4635,39 +4757,75 @@ const runHybridRecipeSearch=({
     lockedIds:new Set(lockedIds||[]),
   });
 };
-// ── Auto-mejorar: aplica en cadena la sugerencia crítica/advertencia que de
-//    verdad mejora el score global (hasta maxIter pasos) — prueba las 3 de
-//    mayor score predicho y se queda con la mejor tras aplicarla, no solo con la
-//    primera de la lista. `spp` son los objetivos resueltos del Formulador: el
+// ── Auto-mejorar: aplica en cadena (hasta maxIter pasos) el ajuste crítico o
+//    de advertencia que más avanza — evalúa todos los ajustes accionables y
+//    sus correcciones combinadas, y si ninguno avanza solo, pares de ajustes.
+//    `spp` son los objetivos resueltos del Formulador: el
 //    análisis y las cantidades de cada paso usan los mismos rangos que la UI
 //    (sin él, analyze caería al SPP heredado y empujaría hacia su C:N ideal).
-const autoImproveRecipe=({recipe,sKey,ings,optimizerINGS,spp,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
-  let cur=recipe;let bestScore=-1;
+// `resolveSpp` (receta → objetivos) hace que cada paso use los objetivos de la
+// receta en ese momento: aplicar un ajuste puede cambiar la clase de sustrato,
+// y puntuar el paso siguiente con los rangos de la receta inicial lo aceptaría
+// o rechazaría con el contexto equivocado. Sin él, `spp` fijo como antes.
+// Progreso de Auto-mejorar: primero menos críticos, después más score. Con
+// varios críticos, el tope de severidad deja el score igual al corregir solo
+// uno, y la regla anterior ("solo si sube el score") se detenía ahí con la
+// receta en "No ejecutar". Ahora un paso que quita un crítico sin bajar el
+// score es progreso; uno que no quita críticos tiene que subir el score; uno
+// que agrega críticos nunca se acepta.
+const autoImproveIsBetter=(next,cur)=>(next.criticals<cur.criticals&&next.score>=cur.score)||(next.criticals===cur.criticals&&next.score>cur.score);
+const AUTO_IMPROVE_PAIR_POOL=8;
+const autoImproveOps=apply=>Array.isArray(apply)?apply:(apply?[apply]:[]);
+const autoImproveRecipeDetailed=({recipe,sKey,ings,optimizerINGS,spp,resolveSpp=null,stockIds,lockedIds,useStock,usageCounts,histStats,maxIter=6})=>{
+  const evaluate=createRecipeEvaluator({sKey,ings,spp,resolveSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze});
+  const sppFor=r=>(typeof resolveSpp==='function'&&resolveSpp(r))||spp;
+  // Mismo evaluador que el veredicto: el score de cada candidato es el que el
+  // Perito mostrará después de aplicarlo.
+  const progressOf=r=>{
+    const e=evaluate(r);
+    if(!e) return null;
+    return{score:e.score,status:e.status,criticals:SetasScoring.assessSeverity(e.an).criticals};
+  };
+  let cur=recipe;
+  let curP=progressOf(cur);
+  const before=curP;
+  const steps=[];
+  if(!curP) return{recipe,steps,before:null,after:null};
   for(let i=0;i<maxIter;i++){
-    const a=analyze(cur,sKey,ings,spp);
+    const curSpp=sppFor(cur);
+    const a=analyze(cur,sKey,ings,curSpp);
     if(!a) break;
-    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,spp,usageCounts);
-    if(o.score<=bestScore) break;
-    bestScore=o.score;
-    const candidates=o.items
-      .filter(it=>it.apply&&(it.priority==='critical'||it.priority==='warning'))
-      .sort((x,y)=>(y.predictedScore??-1)-(x.predictedScore??-1))
-      .slice(0,3);
-    if(!candidates.length) break;
-    let bestCandScore=-1,bestCandidate=null,bestO2=null;
-    for(const cand of candidates){
-      const tryRec=applyOptToRecipe(cur,cand.apply,lockedIds,optimizerINGS);
-      const tryA=analyze(tryRec,sKey,ings,spp);
-      if(!tryA) continue;
-      const tryO=generateOptimizer(tryA,sKey,stockIds,tryRec,optimizerINGS,lockedIds,blendEBWithHistory(tryA,histStats),useStock,undefined,spp,usageCounts);
-      if(tryO.score>bestCandScore){bestCandScore=tryO.score;bestCandidate=tryRec;bestO2=tryO;}
+    const o=generateOptimizer(a,sKey,stockIds,cur,optimizerINGS,lockedIds,blendEBWithHistory(a,histStats),useStock,undefined,curSpp,usageCounts,evaluate);
+    const moves=[];
+    o.items.filter(it=>it.priority==='critical'||it.priority==='warning').forEach(it=>{
+      if(it.apply) moves.push({apply:it.apply,icons:[it.icon],labels:[it.label]});
+      if(it.comboApply) moves.push({apply:it.comboApply,icons:[it.icon],labels:[it.comboLabel||it.label]});
+    });
+    if(!moves.length) break;
+    let best=null;
+    const tryMove=(apply,meta)=>{
+      const next=applyOptToRecipe(cur,apply,lockedIds,optimizerINGS);
+      const p=progressOf(next);
+      if(p&&autoImproveIsBetter(p,curP)&&(!best||autoImproveIsBetter(p,best.after))) best={recipe:next,apply,after:p,...meta};
+    };
+    moves.forEach(m=>tryMove(m.apply,{icons:m.icons,labels:m.labels}));
+    // Ningún ajuste suelto avanza: probar dos a la vez (p. ej. N y pH), que es
+    // lo que hace falta cuando cada crítico por separado no cambia el score.
+    if(!best){
+      const pool=moves.slice(0,AUTO_IMPROVE_PAIR_POOL);
+      for(let x=0;x<pool.length;x++) for(let y=0;y<pool.length;y++){
+        if(x===y) continue;
+        tryMove([...autoImproveOps(pool[x].apply),...autoImproveOps(pool[y].apply)],{icons:[...pool[x].icons,...pool[y].icons],labels:[...pool[x].labels,...pool[y].labels]});
+      }
     }
-    if(!bestCandidate) break;
-    if(bestO2.score<=o.score) break; // no aceptar si no mejora el score global
-    cur=bestCandidate;
+    if(!best) break;
+    steps.push({labels:best.labels,icons:best.icons,ingredientIds:[...new Set(autoImproveOps(best.apply).map(op=>op&&op.id).filter(Boolean))],before:curP,after:best.after});
+    cur=best.recipe;
+    curP=best.after;
   }
-  return cur;
+  return{recipe:cur,steps,before,after:curP};
 };
+const autoImproveRecipe=args=>autoImproveRecipeDetailed(args).recipe;
 // ── Entradas del plan de lanzamiento compartidas por "Lanzar Lote" y
 //    "Ejecutar Lote" (I4/I5). La humedad que el operador editó a mano manda;
 //    si no la tocó, el objetivo resuelto de la especie. El spawn es grano
@@ -6434,6 +6592,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [releaseBatchId,setReleaseBatchId]=useState(null);
   const [prodLaunchForm,setProdLaunchForm]=useState(null);
   const [showIoTHub,setShowIoTHub]=useState(false);
+  const iotHubTriggerRef=useRef(null);
   const [injectedClimateReadings,setInjectedClimateReadings]=useState({});
   // Puente de telemetría en vivo (WebSocket / MQTT / Firestore) + motor de
   // umbrales. Se monta una sola vez en el shell y alimenta a la vez el strip de
@@ -6548,6 +6707,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const qrLotesRef=useRef(bitLotes);
   qrLotesRef.current=bitLotes;
   const [bitBolsas,setBitBolsas]=useState([]);
+  const bitBolsasEditRef=useRef(bitBolsas);
+  useEffect(()=>{bitBolsasEditRef.current=bitBolsas;},[bitBolsas]);
   const [bitCosechas,setBitCosechas]=useState([]);
   // Tareas del motor SetasTaskEngine (SOP + follow-ups + siembra inicial de
   // TodayV2). Misma mecánica de persistencia que bitLotes/bitBolsas.
@@ -6717,12 +6878,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Bloquea el scroll del body mientras cualquier modal esté abierto — en iOS Safari
   // el fondo puede seguir haciendo rubber-band scroll detrás de un overlay fixed.
   React.useEffect(()=>{
-    const anyModalOpen=!!(confirmDlg||moveDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId);
+    const anyModalOpen=!!(confirmDlg||moveDlg||promptDlg||versionDlg||noticeDlg||loteBatchConfirm||showBitNuevo||showBitCosecha||showQrSheet||showThermalModal||showDiagModal||showTriageModal||showAIFormModal||showProvModal||catalogModalOpen||showProdLaunchModal||publicTraceModalLoteId||showIoTHub);
     if(!anyModalOpen) return;
     const prevOverflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     return ()=>{document.body.style.overflow=prevOverflow;};
-  },[confirmDlg,moveDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId]);
+  },[confirmDlg,moveDlg,promptDlg,versionDlg,noticeDlg,loteBatchConfirm,showBitNuevo,showBitCosecha,showQrSheet,showThermalModal,showDiagModal,showTriageModal,showAIFormModal,showProvModal,catalogModalOpen,showProdLaunchModal,publicTraceModalLoteId,showIoTHub]);
   const [collapsedMonths,setCollapsedMonths]=useState({});
   const [editingRowId,setEditingRowId]=useState(null);
   const [editingRowData,setEditingRowData]=useState({stock:'',precio:'',proveedorId:'',alertaMin:'',ingredienteNuevoId:''});
@@ -7421,7 +7582,15 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Por ingrediente, no por ícono (appliedIcons ya cubre eso a otro nivel).
   const [usageCounts,setUsageCounts]=React.useState({});
   React.useEffect(()=>{setUsageCounts({});},[sKey]);
-  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts]);
+  // Contexto único de score del Perito: veredicto, "Índice estimado" de cada
+  // sugerencia, ΔScore de la tarjeta, Morphing y Auto-mejorar puntúan con el
+  // mismo evaluador. Cada receta evaluada resuelve sus propios objetivos
+  // (resolvePeritoSpp ≡ effectiveSPP para la receta activa), así la predicción
+  // de un ajuste ya refleja si cambia la clase de sustrato.
+  const resolvePeritoSpp=React.useCallback(r=>SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,r,effectiveINGS),[sKey,effectiveINGS]);
+  const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
+  const substrateClassInfo=useMemo(()=>SetasSpeciesTargetsApi.describeSubstrateClass?SetasSpeciesTargetsApi.describeSubstrateClass({speciesId:sKey,recipe,ings:effectiveINGS,legacySpp:SPP}):null,[sKey,recipe,effectiveINGS]);
+  const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
   const peritoRevisionRef=React.useRef(0);
@@ -7542,8 +7711,242 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // accionables con mejor predictedScore (generateOptimizer ya lo calcula) y
   // se queda con el que de verdad produce el mejor resultado tras aplicarlo —
   // no solo el primero de la lista.
+  // Auto-mejorar entra al historial como un solo paso: "Deshacer" devuelve la
+  // receta de antes de todos sus ajustes. Registra ingredientes e íconos igual
+  // que "Aplicar ajuste" y deja un resumen visible mientras la receta sea la
+  // que produjo (autoImproveResult.recipeKey).
+  const [autoImproveResult,setAutoImproveResult]=React.useState(null);
   const autoImprove=()=>{
-    setRecipe(autoImproveRecipe({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats}));
+    const res=autoImproveRecipeDetailed({recipe,sKey,ings:effectiveINGS,optimizerINGS,spp:effectiveSPP,resolveSpp:resolvePeritoSpp,stockIds,lockedIds,useStock:optUseStock,usageCounts,histStats});
+    if(!res.steps.length){
+      setAutoImproveResult({recipeKey:recipeKeyOf(recipe),steps:[],before:res.before,after:res.before});
+      return;
+    }
+    setRecipeHistory(h=>[...h,recipe]);
+    setRecipe(res.recipe);
+    setAppliedIcons(s=>{const next={...s};res.steps.forEach(st=>st.icons.forEach(ic=>{next[ic]=(next[ic]||0)+1;}));return next;});
+    setUsageCounts(s=>{const next={...s};res.steps.forEach(st=>st.ingredientIds.forEach(id=>{next[id]=(next[id]||0)+1;}));return next;});
+    setAutoImproveResult({recipeKey:recipeKeyOf(res.recipe),steps:res.steps,before:res.before,after:res.after});
+  };
+  const autoImproveSummary=autoImproveResult&&autoImproveResult.recipeKey===recipeKeyOf(recipe)?autoImproveResult:null;
+  // ── Panel del Perito: una sola implementación ──
+  // Antes el Formulador (#bl-perito) y la Mesa del Perito (subpestaña
+  // Generador, .perito-standalone-panel) tenían dos copias del mismo panel
+  // —encabezado, métricas, medidores y tarjetas— que ya diferían en textos,
+  // métricas y orden. Ahora ambos renderizan esto; la variante solo agrega lo
+  // propio de cada lugar: siguiente paso del flujo, crear prueba, gráficos y
+  // evaluación técnica en el Formulador; factor restrictivo y contexto físico
+  // de Tenjo en la Mesa del Perito. La "barra resumen" que repetía score, EB y
+  // costo justo debajo de las métricas se retiró: el costo por kg de hongo
+  // quedó como segunda línea de la métrica de costo.
+  const peritoItemKeys=list=>{const seen=new Map();return list.map(it=>{const base=`${it.priority}|${it.icon}|${it.label}`;const n=seen.get(base)||0;seen.set(base,n+1);return n?`${base}#${n}`:base;});};
+  const renderPeritoPanel=(variant)=>{
+    const isWorkbench=variant==='workbench';
+    if(!an) return isWorkbench?(
+      <section className="panel perito-standalone-panel" data-perito-variant={variant} style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
+        <div className="os-provenance-notice">Agrega ingredientes en la Mesa de Mezcla para ver el diagnóstico del Perito.</div>
+      </section>
+    ):null;
+    const hasPer=recipe.length>0;
+    const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
+    const criticals=items.filter(s=>s.priority==='critical');
+    const warnings=items.filter(s=>s.priority==='warning');
+    const tips=items.filter(s=>s.priority==='tip');
+    const infos=items.filter(s=>s.priority==='info');
+    const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
+    const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
+    const cur=sp?Math.min(an.cn,max):0;
+    const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
+    const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
+    const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
+    const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+    const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
+    const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
+    return(
+      <section className={`panel print-panel${isWorkbench?' perito-standalone-panel':''}`} id={isWorkbench?undefined:'bl-perito'} data-perito-variant={variant} aria-label="Perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:isWorkbench?24:12,transition:'background .3s,border-color .3s',...(isWorkbench?{padding:20,borderRadius:'var(--r-md)'}:{})}}>
+        {/* ── ENCABEZADO: score, veredicto y acciones (Auto-mejorar primero, asistente IA al final) ── */}
+        {hasPer&&(
+          <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
+                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
+                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
+                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
+                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
+                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
+                        </div>
+              {isWorkbench&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4}}>Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})</div>}
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
+                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
+                          Deshacer ({recipeHistory.length})
+                        </button>}
+              {!isWorkbench&&<>
+                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+              </>}
+                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
+                          <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
+                        </button>
+            </div>
+          </div>
+        )}
+        {hasPer&&<div style={{marginTop:-8,marginBottom:12}}><SubstrateClassNote info={substrateClassInfo}/></div>}
+        {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
+
+        {isWorkbench&&<>
+                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
+                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                          Factor Restrictivo Estimado: {restrictiveFactor.label}
+                        </span>
+                      </div>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
+                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
+                      </div>
+                      {restrictiveFactor.counterfactualOpportunity&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
+                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
+                        </div>
+                      )}
+                      {restrictiveFactor.actionRequired&&(
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                          → Acción correctiva: {restrictiveFactor.actionRequired}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+
+                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
+                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
+                        <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
+                      </div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                        All American 1941X: {reqPsi.toFixed(2)} psig
+                      </span>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
+                      <div>
+                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                      </div>
+                      <div>
+                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
+                      </div>
+                      <div>
+                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
+                      </div>
+                    </div>
+                  </div>
+
+        </>}
+
+        {/* ── MÉTRICAS ── */}
+        <div className="mgrid" style={{marginBottom:12}}>
+          {[
+                        {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
+                        {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
+                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
+                        {l:'Costo / kg seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,neutral:true,prov:procedenciaCosto(an.cost,realCostPerKg),sub:an.eb>0?`≈ $${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')} por kg de hongo con la EB estimada`:null},
+                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
+                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
+                    ].map(m=>(
+                      <div key={m.l} className="mc">
+                        <div className="mlbl">{m.l}</div>
+                        <div className="mval">{m.v}</div>
+                        {m.neutral
+                          ?<span className="mbadge bneutral" data-testid="metric-no-target" title={COST_NO_TARGET_TITLE}>Sin objetivo</span>
+                          :<span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>}
+                        {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
+              {m.sub&&<span className="os-provenance-line" data-testid="metric-sub">{m.sub}</span>}
+                      </div>
+                    ))}
+        </div>
+        <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
+
+        {/* ── EB + C:N ── */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:16,margin:'12px 0'}}>
+          <EBDial an={an} sp={sp}/>
+                  {sp&&an.cn>0&&(
+                    <div className="gauge-wrap">
+                      <div className="gauge-hdr">
+                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
+                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
+                      </div>
+                      <div className="gauge-tr">
+                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
+                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                      </div>
+                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
+                    </div>
+                  )}
+        </div>
+        <NitrogenChart recipe={recipe}/>
+
+        {/* ── EVIDENCIA + SUGERENCIAS ── */}
+        {hasPer&&(
+          <>
+                      {histStats&&histStats.n>0&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
+                        </div>}
+                      {modelAccuracy!=null&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
+                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
+                        </div>}
+                      {similarTrial&&
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
+                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
+                        </div>}
+                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
+                      </div>
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
+            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
+            {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
+            {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
+            {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
+          </>
+        )}
+
+        {!isWorkbench&&<>
+                  {/* ── CHARTS TOGGLE + CHARTS ── */}
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
+                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
+                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
+                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
+                  </div>
+                  {showFlush&&<FlushChart an={an}/>}
+                  {showCompChart&&<CompositionChart recipe={recipe}/>}
+                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
+
+                  {/* ── EVALUACIÓN TÉCNICA ── */}
+                  <div className="dbox" style={{marginTop:8}}>
+                    <div className="dttl">Evaluación</div>
+                    <div className="dtxt">{dg.main}</div>
+                  </div>
+                  {dg.sugs.length>0&&(<>
+                    <div className="sec" style={{marginTop:8}}>A considerar</div>
+                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
+                  </>)}
+        </>}
+      </section>
+    );
   };
   // Impresión de la Hoja de Producción.
   // ── openPrintWindow: abre una ventana nueva con la hoja de producción y la imprime.
@@ -8171,7 +8574,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       window.SetasPublicTraceDB?.publicarLote({...loteActual,...fields}, cos, bol).catch(e=>console.warn('No se publicó la ficha pública del lote:',e));
     }
   };
-  const updateBitBolsa=(bolsaId,fields)=>{
+  const updateBitBolsa=(bolsaId,fields,options={})=>{
     const fechaKey=['col25','col50','col100'].find(k=>k in fields);
     if(fechaKey&&fields[fechaKey]){
       const bolsa=bitBolsas.find(b=>b.id===bolsaId);
@@ -8181,8 +8584,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
         return;
       }
     }
-    setBitBolsas(prev=>{const upd=prev.map(b=>b.id===bolsaId?{...b,...fields}:b);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){bitQuotaWarn();}return upd;});
+    if(!bitBolsasEditRef.current.some(b=>b.id===bolsaId)) return false;
+    const upd=bitBolsasEditRef.current.map(b=>b.id===bolsaId?{...b,...fields}:b);
+    // Persist first: a failed local write must not appear saved or reach sync.
+    try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){if(!options.silent)bitQuotaWarn();return false;}
+    bitBolsasEditRef.current=upd;
+    setBitBolsas(upd);
     encolarSync({type:'actualizarBolsa',key:'bolsa:'+bolsaId,args:[bolsaId,fields]});
+    return true;
   };
   // Fusiona tareas nuevas con las existentes vía SetasTaskEngine.mergeTasks (la
   // idempotencia la da el motor por id determinista: no se reimplementa aquí)
@@ -9963,7 +10372,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <span className="live-telemetry-status__alt" title="Los sensores NDIR subestiman el CO₂ ~26 % a esta altitud; el puente corrige cada lectura antes de evaluarla.">
           CO₂ compensado · {liveTelemetry.status.altitudeM||2600} msnm
         </span>
-        <button className="os-action live-telemetry-status__cfg" type="button" onClick={()=>setShowIoTHub(true)}>
+        <button ref={iotHubTriggerRef} className="os-action live-telemetry-status__cfg" type="button" onClick={()=>setShowIoTHub(true)}>
           Configurar
         </button>
       </div>
@@ -10640,7 +11049,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
     );
   };
   if (typeof window !== 'undefined') window.BatchSheetModal = BatchSheetModal;
-  const ClimateDashboardSection = () => {
+  // Keep the operator projection across telemetry-driven panel remounts.
+    const [activeCulinaryKey, setActiveCulinaryKey] = useState('firme');
+    const [tempProj, setTempProj] = useState(14.0);
+    const [rhProj, setRhProj] = useState(82.0);
+    const [co2Proj, setCo2Proj] = useState(700);
+  const useClimateDashboardView = () => {
     const climateMath = typeof window !== 'undefined' ? window.SetasClimate : null;
     // Tablero de salas: toda la proyección (ocupación, ambiente, alertas,
     // próxima acción) la calcula SetasRoomState.buildRoomBoard — aquí sólo se
@@ -10774,10 +11188,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
       }
     };
 
-    const [activeCulinaryKey, setActiveCulinaryKey] = useState('firme');
-    const [tempProj, setTempProj] = useState(14.0);
-    const [rhProj, setRhProj] = useState(82.0);
-    const [co2Proj, setCo2Proj] = useState(700);
     const [dragNode, setDragNode] = useState(null);
 
     const canvasRef = useRef(null);
@@ -11232,6 +11642,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <button
               type="button"
               className="btn btn--sm btn--secondary"
+              ref={iotHubTriggerRef}
               onClick={() => setShowIoTHub(true)}
               style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 10px',fontSize:11}}
             >
@@ -11651,7 +12062,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
           
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:20,marginTop:16}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',gap:20,marginTop:16}}>
             {/* Controles y Sliders */}
             <div style={{display:'flex',flexDirection:'column',gap:16}}>
               {/* Selector Culinario */}
@@ -11724,8 +12135,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     max="32" 
                     step="0.5" 
                     value={tempProj} 
-                    onChange={(e) => setTempProj(parseFloat(e.target.value))}
-                    aria-label="Proyección de temperatura (°C)"
+                    onChange={e => setTempProj(parseFloat(e.target.value))}
+                    id="climate-temp-projection" name="climate-temp-projection" aria-label="Proyección de temperatura (°C)" aria-valuetext={`${tempProj} °C`}
                     style={{width:'100%'}}
                   />
                 </div>
@@ -11742,8 +12153,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     max="99" 
                     step="1" 
                     value={rhProj} 
-                    onChange={(e) => setRhProj(parseInt(e.target.value))}
-                    aria-label="Proyección de humedad relativa (%)"
+                    onChange={e => setRhProj(parseInt(e.target.value))}
+                    id="climate-rh-projection" name="climate-rh-projection" aria-label="Proyección de humedad relativa (%)" aria-valuetext={`${rhProj} %`}
                     style={{width:'100%'}}
                   />
                 </div>
@@ -11760,8 +12171,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     max="2200" 
                     step="25" 
                     value={co2Proj} 
-                    onChange={(e) => setCo2Proj(parseInt(e.target.value))}
-                    aria-label="Proyección de nivel de CO₂ (ppm)"
+                    onChange={e => setCo2Proj(parseInt(e.target.value))}
+                    id="climate-co2-projection" name="climate-co2-projection" aria-label="Proyección de nivel de CO₂ (ppm)" aria-valuetext={`${co2Proj} ppm`}
                     style={{width:'100%'}}
                   />
                 </div>
@@ -11804,6 +12215,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 Interactivo (Arrastra los puntos)
               </span>
               <canvas 
+                role="img" aria-label="Comparación visual de temperatura, humedad y CO₂. Ajusta la proyección con los controles anteriores."
                 ref={canvasRef} 
                 width="220" 
                 height="220" 
@@ -11835,12 +12247,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
 
-            <div className="climate-range-pills">
+            <div className="climate-range-pills" role="group" aria-label="Intervalo de las series ambientales">
               {['1h', '6h', '24h'].map(rng => (
                 <button
                   key={rng}
                   type="button"
                   className={`climate-range-pill ${climateTimeRange === rng ? 'on' : ''}`}
+                  aria-pressed={climateTimeRange === rng}
+                  aria-label={`${rng === '1h' ? 'Última hora' : rng === '6h' ? 'Últimas 6 horas' : 'Últimas 24 horas'}`}
                   onClick={() => setClimateTimeRange(rng)}
                 >
                   {rng}
@@ -11849,7 +12263,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </div>
 
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:14,marginTop:8}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(280px, 100%), 1fr))',gap:14,marginTop:8}}>
             {/* Gráfico 1: Temperatura */}
             <div>
               <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:4}}>
@@ -11857,7 +12271,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Banda: {defaultTargets.temperature_c.min}°C - {defaultTargets.temperature_c.max}°C</span>
               </div>
               <div className="climate-svg-wrap">
-                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                <svg role="img" aria-label={`Temperatura: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
                   <rect x="0" y="40" width="500" height="45" fill="rgba(74, 110, 66, 0.12)" />
                   <line x1="0" y1="62.5" x2="500" y2="62.5" stroke="rgba(74, 110, 66, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
@@ -11873,7 +12287,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Banda: {defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%</span>
               </div>
               <div className="climate-svg-wrap">
-                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                <svg role="img" aria-label={`Humedad relativa: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
                   <rect x="0" y="20" width="500" height="60" fill="rgba(56, 120, 180, 0.12)" />
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
@@ -11889,7 +12303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Límite FAE: &lt; {defaultTargets.co2_ppm.max} ppm</span>
               </div>
               <div className="climate-svg-wrap">
-                <svg viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
+                <svg role="img" aria-label={`CO₂: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />
                   <polyline fill="none" stroke="var(--accent-terracotta)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
                 </svg>
@@ -11935,7 +12349,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   className="climate-actuator-btn"
                   onClick={() => setHumidifierOverride(prev => prev === 'ON' ? null : 'ON')}
                 >
-                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : '<AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)'}
+                  {humidifierOverride === 'ON' ? '↺ Modo Auto' : <><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Forzar Humidificación (1m)</>}
                 </button>
                 {humidifierOverride !== null && (
                   <button
@@ -12003,6 +12417,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       </div>
     );
   };
+
+  // Invoke unconditionally so React preserves the panel DOM and hook state.
+  const climateDashboardView = useClimateDashboardView();
 
   const BitacoraSection=()=>(
 <div>
@@ -12181,14 +12598,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       })()}
                       onChange={pct=>{
                         const today=new Date().toISOString().split('T')[0];
-                        bolsas.forEach(b=>{
+                        if(!bolsas.every(b=>{
                           const up={};
                           if(pct>=25&&!b.col25) up.col25=today;
                           if(pct>=50&&!b.col50) up.col50=today;
                           if(pct>=100&&!b.col100) up.col100=today;
                           up.colonizationPct=pct;
-                          updateBitBolsa(b.id,up);
-                        });
+                          return updateBitBolsa(b.id,up);
+                        })) return;
                         if(pct>=100&&lote.estado==='incubacion'){
                           updateBitLote(lote.id,{estado:'fructificacion'});
                         }
@@ -12200,10 +12617,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       onQuickAction={act=>{
                         const today=new Date().toISOString().split('T')[0];
                         if(act==='primordios'){
+
+                          if(!bolsas.every(b=>{
+                            return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
+                          })) return;
                           updateBitLote(lote.id,{estado:'fructificacion'});
-                          bolsas.forEach(b=>{
-                            updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
-                          });
                           setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${lote.codigo} actualizado a fructificación.`});
                         } else if(act==='riego'){
                           setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad registrada para ${lote.codigo}.`});
@@ -12234,7 +12652,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </td>
                             ))}
                             <td data-label="Observaciones">
-                              <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={bolsa.observaciones||''} placeholder="…" onChange={e=>updateBitBolsa(bolsa.id,{observaciones:e.target.value})} style={{width:'100%',padding:'2px 5px',fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",border:'1px solid var(--paper-300)',borderRadius:3,background:'var(--paper-50)'}}/>
+                              <BagObservationEditor bolsa={bolsa} onSave={updateBitBolsa}/>
                             </td>
                             <td data-label="Foto" style={{textAlign:'center'}}>
                               {bolsa.foto
@@ -12649,38 +13067,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 </div>
 
-                <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--border-hairline)'}}>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:'var(--ink-2, #6B6759)',flexShrink:0}}>
-                    Registro de cultivo · vista previa
-                  </span>
-                  <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
-                    {[
-                      {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
-                      {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
-                      {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
-                      {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
-                      {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
-                    ].map(m=>(
-                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
-                        <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-0)'}}>{m.value}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
-                </div>
-
-                {/* Telemetría en vivo de las cámaras. Va aquí, dentro de la
-                    cabecera del Tablero de Control y por encima de la cola de
-                    trabajo, porque una sala fuera de banda es lo primero que hay
-                    que atender del turno — y porque este es el cockpit que el
-                    operario ve de verdad al entrar (TodayV2 no se monta). */}
-                <div className="home-live-telemetry" style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
-                  <LiveTelemetryStatusBar/>
-                  <LiveAlertsSection/>
-                  <LiveClimateStrip/>
-                </div>
-
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
                   <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border-hairline)'}}>
                   <div style={{border:'1px solid var(--accent-blue-grey)',borderRadius:0,padding:'10px 14px',background:'var(--paper-1)'}}>
@@ -12698,6 +13084,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
 
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
+                {(liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length > 0) && (
                 <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-error,#B53A25)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -12778,6 +13165,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     )
                   )}
                 </section>
+                )}
 
                 {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
                 <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-ok,#2E3B2F)',padding:'16px 18px'}}>
@@ -12787,7 +13175,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok,#2E3B2F)'}}>
                         Banda 2 · Ahora
                       </span>
-                      <span className="sdp-provenance">Acciones directas ≥ 44px</span>
+                      <span className="sdp-provenance">Registro de campo</span>
                     </div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
                       {nowLots.length + tasksHoy.filter(t=>!t.done).length} pendiente{nowLots.length + tasksHoy.filter(t=>!t.done).length === 1 ? '' : 's'}
@@ -12928,6 +13316,39 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </button>
                   </div>
                 </section>
+
+                <details className="home-secondary-summary" data-testid="today-record-summary">
+                  <summary>Resumen del registro de cultivo</summary>
+                <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--border-hairline)'}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:'var(--ink-2, #6B6759)',flexShrink:0}}>
+                    Registro de cultivo · vista previa
+                  </span>
+                  <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
+                    {[
+                      {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
+                      {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
+                      {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
+                      {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
+                      {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                    ].map(m=>(
+                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
+                        <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
+                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-0)'}}>{m.value}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+                </div>
+
+                </details>
+                <details className="home-secondary-summary" data-testid="today-telemetry-summary">
+                  <summary>Lecturas de salas y conexión</summary>
+                <div className="home-live-telemetry" style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
+                  <LiveTelemetryStatusBar/>
+                  <LiveClimateStrip/>
+                </div>
+
+                </details>
 
                 {/* ── BANDA 3: DESPUÉS (Transiciones programadas & Monitoreo) ── */}
                 <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--text-secondary,#6B6759)',padding:'16px 18px'}}>
@@ -13731,7 +14152,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onKeyDown={onBuilderTabKeyDown}
                 onClick={()=>openBuilderSubTab('generador')}>
                 <AppIcon name="wand" size={13} />
-                <span>Perito & Generador de Recetas</span>
+                <span>Generador de Recetas</span>
               </button>
             </nav>
             <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
@@ -13864,176 +14285,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div id="formular-panel-mesa" className="builder-wrap" data-tab={tab} role="tabpanel" aria-labelledby="formular-tab-mesa">
           {loadedFlash&&<div className="loaded-toast" role="status" aria-live="polite"><AppIcon name="check" size={13} style={{marginRight:4}} /> Receta cargada en Mesa de Mezcla</div>}
 
-          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
-              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
-              teórico o de uno mezclado con el historial real de la finca, y
-              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
-              procedencia. Una etiqueta fija que no sigue al dato es peor que
-              no tener etiqueta: afirma algo que puede ser falso. */}
-          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
-          {recipe.length>0&&(
-            <section className="form-summary-strip" aria-label="Resumen de receta activa">
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Especie</span>
-                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
-                <span className="os-provenance-line">Manual</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Objetivo</span>
-                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
-                <span className="os-provenance-line">Modo activo</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Peso total</span>
-                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
-                <span className="os-provenance-line">Calculado</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Humedad objetivo</span>
-                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">BE estimada</span>
-                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  if(!prov) return 'Estimado';
-                  // El número que se muestra pasa por blendEBWithHistory, así que
-                  // la etiqueta tiene que decir si de verdad entró historial de la
-                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
-                  // le sirve a nadie para decidir. No se pinta ningún nivel de
-                  // confianza aquí porque la banda de predicción la calcula
-                  // scoring.js y no está en alcance en esta franja — inventarle un
-                  // nivel sería exactamente el defecto que esto viene a corregir.
-                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
-                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
-                  if(!d) return 'Estimado';
-                  const muestra=conHistorial
-                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
-                    : '';
-                  return `${d.label} · ${d.detail}${muestra}`;
-                })()}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-costo">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  // El valor de esta celda es an.cost, que es SIEMPRE el precio de
-                  // catálogo. El costo real ponderado de los lotes en bodega se
-                  // calcula aparte (realCostPerKg) y no es lo que se muestra aquí,
-                  // así que la línea lo dice y, cuando los dos se separan, enseña
-                  // el de bodega en vez de dejar creer que el de arriba lo es.
-                  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
-                  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
-                  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an?.cost||0))>=20;
-                  return hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base;
-                })()}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Revisión</span>
-                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
-                  Perito {Math.round(opt?.score||0)}/100
-                </span>
-                <span className="os-provenance-line">Perito · Requiere revisión</span>
-              </div>
-            </section>
-          )}
-
-          {/* 5.2 Recorrido en 5 pasos visibles con estados explícitos */}
-          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label="Recorrido de formulación en 5 pasos">
-            <div className="form-flow-head">
-              <div>
-                <span className="form-flow-eyebrow">Recorrido metodológico</span>
-                <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
-                  01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
-                </div>
-              </div>
-              <span className="form-flow-progress" aria-live="polite">
-                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
-              </span>
-            </div>
-            <ol className="form-flow-grid form-flow-grid--5">
-              {/* Paso 01: Especie */}
-              <li className={`form-step ${hasPickedSpecies?'is-ready':''}`}>
-                <span className="form-step-num">01</span>
-                <span className="form-step-label">Especie</span>
-                <div className="form-step-species-state">
-                  <strong>{hasPickedSpecies?(sp?.name||'Pendiente'):'Pendiente'}</strong>
-                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
-                </div>
-                <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
-                  {hasPickedSpecies?'Completado':'Activo'}
-                </span>
-                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
-              </li>
-
-              {/* Paso 02: Objetivo */}
-              <li className="form-step is-ready">
-                <span className="form-step-num">02</span>
-                <span className="form-step-label">Objetivo</span>
-                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
-                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
-                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
-                </div>
-                <span className="form-step-state-badge is-completado">Completado</span>
-                <span className="form-step-help">{globalMode==='produccion'?'Stock físico de Bodega Tenjo.':'Paleta exploratoria de investigación.'}</span>
-              </li>
-
-              {/* Paso 03: Ingredientes */}
-              <li className={`form-step ${recipe.length>0?'is-ready':''}`}>
-                <span className="form-step-num">03</span>
-                <span className="form-step-label">Ingredientes</span>
-                <div className="form-step-actions">
-                  <button type="button" onClick={focusIngredientCatalog}>Manual</button>
-                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Generador</button>
-                </div>
-                <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
-                  {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
-                </span>
-                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
-              </li>
-
-              {/* Paso 04: Balance */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
-                <span className="form-step-num">04</span>
-                <span className="form-step-label">Balance</span>
-                <div className="form-step-species-state">
-                  <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
-                  <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
-                </div>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
-                </span>
-                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
-              </li>
-
-              {/* Paso 05: Revisión */}
-              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
-                <span className="form-step-num">05</span>
-                <span className="form-step-label">Revisión</span>
-                <button
-                  type="button"
-                  className="form-step-primary"
-                  disabled={recipe.length===0}
-                  onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
-                  Dictamen Perito
-                </button>
-                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(opt?.score||0)>=70?'is-completado':'is-atencion'}`}>
-                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt?.score||0)}/100`}
-                </span>
-                <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
-              </li>
-            </ol>
-          </section>
-
           <section className={`form-species-context ${recipe.length>0?'has-recipe':'is-empty'}`} aria-labelledby="form-species-context-title">
             <div className="form-species-identity">
               <span className="form-species-kicker">Especie activa</span>
@@ -14056,12 +14307,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
               </div>
             </div>
-            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
-              <span><small>C:N objetivo</small><b>{hasPickedSpecies&&sp?.cn_optimal?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
-              <span><small>N objetivo</small><b>{hasPickedSpecies&&sp?.n_optimal?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
-              <span><small>EB meta</small><b>{hasPickedSpecies&&sp?.eb_optimal!=null?`${sp.eb_optimal}%`:'—'}</b></span>
-              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
-            </div>
+
           </section>
 
 
@@ -14321,6 +14567,182 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })()}
           </div>
+          {recipe.length>0&&(
+          <details className="form-support-details" data-testid="formulator-provenance-details">
+            <summary>Resumen y procedencia de la receta</summary>
+          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
+              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
+              teórico o de uno mezclado con el historial real de la finca, y
+              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
+              procedencia. Una etiqueta fija que no sigue al dato es peor que
+              no tener etiqueta: afirma algo que puede ser falso. */}
+          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
+          {recipe.length>0&&(
+            <section className="form-summary-strip" aria-label="Resumen de receta activa">
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Especie</span>
+                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
+                <span className="os-provenance-line">Manual</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Objetivo</span>
+                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
+                <span className="os-provenance-line">Modo activo</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Peso total</span>
+                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">C:N</span>
+                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">BE estimada</span>
+                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  if(!prov) return 'Estimado';
+                  // El número que se muestra pasa por blendEBWithHistory, así que
+                  // la etiqueta tiene que decir si de verdad entró historial de la
+                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
+                  // le sirve a nadie para decidir. No se pinta ningún nivel de
+                  // confianza aquí porque la banda de predicción la calcula
+                  // scoring.js y no está en alcance en esta franja — inventarle un
+                  // nivel sería exactamente el defecto que esto viene a corregir.
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
+                  if(!d) return 'Estimado';
+                  const muestra=conHistorial
+                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
+                    : '';
+                  return `${d.label} · ${d.detail}${muestra}`;
+                })()}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Costo/kg</span>
+                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                {/* El valor de esta celda es an.cost, SIEMPRE precio de catálogo; el
+                    costo real de bodega (realCostPerKg) se muestra aparte cuando
+                    se separan, en vez de dejar creer que el de arriba lo es. */}
+                <span className="os-provenance-line" data-testid="prov-costo">{procedenciaCosto(an?.cost,realCostPerKg).texto}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Revisión</span>
+                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
+                  Perito {Math.round(opt?.score||0)}/100
+                </span>
+                <span className="os-provenance-line">Perito · Requiere revisión</span>
+              </div>
+            </section>
+          )}
+
+          </details>
+          )}
+          <details className="form-support-details form-method-details" data-testid="formulator-method-details">
+            <summary>Guía de formulación · cinco pasos</summary>
+            <div className="form-species-targets" aria-label="Objetivos de la especie activa">
+              <span><small>C:N objetivo</small><b>{hasPickedSpecies&&sp?.cn_optimal?`${sp.cn_optimal.min}–${sp.cn_optimal.max}:1`:'—'}</b></span>
+              <span><small>N objetivo</small><b>{hasPickedSpecies&&sp?.n_optimal?`${sp.n_optimal.min}–${sp.n_optimal.max}%`:'—'}</b></span>
+              <span><small>EB meta</small><b>{hasPickedSpecies&&sp?.eb_optimal!=null?`${sp.eb_optimal}%`:'—'}</b></span>
+              <span className={`form-species-mode is-${globalMode}`}><small>Origen</small><b>{globalMode==='produccion'?'Bodega':'Paleta completa'}</b></span>
+            </div>
+          {/* 5.2 Recorrido en 5 pasos visibles con estados explícitos */}
+          <section className={`form-flow${recipe.length>0?' has-recipe':''}`} aria-label="Recorrido de formulación en 5 pasos">
+            <div className="form-flow-head">
+              <div>
+                <span className="form-flow-eyebrow">Recorrido metodológico</span>
+                <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
+                  01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
+                </div>
+              </div>
+              <span className="form-flow-progress" aria-live="polite">
+                {hasPickedSpecies?(recipe.length>0?(Math.abs((an?.tot||0)-100)<=MASS_BALANCE_TOL?'Paso 5: Listo para validar':'Paso 4: Balance en curso'):'Paso 3: Agregar insumos'):'Paso 1: Seleccionar especie'}
+              </span>
+            </div>
+            <ol className="form-flow-grid form-flow-grid--5">
+              {/* Paso 01: Especie */}
+              <li className={`form-step ${hasPickedSpecies?'is-ready':''}`}>
+                <span className="form-step-num">01</span>
+                <span className="form-step-label">Especie</span>
+                <div className="form-step-species-state">
+                  <strong>{hasPickedSpecies?(sp?.name||'Pendiente'):'Pendiente'}</strong>
+                  <button type="button" onClick={()=>{document.querySelector('.form-species-context')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.getElementById('form-species-context-select')?.focus(),250);}}>{hasPickedSpecies?'Cambiar':'Seleccionar'}</button>
+                </div>
+                <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
+                  {hasPickedSpecies?'Completado':'Activo'}
+                </span>
+                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
+              </li>
+
+              {/* Paso 02: Objetivo */}
+              <li className="form-step is-ready">
+                <span className="form-step-num">02</span>
+                <span className="form-step-label">Objetivo</span>
+                <div className="form-step-options" role="group" aria-label="Origen de ingredientes">
+                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+                </div>
+                <span className="form-step-state-badge is-completado">Completado</span>
+                <span className="form-step-help">{globalMode==='produccion'?'Stock físico de Bodega Tenjo.':'Paleta exploratoria de investigación.'}</span>
+              </li>
+
+              {/* Paso 03: Ingredientes */}
+              <li className={`form-step ${recipe.length>0?'is-ready':''}`}>
+                <span className="form-step-num">03</span>
+                <span className="form-step-label">Ingredientes</span>
+                <div className="form-step-actions">
+                  <button type="button" onClick={focusIngredientCatalog}>Manual</button>
+                  <button type="button" onClick={()=>openBuilderSubTab('generador')}>Generador</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
+                  {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
+                </span>
+                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
+              </li>
+
+              {/* Paso 04: Balance */}
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-ready':''}`}>
+                <span className="form-step-num">04</span>
+                <span className="form-step-label">Balance</span>
+                <div className="form-step-species-state">
+                  <strong>{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0.0%'}</strong>
+                  <button type="button" onClick={()=>{if(autoBalance)autoBalance();}}>Cerrar 100%</button>
+                </div>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
+                </span>
+                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
+              </li>
+
+              {/* Paso 05: Revisión */}
+              <li className={`form-step ${(an&&an.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL&&(opt?.score||0)>=70)?'is-ready':''}`}>
+                <span className="form-step-num">05</span>
+                <span className="form-step-label">Revisión</span>
+                <button
+                  type="button"
+                  className="form-step-primary"
+                  disabled={recipe.length===0}
+                  onClick={()=>document.getElementById('bl-perito')?.scrollIntoView({behavior:'smooth',block:'start'})}>
+                  Dictamen Perito
+                </button>
+                <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(opt?.score||0)>=70?'is-completado':'is-atencion'}`}>
+                  {recipe.length===0?'Pendiente':`Score ${Math.round(opt?.score||0)}/100`}
+                </span>
+                <span className="form-step-help">Auditoría agronómica, riesgo y tratamiento.</span>
+              </li>
+            </ol>
+          </section>
+
+          </details>
           <section className="builder-cols form-recipe-workspace" aria-labelledby="active-recipe-workspace-title">
             <header className="active-recipe-workspace-head">
               <div>
@@ -14584,158 +15006,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <button type="button" onClick={()=>openBuilderSubTab('generador')}>Abrir generador</button>
             </header>
-            {an&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const infos=items.filter(s=>s.priority==='info');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an.cn,max):0;
-              const cnOk=sp&&an.cn>=oMin&&an.cn<=oMax;
-              return(
-                <div className="panel print-panel" id="bl-perito" style={{background:hasPer?sm.bg:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:12,transition:'background .3s,border-color .3s'}}>
-                  {/* ── HEADER: SCORE + VEREDICTO + ACCIONES ── */}
-                  {hasPer&&(
-                    <div style={{display:'flex',alignItems:'flex-start',gap:14,marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${sm.border}40`,flexWrap:'wrap'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:62,height:62,borderRadius:'50%',background:sm.badge,flexShrink:0,transition:'background .3s'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:24,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
-                      </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
-                          {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
-                          {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
-                          {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
-                        </div>
-                      </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
-                          <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
-                        </button>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
-                          Deshacer ({recipeHistory.length})
-                        </button>}
-                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── MÉTRICAS CLAVE (siempre visibles) ── */}
-                  <div className="mgrid" style={{marginBottom:12}}>
-                    {[
-                      {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
-                      {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
-                      {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                      {l:'Costo / kg',v:`$${Math.round(an.cost)}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                      {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
-                      {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
-                    ].map(m=>(
-                      <div key={m.l} className="mc">
-                        <div className="mlbl">{m.l}</div>
-                        <div className="mval">{m.v}</div>
-                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                        {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
-
-                  {/* ── EBDial + C:N gauge ── */}
-                  <EBDial an={an} sp={sp}/>
-                  {sp&&an.cn>0&&(
-                    <div className="gauge-wrap">
-                      <div className="gauge-hdr">
-                        <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                        <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                      </div>
-                      <div className="gauge-tr">
-                        <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                      </div>
-                      <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                    </div>
-                  )}
-                  <NitrogenChart recipe={recipe}/>
-
-                  {/* ── PERITO: INDICADORES + ITEMS ── */}
-                  {hasPer&&(
-                    <>
-                      {/* ── barra resumen live: score + EB + costo seco + costo hongo (Funcionalidad 2) ── */}
-                      <div style={{display:'flex',gap:0,margin:'10px 0 8px',border:'1px solid rgba(26,20,16,.1)',borderRadius:6,overflow:'hidden',background:'var(--paper-100)'}}>
-                        {[
-                          {l:'Calificación',v:`${opt?.score??'—'}/100`,ok:(opt?.score||0)>=85,w:(opt?.score||0)>=60},
-                          {l:'EB estimada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb?.toFixed(0)||'—'}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                          {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                          {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
-                        ].map((m,i)=>(
-                          <div key={m.l} style={{flex:1,padding:'7px 8px',borderLeft:i>0?'1px solid rgba(26,20,16,.08)':'none',textAlign:'center'}}>
-                            <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{m.l}</div>
-                            <div style={{fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',fontWeight:700,fontSize:"var(--text-md)",color:m.ok?'#3D5A38':m.w?'#7A5A10':'var(--coral-500)',lineHeight:1}}>{m.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
-                        </div>}
-                      {histStats&&histStats.n>0&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
-                        </div>}
-                      {modelAccuracy!=null&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
-                        </div>}
-                      {similarTrial&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
-                          Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
-                        </div>}
-                      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
-                      </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id="perito-recommendations">Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
-                      {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{criticals.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
-                      {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{warnings.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</div>}
-                      {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{tips.map((item,i)=><PeritoItem key={i} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} speciesKey={sKey} onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');openBuilderSubTab('generador');}}/>)}</details>}
-                      {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:item.color,flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:item.color,marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
-                    </>
-                  )}
-
-                  {/* ── CHARTS TOGGLE + CHARTS ── */}
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
-                    <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
-                    <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
-                    <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
-                  </div>
-                  {showFlush&&<FlushChart an={an}/>}
-                  {showCompChart&&<CompositionChart recipe={recipe}/>}
-                  {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
-
-                  {/* ── EVALUACIÓN TÉCNICA ── */}
-                  <div className="dbox" style={{marginTop:8}}>
-                    <div className="dttl">Evaluación</div>
-                    <div className="dtxt">{dg.main}</div>
-                  </div>
-                  {dg.sugs.length>0&&(<>
-                    <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
-                  </>)}
-                </div>
-              );
-            })()}
-            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+            {renderPeritoPanel('formulador')}            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
             {recipe.length>0&&<div className="panel panel-accent" id="bl-receta-summary">
               {/* ── HEADER EDITORIAL ── */}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
@@ -15094,223 +15365,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </button>
             </div>
 
-            {/* ── SECCIÓN 1: PERITO DIAGNÓSTICO VIVO (STANDALONE) ── */}
-            {['all','perito'].includes(workbenchMode)&&(()=>{
-              const hasPer=recipe.length>0;
-              const {score,status,items}=hasPer?opt:{score:0,status:'sin_receta',items:[]};
-              const criticals=items.filter(s=>s.priority==='critical');
-              const warnings=items.filter(s=>s.priority==='warning');
-              const tips=items.filter(s=>s.priority==='tip');
-              const sm=PERITO_STATUS[status]||PERITO_STATUS.sin_receta;
-              const restrictiveFactor=engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null);
-              const max=150,oMin=sp?.cn_optimal?.min,oMax=sp?.cn_optimal?.max;
-              const cur=sp?Math.min(an?.cn||0,max):0;
-              const cnOk=sp&&an&&an.cn>=oMin&&an.cn<=oMax;
-              const reqPsi=engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03);
-              const optHold=engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
-
-              return (
-                <section className="panel perito-standalone-panel" style={{background:'var(--paper-50)',border:`1.5px solid ${hasPer?sm.border:'var(--border-soft)'}`,marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:16,marginBottom:16,paddingBottom:14,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap'}}>
-                    <div style={{display:'flex',gap:14,alignItems:'center'}}>
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',width:68,height:68,borderRadius:'50%',background:sm.badge,flexShrink:0,boxShadow:'0 4px 10px rgba(0,0,0,.1)'}}>
-                        <span style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:900,color:'var(--paper-0)',lineHeight:1}}>{score}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.8)',letterSpacing:'var(--tracking-button)',marginTop:2}}>PERITO</span>
-                      </div>
-                      <div>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,fontWeight:800}}>Dictamen Pericial Dinámico · Receta Activa</div>
-                        <h2 style={{fontFamily:'var(--font-display)',fontSize:"var(--text-xl)",fontWeight:700,color:sm.txt,margin:'2px 0 4px'}}>{sm.veredicto}</h2>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)'}}>
-                          {sm.accion} · Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      {(criticals.length>0||warnings.length>0)&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
-                      {recipeHistory.length>0&&<button type="button" onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>Deshacer ({recipeHistory.length})</button>}
-                      <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'7px 12px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="wand" size={13} color="var(--paper-0)" /> Consultar IA</button>
-                    </div>
-                  </div>
-
-                  {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
-                  {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
-                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
-                          Factor Restrictivo Estimado: {restrictiveFactor.label}
-                        </span>
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)',marginBottom:4,lineHeight:1.5}}>
-                        <b>Diagnóstico Causal:</b> {restrictiveFactor.rationale}
-                      </div>
-                      {restrictiveFactor.counterfactualOpportunity&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--moss-800)',marginBottom:4,background:'rgba(77,98,53,.08)',padding:'4px 8px',borderRadius:3}}>
-                          <b>Oportunidad Contrafactual:</b> {restrictiveFactor.counterfactualOpportunity.description}
-                        </div>
-                      )}
-                      {restrictiveFactor.actionRequired&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
-                          → Acción correctiva: {restrictiveFactor.actionRequired}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
-                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
-                        <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
-                      </div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
-                        All American 1941X: {reqPsi.toFixed(2)} psig
-                      </span>
-                    </div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
-                      <div>
-                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
-                      </div>
-                      <div>
-                        <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
-                      </div>
-                      <div>
-                        <b>Letalidad F₀:</b> &ge; 12.0 min (inactivación probada de <i>G. stearothermophilus</i>).
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Resumen Métricas */}
-                  {an&&(
-                    <>
-                    <div className="mgrid" style={{marginBottom:14}}>
-                      {[
-                        {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
-                        {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
-                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                        {l:'Costo / kg Seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800},
-                        {l:'Costo / kg Hongo',v:an.eb>0?`$${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')}`:'—',ok:((an.cost||0)/(an.eb/100))<1600,w:((an.cost||0)/(an.eb/100))<3200},
-                        {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
-                        {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
-                      ].map(m=>(
-                        <div key={m.l} className="mc">
-                          <div className="mlbl">{m.l}</div>
-                          <div className="mval">{m.v}</div>
-                          <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
-                          {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="os-provenance-notice" data-testid="prov-nutrientes">{procedenciaNutrientesResumen()}</div>
-                    </>
-                  )}
-
-                  {/* Gauges */}
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))',gap:16,marginBottom:16}}>
-                    <EBDial an={an} sp={sp}/>
-                    {sp&&an?.cn>0&&(
-                      <div className="gauge-wrap" style={{marginTop:0}}>
-                        <div className="gauge-hdr">
-                          <span className="gauge-cur">C:N {an.cn.toFixed(1)}:1</span>
-                          <span className="gauge-tgt">objetivo {oMin}–{oMax}:1</span>
-                        </div>
-                        <div className="gauge-tr">
-                          <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                          <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
-                        </div>
-                        <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
-                        <NitrogenChart recipe={recipe}/>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Sugerencias Dinámicas con Simulación Delta */}
-                  <div className="perito-suggestions-deck" style={{marginTop:12}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,paddingBottom:6,borderBottom:'1px solid var(--border-soft)'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-700)'}}>
-                        Sugerencias Inteligentes con Simulación Delta ({items.length})
-                      </div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-500)'}}>
-                        Simulación de impacto en vivo sin mutar mesa
-                      </div>
-                    </div>
-
-                    {criticals.length===0&&warnings.length===0&&tips.length===0&&(
-                      <div style={{padding:'12px 16px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#2F4A24'}}>
-                        <AppIcon name="check" size={13} style={{marginRight:4}} /> Todos los parámetros se encuentran en rango óptimo para {sp?.name||'la especie seleccionada'}.
-                      </div>
-                    )}
-
-                    {criticals.length>0&&(
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)',marginBottom:6}}>
-                          Críticos ({criticals.length})
-                        </div>
-                        {criticals.map((item,i)=>(
-                          <PeritoItem
-                            key={i}
-                            item={item}
-                            onApply={applyOptStep}
-                            baseScore={opt.score}
-                            recipe={recipe}
-                            lockedIds={lockedIds}
-                            ingredients={optimizerINGS}
-                            speciesKey={sKey}
-                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {warnings.length>0&&(
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)',marginBottom:6}}>
-                          Mejoras y Balance ({warnings.length})
-                        </div>
-                        {warnings.map((item,i)=>(
-                          <PeritoItem
-                            key={i}
-                            item={item}
-                            onApply={applyOptStep}
-                            baseScore={opt.score}
-                            recipe={recipe}
-                            lockedIds={lockedIds}
-                            ingredients={optimizerINGS}
-                            speciesKey={sKey}
-                            onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {tips.length>0&&(
-                      <details style={{marginBottom:10}}>
-                        <summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'6px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}>
-                          <span>Opcionales &amp; Ajustes Finos ({tips.length})</span>
-                          <span style={{fontSize:"var(--text-xs)"}}>▾</span>
-                        </summary>
-                        <div style={{marginTop:6}}>
-                          {tips.map((item,i)=>(
-                            <PeritoItem
-                              key={i}
-                              item={item}
-                              onApply={applyOptStep}
-                              baseScore={opt.score}
-                              recipe={recipe}
-                              lockedIds={lockedIds}
-                              ingredients={optimizerINGS}
-                              speciesKey={sKey}
-                              onMorph={(tgt)=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');}}
-                            />
-                          ))}
-                        </div>
-                      </details>
-                    )}
-                  </div>
-                </section>
-              );
-            })()}
-
+            {/* ── SECCIÓN 1: DIAGNÓSTICO DEL PERITO (misma implementación que el Formulador) ── */}
+            {['all','perito'].includes(workbenchMode)&&renderPeritoPanel('workbench')}
             {/* ── SECCIÓN 2: COMPARADOR & MORPHING DE RECETAS ── */}
             {['all','morphing'].includes(workbenchMode)&&(()=>{
               const activeCandidate = morphTargetRecipe || (optResults && optResults[optProfile] && optResults[optProfile][0]?.recipe) || [];
@@ -15319,12 +15375,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const morphedRec = (hasBase && hasCandidate && engineMorphRecipes)
                 ? engineMorphRecipes(recipe, activeCandidate, morphAlpha, lockedIds)
                 : (recipe || []);
-              const anMorph = (hasBase && hasCandidate)
-                ? analyze(morphedRec, sKey, effectiveINGS, effectiveSPP)
-                : an;
-              const scoreMorphObj = (hasBase && hasCandidate && anMorph)
-                ? scoreAn(anMorph, { recipe: morphedRec })
-                : opt;
+              // Mismo evaluador que el veredicto: con α=0 el score morfeado es
+              // el del Perito, y cada mezcla usa sus propios objetivos.
+              const evalMorph = (hasBase && hasCandidate) ? peritoEvaluate(morphedRec) : null;
+              const anMorph = (hasBase && hasCandidate) ? (evalMorph?.an || null) : an;
+              const scoreMorphObj = evalMorph ? evalMorph.scoreObj : opt;
               const scoreMorph = Math.round(scoreMorphObj?.score || 0);
 
               const trajectoryAnalysis = (hasBase && hasCandidate && engineAnalyzeMorphTrajectory)
@@ -15333,7 +15388,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     recipeB: activeCandidate,
                     lockedIds,
                     species: sp,
-                    analyzeFn: (r) => analyze(r, sKey, effectiveINGS, effectiveSPP),
+                    analyzeFn: (r) => peritoEvaluate(r)?.an || null,
                     requestedAlpha: morphAlpha,
                   })
                 : null;
@@ -15895,11 +15950,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         {l:'C:N logrado',v:`${invResult.an.cn.toFixed(1)}:1`,ok:sp&&invResult.an.cn>=sp.cn_optimal.min&&invResult.an.cn<=sp.cn_optimal.max},
                                         {l:'Nitrógeno',v:`${invResult.an.avgN.toFixed(2)}%`,ok:sp&&invResult.an.avgN>=sp.n_optimal.min&&invResult.an.avgN<=sp.n_optimal.max},
                                         {l:'EB esperada',v:invResult.an.ebLow&&invResult.an.ebHigh?`${invResult.an.ebLow}–${invResult.an.ebHigh}%`:`${invResult.an.eb.toFixed(0)}%`,ok:invResult.an.eb>=90},
-                                        {l:'Costo/kg',v:`${Math.round(invResult.an.cost)}`,ok:invResult.an.cost<1000},
+                                        {l:'Costo/kg seco',v:`$${Math.round(invResult.an.cost).toLocaleString('es-CO')}`,neutral:true},
                                       ].map((m,i)=>(
-                                        <div key={i} style={{background:'var(--paper-50)',border:`1px solid ${m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
+                                        <div key={i} title={m.neutral?COST_NO_TARGET_TITLE:undefined} style={{background:'var(--paper-50)',border:`1px solid ${!m.neutral&&m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
                                           <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{m.l}</div>
-                                          <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:m.ok?'var(--moss-500)':'var(--coral-500)'}}>{m.v}</div>
+                                          <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:m.neutral?'var(--ink-700)':m.ok?'var(--moss-500)':'var(--coral-500)'}}>{m.v}</div>
                                         </div>
                                       ))}
                                     </div>
@@ -16589,7 +16644,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='inventario'&&<>{invLotes.length===0&&<section className="prototype-panel"><h3>Bodega sin existencias registradas</h3><p>El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo.</p><button type="button" className="inv-btn inv-btn-pri" onClick={()=>setInvTab('compra')}>Registrar primera compra</button></section>}{BodegaSection()}</>}
 
-        {tab==='clima'&&<ClimateDashboardSection/>}
+        {tab==='clima'&&climateDashboardView}
 
         {tab==='bitacora'&&BitacoraSection()}
 
@@ -17458,14 +17513,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onChange={pct=>{
                           const today=new Date().toISOString().split('T')[0];
                           const loteBolsas=bitBolsas.filter(b=>b.loteId===currentLote.id);
-                          loteBolsas.forEach(b=>{
+                          if(!loteBolsas.every(b=>{
                             const up={};
                             if(pct>=25&&!b.col25) up.col25=today;
                             if(pct>=50&&!b.col50) up.col50=today;
                             if(pct>=100&&!b.col100) up.col100=today;
                             up.colonizationPct=pct;
-                            updateBitBolsa(b.id,up);
-                          });
+                            return updateBitBolsa(b.id,up);
+                          })) return;
                           if(pct>=100&&currentLote.estado==='incubacion'){
                             updateBitLote(currentLote.id,{estado:'fructificacion'});
                           }
@@ -17477,11 +17532,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         onQuickAction={act=>{
                           const today=new Date().toISOString().split('T')[0];
                           if(act==='primordios'){
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
+
                             const loteBolsas=bitBolsas.filter(b=>b.loteId===currentLote.id);
-                            loteBolsas.forEach(b=>{
-                              updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
-                            });
+                            if(!loteBolsas.every(b=>{
+                              return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
+                            })) return;
+                            updateBitLote(currentLote.id,{estado:'fructificacion'});
                             setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${currentLote.codigo} pasado a etapa de fructificación.`});
                           } else if(act==='riego'){
                             setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad y niebla registrada para ${currentLote.codigo}.`});
@@ -19878,7 +19934,7 @@ interval:
         {showIoTHub && (
           <IoTHubModal
             isOpen={showIoTHub}
-            onClose={() => setShowIoTHub(false)}
+            onClose={() => {setShowIoTHub(false);requestAnimationFrame(()=>iotHubTriggerRef.current?.focus());}}
             liveTelemetry={liveTelemetry}
             selectedRoomId={selectedClimateRoom}
             onInjectReading={(r) => {

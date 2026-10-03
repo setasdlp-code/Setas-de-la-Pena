@@ -44,6 +44,7 @@ const arranca=async(server,browser,semilla)=>{
   await page.waitForFunction(()=>window.SetasFormulatorAPI&&window.SetasFormulatorAPI.adapterType()==='native');
   await page.selectOption('#form-species-context-select',ESPECIE);
   await page.evaluate(r=>window.SetasFormulatorAPI.applyRecipe(r),RECETA);
+  await page.getByTestId('formulator-provenance-details').locator('summary').click();
   await page.locator('[data-testid="prov-eb"]').first().waitFor({state:'attached'});
   return {page,errores};
 };
