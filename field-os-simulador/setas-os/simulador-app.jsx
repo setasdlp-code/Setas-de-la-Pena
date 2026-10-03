@@ -8370,7 +8370,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     {/* ESTADO */}
                                     <td data-label="Estado">
                                       {r.stock<r.alertaMin
-                                        ?<span className="sdp-badge sdp-badge--err" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
+                                        ?<span className="sdp-badge sdp-badge--error" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>Crítico</span>
                                         :r.stock<r.alertaMin*2.5
                                           ?<span className="sdp-badge sdp-badge--warn" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>Bajo</span>
                                           :<span className="sdp-badge sdp-badge--ok" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)"}}>OK</span>}
