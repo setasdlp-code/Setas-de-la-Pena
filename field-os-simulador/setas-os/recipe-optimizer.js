@@ -836,16 +836,41 @@
         });
       }
     }
-    if (an.cost > 800) {
-      const alt = bestStock(g => g.role === 'suplemento_n' && g.cost < 700 && g.n >= 1.5, (a, b) => a.cost - b.cost);
-      if (alt) items.push({
-        priority: 'tip', icon: '$↓',
-        label: 'Oportunidad de costo',
-        action: `<b>${alt.name}</b> ($${alt.cost}/kg, N=${alt.n}%) como suplemento parcial en bodega`,
-        effect: `Costo estimado actual $${Math.round(an.cost)}/kg. Una sustitución parcial requiere cotización, humedad y disponibilidad equivalentes antes de declarar ahorro.`,
-        delta: 'Comparar cotizaciones y costo seco antes de sustituir',
-        apply: null
-      });
+    // Oportunidad de costo, relativa: antes se disparaba con costo > $800/kg y
+    // solo proponía suplementos de menos de $700/kg — umbrales sin fuente que
+    // la activaban en el 95 % de las recetas del catálogo. Ahora compara el
+    // costo del nitrógeno (precio por kg seco ÷ fracción de N) del suplemento
+    // más barato que ya está en la receta contra los compatibles QUE ESTÁN EN
+    // BODEGA, y solo aparece si alguno aporta N más barato. Sin números fijos.
+    // Solo bodega: contra el catálogo completo el estiércol de gallina gana
+    // casi siempre y el tip repetía lo mismo en el 92 % de las recetas.
+    const dryCost = g => (Number(g.cost) || 0) / Math.max(0.08, 1 - Math.min(0.92, (Number(g.moisture) || 0) / 100));
+    const costPerKgN = g => (g.n > 0 ? dryCost(g) / (g.n / 100) : Infinity);
+    const suppsInRecipe = (recipe || [])
+      .filter(r => (Number(r.p) || 0) > 0)
+      .map(r => effectiveINGS.find(g => g.id === r.id))
+      .filter(g => g && g.role === 'suplemento_n' && g.n > 0 && g.cost > 0);
+    if (suppsInRecipe.length) {
+      const cheapestCur = suppsInRecipe.reduce((m, g) => (costPerKgN(g) < costPerKgN(m) ? g : m), suppsInRecipe[0]);
+      const curN = costPerKgN(cheapestCur);
+      const inStock = id => !!(stockIds && stockIds.size > 0 && stockIds.has(id));
+      const alt = effectiveINGS
+        .filter(g => g.role === 'suplemento_n' && g.cs && g.cs.includes(sKey) && g.cost > 0 && g.n > 0 && inStock(g.id)
+          && !lockedIds.includes(g.id) && !suppsInRecipe.some(x => x.id === g.id) && costPerKgN(g) < curN)
+        .sort((a, b) => costPerKgN(a) - costPerKgN(b) || a.id.localeCompare(b.id))[0];
+      if (alt) {
+        const fmt = v => `$${Math.round(v).toLocaleString('es-CO')}`;
+        const where = 'en bodega';
+        items.push({
+          priority: 'tip', icon: '$↓',
+          label: 'Oportunidad de costo',
+          action: `<b>${alt.name}</b> (${where}) aporta nitrógeno a ${fmt(costPerKgN(alt))} por kg de N, frente a ${fmt(curN)} de <b>${cheapestCur.name}</b>`,
+          effect: 'Comparación con precios de catálogo por kg seco. Una sustitución parcial requiere cotización, humedad y disponibilidad equivalentes antes de declarar ahorro, y cambia la composición: revisar C:N, N y tratamiento.',
+          delta: 'Comparar cotizaciones y costo seco antes de sustituir',
+          apply: null,
+          costComparison: { altId: alt.id, currentId: cheapestCur.id, altCostPerKgN: costPerKgN(alt), currentCostPerKgN: curN },
+        });
+      }
     }
     const recommendedTreatment = calcTreatment(an, sKey, effectiveSPP);
     const calciumWarning = calciumPct < 0.6 && recommendedTreatment?.col !== 'autoclave';

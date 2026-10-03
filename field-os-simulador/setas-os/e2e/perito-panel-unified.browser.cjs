@@ -45,6 +45,10 @@ const root=path.resolve(__dirname,'..');
   assert.doesNotMatch(a.text,/CALIFICACIÓN|Calificación/,'la barra resumen duplicada no debe volver');
   assert.equal(a.metrics.length,6,a.metrics.join(', '));
   await expect(form.getByTestId('metric-sub')).toContainText('por kg de hongo');
+  // Costo sin objetivo con fuente: se muestra sin calificar (antes "Ajustar" contra $800/$2.000).
+  const costCell=form.locator('.mgrid .mc',{hasText:/Costo \/ kg seco/i});
+  await expect(costCell.getByTestId('metric-no-target')).toHaveText(/Sin objetivo/i);
+  await expect(costCell.locator('.mbadge.bgood, .mbadge.bwarn, .mbadge.bbad')).toHaveCount(0);
   // Auto-mejorar antes que el asistente IA en el orden de lectura.
   const buttons=await form.locator('button').allTextContents();
   assert.ok(buttons.findIndex(t=>/Auto-mejorar/.test(t))<buttons.findIndex(t=>/Asistente IA/.test(t)),buttons.join(' | '));

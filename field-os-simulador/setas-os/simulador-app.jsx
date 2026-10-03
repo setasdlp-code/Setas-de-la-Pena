@@ -4274,6 +4274,21 @@ const procedenciaSinMatrizNutritiva=()=>({texto:'Sin matriz nutritiva',title:'Es
 // arma el texto a partir de detail/caveat de describe(), no de cadenas escritas
 // a mano, para que si el vocabulario cambia la pantalla cambie con él.
 const cap=(s)=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+// ── Procedencia del costo y ausencia de objetivo ──
+// El costo que muestran el Perito y el resumen es an.cost: SIEMPRE el precio de
+// catálogo por kg seco. No hay objetivo de costo con fuente (knowledge_base/
+// 07_business/pricing.md: costo por kg aún desconocido; la comparación válida
+// es COP/kg vendible con lotes reales), así que la métrica no lleva calificación
+// Óptimo/Ajustar — antes se juzgaba contra $800/$2.000, umbrales sin fuente que
+// marcaban "Ajustar" en dos de cada tres recetas del catálogo.
+const COST_NO_TARGET_TITLE='Sin objetivo de costo con fuente: la base de conocimiento aún no tiene costo por kg vendible de lotes reales. El valor sirve para comparar recetas entre sí.';
+const procedenciaCosto=(cost,realCostPerKg)=>{
+  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
+  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
+  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(cost||0))>=20;
+  return{texto:hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base,title:COST_NO_TARGET_TITLE};
+};
 const procedenciaNutrientesResumen=()=>{
   const prov=typeof window!=='undefined'?window.SetasProvenance:null;
   const ligno=prov?prov.describe({vocabulary:'nutrient',value:'catalog-lignocellulosic'}):null;
@@ -7844,14 +7859,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
                         {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
                         {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                        {l:'Costo / kg seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,ok:an.cost<800,w:an.cost<2000&&an.cost>=800,sub:an.eb>0?`≈ $${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')} por kg de hongo con la EB estimada`:null},
+                        {l:'Costo / kg seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,neutral:true,prov:procedenciaCosto(an.cost,realCostPerKg),sub:an.eb>0?`≈ $${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')} por kg de hongo con la EB estimada`:null},
                         {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
                         {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
                     ].map(m=>(
                       <div key={m.l} className="mc">
                         <div className="mlbl">{m.l}</div>
                         <div className="mval">{m.v}</div>
-                        <span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>
+                        {m.neutral
+                          ?<span className="mbadge bneutral" data-testid="metric-no-target" title={COST_NO_TARGET_TITLE}>Sin objetivo</span>
+                          :<span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>}
                         {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
               {m.sub&&<span className="os-provenance-line" data-testid="metric-sub">{m.sub}</span>}
                       </div>
@@ -7881,10 +7898,6 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         {/* ── EVIDENCIA + SUGERENCIAS ── */}
         {hasPer&&(
           <>
-                      {realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an.cost||0))>=20&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Costo real de bodega (precio ponderado de tus lotes): <b>${realCostPerKg.toLocaleString('es-CO')}/kg seco</b> · catálogo: ${Math.round(an.cost||0).toLocaleString('es-CO')}/kg seco
-                        </div>}
                       {histStats&&histStats.n>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
                           Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
@@ -14614,18 +14627,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="form-summary-cell">
                 <span className="form-summary-k">Costo/kg</span>
                 <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-costo">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  // El valor de esta celda es an.cost, que es SIEMPRE el precio de
-                  // catálogo. El costo real ponderado de los lotes en bodega se
-                  // calcula aparte (realCostPerKg) y no es lo que se muestra aquí,
-                  // así que la línea lo dice y, cuando los dos se separan, enseña
-                  // el de bodega en vez de dejar creer que el de arriba lo es.
-                  const d=prov?prov.describe({vocabulary:'cost',value:'catalog'}):null;
-                  const base=d?`${d.label} · ${d.detail}`:'Precio de catálogo';
-                  const hayReal=realCostPerKg!=null&&Math.abs(realCostPerKg-Math.round(an?.cost||0))>=20;
-                  return hayReal?`${base} · bodega: $${realCostPerKg.toLocaleString('es-CO')}/kg seco`:base;
-                })()}</span>
+                {/* El valor de esta celda es an.cost, SIEMPRE precio de catálogo; el
+                    costo real de bodega (realCostPerKg) se muestra aparte cuando
+                    se separan, en vez de dejar creer que el de arriba lo es. */}
+                <span className="os-provenance-line" data-testid="prov-costo">{procedenciaCosto(an?.cost,realCostPerKg).texto}</span>
               </div>
               <div className="form-summary-cell">
                 <span className="form-summary-k">Revisión</span>
@@ -15943,11 +15948,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         {l:'C:N logrado',v:`${invResult.an.cn.toFixed(1)}:1`,ok:sp&&invResult.an.cn>=sp.cn_optimal.min&&invResult.an.cn<=sp.cn_optimal.max},
                                         {l:'Nitrógeno',v:`${invResult.an.avgN.toFixed(2)}%`,ok:sp&&invResult.an.avgN>=sp.n_optimal.min&&invResult.an.avgN<=sp.n_optimal.max},
                                         {l:'EB esperada',v:invResult.an.ebLow&&invResult.an.ebHigh?`${invResult.an.ebLow}–${invResult.an.ebHigh}%`:`${invResult.an.eb.toFixed(0)}%`,ok:invResult.an.eb>=90},
-                                        {l:'Costo/kg',v:`${Math.round(invResult.an.cost)}`,ok:invResult.an.cost<1000},
+                                        {l:'Costo/kg seco',v:`$${Math.round(invResult.an.cost).toLocaleString('es-CO')}`,neutral:true},
                                       ].map((m,i)=>(
-                                        <div key={i} style={{background:'var(--paper-50)',border:`1px solid ${m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
+                                        <div key={i} title={m.neutral?COST_NO_TARGET_TITLE:undefined} style={{background:'var(--paper-50)',border:`1px solid ${!m.neutral&&m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
                                           <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>{m.l}</div>
-                                          <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:m.ok?'var(--moss-500)':'var(--coral-500)'}}>{m.v}</div>
+                                          <div style={{fontFamily:"var(--font-num)",fontSize:20,fontWeight:600,color:m.neutral?'var(--ink-700)':m.ok?'var(--moss-500)':'var(--coral-500)'}}>{m.v}</div>
                                         </div>
                                       ))}
                                     </div>
