@@ -12174,7 +12174,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               })}
             </div>
 
-            <div className="ed-div" aria-hidden="true"><span className="ed-div__m">Recetario</span></div>
+            <div className="catalog-eyebrow" aria-hidden="true">Recetario</div>
 
             {/* ---- RECETARIO: recetas guardadas de la especie seleccionada ---- */}
             <section className="recetario-sect" id="recetario-panel" aria-labelledby="recetario-title">
@@ -12390,9 +12390,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* LEFT: Texto + franja de parámetros + CTA */}
                 <div className="spp-info-left">
                   <div className="spp-info-top" style={{background:'color-mix(in oklab,var(--moss-100) 40%,var(--paper-50))'}}>
-                    <div className="ed-folio" style={{marginBottom:10}}>
-                      <span className="ed-folio__t">Ficha de especie</span>
-                      <span className="ed-folio__n">{SPP_CODE[sKey]} · Tenjo</span>
+                    <div className="catalog-eyebrow" style={{marginBottom:10}}>
+                      Ficha de especie · {SPP_CODE[sKey]} · Tenjo
                     </div>
                     <div className="spp-info-sci">{sp.scientific}</div>
                     <h2 className="spp-info-name">{sp.name}</h2>
