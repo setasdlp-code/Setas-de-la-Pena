@@ -82,12 +82,12 @@
     "latin": {
       "size": "18px",
       "family": "editorial",
-      "weight": 400,
+      "weight": 300,
       "leading": 1.3,
       "tracking": "0",
       "case": "none",
       "style": "italic",
-      "use": "Latin binomial: 'Lentinula edodes'. Always italic, always sentence case."
+      "use": "Latin binomial: 'Lentinula edodes'. Always italic, always sentence case. Light Italic 300: Gaya Patched no tiene corte 400."
     },
     "body": {
       "size": "16px",

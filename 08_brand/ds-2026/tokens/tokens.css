@@ -126,7 +126,7 @@
   --t-heading-02: var(--weight-medium) var(--size-heading-02)/var(--leading-tight) var(--font-editorial);
   --t-heading-03: var(--weight-semibold) var(--size-heading-03)/var(--leading-snug) var(--font-sans);
   --t-species: var(--weight-bold) var(--size-species)/var(--leading-tight) var(--font-editorial);
-  --t-latin: italic var(--weight-regular) var(--size-latin)/var(--leading-snug) var(--font-editorial);
+  --t-latin: italic var(--weight-light) var(--size-latin)/var(--leading-snug) var(--font-editorial);
   --t-body: var(--weight-regular) var(--size-body)/var(--leading-normal) var(--font-sans);
   --t-small: var(--weight-regular) var(--size-small)/var(--leading-normal) var(--font-sans);
   --t-data: var(--weight-regular) var(--size-data)/var(--leading-data) var(--font-mono);

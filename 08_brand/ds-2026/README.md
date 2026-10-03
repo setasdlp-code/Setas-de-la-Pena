@@ -98,23 +98,20 @@ node scripts/build-tokens.mjs
 |---|---|
 | **Tipografía** | Gaya Patched (especies, hero, títulos) · IBM Plex Sans (prosa e interfaz) · IBM Plex Mono (datos tabulares sin tracking; labels/metadatos en mayúsculas con tracking ≥ 0.15em) |
 
-> **Gaya no es una fuente completa.** Medido con fontTools sobre los doce cortes
-> vendorizados: los doce carecen de `%`, `°`, `²`, `₂`, `×` y `€`, y Regular e
-> Italic —los dos cortes de prosa y de binomio— traen 280 glifos contra los 328
-> de los demás, sin `·`, `—`, `–`, comillas tipográficas, `¿`, `¡`, `«` ni `…`.
-> Sin arreglo el navegador resuelve esos caracteres uno a uno con la primera
-> fuente de la pila que los tenga, y «91% a 18,4 °C» sale con dos tipografías
-> mezcladas. `tokens/fonts.css` lo hace determinista: catorce caras con
-> `unicode-range` sirven esos puntos de código desde IBM Plex Sans, que ya era
-> el recurso documentado para CO₂. Van con peso discreto, no con rango: una cara
-> `100 900` gana el emparejamiento por encima del corte exacto y se lleva la
-> línea entera, no solo su rango.
-| **Micro Floor** | Mínimo estricto en pantalla: `11px` (`--size-micro-screen`). `--size-micro-print: 9px` es solo fine print físico; el código de lote usa `--size-lot-code-print: 6mm` y debe verificar x-height ≥ 3mm en la salida final. |
-| **Color Coral** | `--brand-accent` (`coral-500` #B8614D) para bordes, marcas y acentos gráficos no textuales. Para texto accesible sobre papel se exige `--brand-accent-text` (`coral-700` #8A3E2D, ratio 6.79:1 AA). |
-| **Color Ochre** | `WARNING #C49A4C` (2.36:1) reservado para fondos y barras. Para texto de advertencia se exige `WARNING_TEXT #866629` (4.83:1 AA). |
-| **Profundidad** | Cero sombras difusas (`box-shadow: none`). Delimitación exclusivamente mediante bordes minerales y líneas (`border-hairline`, `border-heavy`). |
-| **Modos** | Atributo `data-mode` sobre el contenedor semántico de la superficie (o `<body>` solo cuando toda la página comparte modo): `field` (campo/móvil, targets ≥ 44px), `control` (escritorio/consola alta densidad), `archive` (editorial/certificados), `culinary` (gastronomía/packaging). |
-| **Trazabilidad** | Toda cifra agronómica relevante debe poder expresar procedencia (`sdp-provenance`): `● measured`, `◆ calculated`, `◇ estimated`, `◎ target`, `△ manual`, `⬡ simulated`, `◌ pending`. Los labels visibles se localizan en la aplicación. |
+> **Gaya Patched son cinco pesos, no seis.** El suplemento normativo de la marca
+> (`08_brand/field-os-identity/guidelines/typography-gaya-patched.md`) define la
+> familia como Thin, Light, Medium, Bold y Black con sus itálicas: diez archivos.
+> No existe un corte Regular 400. Este directorio llegó a declarar además un
+> `GayaPatched-Regular.otf` y un `GayaPatched-Italic.otf` ajenos a la familia,
+> con 280 glifos contra los 328 de los legítimos; al ocupar el peso 400 se
+> llevaban el binomio latino y la línea salía con dos tipografías mezcladas. Ya
+> no se declaran, y el binomio pasó a Light Italic 300.
+>
+> De lo que sí falta en los diez cortes reales —`%`, `°`, `²`, `₂`, `×` y `€`—
+> se encarga un relleno de diez caras con `unicode-range` desde IBM Plex Sans,
+> que ya era el recurso documentado para CO₂. Van con peso discreto, no con
+> rango: una cara `100 900` gana el emparejamiento por encima del corte exacto y
+> se lleva la línea entera.
 
 ## Validación y distribución
 
