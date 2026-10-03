@@ -603,7 +603,7 @@ Example content is **Reishi** (*Ganoderma lucidum*) and **melena de león**
     ├── build-tokens.mjs          ← JSON sources → tokens.css compiler
     ├── validate.py               ← structural gate: tokens, fonts, assets, parity
     ├── contrast-audit.py         ← WCAG gate; exits non-zero on violation (30/30)
-    ├── visual-contract.mjs       ← anti-slop visual gate (15 checks)
+    ├── visual-contract.mjs       ← anti-slop visual gate (16 checks)
     ├── sync-consumers.mjs        ← deterministic sync to Setas OS package
     ├── gen-textures.py           ← tileable paper textures, no image library
     └── make-cutout.mjs           ← studio ground → transparent PNG (edge flood fill)
