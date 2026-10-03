@@ -147,10 +147,10 @@ test('trace.html extrae parámetros de canastillas (?crate= y ?canastilla=) y pr
   );
 });
 
-test('etiqueta vertical 50x70: spec de canvas y CSS alineados (QR 36mm)', () => {
+test('etiqueta vertical 50x70: spec de canvas y CSS alineados (QR 40mm, lomo)', () => {
   const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, 'sim.css'), 'utf8');
-  assert.match(jsx, /'50x70':\s*\{[^}]*?layout:\s*'vertical'[^}]*?qrMm:\s*36/);
+  assert.match(jsx, /'50x70':\s*\{[^}]*?layout:\s*'vertical'[^}]*?qrMm:\s*40/);
   assert.match(jsx, /'50mm 70mm'/);
-  assert.match(css, /\.sim-root \.thermal-card-50x70 \.thermal-qr-img\s*\{[^}]*?width:\s*36mm;[^}]*?height:\s*36mm;/s);
+  assert.match(css, /\.sim-root \.thermal-card-50x70 \.thermal-qr-img\s*\{[^}]*?width:\s*40mm;[^}]*?height:\s*40mm;/s);
 });
