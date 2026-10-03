@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 54a90045ea3693887327635ae2459b3e0a9aeb273dd7b7ed016db4cb0e6ae15c
+// source-hash: 05dcd22710bba60149fc4ee78cf05ac320de615c26f9fa715a70ecde15d0011a
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3367,9 +3367,9 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2
   },
-  // Vertical (retrato): franja negra con la marca arriba, especie, QR
-  // centrado de 36mm, insignia de bolsa, código y fila meta fecha · receta.
-  // Mismos valores que .thermal-card-50x70 en sim.css.
+  // Vertical "Lomo": franja negra de 4mm en el borde izquierdo con la marca
+  // en vertical; especie, QR de 40mm, código, bolsa (texto, sin bloque
+  // negro) y fecha · receta. Mismos valores que .thermal-card-50x70 en sim.css.
   "50x70": {
     layout: "vertical",
     wMm: 50,
@@ -3377,12 +3377,13 @@ const THERMAL_LABEL_SPECS = {
     padXMm: 2.5,
     padYMm: 2.5,
     gapPx: 6,
-    qrMm: 36,
-    bandMm: 4.5,
+    qrMm: 40,
+    spineMm: 4,
+    spineText: "SETAS DE LA PEÑA",
     eyebrowPx: 7,
     speciesPx: 17,
-    badgePx: 8.5,
-    codePx: 9.5,
+    badgePx: 10.5,
+    codePx: 8,
     metaPx: 7
   }
 };
@@ -3454,15 +3455,16 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   const mm = THERMAL_PX_PER_MM;
   const w = spec.wMm * mm;
   const h = spec.hMm * mm;
-  const padX = spec.padXMm * mm;
   const padY = spec.padYMm * mm;
-  const innerW = w - padX * 2;
-  const eyebrow = (item.eyebrow || "SETAS DE LA PEÑA · TENJO").toUpperCase();
+  const spine = spec.spineMm * mm;
+  const colX = spine + spec.padXMm * mm;
+  const colW = w - colX - spec.padXMm * mm;
+  const cx = colX + colW / 2;
   const species = (item.species || "Seta Cultivada").trim();
   const badge = (item.badge || item.bagCode || "").toUpperCase().trim();
   const code = (item.id || "").trim();
-  const date = (item.date || "").trim();
-  const recipe = (item.recipe || "").trim();
+  const meta = [(item.date || "").trim(), (item.recipe || "").trim()].filter(Boolean).join("  ·  ");
+  const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
   ctx.save();
   ctx.translate(x0, y0);
   ctx.fillStyle = "#fff";
@@ -3473,66 +3475,58 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
   ctx.setLineDash([]);
   ctx.textBaseline = "top";
-  const bandH = spec.bandMm * mm;
   ctx.fillStyle = "#000";
-  ctx.fillRect(padX, padY, innerW, bandH);
-  const eyebrowPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
-  ctx.font = `700 ${eyebrowPx}px ${FONT_MONO}`;
+  ctx.fillRect(0, 0, spine, h);
+  const ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  ctx.save();
+  ctx.translate(spine / 2, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = `700 ${ebPx}px ${FONT_MONO}`;
   ctx.fillStyle = "#fff";
-  const ebW = ctx.measureText(eyebrow).width;
-  ctx.fillText(eyebrow, padX + Math.max(0, (innerW - ebW) / 2), padY + Math.round((bandH - eyebrowPx) / 2));
-  let curY = padY + bandH + cssPxToCanvas(4);
+  ctx.textBaseline = "middle";
+  ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
+  ctx.restore();
+  ctx.fillStyle = "#000";
+  ctx.textBaseline = "top";
+  let curY = padY + cssPxToCanvas(2);
   let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
   ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-  let lines = wrapCanvasText(ctx, species, innerW);
-  while (lines.length > 2 && spPx > 18) {
+  let lines = wrapCanvasText(ctx, species, colW);
+  while (lines.length > 1 && spPx > 18) {
     spPx -= 2;
     ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-    lines = wrapCanvasText(ctx, species, innerW);
+    lines = wrapCanvasText(ctx, species, colW);
   }
-  ctx.fillStyle = "#000";
   const spLH = Math.round(spPx * 1.05);
   lines.slice(0, 2).forEach((line) => {
-    ctx.fillText(line, padX + (innerW - ctx.measureText(line).width) / 2, curY);
+    center(line, curY);
     curY += spLH;
   });
   curY += cssPxToCanvas(3);
   const qrSize = spec.qrMm * mm;
-  drawQrToCanvas(ctx, item, (w - qrSize) / 2, curY, qrSize);
+  drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
   curY += qrSize + cssPxToCanvas(3);
+  const cPx = Math.round(cssPxToCanvas(spec.codePx));
+  ctx.font = `700 ${cPx}px ${FONT_MONO}`;
+  wrapCanvasText(ctx, code, colW).forEach((line) => {
+    center(line, curY);
+    curY += Math.round(cPx * 1.15);
+  });
+  curY += cssPxToCanvas(2);
   if (badge) {
     let bPx = Math.round(cssPxToCanvas(spec.badgePx));
     ctx.font = `800 ${bPx}px ${FONT_MONO}`;
-    const bPadX = cssPxToCanvas(4);
-    let tW = ctx.measureText(badge).width;
-    if (tW + bPadX * 2 > innerW) {
-      bPx = Math.max(10, Math.floor(bPx * (innerW - bPadX * 2) / tW));
+    const tW = ctx.measureText(badge).width;
+    if (tW > colW) {
+      bPx = Math.max(10, Math.floor(bPx * colW / tW));
       ctx.font = `800 ${bPx}px ${FONT_MONO}`;
-      tW = ctx.measureText(badge).width;
     }
-    const bW = tW + bPadX * 2;
-    const bH = Math.round(bPx * 1.4);
-    ctx.fillStyle = "#000";
-    ctx.fillRect((w - bW) / 2, curY, bW, bH);
-    ctx.fillStyle = "#fff";
-    ctx.fillText(badge, (w - tW) / 2, curY + Math.round((bH - bPx) / 2));
-    curY += bH + cssPxToCanvas(2.5);
+    center(badge, curY);
   }
-  const cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
-  ctx.fillStyle = "#000";
-  wrapCanvasText(ctx, code, innerW).forEach((line) => {
-    ctx.fillText(line, (w - ctx.measureText(line).width) / 2, curY);
-    curY += Math.round(cPx * 1.12);
-  });
-  const mPx = Math.round(cssPxToCanvas(spec.metaPx));
-  const metaY = h - padY - mPx;
-  ctx.fillRect(padX, metaY - cssPxToCanvas(2.5), innerW, 1);
-  ctx.font = `600 ${mPx}px ${FONT_MONO}`;
-  if (date) ctx.fillText(date, padX, metaY);
-  if (recipe) {
-    const rTxt = wrapCanvasText(ctx, recipe, innerW / 2)[0] || "";
-    ctx.fillText(rTxt, w - padX - ctx.measureText(rTxt).width, metaY);
+  if (meta) {
+    const mPx = Math.round(cssPxToCanvas(spec.metaPx));
+    ctx.font = `500 ${mPx}px ${FONT_MONO}`;
+    center(meta, h - padY - mPx);
   }
   ctx.restore();
 }

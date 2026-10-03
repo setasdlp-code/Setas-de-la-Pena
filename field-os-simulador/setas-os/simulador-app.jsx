@@ -4992,9 +4992,9 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2.0
   },
-  // Vertical (retrato): franja negra con la marca arriba, especie, QR
-  // centrado de 36mm, insignia de bolsa, código y fila meta fecha · receta.
-  // Mismos valores que .thermal-card-50x70 en sim.css.
+  // Vertical "Lomo": franja negra de 4mm en el borde izquierdo con la marca
+  // en vertical; especie, QR de 40mm, código, bolsa (texto, sin bloque
+  // negro) y fecha · receta. Mismos valores que .thermal-card-50x70 en sim.css.
   '50x70': {
     layout: 'vertical',
     wMm: 50,
@@ -5002,12 +5002,13 @@ const THERMAL_LABEL_SPECS = {
     padXMm: 2.5,
     padYMm: 2.5,
     gapPx: 6,
-    qrMm: 36.0,
-    bandMm: 4.5,
+    qrMm: 40.0,
+    spineMm: 4.0,
+    spineText: 'SETAS DE LA PEÑA',
     eyebrowPx: 7.0,
     speciesPx: 17.0,
-    badgePx: 8.5,
-    codePx: 9.5,
+    badgePx: 10.5,
+    codePx: 8.0,
     metaPx: 7.0
   },
 };
@@ -5089,20 +5090,21 @@ function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
   }
 }
 
-// Etiqueta vertical 50×70: mismo orden de lectura que .thermal-card-50x70.
+// Etiqueta vertical 50×70 "Lomo": mismo orden de lectura que .thermal-card-50x70.
 function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   const mm = THERMAL_PX_PER_MM;
   const w = spec.wMm * mm;
   const h = spec.hMm * mm;
-  const padX = spec.padXMm * mm;
   const padY = spec.padYMm * mm;
-  const innerW = w - padX * 2;
-  const eyebrow = (item.eyebrow || 'SETAS DE LA PEÑA · TENJO').toUpperCase();
+  const spine = spec.spineMm * mm;
+  const colX = spine + spec.padXMm * mm;
+  const colW = w - colX - spec.padXMm * mm;
+  const cx = colX + colW / 2;
   const species = (item.species || 'Seta Cultivada').trim();
   const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
   const code = (item.id || '').trim();
-  const date = (item.date || '').trim();
-  const recipe = (item.recipe || '').trim();
+  const meta = [(item.date || '').trim(), (item.recipe || '').trim()].filter(Boolean).join('  ·  ');
+  const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
 
   ctx.save();
   ctx.translate(x0, y0);
@@ -5115,77 +5117,60 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.setLineDash([]);
   ctx.textBaseline = 'top';
 
-  // Franja de marca invertida
-  const bandH = spec.bandMm * mm;
+  // Lomo negro con la marca en vertical (se lee de abajo hacia arriba)
   ctx.fillStyle = '#000';
-  ctx.fillRect(padX, padY, innerW, bandH);
-  const eyebrowPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
-  ctx.font = `700 ${eyebrowPx}px ${FONT_MONO}`;
+  ctx.fillRect(0, 0, spine, h);
+  const ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  ctx.save();
+  ctx.translate(spine / 2, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = `700 ${ebPx}px ${FONT_MONO}`;
   ctx.fillStyle = '#fff';
-  const ebW = ctx.measureText(eyebrow).width;
-  ctx.fillText(eyebrow, padX + Math.max(0, (innerW - ebW) / 2), padY + Math.round((bandH - eyebrowPx) / 2));
-  let curY = padY + bandH + cssPxToCanvas(4);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
+  ctx.restore();
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'top';
 
   // Especie (serif, hasta 2 líneas, se reduce si no cabe)
+  let curY = padY + cssPxToCanvas(2);
   let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
   ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-  let lines = wrapCanvasText(ctx, species, innerW);
-  while (lines.length > 2 && spPx > 18) {
+  let lines = wrapCanvasText(ctx, species, colW);
+  while (lines.length > 1 && spPx > 18) {
     spPx -= 2;
     ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-    lines = wrapCanvasText(ctx, species, innerW);
+    lines = wrapCanvasText(ctx, species, colW);
   }
-  ctx.fillStyle = '#000';
   const spLH = Math.round(spPx * 1.05);
-  lines.slice(0, 2).forEach(line => {
-    ctx.fillText(line, padX + (innerW - ctx.measureText(line).width) / 2, curY);
-    curY += spLH;
-  });
+  lines.slice(0, 2).forEach(line => { center(line, curY); curY += spLH; });
   curY += cssPxToCanvas(3);
 
-  // QR centrado
+  // QR de 40mm centrado en la columna
   const qrSize = spec.qrMm * mm;
-  drawQrToCanvas(ctx, item, (w - qrSize) / 2, curY, qrSize);
+  drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
   curY += qrSize + cssPxToCanvas(3);
-
-  // Insignia de bolsa
-  if (badge) {
-    let bPx = Math.round(cssPxToCanvas(spec.badgePx));
-    ctx.font = `800 ${bPx}px ${FONT_MONO}`;
-    const bPadX = cssPxToCanvas(4);
-    let tW = ctx.measureText(badge).width;
-    if (tW + bPadX * 2 > innerW) {
-      bPx = Math.max(10, Math.floor(bPx * (innerW - bPadX * 2) / tW));
-      ctx.font = `800 ${bPx}px ${FONT_MONO}`;
-      tW = ctx.measureText(badge).width;
-    }
-    const bW = tW + bPadX * 2;
-    const bH = Math.round(bPx * 1.4);
-    ctx.fillStyle = '#000';
-    ctx.fillRect((w - bW) / 2, curY, bW, bH);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(badge, (w - tW) / 2, curY + Math.round((bH - bPx) / 2));
-    curY += bH + cssPxToCanvas(2.5);
-  }
 
   // Código
   const cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
-  ctx.fillStyle = '#000';
-  wrapCanvasText(ctx, code, innerW).forEach(line => {
-    ctx.fillText(line, (w - ctx.measureText(line).width) / 2, curY);
-    curY += Math.round(cPx * 1.12);
-  });
+  ctx.font = `700 ${cPx}px ${FONT_MONO}`;
+  wrapCanvasText(ctx, code, colW).forEach(line => { center(line, curY); curY += Math.round(cPx * 1.15); });
+  curY += cssPxToCanvas(2);
 
-  // Fila meta anclada abajo: filete + fecha (izq) · receta (der)
-  const mPx = Math.round(cssPxToCanvas(spec.metaPx));
-  const metaY = h - padY - mPx;
-  ctx.fillRect(padX, metaY - cssPxToCanvas(2.5), innerW, 1);
-  ctx.font = `600 ${mPx}px ${FONT_MONO}`;
-  if (date) ctx.fillText(date, padX, metaY);
-  if (recipe) {
-    const rTxt = wrapCanvasText(ctx, recipe, innerW / 2)[0] || '';
-    ctx.fillText(rTxt, w - padX - ctx.measureText(rTxt).width, metaY);
+  // Bolsa: texto grande, sin bloque negro
+  if (badge) {
+    let bPx = Math.round(cssPxToCanvas(spec.badgePx));
+    ctx.font = `800 ${bPx}px ${FONT_MONO}`;
+    const tW = ctx.measureText(badge).width;
+    if (tW > colW) { bPx = Math.max(10, Math.floor(bPx * colW / tW)); ctx.font = `800 ${bPx}px ${FONT_MONO}`; }
+    center(badge, curY);
+  }
+
+  // Fecha · receta anclada abajo
+  if (meta) {
+    const mPx = Math.round(cssPxToCanvas(spec.metaPx));
+    ctx.font = `500 ${mPx}px ${FONT_MONO}`;
+    center(meta, h - padY - mPx);
   }
   ctx.restore();
 }
