@@ -46,7 +46,7 @@ case "$base" in
   origin/*) git fetch origin "${base#origin/}" ;;
 esac
 
-echo "merge-main: fusionando $base…"
+echo "merge-main: fusionando ${base}…"
 if git merge "$base"; then
   echo "merge-main: sin conflictos. Nada que reconstruir."
   exit 0
