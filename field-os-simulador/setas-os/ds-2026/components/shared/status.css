@@ -1,12 +1,13 @@
 /* DS-2026 · Shared Status & Alerts */
 .sdp-alert {
   display: flex; align-items: flex-start; gap: var(--space-2);
-  border-left: 4px solid var(--status-ok);
+  border-left: var(--bar-height) solid var(--status-ok-marker);
   background: var(--status-ok-bg);
   padding: var(--space-2);
 }
 .sdp-alert__icon { flex: none; width: 20px; height: 20px; }
-.sdp-alert__icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: var(--pictogram-stroke); }
+.sdp-alert__icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: var(--pictogram-stroke); vector-effect: non-scaling-stroke; }
+.sdp-alert__icon svg * { vector-effect: non-scaling-stroke; }
 .sdp-alert__body { display: grid; gap: var(--space-half); }
 .sdp-alert__label { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .sdp-alert__msg { font: var(--t-small); color: var(--text-primary); }
@@ -25,7 +26,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-half);
-  padding: 2px 6px;
+  padding: var(--space-half) var(--space-1);
   font: var(--t-label);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;

@@ -12,26 +12,35 @@
   color: var(--text-secondary);
   background: var(--surface-panel);
   border: var(--rule-hairline);
-  border-left: 3px solid var(--provenance-marker, var(--border-hairline));
-  padding: 2px 6px;
+  border-left: var(--marker-width) solid var(--provenance-marker, var(--border-hairline));
+  padding: var(--space-half) var(--space-1);
 }
 
+.sdp-provenance { white-space: nowrap; }
+
+/* El pictograma es una máscara sobre currentColor: no depende de que la
+   fuente tenga el glifo, y hereda el color del rótulo. */
 .sdp-provenance[data-provenance]::before {
-  content: var(--provenance-symbol, "");
+  content: "";
   flex: none;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  -webkit-mask: var(--provenance-icon) center / contain no-repeat;
+  mask: var(--provenance-icon) center / contain no-repeat;
 }
 
 /* Canonical attribute API: symbol + semantic marker. */
-.sdp-provenance[data-provenance="measured"]   { --provenance-symbol: var(--provenance-measured-symbol);   --provenance-marker: var(--status-ok); }
-.sdp-provenance[data-provenance="calculated"] { --provenance-symbol: var(--provenance-calculated-symbol); --provenance-marker: var(--text-secondary); }
-.sdp-provenance[data-provenance="estimated"]  { --provenance-symbol: var(--provenance-estimated-symbol);  --provenance-marker: var(--status-warn-marker); }
-.sdp-provenance[data-provenance="target"]     { --provenance-symbol: var(--provenance-target-symbol);     --provenance-marker: var(--brand-accent); }
-.sdp-provenance[data-provenance="manual"]     { --provenance-symbol: var(--provenance-manual-symbol);     --provenance-marker: var(--text-primary); }
-.sdp-provenance[data-provenance="simulated"]  { --provenance-symbol: var(--provenance-simulated-symbol);  --provenance-marker: var(--text-secondary); border-left-style: dashed; }
-.sdp-provenance[data-provenance="pending"]    { --provenance-symbol: var(--provenance-pending-symbol);    --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }
+.sdp-provenance[data-provenance="measured"]   { --provenance-icon: var(--provenance-measured-icon);   --provenance-marker: var(--status-ok-marker); }
+.sdp-provenance[data-provenance="calculated"] { --provenance-icon: var(--provenance-calculated-icon); --provenance-marker: var(--text-secondary); }
+.sdp-provenance[data-provenance="estimated"]  { --provenance-icon: var(--provenance-estimated-icon);  --provenance-marker: var(--status-warn-marker); }
+.sdp-provenance[data-provenance="target"]     { --provenance-icon: var(--provenance-target-icon);     --provenance-marker: var(--brand-accent); }
+.sdp-provenance[data-provenance="manual"]     { --provenance-icon: var(--provenance-manual-icon);     --provenance-marker: var(--text-primary); }
+.sdp-provenance[data-provenance="simulated"]  { --provenance-icon: var(--provenance-simulated-icon);  --provenance-marker: var(--text-secondary); border-left-style: dashed; }
+.sdp-provenance[data-provenance="pending"]    { --provenance-icon: var(--provenance-pending-icon);    --provenance-marker: var(--status-warn-marker); border-left-style: dotted; opacity: 0.85; }
 
 /* Legacy modifier aliases: styling only; migrate markup to data-provenance. */
-.sdp-provenance--measured   { --provenance-marker: var(--status-ok); }
+.sdp-provenance--measured   { --provenance-marker: var(--status-ok-marker); }
 .sdp-provenance--calculated { --provenance-marker: var(--text-secondary); }
 .sdp-provenance--estimated  { --provenance-marker: var(--status-warn-marker); }
 .sdp-provenance--target     { --provenance-marker: var(--brand-accent); }

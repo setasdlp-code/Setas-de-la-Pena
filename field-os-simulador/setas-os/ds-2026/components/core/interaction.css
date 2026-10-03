@@ -30,13 +30,26 @@
   min-height: var(--field-cell-min-height, 48px) !important;
 }
 
-/* Disabled Contract */
+/* Disabled Contract
+   Sin opacidad: bajarla deja el texto por debajo de 3:1 y al sol no se lee.
+   El estado se dice con color apagado mas filete punteado. El punteado se
+   aplica con border-style, no con border, para no inventar ancho de borde en
+   un elemento que no lo tenia y desplazar su caja. */
 :disabled,
 [aria-disabled="true"],
 .is-disabled {
-  opacity: 0.45;
+  color: var(--text-metadata);
   cursor: not-allowed !important;
   pointer-events: none;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"],
+.is-disabled {
+  border-style: dashed;
 }
 
 /* Reduced Motion */

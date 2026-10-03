@@ -9,43 +9,50 @@
         "symbol": "●",
         "label": "MEASURED",
         "description": "Direct sensor or instrument measurement (e.g. SCD30 CO2 sensor, physical scale).",
-        "labelKey": "provenance.measured"
+        "labelKey": "provenance.measured",
+        "icon": "provenance-measured.svg"
       },
       "calculated": {
         "symbol": "◆",
         "label": "CALCULATED",
         "description": "Derived mathematically from measured inputs (e.g. biological efficiency, dry matter).",
-        "labelKey": "provenance.calculated"
+        "labelKey": "provenance.calculated",
+        "icon": "provenance-calculated.svg"
       },
       "estimated": {
         "symbol": "◇",
         "label": "ESTIMATED",
         "description": "Interpolated or estimated parameter (e.g. projected flush yield date).",
-        "labelKey": "provenance.estimated"
+        "labelKey": "provenance.estimated",
+        "icon": "provenance-estimated.svg"
       },
       "target": {
         "symbol": "◎",
         "label": "TARGET",
         "description": "Set-point or recipe target (e.g. optimal 18.5°C room setpoint).",
-        "labelKey": "provenance.target"
+        "labelKey": "provenance.target",
+        "icon": "provenance-target.svg"
       },
       "manual": {
         "symbol": "△",
         "label": "MANUAL",
         "description": "Manually entered operator measurement or field observation.",
-        "labelKey": "provenance.manual"
+        "labelKey": "provenance.manual",
+        "icon": "provenance-manual.svg"
       },
       "simulated": {
         "symbol": "⬡",
         "label": "SIMULATED",
         "description": "Model-simulated or perito projection.",
-        "labelKey": "provenance.simulated"
+        "labelKey": "provenance.simulated",
+        "icon": "provenance-simulated.svg"
       },
       "pending": {
         "symbol": "◌",
         "label": "PENDING",
         "description": "Measurement awaiting sensor response or operator verification.",
-        "labelKey": "provenance.pending"
+        "labelKey": "provenance.pending",
+        "icon": "provenance-pending.svg"
       }
     },
     "sync": {
@@ -53,25 +60,29 @@
         "symbol": "✓",
         "label": "SINCRONIZADO",
         "state": "normal",
-        "labelKey": "sync.synced"
+        "labelKey": "sync.synced",
+        "icon": "sync-synced.svg"
       },
       "pending": {
         "symbol": "◌",
         "label": "PENDIENTE DE SINCRONIZACIÓN",
         "state": "working",
-        "labelKey": "sync.pending"
+        "labelKey": "sync.pending",
+        "icon": "sync-pending.svg"
       },
       "error": {
         "symbol": "✕",
         "label": "ERROR DE SINCRONIZACIÓN",
         "state": "error",
-        "labelKey": "sync.error"
+        "labelKey": "sync.error",
+        "icon": "sync-error.svg"
       },
       "offline": {
         "symbol": "⚡",
         "label": "SIN CONEXIÓN · GUARDADO LOCALMENTE",
         "state": "offline",
-        "labelKey": "sync.offline"
+        "labelKey": "sync.offline",
+        "icon": "sync-offline.svg"
       }
     },
     "status": {

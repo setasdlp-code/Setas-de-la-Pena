@@ -105,7 +105,7 @@ node scripts/build-tokens.mjs
 > `GayaPatched-Regular.otf` y un `GayaPatched-Italic.otf` ajenos a la familia,
 > con 280 glifos contra los 328 de los legítimos; al ocupar el peso 400 se
 > llevaban el binomio latino y la línea salía con dos tipografías mezcladas. Ya
-> no se declaran, y el binomio pasó a Light Italic 300.
+> no se declaran, y el binomio pasó a Medium Italic 500, que es el corte real al que ese 400 se parecía.
 >
 > De lo que sí falta en los diez cortes reales —`%`, `°`, `²`, `₂`, `×` y `€`—
 > se encarga un relleno de diez caras con `unicode-range` desde IBM Plex Sans,

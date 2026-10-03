@@ -2,6 +2,7 @@
 .sdp-scanner {
   position: relative;
   width: 100%;
+  /* Excepcion: 390px fijo, la pieza es una ilustracion, no un componente dimensionable. */
   max-width: 390px;
   background: var(--surface-recessed);
   border: 2px solid var(--border-heavy);
@@ -23,6 +24,7 @@
 }
 
 .sdp-scanner__reticle {
+  /* Excepcion: reticula de 220px fija, ilustracion no dimensionable. */
   width: 220px;
   height: 220px;
   border: 2px dashed var(--brand-accent);

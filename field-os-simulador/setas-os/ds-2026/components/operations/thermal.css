@@ -1,0 +1,63 @@
+/* DS-2026 · Operations: Etiqueta térmica (Phomemo M110, 203 DPI = 8 puntos/mm, 1 bit, sin grises).
+   Caja física en milímetros: 50 x 30 mm. Todo resuelve a negro sobre blanco.
+   Cuerpo de filete: 0.5 mm = 4 puntos (el filete de 1 px CSS = 0.125 mm = 1 punto se pierde).
+   Texto: mono, x-height >= --print-code-x-height; rol lot-code-print (6 mm, x ~ 0.5em), nunca micro-print. */
+/* Pagina con nombre: el tamano 50 x 30 mm solo aplica a quien declara page: thermal.
+   Un @page global cambiaria la impresion de cualquier consumidor que cargue este bundle. */
+@page thermal { size: 50mm 30mm; margin: 0; }
+
+.sdp-thermal,
+[data-print="thermal"] {
+  page: thermal;
+  box-sizing: border-box;
+  width: 50mm; height: 30mm;
+  padding: 1.5mm;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  align-content: start;
+  overflow: hidden;
+  background: white;
+  color: black;
+  border: 0.5mm solid black;
+  border-radius: 0;
+  font: var(--t-lot-code-print);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  filter: contrast(400%) grayscale(100%);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.sdp-thermal *,
+[data-print="thermal"] * {
+  color: black;
+  background: transparent;
+  border-color: black;
+  text-shadow: none;
+}
+
+.sdp-thermal__lot,
+.sdp-thermal__species,
+.sdp-thermal__date {
+  margin: 0;
+  /* piso de altura de x: 3 mm (--print-code-x-height) con tipografía de 6 mm */
+  font: var(--t-lot-code-print);
+  min-height: calc(var(--print-code-x-height) * 2);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sdp-thermal__lot { font-weight: 800; }
+.sdp-thermal__species,
+.sdp-thermal__date { border-top: 0.5mm solid black; }
+
+/* Barra de estado: relleno negro sólido, sin tinte */
+.sdp-thermal__bar {
+  align-self: end;
+  height: 1.5mm;
+  background: black;
+  border: 0;
+}
+
+@media print {
+  .sdp-thermal, [data-print="thermal"] { break-after: page; }
+}
