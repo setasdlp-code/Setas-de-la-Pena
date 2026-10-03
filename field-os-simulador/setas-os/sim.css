@@ -4740,13 +4740,21 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .climate-kpi-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  /* Arriba, no al centro: cuando el titulo ocupa dos lineas (HUMEDAD
+     RELATIVA, VPD & PSICROMETRIA) centrar deja el chip de procedencia a
+     media altura y montado sobre la segunda linea. */
+  align-items: flex-start;
+  gap: var(--space-1, 8px);
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink-1);
   text-transform: uppercase;
   letter-spacing: .05em;
 }
+
+/* Sin esto el titulo no puede encogerse por debajo de su contenido y se
+   solapa con el bloque de la derecha en vez de partirse en dos lineas. */
+.sim-root .climate-kpi-header > :first-child { min-width: 0; }
 
 .sim-root .climate-kpi-value {
   font-family: var(--font-num, monospace);
