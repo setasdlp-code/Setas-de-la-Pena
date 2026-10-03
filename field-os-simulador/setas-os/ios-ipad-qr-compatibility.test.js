@@ -148,8 +148,6 @@ test('trace.html extrae parámetros de canastillas (?crate= y ?canastilla=) y pr
 });
 
 test('etiqueta vertical 50x70: spec de canvas y CSS alineados (QR 36mm)', () => {
-  const fs = require('node:fs');
-  const path = require('node:path');
   const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
   const css = fs.readFileSync(path.join(__dirname, 'sim.css'), 'utf8');
   assert.match(jsx, /'50x70':\s*\{[^}]*?layout:\s*'vertical'[^}]*?qrMm:\s*36/);
