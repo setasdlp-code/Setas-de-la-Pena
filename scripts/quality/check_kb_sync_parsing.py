@@ -176,15 +176,27 @@ def check_ostreatus_air_and_core_rows_resolve(m) -> None:
                 f"'{name}': el patrón de fila ya no encuentra su fila en la ficha de ostreatus; "
                 "la comparación se perdería en silencio"
             )
-    # El techo de núcleo debe seguir reportándose como ausente en la app
-    # mientras no se cablee: si el getter empezara a devolver un valor sin que
-    # nadie lo documentara, sería un valor inventado.
+    # El techo de núcleo ya está cableado en la app (KB_SPP.incCoreMaxT), así
+    # que el punto pasó de reportar un hueco a comparar de verdad. Lo que se
+    # vigila ahora es que siga comparando: si el getter volviera a dar None, el
+    # punto degradaría a "ausente en la app" y la divergencia dejaría de
+    # detectarse — silencio, no alerta.
     core = points["Incubación techo de núcleo"]
     app_data = m.load_app_data()
-    if core.app_getter(app_data) is not None:
+    app_value = core.app_getter(app_data)
+    if app_value is None:
         raise AssertionError(
-            "la app ya define incCoreMaxT: actualizar el punto para comparar de verdad "
-            "en vez de reportarlo como ausente"
+            "KB_SPP ya no define incCoreMaxT: el punto volvería a reportar un hueco "
+            "en vez de comparar, y una divergencia de techo de núcleo pasaría inadvertida"
+        )
+    # Y que el número siga siendo el del KB. El checker ya lo compara, pero un
+    # fallo aquí es más legible que una fila de divergencia en el reporte.
+    candidates, _ = m.kb_candidates_for(core.kb_file, core.kb_section_pattern, core.kb_row_pattern)
+    kb_values = {c.lo for c in candidates} | {c.hi for c in candidates}
+    if app_value not in kb_values:
+        raise AssertionError(
+            f"el techo de núcleo de la app ({app_value}) no aparece en la fila del KB "
+            f"(valores leídos: {sorted(kb_values)})"
         )
 
 

@@ -5422,6 +5422,25 @@ const ROOM_TARGET_BANDS = {
     temperature_c: { min: 20.0, max: 24.0, target: 22.0, criticalMin: 12.0, criticalMax: 30.0 },
     rh_pct:        { min: 65.0, max: 80.0, target: 72.0, criticalMin: 45.0, criticalMax: 98.0 },
     co2_ppm:       { min: 400,  max: 1500, target: 800,  criticalMax: 5000 },
+    // Temperatura de NÚCLEO del bloque. Hasta ahora la lectura entraba (el
+    // puente la publica y el motor de anomalías ya sabe graduarla y sugerir
+    // "Enfriar sustrato") pero ninguna sala declaraba banda, así que un núcleo a
+    // 32 °C pasaba sin una sola alerta. Esto es lo que lo vuelve accionable.
+    //
+    // Sólo `max`, deliberadamente:
+    //   · no hay `min` porque el piso de núcleo no está documentado en ninguna
+    //     parte, y un mínimo inventado dispara alarmas falsas cada noche fría;
+    //   · no hay `target` porque un núcleo no es una consigna — nadie regula el
+    //     núcleo, se regula el aire (`temperature_c` arriba) y el núcleo es su
+    //     consecuencia más el calor metabólico del micelio.
+    //
+    // 28 °C sale de knowledge_base (`incubation_core_temp_max_c`, ADR-0008) y
+    // coincide en las dos especies que lo documentan, ostreatus y shiitake, así
+    // que vale para esta sala sin importar cuál de las dos la ocupe.
+    // `criticalMax: 30` es el inicio del rango de estrés térmico y aborto que
+    // documenta 01_species/lentinula_edodes.md ("núcleo puede superar 30–32 °C");
+    // se toma el extremo bajo porque es el lado seguro del rango.
+    substrate_temperature_c: { max: 28.0, criticalMax: 30.0 },
   },
 };
 

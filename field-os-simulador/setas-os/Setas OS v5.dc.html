@@ -2140,11 +2140,24 @@ const spCode = k => (SPECIES.find(s=>s.key===k)||{code:'--'}).code;
 // que este rango es DEPENDIENTE DE CEPA (americanas 4-24, alemanas solo bajo
 // 15), asi que el par describe a esta finca y no a la especie -- ver
 // 09_research/intake/app_kb_parameter_discrepancies_2026-09-28.md
+//
+// incCoreMaxT es el techo de temperatura de NUCLEO del bloque, no de aire. Son
+// dos medidas distintas: incT es la consigna que el control regula, el nucleo es
+// una consecuencia del aire mas el calor metabolico del micelio, que Shi et al.
+// 2026 (paper_026) midieron en 4-8 grados por encima del aire durante el pico de
+// colonizacion. Por eso la consigna de aire va POR DEBAJO del techo de nucleo y
+// nunca por encima: con incT [20,24], el nucleo ya llega a 28-32.
+//
+// Solo lo traen pleurotus_ostreatus y lentinula_edodes, que son las dos especies
+// con valor documentado en su ficha de knowledge_base. Las demas NO lo heredan:
+// extrapolar un techo de nucleo a una especie que no lo tiene documentado seria
+// inventar un umbral de seguridad. Ver ADR-0008 y metadata/species.yaml
+// (incubation_core_temp_max_c).
 const KB_SPP = {
   pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,130], cycle:[28,40] },
-  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[13,24], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50] },
+  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[13,24], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50], incCoreMaxT:28 },
   hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[18,24], incT:[21,24], hr:[90,97], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
-  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150] },
+  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150], incCoreMaxT:28 },
   ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:2000, fae:[4,6], be:[13,40], cycle:[90,180] },
 };
 // Sustratos (substrates.yaml). be = rango de eficiencia biológica documentado.
