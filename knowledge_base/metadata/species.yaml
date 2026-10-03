@@ -1,6 +1,26 @@
 # Metadata — Especies Cultivadas
 # Setas de la Peña
-# Última actualización: 2026-09-20
+# Última actualización: 2026-10-03
+#
+# TEMPERATURA DE AIRE vs TEMPERATURA DE NÚCLEO
+# ---------------------------------------------
+# `incubation_temp_c` es la banda de AIRE: lo que el control ambiental regula.
+# `incubation_core_temp_max_c` es un techo de NÚCLEO: lo que hay que vigilar, no
+# lo que se consigna. Nadie regula el núcleo — es una consecuencia del aire más
+# el calor metabólico del micelio.
+#
+# Shi et al. 2026 (paper_026; ARK-012) midieron ese calor metabólico: durante el
+# pico de colonización el núcleo del bloque corre 4–8 °C por encima del aire, con
+# desfase térmico de 2–4 h. De ahí se sigue que el setpoint de aire tiene que ir
+# POR DEBAJO del objetivo de núcleo, nunca por encima. Confundir las dos medidas
+# es el error que empuja el aire hacia arriba y cuece el núcleo.
+#
+# `incubation_core_temp_max_c` es un LÍMITE DE ALARMA derivado de la propia banda
+# de aire (techo de aire + delta mínimo documentado), no una afirmación de
+# literatura sobre la tolerancia térmica de la especie: por encima de él el
+# núcleo está fuera de lo que la banda de aire declarada puede explicar, así que
+# la alarma es sobre el lazo de control. Sólo se consigna en las especies cuyo
+# valor ya está documentado en su propia ficha; no se extrapola a las demás.
 
 species:
   - id: pleurotus_djamor
@@ -56,6 +76,9 @@ species:
     cold_shock_required: strain_dependent
     incubation_temp_c: [21, 27]
     incubation_temp_optimal_c: 25
+    incubation_core_temp_max_c: 28
+    incubation_core_over_air_delta_literature_c: [4, 8]
+    incubation_core_measurement: required_witness_block_per_lot
     literature_humidity_percent: [80, 95]
     humidity_percent: null
     fruiting_co2_ppm_max: null
@@ -76,8 +99,12 @@ species:
     priority: 4
     phase: validation
     document: 01_species/pleurotus_ostreatus.md
-    fruiting_temp_c: [10, 21]
+    fruiting_temp_c: [13, 24]
+    fruiting_temp_commercial_optimum_c: [15, 20]
     incubation_temp_c: [20, 24]
+    incubation_core_temp_max_c: 28
+    incubation_core_over_air_delta_literature_c: [4, 8]
+    incubation_core_measurement: required_witness_block_per_lot
     humidity_percent: [85, 95]
     fruiting_co2_ppm_max: 1000
     fae_per_hour: [5, 8]
@@ -85,7 +112,7 @@ species:
     substrate_incompatible: []
     be_range_percent: [70, 100]
     cycle_days: [35, 50]
-    status_notes: "Temperatura fría — se adapta bien al clima de Tenjo."
+    status_notes: "Temperatura fría — se adapta bien al clima de Tenjo. El techo de núcleo 28 °C sale del techo de aire (24) más el delta mínimo documentado (4, paper_026); por encima el núcleo no lo explica la banda de aire. Requiere sonda de núcleo en un bloque testigo por lote."
 
   - id: ganoderma_lucidum
     common_name: Reishi

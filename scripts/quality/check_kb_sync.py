@@ -477,8 +477,29 @@ SPECIES_SYNC_POINTS: list[SyncPoint] = [
     # Pleurotus ostreatus
     species_point("pleurotus_ostreatus", "Fructificación temperatura", "°C", "pleurotus_ostreatus.md",
                   r"Fructificaci", r"^Temperatura$", "fruitT"),
-    species_point("pleurotus_ostreatus", "Incubación temperatura", "°C", "pleurotus_ostreatus.md",
-                  r"Incubaci", r"^Temperatura$", "incT"),
+    # La fila de incubación de ostreatus ya no se llama "Temperatura" a secas: se
+    # desdobló en aire (consigna) y núcleo (vigilancia) el 2026-10-03, porque
+    # confundir las dos es lo que empujaba el setpoint de aire hacia arriba. El
+    # patrón sigue a la etiqueta nueva; si volviera a "^Temperatura$" el punto
+    # caería a "(no source found)" y la comparación se perdería en silencio.
+    species_point("pleurotus_ostreatus", "Incubación temperatura de aire", "°C", "pleurotus_ostreatus.md",
+                  r"Incubaci", r"^Temperatura \*\*aire\*\*", "incT"),
+    # El techo de núcleo (28 °C) existe en el KB y la app NO lo tiene: no hay
+    # consigna ni alarma de núcleo en KB_SPP. El getter usa .get() a propósito
+    # para que el hueco se reporte como present_in_kb_absent_in_app en vez de
+    # romper el checker, y para que el día que se cablee el punto lo levante
+    # solo. La métrica de telemetría `substrate_temperature_c` ya existe
+    # (telemetry-contract.js); lo que falta es el umbral por especie.
+    SyncPoint(
+        entity="pleurotus_ostreatus",
+        parameter="Incubación techo de núcleo",
+        unit="°C",
+        kb_file=KB / "01_species" / "pleurotus_ostreatus.md",
+        kb_section_pattern=r"Incubaci",
+        kb_row_pattern=r"^Temperatura \*\*n[úu]cleo\*\*",
+        app_source="KB_SPP.pleurotus_ostreatus.incCoreMaxT",
+        app_getter=lambda d: d["KB_SPP"]["pleurotus_ostreatus"].get("incCoreMaxT"),
+    ),
     species_point("pleurotus_ostreatus", "Fructificación HR", "%", "pleurotus_ostreatus.md",
                   r"Fructificaci", r"^HR$", "hr"),
     species_point("pleurotus_ostreatus", "Fructificación CO2", "ppm", "pleurotus_ostreatus.md",
