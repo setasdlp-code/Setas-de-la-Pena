@@ -10501,36 +10501,36 @@ body{margin:0;padding:20px 24px;background:#fff;}
         <div className="climate-kpi-grid">
           {/* 1. Temperatura */}
           <div className="climate-kpi-card sdp-tele">
-            <div className="climate-kpi-header sdp-tele__header">
+            <div className="climate-kpi-header">
               <span>Temperatura</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 <span className="sdp-provenance">● MEASURED</span>
                 <span>Target: {defaultTargets.temperature_c.target}°C</span>
               </div>
             </div>
-            <div className="climate-kpi-value sdp-tele__value">
+            <div className="climate-kpi-value sdp-tele__v">
               <span>{currentMetrics.temp}</span>
-              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>°C</span>
+              <span className="sdp-tele__u">°C</span>
             </div>
-            <div className="climate-kpi-sub sdp-tele__label">
+            <div className="climate-kpi-sub">
               <span>{climateTimeRange}: {tempMin}°C – {tempMax}°C · Sustrato: {currentMetrics.subTemp}°C</span>
             </div>
           </div>
 
           {/* 2. Humedad Relativa */}
           <div className="climate-kpi-card sdp-tele">
-            <div className="climate-kpi-header sdp-tele__header">
+            <div className="climate-kpi-header">
               <span>Humedad Relativa</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 <span className="sdp-provenance">● MEASURED</span>
                 <span>Target: {defaultTargets.rh_pct.target}%</span>
               </div>
             </div>
-            <div className="climate-kpi-value sdp-tele__value">
+            <div className="climate-kpi-value sdp-tele__v">
               <span>{currentMetrics.rh}</span>
-              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>%</span>
+              <span className="sdp-tele__u">%</span>
             </div>
-            <div className="climate-kpi-sub sdp-tele__label">
+            <div className="climate-kpi-sub">
               <span>{climateTimeRange}: {rhMin}% – {rhMax}% · Banda: [{defaultTargets.rh_pct.min}% - {defaultTargets.rh_pct.max}%]</span>
             </div>
           </div>
@@ -10551,19 +10551,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 : { correctedPpm: currentMetrics.co2, baroFactor: 1.36, deltaPpm: Math.round(currentMetrics.co2 * 0.36), rawPpm: currentMetrics.co2, live: false };
             return (
               <div className="climate-kpi-card sdp-tele" data-testid="climate-co2-card" data-co2-live={ndirCorr.live?'true':'false'}>
-                <div className="climate-kpi-header sdp-tele__header">
+                <div className="climate-kpi-header">
                   <span>Dióxido de Carbono (NDIR)</span>
                   <div style={{display:'flex',gap:6,alignItems:'center'}}>
                     <span className="sdp-provenance">● MEASURED</span>
                     <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-olive)' }}>Comp. 2.600m</span>
                   </div>
                 </div>
-                <div className="climate-kpi-value sdp-tele__value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <div className="climate-kpi-value sdp-tele__v">
                   <span>{ndirCorr.correctedPpm}</span>
-                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>ppm real</span>
+                  <span className="sdp-tele__u">ppm real</span>
                   <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
-                <div className="climate-kpi-sub sdp-tele__label">
+                <div className="climate-kpi-sub">
                   <span>Beer-Lambert {(co2Correction&&co2Correction.pressureHpa)||liveTelemetry.config.pressureHpa||745} hPa: <strong>{ndirCorr.baroFactor}x</strong> (+{ndirCorr.deltaPpm} ppm) · Max: {defaultTargets.co2_ppm.max} ppm</span>
                 </div>
               </div>
@@ -10572,7 +10572,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {/* 4. VPD & Punto de Rocío */}
           <div className="climate-kpi-card sdp-tele">
-            <div className="climate-kpi-header sdp-tele__header">
+            <div className="climate-kpi-header">
               <span>VPD & Psicrometría</span>
               <div style={{display:'flex',gap:6,alignItems:'center'}}>
                 <span className="sdp-provenance">○ ESTIMATED</span>
@@ -10581,11 +10581,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </span>
               </div>
             </div>
-            <div className="climate-kpi-value sdp-tele__value">
+            <div className="climate-kpi-value sdp-tele__v">
               <span>{vpd}</span>
-              <span className="sdp-tele__unit" style={{fontSize:15,color:'var(--ink-2)'}}>kPa</span>
+              <span className="sdp-tele__u">kPa</span>
             </div>
-            <div className="climate-kpi-sub sdp-tele__label">
+            <div className="climate-kpi-sub">
               <span>Punto de Rocío (Tdp): {dewPoint}°C · ΔT anti-rocío: {(currentMetrics.temp - dewPoint).toFixed(1)}°C</span>
             </div>
           </div>
@@ -11079,7 +11079,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         >
                           <div style={{padding:'12px 14px',borderBottom:'1px solid var(--paper-300)',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                             <div style={{minWidth:0}}>
-                              <div className="sdp-lote__code" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
+                              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lote.codigo}</div>
                               {SetasInventoryConsumptionApi.isPendingForLote(invOps,lote.id)&&<span className="chip" title="El consumo de bodega de este lote aún no se guardó en el servidor" style={{marginLeft:6}}>Pendiente de sincronizar inventario</span>}
                               <div style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:"var(--text-md)",color:'var(--ink-900)',lineHeight:1.2}}>{lote.especie||'—'}</div>
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
@@ -11380,8 +11380,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         </button>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <span className={`sdp-sync-chip ${isOnline?'sdp-sync-chip--synced':'sdp-sync-chip--pending'}`}>
-            <span className="sdp-sync-chip__dot" aria-hidden="true" />
-            <span className="sdp-sync-chip__label">{isOnline ? 'CONECTADO · SINCRONIZADO' : 'MODO LOCAL · PENDIENTE'}</span>
+            {isOnline ? 'CONECTADO · SINCRONIZADO' : 'MODO LOCAL · PENDIENTE'}
           </span>
         </div>
       </div>
@@ -11786,7 +11785,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
                               {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
                             </button>
-                            <span className="sdp-task__status" style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
+                            <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
                       </div>
@@ -15796,7 +15795,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           muted
                         />
                         <div className="qr-scanner-reticle sdp-scanner__reticle">
-                          <div className="qr-scanner-laser sdp-scanner__laser" />
+                          <div className="qr-scanner-laser" />
                         </div>
                         <button
                           type="button"
