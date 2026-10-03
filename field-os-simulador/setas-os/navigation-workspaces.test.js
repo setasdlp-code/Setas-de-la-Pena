@@ -10,24 +10,25 @@ const shell = fs.readFileSync(path.join(ROOT, 'Setas OS v5.dc.html'), 'utf8');
 const jsx = fs.readFileSync(path.join(ROOT, 'simulador-app.jsx'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'sim.css'), 'utf8');
 
-test('the primary navigation exposes exactly four operational workspaces', () => {
+test('the primary navigation exposes the six canonical product destinations', () => {
   const workspaces = [...shell.matchAll(/data-workspace="([^"]+)"/g)].map(match => match[1]);
-  assert.deepEqual(workspaces, ['formular', 'produccion', 'bitacora', 'control']);
-  assert.match(shell, /<nav class="app-rail" aria-label="Espacios de trabajo">/);
-  assert.match(shell, /aria-label="Ir a Control, Hoy"/);
+  assert.deepEqual(workspaces, ['hoy', 'lotes', 'salas', 'inventario', 'recetas', 'conocimiento']);
+  assert.match(shell, /<nav class="app-rail" aria-label="Destinos principales">/);
+  assert.match(shell, /aria-label="Ir a Hoy"/);
 });
 
 test('workspace routes preserve the agreed information architecture', () => {
-  assert.match(shell, /FORMULAR_SIM_TABS = \['catalogo','formular'\]/);
-  assert.match(shell, /PRODUCCION_SIM_TABS = \['produccion','inventario','schedule'\]/);
-  assert.match(shell, /contextTab\('Catálogo & Recetario'.*goSimTab\('catalogo'\)/);
+  assert.match(shell, /contextTab\('Recetario'.*goSimTab\('catalogo'\)/);
+  assert.match(shell, /contextTab\('Nueva receta'.*goSimTab\('formular'\)/);
   assert.match(shell, /contextTab\('Preparar mezcla'.*goSimTab\('produccion'\)/);
-  assert.match(shell, /contextTab\('Bodega'.*goSimTab\('inventario'\)/);
+  assert.match(shell, /contextTab\('Inventario'.*goSimTab\('inventario'\)/);
+  assert.match(shell, /contextTab\('Lotes'.*goBitTab\('bit_dash'\)/);
+  assert.match(shell, /contextTab\('Salas'.*goSimTab\('clima'\)/);
+  assert.match(shell, /contextTab\('Conocimiento'.*goKnowledge\(\)/);
   assert.match(shell, /contextTab\('Métricas'.*reviewTab:'rendimiento'/);
-  assert.match(shell, /contextTab\('Registrar evento',s\.module==='sesion'/);
-  assert.match(shell, /contextTab\('Registrar evento',[\s\S]*?screen:'home',capture:true/);
   assert.match(shell, /onGoSesion:\(\)=>this\.setState\(\{module:'sesion',screen:'home',capture:true,workspaceMoreOpen:false\}\)/);
-  assert.match(jsx, /catalogo:'Catálogo & Recetario'/);
+  assert.match(jsx, /catalogo:'Recetario'/);
+  assert.match(jsx, /clima:'Salas'/);
 });
 
 test('the shell and React simulator synchronize navigation bidirectionally', () => {
@@ -47,6 +48,9 @@ test('context tabs are keyboard accessible and mobile targets stay usable', () =
   // El rail mobile Criterio (Hoy/Lotes/Scan/Salas/Más) reemplazó al rail de
   // escritorio replegado en bottom-bar; conserva el mismo piso táctil de 48px.
   assert.match(shell, /\.rail-mobile-btn \{[^}]*min-height:48px;/);
+  assert.match(shell, /\['registrar','Registrar',[^\n]*,'register'\]/);
+  assert.match(shell, /data-action="\{\{ t\.action \}\}"/);
+  assert.match(shell, /\.rail-btn--action \{[^}]*min-height:44px;/);
   assert.match(shell, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
@@ -57,12 +61,14 @@ test('badges use live local state and duplicate simulator chips stay hidden', ()
   assert.match(jsx, /props\.onStockAlertChange\(lowStockCount\)/);
   assert.match(css, /\.sim-root \.fos-chips\{display:none!important;\}/);
   assert.match(css, /\.species-bridge\{position:sticky!important;bottom:0!important;top:auto!important;/);
+  assert.match(css, /bottom:calc\(62px \+ env\(safe-area-inset-bottom\)\)!important/);
 });
 
-test('role restrictions cannot be bypassed through the Production workspace', () => {
+test('role restrictions keep Planificar out of Lotes for unauthorized roles', () => {
   assert.match(shell, /ROLE_GATE\.plan\.includes\(s\.role\)\?\[contextTab\('Planificar'/);
-  assert.match(shell, /goWorkspaceProduccion:\(\)=>ROLE_GATE\.plan\.includes\(s\.role\)/);
-  assert.match(shell, /:this\.goSimTab\('produccion'\)/);
+  assert.match(shell, /goDestinationLotes:\(\)=>this\.goBitTab\('bit_dash'\)/);
+  assert.doesNotMatch(shell, /goDestinationLotes:\(\)=>s\.sessionType/);
+  assert.doesNotMatch(shell, /goDestinationLotes:[^\n]*module:'plan'/);
 });
 
 test('the global top bar is removed while role capabilities remain available for later', () => {

@@ -474,7 +474,9 @@ test('inventory-ledger.js carga tras el gate de Auth y en el banco de pruebas, d
 });
 
 test('el estado invReservas se rehidrata desde localStorage y se limpia con expireDue', () => {
-  assert.match(source, /const \[invReservas,setInvReservas\]=useState\(\[\]\)/);
+  assert.match(source, /const \[invReservas,setInvReservasState\]=useState\(\[\]\)/);
+  assert.match(source, /const invReservasRef=useRef\(\[\]\)/);
+  assert.match(source, /invReservasRef\.current=next;\s*setInvReservasState\(next\)/);
   // Rehidratado en el mismo try/catch donde ya se leen las demás claves de
   // bitácora (sdp_bit_lotes, ...), no en un efecto aparte.
   const loadStart = source.indexOf("const bl=localStorage.getItem('sdp_bit_lotes')");

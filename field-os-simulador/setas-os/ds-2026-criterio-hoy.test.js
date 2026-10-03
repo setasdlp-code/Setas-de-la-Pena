@@ -47,6 +47,8 @@ test('cockpit Hoy is structured into 3 explicit priority bands in Field mode', (
   // Container satisfies UX v2 today contract
   assert.match(source, /data-testid="ux-v2-today"/);
   assert.match(source, /className="home-operational-queue"/);
+  assert.match(source, /className="home-operational-queue"[\s\S]+?\{homeContext\}/,
+    'la cola operativa debe preceder al contexto/KPIs en el DOM de Hoy');
 
   // Banda 1: ATENCIÓN (sensor anomalies, critical stock, quarantine/blocked lots)
   assert.match(source, /sdp-band--atencion/);
