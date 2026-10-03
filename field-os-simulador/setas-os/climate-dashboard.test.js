@@ -73,13 +73,13 @@ test('simulador-app.jsx integrates live telemetry dashboard and Today widget', (
   assert.match(jsx, /cloudlab_844/);
   assert.match(jsx, /const climateDashboardView = useClimateDashboardView\(\);/);
   assert.match(jsx, /tab==='clima'&&climateDashboardView/);
-  assert.match(jsx, /clima:'Cámaras & Telemetría IoT'/);
+  assert.match(jsx, /clima:'Salas'/);
 });
 
-test('Setas OS v5.dc.html exposes one merged Cameras and IoT route', () => {
+test('Setas OS v5.dc.html exposes one merged Salas and IoT route', () => {
   assert.match(authGate, /"(\.\.\/)?climate-math\.js"/, 'climate-math debe cargar tras Auth antes del dashboard');
   assert.doesNotMatch(shell, /<script src="climate-math\.js"><\/script>/, 'climate-math no debe descargarse en el login');
-  assert.match(shell, /contextTab\('Cámaras & IoT',/);
+  assert.match(shell, /contextTab\('Salas',/);
   assert.doesNotMatch(shell, /contextTab\('Telemetría IoT',/);
   assert.doesNotMatch(shell, /contextTab\('Cámaras',/);
   assert.match(shell, /closeCam:\(\)=>this\.goSimTab\('clima'\)/);
@@ -102,12 +102,14 @@ test('sim.css defines climate telemetry styles and responsive cards', () => {
   assert.match(css, /\.climate-actuator-card/);
 });
 
-test('simulador-app.jsx renders relay actuator controls and interactive overrides', () => {
+test('simulador-app.jsx renders relay controls as an explicit local simulation', () => {
   assert.match(jsx, /data-testid="climate-actuators-panel"/);
   assert.match(jsx, /Relay Ch1 · T7\/H05/);
   assert.match(jsx, /Relay Ch2 · Cloudline H4/);
-  assert.match(jsx, /Disparar Pulso FAE/);
-  assert.match(jsx, /Forzar Humidificación/);
+  assert.match(jsx, /Simular pulso FAE/);
+  assert.match(jsx, /Simular humidificación/);
+  assert.match(jsx, /No envía comandos al equipo/);
+  assert.match(jsx, /Sin eventos de actuadores verificados/);
 });
 
 test('Clima ejecuta su hook sin condición y consume la vista sin remontar el panel', () => {

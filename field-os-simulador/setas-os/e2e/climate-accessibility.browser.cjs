@@ -37,7 +37,7 @@ const root=path.resolve(__dirname,'..');
    assert.ok(await panel.evaluate(el=>el.scrollWidth<=el.clientWidth),`dashboard overflow at ${width}`);
    const small=await panel.evaluate(el=>[...el.querySelectorAll('button,select,input')].filter(e=>e.getBoundingClientRect().height).filter(e=>e.getBoundingClientRect().height<44).map(e=>e.textContent.slice(0,40)));
    assert.deepEqual(small,[],`controls smaller than 44px at ${width}`);
-   await expect(panel.getByRole('button',{name:'Forzar Humidificación (1m)',exact:true})).toBeVisible();
+   await expect(panel.getByRole('button',{name:'Simular humidificación (1 min)',exact:true})).toBeVisible();
    assert.equal(await panel.getByRole('img').count(),4);
    await temp.scrollIntoViewIfNeeded();await page.screenshot({path:`/tmp/setas-climate-accessibility-${width}.png`});
    assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${width}x${height}: responsive climate, keyboard projections, named graphs and 44px controls.`);

@@ -58,6 +58,36 @@ test('el caso que motiva todo: reservar el lote A deja el lote B con faltante re
   assert.equal(chequeo.mensaje, 'Faltan 3,0 kg de spawn_grano');
 });
 
+test('la guarda de ejecución excluye la reserva propia pero respeta las reservas de otros lotes', () => {
+  const planB = {
+    allocations: [{ ingredientId: 'spawn_grano', lotId: 'INV-1', quantity: 5, unidad: 'kg' }],
+    shortfalls: [],
+  };
+  const reservaA = ledgerApi.reserve({ ingredienteId: 'spawn_grano', kg: 8, batchId: 'LOTE_A', at: NOW });
+  const reservaB = ledgerApi.reserve({ ingredienteId: 'spawn_grano', kg: 5, batchId: 'LOTE_B', at: NOW });
+  const ledger = ledgerApi.addReservations([], [reservaA, reservaB]);
+  const before = JSON.stringify(ledger);
+
+  const bloqueado = ledgerApi.checkPlanForExecution(planB, {
+    lots: lotsSpawn10kg, ledger, batchId: 'LOTE_B', nowMs: NOW,
+  });
+  assert.equal(bloqueado.ok, false);
+  assert.equal(bloqueado.lines[0].disponible, 2);
+  assert.equal(bloqueado.lines[0].faltante, 3);
+  assert.equal(JSON.stringify(ledger), before, 'la prevalidación no muta el libro');
+
+  const liberado = ledgerApi.releaseForBatch(ledger, 'LOTE_A', { at: NOW + 1000 });
+  assert.equal(ledgerApi.checkPlanForExecution(planB, {
+    lots: lotsSpawn10kg, ledger: liberado, batchId: 'LOTE_B', nowMs: NOW + 1000,
+  }).ok, true);
+
+  const stockRepuesto = [{ ...lotsSpawn10kg[0], cantidadKgTotal: 13, cantidadKgDisponible: 13 }];
+  assert.equal(ledgerApi.checkPlanForExecution(planB, {
+    lots: stockRepuesto, ledger, batchId: 'LOTE_B', nowMs: NOW,
+  }).ok, true);
+  assert.throws(() => ledgerApi.checkPlanForExecution(planB, { lots: lotsSpawn10kg, ledger, nowMs: NOW }), /batchId/);
+});
+
 test('reservar dos veces el mismo lote de producción + ingrediente no duplica el compromiso', () => {
   const r1 = ledgerApi.reserve({ ingredienteId: 'spawn_grano', kg: 4, batchId: 'LOTE_A', at: NOW });
   const r2 = ledgerApi.reserve({ ingredienteId: 'spawn_grano', kg: 4, batchId: 'LOTE_A', at: NOW + 1000 });
