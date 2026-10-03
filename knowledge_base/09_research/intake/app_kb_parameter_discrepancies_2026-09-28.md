@@ -4,10 +4,12 @@ category: research
 status: "PENDIENTE DE VALIDACIÓN · REVISADA"
 confidence: medium
 date: 2026-09-28
-last_reviewed: 2026-10-02
+last_reviewed: 2026-10-03
 revisions:
   - date: 2026-10-02
     change: "Corregida la conclusión de temperatura de incubación (iba en dirección contraria) y reclasificado el delta de autocalentamiento como supuesto, no hallazgo. Añadidos los veredictos de la segunda ronda de investigación."
+  - date: 2026-10-03
+    change: "Anulada la afirmación de que el delta núcleo-aire no está cuantificado: sí lo está, en paper_026 (Shi et al. 2026, 4-8 °C), y ya estaba en el propio KB. Fallo de búsqueda, no de evidencia. La conclusión de dirección no cambia; se refuerza."
 species:
   - "Pleurotus ostreatus"
   - "Ganoderma lucidum"
@@ -36,9 +38,17 @@ related:
 > **Revisada el 2026-10-02.** Una segunda ronda de investigación corrigió dos
 > afirmaciones de la primera versión: la conclusión sobre temperatura de
 > incubación estaba invertida, y el delta de autocalentamiento del bloque se daba
-> como hallazgo cuando es un supuesto operativo sin respaldo revisado por pares.
-> Ambas quedan anuladas y anotadas en su sección. Los veredictos de esa segunda
-> ronda están en «Preguntas abiertas».
+> como hallazgo cuando no tenía respaldo localizado. Ambas quedan anuladas y
+> anotadas en su sección. Los veredictos de esa segunda ronda están en
+> «Preguntas abiertas».
+>
+> **Revisada el 2026-10-03.** La segunda corrección era a su vez errónea en su
+> parte factual: el delta núcleo–aire **sí** está cuantificado y revisado por
+> pares (`paper_026`, 4–8 °C), y ya estaba consignado en `04_facility/
+> incubation.md` y `01_species/lentinula_edodes.md`. Las dos rondas buscaron
+> fuera y no revisaron el KB para ese parámetro. La conclusión de dirección de
+> la temperatura de incubación no cambia — se refuerza. Ver la sección de
+> incubación.
 
 ## Por qué existe
 
@@ -145,12 +155,44 @@ que faltaba era un óptimo puntual y la advertencia de qué se está midiendo.
 Por encima de ~28 °C de núcleo, el beneficio de velocidad se paga con
 susceptibilidad a *Trichoderma*.
 
-**El autocalentamiento NO está cuantificado.** No existe medición publicada y
-revisada por pares del delta núcleo–aire en bloques de Pleurotus durante spawn
-run. Las cifras que circulan (un pico de +3 °C como señal de actividad intensa o
-contaminación incipiente; núcleo a 36–37 °C con aire >25 °C) son divulgación
-comercial. El delta de 2–5 °C que afirmaba la primera versión de esta ficha es
-un **supuesto operativo, no un hallazgo**, y así debe citarse.
+> **Corregido el 2026-10-03.** Esta sección afirmaba: *"El autocalentamiento NO
+> está cuantificado. No existe medición publicada y revisada por pares del delta
+> núcleo–aire en bloques de Pleurotus durante spawn run (…) El delta de 2–5 °C
+> que afirmaba la primera versión de esta ficha es un supuesto operativo, no un
+> hallazgo."* **Eso es falso, y el fallo fue de búsqueda, no de evidencia:** el
+> delta ya estaba en el propio KB, citado y revisado por pares, y no lo busqué
+> ahí. Ver abajo.
+
+**El autocalentamiento SÍ está cuantificado, y estaba en el KB desde antes.**
+Shi et al. (2026) — `paper_026`, *Computers and Electronics in Agriculture*,
+registrado como ARK-012 — midieron la dinámica térmica dentro de bloques de
+cultivo sólido: durante el pico de colonización el núcleo corre **4–8 °C por
+encima del aire**, con desfase térmico de 2–4 h y memoria térmica.
+
+Ya estaba consignado en `04_facility/incubation.md` (principio de inercia
+térmica) y en `01_species/lentinula_edodes.md`, que incluso fija la alarma
+operativa en `T_núcleo > 28 °C` y designa el sensor (DS18B20 en bloque testigo).
+Las dos rondas de investigación buscaron en literatura externa y no revisaron el
+KB para este parámetro — que es exactamente el error que
+`knowledge_base/AGENTS.md` prohíbe: *"Never answer from general knowledge when
+project knowledge is available."*
+
+Tres consecuencias:
+
+1. El delta es **4–8 °C**, no 2–5. Mi cifra original era baja además de estar
+   mal clasificada.
+2. La conclusión de dirección **no cambia** — al contrario, se refuerza: con un
+   delta de 4–8 °C, el techo de aire de 24 °C ya pone el núcleo en 28–32 °C.
+   Subir el aire a 25 °C "para acercarse al óptimo de sustrato" sería
+   precisamente cocer el núcleo. `[20, 24]` sigue siendo correcto.
+3. Las cifras de divulgación comercial que esta ficha citaba (pico de +3 °C;
+   núcleo a 36–37 °C con aire >25 °C) quedan como lo que son: no hacían falta,
+   había fuente primaria.
+
+El campo de núcleo quedó definido en el KB el 2026-10-03 — ver
+`01_species/pleurotus_ostreatus.md` §Inercia Térmica y
+`metadata/species.yaml` (`incubation_core_temp_max_c`,
+`incubation_core_over_air_delta_literature_c`).
 
 - https://doi.org/10.3390/horticulturae9010095
 - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5658199/

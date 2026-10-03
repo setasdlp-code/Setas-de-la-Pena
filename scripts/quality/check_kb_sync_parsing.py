@@ -153,9 +153,45 @@ def check_documented_extractions_are_compared(m) -> None:
             raise AssertionError(f"{species} no tiene fuente documentada y quedó marcada como cubierta")
 
 
+def check_ostreatus_air_and_core_rows_resolve(m) -> None:
+    """La incubación de ostreatus se desdobló en aire (consigna) y núcleo
+    (vigilancia). Los dos patrones de fila tienen que seguir encontrando su
+    fila: si alguno deja de hacerlo, el punto cae a "(no source found)" y la
+    comparación se pierde SIN que el reporte lo diga como divergencia. Es el
+    mismo modo de fallo que un hueco en silencio, y por eso se vigila aquí.
+    """
+    points = {
+        p.parameter: p
+        for p in m.SPECIES_SYNC_POINTS
+        if p.entity == "pleurotus_ostreatus" and "Incubaci" in p.parameter
+    }
+    for name in ("Incubación temperatura de aire", "Incubación techo de núcleo"):
+        if name not in points:
+            raise AssertionError(f"falta el punto de sincronía '{name}' para ostreatus")
+        candidates, _ = m.kb_candidates_for(
+            points[name].kb_file, points[name].kb_section_pattern, points[name].kb_row_pattern
+        )
+        if not candidates:
+            raise AssertionError(
+                f"'{name}': el patrón de fila ya no encuentra su fila en la ficha de ostreatus; "
+                "la comparación se perdería en silencio"
+            )
+    # El techo de núcleo debe seguir reportándose como ausente en la app
+    # mientras no se cablee: si el getter empezara a devolver un valor sin que
+    # nadie lo documentara, sería un valor inventado.
+    core = points["Incubación techo de núcleo"]
+    app_data = m.load_app_data()
+    if core.app_getter(app_data) is not None:
+        raise AssertionError(
+            "la app ya define incCoreMaxT: actualizar el punto para comparar de verdad "
+            "en vez de reportarlo como ausente"
+        )
+
+
 def main() -> int:
     m = load_checker()
     for check in (
+        check_ostreatus_air_and_core_rows_resolve,
         check_identifier_digits_are_not_values,
         check_declining_prose_yields_no_value,
         check_co2_label_is_not_substring_of_words,
