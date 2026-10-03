@@ -11282,7 +11282,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const injected = injectedClimateReadings[selectedClimateRoom];
     const manualMetrics={};
     if(injected){
-      ['temp','rh','co2','subTemp'].forEach(key=>{if(Number.isFinite(Number(injected[key])))manualMetrics[key]=Number(injected[key]);});
+      ['temp','rh','co2','subTemp'].forEach(key=>{
+        const value=injected[key];
+        if(value!==null&&value!==''&&Number.isFinite(Number(value)))manualMetrics[key]=Number(value);
+      });
       if(Object.keys(manualMetrics).length)manualMetrics.timestamp=injected.timestamp||'lectura manual';
     }
 
@@ -11301,6 +11304,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     // Prioridad: telemetría en vivo > lectura manual > monitor medido > referencia.
     const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...manualMetrics, ...liveMetrics };
+    const operationalSources=[physicalMetrics,manualMetrics,liveMetrics];
+    const hasAnyOperationalMetric=operationalSources.some(source=>['temp','rh','co2','subTemp'].some(key=>Object.prototype.hasOwnProperty.call(source,key)));
+    const hasOperationalSubstrate=operationalSources.some(source=>Object.prototype.hasOwnProperty.call(source,'subTemp'));
+    // Una captura parcial no puede completar la sonda de sustrato con el valor
+    // del modelo: al existir alguna lectura operativa, una métrica ausente se
+    // muestra como ausente. La referencia completa sólo aplica cuando no hay
+    // ninguna captura del turno.
+    if(hasAnyOperationalMetric&&!hasOperationalSubstrate)delete currentMetrics.subTemp;
     const metricProvenance=key=>{
       if(Object.prototype.hasOwnProperty.call(liveMetrics,key))return{kind:'measured',label:'MEDIDO',short:'med.'};
       if(Object.prototype.hasOwnProperty.call(manualMetrics,key))return{kind:'manual',label:'MANUAL',short:'manual'};
@@ -12162,7 +12173,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 <div className="climate-kpi-value sdp-tele__value" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                   <span>{ndirCorr.correctedPpm}</span>
-                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>{metricProvenance('co2').kind==='reference'?'ppm de referencia':'ppm'}</span>
+                  <span className="sdp-tele__unit" style={{ fontSize: 13, color: 'var(--ink-2)' }}>{metricProvenance('co2').kind==='reference'?'ppm de referencia':'ppm compensados'}</span>
                   <small style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 400 }}>({ndirCorr.rawPpm} raw)</small>
                 </div>
                 <div className="climate-kpi-sub sdp-tele__label">

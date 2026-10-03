@@ -203,7 +203,7 @@ test('perito-workbench-core.js y el Workbench Perito & Optimizador unificado', (
   assert.match(jsx, /engineSimulateSuggestionDelta/);
   assert.match(jsx, /engineMorphRecipes/);
   assert.match(jsx, /Herramientas avanzadas/);
-  assert.match(jsx, /Perito y generación de recetas/);
+  assert.match(jsx, /Mesa del Perito/);
   assert.match(jsx, /workbenchMode/);
   assert.match(jsx, /perito-standalone-panel/);
   assert.match(jsx, /perito-morph-panel/);

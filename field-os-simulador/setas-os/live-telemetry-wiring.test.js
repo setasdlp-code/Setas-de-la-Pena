@@ -130,6 +130,10 @@ test('las bandas objetivo tienen una sola definición para Hoy y para Cámaras',
 test('el dashboard de Salas prioriza lecturas medidas y rotula las referencias', () => {
   assert.match(jsx, /const roomLive = liveTelemetry\.roomLive\(selectedClimateRoom\)/);
   assert.match(jsx, /const currentMetrics = \{ \.\.\.baseMetrics, \.\.\.physicalMetrics, \.\.\.manualMetrics, \.\.\.liveMetrics \};/);
+  assert.match(jsx, /value!==null&&value!==''&&Number\.isFinite\(Number\(value\)\)/,
+    'una métrica manual ausente no puede convertirse en una lectura de 0');
+  assert.match(jsx, /if\(hasAnyOperationalMetric&&!hasOperationalSubstrate\)delete currentMetrics\.subTemp;/,
+    'una captura parcial no puede completar la sonda ausente con el modelo');
   assert.match(jsx, /selectedCamera\?\.isMeasured===true/);
   assert.match(jsx, /label:'REFERENCIA'/);
   assert.match(jsx, /SIN LECTURA OPERATIVA/);
