@@ -4992,6 +4992,24 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2.0
   },
+  // Vertical (retrato): franja negra con la marca arriba, especie, QR
+  // centrado de 36mm, insignia de bolsa, código y fila meta fecha · receta.
+  // Mismos valores que .thermal-card-50x70 en sim.css.
+  '50x70': {
+    layout: 'vertical',
+    wMm: 50,
+    hMm: 70,
+    padXMm: 2.5,
+    padYMm: 2.5,
+    gapPx: 6,
+    qrMm: 36.0,
+    bandMm: 4.5,
+    eyebrowPx: 7.0,
+    speciesPx: 17.0,
+    badgePx: 8.5,
+    codePx: 9.5,
+    metaPx: 7.0
+  },
 };
 
 // Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
@@ -5054,8 +5072,127 @@ function wrapCanvasText(ctx, text, maxW) {
   return lines;
 }
 
+function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
+  const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
+  if (!qrMini || typeof qrMini.matrix !== 'function') return;
+  const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
+  const n = m.length;
+  const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos)
+  const cell = qrSize / (n + q * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(qrX, qrY, qrSize, qrSize);
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (m[r][c]) ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+    }
+  }
+}
+
+// Etiqueta vertical 50×70: mismo orden de lectura que .thermal-card-50x70.
+function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
+  const mm = THERMAL_PX_PER_MM;
+  const w = spec.wMm * mm;
+  const h = spec.hMm * mm;
+  const padX = spec.padXMm * mm;
+  const padY = spec.padYMm * mm;
+  const innerW = w - padX * 2;
+  const eyebrow = (item.eyebrow || 'SETAS DE LA PEÑA · TENJO').toUpperCase();
+  const species = (item.species || 'Seta Cultivada').trim();
+  const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
+  const code = (item.id || '').trim();
+  const date = (item.date || '').trim();
+  const recipe = (item.recipe || '').trim();
+
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#777';
+  ctx.setLineDash([2, 2]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([]);
+  ctx.textBaseline = 'top';
+
+  // Franja de marca invertida
+  const bandH = spec.bandMm * mm;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(padX, padY, innerW, bandH);
+  const eyebrowPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  ctx.font = `700 ${eyebrowPx}px ${FONT_MONO}`;
+  ctx.fillStyle = '#fff';
+  const ebW = ctx.measureText(eyebrow).width;
+  ctx.fillText(eyebrow, padX + Math.max(0, (innerW - ebW) / 2), padY + Math.round((bandH - eyebrowPx) / 2));
+  let curY = padY + bandH + cssPxToCanvas(4);
+
+  // Especie (serif, hasta 2 líneas, se reduce si no cabe)
+  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
+  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+  let lines = wrapCanvasText(ctx, species, innerW);
+  while (lines.length > 2 && spPx > 18) {
+    spPx -= 2;
+    ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+    lines = wrapCanvasText(ctx, species, innerW);
+  }
+  ctx.fillStyle = '#000';
+  const spLH = Math.round(spPx * 1.05);
+  lines.slice(0, 2).forEach(line => {
+    ctx.fillText(line, padX + (innerW - ctx.measureText(line).width) / 2, curY);
+    curY += spLH;
+  });
+  curY += cssPxToCanvas(3);
+
+  // QR centrado
+  const qrSize = spec.qrMm * mm;
+  drawQrToCanvas(ctx, item, (w - qrSize) / 2, curY, qrSize);
+  curY += qrSize + cssPxToCanvas(3);
+
+  // Insignia de bolsa
+  if (badge) {
+    let bPx = Math.round(cssPxToCanvas(spec.badgePx));
+    ctx.font = `800 ${bPx}px ${FONT_MONO}`;
+    const bPadX = cssPxToCanvas(4);
+    let tW = ctx.measureText(badge).width;
+    if (tW + bPadX * 2 > innerW) {
+      bPx = Math.max(10, Math.floor(bPx * (innerW - bPadX * 2) / tW));
+      ctx.font = `800 ${bPx}px ${FONT_MONO}`;
+      tW = ctx.measureText(badge).width;
+    }
+    const bW = tW + bPadX * 2;
+    const bH = Math.round(bPx * 1.4);
+    ctx.fillStyle = '#000';
+    ctx.fillRect((w - bW) / 2, curY, bW, bH);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(badge, (w - tW) / 2, curY + Math.round((bH - bPx) / 2));
+    curY += bH + cssPxToCanvas(2.5);
+  }
+
+  // Código
+  const cPx = Math.round(cssPxToCanvas(spec.codePx));
+  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  ctx.fillStyle = '#000';
+  wrapCanvasText(ctx, code, innerW).forEach(line => {
+    ctx.fillText(line, (w - ctx.measureText(line).width) / 2, curY);
+    curY += Math.round(cPx * 1.12);
+  });
+
+  // Fila meta anclada abajo: filete + fecha (izq) · receta (der)
+  const mPx = Math.round(cssPxToCanvas(spec.metaPx));
+  const metaY = h - padY - mPx;
+  ctx.fillRect(padX, metaY - cssPxToCanvas(2.5), innerW, 1);
+  ctx.font = `600 ${mPx}px ${FONT_MONO}`;
+  if (date) ctx.fillText(date, padX, metaY);
+  if (recipe) {
+    const rTxt = wrapCanvasText(ctx, recipe, innerW / 2)[0] || '';
+    ctx.fillText(rTxt, w - padX - ctx.measureText(rTxt).width, metaY);
+  }
+  ctx.restore();
+}
+
 function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  if (spec.layout === 'vertical') return drawThermalLabelVertical(ctx, item, x0, y0, spec);
   const w = spec.wMm * THERMAL_PX_PER_MM;
   const h = spec.hMm * THERMAL_PX_PER_MM;
   const padX = spec.padXMm * THERMAL_PX_PER_MM;
@@ -17710,7 +17847,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : thermalSize === '50x70' ? '50mm 70mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -17771,10 +17908,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('50x70')}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x70' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x70' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x70' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        50 × 70 mm
+                      </button>
 
                     </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
-                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
+                      Formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm). 50 × 70 mm: vertical, QR grande y receta.
                     </div>
                   </div>
 
@@ -17815,7 +17959,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x70' ? '50×70 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -17835,6 +17979,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
                               <div>{item.date}</div>
+                              {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
                             </div>
                           </div>
                         </div>
@@ -17914,6 +18059,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
                             <div>{item.date}</div>
+                            {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
                           </div>
                         </div>
                       </div>

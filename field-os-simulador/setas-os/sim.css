@@ -4241,6 +4241,70 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin-top: 2px;
 }
 
+/* 50×70 vertical (retrato) — mismo sistema DS-2026: franja de marca
+   invertida, especie serif, QR maximizado centrado, insignia, código y fila
+   meta (fecha · receta). Reordena el markup común con display:contents.
+   Mantener alineado con THERMAL_LABEL_SPECS['50x70'] en simulador-app.jsx. */
+.sim-root .thermal-card-50x70 {
+  width: 50mm;
+  min-height: 70mm;
+  padding: 2.5mm;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  text-align: center;
+}
+.sim-root .thermal-card-50x70 .thermal-body { display: contents; }
+.sim-root .thermal-card-50x70 .thermal-divider { display: none; }
+.sim-root .thermal-card-50x70 .thermal-eyebrow {
+  order: 1;
+  background: #000000 !important;
+  color: #ffffff !important;
+  height: 4.5mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  letter-spacing: 0.16em;
+  margin: 0 0 1.2mm;
+}
+.sim-root .thermal-card-50x70 .thermal-species {
+  order: 2;
+  font-size: 17px;
+  line-height: 1.05;
+  margin-bottom: 1mm;
+}
+.sim-root .thermal-card-50x70 .thermal-aside { order: 3; }
+.sim-root .thermal-card-50x70 .thermal-qr-img {
+  width: 36mm;
+  height: 36mm;
+}
+.sim-root .thermal-card-50x70 .thermal-badge {
+  order: 4;
+  align-self: center;
+  font-size: 8.5px;
+  padding: 1.5px 5px;
+  margin: 1mm 0 0.8mm;
+}
+.sim-root .thermal-card-50x70 .thermal-code {
+  order: 5;
+  text-align: center;
+  font-size: 9.5px;
+  letter-spacing: -0.01em;
+}
+.sim-root .thermal-card-50x70 .thermal-meta {
+  order: 6;
+  margin-top: auto;
+  padding-top: 1mm;
+  border-top: 1px solid #000000;
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+  font-size: 7px;
+  text-align: left;
+}
+
 .sim-root .thermal-print-roll,
 .thermal-print-roll {
   display: none;
@@ -4363,6 +4427,24 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .thermal-card-print.thermal-card-50x30 .thermal-meta {
     font-size: 6px !important;
     font-weight: 600 !important;
+  }
+  .thermal-card-print.thermal-card-50x70 {
+    width: 50mm !important;
+    height: 70mm !important;
+    padding: 2.5mm !important;
+    page-break-inside: avoid !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-eyebrow {
+    background: #000000 !important;
+    color: #ffffff !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-badge {
+    background: #000000 !important;
+    color: #ffffff !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-qr-img {
+    width: 36mm !important;
+    height: 36mm !important;
   }
   .thermal-card-print .thermal-divider {
     background: #000000 !important;
