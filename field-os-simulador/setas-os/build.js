@@ -20,13 +20,45 @@ function sourceHash(src) {
   return crypto.createHash('sha256').update(src, 'utf8').digest('hex');
 }
 
-function build() {
-  let esbuild;
+/**
+ * Carga esbuild sin depender de la maquina donde se instalo el node_modules.
+ *
+ * `esbuild` trae un binario nativo por plataforma. Si alguien instala en un Mac
+ * y el build corre en Linux (CI, un contenedor, un shell remoto), el require
+ * falla aunque el node_modules este completo. `esbuild-wasm` no tiene binario:
+ * es el mismo compilador en WebAssembly, mas lento pero igual en todas partes,
+ * y su transformSync se comporta igual que el nativo. Asi que el nativo es el
+ * camino normal y el wasm el respaldo, en vez de abortar el commit.
+ */
+function nativeBinaryIsUsable() {
+  // esbuild tira su error de plataforma desde un worker, fuera del alcance de
+  // un try/catch alrededor del require. Hay que mirar antes si el paquete del
+  // par plataforma-arquitectura actual esta instalado.
+  const pkg = `@esbuild/${process.platform}-${process.arch}`;
   try {
-    esbuild = require('esbuild');
+    require.resolve(`${pkg}/package.json`, { paths: [__dirname] });
+    return true;
   } catch (err) {
-    throw new Error('esbuild is not installed — run `npm install` in field-os-simulador/setas-os/ before `node build.js`.');
+    return false;
   }
+}
+
+function loadEsbuild() {
+  if (nativeBinaryIsUsable()) {
+    try {
+      return { mod: require('esbuild'), kind: 'nativo' };
+    } catch (err) { /* cae al wasm */ }
+  }
+  try {
+    return { mod: require('esbuild-wasm'), kind: 'wasm' };
+  } catch (err) {
+    throw new Error('ni esbuild ni esbuild-wasm estan instalados — corre `npm install` en field-os-simulador/setas-os/ antes de `node build.js`.');
+  }
+}
+
+function build() {
+  const { mod: esbuild, kind } = loadEsbuild();
+  if (kind === 'wasm') console.log('esbuild nativo no sirve en esta plataforma; usando esbuild-wasm.');
   const src = fs.readFileSync(SRC, 'utf8');
   const { code } = esbuild.transformSync(src, {
     loader: 'jsx',

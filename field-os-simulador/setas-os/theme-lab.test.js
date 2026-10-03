@@ -168,7 +168,7 @@ test('inspector can jump from selected element to canonical sidebar token contro
 
 test('rule geometry is canonical spacing data and is compiled instead of preview-only CSS', () => {
   const canonicalSpacing = JSON.parse(fs.readFileSync(path.join(ROOT, '..', '..', '08_brand', 'ds-2026', 'tokens', 'spacing.json'), 'utf8'));
-  assert.deepEqual(canonicalSpacing.structure.rule, { hairline: '1px', heavy: '2px', frame: '1px' });
+  assert.deepEqual(canonicalSpacing.structure.rule, { hairline: '1px', heavy: '2px', frame: '1px', editorial: '1px' });
   assert.match(lab, /spacing\.structure\.rule/);
   assert.match(lab, /state\.spacing\.structure\.rule\.hairline/);
 });
