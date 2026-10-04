@@ -250,19 +250,6 @@
   };
 
   /**
-   * Guarda de ejecución para un lote ya planificado. Su propia reserva no se
-   * resta dos veces, pero todas las reservas held de otros lotes sí reducen lo
-   * disponible. Es la comprobación que debe preceder al consumo físico.
-   */
-  const checkPlanForExecution = (plan, { lots = [], ledger = [], incoming = [], nowMs, batchId } = {}) => {
-    if (!batchId) throw new Error('checkPlanForExecution requiere batchId');
-    const otherReservations = (ledger || []).filter(r => !(
-      r && r.batchId === batchId && r.status === 'held'
-    ));
-    return checkPlan(plan, { lots, ledger: otherReservations, incoming, nowMs });
-  };
-
-  /**
    * Puente entre planificar y comprometer: convierte las `allocations` de
    * `buildLaunchPlan` (una por lote de insumo asignado) en asientos de
    * reserva listos para `addReservations`. Se agrupa por ingrediente, no
@@ -325,7 +312,6 @@
     availability,
     lowStockAlerts,
     checkPlan,
-    checkPlanForExecution,
     reservationsForPlan,
     ledgerStats,
   };

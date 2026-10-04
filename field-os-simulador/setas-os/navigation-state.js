@@ -20,7 +20,6 @@
     'bitacora',
     'labExtraction',
     'bioCheck',
-    'aprender',
   ]);
 
   const VIEW_SET = new Set(VIEWS);
@@ -29,23 +28,9 @@
     iot: 'clima',
     telemetria: 'clima',
     optimizar: 'formular',
-    hoy: 'home',
-    lotes: 'bitacora',
-    salas: 'clima',
-    recetas: 'catalogo',
-    conocimiento: 'aprender',
     // El Recetario se fusionó con el Catálogo de especies en una sola vista
     // (2026-09). Se conserva como alias para no romper enlaces ni marcadores.
     dashboard: 'catalogo',
-  });
-
-  const DESTINATION_ROUTES = Object.freeze({
-    hoy: Object.freeze(['home', 'inicio']),
-    lotes: Object.freeze(['bitacora', 'schedule']),
-    salas: Object.freeze(['clima']),
-    inventario: Object.freeze(['inventario']),
-    recetas: Object.freeze(['catalogo', 'formular', 'produccion']),
-    conocimiento: Object.freeze(['aprender', 'labExtraction', 'bioCheck']),
   });
 
   function normalizeView(value, fallback = 'home') {
@@ -67,18 +52,6 @@
     return Object.freeze({
       view: normalizeView(params.get('view')),
     });
-  }
-
-  function destinationForView(value, fallback = 'hoy') {
-    const view = normalizeView(value, null);
-    if (!view) return fallback;
-    const match = Object.entries(DESTINATION_ROUTES).find(([, routes]) => routes.includes(view));
-    return match ? match[0] : fallback;
-  }
-
-  function viewForDestination(destination, fallback = 'home') {
-    const routes = DESTINATION_ROUTES[destination];
-    return routes ? routes[0] : normalizeView(destination, fallback);
   }
 
   function navigate(win, requestedView, options = {}) {
@@ -110,10 +83,7 @@
   return Object.freeze({
     VIEWS,
     VIEW_ALIASES,
-    DESTINATION_ROUTES,
     normalizeView,
-    destinationForView,
-    viewForDestination,
     readLocation,
     resolveOperationalTarget,
     navigate,

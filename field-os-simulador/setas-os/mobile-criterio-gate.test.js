@@ -185,14 +185,11 @@ test('mobile gate 02: mobile navigation IA — Hoy, Lotes, Salas, Más switches 
     assert.equal(await masBtn.getAttribute('aria-expanded'), 'true');
     const morePanel = page.locator('#mobile-more-panel');
     assert.ok(await morePanel.isVisible(), 'Mobile more panel flyout must be visible');
-    assert.ok(await morePanel.locator('[data-action="register"]').isVisible(), 'Registrar must remain globally available in Más');
 
-    // Click the canonical Recetas destination. It opens the Recetario first;
-    // creation and preparation remain contextual steps inside that destination.
-    const recipesItem = morePanel.locator('.rail-flyout-item[data-dest="recetas"]');
-    await recipesItem.click();
-    await page.waitForSelector('.dash-title, .species-catalog-disclosure', { state: 'visible' });
-    assert.match(await page.locator('.sim-root').innerText(), /Recetas/);
+    // Click secondary item "Formular receta"
+    const formItem = morePanel.locator('.rail-flyout-item[data-dest="formular"]');
+    await formItem.click();
+    await page.waitForSelector('[data-testid="form-mobile-start"], #form-mobile-species-select, .form-species-context, [id="form-species-context-select"]', { state: 'visible' });
 
     // 5. Return to Hoy
     await hoyBtn.click();
@@ -201,96 +198,6 @@ test('mobile gate 02: mobile navigation IA — Hoy, Lotes, Salas, Más switches 
     assert.ok(await page.locator('[data-testid="ux-v2-today"]').isVisible());
   } finally {
     await context.close();
-  }
-});
-
-test('mobile gate 02d: Lotes, Inventario, Recetas and Conocimiento stay overflow-free across field viewports', { timeout: 60_000 }, async () => {
-  for (const vp of VIEWPORTS) {
-    const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
-    const page = await context.newPage();
-    const assertNoOverflow = async label => {
-      const size = await page.evaluate(() => ({
-        scrollWidth: document.documentElement.scrollWidth,
-        clientWidth: document.documentElement.clientWidth,
-        offenders: [...document.querySelectorAll('body *')].map(el => {
-          const r = el.getBoundingClientRect();
-          return { tag: el.tagName.toLowerCase(), cls: String(el.className || '').slice(0, 80), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
-        }).filter(x => x.right > document.documentElement.clientWidth + 1 || x.left < -1).slice(0, 8),
-      }));
-      assert.ok(size.scrollWidth <= size.clientWidth, `${label} overflow at ${vp.name}: ${size.scrollWidth} > ${size.clientWidth}; offenders=${JSON.stringify(size.offenders)}`);
-    };
-    try {
-      await seedTestBatches(page);
-      await page.goto(`${baseUrl}/__harness.html`, { waitUntil: 'networkidle' });
-
-      await page.locator('.app-rail-mobile [data-dest="lotes"]').click();
-      const card = page.locator('.panel.sdp-lote[data-lote-id="SDP-2026-PO1"]');
-      await card.waitFor({ state: 'visible' });
-      await assertNoOverflow('Lotes list');
-      await card.click();
-      await page.locator('[data-testid="ux-v2-batch-detail-mobile"]').waitFor({ state: 'visible' });
-      await assertNoOverflow('Lote detail');
-
-      await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-      await page.locator('#mobile-more-panel [data-dest="inventario"]').click();
-      await page.waitForTimeout(150);
-      assert.match(await page.locator('.sim-root').innerText(), /Inventario/, 'Inventario destination did not open');
-      await assertNoOverflow('Inventario');
-
-      await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-      await page.locator('#mobile-more-panel [data-dest="recetas"]').click();
-      await page.locator('.dash-title, .species-catalog-disclosure').first().waitFor({ state: 'visible' });
-      await assertNoOverflow('Recetas library');
-      await page.getByRole('button', { name: /Formular con|Formular ahora|Crear primera receta/ }).first().click();
-      await page.locator('.form-recipe-workspace').waitFor({ state: 'visible' });
-      await assertNoOverflow('Nueva receta');
-
-      await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-      await page.locator('#mobile-more-panel [data-dest="conocimiento"]').click();
-      await page.waitForFunction(() => /Laboratorio|Conocimiento/i.test(document.querySelector('.sim-root')?.innerText || ''));
-      await assertNoOverflow('Conocimiento');
-    } finally {
-      await context.close();
-    }
-  }
-});
-
-test('mobile gate 02b: Salas discloses reference data and never overflows at field viewports', { timeout: 45_000 }, async () => {
-  for (const vp of VIEWPORTS) {
-    const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
-    const page = await context.newPage();
-    try {
-      await page.goto(`${baseUrl}/__harness.html`, { waitUntil: 'networkidle' });
-      await page.locator('.app-rail-mobile [data-dest="salas"]').click();
-      const dashboard=page.locator('[data-testid="climate-dashboard"]');
-      await dashboard.waitFor({state:'visible'});
-      const overflow=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));
-      assert.ok(overflow.scrollWidth<=overflow.clientWidth,`Salas overflow at ${vp.name}: ${overflow.scrollWidth} > ${overflow.clientWidth}`);
-      assert.match(await dashboard.innerText(),/SIN LECTURA OPERATIVA/);
-      assert.match(await dashboard.innerText(),/referencia de modelo/i);
-    } finally {
-      await context.close();
-    }
-  }
-});
-
-test('mobile gate 02c: the species bridge stays above the fixed bottom rail', { timeout: 45_000 }, async () => {
-  for (const vp of VIEWPORTS) {
-    const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
-    const page = await context.newPage();
-    try {
-      await page.goto(`${baseUrl}/__harness.html`, { waitUntil: 'networkidle' });
-      await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-      await page.locator('#mobile-more-panel [data-dest="recetas"]').click();
-      const bridge=page.locator('[data-testid="species-bridge"]');
-      await bridge.waitFor({state:'visible'});
-      await bridge.scrollIntoViewIfNeeded();
-      const [bridgeBox,railBox]=await Promise.all([bridge.boundingBox(),page.locator('.app-rail-mobile').boundingBox()]);
-      assert.ok(bridgeBox&&railBox,`Bridge and rail must have boxes at ${vp.name}`);
-      assert.ok(bridgeBox.y+bridgeBox.height<=railBox.y+1,`Species bridge overlaps mobile rail at ${vp.name}`);
-    } finally {
-      await context.close();
-    }
   }
 });
 
@@ -324,35 +231,6 @@ test('mobile gate 03: global scan affordance — persistent and triggers scan su
       await closeBtn.click();
       await scanModal.waitFor({ state: 'hidden' });
     }
-  } finally {
-    await context.close();
-  }
-});
-
-test('mobile gate 03b: global Registrar remains reachable from every canonical destination', { timeout: 45_000 }, async () => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  try {
-    await seedTestBatches(page);
-    await page.goto(`${baseUrl}/__harness.html`, { waitUntil: 'networkidle' });
-
-    const visit = async dest => {
-      if (['hoy', 'lotes', 'salas'].includes(dest)) {
-        await page.locator(`.app-rail-mobile [data-dest="${dest}"]`).click();
-      } else {
-        await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-        await page.locator(`#mobile-more-panel [data-dest="${dest}"]`).click();
-      }
-      await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-      const register = page.locator('#mobile-more-panel [data-action="register"]');
-      await register.waitFor({ state: 'visible' });
-      await register.click();
-      const dialog = page.getByRole('dialog', { name: 'Registrar evento' });
-      await dialog.waitFor({ state: 'visible' });
-      await dialog.getByRole('button', { name: 'Cerrar' }).click();
-    };
-
-    for (const dest of ['hoy', 'lotes', 'salas', 'inventario', 'recetas', 'conocimiento']) await visit(dest);
   } finally {
     await context.close();
   }

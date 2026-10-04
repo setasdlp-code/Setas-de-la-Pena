@@ -56,46 +56,42 @@ test.describe('desktop navigation contract', () => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'desktop-only behavioral suite');
   });
 
-  test('canonical destinations keep rail and contextual tab synchronized', async ({ page }) => {
+  test('four workspaces keep rail and contextual tab synchronized', async ({ page }) => {
     await openApp(page);
 
-    await workspaceButton(page, 'recetas').click();
-    await expectWorkspace(page, 'recetas', 'Recetario');
+    await workspaceButton(page, 'formular').click();
+    await expectWorkspace(page, 'formular', 'Formular');
 
-    await workspaceButton(page, 'lotes').click();
-    await expectWorkspace(page, 'lotes', 'Lotes');
+    await workspaceButton(page, 'produccion').click();
+    // Operario entra directamente a Preparar mezcla; roles elevados pueden ver Planificar.
+    const selectedProduction = selectedContextTab(page);
+    await expect(selectedProduction).toBeVisible();
+    await expect(selectedProduction).toContainText(/Preparar mezcla|Planificar/);
+    await expect(workspaceButton(page, 'produccion')).toHaveAttribute('aria-current', 'page');
 
-    await workspaceButton(page, 'salas').click();
-    await expectWorkspace(page, 'salas', 'Salas');
+    await workspaceButton(page, 'bitacora').click();
+    await expectWorkspace(page, 'bitacora', 'Lotes');
 
-    await workspaceButton(page, 'inventario').click();
-    await expectWorkspace(page, 'inventario', 'Inventario');
-
-    await workspaceButton(page, 'hoy').click();
-    await expectWorkspace(page, 'hoy', 'Hoy');
-
-    await workspaceButton(page, 'conocimiento').click();
-    await expectWorkspace(page, 'conocimiento', 'Conocimiento');
+    await workspaceButton(page, 'control').click();
+    await expectWorkspace(page, 'control', 'Tablero de Control');
   });
 
   test('internal React tab changes remain synchronized with shell navigation', async ({ page }) => {
     await openApp(page);
 
-    await workspaceButton(page, 'recetas').click();
-    await contextTab(page, 'Nueva receta').click();
-    await expectWorkspace(page, 'recetas', 'Nueva receta');
-
+    await workspaceButton(page, 'formular').click();
     await contextTab(page, 'Recetario').click();
-    await expectWorkspace(page, 'recetas', 'Recetario');
+    await expectWorkspace(page, 'formular', 'Recetario');
+
+    await contextTab(page, 'Formular').click();
+    await expectWorkspace(page, 'formular', 'Formular');
+
+    await workspaceButton(page, 'produccion').click();
+    await contextTab(page, 'Bodega').click();
+    await expectWorkspace(page, 'produccion', 'Bodega');
 
     await contextTab(page, 'Preparar mezcla').click();
-    await expectWorkspace(page, 'recetas', 'Preparar mezcla');
-
-    await workspaceButton(page, 'inventario').click();
-    await expectWorkspace(page, 'inventario', 'Inventario');
-
-    await workspaceButton(page, 'lotes').click();
-    await expectWorkspace(page, 'lotes', 'Lotes');
+    await expectWorkspace(page, 'produccion', 'Preparar mezcla');
   });
 
   test('loading a saved recipe from Recetario lands in Formulador', async ({ page }) => {
@@ -116,23 +112,23 @@ test.describe('desktop navigation contract', () => {
       ]));
     });
 
-    await workspaceButton(page, 'recetas').click();
+    await workspaceButton(page, 'formular').click();
     await contextTab(page, 'Recetario').click();
-    await expectWorkspace(page, 'recetas', 'Recetario');
+    await expectWorkspace(page, 'formular', 'Recetario');
 
     const card = page.locator('.dash-card').filter({ hasText: 'E2E_RECETA_CARGADA' });
     await expect(card).toBeVisible({ timeout: 10000 });
     await card.getByRole('button', { name: 'Cargar', exact: true }).click();
 
-    await expectWorkspace(page, 'recetas', 'Nueva receta');
-    await expect(breadcrumb(page)).toContainText(/Recetas|Nueva receta|Formul/i);
+    await expectWorkspace(page, 'formular', 'Formular');
+    await expect(breadcrumb(page)).toContainText(/Formul/i);
     await expect(selectedContextTab(page)).not.toContainText('Recetario');
   });
 
   test('Formular keeps species and live recipe evaluation visible before advanced tools', async ({ page }) => {
     await openApp(page, () => localStorage.setItem('sim_preselect_spp', 'p_ostreatus_gris'));
-    await workspaceButton(page, 'recetas').click();
-    await contextTab(page, 'Nueva receta').click();
+    await workspaceButton(page, 'formular').click();
+    await contextTab(page, 'Formular').click();
 
     const species = page.locator('.form-species-context');
     const liveSummary = page.locator('.sim-live-dashboard');
@@ -216,8 +212,8 @@ test.describe('desktop navigation contract', () => {
   test('ingredient groups use the workspace scroll and collapse independently', async ({ page }) => {
     test.setTimeout(45000);
     await openApp(page);
-    await workspaceButton(page, 'recetas').click();
-    await contextTab(page, 'Nueva receta').click();
+    await workspaceButton(page, 'formular').click();
+    await contextTab(page, 'Formular').click();
     await page.getByRole('button', { name: /Catálogo|Paleta completa/ }).first().click();
 
     const list = page.locator('#bl-ingredientes .ing-list');
@@ -265,25 +261,22 @@ test.describe('desktop navigation contract', () => {
     await openApp(page);
 
     for (let pass = 0; pass < 2; pass += 1) {
-      await workspaceButton(page, 'recetas').click();
+      await workspaceButton(page, 'formular').click();
       await contextTab(page, 'Recetario').click();
-      await expectWorkspace(page, 'recetas', 'Recetario');
+      await expectWorkspace(page, 'formular', 'Recetario');
 
-      await workspaceButton(page, 'inventario').click();
-      await expectWorkspace(page, 'inventario', 'Inventario');
+      await workspaceButton(page, 'produccion').click();
+      await contextTab(page, 'Bodega').click();
+      await expectWorkspace(page, 'produccion', 'Bodega');
 
-      await workspaceButton(page, 'lotes').click();
-      await expectWorkspace(page, 'lotes', 'Lotes');
+      await workspaceButton(page, 'bitacora').click();
+      await expectWorkspace(page, 'bitacora', 'Lotes');
 
-      await workspaceButton(page, 'hoy').click();
-      await expectWorkspace(page, 'hoy', 'Hoy');
+      await workspaceButton(page, 'control').click();
+      await expectWorkspace(page, 'control', 'Tablero de Control');
 
-      await workspaceButton(page, 'salas').click();
-      await expectWorkspace(page, 'salas', 'Salas');
-
-      await workspaceButton(page, 'recetas').click();
-      await contextTab(page, 'Nueva receta').click();
-      await expectWorkspace(page, 'recetas', 'Nueva receta');
+      await workspaceButton(page, 'formular').click();
+      await expectWorkspace(page, 'formular', 'Formular');
       await expect(page.locator('body')).not.toContainText(/Cannot read|undefined is not|blank screen/i);
     }
   });
@@ -329,13 +322,9 @@ test.describe('mobile navigation contract', () => {
   test('Formular omits the species bridge and remaining bridges never overlap the bottom rail', async ({ page }) => {
     await openApp(page);
     await page.locator('.app-rail-mobile [data-dest="mas"]').click();
-    const recetasBtn = page.locator('#mobile-more-panel [data-dest="recetas"], .rail-flyout-item:has-text("Recetas")');
-    if (await recetasBtn.count()) {
-      await recetasBtn.first().click();
-    }
-    const nuevaRecetaTab = page.locator('.workspace-subnav [role="tab"]:has-text("Nueva receta")');
-    if (await nuevaRecetaTab.count()) {
-      await nuevaRecetaTab.first().click();
+    const formularBtn = page.locator('#mobile-more-panel [data-action="formular"], .rail-flyout-item:has-text("Formular")');
+    if (await formularBtn.count()) {
+      await formularBtn.first().click();
     }
 
     const bridge = page.locator('.species-bridge');

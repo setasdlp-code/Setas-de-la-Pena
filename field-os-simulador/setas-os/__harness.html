@@ -135,10 +135,6 @@ function HarnessApp() {
   var mobileMoreOpen = mobileMoreState[0];
   var setMobileMoreOpen = mobileMoreState[1];
 
-  var registerOpenState = React.useState(false);
-  var registerOpen = registerOpenState[0];
-  var setRegisterOpen = registerOpenState[1];
-
   var mobileDest = (tab === 'home') ? 'hoy'
     : (tab === 'bitacora') ? 'lotes'
     : (tab === 'clima') ? 'salas'
@@ -151,10 +147,11 @@ function HarnessApp() {
   var toggleMobileMore = function() { setMobileMoreOpen(function(o) { return !o; }); };
 
   var moreItems = [
-    { key: 'registrar', label: 'Registrar', action: 'register', go: function() { setMobileMoreOpen(false); setRegisterOpen(true); } },
-    { key: 'inventario', label: 'Inventario', go: function() { setMobileMoreOpen(false); setTab('inventario'); setTabNonce(function(n) { return n + 1; }); } },
-    { key: 'recetas', label: 'Recetas', go: function() { setMobileMoreOpen(false); setTab('catalogo'); setTabNonce(function(n) { return n + 1; }); } },
-    { key: 'conocimiento', label: 'Conocimiento', go: function() { setMobileMoreOpen(false); setTab('labExtraction'); setTabNonce(function(n) { return n + 1; }); } }
+    { key: 'formular', label: 'Formular receta', go: function() { setMobileMoreOpen(false); setTab('formular'); setTabNonce(function(n) { return n + 1; }); } },
+    { key: 'produccion', label: 'Preparar mezcla', go: function() { setMobileMoreOpen(false); setTab('produccion'); setTabNonce(function(n) { return n + 1; }); } },
+    { key: 'inventario', label: 'Bodega', go: function() { setMobileMoreOpen(false); setTab('inventario'); setTabNonce(function(n) { return n + 1; }); } },
+    { key: 'bitacora', label: 'Bitácora', go: function() { setMobileMoreOpen(false); setTab('bitacora'); setTabNonce(function(n) { return n + 1; }); setBitSubtab('bit_dash'); setBitSubtabNonce(function(n) { return n + 1; }); } },
+    { key: 'clima', label: 'Salas', go: function() { setMobileMoreOpen(false); setTab('clima'); setTabNonce(function(n) { return n + 1; }); } }
   ];
 
   return React.createElement(React.Fragment, null,
@@ -244,7 +241,7 @@ function HarnessApp() {
       className: 'rail-flyout mobile-more-flyout',
       id: 'mobile-more-panel',
       role: 'group',
-      'aria-label': 'Más destinos y acciones'
+      'aria-label': 'Más secciones'
     },
       moreItems.map(function(item) {
         return React.createElement('button', {
@@ -252,20 +249,9 @@ function HarnessApp() {
           className: 'rail-flyout-item ' + (tab === item.key ? 'on' : ''),
           onClick: item.go,
           'data-dest': item.key,
-          'data-action': item.action,
           'aria-current': tab === item.key ? 'page' : undefined
         }, item.label);
       })
-    ) : null,
-    registerOpen ? React.createElement('div', {
-      role: 'dialog',
-      'aria-modal': 'true',
-      'aria-label': 'Registrar evento',
-      style: { position: 'fixed', inset: '16px', zIndex: 1400, background: 'var(--paper-0)', border: '1px solid var(--border-strong)', padding: '24px' }
-    },
-      React.createElement('h2', null, 'Registrar evento'),
-      React.createElement('p', null, 'Captura operativa global disponible desde cualquier destino.'),
-      React.createElement('button', { type: 'button', onClick: function() { setRegisterOpen(false); } }, 'Cerrar')
     ) : null
   );
 }

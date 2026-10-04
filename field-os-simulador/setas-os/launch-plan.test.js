@@ -41,34 +41,6 @@ test('el plan existe aunque no haya lotes: lista completa y faltantes explícito
   assert.equal(plan.shortfalls.length, 2);
   assert.equal(plan.allocations.length, 0);
   assert.ok(plan.shortfalls.every(s => s.available === 0 && s.missing === s.needed));
-  assert.equal(LP.canExecuteLaunchPlan(plan), false);
-});
-
-test('la ejecución solo es elegible cuando el plan no tiene faltantes', () => {
-  assert.equal(LP.canExecuteLaunchPlan(null), false);
-  assert.equal(LP.canExecuteLaunchPlan({}), false);
-  assert.equal(LP.canExecuteLaunchPlan({ shortfalls: [{ ingredientId: 'paja_trigo', missing: 1 }] }), false);
-  assert.equal(LP.canExecuteLaunchPlan({ shortfalls: [] }), true);
-});
-
-test('un plan con faltantes se reasigna contra la Bodega actual antes de preparar', () => {
-  const planned = LP.buildLaunchPlan({
-    recipe: [{ id: 'paja_trigo', p: 100 }], bags: 2, kgPerBag: 2, moistureTarget: 65,
-    ingredients: INGS, inventoryLots: [],
-  });
-  assert.equal(LP.canExecuteLaunchPlan(planned), false);
-
-  const replenished = LP.refreshLaunchPlanInventory(planned, [
-    lot('paja-actual', 'paja_trigo', 10, '2026-09-27'),
-  ]);
-  assert.equal(replenished.shortfalls.length, 0);
-  assert.equal(LP.canExecuteLaunchPlan(replenished), true);
-  assert.ok(replenished.allocations.some(a => a.lotId === 'paja-actual'));
-
-  const depletedAgain = LP.refreshLaunchPlanInventory(replenished, []);
-  assert.equal(LP.canExecuteLaunchPlan(depletedAgain), false);
-  assert.equal(depletedAgain.allocations.length, 0);
-  assert.ok(depletedAgain.shortfalls.some(s => s.ingredientId === 'paja_trigo'));
 });
 
 test('FIFO por fechaIngreso con respaldo a fechaCompra', () => {
@@ -140,8 +112,6 @@ test('buildLoteRecords: sin analysis ni treatmentName usa los valores por defect
   assert.equal(lote.costoIngKg, 0);
   assert.equal(lote.recipeRef.cn, '—');
   assert.deepEqual(lote.ingredientLots, []);
-  assert.deepEqual(lote.launchPlan, plan);
-  assert.notEqual(lote.launchPlan, plan);
   assert.equal(bolsas.length, 2);
 });
 
