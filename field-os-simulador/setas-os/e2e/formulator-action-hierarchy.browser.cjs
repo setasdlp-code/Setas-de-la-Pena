@@ -40,7 +40,7 @@ const root=path.resolve(__dirname,'..');
    await input.fill('75');await input.press('Tab');await expect(input).toHaveValue('75');
    await expect(next).toContainText('100%');
    await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('setas_formulator_draft_v1')).recipe[0].p)).toBe(75);
-   await page.getByRole('tab',{name:'Herramientas avanzadas',exact:true}).click();await expect(page.getByRole('tabpanel',{name:'Herramientas avanzadas',exact:true})).toBeVisible();
+   await page.getByRole('tab',{name:'Generador de Recetas',exact:true}).click();await expect(page.getByRole('tabpanel',{name:'Generador de Recetas',exact:true})).toBeVisible();
    await page.getByRole('tab',{name:/Mesa de Mezcla/}).click();await expect(input).toHaveValue('75');
    for(const selector of ['.sim-live-dashboard','.form-species-context','.form-support-details'])assert.ok(await panel.locator(selector).evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth)), `no horizontal overflow in ${selector} at ${width}`);
    console.log(`PASS Formulador ${width}: editable percentage y=${Math.round(box.y)}, details keyboard, origin, locks, draft, generator navigation.`);

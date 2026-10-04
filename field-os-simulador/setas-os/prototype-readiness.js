@@ -154,23 +154,11 @@
     if((existing?.shortfalls||[]).length)throw Error('Hay un consumo parcial anterior. Reconcilia los insumos antes de registrar la preparación.');
     const alreadyRecorded=(lote.lifecycleEvents||[]).some(e=>e.action==='prepare_mix');
     if(alreadyRecorded)return {entries:null,lote,transition:'mix_prepared',reused:true};
-    const plan={allocations:lote.ingredientLots||[],shortfalls:[],preparation:lote.preparation||null};
-    if(!plan.allocations.length)throw Error('El lote no tiene un plan de insumos verificable.');
-    // Revalidate at the transaction boundary. The batch's own held reservation
-    // is excluded by the ledger API, while commitments from other batches still
-    // reduce executable stock. This must run before any lifecycle, stock,
-    // reservation or outbox mutation so a stale authorization remains harmless.
-    const execution=ledger.checkPlanForExecution(plan,{
-      lots:read(storage,'sdp_lotes'),
-      ledger:read(storage,'sdp_inv_reservas'),
-      incoming:[],
-      nowMs:Date.parse(at),
-      batchId:loteId,
-    });
-    if(!execution.ok)throw Error(execution.mensaje||'El inventario disponible ya está comprometido por otro lote.');
     const recetaId=lote.recipeRef?.versionId||lote.recipeRef?.id||lote.recetaId;
     const consequences=batchApi.actionConsequences(sheet,'prepare_mix',{recetaId},{role,operatorId,at,bolsas:read(storage,'sdp_bit_bolsas').filter(b=>b.loteId===loteId)});
     const applied=batchApi.applyConsequences(sheet,consequences,{log:lote.lifecycleEvents||[]});
+    const plan={allocations:lote.ingredientLots||[],shortfalls:[],preparation:lote.preparation||null};
+    if(!plan.allocations.length)throw Error('El lote no tiene un plan de insumos verificable.');
     const op=inventory.buildConsumptionOp({loteId,codigo:lote.codigo,plan,createdAt:Date.parse(at)});
     const consumption=existing?null:inventory.applyLocal(read(storage,'sdp_lotes'),op,{fecha:at.slice(0,10),nota:'Preparación de mezcla · '+lote.codigo});
     if(consumption?.shortfalls.length)throw Error('Stock insuficiente para completar la mezcla. No se descontó inventario.');

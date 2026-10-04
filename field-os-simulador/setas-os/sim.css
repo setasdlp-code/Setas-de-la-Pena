@@ -1893,45 +1893,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .catalog-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px;}
 .sim-root .catalog-eyebrow{font-family:var(--font-editorial);font-weight:500;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-500);display:block;margin-bottom:6px;}
 .sim-root .catalog-title{font-family:var(--font-display);font-size:38px;color:var(--ink-0);margin:0;font-weight:400;line-height:1;}
-.sim-root .species-catalog-disclosure{
-  margin-bottom:24px;
-  border:1px solid var(--border-soft);
-  background:var(--paper-0);
-}
-.sim-root .species-catalog-disclosure > summary{
-  min-height:52px;
-  padding:10px 14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  cursor:pointer;
-  font-family:var(--font-body);
-  font-weight:800;
-  color:var(--ink-0);
-}
-.sim-root .species-catalog-disclosure > summary small{
-  font-family:var(--font-mono);
-  font-size:11px;
-  font-weight:500;
-  color:var(--ink-2);
-  text-align:right;
-}
-.sim-root .species-catalog-disclosure[open] > summary{
-  border-bottom:1px solid var(--border-soft);
-}
-.sim-root .species-catalog-disclosure .spp-grid{
-  padding:18px;
-}
-@media(max-width:600px){
-  .sim-root .species-catalog-disclosure > summary{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:3px;
-  }
-  .sim-root .species-catalog-disclosure > summary small{text-align:left;}
-  .sim-root .species-catalog-disclosure .spp-grid{padding:8px;}
-}
 
 
 
@@ -2484,30 +2445,6 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   justify-content:center!important;
   border-radius:50%!important;
 }
-@media(max-width:900px){
-  .sim-root .species-bridge{
-    bottom:calc(62px + env(safe-area-inset-bottom))!important;
-  }
-  .sim-root .workspace{
-    padding-bottom:calc(126px + env(safe-area-inset-bottom));
-  }
-}
-
-@media(max-width:700px){
-  .sim-root .climate-kpi-grid{
-    grid-template-columns:minmax(0,1fr)!important;
-  }
-  .sim-root .climate-kpi-grid > *{
-    grid-column:auto!important;
-    min-width:0!important;
-  }
-}
-
-@media(max-width:859px){
-  .sim-root .home-registro-row{display:none!important;}
-  .sim-root .home-header-cockpit{padding-bottom:12px!important;}
-}
-
 @media(max-width:900px){
   .sim-root .qa-mini-btn{
     min-width:44px!important;

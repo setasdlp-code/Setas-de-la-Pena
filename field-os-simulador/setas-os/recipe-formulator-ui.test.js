@@ -15,7 +15,7 @@ test('Setas OS — Formulator UI/UX Elite Suite', async (t) => {
 
   await t.test('Formulator exposes unified command cockpit with live metrics, workmode switcher, and auto-balance button', () => {
     assert.match(jsx, /Mesa de Mezcla/);
-    assert.match(jsx, /Herramientas avanzadas/);
+    assert.match(jsx, /Generador de Recetas/);
     assert.match(jsx, /auto-balance|Auto-balance|rebalance/i);
     assert.match(jsx, /Perito|score|C:N/);
   });

@@ -11,19 +11,12 @@ const css = fs.readFileSync(path.join(ROOT, 'sim.css'), 'utf8');
 
 const { consumirInventarioFIFO } = require('./inventario.js');
 
-test('simulador-app.jsx separates planning from the guarded physical preparation', () => {
+test('simulador-app.jsx includes unified production launch buttons and modal workflow', () => {
   assert.match(jsx, /openProdLauncher/);
   assert.match(jsx, /ejecutarLanzamientoProduccion/);
   assert.match(jsx, /data-testid="prod-launch-modal"/);
-  assert.match(jsx, /<AppIcon name="rocket"[^>]*\/>\s*Confirmar y planificar/);
+  assert.match(jsx, /<AppIcon name="rocket"[^>]*\/>\s*(?:Confirmar y\s*)?Lanzar Producción/);
   assert.match(jsx, /showProdLaunchModal/);
-  assert.match(jsx, /refreshLaunchPlanInventory\(planBase,invLotesRef\.current\)/);
-  assert.match(jsx, /if\(!SetasLaunchPlanApi\.canExecuteLaunchPlan\(plan\)\)/);
-  assert.match(jsx, /ledgerApi\.checkPlanForExecution\(plan,/);
-  assert.match(jsx, /if\(r\.shortfalls\.length\) return \{ok:false,reason:'shortfall'/);
-  assert.match(jsx, /'Inventario comprometido o incompleto'/);
-  assert.match(jsx, /onClick=\{ejecutarLanzamientoProduccion\}[\s\S]*?disabled=\{launching\}/);
-  assert.doesNotMatch(jsx, /disabled=\{launching\|\|!SetasLaunchPlanApi\.canExecuteLaunchPlan\(f\.plan\)\}/);
 });
 
 test('sim.css defines styles for launch buttons, summary stats and breakdown table', () => {
@@ -60,3 +53,4 @@ test('consumirInventarioFIFO deducts batch ingredients accurately across stock l
   assert.equal(l3.cantidadKgDisponible, 4.0);
   assert.equal(l4.cantidadKgDisponible, 6.8);
 });
+

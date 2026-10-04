@@ -86,11 +86,11 @@ const root=path.resolve(__dirname,'..');
   // Formulador consumes those same inputs/overrides and invalidates its own launcher.
   await navigate('formular');await page.setViewportSize({width:1280,height:900});
   await page.getByRole('button',{name:/Lanzar Lote/}).click();
-  await expect(page.getByRole('button',{name:/Confirmar y planificar/})).toBeVisible();
+  await expect(page.getByRole('button',{name:/Confirmar y Lanzar/})).toBeVisible();
   await page.evaluate(()=>window.SetasFormulatorAPI.applyRecipe([{id:'paja_trigo',p:70},{id:'salvado_trigo',p:30}]));
-  await expect(page.getByRole('button',{name:/Confirmar y planificar/})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:/Confirmar y Lanzar/})).toHaveCount(0);
   await page.getByRole('button',{name:/Lanzar Lote/}).click();const second=await spec();
-  await page.getByRole('button',{name:/Confirmar y planificar/}).click();
+  await page.getByRole('button',{name:/Confirmar y Lanzar/}).click();
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes')).length)).toBe(2);
   assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes'))[0].preparation),second);
   assert.deepEqual(errors,[]);
