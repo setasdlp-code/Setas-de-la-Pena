@@ -5527,6 +5527,15 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   const [config, setConfigState] = useState(loadLiveTelemetryConfig);
   const [snapshot, setSnapshot] = useState({ at: 0, rooms: {}, status: { connectivity: 'offline', transports: [], activeSource: null, altitudeM: 2600 } });
   const [alerts, setAlerts] = useState([]);
+  // Lecturas que el contrato puso en cuarentena (fuera de rango físico). No
+  // entran a las curvas ni a los umbrales, pero Hoy las informa por sensor
+  // (today-exceptions.js): un sensor que reporta -45 °C es un problema de
+  // hardware, no un dato que se pueda ignorar en silencio.
+  const [rejected, setRejected] = useState([]);
+  const rejectedRef = useRef([]);
+  // Versión de rejectedRef: cambia con cada lectura nueva o poda; el tick solo
+  // re-renderiza cuando cambió.
+  const rejectedVersionRef = useRef({ current: 0, emitted: 0 });
   const bridgeRef = useRef(null);
   const engineRef = useRef(null);
   const signatureRef = useRef('');
@@ -5545,6 +5554,18 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
       // Cada muestra pasa por los umbrales en el momento en que llega; lo que se
       // agrupa en el tick es el render, no la detección.
       onSample: (roomId, sample) => { engine.evaluate(roomId, sample); },
+      onReading: (reading) => {
+        if (!reading || !reading.rejected) return;
+        rejectedVersionRef.current.current += 1;
+        rejectedRef.current.push({
+          roomId: reading.room_id || null,
+          deviceId: reading.device_id || null,
+          metric: reading.metric || null,
+          value: reading.value != null ? reading.value : null,
+          reasons: reading.quality_reasons || [],
+          at: Date.now(),
+        });
+      },
     });
 
     engineRef.current = engine;
@@ -5553,6 +5574,18 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
 
     const pump = () => {
       engine.checkStale();
+      // Solo la última hora y como máximo 500: Hoy informa conteos, no un archivo.
+      const cutoff = Date.now() - 3600000;
+      const version = rejectedVersionRef.current;
+      const fresh = rejectedRef.current.filter(r => r.at >= cutoff).slice(-500);
+      if (fresh.length !== rejectedRef.current.length) {
+        rejectedRef.current = fresh;
+        version.current += 1;
+      }
+      if (version.current !== version.emitted) {
+        version.emitted = version.current;
+        setRejected(fresh.slice());
+      }
       const next = bridge.getSnapshot({ buckets: 24 });
       const activeAlerts = engine.activeAlerts();
       const signature = [
@@ -5597,6 +5630,7 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   return {
     snapshot,
     alerts,
+    rejected,
     config,
     setConfig,
     ingest,
@@ -7366,6 +7400,81 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     },400);
     return ()=>clearTimeout(t);
   },[invLotes,invCompras,invProveedores,invReservas,invMovimientos,bitLotesLoaded,peritoInventoryLoaded]);
+
+  // ── Excepciones de Hoy que no salen del motor de clima (today-exceptions.js):
+  // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
+  // más larga que la referencia. Se calculan aquí, fuera del render de Hoy,
+  // porque también alimentan las notificaciones.
+  const todayExceptions=(()=>{
+    const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
+    const queueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    if(!api) return [];
+    try{
+      return api.buildTodayExceptions({
+        now:Date.now(),
+        lotes:bitLotes,
+        bolsas:bitBolsas,
+        syncStats:queueApi?queueApi.stats(syncQueue,Date.now()):null,
+        remoteSync:{...remoteSync,online:deviceOnline},
+        overdrawnLots:invLotes.filter(l=>(Number(l.sobregiroKg)||0)>0).map(l=>({...l,name:(INGS.find(g=>g.id===l.ingredienteId)||{}).name})),
+        rejected:liveTelemetry.rejected||[],
+      });
+    }catch(e){console.warn('[Hoy] no se pudieron calcular las excepciones',e);return [];}
+  })();
+  const runTodayExceptionAction=item=>{
+    const a=item&&item.action;
+    if(!a) return;
+    if(a.type==='retrySync'){
+      const queueApi=window.SetasSyncQueue;
+      const next=queueApi.retryStuck(syncQueueRef.current,Date.now());
+      syncQueueRef.current=next;
+      setSyncQueue(next);
+      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
+    }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
+    else if(a.type==='goIoT'){setShowIoTHub(true);}
+    else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
+  };
+
+  // Notificaciones del sistema para alarmas nuevas (Banda 1 y clima crítico).
+  // Solo mientras la app está abierta, aunque esté en segundo plano: el
+  // proyecto no tiene servidor de envío (Firebase Spark), así que con la app
+  // cerrada no llegan. Con la pestaña visible no se notifica: ya está en
+  // pantalla.
+  const [notifyPermission,setNotifyPermission]=useState(()=>{
+    try{return typeof Notification!=='undefined'?Notification.permission:'unsupported';}catch(e){return 'unsupported';}
+  });
+  const requestNotifyPermission=()=>{
+    try{
+      if(typeof Notification==='undefined') return;
+      Promise.resolve(Notification.requestPermission()).then(p=>setNotifyPermission(p)).catch(()=>{});
+    }catch(e){}
+  };
+  const notifiedRef=useRef(new Set());
+  const notifyItems=[
+    ...todayExceptions,
+    ...(liveTelemetry.alerts||[]).filter(a=>a.severity==='critico'||a.severity==='alarma')
+      .map(a=>({id:'clima:'+a.key,severity:'alarma',title:`${a.roomId||'Sala'}: ${a.msg||a.metricLabel||'alerta de clima'}`,detail:a.action||''})),
+  ];
+  const notifyKey=notifyItems.filter(i=>i.severity==='alarma').map(i=>i.id).sort().join('|');
+  useEffect(()=>{
+    const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
+    if(!api) return;
+    const {send,notified}=api.notificationsToSend(notifyItems,notifiedRef.current);
+    notifiedRef.current=notified;
+    if(!send.length||notifyPermission!=='granted') return;
+    if(typeof document!=='undefined'&&document.visibilityState==='visible') return;
+    const show=item=>{
+      const opts={body:item.detail||'',tag:'setas-'+item.id,icon:'favicon.svg'};
+      // serviceWorker.ready no se resuelve nunca si no hay service worker
+      // registrado: sin el límite de tiempo la notificación no saldría.
+      const swReady=typeof navigator!=='undefined'&&navigator.serviceWorker&&navigator.serviceWorker.ready
+        ?Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(new Error('sin service worker')),3000))])
+        :Promise.reject(new Error('sin service worker'));
+      const viaSw=swReady.then(reg=>reg.showNotification('Setas OS · '+item.title,opts));
+      viaSw.catch(()=>{try{new Notification('Setas OS · '+item.title,opts);}catch(e){}});
+    };
+    send.slice(0,3).forEach(show);
+  },[notifyKey,notifyPermission]);
 
   // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
   useEffect(()=>{
@@ -13382,7 +13491,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
 
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
-                {(liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length > 0) && (
+                {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
                 <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-error,#B53A25)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -13390,10 +13499,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error,#B53A25)'}}>
                         Banda 1 · Atención
                       </span>
-                      <span className="sdp-provenance">SCD30 · Cuarentena · Insumos</span>
+                      <span className="sdp-provenance">Sensores · Sincronización · Cuarentena · Insumos</span>
                     </div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
-                      {liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
+                      {liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
                     </span>
                   </div>
 
@@ -13401,6 +13510,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {liveTelemetry.alerts.length > 0 && (
                     <div style={{marginBottom: 12}}>
                       <LiveAlertsSection/>
+                    </div>
+                  )}
+
+                  {/* Sincronización, sobregiro, lecturas en cuarentena e incubación (today-exceptions.js) */}
+                  {todayExceptions.length > 0 && (
+                    <ul data-testid="today-exceptions" style={{listStyle:'none',margin:'0 0 12px',padding:0,display:'flex',flexDirection:'column',gap:8}}>
+                      {todayExceptions.map(item=>{
+                        const alarma=item.severity==='alarma';
+                        const ink=alarma?'var(--status-error,#B53A25)':'var(--status-warn-text)';
+                        return <li key={item.id} data-exception-kind={item.kind} data-severity={item.severity} className={`sdp-task ${alarma?'sdp-task--critical':''}`} style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12,padding:'10px 14px',borderLeft:`3px solid ${ink}`}}>
+                          <div style={{minWidth:0,flex:'1 1 240px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:ink,border:`1px solid ${ink}`,padding:'1px 5px'}}>{alarma?'Alarma':'Vigilar'}</span>
+                              <strong style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{item.title}</strong>
+                            </div>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{item.detail}</div>
+                          </div>
+                          {item.action&&<button type="button" className="sdp-btn sdp-btn--field" onClick={()=>runTodayExceptionAction(item)}>{item.action.label}</button>}
+                        </li>;
+                      })}
+                    </ul>
+                  )}
+                  {notifyPermission==='default'&&(
+                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:12,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)'}}>
+                      <span>Recibe estas alarmas como notificación mientras la app esté abierta en este equipo.</span>
+                      <button type="button" data-testid="enable-notifications" className="sdp-btn sdp-btn--field" onClick={requestNotifyPermission}>Avisarme en este equipo</button>
                     </div>
                   )}
 

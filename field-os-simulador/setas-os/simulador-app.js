@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5ec8331f208727aa9c7d1fd6015a76cd8955b87ee3cda10c76fd9b6547906406
+// source-hash: 08574e43465dd9718ae03fa1bd587880b9f5da34e9fcd55fe87a06e42d0582d4
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3806,6 +3806,9 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   const [config, setConfigState] = useState(loadLiveTelemetryConfig);
   const [snapshot, setSnapshot] = useState({ at: 0, rooms: {}, status: { connectivity: "offline", transports: [], activeSource: null, altitudeM: 2600 } });
   const [alerts, setAlerts] = useState([]);
+  const [rejected, setRejected] = useState([]);
+  const rejectedRef = useRef([]);
+  const rejectedVersionRef = useRef({ current: 0, emitted: 0 });
   const bridgeRef = useRef(null);
   const engineRef = useRef(null);
   const signatureRef = useRef("");
@@ -3823,6 +3826,18 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
       // agrupa en el tick es el render, no la detección.
       onSample: (roomId, sample) => {
         engine.evaluate(roomId, sample);
+      },
+      onReading: (reading) => {
+        if (!reading || !reading.rejected) return;
+        rejectedVersionRef.current.current += 1;
+        rejectedRef.current.push({
+          roomId: reading.room_id || null,
+          deviceId: reading.device_id || null,
+          metric: reading.metric || null,
+          value: reading.value != null ? reading.value : null,
+          reasons: reading.quality_reasons || [],
+          at: Date.now()
+        });
       }
     });
     engineRef.current = engine;
@@ -3830,6 +3845,17 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     bridge.start();
     const pump = () => {
       engine.checkStale();
+      const cutoff = Date.now() - 36e5;
+      const version = rejectedVersionRef.current;
+      const fresh = rejectedRef.current.filter((r) => r.at >= cutoff).slice(-500);
+      if (fresh.length !== rejectedRef.current.length) {
+        rejectedRef.current = fresh;
+        version.current += 1;
+      }
+      if (version.current !== version.emitted) {
+        version.emitted = version.current;
+        setRejected(fresh.slice());
+      }
       const next = bridge.getSnapshot({ buckets: 24 });
       const activeAlerts = engine.activeAlerts();
       const signature = [
@@ -3867,6 +3893,7 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   return {
     snapshot,
     alerts,
+    rejected,
     config,
     setConfig,
     ingest,
@@ -5543,6 +5570,87 @@ function SimuladorShell(props) {
     }, 400);
     return () => clearTimeout(t);
   }, [invLotes, invCompras, invProveedores, invReservas, invMovimientos, bitLotesLoaded, peritoInventoryLoaded]);
+  const todayExceptions = (() => {
+    const api = typeof window !== "undefined" ? window.SetasTodayExceptions : null;
+    const queueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    if (!api) return [];
+    try {
+      return api.buildTodayExceptions({
+        now: Date.now(),
+        lotes: bitLotes,
+        bolsas: bitBolsas,
+        syncStats: queueApi ? queueApi.stats(syncQueue, Date.now()) : null,
+        remoteSync: { ...remoteSync, online: deviceOnline },
+        overdrawnLots: invLotes.filter((l) => (Number(l.sobregiroKg) || 0) > 0).map((l) => ({ ...l, name: (INGS.find((g) => g.id === l.ingredienteId) || {}).name })),
+        rejected: liveTelemetry.rejected || []
+      });
+    } catch (e) {
+      console.warn("[Hoy] no se pudieron calcular las excepciones", e);
+      return [];
+    }
+  })();
+  const runTodayExceptionAction = (item) => {
+    const a = item && item.action;
+    if (!a) return;
+    if (a.type === "retrySync") {
+      const queueApi = window.SetasSyncQueue;
+      const next = queueApi.retryStuck(syncQueueRef.current, Date.now());
+      syncQueueRef.current = next;
+      setSyncQueue(next);
+      try {
+        localStorage.setItem("sdp_sync_queue", queueApi.serialize(next));
+      } catch (e) {
+      }
+    } else if (a.type === "goBodega") {
+      setInvTab("stock");
+      goTab("inventario");
+    } else if (a.type === "goIoT") {
+      setShowIoTHub(true);
+    } else if (a.type === "openLote" && a.loteId) {
+      openBatchDetail(a.loteId);
+    }
+  };
+  const [notifyPermission, setNotifyPermission] = useState(() => {
+    try {
+      return typeof Notification !== "undefined" ? Notification.permission : "unsupported";
+    } catch (e) {
+      return "unsupported";
+    }
+  });
+  const requestNotifyPermission = () => {
+    try {
+      if (typeof Notification === "undefined") return;
+      Promise.resolve(Notification.requestPermission()).then((p) => setNotifyPermission(p)).catch(() => {
+      });
+    } catch (e) {
+    }
+  };
+  const notifiedRef = useRef(/* @__PURE__ */ new Set());
+  const notifyItems = [
+    ...todayExceptions,
+    ...(liveTelemetry.alerts || []).filter((a) => a.severity === "critico" || a.severity === "alarma").map((a) => ({ id: "clima:" + a.key, severity: "alarma", title: `${a.roomId || "Sala"}: ${a.msg || a.metricLabel || "alerta de clima"}`, detail: a.action || "" }))
+  ];
+  const notifyKey = notifyItems.filter((i) => i.severity === "alarma").map((i) => i.id).sort().join("|");
+  useEffect(() => {
+    const api = typeof window !== "undefined" ? window.SetasTodayExceptions : null;
+    if (!api) return;
+    const { send, notified } = api.notificationsToSend(notifyItems, notifiedRef.current);
+    notifiedRef.current = notified;
+    if (!send.length || notifyPermission !== "granted") return;
+    if (typeof document !== "undefined" && document.visibilityState === "visible") return;
+    const show = (item) => {
+      const opts = { body: item.detail || "", tag: "setas-" + item.id, icon: "favicon.svg" };
+      const swReady = typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.ready ? Promise.race([navigator.serviceWorker.ready, new Promise((_, reject) => setTimeout(() => reject(new Error("sin service worker")), 3e3))]) : Promise.reject(new Error("sin service worker"));
+      const viaSw = swReady.then((reg) => reg.showNotification("Setas OS · " + item.title, opts));
+      viaSw.catch(() => {
+        try {
+          new Notification("Setas OS · " + item.title, opts);
+        } catch (e) {
+        }
+      });
+    };
+    send.slice(0, 3).forEach(show);
+  }, [notifyKey, notifyPermission]);
   useEffect(() => {
     if (!bitLotesLoaded || initialDeepLinkHandled.current) return;
     initialDeepLinkHandled.current = true;
@@ -9754,7 +9862,11 @@ BATCH (${numBags}×${kgBag} kg):
       };
       const t = tones[kpi.tone];
       return /* @__PURE__ */ React.createElement("span", { key: kpi.label, style: { display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", padding: "6px 10px", background: t.bg, border: `1px solid ${t.border}`, borderRadius: 0, color: t.ink, fontWeight: t.weight } }, /* @__PURE__ */ React.createElement(kpi.icon, { size: 12 }), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: t.ink } }, kpi.value), " ", kpi.label);
-    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-0)", border: `1px solid ${operationStatus.color}`, borderRadius: 0, color: operationStatus.color } }, operationStatus.label))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "SCD30 · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : "")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-0)", border: `1px solid ${operationStatus.color}`, borderRadius: 0, color: operationStatus.color } }, operationStatus.label))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sensores · Sincronización · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), todayExceptions.length > 0 && /* @__PURE__ */ React.createElement("ul", { "data-testid": "today-exceptions", style: { listStyle: "none", margin: "0 0 12px", padding: 0, display: "flex", flexDirection: "column", gap: 8 } }, todayExceptions.map((item) => {
+      const alarma = item.severity === "alarma";
+      const ink = alarma ? "var(--status-error,#B53A25)" : "var(--status-warn-text)";
+      return /* @__PURE__ */ React.createElement("li", { key: item.id, "data-exception-kind": item.kind, "data-severity": item.severity, className: `sdp-task ${alarma ? "sdp-task--critical" : ""}`, style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "10px 14px", borderLeft: `3px solid ${ink}` } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: "1 1 240px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: ink, border: `1px solid ${ink}`, padding: "1px 5px" } }, alarma ? "Alarma" : "Vigilar"), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, item.title)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, item.detail)), item.action && /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--field", onClick: () => runTodayExceptionAction(item) }, item.action.label));
+    })), notifyPermission === "default" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "Recibe estas alarmas como notificación mientras la app esté abierta en este equipo."), /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "enable-notifications", className: "sdp-btn sdp-btn--field", onClick: requestNotifyPermission }, "Avisarme en este equipo")), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : "")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
       setInvTab("compra");
       goTab("inventario");
     }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center" } }, "Registrar Compra +")), criticalLots.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, criticalLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--critical", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-error)", border: "1px solid var(--status-error)", padding: "1px 5px" } }, item.bucket === "critical" ? "Crítico" : "Bloqueo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Abrir lote →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))) : liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", padding: "4px 0" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--status-ok)" }), " Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal."))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--ahora", "aria-label": "Banda 2: Ahora Turno en Curso", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-ok,#2E3B2F)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-ok,#2E3B2F)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-ok,#2E3B2F)" } }, "Banda 2 · Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Registro de campo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, nowLots.length + tasksHoy.filter((t) => !t.done).length, " pendiente", nowLots.length + tasksHoy.filter((t) => !t.done).length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "home-quick-actions-strip", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 14 } }, [
