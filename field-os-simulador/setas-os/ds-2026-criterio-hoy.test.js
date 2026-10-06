@@ -51,7 +51,7 @@ test('cockpit Hoy is structured into 3 explicit priority bands in Field mode', (
   // Banda 1: ATENCIÓN (sensor anomalies, critical stock, quarantine/blocked lots)
   assert.match(source, /sdp-band--atencion/);
   assert.match(source, /Banda 1 · Atención/);
-  assert.match(source, /SCD30 · Cuarentena · Insumos/);
+  assert.match(source, /Sensores · Sincronización · Cuarentena · Insumos/);
   assert.match(source, /sdp-task--critical/);
 
   // Banda 2: AHORA (shift actions, now lots, shift checklist)

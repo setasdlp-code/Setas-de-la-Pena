@@ -99,6 +99,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../sync-merge.js",
   "../inventory-entries.js",
   "../device-sync.js",
+  // Excepciones de la Banda 1 de Hoy; resuelve flush-forecast-engine y
+  // bitacora-model en cada llamada.
+  "../today-exceptions.js",
   "../room-state.js",
   "../provenance.js",
   "../perito-context.js",
