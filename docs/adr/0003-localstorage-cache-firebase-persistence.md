@@ -1,6 +1,6 @@
 # ADR-0003: localStorage is the operational cache, Firebase is persistence
 
-Status: Accepted
+Status: Accepted — ampliada por ADR-0009 (lectura y fusión entre dispositivos)
 Date: 2026-08-29 (recorded 2026-08-30)
 
 ## Context
@@ -25,7 +25,9 @@ it independent of React navigation and component lifecycle.
 - Firestore is eventually consistent with the device; a sync failure is a warning in
   the console, not a user-visible error.
 - localStorage is the source of truth for the current session; reconciliation
-  semantics across devices are not defined by this ADR.
+  semantics across devices are not defined by this ADR. ADR-0009 defines them for
+  Bitácora and Bodega (live reads, three-way merge, tombstones, inventory ledger).
+  RoomCycles, telemetry and evidence still use `fireAndForget`.
 
 ## Source
 

@@ -4,7 +4,7 @@
   const PENDING='sdp_pending_write_v1';
   const PLANS='sdp_experiments_v1';
   const ARCHIVE='sdp_recovery_archive_v1';
-  const KEYS=Object.freeze(['sdp_proveedores','sdp_compras','sdp_lotes','sdp_movimientos','sdp_bit_lotes','sdp_bit_bolsas','sdp_bit_cosechas','sdp_bit_tasks','sdp_room_events','sdp_inv_reservas','sdp_sync_queue','sdp_inventory_ops','setas_v6',PLANS,'sdp_room_cycles','sdp_telemetry_v1','sdp_cycle_evidence_v1']);
+  const KEYS=Object.freeze(['sdp_proveedores','sdp_compras','sdp_lotes','sdp_movimientos','sdp_bit_lotes','sdp_bit_bolsas','sdp_bit_cosechas','sdp_bit_tasks','sdp_room_events','sdp_inv_reservas','sdp_sync_queue','sdp_inventory_ops','setas_v6',PLANS,'sdp_room_cycles','sdp_telemetry_v1','sdp_cycle_evidence_v1','sdp_inv_ledger','sdp_sync_base_v1']);
   const clone=x=>JSON.parse(JSON.stringify(x));
   const read=(storage,key)=>{
     const raw=storage.getItem(key);
@@ -117,6 +117,10 @@
     const previous=data.archive||emptyArchive();
     const archive={sync:mergeRecords(previous.sync,collections.sdp_sync_queue||[],r=>r.id),inventory:mergeRecords(previous.inventory,collections.sdp_inventory_ops||[],r=>r.opId),fieldEvents:mergeRecords(previous.fieldEvents,data.fieldEvents,r=>r.event.id)};
     collections.sdp_sync_queue=[];collections.sdp_inventory_ops=[];
+    // The sync base describes what THIS device last read from the server. A
+    // restored base would make the merge treat restored records missing from
+    // the server as deleted there (ADR-0009); without it they are re-sent.
+    collections.sdp_sync_base_v1=[];
     persist(storage,[...Object.entries(collections),[ARCHIVE,archive]]);
     return preview;
   }

@@ -94,6 +94,11 @@ const PROTECTED_APP_SCRIPTS = [
   "../inventory-consumption.js",
   "../inventory-ledger.js",
   "../purchases.js",
+  // Sincronización entre dispositivos (ADR-0009). device-sync.js resuelve
+  // sync-merge, inventory-entries y sync-queue en cada llamada.
+  "../sync-merge.js",
+  "../inventory-entries.js",
+  "../device-sync.js",
   "../room-state.js",
   "../provenance.js",
   "../perito-context.js",
@@ -195,6 +200,7 @@ function loadDataRuntime() {
         import("./error-monitor.js"),
         import("./db.js"),
         import("./bitacora-sync.js"),
+        import("./remote-sync.js"),
         import("./public-trace-sync.js"),
         import("./eventos-cultivo-sync.js"),
       ]);

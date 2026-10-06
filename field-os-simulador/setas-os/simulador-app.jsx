@@ -7186,7 +7186,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
     const drainOnce=async()=>{
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-      const bitacoraDb=typeof window!=='undefined'?window.SetasBitacoraDB:null;
+      // Bitácora y, desde ADR-0009, los documentos de Bodega y el libro de
+      // asientos (firebase/remote-sync.js) salen por la misma cola.
+      const remoteDb=typeof window!=='undefined'?window.SetasRemoteSyncDB:null;
+      const bitacoraDb=typeof window!=='undefined'&&window.SetasBitacoraDB?{...window.SetasBitacoraDB,...(remoteDb||{})}:null;
       // Sin el módulo de cola, sin el backend de Firestore, o sin red: la
       // cola simplemente espera — es justo lo que debe pasar.
       if(!syncQueueApi||!bitacoraDb) return;
@@ -7200,6 +7203,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const op=syncQueueApi.nextPending(syncQueueRef.current,Date.now());
         if(!op) break;
         const fn=bitacoraDb[op.type];
+        // Operación de remote-sync.js con el módulo todavía cargando: se
+        // espera a la próxima pasada en vez de gastar un intento.
+        if(typeof fn!=='function'&&!remoteDb) break;
         let updatedQueue;
         try{
           if(typeof fn!=='function') throw new Error('Operación desconocida para SetasBitacoraDB: '+op.type);
@@ -7235,6 +7241,131 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       window.removeEventListener('online',onOnline);
     };
   },[]);
+
+  // ── Sincronización entre dispositivos (ADR-0009, device-sync.js).
+  // Cada colección compartida se lee en vivo de Firestore y se fusiona con la
+  // copia local a tres bandas; lo que el servidor no tiene sale por la misma
+  // cola que Bitácora. Bodega se sincroniza como libro de asientos y la lista
+  // de lotes (sdp_lotes) se recalcula desde él.
+  const deviceSyncCtxRef=useRef({deviceId:null,n:0});
+  const nextDeviceSyncCtx=()=>{
+    const r=deviceSyncCtxRef.current;
+    if(!r.deviceId){
+      try{
+        r.deviceId=localStorage.getItem('sdp_device_id');
+        if(!r.deviceId){
+          r.deviceId='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+          localStorage.setItem('sdp_device_id',r.deviceId);
+        }
+      }catch(e){r.deviceId=r.deviceId||'dev_'+Math.random().toString(36).slice(2,10);}
+    }
+    r.n+=1;
+    return {deviceId:r.deviceId,at:new Date().toISOString(),nonce:String(r.n)};
+  };
+  const serverSeenRef=useRef(new Set());
+  const [remoteSync,setRemoteSync]=useState({status:'offline',lastServerAt:null,overdrawn:[],error:null});
+  const [deviceOnline,setDeviceOnline]=useState(typeof navigator==='undefined'||navigator.onLine!==false);
+  useEffect(()=>{
+    const on=()=>setDeviceOnline(true);const off=()=>setDeviceOnline(false);
+    window.addEventListener('online',on);window.addEventListener('offline',off);
+    return ()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off);};
+  },[]);
+  const remoteSyncLabel=()=>{
+    const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+    return planner?planner.describeRemote({...remoteSync,online:deviceOnline}):'';
+  };
+  // Junto al estado de la cola: solo aparece cuando lo que se ve puede no ser
+  // lo que tienen los demás equipos.
+  const remoteSyncNote=()=>{
+    const text=remoteSyncLabel();
+    if(!text||text==='Al día con el servidor') return null;
+    return <span data-testid="remote-sync-state" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:remoteSync.status==='error'?'var(--coral-700)':'var(--ink-2)'}}>· {text}</span>;
+  };
+  // Escribe en un solo paso atómico lo que decidió el planificador, refleja
+  // cada clave en su estado de React y encola los envíos.
+  const applyDeviceSyncPlan=plan=>{
+    if(!plan) return;
+    if(plan.entries&&plan.entries.length){
+      try{SetasPrototype.persist(localStorage,plan.entries);}
+      catch(e){
+        // Nada cambió (persist es atómico); la próxima lectura lo reintenta.
+        setRemoteSync(st=>({...st,status:'error',error:e.message}));
+        if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
+        return;
+      }
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas};
+      for(const [key,value] of plan.entries){
+        if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
+        else if(setters[key]) setters[key](value);
+      }
+    }
+    if(plan.ops&&plan.ops.length){
+      const planner=window.SetasDeviceSync;
+      setSyncQueue(prev=>{
+        const {queue,dropped}=planner.enqueueAll(prev,plan.ops,Date.now());
+        if(dropped) console.warn('[SetasDeviceSync] cola llena: '+dropped+' envío(s) quedan para la próxima pasada');
+        syncQueueRef.current=queue;
+        try{localStorage.setItem('sdp_sync_queue',window.SetasSyncQueue.serialize(queue));}catch(e){bitQuotaWarn();}
+        return queue;
+      });
+    }
+    if(Array.isArray(plan.overdrawn)){
+      setRemoteSync(st=>JSON.stringify(st.overdrawn)===JSON.stringify(plan.overdrawn)?st:{...st,overdrawn:plan.overdrawn});
+    }
+  };
+  const onRemoteSnapshotRef=useRef(null);
+  onRemoteSnapshotRef.current=({coleccion,docs,fromCache})=>{
+    const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+    if(!planner) return;
+    let plan;
+    try{
+      plan=planner.planSnapshot({collection:coleccion,docs,fromCache,read:k=>SetasPrototype.read(localStorage,k),queue:syncQueueRef.current,ctx:nextDeviceSyncCtx()});
+    }catch(err){
+      setRemoteSync(st=>({...st,status:'error',error:err.message}));
+      return;
+    }
+    applyDeviceSyncPlan(plan);
+    if(fromCache) return;
+    serverSeenRef.current.add(coleccion);
+    const allSeen=planner.ALL_COLLECTIONS.every(c=>serverSeenRef.current.has(c));
+    setRemoteSync(st=>({...st,status:'live',error:null,lastServerAt:allSeen?Date.now():st.lastServerAt}));
+  };
+  useEffect(()=>{
+    if(!bitLotesLoaded||!peritoInventoryLoaded) return;
+    let unsubs=[];
+    let cancelled=false;
+    const start=()=>{
+      const remote=typeof window!=='undefined'?window.SetasRemoteSyncDB:null;
+      const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+      if(cancelled||!remote||!planner||unsubs.length) return;
+      unsubs=planner.ALL_COLLECTIONS.map(c=>remote.suscribirColeccion(c,
+        snap=>{if(!cancelled&&onRemoteSnapshotRef.current) onRemoteSnapshotRef.current(snap);},
+        ({error})=>{if(!cancelled) setRemoteSync(st=>({...st,status:'error',error:String(error&&(error.code||error.message)||error)}));}));
+    };
+    start();
+    window.addEventListener('setas-remote-sync-ready',start);
+    return ()=>{
+      cancelled=true;
+      window.removeEventListener('setas-remote-sync-ready',start);
+      unsubs.forEach(u=>{try{u();}catch(e){}});
+    };
+  },[bitLotesLoaded,peritoInventoryLoaded]);
+  // Cambios de Bodega hechos en este equipo entre dos lecturas del servidor:
+  // cualquier camino que escriba sdp_lotes (compra, consumo, ajuste,
+  // preparación, respaldo) termina aquí convertido en asientos.
+  useEffect(()=>{
+    if(!bitLotesLoaded||!peritoInventoryLoaded) return;
+    const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+    if(!planner) return;
+    const t=setTimeout(()=>{
+      let plan;
+      try{
+        plan=planner.planLocal({read:k=>SetasPrototype.read(localStorage,k),queue:syncQueueRef.current,ctx:nextDeviceSyncCtx(),seen:[...serverSeenRef.current]});
+      }catch(err){console.warn('[SetasDeviceSync] no se pudo registrar el cambio de Bodega',err);return;}
+      applyDeviceSyncPlan(plan);
+    },400);
+    return ()=>clearTimeout(t);
+  },[invLotes,invCompras,invProveedores,invReservas,invMovimientos,bitLotesLoaded,peritoInventoryLoaded]);
 
   // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
   useEffect(()=>{
@@ -9429,6 +9560,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {invTab==='stock'&&(
                 <div>
                   {(()=>{
+                    // Dos equipos descontaron los mismos kilos sin verse
+                    // (ADR-0009): el libro no inventa stock, lo deja a cero y
+                    // pide un recuento físico.
+                    const sobregirados=invLotes.filter(l=>(Number(l.sobregiroKg)||0)>0);
+                    if(!sobregirados.length) return null;
+                    return <div role="alert" data-testid="inventory-overdraw" className="stock-critical-card" style={{marginBottom:16}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'color-mix(in oklab, var(--coral-700) 70%, black)',marginBottom:6}}>
+                        <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Recuento necesario ({sobregirados.length})
+                      </div>
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginBottom:6}}>
+                        Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Cuenta el lote y corrige su stock.
+                      </div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {sobregirados.map(l=>{
+                          const g=INGS.find(x=>x.id===l.ingredienteId);
+                          return <span key={l.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--coral-300)',borderRadius:2,color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                            {(g?g.name:l.ingredienteId)} · lote {l.fechaIngreso||l.id}: {Number(l.sobregiroKg).toFixed(1)} kg de más
+                          </span>;
+                        })}
+                      </div>
+                    </div>;
+                  })()}
+                  {(()=>{
                     const ledgerApi=window.SetasInventoryLedger;
                     const incomingCompras=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
                     const availabilityFor=(ingId)=>ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date.now()});
@@ -10875,6 +11029,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
             return <div data-testid="sync-indicator" style={{display:'flex',alignItems:'center',gap:8}}>
               <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(st.stuck>0?'os-sync-state--error':(st.pending>0?'os-sync-state--pending':'os-sync-state--synced'))}>{label}</span>
+              {remoteSyncNote()}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);
@@ -10972,6 +11127,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
                 return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" className={`sdp-sync sdp-sync--${st.stuck>0?'error':(st.pending>0?'pending':'synced')}`}>
                   {label}
+                  {remoteSyncNote()}
                   {st.stuck>0&&<button type="button" onClick={()=>{
                     const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                     setSyncQueue(next);
@@ -12604,6 +12760,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
                   return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'#C53030':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
                     {label}
+                    {remoteSyncNote()}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                       const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                       setSyncQueue(next);
@@ -13444,6 +13601,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
                         <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
                         {label}
+                        {remoteSyncNote()}
                         {st.stuck>0&&<button type="button" onClick={()=>{
                           const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                           setSyncQueue(next);

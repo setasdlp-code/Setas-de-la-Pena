@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 05dcd22710bba60149fc4ee78cf05ac320de615c26f9fa715a70ecde15d0011a
+// source-hash: 5ec8331f208727aa9c7d1fd6015a76cd8955b87ee3cda10c76fd9b6547906406
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -5354,13 +5354,15 @@ function SimuladorShell(props) {
     const drainRef = { inFlight: null, again: false };
     const drainOnce = async () => {
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
-      const bitacoraDb = typeof window !== "undefined" ? window.SetasBitacoraDB : null;
+      const remoteDb = typeof window !== "undefined" ? window.SetasRemoteSyncDB : null;
+      const bitacoraDb = typeof window !== "undefined" && window.SetasBitacoraDB ? { ...window.SetasBitacoraDB, ...remoteDb || {} } : null;
       if (!syncQueueApi || !bitacoraDb) return;
       if (typeof navigator !== "undefined" && navigator.onLine === false) return;
       while (!cancelled) {
         const op = syncQueueApi.nextPending(syncQueueRef.current, Date.now());
         if (!op) break;
         const fn = bitacoraDb[op.type];
+        if (typeof fn !== "function" && !remoteDb) break;
         let updatedQueue;
         try {
           if (typeof fn !== "function") throw new Error("Operación desconocida para SetasBitacoraDB: " + op.type);
@@ -5402,6 +5404,145 @@ function SimuladorShell(props) {
       window.removeEventListener("online", onOnline);
     };
   }, []);
+  const deviceSyncCtxRef = useRef({ deviceId: null, n: 0 });
+  const nextDeviceSyncCtx = () => {
+    const r = deviceSyncCtxRef.current;
+    if (!r.deviceId) {
+      try {
+        r.deviceId = localStorage.getItem("sdp_device_id");
+        if (!r.deviceId) {
+          r.deviceId = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+          localStorage.setItem("sdp_device_id", r.deviceId);
+        }
+      } catch (e) {
+        r.deviceId = r.deviceId || "dev_" + Math.random().toString(36).slice(2, 10);
+      }
+    }
+    r.n += 1;
+    return { deviceId: r.deviceId, at: (/* @__PURE__ */ new Date()).toISOString(), nonce: String(r.n) };
+  };
+  const serverSeenRef = useRef(/* @__PURE__ */ new Set());
+  const [remoteSync, setRemoteSync] = useState({ status: "offline", lastServerAt: null, overdrawn: [], error: null });
+  const [deviceOnline, setDeviceOnline] = useState(typeof navigator === "undefined" || navigator.onLine !== false);
+  useEffect(() => {
+    const on = () => setDeviceOnline(true);
+    const off = () => setDeviceOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  const remoteSyncLabel = () => {
+    const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+    return planner ? planner.describeRemote({ ...remoteSync, online: deviceOnline }) : "";
+  };
+  const remoteSyncNote = () => {
+    const text = remoteSyncLabel();
+    if (!text || text === "Al día con el servidor") return null;
+    return /* @__PURE__ */ React.createElement("span", { "data-testid": "remote-sync-state", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: remoteSync.status === "error" ? "var(--coral-700)" : "var(--ink-2)" } }, "· ", text);
+  };
+  const applyDeviceSyncPlan = (plan) => {
+    if (!plan) return;
+    if (plan.entries && plan.entries.length) {
+      try {
+        SetasPrototype.persist(localStorage, plan.entries);
+      } catch (e) {
+        setRemoteSync((st) => ({ ...st, status: "error", error: e.message }));
+        if (e && e.name === "QuotaExceededError") bitQuotaWarn();
+        return;
+      }
+      const setters = { sdp_bit_lotes: setBitLotes, sdp_bit_bolsas: setBitBolsas, sdp_bit_cosechas: setBitCosechas, sdp_movimientos: setInvMovimientos, sdp_compras: setInvCompras, sdp_proveedores: setInvProveedores, sdp_inv_reservas: setInvReservas };
+      for (const [key, value] of plan.entries) {
+        if (key === "sdp_lotes") {
+          invLotesRef.current = value;
+          setInvLotes(value);
+        } else if (setters[key]) setters[key](value);
+      }
+    }
+    if (plan.ops && plan.ops.length) {
+      const planner = window.SetasDeviceSync;
+      setSyncQueue((prev) => {
+        const { queue, dropped } = planner.enqueueAll(prev, plan.ops, Date.now());
+        if (dropped) console.warn("[SetasDeviceSync] cola llena: " + dropped + " envío(s) quedan para la próxima pasada");
+        syncQueueRef.current = queue;
+        try {
+          localStorage.setItem("sdp_sync_queue", window.SetasSyncQueue.serialize(queue));
+        } catch (e) {
+          bitQuotaWarn();
+        }
+        return queue;
+      });
+    }
+    if (Array.isArray(plan.overdrawn)) {
+      setRemoteSync((st) => JSON.stringify(st.overdrawn) === JSON.stringify(plan.overdrawn) ? st : { ...st, overdrawn: plan.overdrawn });
+    }
+  };
+  const onRemoteSnapshotRef = useRef(null);
+  onRemoteSnapshotRef.current = ({ coleccion, docs, fromCache }) => {
+    const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+    if (!planner) return;
+    let plan;
+    try {
+      plan = planner.planSnapshot({ collection: coleccion, docs, fromCache, read: (k) => SetasPrototype.read(localStorage, k), queue: syncQueueRef.current, ctx: nextDeviceSyncCtx() });
+    } catch (err) {
+      setRemoteSync((st) => ({ ...st, status: "error", error: err.message }));
+      return;
+    }
+    applyDeviceSyncPlan(plan);
+    if (fromCache) return;
+    serverSeenRef.current.add(coleccion);
+    const allSeen = planner.ALL_COLLECTIONS.every((c) => serverSeenRef.current.has(c));
+    setRemoteSync((st) => ({ ...st, status: "live", error: null, lastServerAt: allSeen ? Date.now() : st.lastServerAt }));
+  };
+  useEffect(() => {
+    if (!bitLotesLoaded || !peritoInventoryLoaded) return;
+    let unsubs = [];
+    let cancelled = false;
+    const start = () => {
+      const remote = typeof window !== "undefined" ? window.SetasRemoteSyncDB : null;
+      const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+      if (cancelled || !remote || !planner || unsubs.length) return;
+      unsubs = planner.ALL_COLLECTIONS.map((c) => remote.suscribirColeccion(
+        c,
+        (snap) => {
+          if (!cancelled && onRemoteSnapshotRef.current) onRemoteSnapshotRef.current(snap);
+        },
+        ({ error }) => {
+          if (!cancelled) setRemoteSync((st) => ({ ...st, status: "error", error: String(error && (error.code || error.message) || error) }));
+        }
+      ));
+    };
+    start();
+    window.addEventListener("setas-remote-sync-ready", start);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("setas-remote-sync-ready", start);
+      unsubs.forEach((u) => {
+        try {
+          u();
+        } catch (e) {
+        }
+      });
+    };
+  }, [bitLotesLoaded, peritoInventoryLoaded]);
+  useEffect(() => {
+    if (!bitLotesLoaded || !peritoInventoryLoaded) return;
+    const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+    if (!planner) return;
+    const t = setTimeout(() => {
+      let plan;
+      try {
+        plan = planner.planLocal({ read: (k) => SetasPrototype.read(localStorage, k), queue: syncQueueRef.current, ctx: nextDeviceSyncCtx(), seen: [...serverSeenRef.current] });
+      } catch (err) {
+        console.warn("[SetasDeviceSync] no se pudo registrar el cambio de Bodega", err);
+        return;
+      }
+      applyDeviceSyncPlan(plan);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [invLotes, invCompras, invProveedores, invReservas, invMovimientos, bitLotesLoaded, peritoInventoryLoaded]);
   useEffect(() => {
     if (!bitLotesLoaded || initialDeepLinkHandled.current) return;
     initialDeepLinkHandled.current = true;
@@ -7517,6 +7658,13 @@ BATCH (${numBags}×${kgBag} kg):
     saveInvOps(readInvOps().map((o) => o.status === "failed" ? { ...o, nextAttemptAt: 0 } : o));
     runInventorySync();
   } }, "Reintentar ahora")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, [["stock", "Stock"], ["compra", "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k) }, l))), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
+    const sobregirados = invLotes.filter((l) => (Number(l.sobregiroKg) || 0) > 0);
+    if (!sobregirados.length) return null;
+    return /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "inventory-overdraw", className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)", marginBottom: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Recuento necesario (", sobregirados.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginBottom: 6 } }, "Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Cuenta el lote y corrige su stock."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, sobregirados.map((l) => {
+      const g = INGS.find((x) => x.id === l.ingredienteId);
+      return /* @__PURE__ */ React.createElement("span", { key: l.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, g ? g.name : l.ingredienteId, " · lote ", l.fechaIngreso || l.id, ": ", Number(l.sobregiroKg).toFixed(1), " kg de más");
+    })));
+  })(), (() => {
     const ledgerApi = window.SetasInventoryLedger;
     const incomingCompras = window.SetasPurchases ? window.SetasPurchases.incomingFromCompras(invCompras) : [];
     const availabilityFor = (ingId) => ledgerApi.availability(ingId, { lots: invLotes, ledger: invReservas, incoming: incomingCompras, nowMs: Date.now() });
@@ -8263,7 +8411,7 @@ BATCH (${numBags}×${kgBag} kg):
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
       const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
-      return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (st.stuck > 0 ? "os-sync-state--error" : st.pending > 0 ? "os-sync-state--pending" : "os-sync-state--synced") }, label), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+      return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "os-sync-state " + (st.stuck > 0 ? "os-sync-state--error" : st.pending > 0 ? "os-sync-state--pending" : "os-sync-state--synced") }, label), remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
         try {
@@ -8322,7 +8470,7 @@ BATCH (${numBags}×${kgBag} kg):
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
       const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
-      return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", className: `sdp-sync sdp-sync--${st.stuck > 0 ? "error" : st.pending > 0 ? "pending" : "synced"}` }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", className: `sdp-sync sdp-sync--${st.stuck > 0 ? "error" : st.pending > 0 ? "pending" : "synced"}` }, label, remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
         try {
@@ -9219,7 +9367,7 @@ BATCH (${numBags}×${kgBag} kg):
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
     const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
-    return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "#C53030" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+    return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "#C53030" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
       const next = syncQueueApi.retryStuck(syncQueue, Date.now());
       setSyncQueue(next);
       try {
@@ -9673,6 +9821,7 @@ BATCH (${numBags}×${kgBag} kg):
         },
         /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { width: 8, height: 8, borderRadius: 0, display: "inline-block", background: st.stuck > 0 ? "var(--coral-700)" : st.pending > 0 ? "var(--ochre-500)" : "var(--moss-700)" } }),
         label,
+        remoteSyncNote(),
         st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
           const next = syncQueueApi.retryStuck(syncQueue, Date.now());
           setSyncQueue(next);
