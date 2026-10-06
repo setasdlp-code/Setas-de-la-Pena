@@ -139,3 +139,16 @@ test('guardarBolsas y eliminarLoteCascade usan writeBatch, no N escrituras indep
   assert.match(src.slice(cascadeStart), /writeBatch\(db\)/, 'eliminarLoteCascade debe usar writeBatch');
 });
 
+
+test('ADR-0009: los borrados de Bitácora son lápidas y lifecycleEvents se une en el servidor', () => {
+  const src = read('firebase/bitacora-sync.js');
+  assert.doesNotMatch(src, /deleteDoc|batch\.delete\(/, 'un borrado debe dejar lápida (deleted: true), no eliminar el documento');
+  assert.match(src, /deleted: true/);
+  const start = src.indexOf('export async function actualizarLote');
+  assert.match(src.slice(start, src.indexOf('export async function guardarBolsas')), /arrayUnion\(\.\.\.fields\.lifecycleEvents\)/);
+});
+
+test('ADR-0009: remote-sync conserva el id guardado en los datos al leer', () => {
+  const src = read('firebase/remote-sync.js');
+  assert.match(src, /\(\{ id: d\.id, \.\.\.d\.data\(\) \}\)/);
+});

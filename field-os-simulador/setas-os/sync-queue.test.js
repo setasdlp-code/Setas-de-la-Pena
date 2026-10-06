@@ -8,15 +8,26 @@ const queueApi = require('./sync-queue.js');
 
 const NOW = Date.parse('2026-09-07T10:00:00-05:00');
 
-test('los OP_TYPES coinciden exactamente con las funciones exportadas por firebase/bitacora-sync.js', () => {
-  const src = fs.readFileSync(path.join(__dirname, 'firebase', 'bitacora-sync.js'), 'utf8');
+test('cada OP_TYPE tiene su función exportada en bitacora-sync.js o remote-sync.js', () => {
+  const src = ['bitacora-sync.js', 'remote-sync.js']
+    .map(f => fs.readFileSync(path.join(__dirname, 'firebase', f), 'utf8')).join('\n');
   queueApi.OP_TYPES.forEach(type => {
     assert.match(
       src,
       new RegExp(`export async function ${type}\\(`),
-      `bitacora-sync.js debe exportar 'export async function ${type}(...)'`,
+      `bitacora-sync.js o remote-sync.js debe exportar 'export async function ${type}(...)'`,
     );
   });
+});
+
+test('actualizarDocumento repetido sobre la misma ruta se fusiona y eliminarDocumento descarta lo anterior', () => {
+  let queue = [];
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'actualizarDocumento', key: 'inventario_compras:C1', args: ['inventario_compras/C1', { estado: 'pendiente' }], at: NOW }));
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'actualizarDocumento', key: 'inventario_compras:C1', args: ['inventario_compras/C1', { nota: 'x' }], at: NOW + 1 }));
+  assert.equal(queue.length, 1);
+  assert.deepEqual(queue[0].args[1], { estado: 'pendiente', nota: 'x' });
+  queue = queueApi.enqueue(queue, queueApi.createOperation({ type: 'eliminarDocumento', key: 'inventario_compras:C1', args: ['inventario_compras/C1'], at: NOW + 2 }));
+  assert.deepEqual(queue.map(op => op.type), ['eliminarDocumento']);
 });
 
 test('createOperation valida tipo, key y args, y produce una operación congelada', () => {

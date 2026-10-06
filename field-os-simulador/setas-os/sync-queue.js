@@ -25,7 +25,8 @@
   const glob = typeof globalThis !== 'undefined' ? globalThis : this;
 
   // Los nombres deben coincidir EXACTAMENTE con las funciones exportadas por
-  // firebase/bitacora-sync.js: es el contrato real de lo que se puede
+  // firebase/bitacora-sync.js (Bitácora) o firebase/remote-sync.js (Bodega y
+  // documentos genéricos, ADR-0009): es el contrato real de lo que se puede
   // encolar. Un tipo que no está aquí no tiene función que lo sincronice.
   const OP_TYPES = Object.freeze([
     'guardarLote',
@@ -35,6 +36,12 @@
     'guardarCosecha',
     'eliminarCosecha',
     'eliminarLoteCascade',
+    // args: [ruta 'coleccion/id', documento | campos]
+    'crearDocumento',
+    'actualizarDocumento',
+    'eliminarDocumento',
+    // args: [asiento] — libro de Bodega, solo se crea, nunca se modifica
+    'crearAsientoInventario',
   ]);
 
   // Cinco fallos no es falta de red intermitente, es un problema real que el
@@ -90,8 +97,8 @@
     });
   };
 
-  const isDeleteType = type => type === 'eliminarCosecha' || type === 'eliminarLoteCascade';
-  const isUpdateType = type => type === 'actualizarLote' || type === 'actualizarBolsa';
+  const isDeleteType = type => type === 'eliminarCosecha' || type === 'eliminarLoteCascade' || type === 'eliminarDocumento';
+  const isUpdateType = type => type === 'actualizarLote' || type === 'actualizarBolsa' || type === 'actualizarDocumento';
 
   /**
    * Fusiona los campos de dos operaciones actualizarLote/actualizarBolsa
@@ -99,8 +106,8 @@
    * operación resultante conserva la POSICIÓN de la primera para no alterar
    * el orden respecto a otras operaciones en la cola (FIFO por llegada).
    *
-   * args tiene la forma [idObjeto, fields] en ambas funciones de
-   * bitacora-sync.js: se conserva el idObjeto de la más antigua y se
+   * args tiene la forma [idObjeto, fields] en las tres funciones de
+   * actualización (bitacora-sync.js y remote-sync.js): se conserva el idObjeto de la más antigua y se
    * combinan los `fields`.
    */
   const mergeUpdateOps = (existing, incoming) => {
