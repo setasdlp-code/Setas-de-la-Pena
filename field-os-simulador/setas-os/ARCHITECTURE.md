@@ -178,6 +178,7 @@ Varios equipos escriben a la vez. Bitácora y Bodega se leen en vivo de Firestor
 - **No borrar documentos sincronizados.** Se escribe una lápida (`deleted: true`); las reglas no permiten `delete` en las colecciones de Bodega.
 - **Un registro que solo crece necesita resolvedor.** `lifecycleEvents` se une (y en el servidor se escribe con `arrayUnion`); `status` de reservas solo avanza. Un campo nuevo de ese tipo debe declararse en `device-sync.js` y protegerse al escribir, o un equipo atrasado lo pisará.
 - Una colección nueva para sincronizar se agrega en `COLECCIONES` (`remote-sync.js`), `COLLECTIONS` (`device-sync.js`) y `firestore.rules`.
+- Los ciclos de sala (`sdp_room_cycles`, colección `room_cycles`) se sincronizan igual; un ciclo cerrado no vuelve a activo. Mientras un ciclo está activo, `room-cycle-targets.effectiveBands` pone sus bandas encima de `ROOM_TARGET_BANDS`: Cámaras, la ficha del lote y el motor de alertas leen esa misma salida, nunca `ROOM_TARGET_BANDS` directo. Las bandas sugeridas salen de `knowledge_base/metadata/species.yaml` (copia en `KB_SPECIES`, verificada por `room-cycle-targets.test.js`) y cada banda guarda su origen: `kb-operational`, `kb-literature` o `manual`.
 
 Pruebas: `device-sync.test.js` (convergencia con dos equipos y un servidor simulado) y `e2e/multi-device-sync.browser.cjs` (la app real en dos contextos de navegador).
 

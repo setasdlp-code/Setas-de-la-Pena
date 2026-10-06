@@ -125,6 +125,26 @@ service cloud.firestore {
           && request.resource.data.get('revision', null) == resource.data.get('revision', null);
     }
 
+    // Ciclo de aprendizaje de producción (PRODUCTION_LEARNING_LOOP_V1.md).
+    // Hasta 2026-10-06 no tenían regla, así que Firestore rechazaba toda
+    // escritura y el puente la descartaba en silencio. Un ciclo borrado en la
+    // app es una lápida (ADR-0009); la evidencia y la telemetría no se borran.
+    match /room_cycles/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    match /cycle_evidence/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    match /telemetry_readings/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if isAdmin();
+    }
+
     match /lotes_produccion/{id} {
       allow read: if signedIn();
       allow create: if signedIn()

@@ -5539,18 +5539,24 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   const bridgeRef = useRef(null);
   const engineRef = useRef(null);
   const signatureRef = useRef('');
+  // Bandas y ciclos vigentes: cambian cuando se inicia, avanza o cierra un
+  // ciclo de sala (room-cycle-targets.effectiveBands). Se aplican en caliente
+  // al motor y al puente; los refs sirven para que un reinicio por cambio de
+  // configuración arranque con lo último, no con lo del primer render.
+  const bandsRef = useRef(bands);
+  const cyclesRef = useRef(cycles);
 
   useEffect(() => {
     const bridgeLib = typeof window !== 'undefined' ? window.SetasLiveBridge : null;
     const anomalyLib = typeof window !== 'undefined' ? window.SetasAnomaly : null;
     if (!enabled || !bridgeLib || !anomalyLib) return undefined;
 
-    const engine = anomalyLib.createAnomalyEngine({ bands });
+    const engine = anomalyLib.createAnomalyEngine({ bands: bandsRef.current });
     const bridge = bridgeLib.createLiveTelemetryBridge({
       transports: buildLiveTransports(config),
       factories: bridgeLib.browserFactories,
       pressureHpa: config.pressureHpa,
-      cycles,
+      cycles: cyclesRef.current,
       // Cada muestra pasa por los umbrales en el momento en que llega; lo que se
       // agrupa en el tick es el render, no la detección.
       onSample: (roomId, sample) => { engine.evaluate(roomId, sample); },
@@ -5626,8 +5632,19 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     setConfigState(merged);
   };
 
+  const applyBands = (next) => {
+    bandsRef.current = next;
+    if (engineRef.current && typeof engineRef.current.setBands === 'function') engineRef.current.setBands(next);
+  };
+  const applyCycles = (next) => {
+    cyclesRef.current = next;
+    if (bridgeRef.current && typeof bridgeRef.current.setCycles === 'function') bridgeRef.current.setCycles(next);
+  };
+
   const roomsWithData = Object.keys(snapshot.rooms || {});
   return {
+    applyBands,
+    applyCycles,
     snapshot,
     alerts,
     rejected,
@@ -7297,6 +7314,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return {deviceId:r.deviceId,at:new Date().toISOString(),nonce:String(r.n)};
   };
   const serverSeenRef=useRef(new Set());
+  // Ciclos de sala (ver el bloque "Ciclos de sala" más abajo). Se declaran
+  // aquí porque también los sincroniza este bloque.
+  const [roomCycles,setRoomCycles]=useState(()=>{try{return SetasPrototype.read(localStorage,'sdp_room_cycles');}catch(e){return [];}});
   const [remoteSync,setRemoteSync]=useState({status:'offline',lastServerAt:null,overdrawn:[],error:null});
   const [deviceOnline,setDeviceOnline]=useState(typeof navigator==='undefined'||navigator.onLine!==false);
   useEffect(()=>{
@@ -7327,7 +7347,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
         return;
       }
-      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas};
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles};
       for(const [key,value] of plan.entries){
         if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
         else if(setters[key]) setters[key](value);
@@ -7399,7 +7419,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       applyDeviceSyncPlan(plan);
     },400);
     return ()=>clearTimeout(t);
-  },[invLotes,invCompras,invProveedores,invReservas,invMovimientos,bitLotesLoaded,peritoInventoryLoaded]);
+  },[invLotes,invCompras,invProveedores,invReservas,invMovimientos,roomCycles,bitLotesLoaded,peritoInventoryLoaded]);
 
   // ── Excepciones de Hoy que no salen del motor de clima (today-exceptions.js):
   // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
@@ -7475,6 +7495,233 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     };
     send.slice(0,3).forEach(show);
   },[notifyKey,notifyPermission]);
+
+  // ── Ciclos de sala (room-cycle.js + room-cycle-targets.js). Un ciclo une
+  // sala, especie, etapa y lotes; mientras está activo, sus bandas reemplazan
+  // las fijas de la sala (ROOM_TARGET_BANDS) para las alertas. Se guardan en
+  // sdp_room_cycles y se sincronizan entre equipos (ADR-0009).
+  useEffect(()=>{
+    // El puente de aprendizaje (production-learning-bridge.js) también escribe
+    // ciclos; avisa con este evento.
+    const reload=()=>{try{setRoomCycles(SetasPrototype.read(localStorage,'sdp_room_cycles'));}catch(e){}};
+    window.addEventListener('setas-room-cycle-updated',reload);
+    return ()=>window.removeEventListener('setas-room-cycle-updated',reload);
+  },[]);
+  // Un ciclo puede empezar o terminar sin que nadie toque nada (startAt en el
+  // futuro, endAt en el pasado): se reevalúa cada minuto.
+  const [cycleClock,setCycleClock]=useState(()=>Date.now());
+  useEffect(()=>{const t=setInterval(()=>setCycleClock(Date.now()),60000);return ()=>clearInterval(t);},[]);
+  const cycleTargetsApi=typeof window!=='undefined'?window.SetasRoomCycleTargets:null;
+  const effectiveRoomBands=cycleTargetsApi?cycleTargetsApi.effectiveBands(ROOM_TARGET_BANDS,roomCycles,cycleClock):ROOM_TARGET_BANDS;
+  const activeRoomCycles=cycleTargetsApi?cycleTargetsApi.activeCycles(roomCycles,cycleClock):[];
+  const effectiveBandsKey=JSON.stringify(effectiveRoomBands);
+  useEffect(()=>{
+    liveTelemetry.applyBands(effectiveRoomBands);
+    liveTelemetry.applyCycles(activeRoomCycles);
+  },[effectiveBandsKey,activeRoomCycles.map(c=>c.id).join('|')]);
+
+  const persistRoomCycles=next=>{
+    try{SetasPrototype.persist(localStorage,[['sdp_room_cycles',next]]);}
+    catch(e){setNoticeDlg({title:'No se pudo guardar el ciclo',msg:e.message});return false;}
+    setRoomCycles(next);
+    return true;
+  };
+  const closeRoomCycle=(cycle,{at=new Date().toISOString(),list=roomCycles}={})=>{
+    const closed={...cycle,state:'closed',endAt:at};
+    const next=list.map(c=>c.id===cycle.id?closed:c);
+    if(!persistRoomCycles(next)) return null;
+    // Al cerrar, el puente materializa la evidencia de cada lote del ciclo.
+    try{window.SetasProductionLearning&&window.SetasProductionLearning.onCycleClosed({cycleId:cycle.id});}catch(e){}
+    return next;
+  };
+
+  const CYCLE_METRICS=[
+    {key:'temperature_c',label:'Temperatura aire',unit:'°C'},
+    {key:'rh_pct',label:'Humedad relativa',unit:'%'},
+    {key:'co2_ppm',label:'CO₂',unit:'ppm'},
+    {key:'substrate_temperature_c',label:'Temperatura núcleo',unit:'°C'},
+  ];
+  const [cycleForm,setCycleForm]=useState(null);
+  const [cycleFormError,setCycleFormError]=useState('');
+  const toLocalInput=iso=>{const d=new Date(iso);if(!Number.isFinite(d.getTime()))return '';const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;};
+  // Bandas del formulario: lo sugerido por species.yaml para especie × etapa,
+  // salvo las métricas que el operario ya editó (source 'manual').
+  const suggestedCycleBands=(speciesId,stage,current={})=>{
+    const sug=cycleTargetsApi?cycleTargetsApi.suggestTargets(speciesId,stage).targets:{};
+    const out={};
+    for(const m of CYCLE_METRICS){
+      if(current[m.key]&&current[m.key].source==='manual'){out[m.key]=current[m.key];continue;}
+      const b=sug[m.key];
+      out[m.key]=b?{min:b.min??'',max:b.max??'',target:b.target??'',source:b.source}:{min:'',max:'',target:'',source:null};
+    }
+    return out;
+  };
+  const openCycleForm=({roomId,stage='incubation',batchIds=null,speciesId=null,previous=null}={})=>{
+    const room=roomId||selectedClimateRoom||Object.keys(ROOMS_CONFIG)[0];
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    const ids=batchIds||activos.filter(l=>l.sala===room||l.ubicacion===room).map(l=>l.id);
+    const lote=bitLotes.find(l=>ids.includes(l.id));
+    const sp=speciesId||(lote&&(lote.sKey||lote.especie))||'';
+    setCycleFormError('');
+    setCycleForm({roomId:room,stage,batchIds:ids,speciesId:sp,startAt:toLocalInput(new Date().toISOString()),notes:'',previousId:previous?previous.id:null,bands:suggestedCycleBands(sp,stage)});
+  };
+  const submitCycleForm=()=>{
+    const f=cycleForm;
+    const rcApi=window.SetasRoomCycle;
+    if(!f||!rcApi) return;
+    const startIso=f.startAt?new Date(f.startAt).toISOString():null;
+    const num=v=>v===''||v==null?null:Number(v);
+    const targets={};
+    for(const m of CYCLE_METRICS){
+      const b=f.bands[m.key]||{};
+      if(num(b.min)==null&&num(b.max)==null) continue;
+      targets[m.key]={min:num(b.min),max:num(b.max),target:num(b.target),source:b.source||'manual'};
+    }
+    const cycle={id:'RC_'+f.roomId+'_'+Date.now(),roomId:f.roomId,speciesId:f.speciesId,batchIds:f.batchIds,stage:f.stage,state:'active',startAt:startIso,endAt:null,targets,notes:f.notes||null,provenance:{type:'manual'}};
+    const errors=rcApi.validateRoomCycle(cycle);
+    if(errors.length){
+      const msg={
+        'missing speciesId':'elige la especie','at least one batchId is required':'selecciona al menos un lote','invalid startAt':'indica la fecha de inicio',
+      };
+      setCycleFormError('Revisa el ciclo: '+errors.map(e=>msg[e]||(/min exceeds max/.test(e)?`${e.split(':')[0]}: el mínimo supera el máximo`:e)).join('; ')+'.');
+      return;
+    }
+    let list=roomCycles;
+    // Avanzar etapa = cerrar el ciclo anterior en el instante en que empieza
+    // el nuevo: la evidencia queda separada por etapa.
+    const previous=f.previousId?list.find(c=>c.id===f.previousId):null;
+    if(previous&&previous.state==='active'){
+      const closedList=closeRoomCycle(previous,{at:startIso,list});
+      if(!closedList) return;
+      list=closedList;
+    }
+    if(persistRoomCycles([...list,rcApi.normalizeRoomCycle(cycle)])) setCycleForm(null);
+  };
+
+  const speciesLabel=key=>(SPP&&SPP[key]&&SPP[key].name)||key||'sin especie';
+  const bandText=b=>{
+    if(!b) return '—';
+    const parts=[];
+    if(b.min!=null&&b.max!=null) parts.push(`${b.min}–${b.max}`);
+    else if(b.max!=null) parts.push(`≤ ${b.max}`);
+    else if(b.min!=null) parts.push(`≥ ${b.min}`);
+    if(b.target!=null) parts.push(`objetivo ${b.target}`);
+    return parts.join(' · ')||'—';
+  };
+  const renderRoomCyclePanel=()=>{
+    const api=cycleTargetsApi;
+    if(!api) return null;
+    const roomId=selectedClimateRoom;
+    const room=ROOMS_CONFIG[roomId]||{name:roomId};
+    const active=api.activeCycleForRoom(roomCycles,roomId,cycleClock);
+    const history=roomCycles.filter(c=>c.roomId===roomId&&c.state==='closed').sort((a,b)=>String(b.endAt).localeCompare(String(a.endAt))).slice(0,3);
+    const stageLabel=st=>api.STAGE_LABELS[st]||st;
+    const next=active?api.NEXT_STAGE[active.stage]:null;
+    const days=active?Math.max(0,Math.floor((cycleClock-Date.parse(active.startAt))/86400000)):null;
+    return <section className="climate-overview" data-testid="room-cycle-panel" aria-labelledby="room-cycle-title">
+      <div className="climate-section-head">
+        <div>
+          <span className="climate-eyebrow">Ciclo de sala · {room.name}</span>
+          <h2 id="room-cycle-title">{active?`${stageLabel(active.stage)} · ${speciesLabel(active.speciesId)}`:'Sin ciclo activo'}</h2>
+        </div>
+      </div>
+      {active?(
+        <div data-testid="room-cycle-active" data-stage={active.stage}>
+          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',marginBottom:10}}>
+            Día {days} · desde {new Date(active.startAt).toLocaleDateString('es-CO')} · {active.batchIds.length} lote{active.batchIds.length===1?'':'s'}: {active.batchIds.map(id=>(bitLotes.find(l=>l.id===id)||{}).codigo||id).join(', ')}
+          </div>
+          <table className="inventory-stock-table" data-testid="room-cycle-bands" style={{width:'100%',marginBottom:12}}>
+            <thead><tr><th>Métrica</th><th>Banda del ciclo</th><th>Origen</th></tr></thead>
+            <tbody>
+              {CYCLE_METRICS.map(m=>{
+                const b=active.targets&&active.targets[m.key];
+                const has=b&&(b.min!=null||b.max!=null);
+                return <tr key={m.key} data-metric={m.key}>
+                  <td>{m.label}</td>
+                  <td>{has?`${bandText(b)} ${m.unit}`:'Banda fija de la sala'}</td>
+                  <td><span className="sdp-provenance">{has?(api.SOURCE_LABELS[b.source]||b.source):'—'}</span></td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {next&&<button type="button" className="inv-btn inv-btn-pri" onClick={()=>openCycleForm({roomId,stage:next,batchIds:active.batchIds,speciesId:active.speciesId,previous:active})}>Avanzar a {stageLabel(next)}</button>}
+            <button type="button" className="inv-btn inv-btn-sec" onClick={()=>setConfirmDlg({title:'Cerrar ciclo de sala',msg:`¿Cerrar el ciclo de ${stageLabel(active.stage)} en ${room.name}? La sala vuelve a sus bandas fijas y se registra la evidencia de cada lote.`,confirmLabel:'Cerrar ciclo',onConfirm:()=>closeRoomCycle(active)})}>Cerrar ciclo</button>
+          </div>
+        </div>
+      ):(
+        <div>
+          <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',margin:'0 0 10px'}}>Las alertas usan las bandas fijas de la sala. Inicia un ciclo para usar las de la especie y etapa que hay dentro.</p>
+          <button type="button" className="inv-btn inv-btn-pri" data-testid="room-cycle-start" onClick={()=>openCycleForm({roomId})}>Iniciar ciclo</button>
+        </div>
+      )}
+      {history.length>0&&<details style={{marginTop:12}}>
+        <summary style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',cursor:'pointer'}}>Ciclos anteriores ({history.length})</summary>
+        <ul style={{margin:'6px 0 0',paddingLeft:18,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)'}}>
+          {history.map(c=><li key={c.id}>{stageLabel(c.stage)} · {speciesLabel(c.speciesId)} · {new Date(c.startAt).toLocaleDateString('es-CO')} – {new Date(c.endAt).toLocaleDateString('es-CO')}</li>)}
+        </ul>
+      </details>}
+      {cycleForm&&renderCycleForm()}
+    </section>;
+  };
+  const renderCycleForm=()=>{
+    const api=cycleTargetsApi;
+    const f=cycleForm;
+    const set=patch=>setCycleForm(prev=>({...prev,...patch}));
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    const speciesOptions=[...new Set([f.speciesId,...activos.filter(l=>f.batchIds.includes(l.id)).map(l=>l.sKey||l.especie)].filter(Boolean))];
+    const setBand=(key,field,value)=>setCycleForm(prev=>({...prev,bands:{...prev.bands,[key]:{...prev.bands[key],[field]:value,source:'manual'}}}));
+    const CYCLE_INP={fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 10px',minHeight:44,background:'var(--paper-0)',color:'var(--ink-0)',width:'100%',boxSizing:'border-box'};
+    const lbl={display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)',marginBottom:4};
+    return <AccessibleModal onClose={()=>setCycleForm(null)} label={f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'} dialogStyle={{width:640,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 80px)',overflowY:'auto'}}>
+      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',margin:'0 0 12px'}}>{f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'}</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:12}}>
+        <label><span style={lbl}>Sala</span>
+          <select aria-label="Sala del ciclo" style={CYCLE_INP} value={f.roomId} disabled={!!f.previousId} onChange={e=>set({roomId:e.target.value})}>
+            {Object.values(ROOMS_CONFIG).map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+          </select></label>
+        <label><span style={lbl}>Etapa</span>
+          <select aria-label="Etapa del ciclo" style={CYCLE_INP} value={f.stage} onChange={e=>set({stage:e.target.value,bands:suggestedCycleBands(f.speciesId,e.target.value,f.bands)})}>
+            {Object.entries(api.STAGE_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+          </select></label>
+        <label><span style={lbl}>Especie</span>
+          <select aria-label="Especie del ciclo" style={CYCLE_INP} value={f.speciesId} onChange={e=>set({speciesId:e.target.value,bands:suggestedCycleBands(e.target.value,f.stage,f.bands)})}>
+            {!f.speciesId&&<option value="">Elige especie</option>}
+            {(speciesOptions.length?speciesOptions:Object.keys(SPP||{})).map(k=><option key={k} value={k}>{speciesLabel(k)}</option>)}
+          </select></label>
+        <label><span style={lbl}>Inicio</span>
+          <input aria-label="Inicio del ciclo" type="datetime-local" style={CYCLE_INP} value={f.startAt} onChange={e=>set({startAt:e.target.value})}/></label>
+      </div>
+      <fieldset style={{border:'1px solid var(--border-hairline)',padding:10,marginBottom:12}}>
+        <legend style={lbl}>Lotes en la sala</legend>
+        {activos.length===0&&<div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)'}}>No hay lotes activos en Bitácora.</div>}
+        {activos.map(l=><label key={l.id} style={{display:'flex',alignItems:'center',gap:8,minHeight:44,fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)'}}>
+          <input type="checkbox" checked={f.batchIds.includes(l.id)} onChange={e=>set({batchIds:e.target.checked?[...f.batchIds,l.id]:f.batchIds.filter(x=>x!==l.id)})}/>
+          {l.codigo||l.id} · {speciesLabel(l.sKey||l.especie)}{l.sala?` · ${(ROOMS_CONFIG[l.sala]||{}).name||l.sala}`:''}
+        </label>)}
+      </fieldset>
+      <fieldset style={{border:'1px solid var(--border-hairline)',padding:10,marginBottom:12}}>
+        <legend style={lbl}>Bandas de clima</legend>
+        <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginBottom:8}}>Sugeridas desde {api.KB_SOURCE}. Un valor que cambies queda como consigna de la granja. Una métrica vacía usa la banda fija de la sala.</div>
+        {CYCLE_METRICS.map(m=>{
+          const b=f.bands[m.key]||{};
+          return <div key={m.key} data-band={m.key} style={{display:'grid',gridTemplateColumns:'minmax(120px,1.4fr) 1fr 1fr minmax(120px,1.2fr)',gap:8,alignItems:'center',marginBottom:6}}>
+            <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)'}}>{m.label} ({m.unit})</span>
+            <input aria-label={`${m.label} mínimo`} type="number" inputMode="decimal" style={CYCLE_INP} value={b.min??''} onChange={e=>setBand(m.key,'min',e.target.value)} placeholder="mín"/>
+            <input aria-label={`${m.label} máximo`} type="number" inputMode="decimal" style={CYCLE_INP} value={b.max??''} onChange={e=>setBand(m.key,'max',e.target.value)} placeholder="máx"/>
+            <span className="sdp-provenance" data-band-source={b.source||'none'}>{b.source?(api.SOURCE_LABELS[b.source]||b.source):'Sin valor en la KB'}</span>
+          </div>;
+        })}
+      </fieldset>
+      <label><span style={lbl}>Notas</span>
+        <textarea aria-label="Notas del ciclo" style={{...CYCLE_INP,width:'100%',minHeight:60}} value={f.notes} onChange={e=>set({notes:e.target.value})}/></label>
+      {cycleFormError&&<div role="alert" style={{color:'var(--coral-700)',fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',marginTop:8}}>{cycleFormError}</div>}
+      <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:14}}>
+        <button type="button" className="inv-btn inv-btn-sec" onClick={()=>setCycleForm(null)}>Cancelar</button>
+        <button type="button" className="inv-btn inv-btn-pri" onClick={submitCycleForm}>{f.previousId?'Cerrar etapa y avanzar':'Iniciar ciclo'}</button>
+      </div>
+    </AccessibleModal>;
+  };
 
   // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
   useEffect(()=>{
@@ -11171,7 +11418,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const roomName = sheet && sheet.room ? sheet.room.name : roomId;
     const roomLiveNow = roomId ? liveTelemetry.roomLive(roomId) : null;
     const roomSample = (roomLiveNow && roomLiveNow.sample) || {};
-    const targetBands = roomId ? ROOM_TARGET_BANDS[roomId] : null;
+    // Mismas bandas que Cámaras y el motor de alertas: las del ciclo activo
+    // de la sala si lo hay, si no las fijas.
+    const targetBands = roomId ? (effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null) : null;
     const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
 
     const buildReading = (metricKey, label, unit, decimals) => {
@@ -11503,7 +11752,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Targets por sala desde la fuente única (ROOM_TARGET_BANDS): las mismas
     // bandas que evalúa el motor de umbrales del puente en vivo, para que el
     // dashboard y el cockpit de Hoy nunca discrepen sobre qué es "en rango".
-    const defaultTargets = ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
+    // Con un ciclo de sala activo, sus bandas reemplazan las fijas de la sala.
+    const defaultTargets = effectiveRoomBands[selectedClimateRoom] || ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
 
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
@@ -12035,6 +12285,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+        {renderRoomCyclePanel()}
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
             <div>

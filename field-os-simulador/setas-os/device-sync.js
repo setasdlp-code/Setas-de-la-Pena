@@ -28,6 +28,7 @@
   const LEDGER_COLLECTION = 'inventario_asientos';
 
   const RESERVATION_RANK = Object.freeze({ held: 0, expired: 1, released: 2, consumed: 3 });
+  const CYCLE_STATE_RANK = Object.freeze({ planned: 0, active: 1, cancelled: 2, closed: 3 });
 
   // Colección de Firestore → clave local y reglas de fusión.
   const COLLECTIONS = Object.freeze({
@@ -40,9 +41,14 @@
     inventario_proveedores: { localKey: 'sdp_proveedores' },
     // Una reserva solo avanza: held → expired/released/consumed.
     inventario_reservas: { localKey: 'sdp_inv_reservas', resolvers: () => ({ status: mergeApi().byRank(RESERVATION_RANK) }) },
+    // Ciclos de sala: un ciclo cerrado o cancelado no vuelve a activo.
+    room_cycles: { localKey: 'sdp_room_cycles', resolvers: () => ({ state: mergeApi().byRank(CYCLE_STATE_RANK) }) },
   });
 
   const BODEGA_COLLECTIONS = Object.freeze(['inventario_movimientos', 'inventario_compras', 'inventario_proveedores', 'inventario_reservas']);
+  // Colecciones cuyos cambios locales se envían entre lecturas del servidor.
+  // Bitácora no está: sus escrituras ya se encolan una por una.
+  const LOCAL_PASS_COLLECTIONS = Object.freeze([...BODEGA_COLLECTIONS, 'room_cycles']);
   const ALL_COLLECTIONS = Object.freeze([...Object.keys(COLLECTIONS), LEDGER_COLLECTION]);
 
   const specFor = collection => {
@@ -201,7 +207,7 @@
     const ledger = planLedger({ read, remote: null, pending, ctx });
     const entries = [...ledger.entries];
     const ops = [...ledger.ops];
-    for (const collection of BODEGA_COLLECTIONS) {
+    for (const collection of LOCAL_PASS_COLLECTIONS) {
       if (!seen.includes(collection)) continue;
       const spec = specFor(collection);
       const local = read(spec.localKey) || [];
@@ -251,6 +257,7 @@
     LEDGER_COLLECTION,
     COLLECTIONS,
     BODEGA_COLLECTIONS,
+    LOCAL_PASS_COLLECTIONS,
     ALL_COLLECTIONS,
     pendingDocIds,
     opsForPushes,

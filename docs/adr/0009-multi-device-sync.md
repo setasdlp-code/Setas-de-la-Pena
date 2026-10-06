@@ -102,8 +102,10 @@ equipos.
 - Las lecturas en vivo traen colecciones completas. A la escala de la granja
   (cientos de documentos) es aceptable; con miles de bolsas por año convendrá
   filtrar por lotes activos.
+- Ciclos de sala (`room_cycles`) se sumaron el 2026-10-06, con un resolvedor
+  que impide que un ciclo cerrado o cancelado vuelva a activo.
 - No cubre todavía: tareas (`sdp_bit_tasks`), eventos de sala, planes de
-  ensayo, ciclos de sala, telemetría ni evidencia. Estos últimos siguen con
+  ensayo, telemetría ni evidencia. Estos dos últimos siguen con
   `fireAndForget` (ADR-0003).
 - `bitacora-sync.js` sigue siendo de solo escritura; la lectura vive en
   `remote-sync.js`.
