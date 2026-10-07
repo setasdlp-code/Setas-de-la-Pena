@@ -20,12 +20,17 @@
     return Number.isFinite(n) ? n : null;
   };
 
+  // `source` dice de dónde salió la banda (room-cycle-targets.js): consigna
+  // aprobada en la KB, referencia de literatura o consigna manual de la granja.
+  const BAND_SOURCES = new Set(['kb-operational', 'kb-literature', 'manual']);
+
   const normalizeBand = (band) => {
     if (!band || typeof band !== 'object') return null;
     return {
       min: numericOrNull(band.min),
       max: numericOrNull(band.max),
       target: numericOrNull(band.target),
+      source: BAND_SOURCES.has(band.source) ? band.source : 'manual',
     };
   };
 
@@ -86,7 +91,7 @@
 
   const containsBatch = (cycle, batchId) => (cycle?.batchIds || []).includes(batchId);
 
-  const api = { VALID_STAGES, VALID_STATES, normalizeRoomCycle, validateRoomCycle, isActiveAt, containsBatch };
+  const api = { VALID_STAGES, VALID_STATES, BAND_SOURCES, normalizeRoomCycle, validateRoomCycle, isActiveAt, containsBatch };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasRoomCycle = api;
 })();

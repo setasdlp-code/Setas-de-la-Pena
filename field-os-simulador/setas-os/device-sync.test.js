@@ -262,3 +262,21 @@ test('describeRemote', () => {
   assert.equal(S.describeRemote({ status: 'live', lastServerAt: 0, online: false, now: 5 * 60000 }), 'Sin conexión · última lectura hace 5 min');
   assert.match(S.describeRemote({ status: 'live', lastServerAt: 0, online: false, now: 3 * 3600000 }), /hace 3 h/);
 });
+
+test('ciclos de sala: se sincronizan y uno cerrado no vuelve a activo', () => {
+  const server = new Server();
+  const A = new Device('devA', server);
+  const B = new Device('devB', server);
+  const ciclo = { id: 'RC1', roomId: 'sala', state: 'active', startAt: '2026-10-01T00:00:00Z', batchIds: ['BIT_1'] };
+  A.write([['sdp_room_cycles', [ciclo]]]);
+  A.sync(); B.sync();
+  assert.deepEqual(B.read('sdp_room_cycles'), [ciclo]);
+  A.write([['sdp_room_cycles', [{ ...ciclo, state: 'closed', endAt: '2026-10-06T00:00:00Z' }]]]);
+  B.write([['sdp_room_cycles', [{ ...ciclo, notes: 'revisado' }]]]);
+  A.sync(); B.sync(); A.sync();
+  for (const d of [A, B]) {
+    const [c] = d.read('sdp_room_cycles');
+    assert.equal(c.state, 'closed');
+    assert.equal(c.notes, 'revisado');
+  }
+});

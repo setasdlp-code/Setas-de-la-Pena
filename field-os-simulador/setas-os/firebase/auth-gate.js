@@ -102,6 +102,9 @@ const PROTECTED_APP_SCRIPTS = [
   // Excepciones de la Banda 1 de Hoy; resuelve flush-forecast-engine y
   // bitacora-model en cada llamada.
   "../today-exceptions.js",
+  // Ciclos de sala: modelo y bandas sugeridas desde species.yaml.
+  "../room-cycle.js",
+  "../room-cycle-targets.js",
   "../room-state.js",
   "../provenance.js",
   "../perito-context.js",

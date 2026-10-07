@@ -363,3 +363,32 @@ describe('firestore.rules · bodega compartida (ADR-0009)', function () {
     await assertFails(setDoc(doc(db, 'inventario_compras/X1'), { id: 'X1' }));
   });
 });
+
+describe('firestore.rules · ciclo de aprendizaje de producción', function () {
+  this.timeout(20000);
+  let testEnv;
+  before(async () => {
+    testEnv = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: { rules: fs.readFileSync(RULES_PATH, 'utf8'), host: '127.0.0.1', port: 8080 },
+    });
+  });
+  after(async () => { await testEnv.cleanup(); });
+  beforeEach(async () => { await testEnv.clearFirestore(); });
+
+  it('un usuario autenticado guarda ciclos, evidencia y telemetría', async () => {
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertSucceeds(setDoc(doc(db, 'room_cycles/RC1'), { id: 'RC1', roomId: 'sala', state: 'active' }));
+    await assertSucceeds(setDoc(doc(db, 'room_cycles/RC1'), { state: 'closed' }, { merge: true }));
+    await assertSucceeds(setDoc(doc(db, 'cycle_evidence/RC1__BIT1'), { sourceId: 'RC1', batchId: 'BIT1' }));
+    await assertSucceeds(setDoc(doc(db, 'telemetry_readings/r1'), { room_id: 'sala', metric: 'temperature_c' }));
+  });
+  it('ciclos y evidencia no se borran; sin sesión no se escribe', async () => {
+    await testEnv.withSecurityRulesDisabled(async ctx => { await setDoc(doc(ctx.firestore(), 'room_cycles/RC1'), { id: 'RC1' }); });
+    const db = testEnv.authenticatedContext('u1').firestore();
+    await assertFails(deleteDoc(doc(db, 'room_cycles/RC1')));
+    await assertFails(deleteDoc(doc(db, 'cycle_evidence/X')));
+    const anon = testEnv.unauthenticatedContext().firestore();
+    await assertFails(setDoc(doc(anon, 'room_cycles/RC2'), { id: 'RC2' }));
+  });
+});

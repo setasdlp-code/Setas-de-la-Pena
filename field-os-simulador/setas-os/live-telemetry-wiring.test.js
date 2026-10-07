@@ -45,7 +45,10 @@ test('el shell monta el hook de telemetría en vivo una sola vez', () => {
   // Un hook llamado dos veces abriría dos WebSockets y duplicaría cada alerta.
   assert.equal((jsx.match(/= useLiveTelemetry\(/g) || []).length, 1);
   assert.match(jsx, /createLiveTelemetryBridge\(\{/);
-  assert.match(jsx, /createAnomalyEngine\(\{ bands \}\)/);
+  // Arranca con las bandas vigentes (ref) y las recibe en caliente al cambiar
+  // un ciclo de sala, sin reabrir el socket.
+  assert.match(jsx, /createAnomalyEngine\(\{ bands: bandsRef\.current \}\)/);
+  assert.match(jsx, /engineRef\.current\.setBands\(next\)/);
   assert.match(jsx, /factories: bridgeLib\.browserFactories/);
   assert.match(jsx, /bridge\.start\(\)/);
   // Sin el cleanup, cada cambio de configuración deja un socket colgado.
@@ -120,7 +123,12 @@ test('las bandas objetivo tienen una sola definición para Hoy y para Cámaras',
     assert.match(jsx, new RegExp(`${room}: \\{\\s*\\n\\s*temperature_c:`), `falta la banda de ${room}`);
   });
   // El dashboard ya no redefine sus propios targets por sala.
-  assert.match(jsx, /const defaultTargets = ROOM_TARGET_BANDS\[selectedClimateRoom\] \|\| ROOM_TARGET_BANDS\.martha_01;/);
+  // Cámaras, la ficha del lote y el motor de alertas leen las mismas bandas
+  // efectivas: las de la sala con el ciclo activo encima (room-cycle-targets).
+  assert.match(jsx, /const effectiveRoomBands=cycleTargetsApi\?cycleTargetsApi\.effectiveBands\(ROOM_TARGET_BANDS,roomCycles,cycleClock\):ROOM_TARGET_BANDS;/);
+  assert.match(jsx, /const defaultTargets = effectiveRoomBands\[selectedClimateRoom\] \|\| ROOM_TARGET_BANDS\[selectedClimateRoom\] \|\| ROOM_TARGET_BANDS\.martha_01;/);
+  assert.match(jsx, /const targetBands = roomId \? \(effectiveRoomBands\[roomId\]/);
+  assert.match(jsx, /liveTelemetry\.applyBands\(effectiveRoomBands\)/);
   assert.doesNotMatch(jsx, /const defaultTargets = selectedClimateRoom === 'martha_01'/);
   // Y las bandas declaran límites críticos, que es lo que le permite al motor
   // saltarse el dwell cuando de verdad hace falta.

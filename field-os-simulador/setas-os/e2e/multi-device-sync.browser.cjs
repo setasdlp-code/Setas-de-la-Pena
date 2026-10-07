@@ -13,7 +13,7 @@ const assert=require('node:assert/strict');
 const {chromium,expect}=require('@playwright/test');
 const root=path.resolve(__dirname,'..');
 
-const COLECCIONES=['bitacora_lotes','bitacora_bolsas','bitacora_cosechas','inventario_asientos','inventario_movimientos','inventario_compras','inventario_proveedores','inventario_reservas'];
+const COLECCIONES=['bitacora_lotes','bitacora_bolsas','bitacora_cosechas','inventario_asientos','inventario_movimientos','inventario_compras','inventario_proveedores','inventario_reservas','room_cycles'];
 const clone=x=>JSON.parse(JSON.stringify(x));
 
 class FakeFirestore{
