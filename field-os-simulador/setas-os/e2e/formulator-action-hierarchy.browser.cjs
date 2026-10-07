@@ -43,6 +43,13 @@ const root=path.resolve(__dirname,'..');
    await page.getByRole('tab',{name:'Generador de Recetas',exact:true}).click();await expect(page.getByRole('tabpanel',{name:'Generador de Recetas',exact:true})).toBeVisible();
    await page.getByRole('tab',{name:/Mesa de Mezcla/}).click();await expect(input).toHaveValue('75');
    for(const selector of ['.sim-live-dashboard','.form-species-context','.form-support-details'])assert.ok(await panel.locator(selector).evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth)), `no horizontal overflow in ${selector} at ${width}`);
+   assert.ok(await page.locator('.sim-root').evaluate(el=>el.scrollWidth<=el.clientWidth), `whole Formulador fits after Catálogo/edit/Generador/return at ${width}`);
+   await next.focus();await expect(next).toBeFocused();
+   assert.ok(await next.evaluate(el=>{const r=el.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.right<=innerWidth;}), 'next action fits and retains touch target');
+   const warehouse=panel.locator('.bodega-bar');
+   await warehouse.scrollIntoViewIfNeeded();
+   assert.ok(await warehouse.evaluate(el=>el.scrollWidth<=el.clientWidth), 'Bodega actions fit');
+   await page.screenshot({path:`/tmp/setas-formulator-overflow-${width}.png`});
    console.log(`PASS Formulador ${width}: editable percentage y=${Math.round(box.y)}, details keyboard, origin, locks, draft, generator navigation.`);
    assert.deepEqual(errors,[]);await page.close();
   }
