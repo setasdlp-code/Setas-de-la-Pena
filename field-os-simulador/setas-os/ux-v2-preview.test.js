@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, 'ux-v2-preview.html'), 'utf8');
-const components = fs.readFileSync(path.join(__dirname, '_ds', 'setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e', 'tokens', 'setas-os-components.css'), 'utf8');
+const components = fs.readFileSync(path.join(__dirname, 'setas-os-legacy.css'), 'utf8');
 
 test('UX v2 reference exposes Hoy and canonical batch detail surfaces', () => {
   assert.match(html, /data-testid="ux-v2-today"/);

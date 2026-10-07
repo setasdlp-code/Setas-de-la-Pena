@@ -10551,7 +10551,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           ))}
         </section>
       )}
-      <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="os-provenance os-provenance--calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="os-provenance os-provenance--measured">Medido</span></div></div>
+      <div className="os-metric-grid"><div className="os-metric"><span className="os-metric__label">Bolsas sanas</span><span className="os-metric__value">{stats?`${stats.bolsasSanas}/${stats.numBolsas}`:'—'}</span><span className="sdp-provenance" data-provenance="calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Contaminación</span><span className="os-metric__value">{stats?stats.contPct.toFixed(0)+'%':'—'}</span><span className="sdp-provenance" data-provenance="calculated">Calculado</span></div><div className="os-metric"><span className="os-metric__label">Cosechado</span><span className="os-metric__value">{stats?stats.totalFresco.toFixed(3)+' kg':'—'}</span><span className="sdp-provenance" data-provenance="measured">Medido</span></div></div>
       {stats&&(
         <section className="os-finance-panel" data-testid="batch-financial-closure">
           <div className="os-finance-header">
@@ -10711,7 +10711,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </section>
         );
       })()}
-      <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className={'os-provenance os-provenance--'+e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
+      <div className="os-detail-grid"><section className="os-detail-panel"><h2>Actividad</h2>{events.length===0?<div className="os-v2-empty">Todavía no hay eventos medidos o manuales para este lote.</div>:events.map(e=><div className="os-event-row" key={e.id}><span className="os-task-marker"></span><div><div className="os-event-row__title">{e.title}</div><div className="os-event-row__meta">{e.meta}</div></div><span className="sdp-provenance" data-provenance={e.kind}>{e.kind==='measured'?'Medido':'Manual'}</span></div>)}</section>
         <aside className="os-detail-panel">
           <h2>Acciones válidas ahora</h2>
           <div className="os-valid-actions">
@@ -10731,7 +10731,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
             const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
             return <div data-testid="sync-indicator" style={{display:'flex',alignItems:'center',gap:8}}>
-              <span role="status" aria-live="polite" aria-atomic="true" className={'os-sync-state '+(st.stuck>0?'os-sync-state--error':(st.pending>0?'os-sync-state--pending':'os-sync-state--synced'))}>{label}</span>
+              <span role="status" aria-live="polite" aria-atomic="true" className={'sdp-sync-chip '+(st.stuck>0?'sdp-sync-chip--error':(st.pending>0?'sdp-sync-chip--pending':'sdp-sync-chip--synced'))}>{label}</span>
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);

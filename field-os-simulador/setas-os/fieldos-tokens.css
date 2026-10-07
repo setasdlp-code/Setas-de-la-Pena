@@ -351,3 +351,63 @@ code, pre { font-family: var(--font-mono); font-size: 0.92em; }
 .paper {
   background-color: var(--bg-page);
 }
+
+/* ── LO QUE VIVÍA EN _ds/ ────────────────────────────────────────────
+   La página cargaba un segundo sistema completo bajo _ds/ (677 líneas con
+   su propia paleta, tipografía y componentes os-*). Estos son los nombres
+   que solo él definía y que sim.css todavía llama. Los que tienen
+   equivalente en DS-2026 apuntan a su token; los demás se quedan con su
+   valor, que es vocabulario del dominio y no del sistema.
+
+   La escala de texto se redondea al paso de DS-2026 más cercano. Son
+   medio píxel arriba o abajo en cada paso: 11,5 → 11, 14,5 → 14, 10,5 → 11.
+   ──────────────────────────────────────────────────────────────── */
+:root {
+  --text-2xs:  var(--size-micro-screen);
+  --text-xs:   var(--size-label);
+  --text-sm:   var(--size-data);
+  --text-base: var(--size-small);
+  --text-md:   var(--size-body);
+  --text-lg:   var(--size-heading-03);
+  --text-xl:   var(--size-heading-02);
+  --text-2xl:  var(--size-heading-01);
+
+  /* El interletrado del shell es más estrecho que el del sistema
+     (--tracking-label son 0.15em). Mapearlo ensancharía cientos de
+     rótulos, así que conserva su valor. */
+  --tracking-wide:    0.04em;
+  --tracking-widest:  0.12em;
+
+  --radius-md:   var(--radius-none);
+  --rule-strong: 1px solid var(--rule-500);
+  --tap-target-gap-min: 8px;
+
+  /* DS-2026 no publica tokens de movimiento. */
+  --duration-fast: 240ms;
+  --ease-spring:   cubic-bezier(0.32, 0.72, 0, 1);
+
+  --status-archived: var(--accent-mushroom);
+  --accent-olive-hover:      #4A5737;
+  --accent-terracotta-hover: #894B29;
+
+  /* Colores de categoría de ingrediente. Vocabulario del dominio: base,
+     café, circular, estructural, local, suplemento, tropical, aditivo. */
+  --cat-base:  #5A7042;  --cat-base-text:  #3a4f2a;
+  --cat-cafe:  #7A4A2F;  --cat-cafe-text:  #7A4A2F;
+  --cat-circ:  #6B7C5F;  --cat-circ-text:  #56634C;  --cat-circ-on: #56634C;
+  --cat-est:   #6B4E31;  --cat-est-text:   #6B4E31;
+  --cat-local: #7A5A3F;  --cat-local-text: #7A5A3F;
+  --cat-sup:   #C68F2C;  --cat-sup-text:   #8B6014;  --cat-sup-on:  #8B641F;
+  --cat-trop:  #B8694B;  --cat-trop-text:  #8C5039;  --cat-trop-on: #8C5039;
+  --cat-adit:  var(--accent-blue-grey);
+  --cat-adit-text: #505F6D;
+
+  --cat-base-hover:  color-mix(in oklab, var(--cat-base)  12%, var(--paper-0));
+  --cat-cafe-hover:  color-mix(in oklab, var(--cat-cafe)  12%, var(--paper-0));
+  --cat-circ-hover:  color-mix(in oklab, var(--cat-circ)  12%, var(--paper-0));
+  --cat-est-hover:   color-mix(in oklab, var(--cat-est)   12%, var(--paper-0));
+  --cat-local-hover: color-mix(in oklab, var(--cat-local) 12%, var(--paper-0));
+  --cat-sup-hover:   color-mix(in oklab, var(--cat-sup)   12%, var(--paper-0));
+  --cat-trop-hover:  color-mix(in oklab, var(--cat-trop)  12%, var(--paper-0));
+  --cat-adit-hover:  color-mix(in oklab, var(--cat-adit)  12%, var(--paper-0));
+}

@@ -30,7 +30,6 @@ const AUTH_RUNTIME_SCRIPTS = [
   "../vendor/react-dom.production.min.js",
 ];
 const DC_RUNTIME_SCRIPTS = [
-  "../_ds/setas-de-la-pe-a-field-operating-system-d39a2369-cff1-4759-ac62-d7b102a27e2e/_ds_bundle.js",
   "../qr-mini.js",
   "../bridge-protocol.js",
   "../navigation-state.js",
