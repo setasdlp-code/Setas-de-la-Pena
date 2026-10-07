@@ -18,94 +18,89 @@
   --fos-space-4: 16px;
   --fos-space-5: 24px;
   --fos-space-6: 32px;
-  /* ── DS-2026 STANDALONE SYSTEM PALETTE ── */
-  --paper:          #FAF5E9;  /* warm ivory — every page ground        */
-  --ink:            #222222;  /* charcoal — primary text               */
-  --ink-muted:      #555555;  /* warm gray — secondary text, captions  */
-  --rule:           #888888;  /* mineral gray — hairlines, frames      */
-  --soil:           #4A3C31;  /* dark earth — infill, inverted blocks  */
-  --moss:           #4E6B3F;  /* forest green — OK / active / success  */
-  --rust:           #8E2C14;  /* oxidised red-brown — error only       */
-  /* Keep the pigment separate from the legacy semantic alias below.  The
-     previous --status-attention → --warning → --status-attention chain made
-     both variables invalid at computed-value time. */
-  --warning-pigment:#C49A4C;  /* muted ochre — fill/bar only           */
-  --warning:        var(--warning-pigment);
-  --warning-text:   #826326;  /* AA text on paper and warning tint      */
+  /* ── PALETA ──────────────────────────────────────────────────────
+     Este bloque definia la paleta con hexadecimales propios y, peor, volvia
+     a definir --paper-50/100/200/300 y --ink-900..300, que son primitivas de
+     DS-2026. Como esta hoja carga DESPUES de ds-2026, el sistema quedaba
+     pisado: la pagina renderizaba #FAF5E9 de papel y #222222 de tinta cuando
+     DS-2026 dice #FAF8F3 y #1A1410. Ningun cambio de paleta del sistema
+     llegaba nunca a la app.
 
-  --paper-panel:    #F3EEE2;  /* paper +4% soil — panels, table stripe */
-  --paper-recessed: #EAE4D8;  /* paper +9% soil — wells, placeholders  */
-  --moss-tint:      #E5E4D5;  /* 12% moss on paper — status field ground */
-  --rust-tint:      #EDDDCF;  /* 12% rust on paper */
-  --warning-tint:   #F4EAD6;  /* 12% warning on paper */
-  --soil-tint:      #E5DFD3;  /* 12% soil on paper */
+     Ahora no se define ninguna primitiva aqui. DS-2026 ya publica los alias
+     heredados (--paper, --ink, --ink-muted, --rule, --moss), asi que solo
+     quedan los nombres que el sistema no tiene y las escalas que sim.css
+     sigue llamando, apuntando a su token real.
+     ───────────────────────────────────────────────────────────────── */
 
-  /* ── PAPER / INK — alias old 4-step naming to DS-2026 ── */
-  --paper-0:   var(--paper, #FAF5E9);
-  --paper-1:   var(--paper-panel, #F3EEE2);
-  --paper-2:   var(--paper-recessed, #EAE4D8);
-  --paper-3:   var(--soil-tint, #E5DFD3);
-  --paper-50:  var(--paper-0);
-  --paper-100: var(--paper-0);
-  --paper-200: var(--paper-1);
-  --paper-300: var(--paper-2);
+  /* Nombres sin equivalente en DS-2026. */
+  --soil:            var(--surface-inverse);
+  --soil-tint:       var(--bark-tint);
+  --rust:            var(--status-error);
+  --rust-tint:       var(--coral-tint);
+  --warning-pigment: var(--warning);
 
-  --ink-0:   var(--ink, #222222);
-  --ink-1:   var(--ink-muted, #555555);
-  --ink-2:   var(--ink-muted, #555555);
-  --ink-3:   var(--rule, #888888);
-  --ink-900: var(--ink-0);
-  --ink-800: var(--ink-0);
-  --ink-700: var(--ink-1);
-  --ink-600: var(--ink-2);
-  --ink-500: var(--ink-2);
-  --ink-400: var(--ink-2);
-  --ink-300: var(--ink-3);
+  /* Escala de papel de cuatro pasos del shell antiguo. */
+  --paper-0:   var(--surface-page);
+  --paper-1:   var(--surface-panel);
+  --paper-2:   var(--surface-recessed);
+  --paper-3:   var(--bark-tint);
+  --paper-300: var(--surface-recessed);
 
-  --line-0: var(--rule, #888888);
-  --line-1: var(--rule, #888888);
-  --line-2: var(--ink, #222222);
-  --border-strong:   var(--rule, #888888);
+  /* Escala de tinta del shell antiguo. Los pasos que DS-2026 no tiene
+     (800, 600, 400, 300) caen al escalon mas cercano que si tiene. */
+  --ink-0:   var(--text-primary);
+  --ink-1:   var(--text-secondary);
+  --ink-2:   var(--text-metadata);
+  --ink-3:   var(--rule-500);
+  --ink-800: var(--ink-900);
+  --ink-600: var(--ink-500);
+  --ink-400: var(--ink-500);
+  --ink-300: var(--rule-500);
 
-  --accent-terracotta:      var(--warning-text, #8C6B2E);
-  --accent-terracotta-dark: color-mix(in oklab, var(--warning-text, #8C6B2E) 80%, black);
-  --accent-terracotta-dim:  var(--warning-tint, #F4EAD6);
-  --accent-blue-grey:       #5E7080;
-  --accent-blue-grey-dark:  color-mix(in oklab, #5E7080 85%, black);
-  --accent-blue-grey-dim:   #DFE6EB;
-  --accent-olive:           var(--moss, #4E6B3F);
-  --accent-olive-dim:       var(--moss-tint, #E5E4D5);
-  --accent-mushroom:        var(--soil, #4A3C31);
-  --accent-mushroom-dim:    var(--soil-tint, #E5DFD3);
-  --accent-rust:            var(--rust, #8E2C14);
+  --line-0: var(--rule-500);
+  --line-1: var(--rule-500);
+  --line-2: var(--text-primary);
+  --border-strong:   var(--rule-500);
 
-  /* ── EARTH PIGMENTS — DS-2026 roles ── */
-  --moss-900: var(--moss);
-  --moss-700: var(--moss);
-  --moss-600: var(--moss);
-  --moss-500: var(--moss);
+  --accent-terracotta:      var(--status-warn-text);
+  --accent-terracotta-dark: color-mix(in oklab, var(--status-warn-text) 80%, black);
+  --accent-terracotta-dim:  var(--status-warn-bg, var(--warning-tint));
+  --accent-blue-grey:       var(--status-info);
+  --accent-blue-grey-dark:  color-mix(in oklab, var(--status-info) 85%, black);
+  --accent-blue-grey-dim:   var(--status-info-bg, #DFE6EB);
+  --accent-olive:           var(--status-ok);
+  --accent-olive-dim:       var(--moss-tint);
+  --accent-mushroom:        var(--surface-inverse);
+  --accent-mushroom-dim:    var(--bark-tint);
+  --accent-rust:            var(--status-error);
+
+  /* ── PIGMENTOS ───────────────────────────────────────────────────
+     Este bloque redefinia --moss-*, --coral-*, --sand-*, --bark-*,
+     --slate-* y todos los --status-*, que son primitivas y semanticas de
+     DS-2026. Ademas de pisarlas, armaba un ciclo: DS dice
+     --moss: var(--moss-700) y aqui se decia --moss-700: var(--moss). Con la
+     paleta literal borrada el ciclo quedo a la vista y --status-ok dejo de
+     resolver. Ahora solo quedan los escalones que DS-2026 no publica,
+     apuntados al mas cercano que si existe.
+     ───────────────────────────────────────────────────────────────── */
+  --moss-600: var(--moss-700);
   --moss-300: var(--moss-tint);
   --moss-200: var(--moss-tint);
 
-  --coral-900: var(--warning-text);
-  --coral-700: var(--warning-text);
-  --coral-600: var(--warning-text);
-  --coral-500: var(--warning-text);
-  --coral-300: var(--warning-tint);
-  --coral-200: var(--warning-tint);
-  --coral-100: var(--warning-tint);
+  --coral-900: var(--coral-700);
+  --coral-600: var(--coral-500);
+  --coral-300: var(--coral-tint);
+  --coral-200: var(--coral-tint);
+  --coral-100: var(--coral-tint);
 
-  --sand-500: var(--soil);
-  --sand-300: var(--soil-tint);
-  --sand-200: var(--soil-tint);
+  --sand-300: var(--bark-tint);
+  --sand-200: var(--bark-tint);
 
-  --bark-700: var(--ink);
-  --bark-500: var(--soil);
-  --bark-300: var(--soil-tint);
+  --bark-500: var(--bark-700);
+  --bark-300: var(--bark-tint);
 
-  --slate-900: var(--accent-blue-grey);
-  --slate-700: var(--accent-blue-grey);
-  --slate-500: var(--accent-blue-grey);
+  --slate-900: var(--slate-500);
+  --slate-700: var(--slate-500);
   --slate-300: var(--accent-blue-grey-dim);
   --slate-200: var(--accent-blue-grey-dim);
 
@@ -114,30 +109,20 @@
   --ochre-500: var(--warning);
   --ochre-200: var(--warning-tint);
 
-  --rust-700: var(--rust);
-  --rust-500: var(--rust);
-  --rust-200: var(--rust-tint);
-  --sky-500:  var(--accent-blue-grey);
+  --rust-700: var(--status-error);
+  --rust-500: var(--status-error);
+  --rust-200: var(--coral-tint);
+  --sky-500:  var(--slate-500);
   --sky-200:  var(--accent-blue-grey-dim);
 
-  --status-ok:             var(--moss);
-  --status-ok-bg:          var(--moss-tint);
-  --status-warn:           var(--warning-pigment);
-  --status-warn-bg:        var(--warning-tint);
-  --status-warn-text:      var(--warning-text);
-  --status-error:          var(--rust);
-  --status-error-bg:       var(--rust-tint);
-
-  --status-active:         var(--moss);
-  --status-active-bg:      var(--moss-tint);
-  --status-attention:      var(--warning-pigment);
+  /* Nombres heredados del shell. Los --status-* canonicos los da DS-2026. */
+  --status-active:         var(--status-ok);
+  --status-active-bg:      var(--status-ok-bg);
+  --status-attention:      var(--warning);
   --status-attention-bg:   var(--warning-tint);
   --status-attention-text: var(--warning-text);
 
   --success: var(--status-active);
-  /* Legacy semantic name; it deliberately resolves to the immutable pigment
-     above instead of pointing back through --status-attention. */
-  --warning: var(--warning-pigment);
   --danger:  var(--status-error);
 
   /* ── LEGACY BG / FG / ACCENT ALIASES ── */
