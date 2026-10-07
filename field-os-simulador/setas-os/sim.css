@@ -6736,3 +6736,16 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
  .sim-root .builder-wrap > .sim-live-dashboard .live-dash-metrics{margin:0;flex-wrap:nowrap;}
  .sim-root .builder-wrap > .sim-live-dashboard .live-dash-actions{grid-column:2;grid-row:2;justify-content:flex-end;}
 }
+
+/* Formulador móvil: las acciones largas conservan su ancho disponible. */
+@media(max-width:400px){
+ .sim-root .form-production-command{flex-wrap:wrap;}
+ .sim-root .form-production-command-copy{flex-basis:100%;}
+ .sim-root .form-production-command-btn{width:100%;min-width:0;white-space:normal;}
+}
+@media(max-width:560px){
+ .sim-root .builder-wrap .bodega-bar{display:grid;grid-template-columns:minmax(0,1fr);}
+ .sim-root .builder-wrap .bodega-bar-right{margin-left:0;min-width:0;flex-wrap:wrap;}
+ .sim-root .builder-wrap .bodega-bar-right > .inv-btn{min-height:44px;white-space:normal!important;}
+ .sim-root .builder-wrap .bodega-bar-refresh{width:44px;height:44px;}
+}
