@@ -1219,10 +1219,13 @@
   const calcTreatment = (a, sKey, spp) => {
     if (!a) return null;
     const effectiveSPP = getEffectiveSPP(spp);
-    const { suppP, manP, cafeP, avgN, trichoderma, dynSpawn } = a; const sp = effectiveSPP[sKey];
+    const { manP, cafeP, avgN, trichoderma, dynSpawn } = a; const sp = effectiveSPP[sKey];
+    const suppP = Number.isFinite(a.suppEffectiveP) ? a.suppEffectiveP : (Number.isFinite(a.suppP) ? a.suppP : 0);
+    const suppLimit = Number.isFinite(sp?.supplementation_max) ? sp.supplementation_max : 20;
+    const requiresAutoclave = suppP > suppLimit;
     let score = 0, reasons = [];
     if (trichoderma) { score += 3; reasons.push('⚠ Colapso Trichoderma — N crítico sin esterilización'); }
-    if (suppP > (sp?.supplementation_max || 20)) { score += 2; reasons.push(`Supl ${suppP.toFixed(0)}% > máx`); }
+    if (requiresAutoclave) { score += 2; reasons.push(`Supl ${suppP.toFixed(0)}% > máx`); }
     else if (suppP > 15) { score += 1; reasons.push('Supl alta'); }
     if (avgN > 2.5) { score += 2; reasons.push(`N ${avgN.toFixed(2)}%`); }
     else if (avgN > 1.8) { score += 1; reasons.push('N elevado'); }
@@ -1231,7 +1234,7 @@
     if (cafeP > 0 && cafeP <= 30) { score -= .5; reasons.push('Café pre-pasteurizado'); }
     const spawn = dynSpawn || sp?.spawn_rate || 8;
     const ec = col => ({ ...ENERGY_COST[col], cop_per_kg_seco: energyCostPerKgSeco(col, sKey) });
-    if (score >= 2) return { name: 'Esterilización en Autoclave', temp: '121°C / 18.5–19 PSI', time: '90–120 min', spawn, col: 'autoclave', reasons, prep: 'Empacar bolsas, esterilizar, enfriar 4–6h antes de inocular.', alt: '△ Tenjo (2.580 msnm): 15 PSI manométricos NO alcanzan 121°C reales a esta altitud — mantener 18.5–19 PSI manométricos constantes, o verificar con sensor de núcleo a 121°C real.', energy: ec('autoclave') };
+    if (requiresAutoclave || score >= 2) return { name: 'Esterilización en Autoclave', temp: '121°C / 18.5–19 PSI', time: '90–120 min', spawn, col: 'autoclave', reasons, prep: 'Empacar bolsas, esterilizar, enfriar 4–6h antes de inocular.', alt: '△ Tenjo (2.580 msnm): 15 PSI manométricos NO alcanzan 121°C reales a esta altitud — mantener 18.5–19 PSI manométricos constantes, o verificar con sensor de núcleo a 121°C real.', energy: ec('autoclave') };
     if (score >= .5) return { name: 'Pasteurización Térmica', temp: 'Núcleo 65–75°C', time: '6–8 h (base 5–6 h +25% altitud)', spawn, col: 'thermal', reasons, prep: 'Sumergir el sustrato y sostener el NÚCLEO entre 65–75°C de forma constante. Verificar con termómetro de pincho en el centro de la masa, no solo el agua.', alt: '△ Tenjo (2.580 msnm): el agua hierve a ~91°C, por lo que la transferencia de calor al núcleo es más lenta — se aplica un factor de +25% sobre el tiempo de receta estándar para garantizar pasteurización efectiva en el centro.', energy: ec('thermal') };
     return { name: 'CWLP — Cal en Frío', temp: 'Ambiente (~14°C Tenjo)', time: '18–24 h inmersión', spawn, col: 'cwlp', reasons, prep: '150–200 g cal / 100 L agua. Sumergir, escurrir, inocular.', alt: '△ Tenjo: CWLP funciona independiente de altitud. Verificar pH≥12 antes de sumergir.', energy: ec('cwlp') };
   };
