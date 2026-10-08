@@ -85,6 +85,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../post-harvest-engine.js",
   "../perito-workbench-core.js",
   "../historical-calibration.js",
+  "../operational-metrics.js",
   "../species-targets.js",
   "../mass-balance.js",
   "../recipe-lifecycle.js",
