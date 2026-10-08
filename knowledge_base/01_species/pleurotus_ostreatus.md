@@ -3,17 +3,20 @@ title: Pleurotus ostreatus — Oyster / Orellana
 document_id: DOC-0009
 category: species
 load_priority: selective
-last_reviewed: 2026-09-13
+last_reviewed: 2026-10-03
 confidence: high
 primary_sources:
   - Stamets 2000
   - Cotter 2014
   - Cornell Mushroom Blog
   - NAMA (North American Mycological Association)
+  - Shi et al. 2026 (paper_026) — dinámica térmica de núcleo
 related_documents:
   - pleurotus_djamor.md
   - 02_substrates/substrate_library.md
   - ../09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md
+  - lentinula_edodes.md
+  - ../04_facility/incubation.md
 ---
 
 # Executive Summary
@@ -49,6 +52,19 @@ Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellett
 - Especie robusta y tolerante. Útil para validación y caracterización ambiental de cámaras antes de lotes críticos.
 - Más sensible al CO₂ que *P. djamor* — mantener <1.000 ppm en producción óptima para evitar tallos engrosados y sombreros reducidos.
 - Ciclo de 14–21 días para pinning en condiciones templadas.
+- La consigna de incubación es de **aire**, y el núcleo del bloque corre por encima de ella. El setpoint de aire va por debajo del objetivo de núcleo, nunca por encima (ver abajo).
+
+## Inercia Térmica del Núcleo y Calor Metabólico (Shi et al. 2026 — paper_026; ARK-012)
+
+Mismo fenómeno físico ya documentado para *L. edodes*; aquí se consigna para *P. ostreatus* porque su banda de incubación es más baja y el margen hasta el techo es, por tanto, distinto.
+
+- El núcleo del bloque presenta desfase térmico (*thermal lag*) de 2–4 h y memoria térmica respecto al aire circundante.
+- Durante el pico de colonización, el calor metabólico del micelio eleva el núcleo **4–8 °C por encima del aire**.
+- De ahí la consecuencia operativa: con la banda de aire 20–24 °C, el núcleo llega a **24–32 °C**. El techo de aire no puede subirse "para acercarse al óptimo de sustrato" — subirlo empuja el núcleo, que es lo que ya está arriba.
+- **Techo de núcleo: 28 °C.** Es un **límite de alarma derivado**, no un valor de literatura sobre la tolerancia térmica de la especie: sale del techo de aire declarado (24) más el delta mínimo documentado (4). Por encima de 28 °C el núcleo está fuera de lo que la banda de aire puede explicar, así que la alarma señala el lazo de control, no la biología.
+- Requiere sonda de núcleo (DS18B20) en al menos un bloque testigo por lote y amortiguamiento del control por medias móviles ponderadas (EWMA), igual que en *L. edodes*.
+
+**Strength of evidence:** ★★★★☆ para el delta núcleo–aire (paper_026, revisado por pares, medido en bloques de cultivo sólido). El techo de 28 °C es una derivación interna de la banda de aire, no una medición: ★☆☆☆☆ como afirmación biológica, y debe tratarse como umbral de control provisional hasta tener medición local de núcleo en Tenjo.
 
 # Technical Details
 
@@ -63,7 +79,9 @@ Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellett
 ### Incubación
 | Parámetro | Valor |
 |---|---|
-| Temperatura | 20–24°C |
+| Temperatura **aire** (consigna) | 20–24°C |
+| Temperatura **núcleo** (vigilancia) | techo 28 °C · alarma si T_núcleo > 28 °C · delta sobre aire 4–8 °C (paper_026) |
+| Medición de núcleo | Sonda DS18B20 en un bloque testigo por lote (obligatoria) |
 | HR ambiente | 70% |
 | Duración | 10–18 días |
 
@@ -106,3 +124,4 @@ Por encima de ~1.5 % de N (base seca) se inhibe el crecimiento micelial (Bellett
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Cornell Mushroom Blog. https://blog.mycology.cornell.edu
+- Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]

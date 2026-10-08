@@ -1117,222 +1117,6 @@
     <!-- =================== BANCO CLIMÁTICO (solo después de autenticar) =================== -->
     <iframe class="setas-auth-gated" data-auth-src="climate-bench.html" title="Banco Climático" style="{{ climaFrameStyle }}"></iframe>
 
-    <!-- =================== REVISIÓN DIARIA =================== -->
-    <sc-if value="{{ isRevision }}" hint-placeholder-val="{{ false }}">
-    <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
-      <div class="col">
-        <div class="fos-scroll" style="display:flex;gap:6px;overflow-x:auto;margin:0 0 18px;padding-bottom:2px;">
-          <sc-for list="{{ regTabs }}" as="t" hint-placeholder-count="3">
-            <button onClick="{{ t.go }}" aria-pressed="{{ t.on }}" style="{{ t.style }}">{{ t.label }}</button>
-          </sc-for>
-        </div>
-        
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">WF-9 · Registro de cultivo · solo lectura</div>
-        <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-black);font-size:42px;letter-spacing:var(--tracking-display);color:var(--ink-0);margin:4px 0 0;line-height:1;">Miércoles 2 de julio</h1>
-        <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:10px 0 0;">Lo que ocurrió, leído del registro. Nada se interpreta solo.</p>
-
-        <div class="fos-scroll" style="display:flex;gap:22px;overflow-x:auto;border-bottom:1px solid var(--border-soft);margin:20px 0 4px;mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);-webkit-mask-image:linear-gradient(to right, black calc(100% - 28px), transparent);">
-          <button onClick="{{ setTabEventos }}" style="{{ tabEventosStyle }}">Eventos</button>
-          <button onClick="{{ setTabRend }}" style="{{ tabRendStyle }}">Rendimiento</button>
-          <button onClick="{{ setTabTrabajo }}" style="{{ tabTrabajoStyle }}">Trabajo</button>
-          <button onClick="{{ setTabSuper }}" style="{{ tabSuperStyle }}">Supervisión</button>
-          <button onClick="{{ setTabSalidas }}" style="{{ tabSalidasStyle }}">Salidas</button>
-          <button onClick="{{ setTabConoc }}" style="{{ tabConocStyle }}">Conocimiento</button>
-        </div>
-
-        <sc-if value="{{ isTabTrabajo }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:20px;">
-          <div style="display:flex;gap:10px;">
-            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:26px;color:var(--ink-0);">{{ workTotal }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">horas registradas</div></div>
-            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:26px;color:var(--ink-0);">{{ workKg }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">cosechado</div></div>
-            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:26px;color:var(--accent-terracotta);">{{ workHkg }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">promedio</div></div>
-          </div>
-          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:24px 0 10px;">Por operario</div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <sc-for list="{{ workRows }}" as="w" hint-placeholder-count="3">
-              <div style="border:1px solid var(--border-soft);background:var(--paper-0);border-radius:var(--radius-md);padding:15px 16px;">
-                <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;">
-                  <span style="font:var(--t-label);color:var(--ink-0);">{{ w.op }}</span>
-                  <span style="font-family:var(--font-mono);font-size:13px;color:var(--accent-terracotta);">{{ w.horasKg }}</span>
-                </div>
-                <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:3px;">{{ w.horasLabel }} · {{ w.kgLabel }} · {{ w.tareas }} tareas</div>
-                <div style="height:5px;background:var(--paper-2);margin-top:9px;"><div style="height:5px;width:{{ w.pct }}%;background:var(--accent-olive);"></div></div>
-              </div>
-            </sc-for>
-          </div>
-        </div>
-        </sc-if>
-
-        <sc-if value="{{ isTabSuper }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:20px;">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;">
-            <div style="font:var(--t-label);color:var(--ink-0);">Cola de revisión del supervisor</div>
-            <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-metadata);">{{ anomaliaCount }} anomalías</span>
-          </div>
-          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 16px;max-width:480px;">Eventos fuera de rango que esperan validación. Validar no borra nada: deja constancia.</p>
-          <sc-if value="{{ hasAnomalias }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <sc-for list="{{ anomalias }}" as="a" hint-placeholder-count="3">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--border-soft);border-left:3px solid {{ a.accent }};background:var(--paper-0);padding:13px 15px;">
-                <div style="min-width:0;">
-                  <div style="font-family:var(--font-mono);font-size:12.5px;color:var(--ink-0);">{{ a.id }} · {{ a.kind }}</div>
-                  <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:2px;">{{ a.why }}</div>
-                  <div style="font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:{{ a.accent }};margin-top:4px;">{{ a.state }}</div>
-                </div>
-                <div style="display:flex;gap:8px;flex:none;">
-                  <button onClick="{{ a.reject }}" style="cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-sm);padding:8px 12px;font:var(--t-caption);">Corregir</button>
-                  <button onClick="{{ a.validate }}" style="cursor:pointer;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-sm);padding:8px 12px;font:var(--t-caption);font-weight:600;">Validar</button>
-                </div>
-              </div>
-            </sc-for>
-          </div>
-          </sc-if>
-        </div>
-        </sc-if>
-
-        <sc-if value="{{ isTabEventos }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;gap:10px;margin-top:20px;">
-          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">23</div><div style="font:var(--t-caption);color:var(--text-metadata);">eventos</div></div>
-          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">9</div><div style="font:var(--t-caption);color:var(--text-metadata);">contenedores</div></div>
-          <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--accent-terracotta);">2</div><div style="font:var(--t-caption);color:var(--text-metadata);">cosechas</div></div>
-        </div>
-
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 10px;">Periodos de trabajo</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <sc-for list="{{ reviewSessions }}" as="s" hint-placeholder-count="2">
-            <button onClick="{{ s.go }}" disabled="{{ s.noGo }}" style="cursor:pointer;text-align:left;width:100%;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px 16px;">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font:var(--t-label);color:var(--ink-0);">{{ s.label }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ s.time }}</span></div>
-              <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:3px;">{{ s.summary }}</div>
-            </button>
-          </sc-for>
-        </div>
-
-        <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:26px 0 4px;">Todos los eventos</div>
-        <div style="display:flex;flex-direction:column;">
-          <sc-for list="{{ reviewEvents }}" as="ev" hint-placeholder-count="6">
-            <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
-              <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ ev.time }}</span>
-              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ ev.accent }};margin-top:6px;"></span>
-              <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ ev.typeLabel }}</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ ev.container }}</span></div><div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:1px;">{{ ev.note }}</div></div>
-            </div>
-          </sc-for>
-        </div>
-
-        <div style="margin-top:22px;background:color-mix(in oklab,var(--accent-olive) 12%, var(--paper-0));border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:15px 16px;">
-          <div style="font:var(--t-label);color:var(--accent-olive);">Preparado para el Sistema de Conocimiento</div>
-          <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:3px;">2 resultados marcados como experimentales · listos para evaluación. La evidencia se prepara, no se ingiere automáticamente.</div>
-        </div>
-        </sc-if>
-
-        <!-- ===== RENDIMIENTO ===== -->
-        <sc-if value="{{ isTabRend }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:18px;">
-          <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:18px;">
-            <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Eficiencia biológica media</div>
-            <div style="display:flex;align-items:baseline;gap:10px;margin-top:4px;"><span style="font-family:var(--font-mono);font-weight:600;font-size:42px;letter-spacing:-.02em;color:var(--ink-0);">{{ beOverall }}%</span><span style="font:var(--t-caption);color:var(--text-metadata);">objetivo {{ beTarget }}% · óptimo {{ beOptimal }}%</span></div>
-            <div style="font:var(--t-caption);color:var(--text-secondary);margin-top:8px;line-height:1.5;">BE = peso fresco cosechado ÷ peso seco del sustrato × 100. KPI principal de producción (kpis.yaml). Rendimiento crudo mostrado también en g/kg por lote.</div>
-          </div>
-
-          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Por especie</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <sc-for list="{{ rendSpp }}" as="r" hint-placeholder-count="3">
-              <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:14px 16px;">
-                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
-                  <span style="font:var(--t-label);color:var(--ink-0);">{{ r.name }} <span style="font-weight:400;font-style:italic;color:var(--text-metadata);">{{ r.sci }}</span></span>
-                  <span style="font-family:var(--font-mono);font-weight:600;font-size:20px;color:{{ r.accent }};">{{ r.avg }}%</span>
-                </div>
-                <div style="height:6px;border-radius:3px;background:var(--paper-2);overflow:hidden;margin-top:9px;"><div style="height:100%;width:{{ r.pct }}%;background:{{ r.accent }};"></div></div>
-                <div style="display:flex;justify-content:space-between;font:var(--t-caption);color:var(--text-metadata);margin-top:6px;"><span>{{ r.n }} lotes · {{ r.gPerKg }} g/kg</span><span>rango KB {{ r.targetLabel }}</span></div>
-              </div>
-            </sc-for>
-          </div>
-
-          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Por receta / sustrato</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <sc-for list="{{ rendSub }}" as="r" hint-placeholder-count="2">
-              <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:14px 16px;">
-                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
-                  <span style="font:var(--t-label);color:var(--ink-0);">{{ r.name }}</span>
-                  <span style="font-family:var(--font-mono);font-weight:600;font-size:20px;color:{{ r.accent }};">{{ r.avg }}%</span>
-                </div>
-                <div style="height:6px;border-radius:3px;background:var(--paper-2);overflow:hidden;margin-top:9px;"><div style="height:100%;width:{{ r.pct }}%;background:{{ r.accent }};"></div></div>
-                <div style="display:flex;justify-content:space-between;font:var(--t-caption);color:var(--text-metadata);margin-top:6px;"><span>{{ r.n }} lotes · {{ r.gPerKg }} g/kg · C:N {{ r.cn }}</span><span>rango KB {{ r.targetLabel }}</span></div>
-              </div>
-            </sc-for>
-          </div>
-        </div>
-        </sc-if>
-
-        <!-- ===== SALIDAS ===== -->
-        <sc-if value="{{ isTabSalidas }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:18px;">
-          <div style="display:flex;gap:10px;">
-            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">{{ salidasTotal }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">kg cosechados</div></div>
-            <div style="flex:1;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px;"><div style="font-family:var(--font-mono);font-weight:600;font-size:28px;color:var(--ink-0);">{{ salidasCount }}</div><div style="font:var(--t-caption);color:var(--text-metadata);">salidas</div></div>
-          </div>
-
-          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 10px;">Por destino</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <sc-for list="{{ destTotals }}" as="d" hint-placeholder-count="3">
-              <div style="display:flex;align-items:center;gap:12px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;">
-                <span style="width:9px;height:9px;border-radius:50%;background:{{ d.accent }};"></span>
-                <span style="flex:1;font:var(--t-label);color:var(--ink-0);">{{ d.label }}</span>
-                <span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-1);">{{ d.g }} g</span>
-              </div>
-            </sc-for>
-          </div>
-
-          <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);margin:22px 0 4px;">Registro de salidas</div>
-          <div style="display:flex;flex-direction:column;">
-            <sc-for list="{{ salidas }}" as="x" hint-placeholder-count="3">
-              <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border-soft);">
-                <span style="flex:none;font:var(--t-caption);font-family:var(--font-mono);color:var(--text-disabled);width:44px;padding-top:2px;">{{ x.fecha }}</span>
-                <div style="flex:1;min-width:0;">
-                  <div style="display:flex;justify-content:space-between;gap:8px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ x.sppName }} · {{ x.kg }} kg</span><span style="font:var(--t-caption);font-family:var(--font-mono);color:var(--accent-blue-grey-dark);">{{ x.destLabel }}</span></div>
-                  <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:1px;">Lote {{ x.lote }} · Grade {{ x.grade }}</div>
-                </div>
-              </div>
-            </sc-for>
-          </div>
-        </div>
-        </sc-if>
-
-        <!-- ===== CONOCIMIENTO ===== -->
-        <sc-if value="{{ isTabConoc }}" hint-placeholder-val="{{ false }}">
-        <div style="margin-top:18px;">
-          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 16px;max-width:440px;">Nada se añade a la base de conocimiento con una sola observación. La evidencia madura por un ciclo fijo antes de convertirse en SOP.</p>
-          <div class="fos-scroll" style="display:flex;gap:0;overflow-x:auto;padding-bottom:6px;">
-            <sc-for list="{{ knowledgeLifecycle }}" as="k" hint-placeholder-count="7">
-              <div style="flex:none;display:flex;align-items:center;">
-                <div style="display:flex;flex-direction:column;align-items:center;gap:5px;min-width:64px;">
-                  <span style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--ink-1);">{{ k.n }}</span>
-                  <span style="font:var(--t-caption);color:var(--text-secondary);text-align:center;">{{ k.label }}</span>
-                </div>
-                <span style="flex:none;color:var(--border-strong);padding:0 2px;">›</span>
-              </div>
-            </sc-for>
-          </div>
-
-          <div style="margin-top:18px;background:color-mix(in oklab,var(--accent-olive) 12%, var(--paper-0));border:1px solid var(--accent-olive);border-radius:var(--radius-md);padding:15px 16px;">
-            <div style="font:var(--t-label);color:var(--accent-olive);">Preparado para la base de conocimiento</div>
-            <div style="font:var(--t-body-sm);color:var(--ink-1);margin-top:3px;">La evidencia se prepara, no se ingiere automáticamente. Estos resultados esperan validación antes de promoverse a SOP.</div>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
-            <sc-for list="{{ knowledgeItems }}" as="k" hint-placeholder-count="2">
-              <div style="background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:15px 16px;">
-                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;"><span style="font:var(--t-label);color:var(--ink-0);">{{ k.title }}</span><span style="flex:none;font:var(--t-caption);font-weight:800;color:{{ k.accent }};border:1px solid {{ k.accent }};border-radius:var(--radius-md);padding:3px 10px;">{{ k.state }}</span></div>
-                <div style="font:var(--t-caption);color:var(--text-metadata);margin-top:3px;">{{ k.spp }}</div>
-                <div style="font:var(--t-body-sm);color:var(--text-secondary);margin-top:6px;line-height:1.5;">{{ k.note }}</div>
-              </div>
-            </sc-for>
-          </div>
-        </div>
-        </sc-if>
-      </div>
-    </div>
-    </sc-if>
-
     <!-- =================== PLAN =================== -->
     <sc-if value="{{ isPlan }}" hint-placeholder-val="{{ false }}">
     <div style="animation:fos-screen .4s cubic-bezier(.32,.72,.36,1);padding:24px 26px 44px;">
@@ -2133,11 +1917,24 @@ const spCode = k => (SPECIES.find(s=>s.key===k)||{code:'--'}).code;
 // que este rango es DEPENDIENTE DE CEPA (americanas 4-24, alemanas solo bajo
 // 15), asi que el par describe a esta finca y no a la especie -- ver
 // 09_research/intake/app_kb_parameter_discrepancies_2026-09-28.md
+//
+// incCoreMaxT es el techo de temperatura de NUCLEO del bloque, no de aire. Son
+// dos medidas distintas: incT es la consigna que el control regula, el nucleo es
+// una consecuencia del aire mas el calor metabolico del micelio, que Shi et al.
+// 2026 (paper_026) midieron en 4-8 grados por encima del aire durante el pico de
+// colonizacion. Por eso la consigna de aire va POR DEBAJO del techo de nucleo y
+// nunca por encima: con incT [20,24], el nucleo ya llega a 28-32.
+//
+// Solo lo traen pleurotus_ostreatus y lentinula_edodes, que son las dos especies
+// con valor documentado en su ficha de knowledge_base. Las demas NO lo heredan:
+// extrapolar un techo de nucleo a una especie que no lo tiene documentado seria
+// inventar un umbral de seguridad. Ver ADR-0008 y metadata/species.yaml
+// (incubation_core_temp_max_c).
 const KB_SPP = {
   pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,130], cycle:[28,40] },
-  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[13,24], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50] },
+  pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[13,24], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50], incCoreMaxT:28 },
   hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[18,24], incT:[21,24], hr:[90,97], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
-  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150] },
+  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150], incCoreMaxT:28 },
   ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:2000, fae:[4,6], be:[13,40], cycle:[90,180] },
 };
 // Sustratos (substrates.yaml). be = rango de eficiencia biológica documentado.
@@ -2467,7 +2264,7 @@ class Component extends DCLogic {
       const route=navigation
         ?navigation.readLocation(window.location)
         :{view:new URLSearchParams(window.location.search).get('view')||'home'};
-      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
+      const allowed=['home','inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','metricas','labExtraction','bioCheck'];
       if(!allowed.includes(route.view)) return;
       this.setState(s=>({module:'sim',simTab:route.view,simTabNonce:s.simTabNonce+1}));
     }catch(e){}
@@ -2937,7 +2734,7 @@ class Component extends DCLogic {
       ['bodega','Bodega',()=>this.goSimTab('inventario')],
       ['plan','Planificar',()=>this.setState({module:'plan',capture:false,mobileMoreOpen:false})],
       ['sesion','Registrar evento',()=>this.setState({module:'sesion',screen:'home',capture:true,mobileMoreOpen:false})],
-      ['revision','Métricas',()=>this.setState({module:'revision',capture:false,mobileMoreOpen:false})],
+      ['revision','Métricas',()=>this.goSimTab('metricas')],
       ['aprender','Conocimiento',()=>this.setState({module:'aprender',capture:false,mobileMoreOpen:false})],
       ['costes','Costos',()=>this.setState({module:'costes',capture:false,mobileMoreOpen:false})],
       ['calidad','Calidad',()=>this.setState({module:'calidad',capture:false,mobileMoreOpen:false})],
@@ -3349,7 +3146,7 @@ class Component extends DCLogic {
     if(activeWorkspace==='control') workspaceTabs = [
       contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
       contextTab('Cámaras & IoT',(s.module==='sim'&&s.simTab==='clima')||(s.module==='camaras'&&!!s.camDetail),()=>this.goSimTab('clima')),
-      contextTab('Métricas',s.module==='revision',()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false})),
+      contextTab('Métricas',s.module==='sim'&&s.simTab==='metricas',()=>this.goSimTab('metricas')),
     ];
     if(workspaceTabs.length&&!workspaceTabs.some(t=>t.on)) workspaceTabs[0].tabIndex=0;
     const workspaceMoreItems = gated([['costes','Costos'],['calidad','Calidad'],['aprender','Aprender'],['comercial','Comercial']]).map(([m,label])=>({
@@ -3385,7 +3182,7 @@ class Component extends DCLogic {
       navSesionCls:navCls('sesion'), navRevisionCls:navCls('revision'), navCamarasCls:navCls('camaras'),
       navPlanCls:navCls('plan'), navInventarioCls:navCls('inventario'), navCalidadCls:navCls('calidad'), navAprenderCls:navCls('aprender'), navComercialCls:navCls('comercial'),
       curSesion:s.module==='sesion'?'page':undefined, curCamaras:s.module==='camaras'?'page':undefined,
-      curRevision:s.module==='revision'?'page':undefined,
+      curRevision:s.module==='sim'&&s.simTab==='metricas'?'page':undefined,
       navFormularCls:(s.module==='sim'&&s.simTab==='formular')?'on':'', curFormular:(s.module==='sim'&&s.simTab==='formular')?'page':undefined,
       navRecetarioCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curRecetario:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
       navCatalogoCls:(s.module==='sim'&&s.simTab==='catalogo')?'on':'', curCatalogo:(s.module==='sim'&&s.simTab==='catalogo')?'page':undefined,
@@ -3401,7 +3198,7 @@ class Component extends DCLogic {
       navProdCls: PROD_MODS.includes(s.module)?'on':'', navRegCls: REG_MODS.includes(s.module)?'on':'',
       curProd: PROD_MODS.includes(s.module)?'page':undefined, curReg: REG_MODS.includes(s.module)?'page':undefined,
       goProduccion:()=>this.goSimTab('clima'),
-      goRegistro:()=>this.setState({module:'revision',capture:false}),
+      goRegistro:()=>this.goSimTab('metricas'),
       // Abre la hoja de opciones de inmediato. Cambiar solo module dejaba
       // screen:'start' activo (sin plantilla visible), por lo que el botón
       // parecía no responder aunque el estado sí hubiera cambiado.
@@ -3423,7 +3220,7 @@ class Component extends DCLogic {
       goSimInventario:()=>this.goSimTab('inventario'),
       goSimProduccion:()=>this.goSimTab('produccion'),
       goSimSchedule:()=>this.goSimTab('schedule'),
-      goRevision:()=>this.setState({module:'revision',capture:false}),
+      goRevision:()=>this.goSimTab('metricas'),
       goCamaras:()=>this.goSimTab('clima'),
       goPlan:()=>this.setState({module:'plan',capture:false}),
       goInventario:()=>this.setState({module:'inventario',capture:false}),
@@ -3473,7 +3270,7 @@ class Component extends DCLogic {
       simPreselect:s.simPreselect, simPreselectNonce:s.simPreselectNonce,
       simRootStyle:(s.module==='sim'?'width:100%;min-height:100vh;':'display:none;'),
       onSimTabChange:(tab)=>{
-        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
+        const allowed=['inicio','catalogo','formular','inventario','produccion','schedule','clima','bitacora','metricas','labExtraction','bioCheck'];
         if(allowed.includes(tab)&&(tab!==this.state.simTab||this.state.module!=='sim')) this.setState({module:'sim',simTab:tab,workspaceMoreOpen:false});
       },
       onBitSubtabChange:(bitSubtab)=>{
@@ -3920,8 +3717,8 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
-    const SIM_WORKSPACE = {catalogo:'Formular',formular:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
+    const SIM_CRUMB = { metricas:'Métricas', catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
+    const SIM_WORKSPACE = {metricas:'Control',catalogo:'Formular',formular:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
     const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
       inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
       revision:'Control · Métricas', aprender:'Control · Aprender', comercial:'Control · Comercial' };
@@ -4010,11 +3807,11 @@ class Component extends DCLogic {
       hoyPreviewAnomalias: s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length,
       hoyPreviewAnomaliasColor: (s.containers.filter(c=>c.status==='contaminado'||c.status==='descartado').length + s.salidas.filter(x=>x.pesoG<200).length)>0?'var(--status-attention)':'var(--ink-0)',
       hoyPreviewSalidas: (s.salidas.reduce((a,x)=>a+x.pesoG,0)/1000).toFixed(2),
-      goRevEventos:()=>this.setState({module:'revision',reviewTab:'eventos',capture:false,workspaceMoreOpen:false}),
-      goRevRendimiento:()=>this.setState({module:'revision',reviewTab:'rendimiento',capture:false,workspaceMoreOpen:false}),
-      goRevTrabajo:()=>this.setState({module:'revision',reviewTab:'trabajo',capture:false,workspaceMoreOpen:false}),
-      goRevSuper:()=>this.setState({module:'revision',reviewTab:'supervision',capture:false,workspaceMoreOpen:false}),
-      goRevSalidas:()=>this.setState({module:'revision',reviewTab:'salidas',capture:false,workspaceMoreOpen:false}),
+      goRevEventos:()=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:'eventos'});this.goSimTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));},
+      goRevRendimiento:()=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:'rendimiento'});this.goSimTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));},
+      goRevTrabajo:()=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:'trabajo'});this.goSimTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));},
+      goRevSuper:()=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:'supervision'});this.goSimTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));},
+      goRevSalidas:()=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:'salidas'});this.goSimTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));},
       // handoff
       hasHandoff:!!s.handoff, handoffText:s.handoff, handoffDraft:s.handoffDraft,
       setHandoffDraft:(e)=>this.setState({handoffDraft:e.target.value}),

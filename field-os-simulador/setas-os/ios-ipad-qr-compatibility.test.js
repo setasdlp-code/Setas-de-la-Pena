@@ -146,3 +146,11 @@ test('trace.html extrae parámetros de canastillas (?crate= y ?canastilla=) y pr
     'trace.html debe renderizar la canastilla de inmediato sin error de lote no encontrado'
   );
 });
+
+test('etiqueta vertical 50x70: spec de canvas y CSS alineados (QR 40mm, lomo)', () => {
+  const jsx = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, 'sim.css'), 'utf8');
+  assert.match(jsx, /'50x70':\s*\{[^}]*?layout:\s*'vertical'[^}]*?qrMm:\s*40/);
+  assert.match(jsx, /'50mm 70mm'/);
+  assert.match(css, /\.sim-root \.thermal-card-50x70 \.thermal-qr-img\s*\{[^}]*?width:\s*40mm;[^}]*?height:\s*40mm;/s);
+});

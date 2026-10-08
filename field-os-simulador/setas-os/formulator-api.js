@@ -30,9 +30,9 @@
     adapter: nativeAdapter ? 'native' : null,
   });
 
-  const validateRecipe = targetRecipe => {
+  const validateRecipe = (targetRecipe, restoringDraft = false) => {
     const tol = balanceTolerance();
-    if (!Array.isArray(targetRecipe) || targetRecipe.length === 0) {
+    if (!Array.isArray(targetRecipe) || (!restoringDraft && targetRecipe.length === 0)) {
       return 'La receta propuesta debe incluir al menos un ingrediente.';
     }
     const ids = new Set();
@@ -42,19 +42,19 @@
       const pct = Number(row?.p ?? row?.pct);
       if (!id) return 'La receta propuesta contiene un ingrediente sin identificador válido.';
       if (ids.has(id)) return `La receta propuesta repite el ingrediente ${id}.`;
-      if (!Number.isFinite(pct) || pct <= 0) return `El porcentaje de ${id} debe ser un número positivo y finito.`;
+      if (!Number.isFinite(pct) || pct < 0 || (!restoringDraft && pct === 0)) return `El porcentaje de ${id} debe ser un número positivo y finito.`;
       ids.add(id);
       total += pct;
     }
-    if (Math.abs(total - 100) > tol) {
+    if (!restoringDraft && Math.abs(total - 100) > tol) {
       return `La receta propuesta suma ${total.toFixed(2)}%; debe sumar 100% (±${tol}%).`;
     }
     return null;
   };
 
-  const applyRecipe = async (targetRecipe, options = {}) => {
+  const applyRecipeInternal = async (targetRecipe, options = {}, restoringDraft = false) => {
     const names = options.names || {};
-    const validationError = validateRecipe(targetRecipe);
+    const validationError = validateRecipe(targetRecipe, restoringDraft);
     if (validationError) return { ok: false, message: validationError, adapter: nativeAdapter ? 'native' : null };
     if (!nativeAdapter?.applyRecipe) return { ...NO_ADAPTER };
     const before = getRecipe(names);
@@ -93,6 +93,9 @@
     return result;
   };
 
+  // Solo deshacer una transacción propia puede restaurar un borrador incompleto.
+  const applyRecipe = async (targetRecipe, options = {}) => applyRecipeInternal(targetRecipe, options);
+
   const undoRecipe = async (options = {}) => {
     if (!nativeAdapter?.applyRecipe) return { ...NO_ADAPTER };
     if (!lastTransaction) return { ok: false, message: 'No hay un escenario para deshacer.' };
@@ -103,7 +106,7 @@
       return { ok: false, message: 'La receta cambió después del escenario; no se deshizo para evitar sobrescribir ajustes nuevos.' };
     }
     const tx = lastTransaction;
-    const result = await applyRecipe(tx.before, { ...options, names, expectedRecipe: current, force: true, recordHistory: false });
+    const result = await applyRecipeInternal(tx.before, { ...options, names, expectedRecipe: current, force: true, recordHistory: false }, true);
     if (result.ok) lastTransaction = null;
     return result;
   };
@@ -124,7 +127,7 @@
     applyRecipe,
     undoRecipe,
     canUndo: () => !!lastTransaction,
-    validateRecipe,
+    validateRecipe: targetRecipe => validateRecipe(targetRecipe),
     registerNativeAdapter,
     adapterType: () => nativeAdapter ? 'native' : null,
   };

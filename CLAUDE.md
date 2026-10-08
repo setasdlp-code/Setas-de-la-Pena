@@ -21,6 +21,7 @@ Setas de la Peña — cultivo y venta de setas (Tenjo, Colombia). El repo mezcla
 - Antes de escribir código, haz hasta tres preguntas de aclaración si algo sobre requisitos, ubicación de archivos o convenciones existentes es ambiguo (regla ya establecida en `AGENTS.md`).
 - Rama por tarea, commits pequeños, tests completos antes de PR — no commitear directo a `main`.
 - Antes de editar, revisar `git status`/`git diff` para ver si hay cambios pendientes en el working tree.
+- **Para fusionar `main` en una rama: `sh scripts/git/merge-main.sh`.** El bundle (`simulador-app.js`) y `sw.js` están versionados a propósito, así que cualquier rama que toque `simulador-app.jsx` conflicta en ellos aunque el `.jsx` se fusione limpio. El script fusiona y después los reconstruye con `node build.js` desde el `.jsx` ya fusionado, que es la única resolución válida — editarlos o elegir un lado produce un bundle que no corresponde a ningún fuente. Se detiene sin commitear si conflictúa algo que no sea generado.
 
 ## Límites y Alcance
  

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 90dff71f4f076623934d4943d8789610f54db88a00fe0ce5b847b31553dee905
+// source-hash: bc8d47f73f584fef1b53906f7cb2d3e6551d1d8e3328fe7114ebb98a45f0aa83
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3160,9 +3160,13 @@ const runHybridRecipeSearch = ({
   const compatible = (ingredients || []).filter(
     (g) => (!useStock || stockIds.has(g.id)) && (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter = (rec) => analyze(rec, targetKey, ingredients, spp);
+  const analyzeAdapter = (rec) => {
+    const targets = globalThis.SetasSpeciesTargets || globalThis.SetasSpeciesTargetsApi;
+    const candidateSpp = targets?.applyToSpp && spp[targetKey]?.targets ? targets.applyToSpp(spp, targetKey, rec, ingredients) : spp;
+    return analyze(rec, targetKey, ingredients, candidateSpp);
+  };
   const scoreAdapter = (analysis, ctx) => {
-    const treatment = calcTreatment(analysis, targetKey, spp);
+    const treatment = calcTreatment(analysis, targetKey, { ...spp, [targetKey]: analysis.sp });
     return scoreAn(analysis, {
       treatment,
       recipe: ctx.recipe,
@@ -3366,6 +3370,25 @@ const THERMAL_LABEL_SPECS = {
     codeMarginTopPx: 1.5,
     metaPx: 6.5,
     metaMarginTopPx: 2
+  },
+  // Vertical "Lomo": franja negra de 4mm en el borde izquierdo con la marca
+  // en vertical; especie, QR de 40mm, código, bolsa (texto, sin bloque
+  // negro) y fecha · receta. Mismos valores que .thermal-card-50x70 en sim.css.
+  "50x70": {
+    layout: "vertical",
+    wMm: 50,
+    hMm: 70,
+    padXMm: 2.5,
+    padYMm: 2.5,
+    gapPx: 6,
+    qrMm: 40,
+    spineMm: 4,
+    spineText: "SETAS DE LA PEÑA",
+    eyebrowPx: 7,
+    speciesPx: 17,
+    badgePx: 10.5,
+    codePx: 8,
+    metaPx: 7
   }
 };
 function wrapCanvasText(ctx, text, maxW) {
@@ -3416,8 +3439,104 @@ function wrapCanvasText(ctx, text, maxW) {
   if (currentLine) lines.push(currentLine);
   return lines;
 }
+function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
+  const qrMini = typeof window !== "undefined" ? window.QRMini : null;
+  if (!qrMini || typeof qrMini.matrix !== "function") return;
+  const m = qrMini.matrix(item.qrUrl || item.id || "SETAS-OS");
+  const n = m.length;
+  const q = 4;
+  const cell = qrSize / (n + q * 2);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(qrX, qrY, qrSize, qrSize);
+  ctx.fillStyle = "#000";
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (m[r][c]) ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+    }
+  }
+}
+function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
+  const mm = THERMAL_PX_PER_MM;
+  const w = spec.wMm * mm;
+  const h = spec.hMm * mm;
+  const padY = spec.padYMm * mm;
+  const spine = spec.spineMm * mm;
+  const colX = spine + spec.padXMm * mm;
+  const colW = w - colX - spec.padXMm * mm;
+  const cx = colX + colW / 2;
+  const species = (item.species || "Seta Cultivada").trim();
+  const badge = (item.badge || item.bagCode || "").toUpperCase().trim();
+  const code = (item.id || "").trim();
+  const meta = [(item.date || "").trim(), (item.recipe || "").trim()].filter(Boolean).join("  ·  ");
+  const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "#777";
+  ctx.setLineDash([2, 2]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([]);
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, spine, h);
+  const ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  ctx.save();
+  ctx.translate(spine / 2, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = `700 ${ebPx}px ${FONT_MONO}`;
+  ctx.fillStyle = "#fff";
+  ctx.textBaseline = "middle";
+  ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
+  ctx.restore();
+  ctx.fillStyle = "#000";
+  ctx.textBaseline = "top";
+  let curY = padY + cssPxToCanvas(2);
+  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
+  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+  let lines = wrapCanvasText(ctx, species, colW);
+  while (lines.length > 1 && spPx > 18) {
+    spPx -= 2;
+    ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+    lines = wrapCanvasText(ctx, species, colW);
+  }
+  const spLH = Math.round(spPx * 1.05);
+  lines.slice(0, 2).forEach((line) => {
+    center(line, curY);
+    curY += spLH;
+  });
+  curY += cssPxToCanvas(3);
+  const qrSize = spec.qrMm * mm;
+  drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
+  curY += qrSize + cssPxToCanvas(3);
+  const cPx = Math.round(cssPxToCanvas(spec.codePx));
+  ctx.font = `700 ${cPx}px ${FONT_MONO}`;
+  wrapCanvasText(ctx, code, colW).forEach((line) => {
+    center(line, curY);
+    curY += Math.round(cPx * 1.15);
+  });
+  curY += cssPxToCanvas(2);
+  if (badge) {
+    let bPx = Math.round(cssPxToCanvas(spec.badgePx));
+    ctx.font = `800 ${bPx}px ${FONT_MONO}`;
+    const tW = ctx.measureText(badge).width;
+    if (tW > colW) {
+      bPx = Math.max(10, Math.floor(bPx * colW / tW));
+      ctx.font = `800 ${bPx}px ${FONT_MONO}`;
+    }
+    center(badge, curY);
+  }
+  if (meta) {
+    const mPx = Math.round(cssPxToCanvas(spec.metaPx));
+    ctx.font = `500 ${mPx}px ${FONT_MONO}`;
+    center(meta, h - padY - mPx);
+  }
+  ctx.restore();
+}
 function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS["40x30"];
+  if (spec.layout === "vertical") return drawThermalLabelVertical(ctx, item, x0, y0, spec);
   const w = spec.wMm * THERMAL_PX_PER_MM;
   const h = spec.hMm * THERMAL_PX_PER_MM;
   const padX = spec.padXMm * THERMAL_PX_PER_MM;
@@ -3601,7 +3720,26 @@ const ROOM_TARGET_BANDS = {
   incubacion_01: {
     temperature_c: { min: 20, max: 24, target: 22, criticalMin: 12, criticalMax: 30 },
     rh_pct: { min: 65, max: 80, target: 72, criticalMin: 45, criticalMax: 98 },
-    co2_ppm: { min: 400, max: 1500, target: 800, criticalMax: 5e3 }
+    co2_ppm: { min: 400, max: 1500, target: 800, criticalMax: 5e3 },
+    // Temperatura de NÚCLEO del bloque. Hasta ahora la lectura entraba (el
+    // puente la publica y el motor de anomalías ya sabe graduarla y sugerir
+    // "Enfriar sustrato") pero ninguna sala declaraba banda, así que un núcleo a
+    // 32 °C pasaba sin una sola alerta. Esto es lo que lo vuelve accionable.
+    //
+    // Sólo `max`, deliberadamente:
+    //   · no hay `min` porque el piso de núcleo no está documentado en ninguna
+    //     parte, y un mínimo inventado dispara alarmas falsas cada noche fría;
+    //   · no hay `target` porque un núcleo no es una consigna — nadie regula el
+    //     núcleo, se regula el aire (`temperature_c` arriba) y el núcleo es su
+    //     consecuencia más el calor metabólico del micelio.
+    //
+    // 28 °C sale de knowledge_base (`incubation_core_temp_max_c`, ADR-0008) y
+    // coincide en las dos especies que lo documentan, ostreatus y shiitake, así
+    // que vale para esta sala sin importar cuál de las dos la ocupe.
+    // `criticalMax: 30` es el inicio del rango de estrés térmico y aborto que
+    // documenta 01_species/lentinula_edodes.md ("núcleo puede superar 30–32 °C");
+    // se toma el extremo bajo porque es el lado seguro del rango.
+    substrate_temperature_c: { max: 28, criticalMax: 30 }
   }
 };
 const DEMO_ROOM_METRICS = {
@@ -3672,23 +3810,40 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   const [config, setConfigState] = useState(loadLiveTelemetryConfig);
   const [snapshot, setSnapshot] = useState({ at: 0, rooms: {}, status: { connectivity: "offline", transports: [], activeSource: null, altitudeM: 2600 } });
   const [alerts, setAlerts] = useState([]);
+  const [rejected, setRejected] = useState([]);
+  const rejectedRef = useRef([]);
+  const rejectedVersionRef = useRef({ current: 0, emitted: 0 });
   const bridgeRef = useRef(null);
   const engineRef = useRef(null);
   const signatureRef = useRef("");
+  const bandsRef = useRef(bands);
+  const cyclesRef = useRef(cycles);
   useEffect(() => {
     const bridgeLib = typeof window !== "undefined" ? window.SetasLiveBridge : null;
     const anomalyLib = typeof window !== "undefined" ? window.SetasAnomaly : null;
     if (!enabled || !bridgeLib || !anomalyLib) return void 0;
-    const engine = anomalyLib.createAnomalyEngine({ bands });
+    const engine = anomalyLib.createAnomalyEngine({ bands: bandsRef.current });
     const bridge = bridgeLib.createLiveTelemetryBridge({
       transports: buildLiveTransports(config),
       factories: bridgeLib.browserFactories,
       pressureHpa: config.pressureHpa,
-      cycles,
+      cycles: cyclesRef.current,
       // Cada muestra pasa por los umbrales en el momento en que llega; lo que se
       // agrupa en el tick es el render, no la detección.
       onSample: (roomId, sample) => {
         engine.evaluate(roomId, sample);
+      },
+      onReading: (reading) => {
+        if (!reading || !reading.rejected) return;
+        rejectedVersionRef.current.current += 1;
+        rejectedRef.current.push({
+          roomId: reading.room_id || null,
+          deviceId: reading.device_id || null,
+          metric: reading.metric || null,
+          value: reading.value != null ? reading.value : null,
+          reasons: reading.quality_reasons || [],
+          at: Date.now()
+        });
       }
     });
     engineRef.current = engine;
@@ -3696,6 +3851,17 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     bridge.start();
     const pump = () => {
       engine.checkStale();
+      const cutoff = Date.now() - 36e5;
+      const version = rejectedVersionRef.current;
+      const fresh = rejectedRef.current.filter((r) => r.at >= cutoff).slice(-500);
+      if (fresh.length !== rejectedRef.current.length) {
+        rejectedRef.current = fresh;
+        version.current += 1;
+      }
+      if (version.current !== version.emitted) {
+        version.emitted = version.current;
+        setRejected(fresh.slice());
+      }
       const next = bridge.getSnapshot({ buckets: 24 });
       const activeAlerts = engine.activeAlerts();
       const signature = [
@@ -3729,10 +3895,21 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     saveLiveTelemetryConfig(merged);
     setConfigState(merged);
   };
+  const applyBands = (next) => {
+    bandsRef.current = next;
+    if (engineRef.current && typeof engineRef.current.setBands === "function") engineRef.current.setBands(next);
+  };
+  const applyCycles = (next) => {
+    cyclesRef.current = next;
+    if (bridgeRef.current && typeof bridgeRef.current.setCycles === "function") bridgeRef.current.setCycles(next);
+  };
   const roomsWithData = Object.keys(snapshot.rooms || {});
   return {
+    applyBands,
+    applyCycles,
     snapshot,
     alerts,
+    rejected,
     config,
     setConfig,
     ingest,
@@ -3778,12 +3955,18 @@ const getFieldDb = () => {
   return _fieldDbPromise;
 };
 let _fieldRolePromise = null;
+let _fieldRoleUid = null;
 const getFieldOperatorRole = () => {
-  if (_fieldRolePromise) return _fieldRolePromise;
   const fb = typeof window !== "undefined" ? window.SetasFirebase : null;
   const contracts = typeof window !== "undefined" ? window.SetasFieldEventContracts : null;
   const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
-  if (!fb || !contracts || !uid) return Promise.resolve("operario");
+  if (!fb || !contracts || !uid) {
+    _fieldRolePromise = null;
+    _fieldRoleUid = null;
+    return Promise.resolve("operario");
+  }
+  if (_fieldRolePromise && _fieldRoleUid === uid) return _fieldRolePromise;
+  _fieldRoleUid = uid;
   _fieldRolePromise = (async () => {
     try {
       const { doc, getDoc } = await import("./vendor/firebase/firebase-firestore.js");
@@ -3851,6 +4034,46 @@ const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
     setQueueEntry(await readQueueEntry(db, eventId));
   }
 };
+function OperationalMetrics({ data, loaded, error, role, onReview, onBitacora }) {
+  const api = window.SetasOperationalMetrics, nav = window.SetasOSNavigation;
+  const [section, setSection] = React.useState(() => api.normalizeTab(new URLSearchParams(location.search).get("metricsTab")));
+  const [editing, setEditing] = React.useState(null), [reason, setReason] = React.useState(""), [message, setMessage] = React.useState("");
+  React.useEffect(() => {
+    const pop = () => setSection(api.normalizeTab(new URLSearchParams(location.search).get("metricsTab")));
+    window.addEventListener("popstate", pop);
+    return () => window.removeEventListener("popstate", pop);
+  }, []);
+  React.useEffect(() => {
+    const change = () => setSection(api.normalizeTab(new URLSearchParams(location.search).get("metricsTab")));
+    window.addEventListener("setas-metrics-route", change);
+    return () => window.removeEventListener("setas-metrics-route", change);
+  }, []);
+  const choose = (value) => {
+    setSection(value);
+    nav.navigate(window, "metricas", { metricsTab: value });
+    setEditing(null);
+    setMessage("");
+  };
+  const labels = { eventos: "Eventos", rendimiento: "Rendimiento", trabajo: "Trabajo", supervision: "Supervisión", salidas: "Cosechas", conocimiento: "Conocimiento" };
+  const fmt = (n) => n == null ? "—" : n.toLocaleString("es-CO", { maximumFractionDigits: 2 });
+  const button = { minHeight: 48, padding: "10px 14px", border: "1px solid var(--border-soft)", borderRadius: 8, background: "var(--paper-0)", color: "var(--ink-0)", cursor: "pointer" };
+  const canReview = !!window.SetasFirebase?.auth?.currentUser?.uid && ["produccion", "direccion"].includes(role);
+  const submit = (decision) => {
+    try {
+      onReview(editing, decision, reason);
+      setMessage("Revisión guardada en este dispositivo y encolada para sincronizar.");
+      setEditing(null);
+      setReason("");
+    } catch (e) {
+      setMessage(e.message);
+    }
+  };
+  return /* @__PURE__ */ React.createElement("section", { "data-testid": "operational-metrics", style: { maxWidth: 1100, margin: "auto", padding: "20px 16px 80px", color: "var(--ink-0)" } }, /* @__PURE__ */ React.createElement("p", null, "Registros de Bitácora disponibles en este dispositivo · Todos los ciclos · ", (/* @__PURE__ */ new Date()).toLocaleDateString("es-CO", { timeZone: "America/Bogota" })), /* @__PURE__ */ React.createElement("p", null, "Las cifras corresponden a los registros locales y pueden cambiar al sincronizar otros dispositivos."), /* @__PURE__ */ React.createElement("nav", { "aria-label": "Secciones de Métricas", style: { display: "flex", flexWrap: "wrap", gap: 8, margin: "16px 0" } }, api.TABS.map((key) => /* @__PURE__ */ React.createElement("button", { key, style: button, "aria-pressed": section === key, onClick: () => choose(key) }, labels[key]))), error ? /* @__PURE__ */ React.createElement("p", { role: "alert" }, "No se pudieron leer los registros de Bitácora. Revisa el almacenamiento antes de continuar; no se muestran métricas incompletas.") : !loaded ? /* @__PURE__ */ React.createElement("p", { role: "status" }, "Cargando Bitácora.") : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 18, margin: "20px 0" } }, /* @__PURE__ */ React.createElement("span", null, data.lots.length, " lotes"), /* @__PURE__ */ React.createElement("span", null, data.harvests.length, " cosechas válidas"), /* @__PURE__ */ React.createElement("span", null, fmt(data.freshKg), " kg cosechados registrados"), /* @__PURE__ */ React.createElement("span", null, data.eligibility.eligibleN, " ciclos finales elegibles")), data.lots.length === 0 && /* @__PURE__ */ React.createElement("p", null, "No hay lotes registrados. Añade registros en Bitácora para calcular resultados."), section === "rendimiento" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Rendimiento observado"), /* @__PURE__ */ React.createElement("p", { "data-testid": "metrics-mean" }, "EB media por lote final: ", fmt(data.meanEB), data.meanEB == null ? "" : " %"), /* @__PURE__ */ React.createElement("p", null, "EB = masa fresca cosechada ÷ masa seca del sustrato × 100. La media asigna el mismo peso a cada lote final elegible; los ciclos parciales se muestran aparte."), /* @__PURE__ */ React.createElement("p", null, "Meta y umbral de alerta: pendientes de conciliación. ", /* @__PURE__ */ React.createElement("a", { href: "https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/metadata/kpis.yaml", target: "_blank", rel: "noreferrer" }, "Metadatos de KPI"), " y ", /* @__PURE__ */ React.createElement("a", { href: "https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/CANON.md", target: "_blank", rel: "noreferrer" }, "CANON"), " contienen referencias que deben reconciliarse. No se evalúa aceptación con una meta provisional."), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } }, /* @__PURE__ */ React.createElement("caption", null, "Resultados por lote · Fuente: Bitácora"), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Lote / especie", "Masa seca kg", "Masa fresca kg", "EB %", "Resultado"].map((t) => /* @__PURE__ */ React.createElement("th", { key: t, scope: "col", style: { padding: 8, textAlign: "left" } }, t)))), /* @__PURE__ */ React.createElement("tbody", null, data.rows.map((r) => /* @__PURE__ */ React.createElement("tr", { key: r.loteId }, /* @__PURE__ */ React.createElement("th", { scope: "row", style: { padding: 8, textAlign: "left" } }, r.codigo || r.loteId, /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("small", null, r.sKey || "Especie sin referencia")), /* @__PURE__ */ React.createElement("td", null, fmt(r.dryKg)), /* @__PURE__ */ React.createElement("td", null, fmt(r.freshKg)), /* @__PURE__ */ React.createElement("td", null, fmt(r.be)), /* @__PURE__ */ React.createElement("td", null, r.eligible ? "Final elegible" : r.exclusionReason ? r.reasonLabel : "Parcial; excluido de la media"))))))), section === "eventos" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Eventos registrados"), /* @__PURE__ */ React.createElement("p", null, "Cosechas y eventos del historial de los lotes; no incluye sesiones de trabajo sin registro canónico."), !data.events.length && /* @__PURE__ */ React.createElement("p", null, "No hay eventos registrados."), /* @__PURE__ */ React.createElement("ul", null, data.events.map((e, i) => /* @__PURE__ */ React.createElement("li", { key: `${e.eventKey}:${i}` }, e.type, " · ", e.batchId, " · ", e.at || "Fecha no registrada", e.operatorId ? ` · ${e.operatorId}` : "")))), section === "trabajo" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Trabajo"), /* @__PURE__ */ React.createElement("p", null, "No hay una fuente canónica de horas de trabajo conectada a Métricas. Horas y productividad por hora: sin datos.")), section === "supervision" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Supervisión de registros"), /* @__PURE__ */ React.createElement("p", null, "La revisión documenta el hallazgo; la corrección del registro se realiza en Bitácora."), !canReview && /* @__PURE__ */ React.createElement("p", null, "Para revisar se requiere una sesión de Producción o Dirección."), !data.issues.length && /* @__PURE__ */ React.createElement("p", null, "No hay hallazgos en los registros disponibles."), data.issues.map((i) => /* @__PURE__ */ React.createElement("article", { key: i.id, "data-anomaly-id": i.id, style: { padding: 16, border: "1px solid var(--border-soft)", borderRadius: 8, marginBottom: 12, overflowWrap: "anywhere" } }, /* @__PURE__ */ React.createElement("h3", null, i.label), /* @__PURE__ */ React.createElement("p", null, i.review ? `${i.review.payload.decision} · ${i.review.operatorId} · ${i.review.at} · ${i.review.payload.reason}` : "Pendiente de revisión"), canReview && i.reviewable && /* @__PURE__ */ React.createElement("button", { style: button, onClick: () => {
+    setEditing(i);
+    setReason("");
+    setMessage("");
+  } }, "Revisar hallazgo"), editing?.id === i.id && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", null, "Motivo de la revisión", /* @__PURE__ */ React.createElement("textarea", { "aria-label": "Motivo de la revisión", value: reason, onChange: (e) => setReason(e.target.value), style: { display: "block", width: "100%", boxSizing: "border-box", minHeight: 80 } })), /* @__PURE__ */ React.createElement("button", { style: button, disabled: !reason.trim(), onClick: () => submit("validado") }, "Validar observación"), " ", /* @__PURE__ */ React.createElement("button", { style: button, disabled: !reason.trim(), onClick: () => submit("corregir") }, "Marcar para corregir")))), /* @__PURE__ */ React.createElement("h3", null, "Historial de revisiones"), /* @__PURE__ */ React.createElement("ul", null, data.reviews.map((e) => /* @__PURE__ */ React.createElement("li", { key: e.id, style: { overflowWrap: "anywhere" } }, e.payload.anomalyId, " · ", e.payload.decision, " · ", e.operatorId, " · ", e.at, " · ", e.payload.reason)))), section === "salidas" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Cosechas registradas"), /* @__PURE__ */ React.createElement("p", null, "Estas masas corresponden a cosechas. No representan ventas ni despachos."), !data.harvests.length && /* @__PURE__ */ React.createElement("p", null, "No hay cosechas válidas registradas."), /* @__PURE__ */ React.createElement("ul", null, data.harvests.map((c) => /* @__PURE__ */ React.createElement("li", { key: c.id }, c.loteId, " · ", c.id, " · ", c.pesoFresco, " ", c.unit || "g", " · ", c.fecha || "Fecha no registrada")))), section === "conocimiento" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("h2", null, "Evidencia para conocimiento"), /* @__PURE__ */ React.createElement("p", null, data.eligibility.eligibleN, " resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo."), /* @__PURE__ */ React.createElement("p", null, "Los registros parciales y los datos inválidos no se utilizan como resultados finales. Consulta la evidencia y el cierre de cada lote en Bitácora.")), /* @__PURE__ */ React.createElement("button", { style: button, onClick: onBitacora }, "Abrir Bitácora")), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message));
+}
 function SimuladorShell(props) {
   const initialFormDraft = useMemo(() => readFormDraft(), []);
   const [bridgeOpen, setBridgeOpen] = useState(true);
@@ -3945,19 +4168,19 @@ function SimuladorShell(props) {
       return "home";
     }
   });
-  const TAB_LABELS = { home: "Tablero de Control", inicio: "Inicio", catalogo: "Catálogo & Recetario", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", clima: "Cámaras & IoT", bitacora: "Bitácora", bioCheck: "Bio-Check", labExtraction: "Laboratorio" };
+  const TAB_LABELS = { home: "Tablero de Control", inicio: "Inicio", catalogo: "Catálogo & Recetario", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", clima: "Cámaras & IoT", bitacora: "Bitácora", metricas: "Métricas", bioCheck: "Bio-Check", labExtraction: "Laboratorio" };
   const NAV_GROUPS = [
     { key: "inicio", label: "Inicio", tabs: ["home", "inicio"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M3 11l9-7 9 7M5 10v10h14V10" })) },
     { key: "recetas", label: "Formular", tabs: ["catalogo", "formular"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9" })) },
     { key: "produccion", label: "Producción", tabs: ["produccion", "inventario", "schedule"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6" })) },
     { key: "clima", label: "Cámaras & IoT", tabs: ["clima"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "6", width: "14", height: "12", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "m17 10 4-2v8l-4-2M7 10h6M7 14h4" })) },
-    { key: "registro", label: "Bitácora", tabs: ["bitacora"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5" })) },
+    { key: "registro", label: "Bitácora", tabs: ["bitacora", "metricas"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5" })) },
     { key: "lab", label: "Laboratorio", tabs: ["labExtraction", "bioCheck"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6" })) }
   ];
-  const TAB_PAGE_TITLES = { home: "Centro de Mando · Hoy", inicio: "Inicio", catalogo: "Catálogo de especies & Recetario", formular: "Formulador de receta", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma de cultivo", clima: "Cámaras & Telemetría IoT", bitacora: "Bitácora de pruebas", bioCheck: "Checklist Digital de Bioseguridad", labExtraction: "Laboratorio de Extracciones & Tinturas" };
+  const TAB_PAGE_TITLES = { home: "Centro de Mando · Hoy", inicio: "Inicio", catalogo: "Catálogo de especies & Recetario", formular: "Formulador de receta", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma de cultivo", clima: "Cámaras & Telemetría IoT", bitacora: "Bitácora de pruebas", metricas: "Métricas de cultivo", bioCheck: "Checklist Digital de Bioseguridad", labExtraction: "Laboratorio de Extracciones & Tinturas" };
   const [mode, setMode] = useState("receta");
   const RECETA_TABS = ["catalogo", "formular"];
-  const CULTIVO_TABS = ["inventario", "produccion", "schedule", "clima", "bitacora", "labExtraction", "bioCheck"];
+  const CULTIVO_TABS = ["inventario", "produccion", "schedule", "clima", "bitacora", "metricas", "labExtraction", "bioCheck"];
   const TAB_ALIASES = { optimizar: "formular", dashboard: "catalogo" };
   const applyTab = (t) => {
     t = TAB_ALIASES[t] || t;
@@ -4853,6 +5076,7 @@ function SimuladorShell(props) {
   const [noticeDlg, setNoticeDlg] = useState(null);
   const [bitLotes, setBitLotes] = useState([]);
   const [bitLotesLoaded, setBitLotesLoaded] = useState(false);
+  const [metricsLoadError, setMetricsLoadError] = useState(false);
   const initialDeepLinkHandled = useRef(false);
   const [publicSyncStatus, setPublicSyncStatus] = useState(null);
   const qrLotesRef = useRef(bitLotes);
@@ -5179,13 +5403,11 @@ function SimuladorShell(props) {
       setNoticeDlg({ title: "Revisar almacenamiento", msg: e.message });
     }
     try {
-      const bl = localStorage.getItem("sdp_bit_lotes");
-      const bb = localStorage.getItem("sdp_bit_bolsas");
-      const bc = localStorage.getItem("sdp_bit_cosechas");
+      const bl = SetasPrototype.read(localStorage, "sdp_bit_lotes"), bb = SetasPrototype.read(localStorage, "sdp_bit_bolsas"), bc = SetasPrototype.read(localStorage, "sdp_bit_cosechas");
       const bt = localStorage.getItem("sdp_bit_tasks");
-      if (bl) setBitLotes(JSON.parse(bl));
-      if (bb) setBitBolsas(JSON.parse(bb));
-      if (bc) setBitCosechas(JSON.parse(bc));
+      setBitLotes(bl);
+      setBitBolsas(bb);
+      setBitCosechas(bc);
       if (bt) setBitTasks(JSON.parse(bt));
       const bre = localStorage.getItem("sdp_room_events");
       if (bre) setRoomEvents(JSON.parse(bre));
@@ -5206,6 +5428,7 @@ function SimuladorShell(props) {
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       if (sq && syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     } catch (e) {
+      setMetricsLoadError(true);
       setNoticeDlg({ title: "No se pudo cargar la Bitácora", msg: "Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes." });
     } finally {
       setBitLotesLoaded(true);
@@ -5220,13 +5443,15 @@ function SimuladorShell(props) {
     const drainRef = { inFlight: null, again: false };
     const drainOnce = async () => {
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
-      const bitacoraDb = typeof window !== "undefined" ? window.SetasBitacoraDB : null;
+      const remoteDb = typeof window !== "undefined" ? window.SetasRemoteSyncDB : null;
+      const bitacoraDb = typeof window !== "undefined" && window.SetasBitacoraDB ? { ...window.SetasBitacoraDB, ...remoteDb || {} } : null;
       if (!syncQueueApi || !bitacoraDb) return;
       if (typeof navigator !== "undefined" && navigator.onLine === false) return;
       while (!cancelled) {
         const op = syncQueueApi.nextPending(syncQueueRef.current, Date.now());
         if (!op) break;
         const fn = bitacoraDb[op.type];
+        if (typeof fn !== "function" && !remoteDb) break;
         let updatedQueue;
         try {
           if (typeof fn !== "function") throw new Error("Operación desconocida para SetasBitacoraDB: " + op.type);
@@ -5268,6 +5493,384 @@ function SimuladorShell(props) {
       window.removeEventListener("online", onOnline);
     };
   }, []);
+  const deviceSyncCtxRef = useRef({ deviceId: null, n: 0 });
+  const nextDeviceSyncCtx = () => {
+    const r = deviceSyncCtxRef.current;
+    if (!r.deviceId) {
+      try {
+        r.deviceId = localStorage.getItem("sdp_device_id");
+        if (!r.deviceId) {
+          r.deviceId = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+          localStorage.setItem("sdp_device_id", r.deviceId);
+        }
+      } catch (e) {
+        r.deviceId = r.deviceId || "dev_" + Math.random().toString(36).slice(2, 10);
+      }
+    }
+    r.n += 1;
+    return { deviceId: r.deviceId, at: (/* @__PURE__ */ new Date()).toISOString(), nonce: String(r.n) };
+  };
+  const serverSeenRef = useRef(/* @__PURE__ */ new Set());
+  const [roomCycles, setRoomCycles] = useState(() => {
+    try {
+      return SetasPrototype.read(localStorage, "sdp_room_cycles");
+    } catch (e) {
+      return [];
+    }
+  });
+  const [remoteSync, setRemoteSync] = useState({ status: "offline", lastServerAt: null, overdrawn: [], error: null });
+  const [deviceOnline, setDeviceOnline] = useState(typeof navigator === "undefined" || navigator.onLine !== false);
+  useEffect(() => {
+    const on = () => setDeviceOnline(true);
+    const off = () => setDeviceOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  const remoteSyncLabel = () => {
+    const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+    return planner ? planner.describeRemote({ ...remoteSync, online: deviceOnline }) : "";
+  };
+  const remoteSyncNote = () => {
+    const text = remoteSyncLabel();
+    if (!text || text === "Al día con el servidor") return null;
+    return /* @__PURE__ */ React.createElement("span", { "data-testid": "remote-sync-state", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: remoteSync.status === "error" ? "var(--coral-700)" : "var(--ink-2)" } }, "· ", text);
+  };
+  const applyDeviceSyncPlan = (plan) => {
+    if (!plan) return;
+    if (plan.entries && plan.entries.length) {
+      try {
+        SetasPrototype.persist(localStorage, plan.entries);
+      } catch (e) {
+        setRemoteSync((st) => ({ ...st, status: "error", error: e.message }));
+        if (e && e.name === "QuotaExceededError") bitQuotaWarn();
+        return;
+      }
+      const setters = { sdp_bit_lotes: setBitLotes, sdp_bit_bolsas: setBitBolsas, sdp_bit_cosechas: setBitCosechas, sdp_movimientos: setInvMovimientos, sdp_compras: setInvCompras, sdp_proveedores: setInvProveedores, sdp_inv_reservas: setInvReservas, sdp_room_cycles: setRoomCycles };
+      for (const [key, value] of plan.entries) {
+        if (key === "sdp_lotes") {
+          invLotesRef.current = value;
+          setInvLotes(value);
+        } else if (setters[key]) setters[key](value);
+      }
+    }
+    if (plan.ops && plan.ops.length) {
+      const planner = window.SetasDeviceSync;
+      setSyncQueue((prev) => {
+        const { queue, dropped } = planner.enqueueAll(prev, plan.ops, Date.now());
+        if (dropped) console.warn("[SetasDeviceSync] cola llena: " + dropped + " envío(s) quedan para la próxima pasada");
+        syncQueueRef.current = queue;
+        try {
+          localStorage.setItem("sdp_sync_queue", window.SetasSyncQueue.serialize(queue));
+        } catch (e) {
+          bitQuotaWarn();
+        }
+        return queue;
+      });
+    }
+    if (Array.isArray(plan.overdrawn)) {
+      setRemoteSync((st) => JSON.stringify(st.overdrawn) === JSON.stringify(plan.overdrawn) ? st : { ...st, overdrawn: plan.overdrawn });
+    }
+  };
+  const onRemoteSnapshotRef = useRef(null);
+  onRemoteSnapshotRef.current = ({ coleccion, docs, fromCache }) => {
+    const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+    if (!planner) return;
+    let plan;
+    try {
+      plan = planner.planSnapshot({ collection: coleccion, docs, fromCache, read: (k) => SetasPrototype.read(localStorage, k), queue: syncQueueRef.current, ctx: nextDeviceSyncCtx() });
+    } catch (err) {
+      setRemoteSync((st) => ({ ...st, status: "error", error: err.message }));
+      return;
+    }
+    applyDeviceSyncPlan(plan);
+    if (fromCache) return;
+    serverSeenRef.current.add(coleccion);
+    const allSeen = planner.ALL_COLLECTIONS.every((c) => serverSeenRef.current.has(c));
+    setRemoteSync((st) => ({ ...st, status: "live", error: null, lastServerAt: allSeen ? Date.now() : st.lastServerAt }));
+  };
+  useEffect(() => {
+    if (!bitLotesLoaded || !peritoInventoryLoaded) return;
+    let unsubs = [];
+    let cancelled = false;
+    const start = () => {
+      const remote = typeof window !== "undefined" ? window.SetasRemoteSyncDB : null;
+      const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+      if (cancelled || !remote || !planner || unsubs.length) return;
+      unsubs = planner.ALL_COLLECTIONS.map((c) => remote.suscribirColeccion(
+        c,
+        (snap) => {
+          if (!cancelled && onRemoteSnapshotRef.current) onRemoteSnapshotRef.current(snap);
+        },
+        ({ error }) => {
+          if (!cancelled) setRemoteSync((st) => ({ ...st, status: "error", error: String(error && (error.code || error.message) || error) }));
+        }
+      ));
+    };
+    start();
+    window.addEventListener("setas-remote-sync-ready", start);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("setas-remote-sync-ready", start);
+      unsubs.forEach((u) => {
+        try {
+          u();
+        } catch (e) {
+        }
+      });
+    };
+  }, [bitLotesLoaded, peritoInventoryLoaded]);
+  useEffect(() => {
+    if (!bitLotesLoaded || !peritoInventoryLoaded) return;
+    const planner = typeof window !== "undefined" ? window.SetasDeviceSync : null;
+    if (!planner) return;
+    const t = setTimeout(() => {
+      let plan;
+      try {
+        plan = planner.planLocal({ read: (k) => SetasPrototype.read(localStorage, k), queue: syncQueueRef.current, ctx: nextDeviceSyncCtx(), seen: [...serverSeenRef.current] });
+      } catch (err) {
+        console.warn("[SetasDeviceSync] no se pudo registrar el cambio de Bodega", err);
+        return;
+      }
+      applyDeviceSyncPlan(plan);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [invLotes, invCompras, invProveedores, invReservas, invMovimientos, roomCycles, bitLotesLoaded, peritoInventoryLoaded]);
+  const todayExceptions = (() => {
+    const api = typeof window !== "undefined" ? window.SetasTodayExceptions : null;
+    const queueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    if (!api) return [];
+    try {
+      return api.buildTodayExceptions({
+        now: Date.now(),
+        lotes: bitLotes,
+        bolsas: bitBolsas,
+        syncStats: queueApi ? queueApi.stats(syncQueue, Date.now()) : null,
+        remoteSync: { ...remoteSync, online: deviceOnline },
+        overdrawnLots: invLotes.filter((l) => (Number(l.sobregiroKg) || 0) > 0).map((l) => ({ ...l, name: (INGS.find((g) => g.id === l.ingredienteId) || {}).name })),
+        rejected: liveTelemetry.rejected || []
+      });
+    } catch (e) {
+      console.warn("[Hoy] no se pudieron calcular las excepciones", e);
+      return [];
+    }
+  })();
+  const runTodayExceptionAction = (item) => {
+    const a = item && item.action;
+    if (!a) return;
+    if (a.type === "retrySync") {
+      const queueApi = window.SetasSyncQueue;
+      const next = queueApi.retryStuck(syncQueueRef.current, Date.now());
+      syncQueueRef.current = next;
+      setSyncQueue(next);
+      try {
+        localStorage.setItem("sdp_sync_queue", queueApi.serialize(next));
+      } catch (e) {
+      }
+    } else if (a.type === "goBodega") {
+      setInvTab("stock");
+      goTab("inventario");
+    } else if (a.type === "goIoT") {
+      setShowIoTHub(true);
+    } else if (a.type === "openLote" && a.loteId) {
+      openBatchDetail(a.loteId);
+    }
+  };
+  const [notifyPermission, setNotifyPermission] = useState(() => {
+    try {
+      return typeof Notification !== "undefined" ? Notification.permission : "unsupported";
+    } catch (e) {
+      return "unsupported";
+    }
+  });
+  const requestNotifyPermission = () => {
+    try {
+      if (typeof Notification === "undefined") return;
+      Promise.resolve(Notification.requestPermission()).then((p) => setNotifyPermission(p)).catch(() => {
+      });
+    } catch (e) {
+    }
+  };
+  const notifiedRef = useRef(/* @__PURE__ */ new Set());
+  const notifyItems = [
+    ...todayExceptions,
+    ...(liveTelemetry.alerts || []).filter((a) => a.severity === "critico" || a.severity === "alarma").map((a) => ({ id: "clima:" + a.key, severity: "alarma", title: `${a.roomId || "Sala"}: ${a.msg || a.metricLabel || "alerta de clima"}`, detail: a.action || "" }))
+  ];
+  const notifyKey = notifyItems.filter((i) => i.severity === "alarma").map((i) => i.id).sort().join("|");
+  useEffect(() => {
+    const api = typeof window !== "undefined" ? window.SetasTodayExceptions : null;
+    if (!api) return;
+    const { send, notified } = api.notificationsToSend(notifyItems, notifiedRef.current);
+    notifiedRef.current = notified;
+    if (!send.length || notifyPermission !== "granted") return;
+    if (typeof document !== "undefined" && document.visibilityState === "visible") return;
+    const show = (item) => {
+      const opts = { body: item.detail || "", tag: "setas-" + item.id, icon: "favicon.svg" };
+      const swReady = typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.ready ? Promise.race([navigator.serviceWorker.ready, new Promise((_, reject) => setTimeout(() => reject(new Error("sin service worker")), 3e3))]) : Promise.reject(new Error("sin service worker"));
+      const viaSw = swReady.then((reg) => reg.showNotification("Setas OS · " + item.title, opts));
+      viaSw.catch(() => {
+        try {
+          new Notification("Setas OS · " + item.title, opts);
+        } catch (e) {
+        }
+      });
+    };
+    send.slice(0, 3).forEach(show);
+  }, [notifyKey, notifyPermission]);
+  useEffect(() => {
+    const reload = () => {
+      try {
+        setRoomCycles(SetasPrototype.read(localStorage, "sdp_room_cycles"));
+      } catch (e) {
+      }
+    };
+    window.addEventListener("setas-room-cycle-updated", reload);
+    return () => window.removeEventListener("setas-room-cycle-updated", reload);
+  }, []);
+  const [cycleClock, setCycleClock] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setCycleClock(Date.now()), 6e4);
+    return () => clearInterval(t);
+  }, []);
+  const cycleTargetsApi = typeof window !== "undefined" ? window.SetasRoomCycleTargets : null;
+  const effectiveRoomBands = cycleTargetsApi ? cycleTargetsApi.effectiveBands(ROOM_TARGET_BANDS, roomCycles, cycleClock) : ROOM_TARGET_BANDS;
+  const activeRoomCycles = cycleTargetsApi ? cycleTargetsApi.activeCycles(roomCycles, cycleClock) : [];
+  const effectiveBandsKey = JSON.stringify(effectiveRoomBands);
+  useEffect(() => {
+    liveTelemetry.applyBands(effectiveRoomBands);
+    liveTelemetry.applyCycles(activeRoomCycles);
+  }, [effectiveBandsKey, activeRoomCycles.map((c) => c.id).join("|")]);
+  const persistRoomCycles = (next) => {
+    try {
+      SetasPrototype.persist(localStorage, [["sdp_room_cycles", next]]);
+    } catch (e) {
+      setNoticeDlg({ title: "No se pudo guardar el ciclo", msg: e.message });
+      return false;
+    }
+    setRoomCycles(next);
+    return true;
+  };
+  const closeRoomCycle = (cycle, { at = (/* @__PURE__ */ new Date()).toISOString(), list = roomCycles } = {}) => {
+    const closed = { ...cycle, state: "closed", endAt: at };
+    const next = list.map((c) => c.id === cycle.id ? closed : c);
+    if (!persistRoomCycles(next)) return null;
+    try {
+      window.SetasProductionLearning && window.SetasProductionLearning.onCycleClosed({ cycleId: cycle.id });
+    } catch (e) {
+    }
+    return next;
+  };
+  const CYCLE_METRICS = [
+    { key: "temperature_c", label: "Temperatura aire", unit: "°C" },
+    { key: "rh_pct", label: "Humedad relativa", unit: "%" },
+    { key: "co2_ppm", label: "CO₂", unit: "ppm" },
+    { key: "substrate_temperature_c", label: "Temperatura núcleo", unit: "°C" }
+  ];
+  const [cycleForm, setCycleForm] = useState(null);
+  const [cycleFormError, setCycleFormError] = useState("");
+  const toLocalInput = (iso) => {
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) return "";
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+  const suggestedCycleBands = (speciesId, stage, current = {}) => {
+    const sug = cycleTargetsApi ? cycleTargetsApi.suggestTargets(speciesId, stage).targets : {};
+    const out = {};
+    for (const m of CYCLE_METRICS) {
+      if (current[m.key] && current[m.key].source === "manual") {
+        out[m.key] = current[m.key];
+        continue;
+      }
+      const b = sug[m.key];
+      out[m.key] = b ? { min: b.min ?? "", max: b.max ?? "", target: b.target ?? "", source: b.source } : { min: "", max: "", target: "", source: null };
+    }
+    return out;
+  };
+  const openCycleForm = ({ roomId, stage = "incubation", batchIds = null, speciesId = null, previous = null } = {}) => {
+    const room = roomId || selectedClimateRoom || Object.keys(ROOMS_CONFIG)[0];
+    const activos = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    const ids = batchIds || activos.filter((l) => l.sala === room || l.ubicacion === room).map((l) => l.id);
+    const lote = bitLotes.find((l) => ids.includes(l.id));
+    const sp2 = speciesId || lote && (lote.sKey || lote.especie) || "";
+    setCycleFormError("");
+    setCycleForm({ roomId: room, stage, batchIds: ids, speciesId: sp2, startAt: toLocalInput((/* @__PURE__ */ new Date()).toISOString()), notes: "", previousId: previous ? previous.id : null, bands: suggestedCycleBands(sp2, stage) });
+  };
+  const submitCycleForm = () => {
+    const f = cycleForm;
+    const rcApi = window.SetasRoomCycle;
+    if (!f || !rcApi) return;
+    const startIso = f.startAt ? new Date(f.startAt).toISOString() : null;
+    const num = (v) => v === "" || v == null ? null : Number(v);
+    const targets = {};
+    for (const m of CYCLE_METRICS) {
+      const b = f.bands[m.key] || {};
+      if (num(b.min) == null && num(b.max) == null) continue;
+      targets[m.key] = { min: num(b.min), max: num(b.max), target: num(b.target), source: b.source || "manual" };
+    }
+    const cycle = { id: "RC_" + f.roomId + "_" + Date.now(), roomId: f.roomId, speciesId: f.speciesId, batchIds: f.batchIds, stage: f.stage, state: "active", startAt: startIso, endAt: null, targets, notes: f.notes || null, provenance: { type: "manual" } };
+    const errors = rcApi.validateRoomCycle(cycle);
+    if (errors.length) {
+      const msg = {
+        "missing speciesId": "elige la especie",
+        "at least one batchId is required": "selecciona al menos un lote",
+        "invalid startAt": "indica la fecha de inicio"
+      };
+      setCycleFormError("Revisa el ciclo: " + errors.map((e) => msg[e] || (/min exceeds max/.test(e) ? `${e.split(":")[0]}: el mínimo supera el máximo` : e)).join("; ") + ".");
+      return;
+    }
+    let list = roomCycles;
+    const previous = f.previousId ? list.find((c) => c.id === f.previousId) : null;
+    if (previous && previous.state === "active") {
+      const closedList = closeRoomCycle(previous, { at: startIso, list });
+      if (!closedList) return;
+      list = closedList;
+    }
+    if (persistRoomCycles([...list, rcApi.normalizeRoomCycle(cycle)])) setCycleForm(null);
+  };
+  const speciesLabel = (key) => SPP && SPP[key] && SPP[key].name || key || "sin especie";
+  const bandText = (b) => {
+    if (!b) return "—";
+    const parts = [];
+    if (b.min != null && b.max != null) parts.push(`${b.min}–${b.max}`);
+    else if (b.max != null) parts.push(`≤ ${b.max}`);
+    else if (b.min != null) parts.push(`≥ ${b.min}`);
+    if (b.target != null) parts.push(`objetivo ${b.target}`);
+    return parts.join(" · ") || "—";
+  };
+  const renderRoomCyclePanel = () => {
+    const api = cycleTargetsApi;
+    if (!api) return null;
+    const roomId = selectedClimateRoom;
+    const room = ROOMS_CONFIG[roomId] || { name: roomId };
+    const active = api.activeCycleForRoom(roomCycles, roomId, cycleClock);
+    const history = roomCycles.filter((c) => c.roomId === roomId && c.state === "closed").sort((a, b) => String(b.endAt).localeCompare(String(a.endAt))).slice(0, 3);
+    const stageLabel = (st) => api.STAGE_LABELS[st] || st;
+    const next = active ? api.NEXT_STAGE[active.stage] : null;
+    const days = active ? Math.max(0, Math.floor((cycleClock - Date.parse(active.startAt)) / 864e5)) : null;
+    return /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "data-testid": "room-cycle-panel", "aria-labelledby": "room-cycle-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Ciclo de sala · ", room.name), /* @__PURE__ */ React.createElement("h2", { id: "room-cycle-title" }, active ? `${stageLabel(active.stage)} · ${speciesLabel(active.speciesId)}` : "Sin ciclo activo"))), active ? /* @__PURE__ */ React.createElement("div", { "data-testid": "room-cycle-active", "data-stage": active.stage }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-1)", marginBottom: 10 } }, "Día ", days, " · desde ", new Date(active.startAt).toLocaleDateString("es-CO"), " · ", active.batchIds.length, " lote", active.batchIds.length === 1 ? "" : "s", ": ", active.batchIds.map((id) => (bitLotes.find((l) => l.id === id) || {}).codigo || id).join(", ")), /* @__PURE__ */ React.createElement("table", { className: "inventory-stock-table", "data-testid": "room-cycle-bands", style: { width: "100%", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Métrica"), /* @__PURE__ */ React.createElement("th", null, "Banda del ciclo"), /* @__PURE__ */ React.createElement("th", null, "Origen"))), /* @__PURE__ */ React.createElement("tbody", null, CYCLE_METRICS.map((m) => {
+      const b = active.targets && active.targets[m.key];
+      const has = b && (b.min != null || b.max != null);
+      return /* @__PURE__ */ React.createElement("tr", { key: m.key, "data-metric": m.key }, /* @__PURE__ */ React.createElement("td", null, m.label), /* @__PURE__ */ React.createElement("td", null, has ? `${bandText(b)} ${m.unit}` : "Banda fija de la sala"), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, has ? api.SOURCE_LABELS[b.source] || b.source : "—")));
+    }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, next && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: () => openCycleForm({ roomId, stage: next, batchIds: active.batchIds, speciesId: active.speciesId, previous: active }) }, "Avanzar a ", stageLabel(next)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setConfirmDlg({ title: "Cerrar ciclo de sala", msg: `¿Cerrar el ciclo de ${stageLabel(active.stage)} en ${room.name}? La sala vuelve a sus bandas fijas y se registra la evidencia de cada lote.`, confirmLabel: "Cerrar ciclo", onConfirm: () => closeRoomCycle(active) }) }, "Cerrar ciclo"))) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-1)", margin: "0 0 10px" } }, "Las alertas usan las bandas fijas de la sala. Inicia un ciclo para usar las de la especie y etapa que hay dentro."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", "data-testid": "room-cycle-start", onClick: () => openCycleForm({ roomId }) }, "Iniciar ciclo")), history.length > 0 && /* @__PURE__ */ React.createElement("details", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", cursor: "pointer" } }, "Ciclos anteriores (", history.length, ")"), /* @__PURE__ */ React.createElement("ul", { style: { margin: "6px 0 0", paddingLeft: 18, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)" } }, history.map((c) => /* @__PURE__ */ React.createElement("li", { key: c.id }, stageLabel(c.stage), " · ", speciesLabel(c.speciesId), " · ", new Date(c.startAt).toLocaleDateString("es-CO"), " – ", new Date(c.endAt).toLocaleDateString("es-CO"))))), cycleForm && renderCycleForm());
+  };
+  const renderCycleForm = () => {
+    const api = cycleTargetsApi;
+    const f = cycleForm;
+    const set = (patch) => setCycleForm((prev) => ({ ...prev, ...patch }));
+    const activos = bitLotes.filter((l) => !["completado", "descartado"].includes(l.estado));
+    const speciesOptions = [...new Set([f.speciesId, ...activos.filter((l) => f.batchIds.includes(l.id)).map((l) => l.sKey || l.especie)].filter(Boolean))];
+    const setBand = (key, field, value) => setCycleForm((prev) => ({ ...prev, bands: { ...prev.bands, [key]: { ...prev.bands[key], [field]: value, source: "manual" } } }));
+    const CYCLE_INP = { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 10px", minHeight: 44, background: "var(--paper-0)", color: "var(--ink-0)", width: "100%", boxSizing: "border-box" };
+    const lbl = { display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 4 };
+    return /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setCycleForm(null), label: f.previousId ? "Avanzar ciclo de sala" : "Iniciar ciclo de sala", dialogStyle: { width: 640, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 80px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", margin: "0 0 12px" } }, f.previousId ? "Avanzar ciclo de sala" : "Iniciar ciclo de sala"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", null, /* @__PURE__ */ React.createElement("span", { style: lbl }, "Sala"), /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala del ciclo", style: CYCLE_INP, value: f.roomId, disabled: !!f.previousId, onChange: (e) => set({ roomId: e.target.value }) }, Object.values(ROOMS_CONFIG).map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), /* @__PURE__ */ React.createElement("label", null, /* @__PURE__ */ React.createElement("span", { style: lbl }, "Etapa"), /* @__PURE__ */ React.createElement("select", { "aria-label": "Etapa del ciclo", style: CYCLE_INP, value: f.stage, onChange: (e) => set({ stage: e.target.value, bands: suggestedCycleBands(f.speciesId, e.target.value, f.bands) }) }, Object.entries(api.STAGE_LABELS).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v)))), /* @__PURE__ */ React.createElement("label", null, /* @__PURE__ */ React.createElement("span", { style: lbl }, "Especie"), /* @__PURE__ */ React.createElement("select", { "aria-label": "Especie del ciclo", style: CYCLE_INP, value: f.speciesId, onChange: (e) => set({ speciesId: e.target.value, bands: suggestedCycleBands(e.target.value, f.stage, f.bands) }) }, !f.speciesId && /* @__PURE__ */ React.createElement("option", { value: "" }, "Elige especie"), (speciesOptions.length ? speciesOptions : Object.keys(SPP || {})).map((k) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, speciesLabel(k))))), /* @__PURE__ */ React.createElement("label", null, /* @__PURE__ */ React.createElement("span", { style: lbl }, "Inicio"), /* @__PURE__ */ React.createElement("input", { "aria-label": "Inicio del ciclo", type: "datetime-local", style: CYCLE_INP, value: f.startAt, onChange: (e) => set({ startAt: e.target.value }) }))), /* @__PURE__ */ React.createElement("fieldset", { style: { border: "1px solid var(--border-hairline)", padding: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("legend", { style: lbl }, "Lotes en la sala"), activos.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)" } }, "No hay lotes activos en Bitácora."), activos.map((l) => /* @__PURE__ */ React.createElement("label", { key: l.id, style: { display: "flex", alignItems: "center", gap: 8, minHeight: 44, fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: f.batchIds.includes(l.id), onChange: (e) => set({ batchIds: e.target.checked ? [...f.batchIds, l.id] : f.batchIds.filter((x) => x !== l.id) }) }), l.codigo || l.id, " · ", speciesLabel(l.sKey || l.especie), l.sala ? ` · ${(ROOMS_CONFIG[l.sala] || {}).name || l.sala}` : ""))), /* @__PURE__ */ React.createElement("fieldset", { style: { border: "1px solid var(--border-hairline)", padding: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("legend", { style: lbl }, "Bandas de clima"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginBottom: 8 } }, "Sugeridas desde ", api.KB_SOURCE, ". Un valor que cambies queda como consigna de la granja. Una métrica vacía usa la banda fija de la sala."), CYCLE_METRICS.map((m) => {
+      const b = f.bands[m.key] || {};
+      return /* @__PURE__ */ React.createElement("div", { key: m.key, "data-band": m.key, style: { display: "grid", gridTemplateColumns: "minmax(120px,1.4fr) 1fr 1fr minmax(120px,1.2fr)", gap: 8, alignItems: "center", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)" } }, m.label, " (", m.unit, ")"), /* @__PURE__ */ React.createElement("input", { "aria-label": `${m.label} mínimo`, type: "number", inputMode: "decimal", style: CYCLE_INP, value: b.min ?? "", onChange: (e) => setBand(m.key, "min", e.target.value), placeholder: "mín" }), /* @__PURE__ */ React.createElement("input", { "aria-label": `${m.label} máximo`, type: "number", inputMode: "decimal", style: CYCLE_INP, value: b.max ?? "", onChange: (e) => setBand(m.key, "max", e.target.value), placeholder: "máx" }), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance", "data-band-source": b.source || "none" }, b.source ? api.SOURCE_LABELS[b.source] || b.source : "Sin valor en la KB"));
+    })), /* @__PURE__ */ React.createElement("label", null, /* @__PURE__ */ React.createElement("span", { style: lbl }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { "aria-label": "Notas del ciclo", style: { ...CYCLE_INP, width: "100%", minHeight: 60 }, value: f.notes, onChange: (e) => set({ notes: e.target.value }) })), cycleFormError && /* @__PURE__ */ React.createElement("div", { role: "alert", style: { color: "var(--coral-700)", fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", marginTop: 8 } }, cycleFormError), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setCycleForm(null) }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: submitCycleForm }, f.previousId ? "Cerrar etapa y avanzar" : "Iniciar ciclo")));
+  };
   useEffect(() => {
     if (!bitLotesLoaded || initialDeepLinkHandled.current) return;
     initialDeepLinkHandled.current = true;
@@ -5744,29 +6347,7 @@ function SimuladorShell(props) {
         profileKey: optProfile || "produccion",
         spp: SetasSpeciesTargetsApi.applyToSpp(SPP, sKey, [], INGS)
       });
-      let cand = r.recommended && r.recommended[0] || r.ranked && r.ranked[0] || r.pareto && r.pareto[0] || (r.best?.recipe?.length ? r.best : null);
-      if (!cand || !cand.recipe || !cand.recipe.length) {
-        const availableBases = availableStockIds.filter((id) => INGS.find((g) => g.id === id)?.role === "base_carbono");
-        const availableSupps = availableStockIds.filter((id) => {
-          const role = INGS.find((g) => g.id === id)?.role;
-          return role === "suplemento_n" || role === "suplemento_medio";
-        });
-        if (availableBases.length) {
-          const baseId = availableBases[0];
-          const suppId = availableSupps.length ? availableSupps[0] : null;
-          const hasCal = availableStockIds.includes("carbonato_calcio");
-          const hasYeso = availableStockIds.includes("yeso");
-          const calPct = hasCal ? 3 : 0;
-          const yesoPct = hasYeso ? 2 : 0;
-          const suppPct = suppId ? 15 : 0;
-          const basePct = 100 - calPct - yesoPct - suppPct;
-          const fallbackRec = [{ id: baseId, pct: basePct }];
-          if (suppId) fallbackRec.push({ id: suppId, pct: suppPct });
-          if (hasCal) fallbackRec.push({ id: "carbonato_calcio", pct: calPct });
-          if (hasYeso) fallbackRec.push({ id: "yeso", pct: yesoPct });
-          cand = { recipe: fallbackRec };
-        }
-      }
+      const cand = [...r.recommended || [], ...r.ranked || [], ...r.pareto || [], r.best].find((c) => c?.evaluation?.allowed && c.recipe?.length);
       if (!cand || !cand.recipe || !cand.recipe.length) {
         setNoticeDlg({
           title: "Sin combinación viable con stock actual",
@@ -5774,7 +6355,7 @@ function SimuladorShell(props) {
         });
         return;
       }
-      const formatted = cand.recipe.map((item) => ({ id: item.id, pct: Number(item.p || item.pct || 0) }));
+      const formatted = cand.recipe.map((item) => ({ id: item.id, p: Number(item.p ?? item.pct ?? 0) }));
       setRecipe(formatted);
       const maxBatch = calcMaxBatchFromStock(cand.recipe, stockMap, 10, sp?.moisture?.ideal || 65, INGS);
       setNoticeDlg({
@@ -6141,7 +6722,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     let consumoRegistrado = false;
     try {
       const now = Date.now();
-      const form = { codigo: loteNum, especie: SPP[sKey]?.name || sKey, especieCientifico: SPP[sKey]?.scientific || "", cepa: "", fechaMezcla: fecha, fechaInoculacion: fecha, numBolsas: parseInt(prodBags) || 1, pesoHumedo: prodKg || 1.5, humedad: prodH || an?.moistureTarget || 65, sala: selectedClimateRoom || "martha_01", operador: "Operario Granja Tenjo", notas: "Hoja de producción" };
+      const form = { codigo: loteNum, especie: SPP[sKey]?.name || sKey, especieCientifico: SPP[sKey]?.scientific || "", cepa: "", strainId: "", spawnLotId: "", fechaMezcla: fecha, fechaInoculacion: fecha, numBolsas: parseInt(prodBags) || 1, pesoHumedo: prodKg || 1.5, humedad: prodH || an?.moistureTarget || 65, sala: selectedClimateRoom || "martha_01", operador: "Operario Granja Tenjo", notas: "Hoja de producción" };
       const { lote, bolsas } = SetasLaunchPlanApi.buildLoteRecords({ form, plan, analysis: an, treatmentName: tr?.name, recipe, sKey, recipeName: saveName, score: opt ? opt.score : 0, now, estado: "planificado", objetivo: "Planificado desde el Formulador" });
       applyPrototypeEntries(SetasPrototype.planBatch(localStorage, { lote, bolsas, plan, selection: selectedTrial }));
       setSelectedTrial(null);
@@ -6228,6 +6809,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       especie: sp2?.name || "",
       especieCientifico: sp2?.scientific || "",
       cepa: "",
+      strainId: "",
+      spawnLotId: "",
       fechaMezcla: "",
       fechaInoculacion: "",
       numBolsas: "",
@@ -6369,6 +6952,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
       especie: sp2?.name || "",
       especieCientifico: sp2?.scientific || "",
       cepa: "",
+      strainId: "",
+      spawnLotId: "",
       fechaMezcla: today,
       fechaInoculacion: today,
       numBolsas: nb,
@@ -7379,6 +7964,13 @@ BATCH (${numBags}×${kgBag} kg):
     saveInvOps(readInvOps().map((o) => o.status === "failed" ? { ...o, nextAttemptAt: 0 } : o));
     runInventorySync();
   } }, "Reintentar ahora")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, [["stock", "Stock"], ["compra", "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k) }, l))), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
+    const sobregirados = invLotes.filter((l) => (Number(l.sobregiroKg) || 0) > 0);
+    if (!sobregirados.length) return null;
+    return /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "inventory-overdraw", className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)", marginBottom: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Recuento necesario (", sobregirados.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginBottom: 6 } }, "Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Cuenta el lote y corrige su stock."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, sobregirados.map((l) => {
+      const g = INGS.find((x) => x.id === l.ingredienteId);
+      return /* @__PURE__ */ React.createElement("span", { key: l.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--coral-300)", borderRadius: 2, color: "color-mix(in oklab, var(--coral-700) 70%, black)" } }, g ? g.name : l.ingredienteId, " · lote ", l.fechaIngreso || l.id, ": ", Number(l.sobregiroKg).toFixed(1), " kg de más");
+    })));
+  })(), (() => {
     const ledgerApi = window.SetasInventoryLedger;
     const incomingCompras = window.SetasPurchases ? window.SetasPurchases.incomingFromCompras(invCompras) : [];
     const availabilityFor = (ingId) => ledgerApi.availability(ingId, { lots: invLotes, ledger: invReservas, incoming: incomingCompras, nowMs: Date.now() });
@@ -7600,6 +8192,18 @@ BATCH (${numBags}×${kgBag} kg):
     };
   }, []);
   const operatorRole = fieldOperatorRole;
+  const metricsData = React.useMemo(() => window.SetasOperationalMetrics.derive(bitLotes, bitBolsas, bitCosechas), [bitLotes, bitBolsas, bitCosechas]);
+  const goMetrics = (section) => {
+    window.SetasOSNavigation.navigate(window, "metricas", { metricsTab: section });
+    goTab("metricas");
+    window.dispatchEvent(new Event("setas-metrics-route"));
+  };
+  const saveMetricsReview = (issue, decision, reason) => {
+    const result = window.SetasOperationalMetrics.saveReview({ storage: localStorage, prototype: window.SetasPrototype, queue: window.SetasSyncQueue, auth: window.SetasFirebase?.auth?.currentUser, role: fieldOperatorRole, anomalyId: issue.id, expectedSnapshot: issue.snapshot || null, decision, reason, id: crypto.randomUUID(), at: (/* @__PURE__ */ new Date()).toISOString() });
+    syncQueueRef.current = result.queue;
+    setBitLotes(result.lots);
+    setSyncQueue(result.queue);
+  };
   const peritoContextFor = (lote, sheet) => {
     const api = typeof window !== "undefined" ? window.SetasPeritoContext : null;
     if (!api || !sheet || !lote) return null;
@@ -8125,7 +8729,7 @@ BATCH (${numBags}×${kgBag} kg):
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
       const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
-      return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "sdp-sync-chip " + (st.stuck > 0 ? "sdp-sync-chip--error" : st.pending > 0 ? "sdp-sync-chip--pending" : "sdp-sync-chip--synced") }, label), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+      return /* @__PURE__ */ React.createElement("div", { "data-testid": "sync-indicator", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true", className: "sdp-sync-chip " + (st.stuck > 0 ? "sdp-sync-chip--error" : st.pending > 0 ? "sdp-sync-chip--pending" : "sdp-sync-chip--synced") }, label), remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
         try {
@@ -8147,7 +8751,7 @@ BATCH (${numBags}×${kgBag} kg):
     const roomName = sheet && sheet.room ? sheet.room.name : roomId;
     const roomLiveNow = roomId ? liveTelemetry.roomLive(roomId) : null;
     const roomSample = roomLiveNow && roomLiveNow.sample || {};
-    const targetBands = roomId ? ROOM_TARGET_BANDS[roomId] : null;
+    const targetBands = roomId ? effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null : null;
     const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
     const buildReading = (metricKey, label, unit, decimals) => {
       const band = targetBands && targetBands[metricKey];
@@ -8184,7 +8788,7 @@ BATCH (${numBags}×${kgBag} kg):
       const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
       const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
       const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
-      return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", className: `sdp-sync sdp-sync--${st.stuck > 0 ? "error" : st.pending > 0 ? "pending" : "synced"}` }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", className: `sdp-sync sdp-sync--${st.stuck > 0 ? "error" : st.pending > 0 ? "pending" : "synced"}` }, label, remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
         const next = syncQueueApi.retryStuck(syncQueue, Date.now());
         setSyncQueue(next);
         try {
@@ -8323,7 +8927,7 @@ BATCH (${numBags}×${kgBag} kg):
       lotesEnSala.map((l) => l.especie || l.speciesKey || l.sKey).filter(Boolean)
     ));
     const coCultRoomOpt = activeSpeciesInRoom.length > 1 ? typeof engineOptimizeChamberSetpoints === "function" ? engineOptimizeChamberSetpoints(activeSpeciesInRoom) : typeof SetasCoCultivation !== "undefined" && typeof SetasCoCultivation.optimizeChamberSetpoints === "function" ? SetasCoCultivation.optimizeChamberSetpoints(activeSpeciesInRoom) : null : null;
-    const defaultTargets = ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
+    const defaultTargets = effectiveRoomBands[selectedClimateRoom] || ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
     const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: "referencia de modelo · sin lectura de sonda" };
     const physicalMetrics = selectedCamera ? {
@@ -8738,7 +9342,7 @@ BATCH (${numBags}×${kgBag} kg):
           "Sanitizar sala"
         )
       );
-    }))), /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
+    }))), renderRoomCyclePanel(), /* @__PURE__ */ React.createElement("section", { className: "climate-overview", "aria-labelledby": "climate-overview-title" }, /* @__PURE__ */ React.createElement("div", { className: "climate-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "climate-eyebrow" }, "Planta de Tenjo · ", LIVE_CONNECTIVITY_LABEL[liveTelemetry.status.connectivity] || "—", liveTelemetry.status.activeSource ? ` · ${liveTelemetry.status.activeSource}` : ""), /* @__PURE__ */ React.createElement("h2", { id: "climate-overview-title" }, "Módulos ambientales")), /* @__PURE__ */ React.createElement("div", { className: "climate-overview-actions" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         type: "button",
@@ -9081,7 +9685,7 @@ BATCH (${numBags}×${kgBag} kg):
     const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     const st = syncQueueApi ? syncQueueApi.stats(syncQueue, Date.now()) : { pending: 0, stuck: 0 };
     const label = syncQueueApi ? syncQueueApi.describeForOperator(st) : "Sincronizado";
-    return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "#C53030" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
+    return /* @__PURE__ */ React.createElement("span", { "data-testid": "sync-indicator", role: "status", "aria-live": "polite", "aria-atomic": "true", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: st.stuck > 0 ? "#C53030" : st.pending > 0 ? "var(--ink-500)" : "inherit", marginLeft: 8, alignSelf: "center", display: "flex", alignItems: "center", gap: 6 } }, label, remoteSyncNote(), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => {
       const next = syncQueueApi.retryStuck(syncQueue, Date.now());
       setSyncQueue(next);
       try {
@@ -9468,7 +10072,11 @@ BATCH (${numBags}×${kgBag} kg):
       };
       const t = tones[kpi.tone];
       return /* @__PURE__ */ React.createElement("span", { key: kpi.label, style: { display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", padding: "6px 10px", background: t.bg, border: `1px solid ${t.border}`, borderRadius: 0, color: t.ink, fontWeight: t.weight } }, /* @__PURE__ */ React.createElement(kpi.icon, { size: 12 }), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: t.ink } }, kpi.value), " ", kpi.label);
-    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-0)", border: `1px solid ${operationStatus.color}`, borderRadius: 0, color: operationStatus.color } }, operationStatus.label))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "SCD30 · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : "")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+    }), /* @__PURE__ */ React.createElement("span", { role: "status", "aria-label": `Estado operativo: ${operationStatus.label}`, style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", padding: "6px 10px", background: "var(--paper-0)", border: `1px solid ${operationStatus.color}`, borderRadius: 0, color: operationStatus.color } }, operationStatus.label))), (props.hasHandoff === true || props.hasHandoff === "true") && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--accent-blue-grey)", borderRadius: 0, padding: "10px 14px", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent-blue-grey)" } }, "Traspaso del turno anterior"), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onClearHandoff && props.onClearHandoff(), className: "home-handoff-dismiss", style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)" } }, "Leído [×]")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, props.handoffText)))), /* @__PURE__ */ React.createElement("div", { className: "home-operational-queue", "data-testid": "ux-v2-today", style: { marginTop: 18, display: "flex", flexDirection: "column", gap: 16 } }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0 && /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--atencion", "aria-label": "Banda 1: Atención Inmediata", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-error,#B53A25)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-error,#B53A25)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-error,#B53A25)" } }, "Banda 1 · Atención"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Sensores · Sincronización · Cuarentena · Insumos")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length, " excepción", liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? "" : "es")), liveTelemetry.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement(LiveAlertsSection, null)), todayExceptions.length > 0 && /* @__PURE__ */ React.createElement("ul", { "data-testid": "today-exceptions", style: { listStyle: "none", margin: "0 0 12px", padding: 0, display: "flex", flexDirection: "column", gap: 8 } }, todayExceptions.map((item) => {
+      const alarma = item.severity === "alarma";
+      const ink = alarma ? "var(--status-error,#B53A25)" : "var(--status-warn-text)";
+      return /* @__PURE__ */ React.createElement("li", { key: item.id, "data-exception-kind": item.kind, "data-severity": item.severity, className: `sdp-task ${alarma ? "sdp-task--critical" : ""}`, style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "10px 14px", borderLeft: `3px solid ${ink}` } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: "1 1 240px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: ink, border: `1px solid ${ink}`, padding: "1px 5px" } }, alarma ? "Alarma" : "Vigilar"), /* @__PURE__ */ React.createElement("strong", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, item.title)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 4, lineHeight: 1.4 } }, item.detail)), item.action && /* @__PURE__ */ React.createElement("button", { type: "button", className: "sdp-btn sdp-btn--field", onClick: () => runTodayExceptionAction(item) }, item.action.label));
+    })), notifyPermission === "default" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12, fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)" } }, /* @__PURE__ */ React.createElement("span", null, "Recibe estas alarmas como notificación mientras la app esté abierta en este equipo."), /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "enable-notifications", className: "sdp-btn sdp-btn--field", onClick: requestNotifyPermission }, "Avisarme en este equipo")), criticalStockItems.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "sdp-alert sdp-alert--warn stock-critical-card", style: { marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderRadius: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-alert__body", style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-alert__label", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--status-warn-text)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Alerta de Stock Crítico (", criticalStockItems.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, criticalStockItems.slice(0, 3).map(({ ing, stockKg, threshold, entranteKg }) => /* @__PURE__ */ React.createElement("span", { key: ing.id, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "2px 6px", background: "var(--paper-0)", border: "1px solid var(--rule)", borderRadius: 0, color: "var(--status-warn-text)" } }, ing.name, ": ", stockKg.toFixed(1), " kg (< ", threshold, " kg)", entranteKg > 0 ? ` (+${entranteKg.toFixed(1)} kg en camino)` : "")), criticalStockItems.length > 3 && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-2)", padding: "2px 4px" } }, "+", criticalStockItems.length - 3, " más"))), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
       setInvTab("compra");
       goTab("inventario");
     }, style: { background: "none", border: "none", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline", cursor: "pointer", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center" } }, "Registrar Compra +")), criticalLots.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, criticalLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--critical", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-error)", border: "1px solid var(--status-error)", padding: "1px 5px" } }, item.bucket === "critical" ? "Crítico" : "Bloqueo"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Abrir lote →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))) : liveTelemetry.alerts.length === 0 && criticalStockItems.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", padding: "4px 0" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, color: "var(--status-ok)" }), " Sin excepciones fuera de banda ni bloqueos. Cámaras y stock dentro de rango nominal."))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--ahora", "aria-label": "Banda 2: Ahora Turno en Curso", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--status-ok,#2E3B2F)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--status-ok,#2E3B2F)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--status-ok,#2E3B2F)" } }, "Banda 2 · Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Registro de campo")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, nowLots.length + tasksHoy.filter((t) => !t.done).length, " pendiente", nowLots.length + tasksHoy.filter((t) => !t.done).length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "home-quick-actions-strip", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8, marginBottom: 14 } }, [
@@ -9535,6 +10143,7 @@ BATCH (${numBags}×${kgBag} kg):
         },
         /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { width: 8, height: 8, borderRadius: 0, display: "inline-block", background: st.stuck > 0 ? "var(--coral-700)" : st.pending > 0 ? "var(--ochre-500)" : "var(--moss-700)" } }),
         label,
+        remoteSyncNote(),
         st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
           const next = syncQueueApi.retryStuck(syncQueue, Date.now());
           setSyncQueue(next);
@@ -9557,11 +10166,11 @@ BATCH (${numBags}×${kgBag} kg):
       },
       "Cerrar jornada"
     ))), /* @__PURE__ */ React.createElement("details", { className: "home-secondary-summary", "data-testid": "today-record-summary" }, /* @__PURE__ */ React.createElement("summary", null, "Resumen del registro de cultivo"), /* @__PURE__ */ React.createElement("div", { className: "home-registro-row", style: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-widest, 0.12em)", textTransform: "uppercase", color: "var(--ink-2, #6B6759)", flexShrink: 0 } }, "Registro de cultivo · vista previa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, flex: 1 } }, [
-      { label: "Eventos", value: props.hoyPreviewEventos, onClick: props.onGoRevEventos },
-      { label: "Rendimiento (EB)", value: `${props.hoyPreviewBe}%`, onClick: props.onGoRevRendimiento },
-      { label: "Trabajo", value: `${props.hoyPreviewHoras} h`, onClick: props.onGoRevTrabajo },
-      { label: "Supervisión", value: props.hoyPreviewAnomalias, onClick: props.onGoRevSuper, color: props.hoyPreviewAnomaliasColor },
-      { label: "Salidas", value: `${props.hoyPreviewSalidas} kg`, onClick: props.onGoRevSalidas }
+      { label: "Eventos", value: !metricsLoadError && bitLotesLoaded ? metricsData.events.length : "—", onClick: () => goMetrics("eventos") },
+      { label: "Rendimiento (EB)", value: metricsLoadError ? "Sin datos" : metricsData.meanEB == null ? "Sin finales" : `${metricsData.meanEB.toFixed(1)}%`, onClick: () => goMetrics("rendimiento") },
+      { label: "Trabajo", value: "Sin datos", onClick: () => goMetrics("trabajo") },
+      { label: "Supervisión", value: !metricsLoadError && bitLotesLoaded ? metricsData.issues.filter((i) => !i.review).length : "—", onClick: () => goMetrics("supervision") },
+      { label: "Cosechas", value: bitLotesLoaded ? `${metricsData.freshKg.toFixed(2)} kg` : "—", onClick: () => goMetrics("salidas") }
     ].map((m) => /* @__PURE__ */ React.createElement("button", { key: m.label, onClick: () => m.onClick && m.onClick(), className: "home-registro-chip", style: { cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "6px 12px", minHeight: 44, minWidth: 44 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: m.color || "var(--ink-0)" } }, m.value)))), /* @__PURE__ */ React.createElement("button", { onClick: () => props.onGoRegistro && props.onGoRegistro(), style: { cursor: "pointer", background: "none", border: "none", padding: "8px 12px", minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--accent-terracotta)", flexShrink: 0, whiteSpace: "nowrap" } }, "Ver registro completo →"))), /* @__PURE__ */ React.createElement("details", { className: "home-secondary-summary", "data-testid": "today-telemetry-summary" }, /* @__PURE__ */ React.createElement("summary", null, "Lecturas de salas y conexión"), /* @__PURE__ */ React.createElement("div", { className: "home-live-telemetry", style: { marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement(LiveTelemetryStatusBar, null), /* @__PURE__ */ React.createElement(LiveClimateStrip, null))), /* @__PURE__ */ React.createElement("section", { className: "sdp-band sdp-band--despues", "aria-label": "Banda 3: Después y Monitoreo", style: { background: "var(--surface-page,#F6F4EC)", border: "1px solid var(--border-heavy,#222222)", borderLeft: "5px solid var(--text-secondary,#6B6759)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, background: "var(--text-secondary,#6B6759)", display: "inline-block" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary,#6B6759)" } }, "Banda 3 · Después"), /* @__PURE__ */ React.createElement("span", { className: "sdp-provenance" }, "Planificación / Tarde")), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" } }, laterLots.length, " programado", laterLots.length === 1 ? "" : "s")), laterLots.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", fontStyle: "italic" } }, "Sin transiciones posteriores pendientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, laterLots.slice(0, 5).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--later", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-task__due" }, "DESPUÉS"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ver lote →"))), laterLots.length > 5 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)", paddingTop: 2 } }, "+", laterLots.length - 5, " lote", laterLots.length - 5 === 1 ? "" : "s", " en incubación o maduración")))), (copilotBriefing || typeof window !== "undefined" && window.SetasVisionDiagnosis) && /* @__PURE__ */ React.createElement("div", { className: "home-cultivation-copilot", style: { background: "var(--paper-0)", border: "1px solid var(--border-soft)", borderRadius: 0, padding: "20px", marginTop: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-2)" } }, "Copiloto de cultivo · sugerencias heurísticas"), /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "var(--text-xl)", letterSpacing: "-0.01em", color: "var(--ink-0)", marginTop: 2, marginBottom: 0 } }, "Próximas mejores acciones")), copilotBriefing && copilotBriefing.harvestCalendar && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: "0.06em" } }, "Próx. 14 días"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-lg)", color: "var(--ink-0)" } }, copilotBriefing.harvestCalendar.kgNext14d, " kg"))), copilotBriefing && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)", color: "var(--ink-1)", marginTop: 0, marginBottom: 14, lineHeight: 1.4 } }, copilotBriefing.headline), copilotTopActions.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 } }, copilotTopActions.map((action) => /* @__PURE__ */ React.createElement("div", { key: action.id, style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "10px 12px", border: "1px solid var(--border-hairline)", borderLeft: `4px solid ${copilotActionColor(action.priority)}`, borderRadius: 0, background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: copilotActionColor(action.priority), border: `1px solid ${copilotActionColor(action.priority)}`, padding: "1px 5px" } }, action.kind), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, action.title), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)", border: "1px solid var(--border-hairline)", padding: "1px 5px" } }, copilotConfidenceLabel(action.confidence))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-2)", marginTop: 4, lineHeight: 1.4 } }, action.why))))) : /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-ok)", marginBottom: 14 } }, "Sin sugerencias del copiloto por ahora."), copilotBriefing.harvestCalendar && copilotBriefing.harvestCalendar.nextDeficitWeek && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ochre-700)", marginBottom: 14 } }, "Déficit proyectado en ", copilotBriefing.harvestCalendar.nextDeficitWeek.week, ": ", copilotBriefing.harvestCalendar.nextDeficitWeek.deficitKg, " kg (oferta ", copilotBriefing.harvestCalendar.nextDeficitWeek.supply, " kg vs. demanda ", copilotBriefing.harvestCalendar.nextDeficitWeek.demand, " kg)."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: handleCopilotExportIcs, style: { cursor: "pointer", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 12px", minHeight: 44, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-0)" } }, "Exportar calendario (.ics)"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)" } }, "Motores: ", copilotBriefing.enginesUsed.join(", ") || "ninguno disponible", copilotBriefing.enginesMissing.length > 0 ? ` · faltan: ${copilotBriefing.enginesMissing.join(", ")}` : "")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "11px", color: "var(--ink-2)", marginTop: 10, lineHeight: 1.4, fontStyle: "italic" } }, copilotBriefing.disclaimer)), typeof window !== "undefined" && window.SetasVisionDiagnosis && /* @__PURE__ */ React.createElement("div", { style: { marginTop: copilotBriefing ? 18 : 0, paddingTop: copilotBriefing ? 16 : 0, borderTop: copilotBriefing ? "1px solid var(--border-hairline)" : "none" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 8 } }, "Cribado de foto (bolsa/bloque)"), /* @__PURE__ */ React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 0, padding: "8px 12px", minHeight: 44, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-0)" } }, copilotVisionBusy ? "Analizando…" : "Tomar/elegir foto", /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", capture: "environment", onChange: handleCopilotPhotoChange, style: { display: "none" }, disabled: copilotVisionBusy })), copilotVisionError && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error,#B53A25)", marginTop: 8 } }, copilotVisionError), copilotVisionResult && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: "10px 12px", border: "1px solid var(--border-hairline)", background: "var(--paper-1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-0)" } }, "Colonización estimada: ", copilotVisionResult.colonizationPct, "%"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--ink-2)", border: "1px solid var(--border-hairline)", padding: "1px 5px" } }, copilotConfidenceLabel(copilotVisionResult.confidence))), copilotVisionResult.flags.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 } }, copilotVisionResult.flags.map((flag, i) => /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "2px 6px", border: "1px solid var(--ochre-700)", color: "var(--ochre-700)" } }, flag.pathogenId, " · ", flag.severity))), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginTop: 8 } }, copilotVisionResult.recommendation), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "11px", color: "var(--ink-2)", marginTop: 6, fontStyle: "italic" } }, copilotVisionResult.disclaimer)))), /* @__PURE__ */ React.createElement("div", { style: {
       background: "var(--paper-0)",
       border: "1px solid var(--border-soft)",
@@ -10805,10 +11414,10 @@ Click para ver análisis completo`
       [`Spawn (${spn}%)`, `${pb.spawn.toFixed(2)} kg`, `micelio en grano · ${spn}% del húmedo objetivo`],
       ["Sustrato húmedo objetivo", `${pb.wet.toFixed(1)} kg`, `${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`]
     ].map(([l, v, s]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { border: "1px solid var(--paper-300)", padding: "10px 12px", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 3, fontWeight: 700 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 20, fontWeight: 600, color: "var(--ink-900,#222)" } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-600)", marginTop: 1, fontWeight: 500 } }, s)))), ptr && /* @__PURE__ */ React.createElement("div", { id: "ps-sec-2", style: { border: "1px solid var(--paper-300)", padding: "10px 14px", marginBottom: 18, background: "var(--paper-50)", scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 20, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "2"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Tratamiento — ", ptr.name)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900)" } }, ptr.temp, " · ", ptr.time, " · Spawn ", ptr.spawn, "%"), ptr.reasons?.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 4 } }, ptr.reasons.join(" · "))), /* @__PURE__ */ React.createElement("div", { id: "ps-sec-3", style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8, scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "3"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Procedimiento")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, steps.map((t, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "prod-step", style: { opacity: checkedSteps["step_" + i] ? 0.4 : 1, transition: "opacity .2s" } }, /* @__PURE__ */ React.createElement("input", { name: `procedureStep-${i}`, type: "checkbox", "aria-label": `Paso ${i + 1} completado: ${t}`, checked: !!checkedSteps["step_" + i], onChange: (e) => setCheckedSteps((prev) => ({ ...prev, ["step_" + i]: e.target.checked })), style: { accentColor: "var(--coral-500)", width: 14, height: 14, cursor: "pointer", flexShrink: 0, marginTop: 3 } }), /* @__PURE__ */ React.createElement("div", { className: "prod-step-n" }, i + 1), /* @__PURE__ */ React.createElement("div", { className: "prod-step-t", style: { textDecoration: checkedSteps["step_" + i] ? "line-through" : "none" } }, t)))), fechas.length > 0 && /* @__PURE__ */ React.createElement("div", { id: "ps-sec-4", style: { scrollMarginTop: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-num)", fontSize: 22, color: "var(--coral-500)", lineHeight: 1, flexShrink: 0 } }, "4"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-900)" } }, "Fechas clave"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 1 } }, "estimadas · EB ", an.eb.toFixed(0), "%"))), /* @__PURE__ */ React.createElement("div", { className: "ps-fechas-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "ps-fechas", style: { display: "grid", gridTemplateColumns: `repeat(${fechas.length},1fr)`, gap: 1, background: "var(--paper-300)", border: "1px solid var(--paper-300)" } }, fechas.map(([l, v]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "var(--paper-0)", padding: "8px 6px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-2xs)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 2 } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-900,#222)" } }, v)))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, paddingTop: 14, borderTop: "2px solid var(--ink-900)" } }, /* @__PURE__ */ React.createElement("div", { className: "ps-sig", style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20, marginBottom: 18 } }, [["Operario"], ["Hora inicio"], ["Verificado por"]].map(([l]) => /* @__PURE__ */ React.createElement("div", { key: l }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 6 } }, l), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--ink-600)", height: 26 } })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", marginBottom: 6 } }, "Observaciones del lote"), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--paper-400)", height: 22, marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "1px solid var(--paper-400)", height: 22 } })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-400)", textAlign: "right", letterSpacing: "var(--tracking-label)" } }, "Setas de la Pe\\u00f1a · Tenjo 2.600 msnm · simulador v9.1"))));
-  })()), tab === "inventario" && /* @__PURE__ */ React.createElement(React.Fragment, null, invLotes.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "prototype-panel" }, /* @__PURE__ */ React.createElement("h3", null, "Bodega sin existencias registradas"), /* @__PURE__ */ React.createElement("p", null, "El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: () => setInvTab("compra") }, "Registrar primera compra")), BodegaSection()), tab === "clima" && climateDashboardView, tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), moveDlg && /* @__PURE__ */ React.createElement(MoveRoomModal, { dlg: moveDlg, onClose: () => setMoveDlg(null) }), newVersionFor && /* @__PURE__ */ React.createElement(NewRecipeVersionModal, { recipe: newVersionFor, onClose: () => setNewVersionFor(null), onConfirm: confirmNewRecipeVersion }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), versionDlg && /* @__PURE__ */ React.createElement(NewRecipeVersionModal, { recipe: versionDlg.recipe, onClose: () => setVersionDlg(null), onConfirm: () => confirmNewRecipeVersion(versionDlg.recipe) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Planificar lote", dialogStyle: { width: "min(520px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14, style: { marginRight: 6 } }), " Planificar lote — reservar insumos"), /* @__PURE__ */ React.createElement("p", null, loteBatchConfirm.plan.preparation.revision, " · agua ", loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4), " L · pesaje ", loteBatchConfirm.plan.preparation.weighing.resolutionG, " g · Bodega a 1 g."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se RESERVARÁN los insumos y bolsas. La bodega no se descuenta todavía: eso pasa al registrar «Preparar mezcla», que es cuando el sustrato se pesa (FIFO, del lote más antiguo al más nuevo)."), (() => {
+  })()), tab === "inventario" && /* @__PURE__ */ React.createElement(React.Fragment, null, invLotes.length === 0 && /* @__PURE__ */ React.createElement("section", { className: "prototype-panel" }, /* @__PURE__ */ React.createElement("h3", null, "Bodega sin existencias registradas"), /* @__PURE__ */ React.createElement("p", null, "El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: () => setInvTab("compra") }, "Registrar primera compra")), BodegaSection()), tab === "clima" && climateDashboardView, tab === "metricas" && /* @__PURE__ */ React.createElement(OperationalMetrics, { data: metricsData, loaded: bitLotesLoaded, error: metricsLoadError, role: fieldOperatorRole, onReview: saveMetricsReview, onBitacora: () => goTab("bitacora") }), tab === "bitacora" && BitacoraSection(), tab === "bioCheck" && /* @__PURE__ */ React.createElement(BioCheck, null), tab === "labExtraction" && /* @__PURE__ */ React.createElement(LabExtraction, null), confirmDlg && /* @__PURE__ */ React.createElement(ConfirmModal, { dlg: confirmDlg, onClose: () => setConfirmDlg(null) }), moveDlg && /* @__PURE__ */ React.createElement(MoveRoomModal, { dlg: moveDlg, onClose: () => setMoveDlg(null) }), newVersionFor && /* @__PURE__ */ React.createElement(NewRecipeVersionModal, { recipe: newVersionFor, onClose: () => setNewVersionFor(null), onConfirm: confirmNewRecipeVersion }), promptDlg && /* @__PURE__ */ React.createElement(PromptModal, { dlg: promptDlg, onClose: () => setPromptDlg(null) }), versionDlg && /* @__PURE__ */ React.createElement(NewRecipeVersionModal, { recipe: versionDlg.recipe, onClose: () => setVersionDlg(null), onConfirm: () => confirmNewRecipeVersion(versionDlg.recipe) }), noticeDlg && /* @__PURE__ */ React.createElement(NoticeModal, { dlg: noticeDlg, onClose: () => setNoticeDlg(null) }), loteBatchConfirm && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setLoteBatchConfirm(null), label: "Planificar lote", dialogStyle: { width: "min(520px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14, style: { marginRight: 6 } }), " Planificar lote — reservar insumos"), /* @__PURE__ */ React.createElement("p", null, loteBatchConfirm.plan.preparation.revision, " · agua ", loteBatchConfirm.plan.preparation.totals.waterToAddKg.toFixed(4), " L · pesaje ", loteBatchConfirm.plan.preparation.weighing.resolutionG, " g · Bodega a 1 g."), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginBottom: 14 } }, "Lote ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--ink-900)" } }, loteBatchConfirm.loteNum || "—"), " · ", loteBatchConfirm.fecha, " — se RESERVARÁN los insumos y bolsas. La bodega no se descuenta todavía: eso pasa al registrar «Preparar mezcla», que es cuando el sustrato se pesa (FIFO, del lote más antiguo al más nuevo)."), (() => {
     const h = procedenciaHumedades(loteBatchConfirm.plan.preparation);
     return h ? /* @__PURE__ */ React.createElement("div", { "data-testid": "confirm-humedad-procedencia", className: "os-provenance-notice" + (h.estimados.length ? " os-provenance-notice--estimated" : ""), style: { marginBottom: 14 } }, h.texto) : null;
-  })(), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-table-wrap" }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", minWidth: 340, borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 0 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido", "Stock", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido" || h === "Stock" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px", whiteSpace: "nowrap" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.krKg : row.krKg.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.stockActual : row.stockActual.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--status-ok)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--status-warn-marker)" }))))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--coral-700)" }), " Uno o más ingredientes no tienen stock suficiente — se reservará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), disabled: ejecutandoLote, className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, disabled: ejecutandoLote, className: "inv-btn inv-btn-pri" }, ejecutandoLote ? "Reservando…" : "Confirmar y reservar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: "min(560px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("style", null, `[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), captureSaveError && /* @__PURE__ */ React.createElement("p", { role: "alert" }, captureSaveError), /* @__PURE__ */ React.createElement("p", null, "Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña."), /* @__PURE__ */ React.createElement("p", null, "Plan de preparación: ", prodBags, " bolsas × ", prodKg, " kg · ", prodH, "% humedad. No confirma medidas."), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", "aria-invalid": !!captureErrors["bit-codigo"], "aria-describedby": captureErrors["bit-codigo"] ? "bit-codigo-error" : void 0, onBlur: () => validateCaptureField("bit-codigo"), name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) }), captureErrorNode("bit-codigo")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", "aria-invalid": !!captureErrors["bit-especie"], "aria-describedby": captureErrors["bit-especie"] ? "bit-especie-error" : void 0, onBlur: () => validateCaptureField("bit-especie"), name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }), captureErrorNode("bit-especie"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", "aria-invalid": !!captureErrors["bit-cepa"], "aria-describedby": captureErrors["bit-cepa"] ? "bit-cepa-error" : void 0, onBlur: () => validateCaptureField("bit-cepa"), name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) }), captureErrorNode("bit-cepa")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", "aria-invalid": !!captureErrors["bit-operador"], "aria-describedby": captureErrors["bit-operador"] ? "bit-operador-error" : void 0, onBlur: () => validateCaptureField("bit-operador"), name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }), captureErrorNode("bit-operador"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", "aria-invalid": !!captureErrors["bit-fecha-mezcla"], "aria-describedby": captureErrors["bit-fecha-mezcla"] ? "bit-fecha-mezcla-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-mezcla"), name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) }), captureErrorNode("bit-fecha-mezcla")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", "aria-invalid": !!captureErrors["bit-fecha-inoculacion"], "aria-describedby": captureErrors["bit-fecha-inoculacion"] ? "bit-fecha-inoculacion-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-inoculacion"), name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }), captureErrorNode("bit-fecha-inoculacion"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", "aria-invalid": !!captureErrors["bit-bags"], "aria-describedby": captureErrors["bit-bags"] ? "bit-bags-error" : void 0, onBlur: () => validateCaptureField("bit-bags"), name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: e.target.value })) }), captureErrorNode("bit-bags")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa medidos · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", "aria-invalid": !!captureErrors["bit-wet-kg"], "aria-describedby": captureErrors["bit-wet-kg"] ? "bit-wet-kg-error" : void 0, onBlur: () => validateCaptureField("bit-wet-kg"), name: "wetKgPerBag", type: "number", className: "inv-input", min: 0, step: 0.1, value: bitNuevoForm.pesoHumedo ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: e.target.value })) }), captureErrorNode("bit-wet-kg")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn confirmado · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", "aria-invalid": !!captureErrors["bit-spawn"], "aria-describedby": captureErrors["bit-spawn"] ? "bit-spawn-error" : void 0, onBlur: () => validateCaptureField("bit-spawn"), name: "spawnPercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.spawnPct ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: e.target.value })) }), captureErrorNode("bit-spawn")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad medida % · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", "aria-invalid": !!captureErrors["bit-moisture"], "aria-describedby": captureErrors["bit-moisture"] ? "bit-moisture-error" : void 0, onBlur: () => validateCaptureField("bit-moisture"), name: "moisturePercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.humedad ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: e.target.value })) }), captureErrorNode("bit-moisture"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", "aria-invalid": !!captureErrors["bit-treatment"], "aria-describedby": captureErrors["bit-treatment"] ? "bit-treatment-error" : void 0, onBlur: () => validateCaptureField("bit-treatment"), name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t))), captureErrorNode("bit-treatment")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco medido total (kg) · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", "aria-invalid": !!captureErrors["bit-dry-weight"], "aria-describedby": captureErrors["bit-dry-weight"] ? "bit-dry-weight-error" : void 0, onBlur: () => validateCaptureField("bit-dry-weight"), name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco ?? "", min: 0, placeholder: "Sin medición", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: e.target.value })) }), captureErrorNode("bit-dry-weight"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", "aria-invalid": !!captureErrors["bit-objective"], "aria-describedby": captureErrors["bit-objective"] ? "bit-objective-error" : void 0, onBlur: () => validateCaptureField("bit-objective"), name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) }), captureErrorNode("bit-objective")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  })(), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-table-wrap" }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", minWidth: 340, borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", marginBottom: 0 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Ingrediente", "Requerido", "Stock", ""].map((h) => /* @__PURE__ */ React.createElement("th", { key: h, style: { textAlign: h === "Requerido" || h === "Stock" ? "right" : "left", fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-800)", borderBottom: "1.5px solid var(--ink-900)", padding: "6px 8px", whiteSpace: "nowrap" } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, loteBatchConfirm.preview.map((row) => /* @__PURE__ */ React.createElement("tr", { key: row.id, style: { background: row.ok ? "transparent" : "color-mix(in oklab,var(--coral-200) 30%,var(--paper-50))" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", color: "var(--ink-900)" } }, row.name), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.krKg : row.krKg.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "right", color: row.ok ? "var(--moss-700)" : "var(--coral-700)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, row.unit === "uds" ? row.stockActual : row.stockActual.toFixed(3), " ", row.unit || "kg"), /* @__PURE__ */ React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--paper-300)", textAlign: "center", fontSize: "var(--text-base)" } }, row.ok ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 12, color: "var(--status-ok)" }) : /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--status-warn-marker)" }))))))), loteBatchConfirm.preview.some((r) => !r.ok) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-700)", background: "color-mix(in oklab,var(--coral-100) 60%,var(--paper-50))", border: "1px solid var(--coral-200)", borderRadius: 4, padding: "8px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--coral-700)" }), " Uno o más ingredientes no tienen stock suficiente — se reservará lo disponible y el faltante quedará a 0."), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setLoteBatchConfirm(null), disabled: ejecutandoLote, className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: confirmarEjecucion, disabled: ejecutandoLote, className: "inv-btn inv-btn-pri" }, ejecutandoLote ? "Reservando…" : "Confirmar y reservar"))), showBitNuevo && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitNuevo(false), label: "Nueva prueba experimental", dialogStyle: { width: "min(560px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("style", null, `[aria-label="Nueva prueba experimental"] input,[aria-label="Nueva prueba experimental"] select,[aria-label="Nueva prueba experimental"] button,[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Nueva prueba experimental"] .inv-row,[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nueva prueba experimental"), captureSaveError && /* @__PURE__ */ React.createElement("p", { role: "alert" }, captureSaveError), /* @__PURE__ */ React.createElement("p", null, "Registra solo datos confirmados. Los campos opcionales vacíos quedan sin medición. Borrador conservado en esta pestaña."), /* @__PURE__ */ React.createElement("p", null, "Plan de preparación: ", prodBags, " bolsas × ", prodKg, " kg · ", prodH, "% humedad. No confirma medidas."), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-codigo" }, "Código de lote"), /* @__PURE__ */ React.createElement("input", { id: "bit-codigo", "aria-invalid": !!captureErrors["bit-codigo"], "aria-describedby": captureErrors["bit-codigo"] ? "bit-codigo-error" : void 0, onBlur: () => validateCaptureField("bit-codigo"), name: "codigoLote", autoComplete: "off", className: "inv-input", value: bitNuevoForm.codigo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, codigo: e.target.value })) }), captureErrorNode("bit-codigo")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-especie" }, "Especie"), /* @__PURE__ */ React.createElement("input", { id: "bit-especie", "aria-invalid": !!captureErrors["bit-especie"], "aria-describedby": captureErrors["bit-especie"] ? "bit-especie-error" : void 0, onBlur: () => validateCaptureField("bit-especie"), name: "especie", autoComplete: "off", className: "inv-input", value: bitNuevoForm.especie || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, especie: e.target.value })) }), captureErrorNode("bit-especie"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-strain-id" }, "ID de cepa"), /* @__PURE__ */ React.createElement("input", { id: "bit-strain-id", name: "strainId", autoComplete: "off", className: "inv-input", placeholder: "Ej. STR-OST-001…", value: bitNuevoForm.strainId || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, strainId: e.target.value })) }), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", paddingTop: 3 } }, "Mismo ID para lotes de la misma cepa. Sin él, el lote no entra en comparaciones por cepa.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn-lot-id" }, "Lote de semilla"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn-lot-id", name: "spawnLotId", autoComplete: "off", className: "inv-input", placeholder: "Ej. SPW-260101-01…", value: bitNuevoForm.spawnLotId || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnLotId: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-cepa" }, "Cepa / proveedor (nota)"), /* @__PURE__ */ React.createElement("input", { id: "bit-cepa", "aria-invalid": !!captureErrors["bit-cepa"], "aria-describedby": captureErrors["bit-cepa"] ? "bit-cepa-error" : void 0, onBlur: () => validateCaptureField("bit-cepa"), name: "cepaProveedor", autoComplete: "off", className: "inv-input", placeholder: "Ej. Spawn proveedor X…", value: bitNuevoForm.cepa || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, cepa: e.target.value })) }), captureErrorNode("bit-cepa")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-operador" }, "Operador"), /* @__PURE__ */ React.createElement("input", { id: "bit-operador", "aria-invalid": !!captureErrors["bit-operador"], "aria-describedby": captureErrors["bit-operador"] ? "bit-operador-error" : void 0, onBlur: () => validateCaptureField("bit-operador"), name: "operador", autoComplete: "off", className: "inv-input", value: bitNuevoForm.operador || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, operador: e.target.value })) }), captureErrorNode("bit-operador"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-mezcla" }, "Fecha mezcla"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-mezcla", "aria-invalid": !!captureErrors["bit-fecha-mezcla"], "aria-describedby": captureErrors["bit-fecha-mezcla"] ? "bit-fecha-mezcla-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-mezcla"), name: "fechaMezcla", type: "date", className: "inv-input", value: bitNuevoForm.fechaMezcla || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaMezcla: e.target.value })) }), captureErrorNode("bit-fecha-mezcla")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-fecha-inoculacion" }, "Fecha inoculación"), /* @__PURE__ */ React.createElement("input", { id: "bit-fecha-inoculacion", "aria-invalid": !!captureErrors["bit-fecha-inoculacion"], "aria-describedby": captureErrors["bit-fecha-inoculacion"] ? "bit-fecha-inoculacion-error" : void 0, onBlur: () => validateCaptureField("bit-fecha-inoculacion"), name: "fechaInoculacion", type: "date", className: "inv-input", value: bitNuevoForm.fechaInoculacion || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, fechaInoculacion: e.target.value })) }), captureErrorNode("bit-fecha-inoculacion"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-4", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-bags" }, "# Bolsas"), /* @__PURE__ */ React.createElement("input", { id: "bit-bags", "aria-invalid": !!captureErrors["bit-bags"], "aria-describedby": captureErrors["bit-bags"] ? "bit-bags-error" : void 0, onBlur: () => validateCaptureField("bit-bags"), name: "bagCount", type: "number", className: "inv-input", min: 1, value: bitNuevoForm.numBolsas ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, numBolsas: e.target.value })) }), captureErrorNode("bit-bags")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-wet-kg" }, "kg húmedo/bolsa medidos · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-wet-kg", "aria-invalid": !!captureErrors["bit-wet-kg"], "aria-describedby": captureErrors["bit-wet-kg"] ? "bit-wet-kg-error" : void 0, onBlur: () => validateCaptureField("bit-wet-kg"), name: "wetKgPerBag", type: "number", className: "inv-input", min: 0, step: 0.1, value: bitNuevoForm.pesoHumedo ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, pesoHumedo: e.target.value })) }), captureErrorNode("bit-wet-kg")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-spawn" }, "% spawn confirmado · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-spawn", "aria-invalid": !!captureErrors["bit-spawn"], "aria-describedby": captureErrors["bit-spawn"] ? "bit-spawn-error" : void 0, onBlur: () => validateCaptureField("bit-spawn"), name: "spawnPercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.spawnPct ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, spawnPct: e.target.value })) }), captureErrorNode("bit-spawn")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-moisture" }, "Humedad medida % · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-moisture", "aria-invalid": !!captureErrors["bit-moisture"], "aria-describedby": captureErrors["bit-moisture"] ? "bit-moisture-error" : void 0, onBlur: () => validateCaptureField("bit-moisture"), name: "moisturePercent", type: "number", className: "inv-input", min: 0, max: 100, value: bitNuevoForm.humedad ?? "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, humedad: e.target.value })) }), captureErrorNode("bit-moisture"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-treatment" }, "Tratamiento"), /* @__PURE__ */ React.createElement("select", { id: "bit-treatment", "aria-invalid": !!captureErrors["bit-treatment"], "aria-describedby": captureErrors["bit-treatment"] ? "bit-treatment-error" : void 0, onBlur: () => validateCaptureField("bit-treatment"), name: "treatment", className: "inv-input", value: bitNuevoForm.tratamiento || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, tratamiento: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "—"), ["Pasteurización", "Autoclave", "Cal hidratada (CWLP)", "Sin tratamiento"].map((t) => /* @__PURE__ */ React.createElement("option", { key: t, value: t }, t))), captureErrorNode("bit-treatment")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-dry-weight" }, "Peso seco medido total (kg) · opcional"), /* @__PURE__ */ React.createElement("input", { id: "bit-dry-weight", "aria-invalid": !!captureErrors["bit-dry-weight"], "aria-describedby": captureErrors["bit-dry-weight"] ? "bit-dry-weight-error" : void 0, onBlur: () => validateCaptureField("bit-dry-weight"), name: "dryWeight", type: "number", className: "inv-input", step: 0.01, value: bitNuevoForm.peseSeco ?? "", min: 0, placeholder: "Sin medición", onChange: (e) => setBitNuevoForm((p) => ({ ...p, peseSeco: e.target.value })) }), captureErrorNode("bit-dry-weight"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-objective" }, "Objetivo de la prueba"), /* @__PURE__ */ React.createElement("input", { id: "bit-objective", "aria-invalid": !!captureErrors["bit-objective"], "aria-describedby": captureErrors["bit-objective"] ? "bit-objective-error" : void 0, onBlur: () => validateCaptureField("bit-objective"), name: "testObjective", autoComplete: "off", className: "inv-input", placeholder: "Ej. comparar humedad 63% vs. 66%…", value: bitNuevoForm.objetivo || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, objetivo: e.target.value })) }), captureErrorNode("bit-objective")), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "bit-notes" }, "Notas"), /* @__PURE__ */ React.createElement("textarea", { id: "bit-notes", name: "testNotes", autoComplete: "off", className: "inv-input", rows: 2, value: bitNuevoForm.notas || "", onChange: (e) => setBitNuevoForm((p) => ({ ...p, notas: e.target.value })), style: { resize: "vertical" } })), bitNuevoForm.recipeRef && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--moss-700)", background: "var(--paper-100)", border: "1px solid var(--moss-200)", borderRadius: 4, padding: "7px 12px", marginBottom: 14 } }, "Receta vinculada: ", /* @__PURE__ */ React.createElement("b", null, bitNuevoForm.recipeRef.name), " · C:N ", bitNuevoForm.recipeRef.cn, " · EB ~", bitNuevoForm.recipeRef.eb, "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowBitNuevo(false), className: "inv-btn inv-btn-sec" }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     if (!validateCapture("trial")) return;
     const newId = crearBitLote(SetasBitacora.normalizeTrialCapture(bitNuevoForm));
     if (!newId) return;
@@ -10820,7 +11429,13 @@ Click para ver análisis completo`
   }, className: "inv-btn inv-btn-pri" }, "Crear lote y generar bolsas"))), showBitCosecha && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowBitCosecha(false), label: "Registrar cosecha", dialogStyle: { width: "min(500px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("style", null, `[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Registrar cosecha"), captureSaveError && /* @__PURE__ */ React.createElement("p", { role: "alert" }, captureSaveError), /* @__PURE__ */ React.createElement("p", null, "Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición. Borrador conservado en esta pestaña."), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-bag" }, "Bolsa"), /* @__PURE__ */ React.createElement("select", { id: "harvest-bag", "aria-invalid": !!captureErrors["harvest-bag"], "aria-describedby": captureErrors["harvest-bag"] ? "harvest-bag-error" : void 0, onBlur: () => validateCaptureField("harvest-bag"), name: "harvestBag", className: "inv-input", value: bitCosechaForm.bolsaId || "", onChange: (e) => {
     const b = bitBolsas.find((x) => x.id === e.target.value);
     setBitCosechaForm((p) => ({ ...p, bolsaId: e.target.value, codigo: b?.codigo || "", loteId: b?.loteId || p.loteId }));
-  } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— seleccionar —"), bitBolsas.filter((b) => b.loteId === (bitCosechaForm.loteId || bitActiveLoteId)).map((b) => /* @__PURE__ */ React.createElement("option", { key: b.id, value: b.id }, b.codigo))), captureErrorNode("harvest-bag")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-flush" }, "Flush #"), /* @__PURE__ */ React.createElement("input", { id: "harvest-flush", "aria-invalid": !!captureErrors["harvest-flush"], "aria-describedby": captureErrors["harvest-flush"] ? "harvest-flush-error" : void 0, onBlur: () => validateCaptureField("harvest-flush"), name: "harvestFlush", type: "number", className: "inv-input", min: 1, value: bitCosechaForm.flush ?? "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, flush: e.target.value })) }), captureErrorNode("harvest-flush"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-date" }, "Fecha"), /* @__PURE__ */ React.createElement("input", { id: "harvest-date", "aria-invalid": !!captureErrors["harvest-date"], "aria-describedby": captureErrors["harvest-date"] ? "harvest-date-error" : void 0, onBlur: () => validateCaptureField("harvest-date"), name: "harvestDate", type: "date", className: "inv-input", value: bitCosechaForm.fecha || "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, fecha: e.target.value })) }), captureErrorNode("harvest-date")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-weight" }, "Peso fresco (g)"), /* @__PURE__ */ React.createElement("input", { id: "harvest-weight", "aria-invalid": !!captureErrors["harvest-weight"], "aria-describedby": captureErrors["harvest-weight"] ? "harvest-weight-error" : void 0, onBlur: () => validateCaptureField("harvest-weight"), name: "harvestWeight", type: "number", className: "inv-input", min: 0, step: 1, placeholder: "Ej. 430…", value: bitCosechaForm.pesoFresco ?? "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, pesoFresco: e.target.value })) }), captureErrorNode("harvest-weight"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Calidad · opcional (sin evaluar hasta seleccionar)"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Calidad de la cosecha", style: { display: "flex", gap: 6, paddingTop: 4 } }, [1, 2, 3, 4, 5].map((n) => /* @__PURE__ */ React.createElement("button", { key: n, "aria-label": `${n} de 5 estrellas`, "aria-pressed": (bitCosechaForm.calidad || 0) === n, onClick: () => setBitCosechaForm((p) => ({ ...p, calidad: p.calidad === n ? "" : n })), style: { padding: "6px 12px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-num)", fontSize: "var(--text-md)", cursor: "pointer", background: (bitCosechaForm.calidad || 0) >= n ? "var(--ochre-500)" : "var(--paper-50)", color: (bitCosechaForm.calidad || 0) >= n ? "var(--paper-0)" : "var(--ink-500)", transition: "background-color .1s,color .1s,border-color .1s" } }, n)))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-observations" }, "Observaciones"), /* @__PURE__ */ React.createElement("input", { id: "harvest-observations", "aria-invalid": !!captureErrors["harvest-observations"], "aria-describedby": captureErrors["harvest-observations"] ? "harvest-observations-error" : void 0, onBlur: () => validateCaptureField("harvest-observations"), name: "harvestObservations", autoComplete: "off", className: "inv-input", placeholder: "Ej. buen racimo, amarillamiento leve…", value: bitCosechaForm.observaciones || "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, observaciones: e.target.value })) }), captureErrorNode("harvest-observations")), (() => {
+  } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— seleccionar —"), bitBolsas.filter((b) => b.loteId === (bitCosechaForm.loteId || bitActiveLoteId)).map((b) => /* @__PURE__ */ React.createElement("option", { key: b.id, value: b.id }, b.codigo))), captureErrorNode("harvest-bag")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-flush" }, "Flush #"), /* @__PURE__ */ React.createElement("input", { id: "harvest-flush", "aria-invalid": !!captureErrors["harvest-flush"], "aria-describedby": captureErrors["harvest-flush"] ? "harvest-flush-error" : void 0, onBlur: () => validateCaptureField("harvest-flush"), name: "harvestFlush", type: "number", className: "inv-input", min: 1, value: bitCosechaForm.flush ?? "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, flush: e.target.value })) }), captureErrorNode("harvest-flush"))), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-date" }, "Fecha"), /* @__PURE__ */ React.createElement("input", { id: "harvest-date", "aria-invalid": !!captureErrors["harvest-date"], "aria-describedby": captureErrors["harvest-date"] ? "harvest-date-error" : void 0, onBlur: () => validateCaptureField("harvest-date"), name: "harvestDate", type: "date", className: "inv-input", value: bitCosechaForm.fecha || "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, fecha: e.target.value })) }), captureErrorNode("harvest-date")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-weight" }, "Peso fresco (g)"), /* @__PURE__ */ React.createElement("input", { id: "harvest-weight", "aria-invalid": !!captureErrors["harvest-weight"], "aria-describedby": captureErrors["harvest-weight"] ? "harvest-weight-error" : void 0, onBlur: () => validateCaptureField("harvest-weight"), name: "harvestWeight", type: "number", className: "inv-input", min: 0, step: 1, placeholder: "Ej. 430…", value: bitCosechaForm.pesoFresco ?? "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, pesoFresco: e.target.value })) }), captureErrorNode("harvest-weight"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Calidad · opcional (sin evaluar hasta seleccionar)"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Calidad de la cosecha", style: { display: "flex", gap: 6, paddingTop: 4 } }, [1, 2, 3, 4, 5].map((n) => /* @__PURE__ */ React.createElement("button", { key: n, "aria-label": `${n} de 5 estrellas`, "aria-pressed": (bitCosechaForm.calidad || 0) === n, onClick: () => setBitCosechaForm((p) => ({ ...p, calidad: p.calidad === n ? "" : n })), style: { padding: "6px 12px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-num)", fontSize: "var(--text-md)", cursor: "pointer", background: (bitCosechaForm.calidad || 0) >= n ? "var(--ochre-500)" : "var(--paper-50)", color: (bitCosechaForm.calidad || 0) >= n ? "var(--paper-0)" : "var(--ink-500)", transition: "background-color .1s,color .1s,border-color .1s" } }, n)))), /* @__PURE__ */ React.createElement("details", { style: { marginBottom: 12, border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", padding: "8px 10px" } }, /* @__PURE__ */ React.createElement("summary", { style: { fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--ink-700)", cursor: "pointer" } }, "Fenotipo · opcional (medición experimental)"), /* @__PURE__ */ React.createElement("p", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", margin: "6px 0 10px" } }, "Vocabulario ", /* @__PURE__ */ React.createElement("code", null, "phenotype_dictionary_v0.1"), ". Aún no canónico: estas medidas se usan para construir evidencia propia, no como objetivo de cultivo."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-cap-diameter" }, "Diámetro de píleo (mm)"), /* @__PURE__ */ React.createElement("input", { id: "harvest-cap-diameter", name: "harvestCapDiameter", type: "number", className: "inv-input", min: 0, step: 1, placeholder: "Ej. 60…", value: bitCosechaForm.capDiameterMm ?? "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, capDiameterMm: e.target.value })) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-stipe-length" }, "Largo de estípite (mm)"), /* @__PURE__ */ React.createElement("input", { id: "harvest-stipe-length", name: "harvestStipeLength", type: "number", className: "inv-input", min: 0, step: 1, placeholder: "Ej. 30…", value: bitCosechaForm.stipeLengthMm ?? "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, stipeLengthMm: e.target.value })) }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Códigos de defecto"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Códigos de defecto del fenotipo", style: { display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 } }, ["abort", "surface_dryness", "cracking_excess", "yellowing", "deformation", "mechanical_damage", "water_damage", "bacterial_suspect", "mold_suspect", "overmature", "undersized", "other_declared"].map((code) => {
+    const on = (bitCosechaForm.defectCodes || []).includes(code);
+    return /* @__PURE__ */ React.createElement("button", { key: code, type: "button", "aria-pressed": on, onClick: () => setBitCosechaForm((p) => {
+      const cur = p.defectCodes || [];
+      return { ...p, defectCodes: on ? cur.filter((c) => c !== code) : [...cur, code] };
+    }), style: { padding: "4px 9px", border: "1px solid var(--border-soft)", borderRadius: "var(--r-xs)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", cursor: "pointer", background: on ? "var(--ochre-500)" : "var(--paper-50)", color: on ? "var(--paper-0)" : "var(--ink-500)", transition: "background-color .1s,color .1s" } }, code);
+  }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-phenotype-stage" }, "Etapa de la observación"), /* @__PURE__ */ React.createElement("select", { id: "harvest-phenotype-stage", name: "harvestPhenotypeStage", className: "inv-input", value: bitCosechaForm.phenotypeStage || "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, phenotypeStage: e.target.value })) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— sin declarar —"), ["initiation", "early_development", "maturation", "harvest"].map((s) => /* @__PURE__ */ React.createElement("option", { key: s, value: s }, s))))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "harvest-observations" }, "Observaciones"), /* @__PURE__ */ React.createElement("input", { id: "harvest-observations", "aria-invalid": !!captureErrors["harvest-observations"], "aria-describedby": captureErrors["harvest-observations"] ? "harvest-observations-error" : void 0, onBlur: () => validateCaptureField("harvest-observations"), name: "harvestObservations", autoComplete: "off", className: "inv-input", placeholder: "Ej. buen racimo, amarillamiento leve…", value: bitCosechaForm.observaciones || "", onChange: (e) => setBitCosechaForm((p) => ({ ...p, observaciones: e.target.value })) }), captureErrorNode("harvest-observations")), (() => {
     const harvestLote = bitLotes.find((l) => l.id === (bitCosechaForm.loteId || bitActiveLoteId));
     const harvestSpecies = harvestLote ? harvestLote.especie || harvestLote.speciesKey : "p_ostreatus_gris";
     const postHarvestShelfLife = typeof enginePredictShelfLife === "function" ? enginePredictShelfLife(harvestSpecies, 4, 90) : typeof SetasPostHarvest !== "undefined" && typeof SetasPostHarvest.predictShelfLife === "function" ? SetasPostHarvest.predictShelfLife(harvestSpecies, 4, 90) : null;
@@ -11571,7 +12186,7 @@ Click para ver análisis completo`
       /* @__PURE__ */ React.createElement("style", { dangerouslySetInnerHTML: { __html: `
                   @media print {
                     @page {
-                      size: ${thermalSize === "40x30" ? "40mm 30mm" : "50mm 30mm"};
+                      size: ${thermalSize === "40x30" ? "40mm 30mm" : thermalSize === "50x70" ? "50mm 70mm" : "50mm 30mm"};
                       margin: 0 !important;
                     }
                     body {
@@ -11615,7 +12230,15 @@ Click para ver análisis completo`
           style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "50x30" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "50x30" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "50x30" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
         },
         "50 × 30 mm"
-      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", marginTop: 4 } }, "Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-scope", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Alcance de Impresión"), /* @__PURE__ */ React.createElement(
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: () => setThermalSize("50x70"),
+          style: { minHeight: 44, padding: "6px 8px", border: `1px solid ${thermalSize === "50x70" ? "var(--accent-olive, #5B6B44)" : "var(--border-hairline, #8C7F5B)"}`, background: thermalSize === "50x70" ? "var(--accent-olive-dim, #DCE1D1)" : "var(--paper-0, #F7F4EC)", color: thermalSize === "50x70" ? "var(--accent-olive, #5B6B44)" : "var(--ink-0)", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: "pointer" }
+        },
+        "50 × 70 mm"
+      )), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--ink-2)", marginTop: 4 } }, "Formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm). 50 × 70 mm: vertical, QR grande y receta.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-scope", style: { display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", marginBottom: 4, textTransform: "uppercase" } }, "Alcance de Impresión"), /* @__PURE__ */ React.createElement(
         "select",
         {
           id: "thermal-scope",
@@ -11632,9 +12255,9 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement("option", { value: "crate" }, "Canastilla Reutilizable (CAN-XX)")
       ))),
       thermalScope === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, background: "var(--paper-0, #F7F4EC)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline, #8C7F5B)" } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-start", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Desde bolsa:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-start", name: "thermal-bag-start", type: "number", min: 1, max: totalBags, value: thermalBagStart, onChange: (e) => setThermalBagStart(parseInt(e.target.value) || 1), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } }), /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-end", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Hasta:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-end", name: "thermal-bag-end", type: "number", min: thermalBagStart, max: totalBags, value: thermalBagEnd, onChange: (e) => setThermalBagEnd(parseInt(e.target.value) || totalBags), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } })),
-      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : "50×30 mm")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
+      /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : thermalSize === "50x70" ? "50×70 mm" : "50×30 mm")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date))));
+        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date), thermalSize === "50x70" && item.recipe && /* @__PURE__ */ React.createElement("div", null, item.recipe))));
       }))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, borderTop: "1px solid var(--border-hairline, #8C7F5B)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowThermalModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cancelar"), /* @__PURE__ */ React.createElement(
         "button",
@@ -11694,7 +12317,7 @@ Click para ver análisis completo`
       )),
       /* @__PURE__ */ React.createElement("div", { className: "thermal-print-roll" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date))));
+        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date), thermalSize === "50x70" && item.recipe && /* @__PURE__ */ React.createElement("div", null, item.recipe))));
       }))
     );
   })(), selectedTrial && /* @__PURE__ */ React.createElement("aside", { className: "prototype-panel", "aria-label": "Ensayo seleccionado" }, /* @__PURE__ */ React.createElement("p", null, "Próximo lote: ", selectedTrial.title, " · ", selectedTrial.label, ". La receta debe coincidir con la copia del plan."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setSelectedTrial(null) }, "Desvincular próximo lote")), releaseBatchId && bitLotes.find((l) => l.id === releaseBatchId) && /* @__PURE__ */ React.createElement(PrototypeReleaseDialog, { lote: bitLotes.find((l) => l.id === releaseBatchId), onClose: () => setReleaseBatchId(null), onAuthorize: authorizePrototypePreparation }), showProdLaunchModal && prodLaunchForm && (() => {

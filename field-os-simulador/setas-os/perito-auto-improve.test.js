@@ -68,7 +68,7 @@ test('cada paso registrado avanza y nunca empeora: menos críticos o más score'
 
 test('sin ajuste que avance: devuelve la misma receta y cero pasos', () => {
   const recipe = [{ id: 'guadua', p: 70 }, { id: 'borra_cafe', p: 30 }];
-  const r = run('p_ostreatus_gris', recipe);
+  const r = run('p_ostreatus_gris', recipe, { lockedIds: ['guadua', 'borra_cafe'], optimizerINGS: X.INGS.filter(g => ['guadua', 'borra_cafe'].includes(g.id)) });
   assert.equal(r.steps.length, 0);
   assert.deepEqual(r.recipe, recipe);
   assert.deepEqual(r.after, r.before);

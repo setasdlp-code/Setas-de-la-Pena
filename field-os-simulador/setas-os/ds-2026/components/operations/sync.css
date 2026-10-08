@@ -23,6 +23,7 @@
   color: var(--status-warn-text);
 }
 
+.sdp-sync-chip--error,
 .sdp-sync-chip--offline {
   border-left: var(--bar-height) solid var(--status-error);
   color: var(--status-error);

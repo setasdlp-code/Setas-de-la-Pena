@@ -153,9 +153,57 @@ def check_documented_extractions_are_compared(m) -> None:
             raise AssertionError(f"{species} no tiene fuente documentada y quedó marcada como cubierta")
 
 
+def check_ostreatus_air_and_core_rows_resolve(m) -> None:
+    """La incubación de ostreatus se desdobló en aire (consigna) y núcleo
+    (vigilancia). Los dos patrones de fila tienen que seguir encontrando su
+    fila: si alguno deja de hacerlo, el punto cae a "(no source found)" y la
+    comparación se pierde SIN que el reporte lo diga como divergencia. Es el
+    mismo modo de fallo que un hueco en silencio, y por eso se vigila aquí.
+    """
+    points = {
+        p.parameter: p
+        for p in m.SPECIES_SYNC_POINTS
+        if p.entity == "pleurotus_ostreatus" and "Incubaci" in p.parameter
+    }
+    for name in ("Incubación temperatura de aire", "Incubación techo de núcleo"):
+        if name not in points:
+            raise AssertionError(f"falta el punto de sincronía '{name}' para ostreatus")
+        candidates, _ = m.kb_candidates_for(
+            points[name].kb_file, points[name].kb_section_pattern, points[name].kb_row_pattern
+        )
+        if not candidates:
+            raise AssertionError(
+                f"'{name}': el patrón de fila ya no encuentra su fila en la ficha de ostreatus; "
+                "la comparación se perdería en silencio"
+            )
+    # El techo de núcleo ya está cableado en la app (KB_SPP.incCoreMaxT), así
+    # que el punto pasó de reportar un hueco a comparar de verdad. Lo que se
+    # vigila ahora es que siga comparando: si el getter volviera a dar None, el
+    # punto degradaría a "ausente en la app" y la divergencia dejaría de
+    # detectarse — silencio, no alerta.
+    core = points["Incubación techo de núcleo"]
+    app_data = m.load_app_data()
+    app_value = core.app_getter(app_data)
+    if app_value is None:
+        raise AssertionError(
+            "KB_SPP ya no define incCoreMaxT: el punto volvería a reportar un hueco "
+            "en vez de comparar, y una divergencia de techo de núcleo pasaría inadvertida"
+        )
+    # Y que el número siga siendo el del KB. El checker ya lo compara, pero un
+    # fallo aquí es más legible que una fila de divergencia en el reporte.
+    candidates, _ = m.kb_candidates_for(core.kb_file, core.kb_section_pattern, core.kb_row_pattern)
+    kb_values = {c.lo for c in candidates} | {c.hi for c in candidates}
+    if app_value not in kb_values:
+        raise AssertionError(
+            f"el techo de núcleo de la app ({app_value}) no aparece en la fila del KB "
+            f"(valores leídos: {sorted(kb_values)})"
+        )
+
+
 def main() -> int:
     m = load_checker()
     for check in (
+        check_ostreatus_air_and_core_rows_resolve,
         check_identifier_digits_are_not_values,
         check_declining_prose_yields_no_value,
         check_co2_label_is_not_substring_of_words,

@@ -66,6 +66,51 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Bodega compartida entre dispositivos (ADR-0009). El stock de un lote no
+    // se guarda como número: es la suma de estos asientos, que solo se crean.
+    // Corregir un asiento es escribir otro.
+    match /inventario_asientos/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.id == id
+        && request.resource.data.schema == 'setas.inventory-entry.v1'
+        && request.resource.data.kind in ['open', 'delta', 'patch']
+        && request.resource.data.lotId is string
+        && request.resource.data.at is string
+        && request.resource.data.deviceId is string;
+      allow update, delete: if false;
+    }
+
+    // Documentos de Bodega. Un borrado en la app es una lápida (deleted: true),
+    // nunca un delete: los demás dispositivos tienen que verlo.
+    match /inventario_movimientos/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    match /inventario_compras/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    match /inventario_proveedores/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    // Una reserva solo avanza: held → expired/released/consumed. Un cliente
+    // atrasado no puede devolverla a un estado anterior.
+    function rangoReserva(s) {
+      return s == 'held' ? 0 : (s == 'expired' ? 1 : (s == 'released' ? 2 : (s == 'consumed' ? 3 : -1)));
+    }
+    match /inventario_reservas/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn()
+        && rangoReserva(request.resource.data.get('status', null)) >= rangoReserva(resource.data.get('status', null));
+      allow delete: if false;
+    }
+
     // Cuaderno de campo: `lifecycleState` y `revision` sólo los escribe la
     // aceptación de eventos (Admin SDK, que ignora estas reglas). `estado` sigue
     // siendo del cliente: lo usan bitácora y trazabilidad, y una vez que existe
@@ -78,6 +123,26 @@ service cloud.firestore {
     function transicionIntacta() {
       return request.resource.data.get('lifecycleState', null) == resource.data.get('lifecycleState', null)
           && request.resource.data.get('revision', null) == resource.data.get('revision', null);
+    }
+
+    // Ciclo de aprendizaje de producción (PRODUCTION_LEARNING_LOOP_V1.md).
+    // Hasta 2026-10-06 no tenían regla, así que Firestore rechazaba toda
+    // escritura y el puente la descartaba en silencio. Un ciclo borrado en la
+    // app es una lápida (ADR-0009); la evidencia y la telemetría no se borran.
+    match /room_cycles/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    match /cycle_evidence/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
+    match /telemetry_readings/{id} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if isAdmin();
     }
 
     match /lotes_produccion/{id} {

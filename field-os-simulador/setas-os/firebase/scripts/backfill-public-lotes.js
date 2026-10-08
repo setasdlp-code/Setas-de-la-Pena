@@ -86,6 +86,8 @@ async function main() {
 
   for (const loteDoc of lotesSnap.docs) {
     const lote = loteDoc.data();
+    // Lote borrado en la app: Bitácora deja una lápida (ADR-0009).
+    if (lote.deleted === true) continue;
     if (!lote.codigo) {
       lotesSinCodigo += 1;
       console.warn(`  ⚠ omitido — sin campo "codigo": bitacora_lotes/${loteDoc.id}`);
@@ -95,14 +97,14 @@ async function main() {
     const cosechasSnap = await db.collection('bitacora_cosechas')
       .where('loteId', '==', loteDoc.id)
       .get();
-    const cosechas = cosechasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const cosechas = cosechasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.deleted !== true);
 
     let bolsas = [];
     try {
       const bolsasSnap = await db.collection('bitacora_bolsas')
         .where('loteId', '==', loteDoc.id)
         .get();
-      bolsas = bolsasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      bolsas = bolsasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(b => b.deleted !== true);
     } catch (_) {}
 
     const loteSaneado = {

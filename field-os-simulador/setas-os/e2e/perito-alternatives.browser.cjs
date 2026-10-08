@@ -51,13 +51,12 @@ const root=path.resolve(__dirname,'..');
   await expect(capCard.getByRole('button',{name:/Aplicar corrección combinada/})).toBeEnabled();
   await expect(card('Nitrógeno insuficiente').locator('.pi-action')).toContainText('Se corrige con el mismo ajuste que «C:N demasiado alto»');
 
-  // Sin salida: lo dice.
+  // La evaluación de suplementación efectiva ya permite una alternativa válida.
   await page.evaluate(r=>window.SetasFormulatorAPI.applyRecipe(r),[{id:'guadua',p:70},{id:'borra_cafe',p:30}]);
   const stuck=card('C:N demasiado alto');
-  await expect(stuck).toContainText('Ningún otro ingrediente compatible acerca C:N al objetivo');
-  await expect(stuck.getByRole('button',{name:/^Aplicar ajuste/})).toHaveCount(0);
+  await expect(stuck.getByRole('button',{name:/^Aplicar ajuste/})).toBeEnabled();
 
   assert.deepEqual(errors,[]);
-  console.log('PASS: alternativa cuando el suplemento está sobre su tope (baja el C:N), completar con segundo ingrediente, tarjeta remitida al mismo ajuste y aviso sin salida.');
+  console.log('PASS: alternativa cuando el suplemento está sobre su tope (baja el C:N), completar con segundo ingrediente, tarjeta remitida al mismo ajuste y alternativa con suplementación efectiva.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

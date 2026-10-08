@@ -170,6 +170,18 @@ banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un h
 fresco de `simulador-app.jsx`. Por eso el bundle generado tiene que ir en el mismo
 commit — la CI detecta el desfase, pero no lo corrige.
 
+## 5. Datos compartidos entre dispositivos (ADR-0009)
+
+Varios equipos escriben a la vez. Bitácora y Bodega se leen en vivo de Firestore (`firebase/remote-sync.js`) y se fusionan con la copia local a tres bandas (`sync-merge.js`, con la última versión vista del servidor en `sdp_sync_base_v1`). `device-sync.js` decide qué claves locales escribir y qué encolar; la app persiste esas claves en una sola escritura (`SetasPrototype.persist`) y encola en la misma cola de Bitácora.
+
+- **No escribir stock de Bodega en Firestore como número.** `sdp_lotes` es una proyección de `sdp_inv_ledger` (asientos `open`/`delta`/`patch`, `inventory-entries.js`). Cualquier cambio a `sdp_lotes` se convierte en asientos automáticamente; un camino nuevo que modifique lotes no necesita hacer nada más que escribir `sdp_lotes`.
+- **No borrar documentos sincronizados.** Se escribe una lápida (`deleted: true`); las reglas no permiten `delete` en las colecciones de Bodega.
+- **Un registro que solo crece necesita resolvedor.** `lifecycleEvents` se une (y en el servidor se escribe con `arrayUnion`); `status` de reservas solo avanza. Un campo nuevo de ese tipo debe declararse en `device-sync.js` y protegerse al escribir, o un equipo atrasado lo pisará.
+- Una colección nueva para sincronizar se agrega en `COLECCIONES` (`remote-sync.js`), `COLLECTIONS` (`device-sync.js`) y `firestore.rules`.
+- Los ciclos de sala (`sdp_room_cycles`, colección `room_cycles`) se sincronizan igual; un ciclo cerrado no vuelve a activo. Mientras un ciclo está activo, `room-cycle-targets.effectiveBands` pone sus bandas encima de `ROOM_TARGET_BANDS`: Cámaras, la ficha del lote y el motor de alertas leen esa misma salida, nunca `ROOM_TARGET_BANDS` directo. Las bandas sugeridas salen de `knowledge_base/metadata/species.yaml` (copia en `KB_SPECIES`, verificada por `room-cycle-targets.test.js`) y cada banda guarda su origen: `kb-operational`, `kb-literature` o `manual`.
+
+Pruebas: `device-sync.test.js` (convergencia con dos equipos y un servidor simulado) y `e2e/multi-device-sync.browser.cjs` (la app real en dos contextos de navegador).
+
 ## Preguntas para revisar un PR que toque navegación o el Formulador
 
 1. ¿Alguna acción de React cambia de pestaña sin notificar al shell (`setTab`/`setBitTab` directo en vez de `goTab`/`goBitTab`)?

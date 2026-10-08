@@ -4241,6 +4241,86 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin-top: 2px;
 }
 
+/* 50×70 vertical "Lomo" — franja negra de 4mm en el borde izquierdo con la
+   marca en vertical; especie serif, QR de 40mm, código, bolsa en texto (sin
+   bloque negro) y fecha · receta al pie. Reordena el markup común con
+   display:contents. Mantener alineado con THERMAL_LABEL_SPECS['50x70']. */
+.sim-root .thermal-card-50x70 {
+  position: relative;
+  width: 50mm;
+  min-height: 70mm;
+  padding: 2.5mm 2.5mm 2.5mm 6.5mm;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  text-align: center;
+}
+.sim-root .thermal-card-50x70 .thermal-body { display: contents; }
+.sim-root .thermal-card-50x70 .thermal-divider { display: none; }
+.sim-root .thermal-card-50x70 .thermal-eyebrow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4mm;
+  margin: 0;
+  background: #000000 !important;
+  color: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+.sim-root .thermal-card-50x70 .thermal-eyebrow::after {
+  content: 'SETAS DE LA PEÑA';
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  color: #ffffff;
+}
+.sim-root .thermal-card-50x70 .thermal-species {
+  order: 2;
+  font-size: 17px;
+  line-height: 1.05;
+  margin: 0.6mm 0 1mm;
+}
+.sim-root .thermal-card-50x70 .thermal-aside { order: 3; }
+.sim-root .thermal-card-50x70 .thermal-qr-img {
+  width: 40mm;
+  height: 40mm;
+}
+.sim-root .thermal-card-50x70 .thermal-code {
+  order: 4;
+  text-align: center;
+  font-size: 8px;
+  font-weight: 700;
+  margin-top: 1mm;
+}
+.sim-root .thermal-card-50x70 .thermal-badge {
+  order: 5;
+  align-self: center;
+  background: transparent !important;
+  color: #000000 !important;
+  font-size: 10.5px;
+  padding: 0;
+  margin: 0.6mm 0 0;
+}
+.sim-root .thermal-card-50x70 .thermal-meta {
+  order: 6;
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  gap: 2mm;
+  font-size: 7px;
+  font-weight: 500;
+}
+.sim-root .thermal-card-50x70 .thermal-meta > div + div::before {
+  content: '·';
+  margin-right: 2mm;
+}
+
 .sim-root .thermal-print-roll,
 .thermal-print-roll {
   display: none;
@@ -4363,6 +4443,29 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .thermal-card-print.thermal-card-50x30 .thermal-meta {
     font-size: 6px !important;
     font-weight: 600 !important;
+  }
+  .thermal-card-print.thermal-card-50x70 {
+    width: 50mm !important;
+    height: 70mm !important;
+    padding: 2.5mm !important;
+    page-break-inside: avoid !important;
+  }
+  .thermal-card-print.thermal-card-50x70 {
+    padding-left: 6.5mm !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-eyebrow {
+    background: #000000 !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-eyebrow::after {
+    color: #ffffff !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-badge {
+    background: transparent !important;
+    color: #000000 !important;
+  }
+  .thermal-card-print.thermal-card-50x70 .thermal-qr-img {
+    width: 40mm !important;
+    height: 40mm !important;
   }
   .thermal-card-print .thermal-divider {
     background: #000000 !important;
@@ -6639,4 +6742,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
  .sim-root .builder-wrap > .sim-live-dashboard .live-dash-left{grid-column:1/-1;min-width:0;}
  .sim-root .builder-wrap > .sim-live-dashboard .live-dash-metrics{margin:0;flex-wrap:nowrap;}
  .sim-root .builder-wrap > .sim-live-dashboard .live-dash-actions{grid-column:2;grid-row:2;justify-content:flex-end;}
+}
+
+/* Formulador móvil: las acciones largas conservan su ancho disponible. */
+@media(max-width:400px){
+ .sim-root .form-production-command{flex-wrap:wrap;}
+ .sim-root .form-production-command-copy{flex-basis:100%;}
+ .sim-root .form-production-command-btn{width:100%;min-width:0;white-space:normal;}
+}
+@media(max-width:560px){
+ .sim-root .builder-wrap .bodega-bar{display:grid;grid-template-columns:minmax(0,1fr);}
+ .sim-root .builder-wrap .bodega-bar-right{margin-left:0;min-width:0;flex-wrap:wrap;}
+ .sim-root .builder-wrap .bodega-bar-right > .inv-btn{min-height:44px;white-space:normal!important;}
+ .sim-root .builder-wrap .bodega-bar-refresh{width:44px;height:44px;}
 }

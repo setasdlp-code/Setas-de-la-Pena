@@ -36,6 +36,10 @@
     const contPct = bolsas.length ? (bolsasContaminadas / bolsas.length) * 100 : 0;
     const totalFresco = cosechas.reduce((s, c) => s + (parseFloat(c.pesoFresco) || 0), 0) / 1000;
     const peseSeco = parseFloat(lote.peseSeco) || 0;
+    // EB = fresco cosechado / sustrato SECO, con el spawn FUERA del denominador.
+    // Es la convención mayoritaria de la literatura, así que la serie sigue
+    // comparable con lo publicado; lo que cambia es que ya no es implícita. El
+    // valor no se toca: `beBasis` sólo declara qué significa (ver ADR-0008).
     const be = peseSeco > 0 ? (totalFresco / peseSeco) * 100 : null;
     // Fechas de col100 corruptas o anteriores a la inoculación (typo de captura) se
     // descartan del promedio en vez de contaminarlo con un NaN o un negativo.
@@ -94,6 +98,8 @@
       economics: economicEvidence(lote,costoIncurridoTotal,ingresoRealTotal,totalFresco),
       bolsasSanas, bolsasContaminadas, contPct,
       totalFresco, be, diasCol, costoKg,
+      beBasis: 'fresh_over_dry_substrate',
+      beSpawnIncludedInDenominator: false,
       numBolsas: bolsas.length,
       costoIncurridoTotal, costoIncurridoPorBolsa,
       costoDesglose: {
@@ -191,6 +197,21 @@
       unidad: form.unit || form.unidad || 'g',
       flush,
       calidad,
+      // Fenotipo: subconjunto de phenotype_dictionary_v0.1 capturable con
+      // calibrador y sin protocolo de imagen. Es la variable de respuesta que
+      // falta para relacionar exposición a CO₂ con morfología — la literatura no
+      // trae curva dosis-respuesta, así que sólo se obtiene midiendo aquí.
+      // Opcional por diseño: un campo obligatorio que estorba se llena con
+      // cualquier cosa, y un dato inventado es peor que un hueco declarado.
+      // El vocabulario se valida en lot-record.js, no aquí: esta función
+      // normaliza la captura, no juzga el contenido.
+      capDiameterMm: captureNumber(form.capDiameterMm),
+      stipeLengthMm: captureNumber(form.stipeLengthMm),
+      defectCodes: Array.isArray(form.defectCodes)
+        ? [...new Set(form.defectCodes.map(d => String(d || '').trim()).filter(Boolean))]
+        : [],
+      phenotypeStage: form.phenotypeStage || null,
+      observerNotes: form.observerNotes || null,
     };
   };
   // Both local collections must persist before UI state changes. Roll back the

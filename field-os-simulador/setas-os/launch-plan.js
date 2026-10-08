@@ -156,7 +156,13 @@ function buildLoteRecords({ form, plan, analysis = null, treatmentName = null, r
     codigo: form.codigo,
     especie: form.especie,
     especieCientifico: form.especieCientifico,
+    // `cepa` es la nota del proveedor en texto libre, tal como se capturaba.
+    // `strainId` es la identidad: lo que permite agrupar lotes de la misma cepa
+    // y por fin separar genética de ambiente. Van en campos distintos a
+    // propósito — dos operarios escriben el mismo proveedor de tres formas, así
+    // que la prosa nunca puede ascender a identidad (ADR-0008).
     cepa: form.cepa,
+    strainId: form.strainId || null,
     fechaMezcla: form.fechaMezcla,
     fechaInoculacion: form.fechaInoculacion,
     numBolsas: nb,

@@ -84,6 +84,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../post-harvest-engine.js",
   "../perito-workbench-core.js",
   "../historical-calibration.js",
+  "../operational-metrics.js",
   "../species-targets.js",
   "../mass-balance.js",
   "../recipe-lifecycle.js",
@@ -93,6 +94,17 @@ const PROTECTED_APP_SCRIPTS = [
   "../inventory-consumption.js",
   "../inventory-ledger.js",
   "../purchases.js",
+  // Sincronización entre dispositivos (ADR-0009). device-sync.js resuelve
+  // sync-merge, inventory-entries y sync-queue en cada llamada.
+  "../sync-merge.js",
+  "../inventory-entries.js",
+  "../device-sync.js",
+  // Excepciones de la Banda 1 de Hoy; resuelve flush-forecast-engine y
+  // bitacora-model en cada llamada.
+  "../today-exceptions.js",
+  // Ciclos de sala: modelo y bandas sugeridas desde species.yaml.
+  "../room-cycle.js",
+  "../room-cycle-targets.js",
   "../room-state.js",
   "../provenance.js",
   "../perito-context.js",
@@ -194,6 +206,7 @@ function loadDataRuntime() {
         import("./error-monitor.js"),
         import("./db.js"),
         import("./bitacora-sync.js"),
+        import("./remote-sync.js"),
         import("./public-trace-sync.js"),
         import("./eventos-cultivo-sync.js"),
       ]);

@@ -4724,9 +4724,14 @@ const runHybridRecipeSearch=({
     (!useStock || stockIds.has(g.id)) &&
     (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients,spp);
+  // Resolver la clase de cada candidato; no heredar la de la receta inicial.
+  const analyzeAdapter=rec=>{
+    const targets=globalThis.SetasSpeciesTargets||globalThis.SetasSpeciesTargetsApi;
+    const candidateSpp=targets?.applyToSpp&&spp[targetKey]?.targets?targets.applyToSpp(spp,targetKey,rec,ingredients):spp;
+    return analyze(rec,targetKey,ingredients,candidateSpp);
+  };
   const scoreAdapter=(analysis,ctx)=>{
-    const treatment=calcTreatment(analysis,targetKey,spp);
+    const treatment=calcTreatment(analysis,targetKey,{...spp,[targetKey]:analysis.sp});
     return scoreAn(analysis,{
       treatment,
       recipe:ctx.recipe,
@@ -4992,6 +4997,25 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2.0
   },
+  // Vertical "Lomo": franja negra de 4mm en el borde izquierdo con la marca
+  // en vertical; especie, QR de 40mm, código, bolsa (texto, sin bloque
+  // negro) y fecha · receta. Mismos valores que .thermal-card-50x70 en sim.css.
+  '50x70': {
+    layout: 'vertical',
+    wMm: 50,
+    hMm: 70,
+    padXMm: 2.5,
+    padYMm: 2.5,
+    gapPx: 6,
+    qrMm: 40.0,
+    spineMm: 4.0,
+    spineText: 'SETAS DE LA PEÑA',
+    eyebrowPx: 7.0,
+    speciesPx: 17.0,
+    badgePx: 10.5,
+    codePx: 8.0,
+    metaPx: 7.0
+  },
 };
 
 // Render de la etiqueta térmica a <canvas> para "Compartir" — el Phomemo M110
@@ -5054,8 +5078,111 @@ function wrapCanvasText(ctx, text, maxW) {
   return lines;
 }
 
+function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
+  const qrMini = typeof window !== 'undefined' ? window.QRMini : null;
+  if (!qrMini || typeof qrMini.matrix !== 'function') return;
+  const m = qrMini.matrix(item.qrUrl || item.id || 'SETAS-OS');
+  const n = m.length;
+  const q = 4; // Quiet zone ISO/IEC 18004 (4 módulos)
+  const cell = qrSize / (n + q * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(qrX, qrY, qrSize, qrSize);
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (m[r][c]) ctx.fillRect(Math.round(qrX + (c + q) * cell), Math.round(qrY + (r + q) * cell), Math.ceil(cell), Math.ceil(cell));
+    }
+  }
+}
+
+// Etiqueta vertical 50×70 "Lomo": mismo orden de lectura que .thermal-card-50x70.
+function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
+  const mm = THERMAL_PX_PER_MM;
+  const w = spec.wMm * mm;
+  const h = spec.hMm * mm;
+  const padY = spec.padYMm * mm;
+  const spine = spec.spineMm * mm;
+  const colX = spine + spec.padXMm * mm;
+  const colW = w - colX - spec.padXMm * mm;
+  const cx = colX + colW / 2;
+  const species = (item.species || 'Seta Cultivada').trim();
+  const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
+  const code = (item.id || '').trim();
+  const meta = [(item.date || '').trim(), (item.recipe || '').trim()].filter(Boolean).join('  ·  ');
+  const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
+
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#777';
+  ctx.setLineDash([2, 2]);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.setLineDash([]);
+  ctx.textBaseline = 'top';
+
+  // Lomo negro con la marca en vertical (se lee de abajo hacia arriba)
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, spine, h);
+  const ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  ctx.save();
+  ctx.translate(spine / 2, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.font = `700 ${ebPx}px ${FONT_MONO}`;
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
+  ctx.restore();
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'top';
+
+  // Especie (serif, hasta 2 líneas, se reduce si no cabe)
+  let curY = padY + cssPxToCanvas(2);
+  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
+  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+  let lines = wrapCanvasText(ctx, species, colW);
+  while (lines.length > 1 && spPx > 18) {
+    spPx -= 2;
+    ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+    lines = wrapCanvasText(ctx, species, colW);
+  }
+  const spLH = Math.round(spPx * 1.05);
+  lines.slice(0, 2).forEach(line => { center(line, curY); curY += spLH; });
+  curY += cssPxToCanvas(3);
+
+  // QR de 40mm centrado en la columna
+  const qrSize = spec.qrMm * mm;
+  drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
+  curY += qrSize + cssPxToCanvas(3);
+
+  // Código
+  const cPx = Math.round(cssPxToCanvas(spec.codePx));
+  ctx.font = `700 ${cPx}px ${FONT_MONO}`;
+  wrapCanvasText(ctx, code, colW).forEach(line => { center(line, curY); curY += Math.round(cPx * 1.15); });
+  curY += cssPxToCanvas(2);
+
+  // Bolsa: texto grande, sin bloque negro
+  if (badge) {
+    let bPx = Math.round(cssPxToCanvas(spec.badgePx));
+    ctx.font = `800 ${bPx}px ${FONT_MONO}`;
+    const tW = ctx.measureText(badge).width;
+    if (tW > colW) { bPx = Math.max(10, Math.floor(bPx * colW / tW)); ctx.font = `800 ${bPx}px ${FONT_MONO}`; }
+    center(badge, curY);
+  }
+
+  // Fecha · receta anclada abajo
+  if (meta) {
+    const mPx = Math.round(cssPxToCanvas(spec.metaPx));
+    ctx.font = `500 ${mPx}px ${FONT_MONO}`;
+    center(meta, h - padY - mPx);
+  }
+  ctx.restore();
+}
+
 function drawThermalLabelToCanvas(ctx, item, x0, y0, sizeKey) {
   const spec = THERMAL_LABEL_SPECS[sizeKey] || THERMAL_LABEL_SPECS['40x30'];
+  if (spec.layout === 'vertical') return drawThermalLabelVertical(ctx, item, x0, y0, spec);
   const w = spec.wMm * THERMAL_PX_PER_MM;
   const h = spec.hMm * THERMAL_PX_PER_MM;
   const padX = spec.padXMm * THERMAL_PX_PER_MM;
@@ -5285,6 +5412,25 @@ const ROOM_TARGET_BANDS = {
     temperature_c: { min: 20.0, max: 24.0, target: 22.0, criticalMin: 12.0, criticalMax: 30.0 },
     rh_pct:        { min: 65.0, max: 80.0, target: 72.0, criticalMin: 45.0, criticalMax: 98.0 },
     co2_ppm:       { min: 400,  max: 1500, target: 800,  criticalMax: 5000 },
+    // Temperatura de NÚCLEO del bloque. Hasta ahora la lectura entraba (el
+    // puente la publica y el motor de anomalías ya sabe graduarla y sugerir
+    // "Enfriar sustrato") pero ninguna sala declaraba banda, así que un núcleo a
+    // 32 °C pasaba sin una sola alerta. Esto es lo que lo vuelve accionable.
+    //
+    // Sólo `max`, deliberadamente:
+    //   · no hay `min` porque el piso de núcleo no está documentado en ninguna
+    //     parte, y un mínimo inventado dispara alarmas falsas cada noche fría;
+    //   · no hay `target` porque un núcleo no es una consigna — nadie regula el
+    //     núcleo, se regula el aire (`temperature_c` arriba) y el núcleo es su
+    //     consecuencia más el calor metabólico del micelio.
+    //
+    // 28 °C sale de knowledge_base (`incubation_core_temp_max_c`, ADR-0008) y
+    // coincide en las dos especies que lo documentan, ostreatus y shiitake, así
+    // que vale para esta sala sin importar cuál de las dos la ocupe.
+    // `criticalMax: 30` es el inicio del rango de estrés térmico y aborto que
+    // documenta 01_species/lentinula_edodes.md ("núcleo puede superar 30–32 °C");
+    // se toma el extremo bajo porque es el lado seguro del rango.
+    substrate_temperature_c: { max: 28.0, criticalMax: 30.0 },
   },
 };
 
@@ -5386,24 +5532,51 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
   const [config, setConfigState] = useState(loadLiveTelemetryConfig);
   const [snapshot, setSnapshot] = useState({ at: 0, rooms: {}, status: { connectivity: 'offline', transports: [], activeSource: null, altitudeM: 2600 } });
   const [alerts, setAlerts] = useState([]);
+  // Lecturas que el contrato puso en cuarentena (fuera de rango físico). No
+  // entran a las curvas ni a los umbrales, pero Hoy las informa por sensor
+  // (today-exceptions.js): un sensor que reporta -45 °C es un problema de
+  // hardware, no un dato que se pueda ignorar en silencio.
+  const [rejected, setRejected] = useState([]);
+  const rejectedRef = useRef([]);
+  // Versión de rejectedRef: cambia con cada lectura nueva o poda; el tick solo
+  // re-renderiza cuando cambió.
+  const rejectedVersionRef = useRef({ current: 0, emitted: 0 });
   const bridgeRef = useRef(null);
   const engineRef = useRef(null);
   const signatureRef = useRef('');
+  // Bandas y ciclos vigentes: cambian cuando se inicia, avanza o cierra un
+  // ciclo de sala (room-cycle-targets.effectiveBands). Se aplican en caliente
+  // al motor y al puente; los refs sirven para que un reinicio por cambio de
+  // configuración arranque con lo último, no con lo del primer render.
+  const bandsRef = useRef(bands);
+  const cyclesRef = useRef(cycles);
 
   useEffect(() => {
     const bridgeLib = typeof window !== 'undefined' ? window.SetasLiveBridge : null;
     const anomalyLib = typeof window !== 'undefined' ? window.SetasAnomaly : null;
     if (!enabled || !bridgeLib || !anomalyLib) return undefined;
 
-    const engine = anomalyLib.createAnomalyEngine({ bands });
+    const engine = anomalyLib.createAnomalyEngine({ bands: bandsRef.current });
     const bridge = bridgeLib.createLiveTelemetryBridge({
       transports: buildLiveTransports(config),
       factories: bridgeLib.browserFactories,
       pressureHpa: config.pressureHpa,
-      cycles,
+      cycles: cyclesRef.current,
       // Cada muestra pasa por los umbrales en el momento en que llega; lo que se
       // agrupa en el tick es el render, no la detección.
       onSample: (roomId, sample) => { engine.evaluate(roomId, sample); },
+      onReading: (reading) => {
+        if (!reading || !reading.rejected) return;
+        rejectedVersionRef.current.current += 1;
+        rejectedRef.current.push({
+          roomId: reading.room_id || null,
+          deviceId: reading.device_id || null,
+          metric: reading.metric || null,
+          value: reading.value != null ? reading.value : null,
+          reasons: reading.quality_reasons || [],
+          at: Date.now(),
+        });
+      },
     });
 
     engineRef.current = engine;
@@ -5412,6 +5585,18 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
 
     const pump = () => {
       engine.checkStale();
+      // Solo la última hora y como máximo 500: Hoy informa conteos, no un archivo.
+      const cutoff = Date.now() - 3600000;
+      const version = rejectedVersionRef.current;
+      const fresh = rejectedRef.current.filter(r => r.at >= cutoff).slice(-500);
+      if (fresh.length !== rejectedRef.current.length) {
+        rejectedRef.current = fresh;
+        version.current += 1;
+      }
+      if (version.current !== version.emitted) {
+        version.emitted = version.current;
+        setRejected(fresh.slice());
+      }
       const next = bridge.getSnapshot({ buckets: 24 });
       const activeAlerts = engine.activeAlerts();
       const signature = [
@@ -5452,10 +5637,22 @@ function useLiveTelemetry({ enabled = true, bands = ROOM_TARGET_BANDS, cycles = 
     setConfigState(merged);
   };
 
+  const applyBands = (next) => {
+    bandsRef.current = next;
+    if (engineRef.current && typeof engineRef.current.setBands === 'function') engineRef.current.setBands(next);
+  };
+  const applyCycles = (next) => {
+    cyclesRef.current = next;
+    if (bridgeRef.current && typeof bridgeRef.current.setCycles === 'function') bridgeRef.current.setCycles(next);
+  };
+
   const roomsWithData = Object.keys(snapshot.rooms || {});
   return {
+    applyBands,
+    applyCycles,
     snapshot,
     alerts,
+    rejected,
     config,
     setConfig,
     ingest,
@@ -5527,12 +5724,14 @@ const getFieldDb = () => {
 // de operario del encabezado y no de la sesión de Firebase: un operario veía
 // ofrecidas acciones de cuarentena que el servidor rechazaba.
 let _fieldRolePromise = null;
+let _fieldRoleUid = null;
 const getFieldOperatorRole = () => {
-  if (_fieldRolePromise) return _fieldRolePromise;
   const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
   const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
   const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
-  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+  if (!fb || !contracts || !uid) { _fieldRolePromise=null; _fieldRoleUid=null; return Promise.resolve('operario'); }
+  if (_fieldRolePromise && _fieldRoleUid===uid) return _fieldRolePromise;
+  _fieldRoleUid=uid;
 
   _fieldRolePromise = (async () => {
     try {
@@ -5623,6 +5822,46 @@ const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
   }
 };
 
+function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
+  const api=window.SetasOperationalMetrics,nav=window.SetasOSNavigation;
+  const [section,setSection]=React.useState(()=>api.normalizeTab(new URLSearchParams(location.search).get('metricsTab')));
+  const [editing,setEditing]=React.useState(null),[reason,setReason]=React.useState(''),[message,setMessage]=React.useState('');
+  React.useEffect(()=>{const pop=()=>setSection(api.normalizeTab(new URLSearchParams(location.search).get('metricsTab')));window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop);},[]);
+  // Shell links may change only the subtab while the React view stays mounted.
+  React.useEffect(()=>{const change=()=>setSection(api.normalizeTab(new URLSearchParams(location.search).get('metricsTab')));window.addEventListener('setas-metrics-route',change);return()=>window.removeEventListener('setas-metrics-route',change);},[]);
+  const choose=value=>{setSection(value);nav.navigate(window,'metricas',{metricsTab:value});setEditing(null);setMessage('');};
+  const labels={eventos:'Eventos',rendimiento:'Rendimiento',trabajo:'Trabajo',supervision:'Supervisión',salidas:'Cosechas',conocimiento:'Conocimiento'};
+  const fmt=n=>n==null?'—':n.toLocaleString('es-CO',{maximumFractionDigits:2});
+  const button={minHeight:48,padding:'10px 14px',border:'1px solid var(--border-soft)',borderRadius:8,background:'var(--paper-0)',color:'var(--ink-0)',cursor:'pointer'};
+  const canReview=!!window.SetasFirebase?.auth?.currentUser?.uid&&['produccion','direccion'].includes(role);
+  const submit=decision=>{try{onReview(editing,decision,reason);setMessage('Revisión guardada en este dispositivo y encolada para sincronizar.');setEditing(null);setReason('');}catch(e){setMessage(e.message);}};
+  return <section data-testid="operational-metrics" style={{maxWidth:1100,margin:'auto',padding:'20px 16px 80px',color:'var(--ink-0)'}}>
+    <p>Registros de Bitácora disponibles en este dispositivo · Todos los ciclos · {new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})}</p>
+    <p>Las cifras corresponden a los registros locales y pueden cambiar al sincronizar otros dispositivos.</p>
+    <nav aria-label="Secciones de Métricas" style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0'}}>{api.TABS.map(key=><button key={key} style={button} aria-pressed={section===key} onClick={()=>choose(key)}>{labels[key]}</button>)}</nav>
+    {error?<p role="alert">No se pudieron leer los registros de Bitácora. Revisa el almacenamiento antes de continuar; no se muestran métricas incompletas.</p>:!loaded?<p role="status">Cargando Bitácora.</p>:<>
+      <div style={{display:'flex',flexWrap:'wrap',gap:18,margin:'20px 0'}}><span>{data.lots.length} lotes</span><span>{data.harvests.length} cosechas válidas</span><span>{fmt(data.freshKg)} kg cosechados registrados</span><span>{data.eligibility.eligibleN} ciclos finales elegibles</span></div>
+      {data.lots.length===0&&<p>No hay lotes registrados. Añade registros en Bitácora para calcular resultados.</p>}
+      {section==='rendimiento'&&<>
+        <h2>Rendimiento observado</h2><p data-testid="metrics-mean">EB media por lote final: {fmt(data.meanEB)}{data.meanEB==null?'':' %'}</p>
+        <p>EB = masa fresca cosechada ÷ masa seca del sustrato × 100. La media asigna el mismo peso a cada lote final elegible; los ciclos parciales se muestran aparte.</p>
+        <p>Meta y umbral de alerta: pendientes de conciliación. <a href="https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/metadata/kpis.yaml" target="_blank" rel="noreferrer">Metadatos de KPI</a> y <a href="https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/CANON.md" target="_blank" rel="noreferrer">CANON</a> contienen referencias que deben reconciliarse. No se evalúa aceptación con una meta provisional.</p>
+        <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><caption>Resultados por lote · Fuente: Bitácora</caption><thead><tr>{['Lote / especie','Masa seca kg','Masa fresca kg','EB %','Resultado'].map(t=><th key={t} scope="col" style={{padding:8,textAlign:'left'}}>{t}</th>)}</tr></thead><tbody>{data.rows.map(r=><tr key={r.loteId}><th scope="row" style={{padding:8,textAlign:'left'}}>{r.codigo||r.loteId}<br/><small>{r.sKey||'Especie sin referencia'}</small></th><td>{fmt(r.dryKg)}</td><td>{fmt(r.freshKg)}</td><td>{fmt(r.be)}</td><td>{r.eligible?'Final elegible':r.exclusionReason?r.reasonLabel:'Parcial; excluido de la media'}</td></tr>)}</tbody></table></div>
+      </>}
+      {section==='eventos'&&<><h2>Eventos registrados</h2><p>Cosechas y eventos del historial de los lotes; no incluye sesiones de trabajo sin registro canónico.</p>{!data.events.length&&<p>No hay eventos registrados.</p>}<ul>{data.events.map((e,i)=><li key={`${e.eventKey}:${i}`}>{e.type} · {e.batchId} · {e.at||'Fecha no registrada'}{e.operatorId?` · ${e.operatorId}`:''}</li>)}</ul></>}
+      {section==='trabajo'&&<><h2>Trabajo</h2><p>No hay una fuente canónica de horas de trabajo conectada a Métricas. Horas y productividad por hora: sin datos.</p></>}
+      {section==='supervision'&&<><h2>Supervisión de registros</h2><p>La revisión documenta el hallazgo; la corrección del registro se realiza en Bitácora.</p>{!canReview&&<p>Para revisar se requiere una sesión de Producción o Dirección.</p>}{!data.issues.length&&<p>No hay hallazgos en los registros disponibles.</p>}
+        {data.issues.map(i=><article key={i.id} data-anomaly-id={i.id} style={{padding:16,border:'1px solid var(--border-soft)',borderRadius:8,marginBottom:12,overflowWrap:'anywhere'}}><h3>{i.label}</h3><p>{i.review?`${i.review.payload.decision} · ${i.review.operatorId} · ${i.review.at} · ${i.review.payload.reason}`:'Pendiente de revisión'}</p>{canReview&&i.reviewable&&<button style={button} onClick={()=>{setEditing(i);setReason('');setMessage('');}}>Revisar hallazgo</button>}{editing?.id===i.id&&<div><label>Motivo de la revisión<textarea aria-label="Motivo de la revisión" value={reason} onChange={e=>setReason(e.target.value)} style={{display:'block',width:'100%',boxSizing:'border-box',minHeight:80}}/></label><button style={button} disabled={!reason.trim()} onClick={()=>submit('validado')}>Validar observación</button> <button style={button} disabled={!reason.trim()} onClick={()=>submit('corregir')}>Marcar para corregir</button></div>}</article>)}
+        <h3>Historial de revisiones</h3><ul>{data.reviews.map(e=><li key={e.id} style={{overflowWrap:'anywhere'}}>{e.payload.anomalyId} · {e.payload.decision} · {e.operatorId} · {e.at} · {e.payload.reason}</li>)}</ul>
+      </>}
+      {section==='salidas'&&<><h2>Cosechas registradas</h2><p>Estas masas corresponden a cosechas. No representan ventas ni despachos.</p>{!data.harvests.length&&<p>No hay cosechas válidas registradas.</p>}<ul>{data.harvests.map(c=><li key={c.id}>{c.loteId} · {c.id} · {c.pesoFresco} {c.unit||'g'} · {c.fecha||'Fecha no registrada'}</li>)}</ul></>}
+      {section==='conocimiento'&&<><h2>Evidencia para conocimiento</h2><p>{data.eligibility.eligibleN} resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo.</p><p>Los registros parciales y los datos inválidos no se utilizan como resultados finales. Consulta la evidencia y el cierre de cada lote en Bitácora.</p></>}
+      <button style={button} onClick={onBitacora}>Abrir Bitácora</button>
+    </>}
+    {message&&<p role="status">{message}</p>}
+  </section>;
+}
+
 function SimuladorShell(props){
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
@@ -5705,19 +5944,19 @@ function SimuladorShell(props){
       return navigation?navigation.normalizeView(requested,'home'):(requested||'home');
     }catch(e){return'home';}
   });
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',metricas:'Métricas',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
     {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
+    {key:'registro',label:'Bitácora',tabs:['bitacora','metricas'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',metricas:'Métricas de cultivo',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular'];
-  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
+  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','metricas','labExtraction','bioCheck'];
   const TAB_ALIASES={optimizar:'formular',dashboard:'catalogo'};
   const applyTab=t=>{
     t=TAB_ALIASES[t]||t;
@@ -6702,6 +6941,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
   const [bitLotesLoaded,setBitLotesLoaded]=useState(false);
+  const [metricsLoadError,setMetricsLoadError]=useState(false);
   const initialDeepLinkHandled=useRef(false);
   const [publicSyncStatus,setPublicSyncStatus]=useState(null);
   const qrLotesRef=useRef(bitLotes);
@@ -6999,8 +7239,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
     try{
-      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
-      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const bl=SetasPrototype.read(localStorage,'sdp_bit_lotes'),bb=SetasPrototype.read(localStorage,'sdp_bit_bolsas'),bc=SetasPrototype.read(localStorage,'sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
+      setBitLotes(bl);setBitBolsas(bb);setBitCosechas(bc);if(bt) setBitTasks(JSON.parse(bt));
       const bre=localStorage.getItem('sdp_room_events');
       if(bre) setRoomEvents(JSON.parse(bre));
       const ir=localStorage.getItem('sdp_inv_reservas');
@@ -7019,6 +7259,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
       if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     }catch(e){
+      setMetricsLoadError(true);
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
     }finally{
       setBitLotesLoaded(true);
@@ -7045,7 +7286,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
     const drainOnce=async()=>{
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-      const bitacoraDb=typeof window!=='undefined'?window.SetasBitacoraDB:null;
+      // Bitácora y, desde ADR-0009, los documentos de Bodega y el libro de
+      // asientos (firebase/remote-sync.js) salen por la misma cola.
+      const remoteDb=typeof window!=='undefined'?window.SetasRemoteSyncDB:null;
+      const bitacoraDb=typeof window!=='undefined'&&window.SetasBitacoraDB?{...window.SetasBitacoraDB,...(remoteDb||{})}:null;
       // Sin el módulo de cola, sin el backend de Firestore, o sin red: la
       // cola simplemente espera — es justo lo que debe pasar.
       if(!syncQueueApi||!bitacoraDb) return;
@@ -7059,6 +7303,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         const op=syncQueueApi.nextPending(syncQueueRef.current,Date.now());
         if(!op) break;
         const fn=bitacoraDb[op.type];
+        // Operación de remote-sync.js con el módulo todavía cargando: se
+        // espera a la próxima pasada en vez de gastar un intento.
+        if(typeof fn!=='function'&&!remoteDb) break;
         let updatedQueue;
         try{
           if(typeof fn!=='function') throw new Error('Operación desconocida para SetasBitacoraDB: '+op.type);
@@ -7094,6 +7341,436 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       window.removeEventListener('online',onOnline);
     };
   },[]);
+
+  // ── Sincronización entre dispositivos (ADR-0009, device-sync.js).
+  // Cada colección compartida se lee en vivo de Firestore y se fusiona con la
+  // copia local a tres bandas; lo que el servidor no tiene sale por la misma
+  // cola que Bitácora. Bodega se sincroniza como libro de asientos y la lista
+  // de lotes (sdp_lotes) se recalcula desde él.
+  const deviceSyncCtxRef=useRef({deviceId:null,n:0});
+  const nextDeviceSyncCtx=()=>{
+    const r=deviceSyncCtxRef.current;
+    if(!r.deviceId){
+      try{
+        r.deviceId=localStorage.getItem('sdp_device_id');
+        if(!r.deviceId){
+          r.deviceId='dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+          localStorage.setItem('sdp_device_id',r.deviceId);
+        }
+      }catch(e){r.deviceId=r.deviceId||'dev_'+Math.random().toString(36).slice(2,10);}
+    }
+    r.n+=1;
+    return {deviceId:r.deviceId,at:new Date().toISOString(),nonce:String(r.n)};
+  };
+  const serverSeenRef=useRef(new Set());
+  // Ciclos de sala (ver el bloque "Ciclos de sala" más abajo). Se declaran
+  // aquí porque también los sincroniza este bloque.
+  const [roomCycles,setRoomCycles]=useState(()=>{try{return SetasPrototype.read(localStorage,'sdp_room_cycles');}catch(e){return [];}});
+  const [remoteSync,setRemoteSync]=useState({status:'offline',lastServerAt:null,overdrawn:[],error:null});
+  const [deviceOnline,setDeviceOnline]=useState(typeof navigator==='undefined'||navigator.onLine!==false);
+  useEffect(()=>{
+    const on=()=>setDeviceOnline(true);const off=()=>setDeviceOnline(false);
+    window.addEventListener('online',on);window.addEventListener('offline',off);
+    return ()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off);};
+  },[]);
+  const remoteSyncLabel=()=>{
+    const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+    return planner?planner.describeRemote({...remoteSync,online:deviceOnline}):'';
+  };
+  // Junto al estado de la cola: solo aparece cuando lo que se ve puede no ser
+  // lo que tienen los demás equipos.
+  const remoteSyncNote=()=>{
+    const text=remoteSyncLabel();
+    if(!text||text==='Al día con el servidor') return null;
+    return <span data-testid="remote-sync-state" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:remoteSync.status==='error'?'var(--coral-700)':'var(--ink-2)'}}>· {text}</span>;
+  };
+  // Escribe en un solo paso atómico lo que decidió el planificador, refleja
+  // cada clave en su estado de React y encola los envíos.
+  const applyDeviceSyncPlan=plan=>{
+    if(!plan) return;
+    if(plan.entries&&plan.entries.length){
+      try{SetasPrototype.persist(localStorage,plan.entries);}
+      catch(e){
+        // Nada cambió (persist es atómico); la próxima lectura lo reintenta.
+        setRemoteSync(st=>({...st,status:'error',error:e.message}));
+        if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
+        return;
+      }
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles};
+      for(const [key,value] of plan.entries){
+        if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
+        else if(setters[key]) setters[key](value);
+      }
+    }
+    if(plan.ops&&plan.ops.length){
+      const planner=window.SetasDeviceSync;
+      setSyncQueue(prev=>{
+        const {queue,dropped}=planner.enqueueAll(prev,plan.ops,Date.now());
+        if(dropped) console.warn('[SetasDeviceSync] cola llena: '+dropped+' envío(s) quedan para la próxima pasada');
+        syncQueueRef.current=queue;
+        try{localStorage.setItem('sdp_sync_queue',window.SetasSyncQueue.serialize(queue));}catch(e){bitQuotaWarn();}
+        return queue;
+      });
+    }
+    if(Array.isArray(plan.overdrawn)){
+      setRemoteSync(st=>JSON.stringify(st.overdrawn)===JSON.stringify(plan.overdrawn)?st:{...st,overdrawn:plan.overdrawn});
+    }
+  };
+  const onRemoteSnapshotRef=useRef(null);
+  onRemoteSnapshotRef.current=({coleccion,docs,fromCache})=>{
+    const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+    if(!planner) return;
+    let plan;
+    try{
+      plan=planner.planSnapshot({collection:coleccion,docs,fromCache,read:k=>SetasPrototype.read(localStorage,k),queue:syncQueueRef.current,ctx:nextDeviceSyncCtx()});
+    }catch(err){
+      setRemoteSync(st=>({...st,status:'error',error:err.message}));
+      return;
+    }
+    applyDeviceSyncPlan(plan);
+    if(fromCache) return;
+    serverSeenRef.current.add(coleccion);
+    const allSeen=planner.ALL_COLLECTIONS.every(c=>serverSeenRef.current.has(c));
+    setRemoteSync(st=>({...st,status:'live',error:null,lastServerAt:allSeen?Date.now():st.lastServerAt}));
+  };
+  useEffect(()=>{
+    if(!bitLotesLoaded||!peritoInventoryLoaded) return;
+    let unsubs=[];
+    let cancelled=false;
+    const start=()=>{
+      const remote=typeof window!=='undefined'?window.SetasRemoteSyncDB:null;
+      const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+      if(cancelled||!remote||!planner||unsubs.length) return;
+      unsubs=planner.ALL_COLLECTIONS.map(c=>remote.suscribirColeccion(c,
+        snap=>{if(!cancelled&&onRemoteSnapshotRef.current) onRemoteSnapshotRef.current(snap);},
+        ({error})=>{if(!cancelled) setRemoteSync(st=>({...st,status:'error',error:String(error&&(error.code||error.message)||error)}));}));
+    };
+    start();
+    window.addEventListener('setas-remote-sync-ready',start);
+    return ()=>{
+      cancelled=true;
+      window.removeEventListener('setas-remote-sync-ready',start);
+      unsubs.forEach(u=>{try{u();}catch(e){}});
+    };
+  },[bitLotesLoaded,peritoInventoryLoaded]);
+  // Cambios de Bodega hechos en este equipo entre dos lecturas del servidor:
+  // cualquier camino que escriba sdp_lotes (compra, consumo, ajuste,
+  // preparación, respaldo) termina aquí convertido en asientos.
+  useEffect(()=>{
+    if(!bitLotesLoaded||!peritoInventoryLoaded) return;
+    const planner=typeof window!=='undefined'?window.SetasDeviceSync:null;
+    if(!planner) return;
+    const t=setTimeout(()=>{
+      let plan;
+      try{
+        plan=planner.planLocal({read:k=>SetasPrototype.read(localStorage,k),queue:syncQueueRef.current,ctx:nextDeviceSyncCtx(),seen:[...serverSeenRef.current]});
+      }catch(err){console.warn('[SetasDeviceSync] no se pudo registrar el cambio de Bodega',err);return;}
+      applyDeviceSyncPlan(plan);
+    },400);
+    return ()=>clearTimeout(t);
+  },[invLotes,invCompras,invProveedores,invReservas,invMovimientos,roomCycles,bitLotesLoaded,peritoInventoryLoaded]);
+
+  // ── Excepciones de Hoy que no salen del motor de clima (today-exceptions.js):
+  // sincronización, sobregiro de Bodega, lecturas en cuarentena e incubación
+  // más larga que la referencia. Se calculan aquí, fuera del render de Hoy,
+  // porque también alimentan las notificaciones.
+  const todayExceptions=(()=>{
+    const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
+    const queueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    if(!api) return [];
+    try{
+      return api.buildTodayExceptions({
+        now:Date.now(),
+        lotes:bitLotes,
+        bolsas:bitBolsas,
+        syncStats:queueApi?queueApi.stats(syncQueue,Date.now()):null,
+        remoteSync:{...remoteSync,online:deviceOnline},
+        overdrawnLots:invLotes.filter(l=>(Number(l.sobregiroKg)||0)>0).map(l=>({...l,name:(INGS.find(g=>g.id===l.ingredienteId)||{}).name})),
+        rejected:liveTelemetry.rejected||[],
+      });
+    }catch(e){console.warn('[Hoy] no se pudieron calcular las excepciones',e);return [];}
+  })();
+  const runTodayExceptionAction=item=>{
+    const a=item&&item.action;
+    if(!a) return;
+    if(a.type==='retrySync'){
+      const queueApi=window.SetasSyncQueue;
+      const next=queueApi.retryStuck(syncQueueRef.current,Date.now());
+      syncQueueRef.current=next;
+      setSyncQueue(next);
+      try{localStorage.setItem('sdp_sync_queue',queueApi.serialize(next));}catch(e){}
+    }else if(a.type==='goBodega'){setInvTab('stock');goTab('inventario');}
+    else if(a.type==='goIoT'){setShowIoTHub(true);}
+    else if(a.type==='openLote'&&a.loteId){openBatchDetail(a.loteId);}
+  };
+
+  // Notificaciones del sistema para alarmas nuevas (Banda 1 y clima crítico).
+  // Solo mientras la app está abierta, aunque esté en segundo plano: el
+  // proyecto no tiene servidor de envío (Firebase Spark), así que con la app
+  // cerrada no llegan. Con la pestaña visible no se notifica: ya está en
+  // pantalla.
+  const [notifyPermission,setNotifyPermission]=useState(()=>{
+    try{return typeof Notification!=='undefined'?Notification.permission:'unsupported';}catch(e){return 'unsupported';}
+  });
+  const requestNotifyPermission=()=>{
+    try{
+      if(typeof Notification==='undefined') return;
+      Promise.resolve(Notification.requestPermission()).then(p=>setNotifyPermission(p)).catch(()=>{});
+    }catch(e){}
+  };
+  const notifiedRef=useRef(new Set());
+  const notifyItems=[
+    ...todayExceptions,
+    ...(liveTelemetry.alerts||[]).filter(a=>a.severity==='critico'||a.severity==='alarma')
+      .map(a=>({id:'clima:'+a.key,severity:'alarma',title:`${a.roomId||'Sala'}: ${a.msg||a.metricLabel||'alerta de clima'}`,detail:a.action||''})),
+  ];
+  const notifyKey=notifyItems.filter(i=>i.severity==='alarma').map(i=>i.id).sort().join('|');
+  useEffect(()=>{
+    const api=typeof window!=='undefined'?window.SetasTodayExceptions:null;
+    if(!api) return;
+    const {send,notified}=api.notificationsToSend(notifyItems,notifiedRef.current);
+    notifiedRef.current=notified;
+    if(!send.length||notifyPermission!=='granted') return;
+    if(typeof document!=='undefined'&&document.visibilityState==='visible') return;
+    const show=item=>{
+      const opts={body:item.detail||'',tag:'setas-'+item.id,icon:'favicon.svg'};
+      // serviceWorker.ready no se resuelve nunca si no hay service worker
+      // registrado: sin el límite de tiempo la notificación no saldría.
+      const swReady=typeof navigator!=='undefined'&&navigator.serviceWorker&&navigator.serviceWorker.ready
+        ?Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(new Error('sin service worker')),3000))])
+        :Promise.reject(new Error('sin service worker'));
+      const viaSw=swReady.then(reg=>reg.showNotification('Setas OS · '+item.title,opts));
+      viaSw.catch(()=>{try{new Notification('Setas OS · '+item.title,opts);}catch(e){}});
+    };
+    send.slice(0,3).forEach(show);
+  },[notifyKey,notifyPermission]);
+
+  // ── Ciclos de sala (room-cycle.js + room-cycle-targets.js). Un ciclo une
+  // sala, especie, etapa y lotes; mientras está activo, sus bandas reemplazan
+  // las fijas de la sala (ROOM_TARGET_BANDS) para las alertas. Se guardan en
+  // sdp_room_cycles y se sincronizan entre equipos (ADR-0009).
+  useEffect(()=>{
+    // El puente de aprendizaje (production-learning-bridge.js) también escribe
+    // ciclos; avisa con este evento.
+    const reload=()=>{try{setRoomCycles(SetasPrototype.read(localStorage,'sdp_room_cycles'));}catch(e){}};
+    window.addEventListener('setas-room-cycle-updated',reload);
+    return ()=>window.removeEventListener('setas-room-cycle-updated',reload);
+  },[]);
+  // Un ciclo puede empezar o terminar sin que nadie toque nada (startAt en el
+  // futuro, endAt en el pasado): se reevalúa cada minuto.
+  const [cycleClock,setCycleClock]=useState(()=>Date.now());
+  useEffect(()=>{const t=setInterval(()=>setCycleClock(Date.now()),60000);return ()=>clearInterval(t);},[]);
+  const cycleTargetsApi=typeof window!=='undefined'?window.SetasRoomCycleTargets:null;
+  const effectiveRoomBands=cycleTargetsApi?cycleTargetsApi.effectiveBands(ROOM_TARGET_BANDS,roomCycles,cycleClock):ROOM_TARGET_BANDS;
+  const activeRoomCycles=cycleTargetsApi?cycleTargetsApi.activeCycles(roomCycles,cycleClock):[];
+  const effectiveBandsKey=JSON.stringify(effectiveRoomBands);
+  useEffect(()=>{
+    liveTelemetry.applyBands(effectiveRoomBands);
+    liveTelemetry.applyCycles(activeRoomCycles);
+  },[effectiveBandsKey,activeRoomCycles.map(c=>c.id).join('|')]);
+
+  const persistRoomCycles=next=>{
+    try{SetasPrototype.persist(localStorage,[['sdp_room_cycles',next]]);}
+    catch(e){setNoticeDlg({title:'No se pudo guardar el ciclo',msg:e.message});return false;}
+    setRoomCycles(next);
+    return true;
+  };
+  const closeRoomCycle=(cycle,{at=new Date().toISOString(),list=roomCycles}={})=>{
+    const closed={...cycle,state:'closed',endAt:at};
+    const next=list.map(c=>c.id===cycle.id?closed:c);
+    if(!persistRoomCycles(next)) return null;
+    // Al cerrar, el puente materializa la evidencia de cada lote del ciclo.
+    try{window.SetasProductionLearning&&window.SetasProductionLearning.onCycleClosed({cycleId:cycle.id});}catch(e){}
+    return next;
+  };
+
+  const CYCLE_METRICS=[
+    {key:'temperature_c',label:'Temperatura aire',unit:'°C'},
+    {key:'rh_pct',label:'Humedad relativa',unit:'%'},
+    {key:'co2_ppm',label:'CO₂',unit:'ppm'},
+    {key:'substrate_temperature_c',label:'Temperatura núcleo',unit:'°C'},
+  ];
+  const [cycleForm,setCycleForm]=useState(null);
+  const [cycleFormError,setCycleFormError]=useState('');
+  const toLocalInput=iso=>{const d=new Date(iso);if(!Number.isFinite(d.getTime()))return '';const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;};
+  // Bandas del formulario: lo sugerido por species.yaml para especie × etapa,
+  // salvo las métricas que el operario ya editó (source 'manual').
+  const suggestedCycleBands=(speciesId,stage,current={})=>{
+    const sug=cycleTargetsApi?cycleTargetsApi.suggestTargets(speciesId,stage).targets:{};
+    const out={};
+    for(const m of CYCLE_METRICS){
+      if(current[m.key]&&current[m.key].source==='manual'){out[m.key]=current[m.key];continue;}
+      const b=sug[m.key];
+      out[m.key]=b?{min:b.min??'',max:b.max??'',target:b.target??'',source:b.source}:{min:'',max:'',target:'',source:null};
+    }
+    return out;
+  };
+  const openCycleForm=({roomId,stage='incubation',batchIds=null,speciesId=null,previous=null}={})=>{
+    const room=roomId||selectedClimateRoom||Object.keys(ROOMS_CONFIG)[0];
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    const ids=batchIds||activos.filter(l=>l.sala===room||l.ubicacion===room).map(l=>l.id);
+    const lote=bitLotes.find(l=>ids.includes(l.id));
+    const sp=speciesId||(lote&&(lote.sKey||lote.especie))||'';
+    setCycleFormError('');
+    setCycleForm({roomId:room,stage,batchIds:ids,speciesId:sp,startAt:toLocalInput(new Date().toISOString()),notes:'',previousId:previous?previous.id:null,bands:suggestedCycleBands(sp,stage)});
+  };
+  const submitCycleForm=()=>{
+    const f=cycleForm;
+    const rcApi=window.SetasRoomCycle;
+    if(!f||!rcApi) return;
+    const startIso=f.startAt?new Date(f.startAt).toISOString():null;
+    const num=v=>v===''||v==null?null:Number(v);
+    const targets={};
+    for(const m of CYCLE_METRICS){
+      const b=f.bands[m.key]||{};
+      if(num(b.min)==null&&num(b.max)==null) continue;
+      targets[m.key]={min:num(b.min),max:num(b.max),target:num(b.target),source:b.source||'manual'};
+    }
+    const cycle={id:'RC_'+f.roomId+'_'+Date.now(),roomId:f.roomId,speciesId:f.speciesId,batchIds:f.batchIds,stage:f.stage,state:'active',startAt:startIso,endAt:null,targets,notes:f.notes||null,provenance:{type:'manual'}};
+    const errors=rcApi.validateRoomCycle(cycle);
+    if(errors.length){
+      const msg={
+        'missing speciesId':'elige la especie','at least one batchId is required':'selecciona al menos un lote','invalid startAt':'indica la fecha de inicio',
+      };
+      setCycleFormError('Revisa el ciclo: '+errors.map(e=>msg[e]||(/min exceeds max/.test(e)?`${e.split(':')[0]}: el mínimo supera el máximo`:e)).join('; ')+'.');
+      return;
+    }
+    let list=roomCycles;
+    // Avanzar etapa = cerrar el ciclo anterior en el instante en que empieza
+    // el nuevo: la evidencia queda separada por etapa.
+    const previous=f.previousId?list.find(c=>c.id===f.previousId):null;
+    if(previous&&previous.state==='active'){
+      const closedList=closeRoomCycle(previous,{at:startIso,list});
+      if(!closedList) return;
+      list=closedList;
+    }
+    if(persistRoomCycles([...list,rcApi.normalizeRoomCycle(cycle)])) setCycleForm(null);
+  };
+
+  const speciesLabel=key=>(SPP&&SPP[key]&&SPP[key].name)||key||'sin especie';
+  const bandText=b=>{
+    if(!b) return '—';
+    const parts=[];
+    if(b.min!=null&&b.max!=null) parts.push(`${b.min}–${b.max}`);
+    else if(b.max!=null) parts.push(`≤ ${b.max}`);
+    else if(b.min!=null) parts.push(`≥ ${b.min}`);
+    if(b.target!=null) parts.push(`objetivo ${b.target}`);
+    return parts.join(' · ')||'—';
+  };
+  const renderRoomCyclePanel=()=>{
+    const api=cycleTargetsApi;
+    if(!api) return null;
+    const roomId=selectedClimateRoom;
+    const room=ROOMS_CONFIG[roomId]||{name:roomId};
+    const active=api.activeCycleForRoom(roomCycles,roomId,cycleClock);
+    const history=roomCycles.filter(c=>c.roomId===roomId&&c.state==='closed').sort((a,b)=>String(b.endAt).localeCompare(String(a.endAt))).slice(0,3);
+    const stageLabel=st=>api.STAGE_LABELS[st]||st;
+    const next=active?api.NEXT_STAGE[active.stage]:null;
+    const days=active?Math.max(0,Math.floor((cycleClock-Date.parse(active.startAt))/86400000)):null;
+    return <section className="climate-overview" data-testid="room-cycle-panel" aria-labelledby="room-cycle-title">
+      <div className="climate-section-head">
+        <div>
+          <span className="climate-eyebrow">Ciclo de sala · {room.name}</span>
+          <h2 id="room-cycle-title">{active?`${stageLabel(active.stage)} · ${speciesLabel(active.speciesId)}`:'Sin ciclo activo'}</h2>
+        </div>
+      </div>
+      {active?(
+        <div data-testid="room-cycle-active" data-stage={active.stage}>
+          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',marginBottom:10}}>
+            Día {days} · desde {new Date(active.startAt).toLocaleDateString('es-CO')} · {active.batchIds.length} lote{active.batchIds.length===1?'':'s'}: {active.batchIds.map(id=>(bitLotes.find(l=>l.id===id)||{}).codigo||id).join(', ')}
+          </div>
+          <table className="inventory-stock-table" data-testid="room-cycle-bands" style={{width:'100%',marginBottom:12}}>
+            <thead><tr><th>Métrica</th><th>Banda del ciclo</th><th>Origen</th></tr></thead>
+            <tbody>
+              {CYCLE_METRICS.map(m=>{
+                const b=active.targets&&active.targets[m.key];
+                const has=b&&(b.min!=null||b.max!=null);
+                return <tr key={m.key} data-metric={m.key}>
+                  <td>{m.label}</td>
+                  <td>{has?`${bandText(b)} ${m.unit}`:'Banda fija de la sala'}</td>
+                  <td><span className="sdp-provenance">{has?(api.SOURCE_LABELS[b.source]||b.source):'—'}</span></td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {next&&<button type="button" className="inv-btn inv-btn-pri" onClick={()=>openCycleForm({roomId,stage:next,batchIds:active.batchIds,speciesId:active.speciesId,previous:active})}>Avanzar a {stageLabel(next)}</button>}
+            <button type="button" className="inv-btn inv-btn-sec" onClick={()=>setConfirmDlg({title:'Cerrar ciclo de sala',msg:`¿Cerrar el ciclo de ${stageLabel(active.stage)} en ${room.name}? La sala vuelve a sus bandas fijas y se registra la evidencia de cada lote.`,confirmLabel:'Cerrar ciclo',onConfirm:()=>closeRoomCycle(active)})}>Cerrar ciclo</button>
+          </div>
+        </div>
+      ):(
+        <div>
+          <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',margin:'0 0 10px'}}>Las alertas usan las bandas fijas de la sala. Inicia un ciclo para usar las de la especie y etapa que hay dentro.</p>
+          <button type="button" className="inv-btn inv-btn-pri" data-testid="room-cycle-start" onClick={()=>openCycleForm({roomId})}>Iniciar ciclo</button>
+        </div>
+      )}
+      {history.length>0&&<details style={{marginTop:12}}>
+        <summary style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',cursor:'pointer'}}>Ciclos anteriores ({history.length})</summary>
+        <ul style={{margin:'6px 0 0',paddingLeft:18,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)'}}>
+          {history.map(c=><li key={c.id}>{stageLabel(c.stage)} · {speciesLabel(c.speciesId)} · {new Date(c.startAt).toLocaleDateString('es-CO')} – {new Date(c.endAt).toLocaleDateString('es-CO')}</li>)}
+        </ul>
+      </details>}
+      {cycleForm&&renderCycleForm()}
+    </section>;
+  };
+  const renderCycleForm=()=>{
+    const api=cycleTargetsApi;
+    const f=cycleForm;
+    const set=patch=>setCycleForm(prev=>({...prev,...patch}));
+    const activos=bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
+    const speciesOptions=[...new Set([f.speciesId,...activos.filter(l=>f.batchIds.includes(l.id)).map(l=>l.sKey||l.especie)].filter(Boolean))];
+    const setBand=(key,field,value)=>setCycleForm(prev=>({...prev,bands:{...prev.bands,[key]:{...prev.bands[key],[field]:value,source:'manual'}}}));
+    const CYCLE_INP={fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 10px',minHeight:44,background:'var(--paper-0)',color:'var(--ink-0)',width:'100%',boxSizing:'border-box'};
+    const lbl={display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)',marginBottom:4};
+    return <AccessibleModal onClose={()=>setCycleForm(null)} label={f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'} dialogStyle={{width:640,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 80px)',overflowY:'auto'}}>
+      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',margin:'0 0 12px'}}>{f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'}</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:12}}>
+        <label><span style={lbl}>Sala</span>
+          <select aria-label="Sala del ciclo" style={CYCLE_INP} value={f.roomId} disabled={!!f.previousId} onChange={e=>set({roomId:e.target.value})}>
+            {Object.values(ROOMS_CONFIG).map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+          </select></label>
+        <label><span style={lbl}>Etapa</span>
+          <select aria-label="Etapa del ciclo" style={CYCLE_INP} value={f.stage} onChange={e=>set({stage:e.target.value,bands:suggestedCycleBands(f.speciesId,e.target.value,f.bands)})}>
+            {Object.entries(api.STAGE_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+          </select></label>
+        <label><span style={lbl}>Especie</span>
+          <select aria-label="Especie del ciclo" style={CYCLE_INP} value={f.speciesId} onChange={e=>set({speciesId:e.target.value,bands:suggestedCycleBands(e.target.value,f.stage,f.bands)})}>
+            {!f.speciesId&&<option value="">Elige especie</option>}
+            {(speciesOptions.length?speciesOptions:Object.keys(SPP||{})).map(k=><option key={k} value={k}>{speciesLabel(k)}</option>)}
+          </select></label>
+        <label><span style={lbl}>Inicio</span>
+          <input aria-label="Inicio del ciclo" type="datetime-local" style={CYCLE_INP} value={f.startAt} onChange={e=>set({startAt:e.target.value})}/></label>
+      </div>
+      <fieldset style={{border:'1px solid var(--border-hairline)',padding:10,marginBottom:12}}>
+        <legend style={lbl}>Lotes en la sala</legend>
+        {activos.length===0&&<div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)'}}>No hay lotes activos en Bitácora.</div>}
+        {activos.map(l=><label key={l.id} style={{display:'flex',alignItems:'center',gap:8,minHeight:44,fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)'}}>
+          <input type="checkbox" checked={f.batchIds.includes(l.id)} onChange={e=>set({batchIds:e.target.checked?[...f.batchIds,l.id]:f.batchIds.filter(x=>x!==l.id)})}/>
+          {l.codigo||l.id} · {speciesLabel(l.sKey||l.especie)}{l.sala?` · ${(ROOMS_CONFIG[l.sala]||{}).name||l.sala}`:''}
+        </label>)}
+      </fieldset>
+      <fieldset style={{border:'1px solid var(--border-hairline)',padding:10,marginBottom:12}}>
+        <legend style={lbl}>Bandas de clima</legend>
+        <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginBottom:8}}>Sugeridas desde {api.KB_SOURCE}. Un valor que cambies queda como consigna de la granja. Una métrica vacía usa la banda fija de la sala.</div>
+        {CYCLE_METRICS.map(m=>{
+          const b=f.bands[m.key]||{};
+          return <div key={m.key} data-band={m.key} style={{display:'grid',gridTemplateColumns:'minmax(120px,1.4fr) 1fr 1fr minmax(120px,1.2fr)',gap:8,alignItems:'center',marginBottom:6}}>
+            <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)'}}>{m.label} ({m.unit})</span>
+            <input aria-label={`${m.label} mínimo`} type="number" inputMode="decimal" style={CYCLE_INP} value={b.min??''} onChange={e=>setBand(m.key,'min',e.target.value)} placeholder="mín"/>
+            <input aria-label={`${m.label} máximo`} type="number" inputMode="decimal" style={CYCLE_INP} value={b.max??''} onChange={e=>setBand(m.key,'max',e.target.value)} placeholder="máx"/>
+            <span className="sdp-provenance" data-band-source={b.source||'none'}>{b.source?(api.SOURCE_LABELS[b.source]||b.source):'Sin valor en la KB'}</span>
+          </div>;
+        })}
+      </fieldset>
+      <label><span style={lbl}>Notas</span>
+        <textarea aria-label="Notas del ciclo" style={{...CYCLE_INP,width:'100%',minHeight:60}} value={f.notes} onChange={e=>set({notes:e.target.value})}/></label>
+      {cycleFormError&&<div role="alert" style={{color:'var(--coral-700)',fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',marginTop:8}}>{cycleFormError}</div>}
+      <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:14}}>
+        <button type="button" className="inv-btn inv-btn-sec" onClick={()=>setCycleForm(null)}>Cancelar</button>
+        <button type="button" className="inv-btn inv-btn-pri" onClick={submitCycleForm}>{f.previousId?'Cerrar etapa y avanzar':'Iniciar ciclo'}</button>
+      </div>
+    </AccessibleModal>;
+  };
 
   // ── Deep-Linking canónico: resolver lote / bolsa / canastilla tras confirmar carga de datos locales (v5.1)
   useEffect(()=>{
@@ -7521,29 +8198,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         profileKey:optProfile||'produccion',
         spp:SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],INGS),
       });
-      let cand = (r.recommended && r.recommended[0]) || (r.ranked && r.ranked[0]) || (r.pareto && r.pareto[0]) || (r.best?.recipe?.length ? r.best : null);
-      if (!cand || !cand.recipe || !cand.recipe.length) {
-        const availableBases = availableStockIds.filter(id => INGS.find(g => g.id === id)?.role === 'base_carbono');
-        const availableSupps = availableStockIds.filter(id => {
-          const role = INGS.find(g => g.id === id)?.role;
-          return role === 'suplemento_n' || role === 'suplemento_medio';
-        });
-        if (availableBases.length) {
-          const baseId = availableBases[0];
-          const suppId = availableSupps.length ? availableSupps[0] : null;
-          const hasCal = availableStockIds.includes('carbonato_calcio');
-          const hasYeso = availableStockIds.includes('yeso');
-          const calPct = hasCal ? 3 : 0;
-          const yesoPct = hasYeso ? 2 : 0;
-          const suppPct = suppId ? 15 : 0;
-          const basePct = 100 - calPct - yesoPct - suppPct;
-          const fallbackRec = [{ id: baseId, pct: basePct }];
-          if (suppId) fallbackRec.push({ id: suppId, pct: suppPct });
-          if (hasCal) fallbackRec.push({ id: 'carbonato_calcio', pct: calPct });
-          if (hasYeso) fallbackRec.push({ id: 'yeso', pct: yesoPct });
-          cand = { recipe: fallbackRec };
-        }
-      }
+      const cand=[...(r.recommended||[]),...(r.ranked||[]),...(r.pareto||[]),r.best]
+        .find(c=>c?.evaluation?.allowed&&c.recipe?.length);
       if(!cand||!cand.recipe||!cand.recipe.length){
         setNoticeDlg({
           title:'Sin combinación viable con stock actual',
@@ -7551,7 +8207,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         });
         return;
       }
-      const formatted=cand.recipe.map(item=>({id:item.id,pct:Number(item.p||item.pct||0)}));
+      const formatted=cand.recipe.map(item=>({id:item.id,p:Number(item.p??item.pct??0)}));
       setRecipe(formatted);
       const maxBatch=calcMaxBatchFromStock(cand.recipe,stockMap,10,sp?.moisture?.ideal||65,INGS);
       setNoticeDlg({
@@ -8090,7 +8746,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     let consumoRegistrado=false;
     try{
       const now=Date.now();
-      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
+      const form={codigo:loteNum,especie:SPP[sKey]?.name||sKey,especieCientifico:SPP[sKey]?.scientific||'',cepa:'',strainId:'',spawnLotId:'',fechaMezcla:fecha,fechaInoculacion:fecha,numBolsas:parseInt(prodBags)||1,pesoHumedo:prodKg||1.5,humedad:prodH||an?.moistureTarget||65,sala:selectedClimateRoom||'martha_01',operador:'Operario Granja Tenjo',notas:'Hoja de producción'};
       // El lote NACE planificado y sus insumos quedan reservados, no
       // descontados: la bodega se toca al registrar "Preparar mezcla", que es
       // cuando el sustrato se pesa de verdad.
@@ -8185,7 +8841,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const nb=prodBags||6;const kb=prodKg||1.5;const hm=prodH||67;
     return{
       codigo:sugerirCodigoLote(sKey),
-      especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',
+      especie:sp?.name||'',especieCientifico:sp?.scientific||'',cepa:'',strainId:'',spawnLotId:'',
       fechaMezcla:'',fechaInoculacion:'',
       numBolsas:'',pesoHumedo:'',peseSeco:'',
       spawnPct:'',humedad:'',tratamiento:'',
@@ -8324,6 +8980,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
       especie: sp?.name || '',
       especieCientifico: sp?.scientific || '',
       cepa: '',
+      strainId: '',
+      spawnLotId: '',
       fechaMezcla: today,
       fechaInoculacion: today,
       numBolsas: nb,
@@ -9286,6 +9944,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {invTab==='stock'&&(
                 <div>
                   {(()=>{
+                    // Dos equipos descontaron los mismos kilos sin verse
+                    // (ADR-0009): el libro no inventa stock, lo deja a cero y
+                    // pide un recuento físico.
+                    const sobregirados=invLotes.filter(l=>(Number(l.sobregiroKg)||0)>0);
+                    if(!sobregirados.length) return null;
+                    return <div role="alert" data-testid="inventory-overdraw" className="stock-critical-card" style={{marginBottom:16}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',color:'color-mix(in oklab, var(--coral-700) 70%, black)',marginBottom:6}}>
+                        <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Recuento necesario ({sobregirados.length})
+                      </div>
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginBottom:6}}>
+                        Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Cuenta el lote y corrige su stock.
+                      </div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {sobregirados.map(l=>{
+                          const g=INGS.find(x=>x.id===l.ingredienteId);
+                          return <span key={l.id} style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',padding:'2px 6px',background:'var(--paper-0)',border:'1px solid var(--coral-300)',borderRadius:2,color:'color-mix(in oklab, var(--coral-700) 70%, black)'}}>
+                            {(g?g.name:l.ingredienteId)} · lote {l.fechaIngreso||l.id}: {Number(l.sobregiroKg).toFixed(1)} kg de más
+                          </span>;
+                        })}
+                      </div>
+                    </div>;
+                  })()}
+                  {(()=>{
                     const ledgerApi=window.SetasInventoryLedger;
                     const incomingCompras=window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[];
                     const availabilityFor=(ingId)=>ledgerApi.availability(ingId,{lots:invLotes,ledger:invReservas,incoming:incomingCompras,nowMs:Date.now()});
@@ -9877,6 +10558,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
   useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
   const operatorRole=fieldOperatorRole;
+  const metricsData=React.useMemo(()=>window.SetasOperationalMetrics.derive(bitLotes,bitBolsas,bitCosechas),[bitLotes,bitBolsas,bitCosechas]);
+  const goMetrics=section=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:section});goTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));};
+  const saveMetricsReview=(issue,decision,reason)=>{
+    const result=window.SetasOperationalMetrics.saveReview({storage:localStorage,prototype:window.SetasPrototype,queue:window.SetasSyncQueue,auth:window.SetasFirebase?.auth?.currentUser,role:fieldOperatorRole,anomalyId:issue.id,expectedSnapshot:issue.snapshot||null,decision,reason,id:crypto.randomUUID(),at:new Date().toISOString()});
+    syncQueueRef.current=result.queue;setBitLotes(result.lots);setSyncQueue(result.queue);
+  };
+
   // El Perito vivía SÓLO en el Formulador: sabía más que nadie de recetas y no
   // decía nada cuando el operario estaba frente al lote con el problema. Esto
   // es la puerta que faltaba, y es sólo una puerta: no puntúa, no ordena y no
@@ -10732,6 +11420,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
             return <div data-testid="sync-indicator" style={{display:'flex',alignItems:'center',gap:8}}>
               <span role="status" aria-live="polite" aria-atomic="true" className={'sdp-sync-chip '+(st.stuck>0?'sdp-sync-chip--error':(st.pending>0?'sdp-sync-chip--pending':'sdp-sync-chip--synced'))}>{label}</span>
+              {remoteSyncNote()}
               {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                 const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                 setSyncQueue(next);
@@ -10764,7 +11453,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const roomName = sheet && sheet.room ? sheet.room.name : roomId;
     const roomLiveNow = roomId ? liveTelemetry.roomLive(roomId) : null;
     const roomSample = (roomLiveNow && roomLiveNow.sample) || {};
-    const targetBands = roomId ? ROOM_TARGET_BANDS[roomId] : null;
+    // Mismas bandas que Cámaras y el motor de alertas: las del ciclo activo
+    // de la sala si lo hay, si no las fijas.
+    const targetBands = roomId ? (effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null) : null;
     const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
 
     const buildReading = (metricKey, label, unit, decimals) => {
@@ -10829,6 +11520,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
                 return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" className={`sdp-sync sdp-sync--${st.stuck>0?'error':(st.pending>0?'pending':'synced')}`}>
                   {label}
+                  {remoteSyncNote()}
                   {st.stuck>0&&<button type="button" onClick={()=>{
                     const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                     setSyncQueue(next);
@@ -11095,7 +11787,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Targets por sala desde la fuente única (ROOM_TARGET_BANDS): las mismas
     // bandas que evalúa el motor de umbrales del puente en vivo, para que el
     // dashboard y el cockpit de Hoy nunca discrepen sobre qué es "en rango".
-    const defaultTargets = ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
+    // Con un ciclo de sala activo, sus bandas reemplazan las fijas de la sala.
+    const defaultTargets = effectiveRoomBands[selectedClimateRoom] || ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
 
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
@@ -11627,6 +12320,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
           </section>
         )}
+        {renderRoomCyclePanel()}
         <section className="climate-overview" aria-labelledby="climate-overview-title">
           <div className="climate-section-head">
             <div>
@@ -12461,6 +13155,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
                   return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'#C53030':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
                     {label}
+                    {remoteSyncNote()}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
                       const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                       setSyncQueue(next);
@@ -13081,7 +13776,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
 
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
-                {(liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length > 0) && (
+                {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
                 <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-error,#B53A25)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -13089,10 +13784,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error,#B53A25)'}}>
                         Banda 1 · Atención
                       </span>
-                      <span className="sdp-provenance">SCD30 · Cuarentena · Insumos</span>
+                      <span className="sdp-provenance">Sensores · Sincronización · Cuarentena · Insumos</span>
                     </div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
-                      {liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
+                      {liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
                     </span>
                   </div>
 
@@ -13100,6 +13795,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {liveTelemetry.alerts.length > 0 && (
                     <div style={{marginBottom: 12}}>
                       <LiveAlertsSection/>
+                    </div>
+                  )}
+
+                  {/* Sincronización, sobregiro, lecturas en cuarentena e incubación (today-exceptions.js) */}
+                  {todayExceptions.length > 0 && (
+                    <ul data-testid="today-exceptions" style={{listStyle:'none',margin:'0 0 12px',padding:0,display:'flex',flexDirection:'column',gap:8}}>
+                      {todayExceptions.map(item=>{
+                        const alarma=item.severity==='alarma';
+                        const ink=alarma?'var(--status-error,#B53A25)':'var(--status-warn-text)';
+                        return <li key={item.id} data-exception-kind={item.kind} data-severity={item.severity} className={`sdp-task ${alarma?'sdp-task--critical':''}`} style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12,padding:'10px 14px',borderLeft:`3px solid ${ink}`}}>
+                          <div style={{minWidth:0,flex:'1 1 240px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                              <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:ink,border:`1px solid ${ink}`,padding:'1px 5px'}}>{alarma?'Alarma':'Vigilar'}</span>
+                              <strong style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{item.title}</strong>
+                            </div>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:4,lineHeight:1.4}}>{item.detail}</div>
+                          </div>
+                          {item.action&&<button type="button" className="sdp-btn sdp-btn--field" onClick={()=>runTodayExceptionAction(item)}>{item.action.label}</button>}
+                        </li>;
+                      })}
+                    </ul>
+                  )}
+                  {notifyPermission==='default'&&(
+                    <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:12,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)'}}>
+                      <span>Recibe estas alarmas como notificación mientras la app esté abierta en este equipo.</span>
+                      <button type="button" data-testid="enable-notifications" className="sdp-btn sdp-btn--field" onClick={requestNotifyPermission}>Avisarme en este equipo</button>
                     </div>
                   )}
 
@@ -13300,6 +14021,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
                         <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
                         {label}
+                        {remoteSyncNote()}
                         {st.stuck>0&&<button type="button" onClick={()=>{
                           const next=syncQueueApi.retryStuck(syncQueue,Date.now());
                           setSyncQueue(next);
@@ -13322,11 +14044,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </span>
                   <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
                     {[
-                      {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
-                      {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
-                      {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
-                      {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
-                      {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                      {label:'Eventos',value:!metricsLoadError&&bitLotesLoaded?metricsData.events.length:'—',onClick:()=>goMetrics('eventos')},
+                      {label:'Rendimiento (EB)',value:metricsLoadError?'Sin datos':metricsData.meanEB==null?'Sin finales':`${metricsData.meanEB.toFixed(1)}%`,onClick:()=>goMetrics('rendimiento')},
+                      {label:'Trabajo',value:'Sin datos',onClick:()=>goMetrics('trabajo')},
+                      {label:'Supervisión',value:!metricsLoadError&&bitLotesLoaded?metricsData.issues.filter(i=>!i.review).length:'—',onClick:()=>goMetrics('supervision')},
+                      {label:'Cosechas',value:bitLotesLoaded?`${metricsData.freshKg.toFixed(2)} kg`:'—',onClick:()=>goMetrics('salidas')}
                     ].map(m=>(
                       <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
@@ -16642,6 +17364,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='clima'&&climateDashboardView}
 
+        {tab==='metricas'&&<OperationalMetrics data={metricsData} loaded={bitLotesLoaded} error={metricsLoadError} role={fieldOperatorRole} onReview={saveMetricsReview} onBitacora={()=>goTab('bitacora')}/>}
         {tab==='bitacora'&&BitacoraSection()}
 
         {tab==='bioCheck'&&<BioCheck/>}
@@ -16693,8 +17416,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="bit-codigo">Código de lote</label><input id="bit-codigo" aria-invalid={!!captureErrors["bit-codigo"]} aria-describedby={captureErrors["bit-codigo"]?"bit-codigo-error":undefined} onBlur={()=>validateCaptureField("bit-codigo")} name="codigoLote" autoComplete="off" className="inv-input" value={bitNuevoForm.codigo||''} onChange={e=>setBitNuevoForm(p=>({...p,codigo:e.target.value}))}/>{captureErrorNode("bit-codigo")}</div>
                 <div><label className="inv-label" htmlFor="bit-especie">Especie</label><input id="bit-especie" aria-invalid={!!captureErrors["bit-especie"]} aria-describedby={captureErrors["bit-especie"]?"bit-especie-error":undefined} onBlur={()=>validateCaptureField("bit-especie")} name="especie" autoComplete="off" className="inv-input" value={bitNuevoForm.especie||''} onChange={e=>setBitNuevoForm(p=>({...p,especie:e.target.value}))}/>{captureErrorNode("bit-especie")}</div>
               </div>
+              {/* `strainId` es identidad; `cepa` sigue siendo la nota libre del
+                  proveedor. Separados a propósito: dos operarios escriben el
+                  mismo proveedor de tres formas, así que la prosa no puede
+                  ascender a identidad. Sin identidad no se puede separar
+                  genética de ambiente, que es lo que bloquea la clase térmica de
+                  cepa (ADR-0008). No se modela una clase aquí: las clases
+                  comerciales de ostreatus se solapan. */}
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
-                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
+                <div><label className="inv-label" htmlFor="bit-strain-id">ID de cepa</label><input id="bit-strain-id" name="strainId" autoComplete="off" className="inv-input" placeholder="Ej. STR-OST-001…" value={bitNuevoForm.strainId||''} onChange={e=>setBitNuevoForm(p=>({...p,strainId:e.target.value}))}/><span style={{display:'block',fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',paddingTop:3}}>Mismo ID para lotes de la misma cepa. Sin él, el lote no entra en comparaciones por cepa.</span></div>
+                <div><label className="inv-label" htmlFor="bit-spawn-lot-id">Lote de semilla</label><input id="bit-spawn-lot-id" name="spawnLotId" autoComplete="off" className="inv-input" placeholder="Ej. SPW-260101-01…" value={bitNuevoForm.spawnLotId||''} onChange={e=>setBitNuevoForm(p=>({...p,spawnLotId:e.target.value}))}/></div>
+              </div>
+              <div className="inv-row inv-row-2" style={{marginBottom:12}}>
+                <div><label className="inv-label" htmlFor="bit-cepa">Cepa / proveedor (nota)</label><input id="bit-cepa" aria-invalid={!!captureErrors["bit-cepa"]} aria-describedby={captureErrors["bit-cepa"]?"bit-cepa-error":undefined} onBlur={()=>validateCaptureField("bit-cepa")} name="cepaProveedor" autoComplete="off" className="inv-input" placeholder="Ej. Spawn proveedor X…" value={bitNuevoForm.cepa||''} onChange={e=>setBitNuevoForm(p=>({...p,cepa:e.target.value}))}/>{captureErrorNode("bit-cepa")}</div>
                 <div><label className="inv-label" htmlFor="bit-operador">Operador</label><input id="bit-operador" aria-invalid={!!captureErrors["bit-operador"]} aria-describedby={captureErrors["bit-operador"]?"bit-operador-error":undefined} onBlur={()=>validateCaptureField("bit-operador")} name="operador" autoComplete="off" className="inv-input" value={bitNuevoForm.operador||''} onChange={e=>setBitNuevoForm(p=>({...p,operador:e.target.value}))}/>{captureErrorNode("bit-operador")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
@@ -16733,6 +17467,40 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
               <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>{n}</button>))}</div></div>
+              {/* Fenotipo · phenotype_dictionary_v0.1. Todo opcional: es la
+                  variable de respuesta que falta para relacionar la exposición a
+                  CO₂ con la morfología, y ninguna fuente publicada trae la curva
+                  dosis-respuesta. Un campo obligatorio aquí se llenaría con
+                  cualquier cosa, y un dato inventado es peor que un hueco. */}
+              <details style={{marginBottom:12,border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',padding:'8px 10px'}}>
+                <summary style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-700)',cursor:'pointer'}}>Fenotipo · opcional (medición experimental)</summary>
+                <p style={{fontFamily:'var(--font-body)',fontSize:'var(--text-xs)',color:'var(--ink-500)',margin:'6px 0 10px'}}>
+                  Vocabulario <code>phenotype_dictionary_v0.1</code>. Aún no canónico: estas medidas se usan para construir evidencia propia, no como objetivo de cultivo.
+                </p>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                  <div><label className="inv-label" htmlFor="harvest-cap-diameter">Diámetro de píleo (mm)</label><input id="harvest-cap-diameter" name="harvestCapDiameter" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 60…" value={bitCosechaForm.capDiameterMm??''} onChange={e=>setBitCosechaForm(p=>({...p,capDiameterMm:e.target.value}))}/></div>
+                  <div><label className="inv-label" htmlFor="harvest-stipe-length">Largo de estípite (mm)</label><input id="harvest-stipe-length" name="harvestStipeLength" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 30…" value={bitCosechaForm.stipeLengthMm??''} onChange={e=>setBitCosechaForm(p=>({...p,stipeLengthMm:e.target.value}))}/></div>
+                </div>
+                <div style={{marginBottom:10}}>
+                  <span className="inv-label">Códigos de defecto</span>
+                  <div role="group" aria-label="Códigos de defecto del fenotipo" style={{display:'flex',flexWrap:'wrap',gap:6,paddingTop:4}}>
+                    {['abort','surface_dryness','cracking_excess','yellowing','deformation','mechanical_damage','water_damage','bacterial_suspect','mold_suspect','overmature','undersized','other_declared'].map(code=>{
+                      const on=(bitCosechaForm.defectCodes||[]).includes(code);
+                      return (<button key={code} type="button" aria-pressed={on} onClick={()=>setBitCosechaForm(p=>{const cur=p.defectCodes||[];return {...p,defectCodes:on?cur.filter(c=>c!==code):[...cur,code]};})} style={{padding:'4px 9px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',cursor:'pointer',background:on?'var(--ochre-500)':'var(--paper-50)',color:on?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s'}}>{code}</button>);
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="inv-label" htmlFor="harvest-phenotype-stage">Etapa de la observación</label>
+                  {/* Enum del diccionario de fenotipo, que NO es el de etapas de
+                      sala: uno describe el desarrollo del carpóforo, el otro el
+                      estado de la cámara. Se mantienen separados a propósito. */}
+                  <select id="harvest-phenotype-stage" name="harvestPhenotypeStage" className="inv-input" value={bitCosechaForm.phenotypeStage||''} onChange={e=>setBitCosechaForm(p=>({...p,phenotypeStage:e.target.value}))}>
+                    <option value="">— sin declarar —</option>
+                    {['initiation','early_development','maturation','harvest'].map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </details>
               <div style={{marginBottom:16}}><label className="inv-label" htmlFor="harvest-observations">Observaciones</label><input id="harvest-observations" aria-invalid={!!captureErrors["harvest-observations"]} aria-describedby={captureErrors["harvest-observations"]?"harvest-observations-error":undefined} onBlur={()=>validateCaptureField("harvest-observations")} name="harvestObservations" autoComplete="off" className="inv-input" placeholder="Ej. buen racimo, amarillamiento leve…" value={bitCosechaForm.observaciones||''} onChange={e=>setBitCosechaForm(p=>({...p,observaciones:e.target.value}))}/>{captureErrorNode("harvest-observations")}</div>
 
               {/* Asesor de Poscosecha y Advertencia de Cadena de Frío */}
@@ -17661,7 +18429,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
                     @page {
-                      size: ${thermalSize === '40x30' ? '40mm 30mm' : '50mm 30mm'};
+                      size: ${thermalSize === '40x30' ? '40mm 30mm' : thermalSize === '50x70' ? '50mm 70mm' : '50mm 30mm'};
                       margin: 0 !important;
                     }
                     body {
@@ -17722,10 +18490,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       >
                         50 × 30 mm
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setThermalSize('50x70')}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x70' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x70' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x70' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                      >
+                        50 × 70 mm
+                      </button>
 
                     </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, color: 'var(--ink-2)', marginTop: 4 }}>
-                      Únicos formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm).
+                      Formatos compatibles con la impresora Phomemo M110 (ancho máx. 52 mm). 50 × 70 mm: vertical, QR grande y receta.
                     </div>
                   </div>
 
@@ -17766,7 +18541,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Vista Previa ({items.length} etiqueta{items.length === 1 ? '' : 's'})
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
-                      Formato: {thermalSize === '40x30' ? '40×30 mm' : '50×30 mm'}
+                      Formato: {thermalSize === '40x30' ? '40×30 mm' : thermalSize === '50x70' ? '50×70 mm' : '50×30 mm'}
                     </span>
                   </div>
 
@@ -17786,6 +18561,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
                               <div>{item.date}</div>
+                              {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
                             </div>
                           </div>
                         </div>
@@ -17865,6 +18641,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
                             <div>{item.date}</div>
+                            {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
                           </div>
                         </div>
                       </div>
