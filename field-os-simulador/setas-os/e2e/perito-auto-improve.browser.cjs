@@ -1,7 +1,7 @@
 'use strict';
 // Auto-mejorar en la app real: con varios críticos avanza aunque el score de
 // un solo ajuste quede igual, deja un resumen de lo que hizo y un solo
-// "Deshacer" devuelve la receta anterior. Sin ajuste posible, lo dice.
+// "Deshacer" devuelve la receta anterior. Una alternativa disponible avanza y se puede deshacer.
 // Run: node e2e/perito-auto-improve.browser.cjs
 const fs=require('node:fs');
 const path=require('node:path');
@@ -51,19 +51,22 @@ const root=path.resolve(__dirname,'..');
   await expect.poll(getRecipe).toEqual(before);
   await expect(summary).toHaveCount(0);
 
-  // Sin ajuste aplicable que avance: lo dice y no toca la receta.
+  // La suplementación efectiva corregida permite una alternativa que antes se descartaba.
   const stuck=[{id:'guadua',p:70},{id:'borra_cafe',p:30}];
   await page.evaluate(recipe=>window.SetasFormulatorAPI.applyRecipe(recipe),stuck);
   await expect(panel.locator('.perito-item').first()).toBeVisible();
   const stuckBefore=await getRecipe();
   await panel.getByRole('button',{name:/Auto-mejorar/}).first().click();
-  await expect(summary).toHaveAttribute('data-steps','0');
-  await expect(summary).toContainText('no encontró un ajuste');
-  assert.deepEqual(await getRecipe(),stuckBefore);
+  await expect(summary).toHaveAttribute('data-steps',/^[1-9]\d*$/);
+  assert.notDeepEqual(await getRecipe(),stuckBefore);
+  await summary.getByRole('button',{name:'Deshacer Auto-mejorar'}).click();
+  await expect.poll(getRecipe).toEqual(stuckBefore);
+  await panel.getByRole('button',{name:/Auto-mejorar/}).first().click();
+  await expect(summary).toHaveAttribute('data-steps',/^[1-9]\d*$/);
 
   await page.setViewportSize({width:390,height:844});
   assert.ok(await summary.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'el resumen no debe desbordar en móvil');
   assert.deepEqual(errors,[]);
-  console.log('PASS: Auto-mejorar avanza con varios críticos, resume lo aplicado, se deshace en un paso y avisa cuando no encuentra ajuste.');
+  console.log('PASS: Auto-mejorar avanza con varios críticos, resume lo aplicado, se deshace en un paso y aplica/deshace la alternativa de suplementación efectiva.');
  }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

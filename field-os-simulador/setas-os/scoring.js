@@ -68,7 +68,7 @@ const scoreRisk = (an, treatment) => {
   if (!sp) return 50;
   let pen = 0;
   if (an.trichoderma) pen += 35;
-  const suppP = Number.isFinite(an.suppP) ? an.suppP : 0;
+  const suppP = Number.isFinite(an.suppEffectiveP) ? an.suppEffectiveP : (Number.isFinite(an.suppP) ? an.suppP : 0);
   const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
   const suppOver = Math.max(0, suppP - suppLimit);
   if (suppOver > 0 && treatment && treatment.col !== 'autoclave') pen += 20 + suppOver * 3;
@@ -94,7 +94,7 @@ const scoreTreatment = (an, treatment) => {
   if (!treatment) return 50;
   if (an?.trichoderma) return treatment.col === 'autoclave' ? 100 : 10;
   const sp = an?.sp;
-  const suppP = Number.isFinite(an?.suppP) ? an.suppP : 0;
+  const suppP = Number.isFinite(an?.suppEffectiveP) ? an.suppEffectiveP : (Number.isFinite(an?.suppP) ? an.suppP : 0);
   const suppMax = Number.isFinite(sp?.supplementation_max) ? sp.supplementation_max : 20;
   if (sp && suppP >= suppMax && treatment.col === 'autoclave') return 95;
   if (suppP > 12 && treatment.col === 'cwlp') return 40;
@@ -289,7 +289,7 @@ const buildDimensions = (breakdown, ctx, an) => {
   const economyScore = Math.round(clamp01to100(
     breakdown.cost * 0.60 + breakdown.stock * 0.40
   ));
-  const suppP = Number.isFinite(an?.suppP) ? an.suppP : 0;
+  const suppP = Number.isFinite(an?.suppEffectiveP) ? an.suppEffectiveP : (Number.isFinite(an?.suppP) ? an.suppP : 0);
   const suppMax = Number.isFinite(an?.sp?.supplementation_max) ? an.sp.supplementation_max : 20;
   const suppUnsafe = !!(an?.sp && suppP > suppMax && ctx.treatment?.col !== 'autoclave');
   const nMin = an?.sp?.n_optimal?.min;

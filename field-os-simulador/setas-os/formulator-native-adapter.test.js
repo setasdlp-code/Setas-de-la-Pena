@@ -5,6 +5,22 @@ const assert = require('node:assert/strict');
 require('./mass-balance.js');
 require('./formulator-api.js');
 
+test('undo restaura borradores parciales y vacíos sin permitir aplicar recetas inválidas', async () => {
+  const api = globalThis.SetasFormulatorAPI;
+  for (const initial of [[], [{ id: 'paja_trigo', p: 45 }], [{ id: 'paja_trigo', p: 45 }, { id: 'salvado_trigo', p: 0 }]]) {
+    let recipe = initial;
+    const unregister = api.registerNativeAdapter({ getRecipe: () => recipe, getLockedIds: () => new Set(), applyRecipe: async r => { recipe = r; return { ok: true, recipe: r }; } });
+    try {
+      assert.equal((await api.applyRecipe(initial)).ok, false);
+      assert.equal((await api.applyRecipe([{ id: 'paja_trigo', p: 80 }, { id: 'salvado_trigo', p: 20 }])).ok, true);
+      const undo = await api.undoRecipe();
+      assert.equal(undo.ok, true, undo.message);
+      assert.deepEqual(recipe, initial);
+      assert.equal(api.canUndo(), false);
+    } finally { unregister(); }
+  }
+});
+
 // Prefer the real recipeDistance from perito-scenarios.js over a hand-rolled
 // stand-in, so the new guard tests exercise the exact threshold behavior
 // production code relies on.

@@ -24,12 +24,12 @@ const metricOf = it => {
 const read = (a, m) => (m === 'cn' ? a.cn : a.avgN);
 const critOf = an => globalThis.SetasScoring.assessSeverity(an).criticals;
 
-const setup = (sKey, recipe, { stockIds = new Set(), useStock = false, lockedIds = [] } = {}) => {
+const setup = (sKey, recipe, { stockIds = new Set(), useStock = false, lockedIds = [], optimizerINGS = cat.INGS } = {}) => {
   const resolveSpp = r => T.applyToSpp(cat.SPP, sKey, r, cat.INGS);
   const evaluate = RO.createRecipeEvaluator({ sKey, ings: cat.INGS, resolveSpp, stockIds, analyzeFn: analyze, blendEB: a => a.eb });
   const spp = resolveSpp(recipe);
   const an = analyze(recipe, sKey, cat.INGS, spp);
-  const opt = RO.generateOptimizer(an, sKey, stockIds, recipe, cat.INGS, lockedIds, an.eb, useStock, {}, spp, {}, evaluate);
+  const opt = RO.generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, an.eb, useStock, {}, spp, {}, evaluate);
   return { evaluate, spp, an, opt, target: m => (m === 'cn' ? spp[sKey].cn_optimal.ideal : spp[sKey].n_optimal.ideal) };
 };
 
@@ -134,7 +134,7 @@ test('dos tarjetas con el mismo ajuste: el botón queda en una y la otra la remi
 });
 
 test('sin alternativa posible lo dice en la tarjeta', () => {
-  const it = setup('p_ostreatus_gris', [{ id: 'guadua', p: 70 }, { id: 'borra_cafe', p: 30 }]).opt.items.find(i => i.label === 'C:N demasiado alto');
+  const it = setup('p_ostreatus_gris', [{ id: 'guadua', p: 70 }, { id: 'borra_cafe', p: 30 }], { lockedIds: ['guadua', 'borra_cafe'], optimizerINGS: cat.INGS.filter(g => ['guadua', 'borra_cafe'].includes(g.id)) }).opt.items.find(i => i.label === 'C:N demasiado alto');
   assert.equal(it.apply, null);
   assert.match(it.action, /no acerca C:N al objetivo/);
   assert.match(it.riskIfIgnored, /Ningún otro ingrediente compatible acerca C:N al objetivo sin empeorar el veredicto/);

@@ -4724,9 +4724,14 @@ const runHybridRecipeSearch=({
     (!useStock || stockIds.has(g.id)) &&
     (!Array.isArray(g.cs) || g.cs.length === 0 || g.cs.includes(targetKey))
   );
-  const analyzeAdapter=rec=>analyze(rec,targetKey,ingredients,spp);
+  // Resolver la clase de cada candidato; no heredar la de la receta inicial.
+  const analyzeAdapter=rec=>{
+    const targets=globalThis.SetasSpeciesTargets||globalThis.SetasSpeciesTargetsApi;
+    const candidateSpp=targets?.applyToSpp&&spp[targetKey]?.targets?targets.applyToSpp(spp,targetKey,rec,ingredients):spp;
+    return analyze(rec,targetKey,ingredients,candidateSpp);
+  };
   const scoreAdapter=(analysis,ctx)=>{
-    const treatment=calcTreatment(analysis,targetKey,spp);
+    const treatment=calcTreatment(analysis,targetKey,{...spp,[targetKey]:analysis.sp});
     return scoreAn(analysis,{
       treatment,
       recipe:ctx.recipe,
@@ -8149,29 +8154,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         profileKey:optProfile||'produccion',
         spp:SetasSpeciesTargetsApi.applyToSpp(SPP,sKey,[],INGS),
       });
-      let cand = (r.recommended && r.recommended[0]) || (r.ranked && r.ranked[0]) || (r.pareto && r.pareto[0]) || (r.best?.recipe?.length ? r.best : null);
-      if (!cand || !cand.recipe || !cand.recipe.length) {
-        const availableBases = availableStockIds.filter(id => INGS.find(g => g.id === id)?.role === 'base_carbono');
-        const availableSupps = availableStockIds.filter(id => {
-          const role = INGS.find(g => g.id === id)?.role;
-          return role === 'suplemento_n' || role === 'suplemento_medio';
-        });
-        if (availableBases.length) {
-          const baseId = availableBases[0];
-          const suppId = availableSupps.length ? availableSupps[0] : null;
-          const hasCal = availableStockIds.includes('carbonato_calcio');
-          const hasYeso = availableStockIds.includes('yeso');
-          const calPct = hasCal ? 3 : 0;
-          const yesoPct = hasYeso ? 2 : 0;
-          const suppPct = suppId ? 15 : 0;
-          const basePct = 100 - calPct - yesoPct - suppPct;
-          const fallbackRec = [{ id: baseId, pct: basePct }];
-          if (suppId) fallbackRec.push({ id: suppId, pct: suppPct });
-          if (hasCal) fallbackRec.push({ id: 'carbonato_calcio', pct: calPct });
-          if (hasYeso) fallbackRec.push({ id: 'yeso', pct: yesoPct });
-          cand = { recipe: fallbackRec };
-        }
-      }
+      const cand=[...(r.recommended||[]),...(r.ranked||[]),...(r.pareto||[]),r.best]
+        .find(c=>c?.evaluation?.allowed&&c.recipe?.length);
       if(!cand||!cand.recipe||!cand.recipe.length){
         setNoticeDlg({
           title:'Sin combinación viable con stock actual',
@@ -8179,7 +8163,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         });
         return;
       }
-      const formatted=cand.recipe.map(item=>({id:item.id,pct:Number(item.p||item.pct||0)}));
+      const formatted=cand.recipe.map(item=>({id:item.id,p:Number(item.p??item.pct??0)}));
       setRecipe(formatted);
       const maxBatch=calcMaxBatchFromStock(cand.recipe,stockMap,10,sp?.moisture?.ideal||65,INGS);
       setNoticeDlg({
