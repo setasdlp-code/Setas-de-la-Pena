@@ -30,6 +30,12 @@ await cp(path.join(SRC, 'tokens/tokens.css'), path.join(OUT, 'tokens/tokens.css'
 await cp(path.join(SRC, 'components/base.css'), path.join(OUT, 'components/base.css'));
 await cp(path.join(SRC, 'components/components.css'), path.join(OUT, 'components/components.css'));
 await cp(path.join(SRC, 'components/editorial.css'), path.join(OUT, 'components/editorial.css'));
+// Las fachadas delegan: base.css importa core/, components.css importa shared/,
+// operations/ y market/. Copiar solo las tres dejaba un paquete que pedia
+// archivos inexistentes, y el navegador seguia sin decir nada.
+for (const dir of ['core', 'shared', 'operations', 'market']) {
+  await cp(path.join(SRC, 'components', dir), path.join(OUT, 'components', dir), { recursive: true });
+}
 
 // fonts move from assets/fonts/ to fonts/, so the @font-face srcs must follow
 const fonts = await readFile(path.join(SRC, 'tokens/fonts.css'), 'utf8');
