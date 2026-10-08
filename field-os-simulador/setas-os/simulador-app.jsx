@@ -5724,12 +5724,14 @@ const getFieldDb = () => {
 // de operario del encabezado y no de la sesión de Firebase: un operario veía
 // ofrecidas acciones de cuarentena que el servidor rechazaba.
 let _fieldRolePromise = null;
+let _fieldRoleUid = null;
 const getFieldOperatorRole = () => {
-  if (_fieldRolePromise) return _fieldRolePromise;
   const fb = typeof window !== 'undefined' ? window.SetasFirebase : null;
   const contracts = typeof window !== 'undefined' ? window.SetasFieldEventContracts : null;
   const uid = fb && fb.auth && fb.auth.currentUser ? fb.auth.currentUser.uid : null;
-  if (!fb || !contracts || !uid) return Promise.resolve('operario');
+  if (!fb || !contracts || !uid) { _fieldRolePromise=null; _fieldRoleUid=null; return Promise.resolve('operario'); }
+  if (_fieldRolePromise && _fieldRoleUid===uid) return _fieldRolePromise;
+  _fieldRoleUid=uid;
 
   _fieldRolePromise = (async () => {
     try {
@@ -5820,6 +5822,46 @@ const runFieldSync = async (db, accountId, eventId, setQueueEntry) => {
   }
 };
 
+function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
+  const api=window.SetasOperationalMetrics,nav=window.SetasOSNavigation;
+  const [section,setSection]=React.useState(()=>api.normalizeTab(new URLSearchParams(location.search).get('metricsTab')));
+  const [editing,setEditing]=React.useState(null),[reason,setReason]=React.useState(''),[message,setMessage]=React.useState('');
+  React.useEffect(()=>{const pop=()=>setSection(api.normalizeTab(new URLSearchParams(location.search).get('metricsTab')));window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop);},[]);
+  // Shell links may change only the subtab while the React view stays mounted.
+  React.useEffect(()=>{const change=()=>setSection(api.normalizeTab(new URLSearchParams(location.search).get('metricsTab')));window.addEventListener('setas-metrics-route',change);return()=>window.removeEventListener('setas-metrics-route',change);},[]);
+  const choose=value=>{setSection(value);nav.navigate(window,'metricas',{metricsTab:value});setEditing(null);setMessage('');};
+  const labels={eventos:'Eventos',rendimiento:'Rendimiento',trabajo:'Trabajo',supervision:'Supervisión',salidas:'Cosechas',conocimiento:'Conocimiento'};
+  const fmt=n=>n==null?'—':n.toLocaleString('es-CO',{maximumFractionDigits:2});
+  const button={minHeight:48,padding:'10px 14px',border:'1px solid var(--border-soft)',borderRadius:8,background:'var(--paper-0)',color:'var(--ink-0)',cursor:'pointer'};
+  const canReview=!!window.SetasFirebase?.auth?.currentUser?.uid&&['produccion','direccion'].includes(role);
+  const submit=decision=>{try{onReview(editing,decision,reason);setMessage('Revisión guardada en este dispositivo y encolada para sincronizar.');setEditing(null);setReason('');}catch(e){setMessage(e.message);}};
+  return <section data-testid="operational-metrics" style={{maxWidth:1100,margin:'auto',padding:'20px 16px 80px',color:'var(--ink-0)'}}>
+    <p>Registros de Bitácora disponibles en este dispositivo · Todos los ciclos · {new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})}</p>
+    <p>Las cifras corresponden a los registros locales y pueden cambiar al sincronizar otros dispositivos.</p>
+    <nav aria-label="Secciones de Métricas" style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0'}}>{api.TABS.map(key=><button key={key} style={button} aria-pressed={section===key} onClick={()=>choose(key)}>{labels[key]}</button>)}</nav>
+    {error?<p role="alert">No se pudieron leer los registros de Bitácora. Revisa el almacenamiento antes de continuar; no se muestran métricas incompletas.</p>:!loaded?<p role="status">Cargando Bitácora.</p>:<>
+      <div style={{display:'flex',flexWrap:'wrap',gap:18,margin:'20px 0'}}><span>{data.lots.length} lotes</span><span>{data.harvests.length} cosechas válidas</span><span>{fmt(data.freshKg)} kg cosechados registrados</span><span>{data.eligibility.eligibleN} ciclos finales elegibles</span></div>
+      {data.lots.length===0&&<p>No hay lotes registrados. Añade registros en Bitácora para calcular resultados.</p>}
+      {section==='rendimiento'&&<>
+        <h2>Rendimiento observado</h2><p data-testid="metrics-mean">EB media por lote final: {fmt(data.meanEB)}{data.meanEB==null?'':' %'}</p>
+        <p>EB = masa fresca cosechada ÷ masa seca del sustrato × 100. La media asigna el mismo peso a cada lote final elegible; los ciclos parciales se muestran aparte.</p>
+        <p>Meta y umbral de alerta: pendientes de conciliación. <a href="https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/metadata/kpis.yaml" target="_blank" rel="noreferrer">Metadatos de KPI</a> y <a href="https://github.com/setasdlp-code/Setas-de-la-Pena/blob/main/knowledge_base/CANON.md" target="_blank" rel="noreferrer">CANON</a> contienen referencias que deben reconciliarse. No se evalúa aceptación con una meta provisional.</p>
+        <div style={{overflowX:'auto'}}><table style={{width:'100%',borderCollapse:'collapse'}}><caption>Resultados por lote · Fuente: Bitácora</caption><thead><tr>{['Lote / especie','Masa seca kg','Masa fresca kg','EB %','Resultado'].map(t=><th key={t} scope="col" style={{padding:8,textAlign:'left'}}>{t}</th>)}</tr></thead><tbody>{data.rows.map(r=><tr key={r.loteId}><th scope="row" style={{padding:8,textAlign:'left'}}>{r.codigo||r.loteId}<br/><small>{r.sKey||'Especie sin referencia'}</small></th><td>{fmt(r.dryKg)}</td><td>{fmt(r.freshKg)}</td><td>{fmt(r.be)}</td><td>{r.eligible?'Final elegible':r.exclusionReason?r.reasonLabel:'Parcial; excluido de la media'}</td></tr>)}</tbody></table></div>
+      </>}
+      {section==='eventos'&&<><h2>Eventos registrados</h2><p>Cosechas y eventos del historial de los lotes; no incluye sesiones de trabajo sin registro canónico.</p>{!data.events.length&&<p>No hay eventos registrados.</p>}<ul>{data.events.map((e,i)=><li key={`${e.eventKey}:${i}`}>{e.type} · {e.batchId} · {e.at||'Fecha no registrada'}{e.operatorId?` · ${e.operatorId}`:''}</li>)}</ul></>}
+      {section==='trabajo'&&<><h2>Trabajo</h2><p>No hay una fuente canónica de horas de trabajo conectada a Métricas. Horas y productividad por hora: sin datos.</p></>}
+      {section==='supervision'&&<><h2>Supervisión de registros</h2><p>La revisión documenta el hallazgo; la corrección del registro se realiza en Bitácora.</p>{!canReview&&<p>Para revisar se requiere una sesión de Producción o Dirección.</p>}{!data.issues.length&&<p>No hay hallazgos en los registros disponibles.</p>}
+        {data.issues.map(i=><article key={i.id} data-anomaly-id={i.id} style={{padding:16,border:'1px solid var(--border-soft)',borderRadius:8,marginBottom:12,overflowWrap:'anywhere'}}><h3>{i.label}</h3><p>{i.review?`${i.review.payload.decision} · ${i.review.operatorId} · ${i.review.at} · ${i.review.payload.reason}`:'Pendiente de revisión'}</p>{canReview&&i.reviewable&&<button style={button} onClick={()=>{setEditing(i);setReason('');setMessage('');}}>Revisar hallazgo</button>}{editing?.id===i.id&&<div><label>Motivo de la revisión<textarea aria-label="Motivo de la revisión" value={reason} onChange={e=>setReason(e.target.value)} style={{display:'block',width:'100%',boxSizing:'border-box',minHeight:80}}/></label><button style={button} disabled={!reason.trim()} onClick={()=>submit('validado')}>Validar observación</button> <button style={button} disabled={!reason.trim()} onClick={()=>submit('corregir')}>Marcar para corregir</button></div>}</article>)}
+        <h3>Historial de revisiones</h3><ul>{data.reviews.map(e=><li key={e.id} style={{overflowWrap:'anywhere'}}>{e.payload.anomalyId} · {e.payload.decision} · {e.operatorId} · {e.at} · {e.payload.reason}</li>)}</ul>
+      </>}
+      {section==='salidas'&&<><h2>Cosechas registradas</h2><p>Estas masas corresponden a cosechas. No representan ventas ni despachos.</p>{!data.harvests.length&&<p>No hay cosechas válidas registradas.</p>}<ul>{data.harvests.map(c=><li key={c.id}>{c.loteId} · {c.id} · {c.pesoFresco} {c.unit||'g'} · {c.fecha||'Fecha no registrada'}</li>)}</ul></>}
+      {section==='conocimiento'&&<><h2>Evidencia para conocimiento</h2><p>{data.eligibility.eligibleN} resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo.</p><p>Los registros parciales y los datos inválidos no se utilizan como resultados finales. Consulta la evidencia y el cierre de cada lote en Bitácora.</p></>}
+      <button style={button} onClick={onBitacora}>Abrir Bitácora</button>
+    </>}
+    {message&&<p role="status">{message}</p>}
+  </section>;
+}
+
 function SimuladorShell(props){
   const initialFormDraft=useMemo(()=>readFormDraft(),[]);
   const [bridgeOpen,setBridgeOpen]=useState(true);
@@ -5902,19 +5944,19 @@ function SimuladorShell(props){
       return navigation?navigation.normalizeView(requested,'home'):(requested||'home');
     }catch(e){return'home';}
   });
-  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
+  const TAB_LABELS={home:'Tablero de Control',inicio:'Inicio',catalogo:'Catálogo & Recetario',formular:'Formular',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma',clima:'Cámaras & IoT',bitacora:'Bitácora',metricas:'Métricas',bioCheck:'Bio-Check',labExtraction:'Laboratorio'};
   const NAV_GROUPS=[
     {key:'inicio',label:'Inicio',tabs:['home','inicio'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></svg>},
     {key:'recetas',label:'Formular',tabs:['catalogo','formular'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9"/></svg>},
     {key:'produccion',label:'Producción',tabs:['produccion','inventario','schedule'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 21V9l9-6 9 6v12M3 21h18M9 21v-6h6v6"/></svg>},
     {key:'clima',label:'Cámaras & IoT',tabs:['clima'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10 4-2v8l-4-2M7 10h6M7 14h4"/></svg>},
-    {key:'registro',label:'Bitácora',tabs:['bitacora'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
+    {key:'registro',label:'Bitácora',tabs:['bitacora','metricas'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5"/></svg>},
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
-  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',metricas:'Métricas de cultivo',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular'];
-  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','labExtraction','bioCheck'];
+  const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','metricas','labExtraction','bioCheck'];
   const TAB_ALIASES={optimizar:'formular',dashboard:'catalogo'};
   const applyTab=t=>{
     t=TAB_ALIASES[t]||t;
@@ -6899,6 +6941,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // ── Bitácora de pruebas ──
   const [bitLotes,setBitLotes]=useState([]);
   const [bitLotesLoaded,setBitLotesLoaded]=useState(false);
+  const [metricsLoadError,setMetricsLoadError]=useState(false);
   const initialDeepLinkHandled=useRef(false);
   const [publicSyncStatus,setPublicSyncStatus]=useState(null);
   const qrLotesRef=useRef(bitLotes);
@@ -7196,8 +7239,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     // Bitácora en su propio try/catch: un JSON dañado en las claves de Bodega
     // no debe impedir cargar (ni ocultar) los lotes experimentales guardados.
     try{
-      const bl=localStorage.getItem('sdp_bit_lotes');const bb=localStorage.getItem('sdp_bit_bolsas');const bc=localStorage.getItem('sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
-      if(bl) setBitLotes(JSON.parse(bl));if(bb) setBitBolsas(JSON.parse(bb));if(bc) setBitCosechas(JSON.parse(bc));if(bt) setBitTasks(JSON.parse(bt));
+      const bl=SetasPrototype.read(localStorage,'sdp_bit_lotes'),bb=SetasPrototype.read(localStorage,'sdp_bit_bolsas'),bc=SetasPrototype.read(localStorage,'sdp_bit_cosechas');const bt=localStorage.getItem('sdp_bit_tasks');
+      setBitLotes(bl);setBitBolsas(bb);setBitCosechas(bc);if(bt) setBitTasks(JSON.parse(bt));
       const bre=localStorage.getItem('sdp_room_events');
       if(bre) setRoomEvents(JSON.parse(bre));
       const ir=localStorage.getItem('sdp_inv_reservas');
@@ -7216,6 +7259,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
       if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     }catch(e){
+      setMetricsLoadError(true);
       setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
     }finally{
       setBitLotesLoaded(true);
@@ -10514,6 +10558,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const [fieldOperatorRole,setFieldOperatorRole]=useState('operario');
   useEffect(()=>{let vivo=true;getFieldOperatorRole().then(r=>{if(vivo)setFieldOperatorRole(r);}).catch(()=>{});return()=>{vivo=false;};},[]);
   const operatorRole=fieldOperatorRole;
+  const metricsData=React.useMemo(()=>window.SetasOperationalMetrics.derive(bitLotes,bitBolsas,bitCosechas),[bitLotes,bitBolsas,bitCosechas]);
+  const goMetrics=section=>{window.SetasOSNavigation.navigate(window,'metricas',{metricsTab:section});goTab('metricas');window.dispatchEvent(new Event('setas-metrics-route'));};
+  const saveMetricsReview=(issue,decision,reason)=>{
+    const result=window.SetasOperationalMetrics.saveReview({storage:localStorage,prototype:window.SetasPrototype,queue:window.SetasSyncQueue,auth:window.SetasFirebase?.auth?.currentUser,role:fieldOperatorRole,anomalyId:issue.id,expectedSnapshot:issue.snapshot||null,decision,reason,id:crypto.randomUUID(),at:new Date().toISOString()});
+    syncQueueRef.current=result.queue;setBitLotes(result.lots);setSyncQueue(result.queue);
+  };
+
   // El Perito vivía SÓLO en el Formulador: sabía más que nadie de recetas y no
   // decía nada cuando el operario estaba frente al lote con el problema. Esto
   // es la puerta que faltaba, y es sólo una puerta: no puntúa, no ordena y no
@@ -13994,11 +14045,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </span>
                   <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
                     {[
-                      {label:'Eventos',value:props.hoyPreviewEventos,onClick:props.onGoRevEventos},
-                      {label:'Rendimiento (EB)',value:`${props.hoyPreviewBe}%`,onClick:props.onGoRevRendimiento},
-                      {label:'Trabajo',value:`${props.hoyPreviewHoras} h`,onClick:props.onGoRevTrabajo},
-                      {label:'Supervisión',value:props.hoyPreviewAnomalias,onClick:props.onGoRevSuper,color:props.hoyPreviewAnomaliasColor},
-                      {label:'Salidas',value:`${props.hoyPreviewSalidas} kg`,onClick:props.onGoRevSalidas}
+                      {label:'Eventos',value:!metricsLoadError&&bitLotesLoaded?metricsData.events.length:'—',onClick:()=>goMetrics('eventos')},
+                      {label:'Rendimiento (EB)',value:metricsLoadError?'Sin datos':metricsData.meanEB==null?'Sin finales':`${metricsData.meanEB.toFixed(1)}%`,onClick:()=>goMetrics('rendimiento')},
+                      {label:'Trabajo',value:'Sin datos',onClick:()=>goMetrics('trabajo')},
+                      {label:'Supervisión',value:!metricsLoadError&&bitLotesLoaded?metricsData.issues.filter(i=>!i.review).length:'—',onClick:()=>goMetrics('supervision')},
+                      {label:'Cosechas',value:bitLotesLoaded?`${metricsData.freshKg.toFixed(2)} kg`:'—',onClick:()=>goMetrics('salidas')}
                     ].map(m=>(
                       <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
@@ -17315,6 +17366,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='clima'&&climateDashboardView}
 
+        {tab==='metricas'&&<OperationalMetrics data={metricsData} loaded={bitLotesLoaded} error={metricsLoadError} role={fieldOperatorRole} onReview={saveMetricsReview} onBitacora={()=>goTab('bitacora')}/>}
         {tab==='bitacora'&&BitacoraSection()}
 
         {tab==='bioCheck'&&<BioCheck/>}

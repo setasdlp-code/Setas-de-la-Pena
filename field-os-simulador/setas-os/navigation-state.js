@@ -18,6 +18,7 @@
     'schedule',
     'clima',
     'bitacora',
+    'metricas',
     'labExtraction',
     'bioCheck',
   ]);
@@ -47,11 +48,13 @@
     return locationLike && typeof locationLike.search === 'string' ? locationLike.search : '';
   }
 
+  const METRICS_TABS=Object.freeze(['eventos','rendimiento','trabajo','supervision','salidas','conocimiento']);
+  const normalizeMetricsTab=value=>METRICS_TABS.includes(value)?value:'rendimiento';
+
   function readLocation(locationLike) {
     const params = new URLSearchParams(searchFrom(locationLike));
-    return Object.freeze({
-      view: normalizeView(params.get('view')),
-    });
+    const view=normalizeView(params.get('view'));
+    return Object.freeze(view==='metricas'?{view,metricsTab:normalizeMetricsTab(params.get('metricsTab'))}:{view});
   }
 
   function navigate(win, requestedView, options = {}) {
@@ -60,6 +63,8 @@
 
     const url = new URL(win.location.href);
     url.searchParams.set('view', view);
+    if(view==='metricas')url.searchParams.set('metricsTab',normalizeMetricsTab(options.metricsTab??url.searchParams.get('metricsTab')));
+    else url.searchParams.delete('metricsTab');
     if (url.href !== win.location.href) {
       const method = options.replace === true ? 'replaceState' : 'pushState';
       win.history[method](null, '', url);
@@ -82,6 +87,7 @@
 
   return Object.freeze({
     VIEWS,
+    normalizeMetricsTab,
     VIEW_ALIASES,
     normalizeView,
     readLocation,

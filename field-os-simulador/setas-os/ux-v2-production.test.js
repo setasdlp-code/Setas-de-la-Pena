@@ -186,7 +186,7 @@ test('bitácora writes are enqueued through SetasSyncQueue instead of fired and 
 });
 
 test('la cola de sincronización se rehidrata desde localStorage junto con la bitácora', () => {
-  const loadStart = source.indexOf("const bl=localStorage.getItem('sdp_bit_lotes')");
+  const loadStart = source.indexOf("const bl=SetasPrototype.read(localStorage,'sdp_bit_lotes')");
   assert.ok(loadStart > -1);
   const loadBlock = source.slice(loadStart, loadStart + 1500);
   assert.match(loadBlock, /localStorage\.getItem\('sdp_sync_queue'\)/);
@@ -477,7 +477,7 @@ test('el estado invReservas se rehidrata desde localStorage y se limpia con expi
   assert.match(source, /const \[invReservas,setInvReservas\]=useState\(\[\]\)/);
   // Rehidratado en el mismo try/catch donde ya se leen las demás claves de
   // bitácora (sdp_bit_lotes, ...), no en un efecto aparte.
-  const loadStart = source.indexOf("const bl=localStorage.getItem('sdp_bit_lotes')");
+  const loadStart = source.indexOf("const bl=SetasPrototype.read(localStorage,'sdp_bit_lotes')");
   assert.ok(loadStart > -1);
   const loadBlock = source.slice(loadStart, loadStart + 1500);
   assert.match(loadBlock, /localStorage\.getItem\('sdp_inv_reservas'\)/);
