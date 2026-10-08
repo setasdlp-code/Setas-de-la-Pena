@@ -37,14 +37,24 @@ if(artifactDir)fs.mkdirSync(artifactDir,{recursive:true});
   }
   const page=await browser.newPage();await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());await page.goto(`${base}/__harness.html?view=metricas`);const panel=page.getByTestId('operational-metrics');await expect(panel).toContainText('No hay lotes registrados');await expect(panel.getByTestId('metrics-mean')).toHaveText('EB media por lote final: —');
   await page.evaluate(()=>localStorage.setItem('sdp_bit_cosechas','{broken'));await page.reload();await expect(panel.getByRole('alert')).toContainText('No se pudieron leer');await expect(panel.getByTestId('metrics-mean')).toHaveCount(0);await page.close();
-  const reviewer=await browser.newPage();await reviewer.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+  const reviewer=await browser.newPage({serviceWorkers:'block'});await reviewer.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
   // Mock only the authenticated account lookup; the production UI and durable
   // storage/queue path remain unchanged. No backend writes are performed.
   await reviewer.route('**/vendor/firebase/firebase-firestore.js',r=>r.fulfill({contentType:'application/javascript',body:"export const doc=(...args)=>args; export const getDoc=async()=>({exists:()=>true,data:()=>({rol:'produccion'})});"}));
-  await reviewer.addInitScript(()=>{window.SetasFirebase={auth:{currentUser:{uid:'reviewer-browser'}},db:{}};localStorage.setItem('sdp_bit_lotes',JSON.stringify([{id:'R',peseSeco:1,estado:'fructificacion'}]));localStorage.setItem('sdp_bit_bolsas',JSON.stringify([{id:'B1',loteId:'R',estado:'contaminada'},{id:'B2',loteId:'R',estado:'dudosa'}]));});
+  await reviewer.addInitScript(()=>{
+   window.SetasFirebase={auth:{currentUser:{uid:'reviewer-browser'}},db:{}};
+   // addInitScript also runs on reload: initialize once and preserve the
+   // durable lot/queue written by the real review handler.
+   if(localStorage.getItem('metrics_reviewer_seed'))return;
+   localStorage.setItem('metrics_reviewer_seed','1');
+   localStorage.setItem('sdp_bit_lotes',JSON.stringify([{id:'R',peseSeco:1,estado:'fructificacion'}]));
+   localStorage.setItem('sdp_bit_bolsas',JSON.stringify([{id:'B1',loteId:'R',estado:'contaminada'},{id:'B2',loteId:'R',estado:'dudosa'}]));
+  });
   await reviewer.goto(`${base}/__harness.html?view=metricas&metricsTab=supervision`);
   const rp=reviewer.getByTestId('operational-metrics'),first=rp.locator('[data-anomaly-id="bolsa:B1:estado"]'),second=rp.locator('[data-anomaly-id="bolsa:B2:estado"]');
   await first.getByRole('button',{name:'Revisar hallazgo'}).click();await first.getByRole('textbox',{name:'Motivo de la revisión'}).fill('Inspección de la bolsa registrada');await first.getByRole('button',{name:'Validar observación'}).click();await expect(first).toContainText('reviewer-browser');await expect(second).toContainText('Pendiente de revisión');await expect(rp.getByRole('status')).toContainText('encolada');
+  const storedReview=await reviewer.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_lotes')).find(l=>l.id==='R').lifecycleEvents.find(e=>e.type==='metrics_review'));
+  assert.equal(storedReview.operatorId,'reviewer-browser');assert.equal(storedReview.payload.reason,'Inspección de la bolsa registrada');
   await reviewer.reload();await expect(first).toContainText('Inspección de la bolsa registrada');await expect(second).toContainText('Pendiente de revisión');assert.equal(await reviewer.evaluate(()=>JSON.parse(localStorage.getItem('sdp_sync_queue')).filter(x=>x.key.startsWith('metrics-review:')).length),1);await reviewer.close();
   console.log('Métricas navegador: escritorio, móvil, teclado, recarga, atrás/adelante, ciclos finales/parciales, vacíos y error de almacenamiento: OK');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
