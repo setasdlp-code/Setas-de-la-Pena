@@ -16,6 +16,8 @@
   padding: var(--space-half) var(--space-1);
 }
 
+.sdp-provenance { white-space: nowrap; }
+
 /* The mark is an SVG mask filled with currentColor, never a font glyph:
    ● ◆ ◇ ◎ △ ⬡ ◌ are not in Plex or Gaya, so each device would substitute
    its own font. --provenance-*-symbol remains for plain-text contexts. */

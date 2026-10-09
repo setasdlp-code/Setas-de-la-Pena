@@ -11,10 +11,19 @@ const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const ROOT=path.resolve(__dirname,'..'), T=path.join(ROOT,'tokens');
 const read=n=>JSON.parse(fs.readFileSync(path.join(T,n),'utf8'));
 const primitives=read('primitives.json'), semantic=read('semantic.json'), domain=read('domain.json'), typography=read('typography.json'), spacing=read('spacing.json');
+const ICONS=path.join(ROOT,'assets','icons');
+const iconUri=file=>{
+ const raw=fs.readFileSync(path.join(ICONS,file),'utf8')
+   .replace(/<!--[\s\S]*?-->/g,'')
+   .replace(/\s*\n\s*/g,' ')
+   .trim();
+ const enc=raw.replace(/"/g,"'").replace(/[%#<>{}|\\^`\[\]]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0'));
+ return 'url("data:image/svg+xml,'+enc+'")';
+};
 const cssRef=value=>{ const m=String(value).match(/^\{color\.(primitive|derived)\.([^}]+)\}$/); if(!m) throw new Error('Unsupported semantic reference: '+value); return 'var(--'+m[2]+')'; };
 const semName=(g,k)=>g==='status'&&k.startsWith('warning')?'status-warn'+k.slice('warning'.length):g==='action'&&k==='focus-ring'?'focus-ring':g+'-'+k;
 const weightNameByValue=Object.fromEntries(Object.entries(typography.weights).map(([k,v])=>[String(v),k]));
-const leadingTokenForRole={'display-01':'solid','display-02':'tight','heading-01':'tight','heading-02':'tight','heading-03':'snug','species':'tight','latin':'snug','body':'normal','small':'normal','data':'data','label':'tight','micro':'tight','lot-code-print':'tight'};
+const leadingTokenForRole={'display-01':'solid','display-02':'tight','heading-01':'tight','heading-02':'tight','heading-03':'snug','species':'tight','latin':'snug','cartouche':'snug','body':'normal','small':'normal','data':'data','label':'tight','micro':'tight','lot-code-print':'tight'};
 const markUrl=body=>{ if(body.includes('"')) throw new Error('Domain mark must use single quotes: '+body); return 'url("data:image/svg+xml,'+("<svg xmlns='http://www.w3.org/2000/svg' viewBox='"+domain.markGrid.viewBox+"'>"+body+'</svg>').replace(/</g,'%3C').replace(/>/g,'%3E')+'")'; };
 const COMPONENT_VARS={barHeight:'bar-height',markerWidth:'marker-width',bandRule:'band-rule',signFrame:'sign-frame',dataLg:'size-data-lg',dataXl:'size-data-xl',ingredient:'ingredient-size',stepIndex:'step-index',stepIndexSm:'step-index-sm',plateHeight:'plate-height',ruleOffset:'rule-offset'};
 const componentVars=()=>Object.entries(COMPONENT_VARS).map(([k,css])=>{ const v=spacing.structure.component?.[k]; if(!v) throw new Error('Missing spacing.structure.component.'+k); return '  --'+css+': '+v+';'; });
@@ -30,16 +39,16 @@ function generateCss(){
  L.push('','  /* 3 · TYPE SCALE & ROLES */');
  for(const [k,v] of Object.entries(typography.weights)) L.push('  --weight-'+k+': '+v+';');
  L.push('');
- for(const [k,v] of Object.entries(typography.scale)) L.push('  --size-'+k+': '+v.size+';');
+ for(const [k,v] of Object.entries(typography.scale)) { if(k==='micro') continue; L.push('  --size-'+k+': '+v.size+';'); }
  L.push('  --size-micro: var(--size-micro-screen);','');
  L.push('  --leading-solid: '+typography.scale['display-01'].leading+';','  --leading-tight: '+typography.scale['display-02'].leading+';','  --leading-snug: '+typography.scale['heading-03'].leading+';','  --leading-normal: '+typography.scale.body.leading+';','  --leading-data: '+typography.scale.data.leading+';','');
  L.push('  --tracking-display: '+typography.scale['display-01'].tracking+';','  --tracking-tight: '+typography.scale['heading-01'].tracking+';','  --tracking-normal: '+typography.scale.body.tracking+';','  --tracking-label: '+typography.scale.label.tracking+';','  --tracking-micro: '+typography.scale.micro.tracking+';','');
- for(const role of ['display-01','display-02','heading-01','heading-02','heading-03','species','latin','body','small','data','label','micro','lot-code-print']){ const v=typography.scale[role]; if(!v) continue; const wn=weightNameByValue[String(v.weight)]||'regular', style=v.style?v.style+' ':'', leading=leadingTokenForRole[role]?'var(--leading-'+leadingTokenForRole[role]+')':String(v.leading); L.push('  --t-'+role+': '+style+'var(--weight-'+wn+') var(--size-'+role+')/'+leading+' var('+familyVar[v.family]+');'); }
+ for(const role of ['display-01','display-02','heading-01','heading-02','heading-03','species','latin','cartouche','body','small','data','label','micro','lot-code-print']){ const v=typography.scale[role]; if(!v) continue; const wn=weightNameByValue[String(v.weight)]||'regular', style=v.style?v.style+' ':'', leading=leadingTokenForRole[role]?'var(--leading-'+leadingTokenForRole[role]+')':String(v.leading); L.push('  --t-'+role+': '+style+'var(--weight-'+wn+') var(--size-'+role+')/'+leading+' var('+familyVar[v.family]+');'); }
  L.push('','  /* 4 · SPACING & GRID */');
  for(const [k,v] of Object.entries(spacing.scale)) L.push('  --space-'+k+': '+v+';');
  L.push('  --grid-columns: '+spacing.grid.columns+';');
  for(const [mode,v] of Object.entries(spacing.grid.modes)){ L.push('  --gutter-'+mode+': '+v.gutter+';'); L.push('  --margin-'+mode+': '+v.pageMargin+';'); }
- L.push('  --gutter: var(--gutter-field);','  --page-margin: var(--margin-field);','  --measure-prose: '+spacing.grid.measureProse+';','','  /* 5 · STRUCTURE & OPERATIONAL CONSTRAINTS */','  --radius-none: '+spacing.structure.radius.none+';','  --radius-sm: '+spacing.structure.radius.sm+';','  --rule-hairline: '+spacing.structure.rule.hairline+' solid var(--border-hairline);','  --rule-heavy: '+spacing.structure.rule.heavy+' solid var(--border-heavy);','  --rule-frame: '+spacing.structure.rule.frame+' solid var(--border-hairline);','  --shadow-none: none;','  --tap-target-min: '+spacing.structure.tapTargetMin+';','  --field-cell-min-height: '+spacing.structure.fieldCellMinHeight+';','  --print-code-x-height: '+spacing.structure.printCodeXHeight+';','  --pictogram-grid: '+spacing.structure.pictogram.grid+';','  --pictogram-stroke: '+spacing.structure.pictogram.stroke+';','','  /* Component measurements (spacing.json → structure.component) */',...componentVars(),'','  /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */');
+ L.push('  --gutter: var(--gutter-field);','  --page-margin: var(--margin-field);','  --measure-prose: '+spacing.grid.measureProse+';','','  /* 5 · STRUCTURE & OPERATIONAL CONSTRAINTS */','  --radius-none: '+spacing.structure.radius.none+';','  --radius-sm: '+spacing.structure.radius.sm+';','  --rule-hairline: '+spacing.structure.rule.hairline+' solid var(--border-hairline);','  --rule-heavy: '+spacing.structure.rule.heavy+' solid var(--border-heavy);','  --rule-frame: '+spacing.structure.rule.frame+' solid var(--border-hairline);','  --rule-editorial: '+spacing.structure.rule.editorial+' solid var(--ink);','  --thermal-width: '+spacing.structure.thermal.width+';','  --thermal-height: '+spacing.structure.thermal.height+';','  --thermal-padding: '+spacing.structure.thermal.padding+';','  --thermal-frame: '+spacing.structure.thermal.frame+';','  --thermal-bar: '+spacing.structure.thermal.bar+';','  --shadow-none: none;','  --tap-target-min: '+spacing.structure.tapTargetMin+';','  --field-cell-min-height: '+spacing.structure.fieldCellMinHeight+';','  --print-code-x-height: '+spacing.structure.printCodeXHeight+';','  --pictogram-grid: '+spacing.structure.pictogram.grid+';','  --pictogram-stroke: '+spacing.structure.pictogram.stroke+';','','  /* Component measurements (spacing.json → structure.component) */',...componentVars(),'','  /* 6 · DOMAIN CONTRACT SYMBOLS (labels stay in application i18n) */');
  for(const [k,v] of Object.entries(domain.domain.provenance)) L.push('  --provenance-'+k+'-symbol: "'+v.symbol+'";');
  for(const [k,v] of Object.entries(domain.domain.sync)) L.push('  --sync-'+k+'-symbol: "'+v.symbol+'";');
  L.push('','  /* Domain marks: SVG drawn via mask + currentColor, identical on every device */');

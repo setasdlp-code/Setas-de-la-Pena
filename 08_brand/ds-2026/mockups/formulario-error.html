@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formulario de campo con error · DS-2026</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="_shell.css">
+  <style>
+    .component-sheet { width:min(520px,100%); margin:0 auto; background:var(--surface-page); border:var(--rule-hairline); padding:var(--space-3); display:grid; gap:var(--space-3); }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <main class="component-sheet">
+    <h1>Registro de lote</h1>
+    <label class="sdp-field">
+      <span class="sdp-field__label">Temperatura observada</span>
+      <input class="sdp-field__control" inputmode="decimal" value="18,4" aria-describedby="t-hint">
+      <span class="sdp-field__hint" id="t-hint">°C · medición manual</span>
+    </label>
+    <label class="sdp-field sdp-field--error">
+      <span class="sdp-field__label">Código de lote</span>
+      <input class="sdp-field__control" value="026" aria-invalid="true" aria-describedby="l-error">
+      <span class="sdp-field__error" id="l-error">No se guardó: incluye especie y cepa, por ejemplo GAN-XX.</span>
+    </label>
+  </main>
+</body>
+</html>

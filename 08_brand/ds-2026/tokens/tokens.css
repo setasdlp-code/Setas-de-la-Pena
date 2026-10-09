@@ -8,9 +8,9 @@
 
 :root {
   /* 1 · PRIMITIVE MINERAL PIGMENTS & GROUNDS */
-  --paper-100: #F6F4EC;
-  --paper-50: #FCFBF6;
-  --paper-200: #EDE8DB;
+  --paper-100: #FAF8F3;
+  --paper-50: #FEFDFB;
+  --paper-200: #EFE9DE;
   --ink-900: #1A1410;
   --ink-700: #3A2F26;
   --ink-500: #6B5B4A;
@@ -99,11 +99,11 @@
   --size-heading-03: 19px;
   --size-species: 28px;
   --size-latin: 18px;
+  --size-cartouche: 17px;
   --size-body: 16px;
   --size-small: 14px;
   --size-data: 13px;
   --size-label: 11px;
-  --size-micro: 11px;
   --size-micro-screen: 11px;
   --size-micro-print: 9px;
   --size-lot-code-print: 6mm;
@@ -127,7 +127,8 @@
   --t-heading-02: var(--weight-medium) var(--size-heading-02)/var(--leading-tight) var(--font-editorial);
   --t-heading-03: var(--weight-semibold) var(--size-heading-03)/var(--leading-snug) var(--font-sans);
   --t-species: var(--weight-bold) var(--size-species)/var(--leading-tight) var(--font-editorial);
-  --t-latin: italic var(--weight-regular) var(--size-latin)/var(--leading-snug) var(--font-editorial);
+  --t-latin: italic var(--weight-medium) var(--size-latin)/var(--leading-snug) var(--font-editorial);
+  --t-cartouche: italic var(--weight-regular) var(--size-cartouche)/var(--leading-snug) var(--font-editorial);
   --t-body: var(--weight-regular) var(--size-body)/var(--leading-normal) var(--font-sans);
   --t-small: var(--weight-regular) var(--size-small)/var(--leading-normal) var(--font-sans);
   --t-data: var(--weight-regular) var(--size-data)/var(--leading-data) var(--font-mono);
@@ -165,6 +166,12 @@
   --rule-hairline: 1px solid var(--border-hairline);
   --rule-heavy: 2px solid var(--border-heavy);
   --rule-frame: 1px solid var(--border-hairline);
+  --rule-editorial: 1px solid var(--ink);
+  --thermal-width: 50mm;
+  --thermal-height: 30mm;
+  --thermal-padding: 1.5mm;
+  --thermal-frame: 0.5mm;
+  --thermal-bar: 1.5mm;
   --shadow-none: none;
   --tap-target-min: 44px;
   --field-cell-min-height: 48px;

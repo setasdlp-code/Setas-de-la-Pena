@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estado y estado de vista · DS-2026</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/shared/provenance.css">
+  <link rel="stylesheet" href="../components/shared/view-state.css">
+  <link rel="stylesheet" href="_shell.css">
+  <style>
+    .vs-sheet { width:min(960px,100%); margin:0 auto; background:var(--surface-page); border:var(--rule-hairline); padding:var(--space-5); display:grid; gap:var(--space-4); }
+    .vs-row { display:flex; flex-wrap:wrap; gap:var(--space-1); }
+    .vs-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:var(--space-2); }
+    @media (max-width:760px) { .vs-sheet { padding:var(--space-2); } }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <main class="vs-sheet">
+    <header>
+      <div class="t-label">Setas de la Peña · DS-2026 Core</div>
+      <h1 style="margin-top:var(--space-1);margin-bottom:0">Estado y estado de vista</h1>
+    </header>
+
+    <section aria-labelledby="par">
+      <h2 id="par">Qué ocurre y de dónde viene el dato</h2>
+      <div class="vs-row" aria-label="Estados">
+        <span class="sdp-state sdp-state--active">Activo</span>
+        <span class="sdp-state sdp-state--attention">Atención</span>
+        <span class="sdp-state sdp-state--blocked">Bloqueado</span>
+        <span class="sdp-state sdp-state--failed">Fallido</span>
+        <span class="sdp-state sdp-state--unavailable">No disponible</span>
+      </div>
+      <div class="vs-row" style="margin-top:var(--space-1)" aria-label="Pareja estado y procedencia">
+        <span class="sdp-state sdp-state--attention">Atención</span>
+        <span class="sdp-provenance" data-provenance="estimated">Estimado · 10:42</span>
+        <span class="sdp-state sdp-state--active">Activo</span>
+        <span class="sdp-provenance" data-provenance="measured">Medido · SCD30 · 3 min</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="vistas">
+      <h2 id="vistas">Estados de vista</h2>
+      <div class="vs-grid">
+        <div class="sdp-view-state sdp-view-state--loading" role="status" aria-busy="true">
+          <span class="sdp-view-state__label">Cargando</span>
+          <h3 class="sdp-view-state__title">Leyendo la cámara 2</h3>
+          <p class="sdp-view-state__body">Mostramos la última lectura guardada mientras llega la nueva.</p>
+        </div>
+        <div class="sdp-view-state sdp-view-state--empty" role="status">
+          <span class="sdp-view-state__label">Vacío</span>
+          <h3 class="sdp-view-state__title">Sin lecturas todavía</h3>
+          <p class="sdp-view-state__body">Registra una medición a mano o conecta el sensor de la cámara.</p>
+          <div class="sdp-view-state__actions"><button class="sdp-btn sdp-btn--primary" type="button">Registrar medición</button></div>
+        </div>
+        <div class="sdp-view-state sdp-view-state--error" data-cause="network" role="alert">
+          <span class="sdp-view-state__label">Sin red</span>
+          <h3 class="sdp-view-state__title">No hay conexión</h3>
+          <p class="sdp-view-state__body">Tus registros quedan en este dispositivo y se envían al volver la señal.</p>
+          <div class="sdp-view-state__actions"><button class="sdp-btn" type="button">Seguir sin conexión</button><button class="sdp-btn" type="button">Reintentar</button></div>
+        </div>
+        <div class="sdp-view-state sdp-view-state--error" data-cause="server" role="alert">
+          <span class="sdp-view-state__label">Fallo del servidor</span>
+          <h3 class="sdp-view-state__title">No pudimos guardar el registro</h3>
+          <p class="sdp-view-state__body">Tienes red, pero el servidor no respondió. Tus datos siguen aquí.</p>
+          <div class="sdp-view-state__actions"><button class="sdp-btn sdp-btn--primary" type="button">Reintentar</button><button class="sdp-btn" type="button">Reportar fallo</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

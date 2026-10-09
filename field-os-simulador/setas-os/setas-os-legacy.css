@@ -1,0 +1,117 @@
+/* Setas OS · componentes heredados del paquete _ds/
+   ---------------------------------------------------------------------
+   La página cargaba un segundo sistema de diseño completo bajo _ds/, con
+   su propia paleta, su tipografía y estos componentes. Se retiró porque
+   duplicaba DS-2026 y le peleaba las variables.
+
+   Lo que quedó aquí son las piezas que la app todavía usa y que DS-2026 no
+   tiene con ese nombre. Las que sí tenían equivalente se migraron:
+   os-provenance pasó a sdp-provenance y os-sync-state a sdp-sync-chip.
+
+   Este archivo carga en el mismo lugar que ocupaba _ds/, antes de
+   fieldos-tokens.css y sim.css, para no alterar el orden de la cascada.
+   No agregues nada nuevo aquí: lo que venga después va al DS. */
+
+/* ── Acciones ─────────────────────────────────────────────────────── */
+.os-action,
+.os-icon-action {
+  min-height: var(--tap-target-min);
+  border: var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-spring),
+              border-color var(--duration-fast) var(--ease-spring),
+              color var(--duration-fast) var(--ease-spring),
+              transform var(--duration-fast) var(--ease-spring);
+}
+.os-action { padding: 10px 14px; }
+.os-icon-action { min-width: var(--tap-target-min); padding: 8px; display: inline-grid; place-items: center; }
+.os-action:hover,
+.os-icon-action:hover { background: var(--surface-recessed); }
+.os-action:active:not(:disabled),
+.os-icon-action:active:not(:disabled) { transform: scale(0.98); }
+.os-action:focus-visible,
+.os-icon-action:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+.os-action:disabled,
+.os-icon-action:disabled { color: var(--text-metadata); cursor: not-allowed; background: var(--surface-panel); }
+.os-action--primary { background: var(--text-primary); border-color: var(--text-primary); color: var(--surface-page); }
+.os-action--primary:hover { background: var(--text-secondary); }
+.os-action--danger { border-color: var(--status-error); color: var(--status-error); }
+
+/* ── Cabecera de lote ─────────────────────────────────────────────── */
+.os-batch-header {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--rule-heavy);
+  background: var(--surface-page);
+}
+.os-batch-header__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.os-batch-header__code { font-family: var(--font-mono); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.os-batch-header__species { font-family: var(--font-sans); font-size: var(--text-xl); font-weight: var(--weight-medium); }
+.os-batch-header__meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--text-secondary); font-family: var(--font-display); font-size: var(--text-base); }
+.os-batch-header__next { border-top: var(--rule-hairline); padding-top: var(--space-3); }
+.os-batch-header__next-label { display: block; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-metadata); text-transform: uppercase; letter-spacing: var(--tracking-widest); }
+.os-batch-header__next-value { display: block; margin-top: var(--space-1); font-family: var(--font-display); font-size: var(--text-md); }
+
+/* ── Fila de evento ───────────────────────────────────────────────── */
+.os-event-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  min-height: 48px;
+  padding: var(--space-3) 0;
+  border-bottom: var(--rule-hairline);
+}
+.os-event-row__title { font-family: var(--font-display); font-size: var(--text-base); color: var(--text-primary); }
+.os-event-row__meta { margin-top: 2px; font-family: var(--font-mono); font-size: var(--text-sm); color: var(--text-metadata); }
+
+/* ── Métrica ──────────────────────────────────────────────────────── */
+.os-metric { display: grid; gap: 2px; min-width: 0; }
+.os-metric__label { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-metadata); }
+.os-metric__value { font-family: var(--font-mono); font-size: var(--text-lg); line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.os-metric__target { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--text-secondary); }
+
+/* ── Captura en campo ─────────────────────────────────────────────── */
+.os-scan-target {
+  min-height: 96px;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 2px solid var(--border-heavy);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+.os-scan-target:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
+
+.os-sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  gap: var(--tap-target-gap-min);
+  padding: var(--space-3);
+  border-top: var(--rule-strong);
+  background: var(--surface-page);
+}
+.os-sticky-actions > * { flex: 1 1 auto; min-height: 48px; }
+
+/* En teléfono el objetivo táctil sube de 44 a 48px: el guante engorda el dedo. */
+@media (max-width: 700px) {
+  .os-action,
+  .os-icon-action { min-height:48px; }
+  .os-icon-action { min-width: 48px; }
+  .os-event-row { min-height: 52px; }
+  .os-sticky-actions { padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom)); }
+}

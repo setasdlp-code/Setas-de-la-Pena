@@ -366,6 +366,62 @@ check('components.css facade covers every index.css component module', () => {
   const facade = mods(fs.readFileSync(path.join(DS_ROOT, 'components/components.css'), 'utf8'), /@import\s+["']\.\/((?:shared|operations|market)\/[\w-]+\.css)["']/g);
   const missing = [...index].filter(m => !facade.has(m));
   if (missing.length) throw new Error('components/components.css is missing: ' + missing.join(', '));
+
+});
+
+// Gate 17: every sdp-*/ed-* class a mockup writes has a rule in the CSS it loads.
+// Las demas compuertas comparan documentacion contra CSS; esta compara MARCADO
+// contra CSS, que es por donde se colaron .sdp-btn--subtle, .sdp-label,
+// .sdp-input--field y los chips de procedencia sin reglas. Resuelve la cadena
+// de @import de cada hoja enlazada, suma los <style> en linea, y falla si una
+// clase del marcado no tiene ni una regla que la nombre.
+check('every class a mockup writes has a rule in the CSS it loads', () => {
+  const MOCKUPS = path.join(DS_ROOT, 'mockups');
+  if (!fs.existsSync(MOCKUPS)) return;
+
+  const htmlFiles = [];
+  (function collect(dir) {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, ent.name);
+      if (ent.isDirectory()) { if (ent.name !== 'out') collect(abs); }
+      else if (ent.name.endsWith('.html')) htmlFiles.push(abs);
+    }
+  })(MOCKUPS);
+
+  // Une una hoja con todo lo que importa, en profundidad y sin ciclos.
+  function resolveCss(file, seen = new Set()) {
+    const abs = path.normalize(file);
+    if (seen.has(abs) || !fs.existsSync(abs)) return '';
+    seen.add(abs);
+    const css = fs.readFileSync(abs, 'utf8');
+    let out = css;
+    for (const m of css.matchAll(/[@]import\s+["']([^"']+)["']/g)) {
+      out += resolveCss(path.resolve(path.dirname(abs), m[1]), seen);
+    }
+    return out;
+  }
+
+  const problems = [];
+  for (const html of htmlFiles) {
+    const src = fs.readFileSync(html, 'utf8');
+    let css = '';
+    for (const m of src.matchAll(/href=["']([^"']+\.css)["']/g)) {
+      css += resolveCss(path.resolve(path.dirname(html), m[1]));
+    }
+    for (const m of src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) css += m[1];
+
+    const used = new Set();
+    for (const m of src.matchAll(/class=["']([^"']+)["']/g)) {
+      for (const c of m[1].split(/\s+/)) {
+        if (c.startsWith('sdp-') || c.startsWith('ed-')) used.add(c);
+      }
+    }
+    const missing = [...used].filter(c => !css.includes('.' + c)).sort();
+    if (missing.length) {
+      problems.push(path.relative(DS_ROOT, html) + ': ' + missing.join(' '));
+    }
+  }
+  if (problems.length) throw new Error(problems.join(' | '));
 });
 
 console.log(`\nResults: ${passedChecks}/${totalChecks} gates passed (${failedChecks} failed).`);

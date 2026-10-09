@@ -6,17 +6,17 @@
   "color": {
     "primitive": {
       "paper-100": {
-        "value": "#F6F4EC",
+        "value": "#FAF8F3",
         "type": "color",
-        "role": "Warm archival paper ground. Canonical page background."
+        "role": "Warm archival paper ground, lightened 2026-09. Canonical page background."
       },
       "paper-50": {
-        "value": "#FCFBF6",
+        "value": "#FEFDFB",
         "type": "color",
         "role": "Lightest cream. Elevated surfaces, cards, inset highlights."
       },
       "paper-200": {
-        "value": "#EDE8DB",
+        "value": "#EFE9DE",
         "type": "color",
         "role": "Darker cream. Sunken wells, image placeholders, table hover."
       },

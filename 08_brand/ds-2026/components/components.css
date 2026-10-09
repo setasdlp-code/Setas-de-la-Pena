@@ -7,14 +7,17 @@
 @import "./shared/status.css";
 @import "./shared/metadata.css";
 @import "./shared/provenance.css";
-@import "./shared/action.css";
 @import "./shared/reading.css";
+@import "./shared/action.css";
 @import "./shared/forms.css";
 @import "./shared/figure.css";
 @import "./shared/species.css";
+@import "./shared/segment.css";
+@import "./shared/view-state.css";
 
 @import "./operations/lot.css";
 @import "./operations/room.css";
+@import "./operations/thermal.css";
 @import "./operations/task.css";
 @import "./operations/event.css";
 @import "./operations/inventory.css";

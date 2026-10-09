@@ -6,7 +6,7 @@
   padding: var(--space-2);
 }
 .sdp-alert__icon { flex: none; width: 20px; height: 20px; }
-.sdp-alert__icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: var(--pictogram-stroke); }
+.sdp-alert__icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: var(--pictogram-stroke); vector-effect: non-scaling-stroke; }
 .sdp-alert__icon svg * { vector-effect: non-scaling-stroke; }
 .sdp-alert__body { display: grid; gap: var(--space-half); }
 .sdp-alert__label { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; }

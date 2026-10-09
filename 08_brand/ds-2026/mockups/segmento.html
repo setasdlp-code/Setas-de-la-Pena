@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Selector segmentado · DS-2026</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/components.css">
+  <link rel="stylesheet" href="../components/shared/segment.css">
+  <link rel="stylesheet" href="_shell.css">
+  <style>
+    .component-sheet { width:min(1120px,100%); margin:0 auto; background:var(--surface-page); border:var(--rule-hairline); padding:var(--space-5); }
+    .component-head { display:flex; align-items:flex-end; justify-content:space-between; gap:var(--space-3); padding-bottom:var(--space-3); border-bottom:var(--rule-heavy); }
+    .component-nav { display:flex; flex-wrap:wrap; gap:var(--space-2); margin:var(--space-2) 0 var(--space-5); }
+    .component-section { display:grid; grid-template-columns:minmax(180px,3fr) minmax(0,9fr); gap:var(--space-4); padding:var(--space-4) 0; border-top:var(--rule-hairline); }
+    .component-demo { display:flex; flex-wrap:wrap; align-items:flex-start; gap:var(--space-2); }
+    .component-stack { width:min(520px,100%); display:grid; gap:var(--space-2); }
+    .component-meta { display:grid; gap:var(--space-half); }
+    fieldset { border:0; padding:0; margin:0; }
+    legend { font:var(--t-label); letter-spacing:var(--tracking-label); text-transform:uppercase; color:var(--text-metadata); margin-bottom:var(--space-1); }
+    @media (max-width:760px) {
+      body { padding:var(--space-2); }
+      .component-sheet { padding:var(--space-3); }
+      .component-head,.component-section { grid-template-columns:1fr; display:grid; }
+    }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <main class="component-sheet">
+    <header class="component-head">
+      <div><div class="t-label">Setas de la Peña · DS-2026 Core</div><h1 style="margin-top:var(--space-1);margin-bottom:0">Selector segmentado</h1></div>
+    </header>
+    <section class="component-section" data-mode="field">
+      <div class="component-meta"><span class="t-label">01</span><h2>field</h2></div>
+      <fieldset>
+        <legend>Mostrar línea para</legend>
+        <div class="sdp-segment">
+          <label class="sdp-segment__option"><input type="radio" name="linea-field" checked><span>Hogar</span></label>
+          <label class="sdp-segment__option"><input type="radio" name="linea-field"><span>Chef</span></label>
+        </div>
+      </fieldset>
+    </section>
+    <section class="component-section" data-mode="control">
+      <div class="component-meta"><span class="t-label">02</span><h2>control</h2></div>
+      <fieldset>
+        <legend>Mostrar línea para</legend>
+        <div class="sdp-segment">
+          <label class="sdp-segment__option"><input type="radio" name="linea-control" checked><span>Hogar</span></label>
+          <label class="sdp-segment__option"><input type="radio" name="linea-control"><span>Chef</span></label>
+          <label class="sdp-segment__option"><input type="radio" name="linea-control" disabled><span>Mayorista</span></label>
+        </div>
+      </fieldset>
+    </section>
+
+  </main>
+</body>
+</html>

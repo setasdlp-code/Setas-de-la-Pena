@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Etiqueta térmica · DS-2026</title>
+  <link rel="stylesheet" href="../tokens/tokens.css">
+  <link rel="stylesheet" href="../components/base.css">
+  <link rel="stylesheet" href="../components/operations/thermal.css">
+  <link rel="stylesheet" href="_shell.css">
+  <style>
+    .thermal-sheet { width: max-content; max-width: 100%; margin: 0 auto; display: grid; gap: var(--space-2); }
+    .thermal-note { font: var(--t-data); color: var(--text-secondary); max-width: 56ch; }
+    @media print {
+      html, body { margin: 0; padding: 0; background: white; }
+      body::before { display: none; }
+      .thermal-note, .thermal-sheet > h1 { display: none; }
+      .thermal-sheet { display: block; width: 50mm; }
+    }
+  </style>
+</head>
+<body data-mode="field" data-content-status="illustrative">
+  <main class="thermal-sheet">
+    <h1 class="t-label">Etiqueta térmica · 50 x 30 mm · 203 DPI</h1>
+    <div class="sdp-thermal" data-print="thermal">
+      <p class="sdp-thermal__lot">SP-0412-B</p>
+      <p class="sdp-thermal__species">Shiitake</p>
+      <p class="sdp-thermal__date">02.10.26</p>
+      <span class="sdp-thermal__bar" aria-hidden="true"></span>
+    </div>
+    <p class="thermal-note">Se imprime a escala real: 50 x 30 mm, sin márgenes, monocromo. Código de lote con x-height de 3 mm.</p>
+  </main>
+</body>
+</html>

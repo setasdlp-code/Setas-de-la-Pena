@@ -78,6 +78,7 @@ PAIRS = [
     ("MOSS_500", "PAPER", "OK bar / marker (--status-ok-marker)", 3.0, ALLOW),
     ("MOSS_500", "MOSS_TINT", "OK bar on OK tint", 3.0, ALLOW),
     ("CORAL_700", "PAPER_PANEL", "Outlined accent action text and border", 4.5, ALLOW),
+    ("MOSS_500", "PAPER_RECESSED", "OK bar over recessed track", 3.0, ALLOW),
     ("CORAL_500", "PAPER", "Decorative terracotta rule/fill", 3.0, ALLOW),
 
     # Explicitly banned uses.

@@ -146,7 +146,7 @@ test('Bitácora and Producción controls expose contextual accessible names', ()
   assert.match(jsx, /title:'Eliminar cosecha'[\s\S]*onConfirm:\(\)=>deleteBitCosecha/);
   assert.match(jsx, /aria-label=\{`Humedad real de \$\{g\?\.name\|\|r\.id\}, porcentaje`\}/);
   assert.match(jsx, /aria-label=\{`Paso \$\{i\+1\} completado: \$\{t\}`\}/);
-  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true" className=\{'os-sync-state/);
+  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true" className=\{'sdp-sync-chip/);
   assert.match(jsx, /name=\{`stockKg-\$\{r\.id\}`\} aria-label=\{`Stock de \$\{r\.name\} en kg`\}/);
   assert.match(jsx, /name="newStockIngredient" aria-label="Ingrediente que se agregará al stock"/);
 });

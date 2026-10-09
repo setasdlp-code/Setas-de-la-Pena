@@ -1,0 +1,36 @@
+/* Plantillas de identidad · puente al DS-2026
+   ---------------------------------------------------------------------
+   Las plantillas se escribieron contra el sistema antiguo de
+   field-os-identity. Ahora cargan DS-2026, que es el sistema vivo, y este
+   archivo traduce el vocabulario que ellas usan y el sistema no publica.
+
+   Una decisión que conviene conocer: en el sistema antiguo --font-sans era
+   Gaya, la tipografía editorial. En DS-2026 --font-sans es IBM Plex Sans y
+   Gaya se llama --font-editorial. Aquí se conserva el significado antiguo
+   para que las plantillas sigan viéndose igual. Si algún día se quiere que
+   el cuerpo pase a Plex, se cambia aquí y se revisan las cuatro plantillas
+   a ojo, porque es un cambio visible, no una equivalencia. */
+
+:root {
+  /* Tipografía: --font-sans era Gaya, no la sans del sistema. */
+  --font-sans:    var(--font-editorial);
+  /* --font-display era 'IBM Plex Sans Display'. Como la línea de arriba
+     reasigna --font-sans, aquí va la pila literal en vez de var(--font-sans). */
+  --font-display: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+
+  /* Superficies y reglas que el shell antiguo nombraba distinto. */
+  --paper-2:     var(--surface-recessed);
+  --rule-strong: 1px solid var(--rule-500);
+  --text-disabled: var(--text-metadata);
+
+  /* Estados. El sistema los llama --status-ok / --status-warn. */
+  --status-active:    var(--status-ok);
+  --status-attention: var(--status-warn-text);
+  --status-warning:   var(--status-warn-text);
+
+  --accent-olive:      var(--status-ok);
+  --accent-terracotta: var(--status-warn-text);
+  --accent-blue-grey:  var(--status-info);
+
+  --leading-relaxed: 1.7;
+}

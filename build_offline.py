@@ -34,8 +34,11 @@ LOCAL_FILES = {
     "recommender": HERE / "recipe-recommender.js",
 }
 FONT_FILES = {
-    "GayaPatched-Regular":        DS_BASE / "fonts" / "GayaPatched-Regular.otf",
-    "GayaPatched-Italic":         DS_BASE / "fonts" / "GayaPatched-Italic.otf",
+    # Gaya Patched son cinco pesos; el Regular 400 que había aquí era un parche
+    # local de diacríticos sobre la versión de prueba. Medium es el corte real
+    # al que se parecía en peso.
+    "GayaPatched-Medium":         DS_BASE / "fonts" / "GayaPatched-Medium.otf",
+    "GayaPatched-MediumItalic":   DS_BASE / "fonts" / "GayaPatched-MediumItalic.otf",
     "PPObjectSans-Heavy":         DS_BASE / "fonts" / "PPObjectSans-Heavy.otf",
     "PPObjectSans-HeavySlanted":  DS_BASE / "fonts" / "PPObjectSans-HeavySlanted.otf",
     "PPObjectSans-Regular":       DS_BASE / "fonts" / "PPObjectSans-Regular.otf",
@@ -96,7 +99,7 @@ for family, path in FONT_FILES.items():
 # Reemplazar URLs de fuentes en el CSS del design system por data URIs
 def inline_fonts_in_css(css):
     for family, data_uri, ext in font_faces:
-        fname = Path(family + ext).name  # e.g. "GayaPatched-Regular.otf"
+        fname = Path(family + ext).name  # e.g. "GayaPatched-Medium.otf"
         # Reemplazar la ruta relativa por data URI
         css = css.replace(f"fonts/{fname}", data_uri)
         css = css.replace(f"./fonts/{fname}", data_uri)

@@ -30,9 +30,14 @@
   font-display: swap;
 }
 
+/* Gaya Patched son cinco pesos con sus itálicas; no hay corte Regular 400.
+   Lo que antes se cargaba como 400 era un parche local de diacríticos sobre la
+   versión de prueba, con 280 glifos contra los 328 de los cortes legítimos.
+   Se declara Medium como 400 porque es el corte al que ese archivo se parecía
+   en peso: así la app no cambia de aspecto. */
 @font-face {
   font-family: "Gaya Patched";
-  src: url("./assets/fonts/GayaPatched-Regular.otf") format("opentype");
+  src: url("./assets/fonts/GayaPatched-Medium.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -40,9 +45,25 @@
 
 @font-face {
   font-family: "Gaya Patched";
-  src: url("./assets/fonts/GayaPatched-Italic.otf") format("opentype");
+  src: url("./assets/fonts/GayaPatched-MediumItalic.otf") format("opentype");
   font-weight: 400;
   font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Gaya Patched";
+  src: url("./assets/fonts/GayaPatched-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Gaya Patched";
+  src: url("./assets/fonts/GayaPatched-Black.otf") format("opentype");
+  font-weight: 800 900;
+  font-style: normal;
   font-display: swap;
 }
 

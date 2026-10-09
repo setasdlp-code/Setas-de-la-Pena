@@ -35,7 +35,7 @@
     "border": {
       "hairline": {
         "value": "{color.primitive.rule-500}",
-        "description": "1px hairline border, specimen frames, subtle table rules. Rule 500 (3.22:1 graphic): ink 500 sat too close to secondary text and boxed cards in."
+        "description": "1px hairline, specimen frames, table rules. Mineral gray: lighter than text so a card reads as a frame, not a box (3.34:1, clears the 3:1 graphic floor)."
       },
       "heavy": {
         "value": "{color.primitive.ink-900}",
@@ -101,6 +101,10 @@
       },
       "error-bg": {
         "value": "{color.derived.coral-tint}"
+      },
+      "ok-marker": {
+        "value": "{color.primitive.moss-500}",
+        "description": "Restrained moss for OK bars, meters and thin rules. Moss 700 is so close to ink that a status bar reads black."
       }
     },
     "action": {

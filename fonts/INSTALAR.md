@@ -4,8 +4,11 @@ Esta carpeta contiene las tipografías de marca para uso interno.
 
 ## Cómo instalar en Mac
 
-1. Doble-click sobre `GayaPatched-Regular.otf` → "Instalar fuente"
-2. Doble-click sobre `GayaPatched-Italic.otf` → "Instalar fuente"
+1. Selecciona los diez `.otf` de esta carpeta y ábrelos → "Instalar fuentes"
+
+La familia son cinco pesos con sus itálicas: Thin, Light, Medium, Bold y Black.
+No hay un corte Regular. El `GayaPatched-Regular.otf` que estuvo aquí era un
+parche local de diacríticos sobre la versión de prueba y ya no se usa.
 3. Reiniciar Keynote / PowerPoint / Word para que aparezca en la lista de fuentes.
 
 Una vez instaladas, abrir `Setas-de-la-Pena-Presentacion-Socios-v1.pptx` y la tipografía display se va a ver en Gaya.

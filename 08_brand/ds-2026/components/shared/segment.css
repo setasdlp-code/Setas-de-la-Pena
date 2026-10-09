@@ -1,0 +1,77 @@
+/* DS-2026 · Shared: Segmented selector (.sdp-segment)
+   Owner of .sdp-segment and .sdp-segment__option.
+   Native radio group: one choice, arrows move AND select, no JavaScript. */
+.sdp-segment {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  max-width: 100%;
+  border: var(--rule-hairline);
+  background: var(--surface-page);
+}
+
+.sdp-segment__option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-target-min);
+  min-width: var(--tap-target-min);
+  padding: 0 var(--space-3);
+  font: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--surface-page);
+  cursor: pointer;
+  user-select: none;
+}
+.sdp-segment__option + .sdp-segment__option { border-left: var(--rule-hairline); }
+.sdp-segment__option:hover { background: var(--surface-panel); }
+
+/* The native input stays focusable and in the accessibility tree. */
+.sdp-segment__option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+/* Selected: fill + weight (and inverse text), never colour alone. */
+.sdp-segment__option:has(input:checked) {
+  background: var(--action-primary);
+  color: var(--text-inverse);
+  font-weight: var(--weight-bold);
+}
+.sdp-segment__option:has(input:checked):hover { background: var(--action-primary-hover); }
+
+.sdp-segment__option:has(input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.sdp-segment__option:has(input:disabled) {
+  color: var(--text-metadata);
+  background: var(--surface-recessed);
+  cursor: not-allowed;
+}
+.sdp-segment__option:has(input:checked:disabled) { font-weight: var(--weight-bold); }
+
+/* Field profile: separate targets by 8px. */
+[data-mode="field"] .sdp-segment {
+  gap: var(--space-1);
+  border: 0;
+  background: transparent;
+}
+[data-mode="field"] .sdp-segment__option { border: var(--rule-hairline); }
+[data-mode="field"] .sdp-segment__option + .sdp-segment__option { border-left: var(--rule-hairline); }
+
+@media (max-width: 480px) {
+  .sdp-segment { display: grid; width: 100%; }
+  .sdp-segment__option { padding: 0 var(--space-2); }
+}

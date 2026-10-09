@@ -49,7 +49,8 @@
 }
 
 .sdp-btn:disabled, .sdp-btn--disabled {
-  opacity: 0.45;
+  border-style: dashed;
+  color: var(--text-metadata);
   cursor: not-allowed;
   pointer-events: none;
 }

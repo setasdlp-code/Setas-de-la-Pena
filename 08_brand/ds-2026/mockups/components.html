@@ -46,7 +46,7 @@
       <div class="component-demo">
         <button class="sdp-btn sdp-btn--primary" type="button">Registrar medición</button>
         <button class="sdp-btn" type="button">Ver trazabilidad</button>
-        <button class="sdp-btn sdp-btn--subtle" type="button">Cancelar</button>
+        <button class="sdp-btn sdp-btn--secondary" type="button">Cancelar</button>
         <button class="sdp-btn" type="button" aria-busy="true">Guardando</button>
         <button class="sdp-btn" type="button" disabled>No disponible</button>
       </div>
@@ -100,8 +100,8 @@
     <section class="component-section" id="view-states">
       <div class="component-meta"><span class="t-label">05 · Respuesta</span><h2>Estados de vista</h2><p class="t-small">Cada situación explica la siguiente acción.</p></div>
       <div class="component-stack">
-        <div class="sdp-view-state" role="status"><h3 class="sdp-view-state__title">Sin lecturas todavía</h3><p class="sdp-view-state__body">Registra una medición o conecta el sensor de la cámara.</p><div><button class="sdp-btn" type="button">Registrar medición</button></div></div>
-        <div class="sdp-view-state sdp-view-state--error" role="alert"><h3 class="sdp-view-state__title">No pudimos guardar el registro</h3><p class="sdp-view-state__body">Conservamos los datos en este dispositivo. Intenta enviarlos de nuevo.</p><div><button class="sdp-btn sdp-btn--primary" type="button">Reintentar</button></div></div>
+        <div class="sdp-view-state sdp-view-state--empty"><span class="sdp-view-state__label">Sin registros</span><h3 class="sdp-view-state__title">Sin lecturas todavía</h3><p class="sdp-view-state__body">Registra una medición o conecta el sensor de la cámara.</p><div class="sdp-view-state__actions"><button class="sdp-btn sdp-btn--primary" type="button">Registrar medición</button></div></div>
+        <div class="sdp-view-state sdp-view-state--error" data-cause="server" role="alert"><span class="sdp-view-state__label">Fallo del servidor</span><h3 class="sdp-view-state__title">No pudimos guardar el registro</h3><p class="sdp-view-state__body">Conservamos los datos en este dispositivo. Intenta enviarlos de nuevo.</p><div class="sdp-view-state__actions"><button class="sdp-btn sdp-btn--primary" type="button">Reintentar</button><button class="sdp-btn sdp-btn--secondary" type="button">Reportar</button></div></div>
       </div>
     </section>
   </main>

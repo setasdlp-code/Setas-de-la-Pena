@@ -1,15 +1,17 @@
-// Loads this design system into the template. In a consuming project, point
-// base at the bound DS folder relative to this file (e.g. '_ds/<folder>' at
-// the project root, '../_ds/<folder>' one level down) — one line to edit.
+// Carga DS-2026, el sistema vivo, en esta plantilla.
+//
+// Antes cargaba los tokens de field-os-identity con `base = '../..'`. Esa
+// capa quedó congelada; DS-2026 es la que se mantiene, la que las compuertas
+// verifican y la que usa la aplicación. _ds2026-compat.css traduce el
+// vocabulario que estas plantillas usan y el sistema no publica.
 (() => {
-  const base = '../..';
-  for (const p of ["tokens/fonts.css","tokens/colors.css","tokens/typography.css","tokens/spacing.css","tokens/structure.css","tokens/components.css","styles.css"]) {
+  const DS = '../../../ds-2026';
+  const hojas = [DS + '/tokens/fonts.css', DS + '/index.css', '../_ds2026-compat.css'];
+  for (const href of hojas) {
     const l = document.createElement('link');
-    l.rel = 'stylesheet'; l.href = base + '/' + p;
+    l.rel = 'stylesheet';
+    l.href = href;
+    l.onerror = () => console.error('ds-base.js: no cargó ' + href);
     document.head.appendChild(l);
   }
-  const s = document.createElement('script');
-  s.src = base + '/_ds_bundle.js';
-  s.onerror = () => console.error('ds-base.js: failed to load ' + s.src + ' — if this is a consuming project, point the base line in ds-base.js at the bound _ds/<folder> tree relative to this page (e.g. _ds/<folder> at the project root, ../_ds/<folder> one level down); in a fresh design system this can just mean the bundle is not compiled yet');
-  document.head.appendChild(s);
 })();

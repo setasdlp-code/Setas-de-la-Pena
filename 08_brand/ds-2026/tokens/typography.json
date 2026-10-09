@@ -132,12 +132,22 @@
     "latin": {
       "size": "18px",
       "family": "editorial",
-      "weight": 400,
+      "weight": 500,
       "leading": 1.3,
       "tracking": "0",
       "case": "none",
       "style": "italic",
-      "use": "Latin binomial: 'Lentinula edodes'. Always italic, always sentence case."
+      "use": "Latin binomial: 'Lentinula edodes'. Always italic, always sentence case. Medium Italic 500: Gaya Patched no tiene corte 400, y el 400 que se usaba antes pesa como el Medium."
+    },
+    "cartouche": {
+      "size": "17px",
+      "family": "editorial",
+      "weight": 400,
+      "leading": 1.4,
+      "tracking": "0",
+      "case": "none",
+      "style": "italic",
+      "use": "Pie de cartucho y pie de figura en superficie de archivo. Entre el cuerpo (16) y el latino (18): la voz del aparato de una lámina, no la del texto corrido."
     },
     "body": {
       "size": "16px",

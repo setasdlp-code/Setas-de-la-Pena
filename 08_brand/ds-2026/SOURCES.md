@@ -129,7 +129,12 @@ assertion is in `scripts/contrast-audit.py`.
 
 ## Font Integrity Checksums (SHA-256)
 
-All 20 vendored font files are frozen and verified by SHA-256:
+All 20 vendored font files are frozen and verified by SHA-256.
+
+GayaPatched-Regular.otf y GayaPatched-Italic.otf son un parche local de
+diacríticos sobre la Gaya de prueba: traen 280 glifos contra los 328 de los
+otros cinco pesos. `tokens/fonts.css` les pone un relleno por unicode-range
+para los signos que les faltan. No se distribuyen fuera del equipo.
 
 | Font File | SHA-256 Checksum |
 |---|---|
@@ -141,8 +146,8 @@ All 20 vendored font files are frozen and verified by SHA-256:
 | `GayaPatched-Light.otf` | `81e0b7e69b19b5ddbbc7d3eeeccd5fb58ecd3357d9b00c16bc6c1c03268f77f1` |
 | `GayaPatched-LightItalic.otf` | `e61299ea11cf1458d9402651274fce3907936a7b61b61c1aca091f1a6f9e2d66` |
 | `GayaPatched-Medium.otf` | `62cf06eadae3682f46de9aef14c76298c6df918913a6bd69740502cd52f347ec` |
-| `GayaPatched-MediumItalic.otf` | `e5e98d817d0f4628bf98128ba66d59bd8b10e365f91d1c2aefd7706258aca7be` |
 | `GayaPatched-Regular.otf` | `bce8fb50abce701c84bcd0ad03d9c9828de777be87c1542aaacd5fd9fb8918a5` |
+| `GayaPatched-MediumItalic.otf` | `e5e98d817d0f4628bf98128ba66d59bd8b10e365f91d1c2aefd7706258aca7be` |
 | `GayaPatched-Thin.otf` | `32e23feabf101c43518573ae88fbe63dcd4da961aae1fb74a930e59c9bb7c1a2` |
 | `GayaPatched-ThinItalic.otf` | `17594cc9c19e10d7ef751fa7cf140b9736b56e2aa7fb9a776b60d7aaba6cfc57` |
 | `IBMPlexMono-Medium.ttf` | `98fbd727aae340b236955879dabed4d991aac9e8e90b3b2a67ce4a59221cc97c` |
