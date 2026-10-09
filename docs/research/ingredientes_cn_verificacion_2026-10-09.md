@@ -1,6 +1,6 @@
 # Verificación de C:N / %N / %C del catálogo + ingredientes nuevos — 2026-10-09
 
-Insumo para decisión humana. **No modifica `substrate-catalog.js` ni `knowledge_base/`.**
+Insumo para decisión humana. Los cambios aprobados se aplicaron a `substrate-catalog.js` (sección 4). No modifica `knowledge_base/`.
 Dos corridas de deep-research (fan-out web → extracción → verificación adversarial 3 votos → síntesis).
 Corpus de ground-truth ausente: ningún cambio derivado de aquí puede validarse con `perito:regression`.
 
@@ -52,13 +52,34 @@ Evidencia útil sobre insumos que **ya están** en el catálogo:
 | aserrín eucalipto / roble + salvado | L. edodes | 65.0 % / 59.7 %; mezcla 400:400:200 74.1 % | El Sebaaly 2024 | Eucalipto solo y roble no difieren significativamente. |
 | afrecho_cerveceria | L. edodes | Bajó el rendimiento | SARE FNE14-795 (EE.UU.) | Shiitake es sensible al N del sustrato. |
 
-## 4. Propuestas (requieren aprobación)
+## 4. Aplicado en `substrate-catalog.js` (aprobado por Sebastián, 2026-10-09)
 
-1. **harina_maiz:** corregir N (3.2 → ~1.4) y C:N (8 → ~32). Única corrección con evidencia directa, de tier 3.
-2. **Resolver las 9 incoherencias c/n ↔ cn** (sección 1) en lo interno: decidir cuál de los tres campos es la fuente y recalcular, sin inventar valores nuevos.
-3. **Agregar una nota con cita** a capacho_uchuva (EB 76.1 %), aserrin_eucalipto y aserrin_roble (El Sebaaly 2024).
-4. **Lo más rentable:** análisis elemental (CHN o Dumas, base seca) de los 5–10 insumos que la finca usa de verdad (kikuyo, cáscara de plátano, pulpa de café, melaza, capacho de uchuva). La literatura no va a cubrirlos, y el dato medido en la finca vale más que cualquier cita.
-5. **Ingredientes nuevos:** búsquedas dirigidas por residuo (por ejemplo, "residuos de panela *Pleurotus* eficiencia biológica"), una a la vez, en vez de una barrida amplia.
+Criterio: en cada incoherencia se tomó como ancla el campo más plausible y se recalcularon los demás. Salvo harina_maiz, son **estimaciones sin fuente primaria verificada**.
+
+| id | Antes (cn / n / c) | Después | Ancla | Por qué |
+|---|---|---|---|---|
+| harina_maiz | 8 / 3.2 / 36 | 33 / 1.4 / 46.8 | Certificado Labmix24 (Tier 3) | N 3.2 % implicaba ~20 % de proteína; el maíz tiene 7.8–12 % |
+| rastrojo_maiz | 60 / 0.6 / 45 | 60 / 0.75 / 45 | cn | Proteína de rastrojo ~4–5 % MS → N ~0.7–0.8 |
+| pulpa_cafe | 25 / 2.5 / 45 | 25 / 1.8 / 45 | cn | Proteína de pulpa fresca ~10–12 % MS → N ~1.6–1.9 |
+| harina_trigo | 12 / 2.8 / 40 | 18 / 2.4 / 44 | Proteína y almidón | Integral ~13–14 % proteína (N×5.7); almidón ≈44 % C |
+| melaza | 30 / 0.5 / 38 | 76 / 0.5 / 38 | n, c | N bajo en melaza de caña (~0.4–0.8 % MS) |
+| hemp_hurds | 70 / 0.5 / 47 | 94 / 0.5 / 47 | n, c | Sin dato publicado; se respetan n y c |
+| aserrin_alamo | 200 / 0.2 / 45 | 225 / 0.2 / 45 | n, c | Rango típico de madera de latifoliada |
+| salvado_arroz | 18 / 2.2 / 47 | 21 / 2.2 / 47 | n, c | Proteína ~12–14 % MS |
+| torta_girasol | 7 / 5.0 / 45 | 9 / 5.0 / 45 | n, c | Proteína ~30–35 % MS |
+
+Notas con cita agregadas (sin cambiar valores): capacho_uchuva (EB 76.1 %), aserrin_roble y aserrin_eucalipto (El Sebaaly 2024).
+
+**Efecto en predicciones.** `analyze()` calcula el C:N de la mezcla con `c` y `n`, así que harina_maiz, rastrojo_maiz, pulpa_cafe y harina_trigo cambian el C:N de cualquier receta que los use. Solo un preset cambió: `bodega_blanca_maiz` pasó de C:N 28 a 36.8; se renombró a "C:N≈37" y se quitó "$600/kg N", que ya no aplica. El `cn` propio de cada insumo **sí** se usa en `recipe-optimizer.js` para sugerir bases de alto C:N (filtros `cn > 60` / `cn > 80`, orden por `cn`). hemp_hurds (70→94) entra ahora en el filtro `> 80`, y aserrin_alamo (200→225) puede cambiar de orden.
+
+**Validación.** `perito:regression` no se pudo correr: falta `ground-truth-fixtures.json`. Tests unitarios: 1048/1056; las 8 fallas son de dependencias no instaladas (`fake-indexeddb`, `@playwright/test`), ajenas al catálogo. `knowledge_base/02_substrates` no tiene valores numéricos para estos insumos, así que no hay contradicción con el KB, pero tampoco trazabilidad.
+
+## 5. Pendiente (requiere decisión)
+
+1. **Rol de harina_maiz.** Con N 1.4 % sigue como `suplemento_n`, con menos N que el kikuyo (clasificado como base). `bodega_blanca_maiz` dependía de ella como N barato y ahora queda en C:N 37, dentro del rango de Orellana Blanca (25–45) pero lejos del ideal (30). ¿Cambiar el rol o reformular el preset?
+2. **Análisis de laboratorio.** Lo más rentable es un análisis elemental (CHN o Dumas, base seca) de los 5–10 insumos que la finca usa de verdad: kikuyo, cáscara de plátano, pulpa de café, melaza, capacho de uchuva. La literatura no va a cubrirlos.
+3. **Trazabilidad en el KB.** Registrar estos valores y sus fuentes en `knowledge_base/02_substrates` requiere autorización explícita.
+4. **Ingredientes nuevos.** Búsquedas dirigidas por residuo (por ejemplo, "residuos de panela *Pleurotus* eficiencia biológica"), una a la vez.
 
 ## Limitaciones
 
