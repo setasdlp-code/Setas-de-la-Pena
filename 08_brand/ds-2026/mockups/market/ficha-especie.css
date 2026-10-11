@@ -1,0 +1,89 @@
+/* Ficha de especie · Melena de león.
+   Sistema DS-2026 (archive). Contenido tomado de knowledge_base/01_species/hericium_erinaceus.md.
+   Una sola voz tipográfica en titulares, sin numeración decorativa, un solo aviso. */
+:root {
+  --paper: #FAF8F3;
+  --paper-deep: #EFE9DE;
+  --ink: #1A1410;
+  --ink-soft: #3A2F26;
+  --ink-mute: #5E4F40;
+  --moss: #2E3B2F;
+  --moss-deep: #1E2A16;
+  --coral: #B8614D;
+  --sand: #BFA98B;
+  --rule: #D9D0BE;
+  --serif: 'Gaya Patched', Georgia, 'Times New Roman', serif;
+  --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 var(--sans); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: var(--gutter); }
+.label { font: 500 .8125rem/1.3 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-mute); }
+
+/* Cabecera */
+.top { border-bottom: 1px solid var(--ink); }
+.top .wrap { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding-block: 1.1rem; }
+.brand { font: 600 1.5rem/1 var(--serif); text-decoration: none; }
+.top nav { display: flex; gap: 1.5rem; font-size: .9375rem; }
+.top nav a { text-decoration: none; padding-block: .25rem; border-bottom: 1px solid transparent; }
+.top nav a:hover { border-color: currentColor; }
+
+/* Hero: título primero en móvil */
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(1.5rem, 5vw, 4rem); padding-block: clamp(2rem, 6vw, 4.5rem); align-items: start; }
+.hero h1 { font: 900 clamp(3.25rem, 11vw, 6.5rem)/.95 var(--serif); margin: .5rem 0 0; color: var(--moss); letter-spacing: -.01em; text-wrap: balance; }
+.latin { font: italic 500 1.5rem/1.2 var(--serif); margin: .75rem 0 0; color: var(--ink-soft); }
+.lede { font-size: 1.25rem; line-height: 1.5; max-width: 34em; margin: 1.5rem 0 0; }
+.facts { margin: 2rem 0 0; border-top: 1px solid var(--ink); }
+.facts div { display: grid; grid-template-columns: 9.5rem 1fr; gap: 1rem; padding-block: .8rem; border-bottom: 1px solid var(--rule); }
+.facts dt { font: 500 .8125rem/1.5 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-mute); }
+.facts dd { margin: 0; }
+.plate { background: var(--paper-deep); padding: clamp(1rem, 3vw, 2rem); margin: 0; }
+.plate img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+.plate figcaption { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--sand); margin-top: 1rem; padding-top: .75rem; }
+.plate figcaption em { font: italic 500 1rem var(--serif); }
+
+/* Secciones: título a la izquierda, contenido a la derecha */
+.sec { padding-block: clamp(2.5rem, 7vw, 5rem); border-top: 1px solid var(--ink); }
+.sec .wrap { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.6fr); gap: clamp(1.5rem, 5vw, 4rem); }
+.sec h2 { font: 700 clamp(1.9rem, 4vw, 2.75rem)/1.05 var(--serif); margin: 0; text-wrap: balance; }
+.sec .intro { margin: 1rem 0 0; color: var(--ink-soft); max-width: 28em; }
+.items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.items li { padding-block: 1.25rem; border-bottom: 1px solid var(--rule); }
+.items h3 { font: 600 1.5rem/1.2 var(--serif); margin: 0 0 .4rem; }
+.items p { margin: 0; max-width: 38em; color: var(--ink-soft); }
+
+/* Banda oscura: el momento memorable */
+.band { background: var(--moss); color: var(--paper); padding-block: clamp(3rem, 8vw, 6rem); }
+.band .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: center; }
+.band h2 { font: 700 clamp(2.25rem, 5.5vw, 4rem)/1 var(--serif); margin: 0 0 1.25rem; text-wrap: balance; }
+.band p { margin: 0; max-width: 32em; color: #E4E0D2; }
+.band .label { color: var(--sand); }
+.zoom { margin: 0; aspect-ratio: 1; overflow: hidden; background: var(--paper-deep); }
+.zoom img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; transform: scale(1.9); transform-origin: 50% 30%; mix-blend-mode: multiply; display: block; }
+
+/* Aviso único y pie */
+.notice { background: var(--paper-deep); padding: 1.25rem 1.5rem; max-width: 46rem; font-size: .9375rem; color: var(--ink-soft); }
+.notice strong { color: var(--ink); }
+.next { padding-block: clamp(2rem, 5vw, 3.5rem); border-top: 1px solid var(--ink); }
+.next .wrap { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.next h2 { font: 700 1.75rem/1.1 var(--serif); margin: 0; }
+.btn { display: inline-block; background: var(--moss); color: var(--paper); padding: .85rem 1.4rem; text-decoration: none; font: 500 .9375rem var(--sans); border: 1px solid var(--moss); }
+.btn:hover { background: var(--moss-deep); }
+.foot { border-top: 1px solid var(--ink); padding-block: 1.5rem 2rem; }
+.foot .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; color: var(--ink-mute); font-size: .9375rem; }
+
+@media (max-width: 760px) {
+  .hero, .sec .wrap, .band .wrap { grid-template-columns: 1fr; }
+  .facts div { grid-template-columns: 1fr; gap: .15rem; }
+  .zoom { max-width: 24rem; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.sib { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; list-style: none; margin: 0; padding: 0; }
+.sib a { text-decoration: none; border-bottom: 1px solid var(--rule); padding-block: .2rem; }
+.sib a:hover, .sib a[aria-current] { border-color: var(--ink); }
+.next .wrap { align-items: flex-start; }
