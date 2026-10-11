@@ -1,0 +1,52 @@
+/* Website treatments: IBM Plex is selected by default; alternatives remain opt-in. */
+@font-face {
+  font-family: "Trial Bricolage";
+  src: url("assets/fonts/typography-trials/BricolageGrotesque-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Trial Libre Baskerville";
+  src: url("assets/fonts/typography-trials/LibreBaskerville-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+[data-pairing="bricolage"] { --font-sans: "Trial Bricolage", "IBM Plex Sans", sans-serif; }
+[data-pairing="bricolage"] .trial-prose,
+[data-pairing="bricolage"] .trial-links .sdp-btn { font-family: "Trial Bricolage", "IBM Plex Sans", sans-serif; }
+[data-pairing="bricolage"] .hero h1,
+[data-pairing="bricolage"] .trial-title { font-style: italic; font-weight: 700; }
+[data-pairing="libre"] .hero-intro,
+[data-pairing="libre"] .species-lead,
+[data-pairing="libre"] .species-section-content p,
+[data-pairing="libre"] .kitchen-copy > p:not(.t-label):not(.t-small),
+[data-pairing="libre"] .journal-grid article > p,
+[data-pairing="libre"] .trial-prose { font-family: "Trial Libre Baskerville", Georgia, serif; line-height: 1.7; }
+[data-pairing="libre"] .hero h1,
+[data-pairing="libre"] .trial-title { font-style: italic; font-weight: 500; }
+[data-pairing="mono"] .hero-intro,
+[data-pairing="mono"] .card-profile,
+[data-pairing="mono"] .species-overview dd,
+[data-pairing="mono"] .trial-prose { font-family: var(--font-mono); font-size: 16px; line-height: 1.65; }
+[data-pairing="mono"] .hero h1,
+[data-pairing="mono"] .trial-title { font-weight: 700; letter-spacing: -.02em; }
+.trial-intro { padding-block: 48px 32px; max-width: 800px; }
+.trial-intro h1 { font: 700 clamp(40px, 5vw, 64px)/1.1 var(--font-editorial); }
+.trial-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-bottom: 48px; }
+.trial-card { min-width: 0; border: var(--rule-hairline); padding: 24px; }
+.trial-card > h2 { font: 500 24px/1.2 var(--font-editorial); }
+.trial-sample { padding-top: 24px; margin-top: 24px; border-top: var(--rule-hairline); }
+.trial-title { font: 900 clamp(36px, 3.5vw, 48px)/1.1 var(--font-editorial); color: var(--brand-primary); margin-bottom: 20px; }
+.trial-art { background: var(--surface-recessed); margin: 0 0 24px; padding: 16px; }
+.trial-art img { width: 100%; height: 220px; object-fit: contain; mix-blend-mode: multiply; }
+.trial-sample h3 { font: 700 28px/1.2 var(--font-editorial); }
+.trial-prose { min-height: 140px; font: var(--t-body); }
+.trial-fact { padding-block: 16px; border-block: var(--rule-hairline); margin-bottom: 20px; }
+.trial-links { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.trial-assessment { border-top: var(--rule-hairline); margin-top: 24px; padding-top: 20px; font: var(--t-small); }
+.trial-recommendation { padding: 32px; background: var(--surface-recessed); margin-bottom: 48px; }
+.trial-recommendation h2 { font: var(--t-heading-02); }
+@media (max-width: 1000px) { .trial-grid { grid-template-columns: 1fr; } .trial-prose { min-height: 0; } .trial-card { padding: 24px; } .trial-title { font-size: 48px; } }
+@media (max-width: 650px) { .trial-intro { padding-top: 32px; } .trial-title { font-size: 40px; } .trial-card, .trial-recommendation { padding: 20px; } }

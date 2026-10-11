@@ -1,0 +1,49 @@
+{
+  "createdAtUTC": "2026-10-11T03:51:44.536371+00:00",
+  "method": "Ilustración conceptual generada con IA, estilo gouache y lápiz.",
+  "approvedDirection": "Grabado para especies; gouache para cocina y recetas; fotografía mínima.",
+  "referenceStudy": "/workspace/generated_images/exec-4310926c-24c1-40de-af7c-3f5d37755564.png",
+  "referenceArepa": "/workspace/generated_images/exec-4d077c69-ab19-4c02-b531-4a5b6d93a727.png",
+  "recipeStatus": "Adaptaciones pendientes de prueba en cocina; las ilustraciones no documentan su validación.",
+  "images": [
+    {
+      "name": "arepa",
+      "file": "arepa-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-4d077c69-ab19-4c02-b531-4a5b6d93a727.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 167470,
+      "sha256": "907610268554282683ff8a3ecc6b98fe8115b8183302e675eb8912708d3bb686",
+      "prompt": "Create one standalone culinary illustration for the Setas de la Peña website, by extracting and refining ONLY the MIDDLE gouache-and-pencil direction of the attached study sheet. Use that middle painted arepa as the stylistic and recipe reference. Remove the left engraving version, right screenprint version, small ingredient drawings, and comparison layout completely.\n\nShow a SINGLE small round Colombian corn AREPA, open-faced on a simple shallow off-white ceramic plate: a layer of mashed avocado, a generous topping of cooked sliced shiitake with dark brown caps and pale gills, small charred sweetcorn kernels, and a little chopped cilantro. Maintain the friendly handmade gouache pigment shapes, restrained visible brush marks and sparse pencil contours of the approved CENTER illustration. Warm, appetizing, clearly drawn. Not a photograph, not an oil painting, not watercolor wash, no engraving, no cartoon icon. Shiitake slices should be recognizable and nicely separated.\n\nSquare composition, slightly elevated three-quarter view, the entire plate visible and centered, 15% empty margin around the complete plate, balanced scale suitable for a recipe thumbnail as well as a large kitchen illustration. One dish only, no loose ingredient drawings, no props, no foliage, no forks, no hands, no text or logos. Flat warm paper background close to #FAF8F3, no shadows behind the plate or background texture. Limited warm palette: oak brown #594631, moss green #2E3B2F/#6D7C5A, sand #BFA98B, muted ochre corn touches #C49A4C, off-white paper and darker ink accents. Keep the image original and preserve the middle reference's painted character.",
+      "originalFile": "arepa-shiitake-gouache.png",
+      "originalSHA256": "9a8c6649e44a0f9668b54d2791416dd8f925c245da5d99c4f9af714a19df846d",
+      "encoding": "WebP quality 86; mismos límites y dimensiones, sin recorte ni cambio de composición."
+    },
+    {
+      "name": "sopa",
+      "file": "sopa-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-a646fe94-e85a-4041-92a1-1308e28cc44e.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 196450,
+      "sha256": "e7b452e4d565e6812875fb94d1519ae69ef5a656b833c923b383b86943b3c4f4",
+      "prompt": "Use the attached AREPA illustration only as the style reference for a NEW standalone food illustration in the same family. Replace the arepa with a bowl of Colombian-accessible SHIITAKE, COCONUT AND GINGER SOUP. Keep the same welcoming editorial GOUACHE + colored-pencil character: opaque pigment shapes, visible restrained brush strokes, soft handmade edges, sparse pencil contours, warm browns and greens on off-white paper. This must clearly be an illustration, not a photo or realistic oil painting.\n\nOne simple shallow cream ceramic bowl, viewed from an elevated three-quarter angle. Inside: pale creamy coconut broth, several nicely separated cooked sliced shiitake caps with dark oak-brown edges and pale gills, a little chopped cilantro and scallion, and a few pale cooked yuca cubes partially visible beneath the broth. The shiitake is prominent and recognizable, the bowl looks like a soup, not mushroom rice or salad. No arepa, corn, avocado, cheese, egg, noodles, meat, decorative flowers or loose raw ingredient drawings. Subtle painted suggestion of ginger in the broth, no whole ginger roots. No text, logos, certification badges, cutlery or props.\n\nSquare composition with the COMPLETE bowl centered, 12–15% clear margin around the bowl, same visual scale as the reference recipe plate. Flat warm paper background close to #FAF8F3, no photographic cast shadow, no background texture. Coherent brand palette: paper/off-white, oak brown #594631, moss #2E3B2F/#6D7C5A, sand #BFA98B and minimal dark ink. Original culinary artwork matching the reference's brushwork and simplicity, suitable for use alongside the arepa in a mushroom brand website.",
+      "originalFile": "sopa-shiitake-gouache.png",
+      "originalSHA256": "6043c337b495d4a88aed94d92e94c86452289f430150fb65cddcb1ff2c33f929",
+      "encoding": "WebP quality 86; mismos límites y dimensiones, sin recorte ni cambio de composición."
+    },
+    {
+      "name": "patacones",
+      "file": "patacones-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-20af7b67-1765-476d-96fe-12b8ce2a612b.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 195552,
+      "sha256": "11ddaed6954b450861b6c3e93aeef1c898ebb9a5b3969c2bfa9e4da906ee57a0",
+      "prompt": "Use the attached AREPA image only as the reference for brushwork, palette, ceramic plate and perspective. Create a NEW standalone culinary illustration of THREE SMALL BAKED PATACONES WITH SHIITAKE AND AVOCADO, in the exact same welcoming editorial GOUACHE + colored-pencil family. Replace the arepa completely. Clearly hand-painted pigment shapes, restrained visible brush marks, a few pencil contours, organic soft edges. Not photography, not a realistic oil painting, not engraving, not screenprint or cartoon clipart.\n\nOn one plain shallow cream ceramic plate, arrange THREE distinct small golden flattened GREEN-PLANTAIN rounds in a loose triangle, not stacked. Each patacón is flattened, irregularly round with plantain texture and crisp browned edges, noticeably smaller and thinner than an arepa. Each has a small layer of mashed avocado with lime and two or three cooked sliced SHIITAKE caps, dark oak-brown on the outside with paler gills. A tiny garnish of chopped scallion/cilantro. Mushrooms must be clearly visible and separated. No maize kernels, no corn arepa, no bread, no cheese, no egg, no meat, no soup, no extra side dishes.\n\nSquare image, slightly elevated three-quarter angle matching the reference's plate. Keep the entire plate and all THREE separate patacones visible and centered with approximately 12–15% empty margin. One dish only. No loose ingredient drawings, cutlery, props, hands, decorative plants, flowers, text or logos. Flat warm paper #FAF8F3 background, no photographic cast shadow, no backdrop texture. Coherent palette: paper, oak brown #594631, moss #2E3B2F/#6D7C5A, sand #BFA98B and warm muted ochre #C49A4C for the cooked plantain. Original illustration for a Colombian mushroom brand recipe, consistent with the attached style.",
+      "originalFile": "patacones-shiitake-gouache.png",
+      "originalSHA256": "078b09ca5a4e768147a3cdc392e6a5a9d5cb31f81469af18fe5c50dcf2036d23",
+      "encoding": "WebP quality 86; mismos límites y dimensiones, sin recorte ni cambio de composición."
+    }
+  ]
+}
