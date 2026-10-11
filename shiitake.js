@@ -30,6 +30,15 @@ window.addEventListener('afterprint', () => {
   const formatPrice = value => `${money.format(value)} COP`;
   const formatWeight = value => value % 1000 === 0 ? `${count.format(value / 1000)} kg` : `${count.format(value)} g`;
   const setText = (selector, value) => { document.querySelector(selector).textContent = value; };
+  const recipes = window.SetasRecipes || {};
+  const params = new URLSearchParams(location.search);
+  const scaleParam = params.get('scale');
+  const recipeId = params.get('recipe');
+  // Solo identificadores conocidos y factor 1: cualquier otro valor deja la consulta normal.
+  let recipe = recipeId && Object.hasOwn(recipes, recipeId) && (scaleParam === null || scaleParam === '1') ? { id: recipeId, ...recipes[recipeId] } : null;
+  const recipeBox = document.querySelector('#recipe-context');
+  const recipeGrams = document.querySelector('#recipe-grams');
+  const differenceRow = document.querySelector('#order-difference-row');
   const seen = new Set();
   const presentations = (Array.isArray(data.presentations) ? data.presentations : []).filter(item => {
     if (!item || !text(item.id) || seen.has(item.id) || !text(item.name) || !Number.isSafeInteger(item.weightGrams) || item.weightGrams <= 0) return false;
@@ -77,19 +86,53 @@ window.addEventListener('afterprint', () => {
     });
   }
 
+  if (recipe) {
+    recipeBox.hidden = false;
+    setText('#recipe-context-text', `Para ${recipe.name} necesitas ${formatWeight(recipe.grams)} de shiitake fresco limpio. Puedes cambiar la cantidad.`);
+    if (presentations.length) {
+      document.querySelector('#recipe-grams-field').hidden = false;
+      recipeGrams.value = String(recipe.grams);
+      proposeUnits();
+    } else quantity.value = String(recipe.grams);
+  }
+
+  function selectedItem() {
+    return presentations.length ? presentations[Number(form.elements.namedItem('presentation').value)] : null;
+  }
+
+  // Gramos que pide la receta (si hay contexto) frente a presentaciones: nunca se mezclan en un mismo campo.
+  function neededGrams() {
+    if (!recipe || !presentations.length) return null;
+    const grams = Number(recipeGrams.value);
+    return recipeGrams.value !== '' && Number.isSafeInteger(grams) && grams > 0 ? grams : null;
+  }
+
+  function proposeUnits() {
+    const needed = neededGrams();
+    if (needed !== null) quantity.value = String(Math.ceil(needed / selectedItem().weightGrams));
+  }
+
   function selection() {
-    const selected = form.elements.namedItem('presentation');
-    const item = presentations.length ? presentations[Number(selected.value)] : null;
+    const item = selectedItem();
     const units = Number(quantity.value);
     const weight = units * (item ? item.weightGrams : 1);
     const subtotal = item && item.priceCOP !== null ? units * item.priceCOP : null;
-    const valid = quantity.value !== '' && Number.isSafeInteger(units) && units > 0 && Number.isSafeInteger(weight) && (subtotal === null || Number.isSafeInteger(subtotal));
-    return { item, units, weight, subtotal, valid };
+    const needed = neededGrams();
+    const valid = quantity.value !== '' && Number.isSafeInteger(units) && units > 0 && Number.isSafeInteger(weight) && (subtotal === null || Number.isSafeInteger(subtotal)) && (!recipe || !presentations.length || needed !== null);
+    return { item, units, weight, subtotal, needed, valid };
+  }
+
+  function describeDifference(selected) {
+    const gap = selected.weight - selected.needed;
+    return gap === 0 ? `${formatWeight(selected.weight)} · coincide con la receta` : `${formatWeight(selected.weight)} · ${formatWeight(Math.abs(gap))} ${gap > 0 ? 'más' : 'menos'} que la receta`;
   }
 
   function updateSummary() {
     const selected = selection();
     quantity.setCustomValidity(selected.valid || quantity.value === '' ? '' : 'Escribe una cantidad entera positiva dentro del rango admitido.');
+    if (recipe && presentations.length) recipeGrams.setCustomValidity(selected.needed !== null || recipeGrams.value === '' ? '' : 'Escribe los gramos como un entero positivo.');
+    differenceRow.hidden = !(selected.valid && selected.needed !== null);
+    if (!differenceRow.hidden) setText('#order-difference', describeDifference(selected));
     setText('#order-weight', selected.valid ? formatWeight(selected.weight) : '—');
     setText('#order-subtotal', !selected.valid ? '—' : selected.subtotal === null ? 'Precio por confirmar' : formatPrice(selected.subtotal));
     setText('#order-delivery', deliveryFee === null ? 'Cobertura y costo por confirmar' : deliveryText);
@@ -106,10 +149,23 @@ window.addEventListener('afterprint', () => {
     copyStatus.textContent = '';
   }
 
-  form.addEventListener('input', () => {
+  form.addEventListener('input', event => {
     municipality.setCustomValidity('');
     clearReview();
+    if (recipe && presentations.length && (event.target === recipeGrams || event.target.name === 'presentation')) proposeUnits();
     updateSummary();
+  });
+  document.querySelector('#recipe-clear').addEventListener('click', () => {
+    recipe = null;
+    recipeBox.hidden = true;
+    recipeGrams.setCustomValidity('');
+    const url = new URL(location.href);
+    url.searchParams.delete('recipe');
+    url.searchParams.delete('scale');
+    history.replaceState(null, '', url);
+    clearReview();
+    updateSummary();
+    quantity.focus();
   });
   form.addEventListener('submit', event => {
     event.preventDefault();
@@ -123,8 +179,11 @@ window.addEventListener('afterprint', () => {
     const lines = [
       'Hola, Setas de la Peña.',
       `Me interesa el shiitake para ${purpose}.`,
+      ...(recipe ? [`Quiero cocinar ${recipe.name} (la receta base usa ${formatWeight(recipe.grams)} de shiitake fresco limpio).`] : []),
+      ...(recipe && selected.needed !== null ? [`Necesito unos ${formatWeight(selected.needed)} para la receta.`] : []),
       selected.item ? `Presentación solicitada: ${selected.item.name} (${formatWeight(selected.item.weightGrams)}).` : 'Presentación: por confirmar.',
       selected.item ? `Cantidad: ${count.format(selected.units)} ${selected.units === 1 ? 'presentación' : 'presentaciones'} (${formatWeight(selected.weight)} en total).` : `Cantidad solicitada: ${formatWeight(selected.weight)}.`,
+      ...(recipe && selected.needed !== null ? [`Peso que recibiría: ${describeDifference(selected)}.`] : []),
       selected.subtotal === null ? 'Precio: por confirmar.' : `Subtotal del producto: ${formatPrice(selected.subtotal)} (sin envío).`,
       `Municipio de entrega: ${location}.`,
       deliveryFee === null ? 'Costo de entrega: por confirmar.' : `Costo de entrega publicado: ${deliveryText}.`,

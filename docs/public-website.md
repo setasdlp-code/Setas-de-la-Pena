@@ -7,6 +7,7 @@ Sitio estático independiente de Setas OS. La portada enlaza la colección, el o
 - `index.html`: portada, filtros, fichas breves y enlaces de consulta.
 - `shiitake.html`: ficha completa, solicitud de cantidad y municipio, entrega y conservación.
 - `recetas.html`: arepa, sopa de coco y patacones con shiitake, ingredientes, pasos, fuentes e impresión.
+- `recipe-data.js`: IDs estables y gramos base de shiitake por receta (`receta-arepa` 300 g, `receta-sopa` 300 g, `receta-patacones` 250 g). Cada receta enlaza a `shiitake.html?recipe=<id>&scale=1#producto`; solo se aceptan IDs conocidos y `scale=1`, cualquier otro valor deja la consulta normal. Sin presentaciones, la cantidad precargada son los gramos; con presentaciones, los gramos de la receta se mantienen aparte y se propone `ceil(gramos / peso por presentación)` con la diferencia de peso visible. Los datos de 300/300/250 g deben coincidir con `recetas.html` (el chequeo lo comprueba).
 - `typography.html`: estudio tipográfico, excluido de indexación.
 
 Las páginas cargan un único entrypoint del DS: `08_brand/ds-2026/market.css`. Gaya + IBM Plex es la combinación predeterminada. Bricolage y Libre Baskerville se mantienen como alternativas mediante `?pairing=bricolage` y `?pairing=libre`, con fuentes locales y licencias OFL.
