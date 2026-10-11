@@ -147,10 +147,10 @@ import './formulator-api.js';
         const added = addedMap.get(r.id);
         const name = esc(names[r.id] || r.id);
         if (added && added.isNew) {
-          return `<strong style="color:var(--accent-olive,#496E4C)">+ ${name} ${Number(r.p).toFixed(1)}%</strong>`;
+          return `<strong style="color:var(--accent-olive)">+ ${name} ${Number(r.p).toFixed(1)}%</strong>`;
         }
         if (added && added.delta > 0) {
-          return `<span style="color:var(--accent-olive,#496E4C)">${name} ${Number(r.p).toFixed(1)}% (+${added.delta}%)</span>`;
+          return `<span style="color:var(--accent-olive)">${name} ${Number(r.p).toFixed(1)}% (+${added.delta}%)</span>`;
         }
         return `${name} ${Number(r.p).toFixed(1)}%`;
       }).join(' · ');
@@ -170,7 +170,7 @@ import './formulator-api.js';
     const el = document.getElementById('perito-scenarios-status');
     if (!el) return;
     el.textContent = text || '';
-    el.style.color = kind === 'error' ? '#9C2F22' : kind === 'ok' ? 'var(--accent-olive)' : 'var(--ink-500)';
+    el.style.color = kind === 'error' ? 'var(--status-error)' : kind === 'ok' ? 'var(--accent-olive)' : 'var(--ink-500)';
   };
 
   const applyScenario = async scenarioId => {
@@ -209,39 +209,39 @@ import './formulator-api.js';
   const TYPE_CONFIG = {
     conservadora: {
       label: 'Conservadora · Estándar',
-      badgeBg: 'var(--accent-blue-grey-dim, #DEE5E7)',
-      badgeColor: 'var(--accent-blue-grey, #5E7080)',
-      btnBg: 'var(--accent-blue-grey, #5E7080)',
-      btnColor: 'var(--paper-0, #F7F4EC)',
+      badgeBg: 'var(--accent-blue-grey-dim)',
+      badgeColor: 'var(--accent-blue-grey)',
+      btnBg: 'var(--accent-blue-grey)',
+      btnColor: 'var(--paper-0)',
     },
     rendimiento: {
       label: 'Rendimiento · Alta Proteína',
-      badgeBg: 'var(--accent-olive-dim, #DCE1D1)',
-      badgeColor: 'var(--accent-olive, #5B6B44)',
-      btnBg: 'var(--accent-olive, #5B6B44)',
-      btnColor: 'var(--paper-0, #F7F4EC)',
+      badgeBg: 'var(--accent-olive-dim)',
+      badgeColor: 'var(--accent-olive)',
+      btnBg: 'var(--accent-olive)',
+      btnColor: 'var(--paper-0)',
     },
     economia: {
       label: 'Económica · Subproductos',
-      badgeBg: 'var(--accent-terracotta-dim, #EFE0D3)',
-      badgeColor: 'var(--accent-terracotta, #A85C32)',
-      btnBg: 'var(--accent-terracotta, #A85C32)',
-      btnColor: 'var(--paper-0, #F7F4EC)',
+      badgeBg: 'var(--accent-terracotta-dim)',
+      badgeColor: 'var(--accent-terracotta)',
+      btnBg: 'var(--accent-terracotta)',
+      btnColor: 'var(--paper-0)',
     },
     experimental: {
       label: 'Experimental · Novedad',
-      badgeBg: 'var(--accent-mushroom-dim, #E7E0D3)',
-      badgeColor: 'var(--accent-mushroom, #7A6A52)',
-      btnBg: 'var(--paper-0, #F7F4EC)',
-      btnColor: 'var(--accent-mushroom, #7A6A52)',
-      btnBorder: '1px solid var(--accent-mushroom, #7A6A52)',
+      badgeBg: 'var(--accent-mushroom-dim)',
+      badgeColor: 'var(--accent-mushroom)',
+      btnBg: 'var(--paper-0)',
+      btnColor: 'var(--accent-mushroom)',
+      btnBorder: '1px solid var(--accent-mushroom)',
     },
     alternativa: {
       label: 'Alternativa Equilibrada',
-      badgeBg: 'var(--paper-2, #E5DFD0)',
-      badgeColor: 'var(--ink-1, #3C392F)',
-      btnBg: 'var(--accent-olive, #5B6B44)',
-      btnColor: 'var(--paper-0, #F7F4EC)',
+      badgeBg: 'var(--paper-2)',
+      badgeColor: 'var(--ink-1)',
+      btnBg: 'var(--accent-olive)',
+      btnColor: 'var(--paper-0)',
     },
   };
 
@@ -252,7 +252,7 @@ import './formulator-api.js';
     if (!box) {
       box = document.createElement('section');
       box.id = 'perito-scenarios-v1';
-      box.style.cssText = 'margin:12px 0 14px;padding:12px 14px;border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-md,3px);background:var(--paper-0,#F7F4EC);font-family:var(--font-body);box-shadow:var(--shadow-card-rest,0 1px 4px rgba(26,20,16,.05));';
+      box.style.cssText = 'margin:12px 0 14px;padding:12px 14px;border:1px solid var(--border-hairline);border-radius:var(--radius-md,3px);background:var(--paper-0);font-family:var(--font-body);box-shadow:var(--shadow-card-rest,0 1px 4px rgba(26,20,16,.05));';
       const model = document.getElementById('perito-model-v2');
       if (model?.parentElement === root) root.insertBefore(box, model.nextSibling);
       else root.insertBefore(box, root.firstChild?.nextSibling || null);
@@ -266,16 +266,16 @@ import './formulator-api.js';
 
     box.innerHTML = `
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:8px;flex-wrap:wrap">
-        <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${isPartial ? 'var(--accent-olive,#5B6B44)' : 'var(--ink-0,#1E1D19)'};font-weight:700">${isPartial ? `🌱 Asistente de Co-formulación · ${partialTotal}% anclado` : 'Perito · Escenarios Recomendados'}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${isPartial ? 'var(--accent-olive)' : 'var(--ink-0)'};font-weight:700">${isPartial ? `🌱 Asistente de Co-formulación · ${partialTotal}% anclado` : 'Perito · Escenarios Recomendados'}</div>
         <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-2)">${result.explored} explorados · ${result.pareto?.length || 0} Pareto</div>
       </div>
-      ${canUndo ? '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button data-scenario-action="undo" style="cursor:pointer;min-height:36px;border:1px solid var(--border-hairline,#8C7F5B);background:var(--paper-1,#EFEBE0);padding:5px 10px;border-radius:var(--radius-sm,2px);font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--ink-0)">↶ Deshacer escenario</button></div>' : ''}
+      ${canUndo ? '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button data-scenario-action="undo" style="cursor:pointer;min-height:36px;border:1px solid var(--border-hairline);background:var(--paper-1);padding:5px 10px;border-radius:var(--radius-sm,2px);font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--ink-0)">↶ Deshacer escenario</button></div>' : ''}
       ${rows.length ? rows.map((c, i) => {
         const d = c.evaluation?.dimensions || {};
         const an = c.evaluation?.analysis || {};
         const conf = TYPE_CONFIG[c.type] || TYPE_CONFIG.alternativa;
         const buttonLabel = isPartial ? 'Completar mi receta' : (c.type === 'experimental' ? 'Probar escenario' : 'Aplicar a mi receta');
-        return `<article class="coform-card" style="padding:10px 12px;margin-top:10px;border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-md,3px);background:var(--paper-1,#EFEBE0);box-shadow:var(--shadow-card-rest,0 1px 4px rgba(26,20,16,.05));">
+        return `<article class="coform-card" style="padding:10px 12px;margin-top:10px;border:1px solid var(--border-hairline);border-radius:var(--radius-md,3px);background:var(--paper-1);box-shadow:var(--shadow-card-rest,0 1px 4px rgba(26,20,16,.05));">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
             <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;background:${conf.badgeBg};color:${conf.badgeColor};border:1px solid ${conf.badgeColor};letter-spacing:.04em;text-transform:uppercase;">${conf.label}</span>
             <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">${c.evaluation?.score ? `Score ${Math.round(c.evaluation.score)} pts` : ''}</span>
@@ -283,7 +283,7 @@ import './formulator-api.js';
           <div style="font-family:var(--font-sans);font-size:12px;line-height:1.45;color:var(--ink-0);margin-bottom:6px;font-weight:500;">
             ${recipeText(c.recipe, names, c.addedIngredients)}
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:8px;padding:4px 6px;background:var(--paper-0,#F7F4EC);border:1px solid var(--border-hairline,#8C7F5B);border-radius:2px;text-align:center;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:8px;padding:4px 6px;background:var(--paper-0);border:1px solid var(--border-hairline);border-radius:2px;text-align:center;">
             <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-2);text-transform:uppercase;">C:N</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">${Math.round(an.cn || 0)}:1</div></div>
             <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-2);text-transform:uppercase;">EB est.</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">${Math.round(an.eb || 0)}%</div></div>
             <div><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-2);text-transform:uppercase;">Costo</div><div style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--ink-0);">$${Math.round(an.cost || 0)}/kg</div></div>
@@ -297,8 +297,8 @@ import './formulator-api.js';
       }).join('') : `<div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-500)">${esc(result.blockedReason || 'No apareció una alternativa viable bajo las restricciones activas.')}</div>`}
       ${!isPartial && rows.length ? `
       <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(26,20,16,.1)">
-        <button data-scenario-action="save-receta" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline,#8C7F5B);background:var(--paper-1,#EFEBE0);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">💾 Guardar en Recetario</button>
-        <button data-scenario-action="create-batch" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline,#8C7F5B);background:var(--paper-1,#EFEBE0);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">📦 Crear Lote en Bitácora</button>
+        <button data-scenario-action="save-receta" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline);background:var(--paper-1);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">💾 Guardar en Recetario</button>
+        <button data-scenario-action="create-batch" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline);background:var(--paper-1);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">📦 Crear Lote en Bitácora</button>
       </div>` : ''}
       <div id="perito-scenarios-status" style="min-height:14px;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--ink-500)"></div>
       <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">El Perito consume SetasFormulatorAPI; no conoce controles internos del Formulador. Co-formulación ajusta reactivamente las sugerencias respetando tus ingredientes.</div>`;
