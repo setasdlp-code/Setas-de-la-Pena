@@ -34,8 +34,10 @@ window.addEventListener('afterprint', () => {
   const params = new URLSearchParams(location.search);
   const scaleParam = params.get('scale');
   const recipeId = params.get('recipe');
-  // Solo identificadores conocidos y factor 1: cualquier otro valor deja la consulta normal.
-  let recipe = recipeId && Object.hasOwn(recipes, recipeId) && (scaleParam === null || scaleParam === '1') ? { id: recipeId, ...recipes[recipeId] } : null;
+  // Solo identificadores conocidos y factor 1, 2 o 3: cualquier otro valor deja la consulta normal.
+  const validScale = scaleParam === null || /^[123]$/.test(scaleParam);
+  let recipe = recipeId && validScale && Object.hasOwn(recipes, recipeId) ? { id: recipeId, ...recipes[recipeId], scale: Number(scaleParam || 1) } : null;
+  if (recipe) { recipe.baseGrams = recipe.grams; recipe.grams = recipe.baseGrams * recipe.scale; }
   const recipeBox = document.querySelector('#recipe-context');
   const recipeGrams = document.querySelector('#recipe-grams');
   const differenceRow = document.querySelector('#order-difference-row');
@@ -88,7 +90,7 @@ window.addEventListener('afterprint', () => {
 
   if (recipe) {
     recipeBox.hidden = false;
-    setText('#recipe-context-text', `Para ${recipe.name} necesitas ${formatWeight(recipe.grams)} de shiitake fresco limpio. Puedes cambiar la cantidad.`);
+    setText('#recipe-context-text', `Para ${recipe.name}${recipe.scale > 1 ? ` (×${recipe.scale})` : ''} necesitas ${formatWeight(recipe.grams)} de shiitake fresco limpio. Puedes cambiar la cantidad.`);
     if (presentations.length) {
       document.querySelector('#recipe-grams-field').hidden = false;
       recipeGrams.value = String(recipe.grams);
@@ -179,7 +181,7 @@ window.addEventListener('afterprint', () => {
     const lines = [
       'Hola, Setas de la Peña.',
       `Me interesa el shiitake para ${purpose}.`,
-      ...(recipe ? [`Quiero cocinar ${recipe.name} (la receta base usa ${formatWeight(recipe.grams)} de shiitake fresco limpio).`] : []),
+      ...(recipe ? [`Quiero cocinar ${recipe.name} (${recipe.scale > 1 ? `versión ×${recipe.scale}; ` : ''}la receta base usa ${formatWeight(recipe.baseGrams)} de shiitake fresco limpio).`] : []),
       ...(recipe && selected.needed !== null ? [`Necesito unos ${formatWeight(selected.needed)} para la receta.`] : []),
       selected.item ? `Presentación solicitada: ${selected.item.name} (${formatWeight(selected.item.weightGrams)}).` : 'Presentación: por confirmar.',
       selected.item ? `Cantidad: ${count.format(selected.units)} ${selected.units === 1 ? 'presentación' : 'presentaciones'} (${formatWeight(selected.weight)} en total).` : `Cantidad solicitada: ${formatWeight(selected.weight)}.`,
