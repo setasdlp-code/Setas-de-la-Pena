@@ -365,8 +365,17 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
 .purchase-fields .sdp-field__hint { line-height: 1.6; }
 .purchase-summary { margin-block: 24px; }
 .purchase-summary > div { display: flex; justify-content: space-between; gap: 24px; border-top: var(--rule-hairline); padding-block: 12px; }
+.purchase-summary > [hidden] { display: none; }
 .purchase-summary dt { font: var(--t-small); color: var(--text-secondary); }
 .purchase-summary dd { font: var(--t-data); margin: 0; text-align: right; }
+.recipe-context { margin-bottom: 24px; padding: 16px; border: var(--rule-hairline); background: var(--surface-page); }
+.recipe-context[hidden], .recipe-context [hidden] { display: none; }
+.recipe-context p { margin-block: 8px; }
+.recipe-context .sdp-input { width: 100%; font-size: 16px; min-height: 48px; }
+.recipe-context .sdp-field { margin-block: 16px; }
+.recipe-cta { margin-top: 24px; }
+.recipe-cta p { margin: 12px 0 0; }
+@media print { .recipe-cta { display: none; } }
 .purchase-submit { width: 100%; min-height: 52px; }
 .purchase-confirmation { margin-top: 16px; margin-bottom: 0; }
 .purchase-message { margin-top: 24px; padding-top: 24px; border-top: var(--rule-heavy); scroll-margin-top: 24px; }

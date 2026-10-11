@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="typography-trials.css">
   <script src="typography-trials.js" defer></script>
   <script src="commercial-data.js" defer></script>
+  <script src="recipe-data.js" defer></script>
   <script src="shiitake.js" defer></script>
 </head>
 <body class="species-page">
@@ -39,13 +40,19 @@
           <p class="t-small" id="availability-detail">La disponibilidad y las presentaciones se confirman al consultar.</p>
           <dl class="purchase-facts"><div><dt class="t-label">Presentación</dt><dd id="offer-format">Acordamos el formato contigo</dd></div><div><dt class="t-label">Precio</dt><dd id="offer-price">Por confirmar</dd></div></dl>
           <form id="order-form" action="#producto" hidden>
+            <div class="recipe-context" id="recipe-context" hidden>
+              <p class="t-label">Tu receta</p>
+              <p id="recipe-context-text"></p>
+              <div class="sdp-field" id="recipe-grams-field" hidden><label class="sdp-field__label" for="recipe-grams">Gramos de shiitake que necesita la receta</label><input class="sdp-input" id="recipe-grams" type="number" min="1" step="1" inputmode="numeric"><span class="sdp-field__hint">Proponemos las presentaciones necesarias para llegar a este peso.</span></div>
+              <button type="button" class="sdp-btn" id="recipe-clear">Quitar receta de la consulta</button>
+            </div>
             <fieldset class="purchase-purpose"><legend class="t-label">¿Para quién cocinas?</legend><div class="purchase-choice-row"><label><input type="radio" name="purpose" value="casa" checked><span>Para casa</span></label><label><input type="radio" name="purpose" value="restaurante"><span>Para restaurante</span></label></div></fieldset>
             <fieldset id="presentation-field" class="purchase-presentations" hidden><legend class="t-label">Elige la presentación</legend><div id="presentation-options" class="purchase-options"></div></fieldset>
             <div class="purchase-fields">
               <div class="sdp-field"><label class="sdp-field__label" for="order-quantity" id="quantity-label">Cantidad que necesitas (g)</label><input class="sdp-input" id="order-quantity" name="quantity" type="number" min="1" step="1" value="250" inputmode="numeric" required aria-describedby="quantity-hint"><span class="sdp-field__hint" id="quantity-hint">Cantidad solicitada; el formato se confirma al consultar.</span></div>
               <div class="sdp-field"><label class="sdp-field__label" for="order-municipality">Municipio de entrega</label><input class="sdp-input" id="order-municipality" name="municipality" type="text" maxlength="80" autocomplete="address-level2" placeholder="Escribe tu municipio" required aria-describedby="municipality-hint"><span class="sdp-field__hint" id="municipality-hint">Confirmaremos la cobertura para tu municipio.</span></div>
             </div>
-            <dl class="purchase-summary" aria-live="polite" aria-atomic="true"><div><dt>Cantidad solicitada</dt><dd id="order-weight">250 g</dd></div><div><dt>Subtotal del producto</dt><dd id="order-subtotal">Precio por confirmar</dd></div><div><dt>Entrega</dt><dd id="order-delivery">Cobertura y costo por confirmar</dd></div></dl>
+            <dl class="purchase-summary" aria-live="polite" aria-atomic="true"><div><dt>Cantidad solicitada</dt><dd id="order-weight">250 g</dd></div><div id="order-difference-row" hidden><dt>Peso entregado frente a la receta</dt><dd id="order-difference"></dd></div><div><dt>Subtotal del producto</dt><dd id="order-subtotal">Precio por confirmar</dd></div><div><dt>Entrega</dt><dd id="order-delivery">Cobertura y costo por confirmar</dd></div></dl>
             <button type="submit" class="sdp-btn sdp-btn--primary purchase-submit">Preparar consulta <span aria-hidden="true">↗</span></button>
             <p class="t-small purchase-confirmation">Revisa el mensaje antes de compartirlo. La disponibilidad, el valor final y la entrega se acuerdan con Setas de la Peña.</p>
           </form>
