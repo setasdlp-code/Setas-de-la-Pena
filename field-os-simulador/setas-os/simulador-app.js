@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 63689497e155fc95cd23671c665a0f37eef684428a601ad1c8679c6cbace4db7
+// source-hash: 289e919e60966822016057321f581ab066ee01bc743a8f4aa80f34e9e09b940a
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -9158,6 +9158,7 @@ BATCH (${numBags}×${kgBag} kg):
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
+      const tk = (n, fb) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || fb;
       const w = canvas.width;
       const h = canvas.height;
       const cx = w / 2;
@@ -9177,7 +9178,7 @@ BATCH (${numBags}×${kgBag} kg):
         ctx.lineTo(cx + Math.cos(ang) * 90, cy + Math.sin(ang) * 90);
         ctx.stroke();
       });
-      ctx.fillStyle = "#6B6759";
+      ctx.fillStyle = tk("--text-metadata", "#6B6759");
       ctx.font = '9px "IBM Plex Mono", monospace';
       ctx.textAlign = "center";
       ctx.fillText("CO₂ (FAE)", cx, cy - 83);
@@ -9206,8 +9207,9 @@ BATCH (${numBags}×${kgBag} kg):
       const ptCO2Act = { x: cx + Math.cos(angles[0]) * vCO2Act * rMax, y: cy + Math.sin(angles[0]) * vCO2Act * rMax };
       const ptTempAct = { x: cx + Math.cos(angles[1]) * vTempAct * rMax, y: cy + Math.sin(angles[1]) * vTempAct * rMax };
       const ptHumAct = { x: cx + Math.cos(angles[2]) * vHumAct * rMax, y: cy + Math.sin(angles[2]) * vHumAct * rMax };
-      ctx.fillStyle = "rgba(91, 107, 68, 0.18)";
-      ctx.strokeStyle = "#5B6B44";
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = tk("--status-ok", "#2E3B2F");
+      ctx.strokeStyle = tk("--status-ok", "#2E3B2F");
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(ptCO2Act.x, ptCO2Act.y);
@@ -9215,8 +9217,9 @@ BATCH (${numBags}×${kgBag} kg):
       ctx.lineTo(ptHumAct.x, ptHumAct.y);
       ctx.closePath();
       ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.stroke();
-      ctx.fillStyle = "#5B6B44";
+      ctx.fillStyle = tk("--status-ok", "#2E3B2F");
       [ptCO2Act, ptTempAct, ptHumAct].forEach((pt) => {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI);
@@ -9228,7 +9231,7 @@ BATCH (${numBags}×${kgBag} kg):
       ptCO2Proj.current = { x: cx + Math.cos(angles[0]) * vCO2Proj * rMax, y: cy + Math.sin(angles[0]) * vCO2Proj * rMax };
       ptTempProj.current = { x: cx + Math.cos(angles[1]) * vTempProj * rMax, y: cy + Math.sin(angles[1]) * vTempProj * rMax };
       ptHumProj.current = { x: cx + Math.cos(angles[2]) * vHumProj * rMax, y: cy + Math.sin(angles[2]) * vHumProj * rMax };
-      ctx.strokeStyle = "#A85C32";
+      ctx.strokeStyle = tk("--status-warn-text", "#866629");
       ctx.lineWidth = 2.5;
       ctx.setLineDash([4, 3]);
       ctx.beginPath();
@@ -9238,7 +9241,7 @@ BATCH (${numBags}×${kgBag} kg):
       ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "#A85C32";
+      ctx.fillStyle = tk("--status-warn-text", "#866629");
       [ptCO2Proj.current, ptTempProj.current, ptHumProj.current].forEach((pt) => {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 4.5, 0, 2 * Math.PI);
