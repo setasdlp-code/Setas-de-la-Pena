@@ -4114,7 +4114,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
           <div className="ing-profile">
             <div className="ing-profile-row">
               <span className="k">Carbono</span>
-              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.c/50)*100+'%',background:'#5A7042'}}></div></div>
+              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.c/50)*100+'%',background:'var(--cat-base)'}}></div></div>
               <span className="v">{ing.c}<span className="unit">%</span></span>
             </div>
             <div className="ing-profile-row">
@@ -4129,7 +4129,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
             </div>
             <div className="ing-profile-row">
               <span className="k">pH</span>
-              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:((ing.ph-4)/3)*100+'%',background:'#C68F2C'}}></div></div>
+              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:((ing.ph-4)/3)*100+'%',background:'var(--cat-sup)'}}></div></div>
               <span className="v">{ing.ph}</span>
             </div>
             <div className="ing-profile-row">
@@ -17230,8 +17230,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div className="econ-pills-row">
                     <span className="econ-pill"><span className="econ-dot" style={{background:'#5E7080'}}></span>Sustrato: ${Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString('es-CO')}/bolsa</span>
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#5B6B44'}}></span>Micelio: ${Math.round(pb.costBreakdownPerBag.spawn).toLocaleString('es-CO')}/bolsa</span>
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#A85C32'}}></span>Tratamiento Térmico: ${Math.round(pb.costBreakdownPerBag.energia).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-olive)'}}></span>Micelio: ${Math.round(pb.costBreakdownPerBag.spawn).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-terracotta)'}}></span>Tratamiento Térmico: ${Math.round(pb.costBreakdownPerBag.energia).toLocaleString('es-CO')}/bolsa</span>
                     <span className="econ-pill"><span className="econ-dot" style={{background:'#7A6A52'}}></span>Bolsa PP: ${Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString('es-CO')}/bolsa</span>
                   </div>
                 </div>
