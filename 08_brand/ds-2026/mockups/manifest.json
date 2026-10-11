@@ -174,5 +174,13 @@
     "height": 900,
     "scale": 2,
     "fullPage": true
+  },
+  {
+    "name": "13-ficha-nameko",
+    "file": "mockups/market/13-ficha-nameko.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
   }
 ]
