@@ -43,19 +43,19 @@
 </style>
 </head>
 <body>
-  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper,#FAF5E9);contain:strict;">
-    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel,#F3EEE2);border:1px solid var(--ink,#222222);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
-      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper,#FAF5E9);border:1px solid var(--rule,#888888);">
-        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--warning-text,#8C6B2E);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo · 2.600 m</div>
-        <h1 style="margin:2px 0 0;font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif));font-size:30px;line-height:1.05;font-weight:700;color:var(--ink,#222222);">Setas de la Peña</h1>
-        <p style="margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--ink-muted,#555555);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
-        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted,#555555);">Conectando…</div>
-        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Correo</label>
-        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule,#888888);border-radius:0;background:var(--paper,#FAF5E9);color:var(--ink,#222222);font:inherit;display:none;">
-        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink,#222222);">Contraseña</label>
-        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule,#888888);border-radius:0;background:var(--paper,#FAF5E9);color:var(--ink,#222222);font:inherit;display:none;">
-        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--rust,#8E2C14);font-size:12px;font-family:var(--font-mono,'IBM Plex Mono',monospace);"></div>
-        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink,#222222);color:var(--paper,#FAF5E9);border:1px solid var(--ink,#222222);border-radius:0;font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
+  <div id="setas-auth-gate" data-setas-auth-prebuilt="true" aria-busy="true" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--paper);contain:strict;">
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-panel);border:1px solid var(--ink);border-radius:0;box-shadow:none;font-family:var(--font-sans,'IBM Plex Sans',Arial,sans-serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper);border:1px solid var(--rule);">
+        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--warning-text);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo · 2.600 m</div>
+        <h1 style="margin:2px 0 0;font-family:var(--font-editorial, var(--font-serif, 'Gaya Patched', 'Gaya', Georgia, serif));font-size:30px;line-height:1.05;font-weight:700;color:var(--ink);">Setas de la Peña</h1>
+        <p style="margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--ink-muted);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
+        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-muted);">Conectando…</div>
+        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink);">Correo</label>
+        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule);border-radius:0;background:var(--paper);color:var(--ink);font:inherit;display:none;">
+        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink);">Contraseña</label>
+        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--rule);border-radius:0;background:var(--paper);color:var(--ink);font:inherit;display:none;">
+        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--rust);font-size:12px;font-family:var(--font-mono,'IBM Plex Mono',monospace);"></div>
+        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink);color:var(--paper);border:1px solid var(--ink);border-radius:0;font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
       </div>
     </form>
   </div>
