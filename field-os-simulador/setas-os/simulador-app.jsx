@@ -2022,10 +2022,10 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       <div className="pi-effect">{item.effect}</div>
       {deltaSim?.diff&&(
         <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
-          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
-          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
             ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({Math.round(deltaSim.diff.newEb)}%)
           </span>
           {deltaSim.diff.confidence&&(
@@ -2034,7 +2034,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             </span>
           )}
           {deltaSim.diff.deltaCost!==0&&(
-            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
               ΔCosto: {deltaSim.diff.deltaCost<=0?`-$${Math.abs(deltaSim.diff.deltaCost)}/kg`:`+$${deltaSim.diff.deltaCost}/kg`}
             </span>
           )}
@@ -3927,9 +3927,9 @@ const FieldActionModal = ({
             padding: '12px 14px',
             marginBottom: 14,
             background: '#FEF2F2',
-            border: '1.5px solid #DC2626',
+            border: '1.5px solid var(--status-error)',
             borderRadius: 3,
-            color: '#991B1B',
+            color: 'var(--status-error)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
@@ -3950,7 +3950,7 @@ const FieldActionModal = ({
       )}
 
       {actionError && (
-        <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+        <div style={{ padding: '8px 10px', background: 'var(--status-error-bg)', color: 'var(--status-error)', borderLeft: '3px solid var(--status-error)', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
           <><AppIcon name="alert" size={12} style={{marginRight:4}} /> {actionError}</>
         </div>
       )}
@@ -4013,8 +4013,8 @@ const FieldActionModal = ({
                     textTransform: 'uppercase',
                     padding: '2px 6px',
                     borderRadius: 2,
-                    background: isDiscard ? '#FEE2E2' : (isException ? '#FEF3C7' : '#E0E7FF'),
-                    color: isDiscard ? '#991B1B' : (isException ? '#92400E' : '#3730A3'),
+                    background: isDiscard ? 'var(--status-error-bg)' : (isException ? '#FEF3C7' : '#E0E7FF'),
+                    color: isDiscard ? 'var(--status-error)' : (isException ? '#92400E' : '#3730A3'),
                   }}>
                     {{advance:'Avance',exception:'Excepción',discard:'Descarte'}[opt.transitionClass]||'Cambio'}
                   </span>
@@ -8433,7 +8433,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
                           {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
                           {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                          {an.trichoderma&&<div style={{color:'var(--status-error)',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
                           {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
                         </div>
               {isWorkbench&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4}}>Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})</div>}
@@ -8460,10 +8460,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         {isWorkbench&&<>
                   {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
-                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 8%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 30%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="var(--status-error)"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
                           Factor Restrictivo Estimado: {restrictiveFactor.label}
                         </span>
                       </div>
@@ -8476,7 +8476,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         </div>
                       )}
                       {restrictiveFactor.actionRequired&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':'#5A4008',fontWeight:700}}>
                           → Acción correctiva: {restrictiveFactor.actionRequired}
                         </div>
                       )}
@@ -8496,7 +8496,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                     </div>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
                       <div>
-                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                        <b>Presión manométrica:</b> <span style={{color:'var(--status-error)',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
                       </div>
                       <div>
                         <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
@@ -8567,13 +8567,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                           Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
                         </div>}
                       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 12%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
                         {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 25%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
-            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
+            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
             {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
             {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
@@ -13153,7 +13153,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
                   const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
                   const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
-                  return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'#C53030':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
+                  return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'var(--status-error)':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
                     {label}
                     {remoteSyncNote()}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
@@ -15920,11 +15920,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?<><AppIcon name="check" size={11} style={{marginRight:4}} /> Guardada</>:'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px',display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="rocket" size={13} /> Lanzar Lote</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
+                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><AppIcon name="alert" size={11} color="var(--status-error)" /> sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
-                  <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> {productionBlockMsg}</span>
+                  <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)'}}>
+                    <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> {productionBlockMsg}</span>
                     {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="#fff" /> Auto-mejorar</button>}
                   </div>
                 )}
@@ -16006,8 +16006,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500)':'#C53030'}}>EB estimada {e.eb}%</span>
-                            {e.ebReal!=null&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:Math.abs(e.ebReal-parseFloat(e.eb))<=10?'var(--accent-olive)':'#C53030'}}>EB real {e.ebReal}% ({e.ebReal>=parseFloat(e.eb)?'+':''}{Math.round((e.ebReal-parseFloat(e.eb))*10)/10})</span>}
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500)':'var(--status-error)'}}>EB estimada {e.eb}%</span>
+                            {e.ebReal!=null&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:Math.abs(e.ebReal-parseFloat(e.eb))<=10?'var(--accent-olive)':'var(--status-error)'}}>EB real {e.ebReal}% ({e.ebReal>=parseFloat(e.eb)?'+':''}{Math.round((e.ebReal-parseFloat(e.eb))*10)/10})</span>}
                             {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
                             {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
                           </div>
@@ -16148,8 +16148,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                     <div>
                       {!isMorphFeasible&&trajectoryAnalysis&&(
-                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
-                          <b><AppIcon name="alert" size={13} color="#9B2C2C" style={{marginRight:4}} /> Esta mezcla ({(morphAlpha*100).toFixed(0)} % de la candidata) no cumple los criterios agronómicos:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)'}}>
+                          <b><AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> Esta mezcla ({(morphAlpha*100).toFixed(0)} % de la candidata) no cumple los criterios agronómicos:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
                           {trajectoryAnalysis.feasibleInterval&&(
                             <div style={{marginTop:4,color:'var(--ink-800)'}}>
                               → Mezclas que sí cumplen para esta especie: <b>entre {(trajectoryAnalysis.feasibleInterval[0]*100).toFixed(0)} % y {(trajectoryAnalysis.feasibleInterval[1]*100).toFixed(0)} % de la candidata</b>
@@ -16162,7 +16162,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
                             Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
                           </span>
-                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'#C53030'}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'var(--status-error)'}}>
                             {(morphAlpha*100).toFixed(0)} % candidata {!isMorphFeasible?'(fuera de criterio)':''}
                           </span>
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
@@ -16433,7 +16433,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       <div style={{display:'flex',gap:0,background:'var(--paper-100)',borderTop:'1px solid var(--border-soft)'}}>
                                         <div style={{flex:1,padding:'7px 10px',borderRight:'1px solid var(--border-soft)'}}>
                                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Riesgo</div>
-                                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500)':'#C53030'}}>{r.riskScore??'—'}/100</div>
+                                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500)':'var(--status-error)'}}>{r.riskScore??'—'}/100</div>
                                         </div>
                                         {r.maxKgWet!=null&&(
                                           <div style={{flex:2,padding:'7px 10px'}}>
@@ -16757,7 +16757,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* Badge cinético térmico Q10 */}
                 {sch&&(
-                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'rgba(197,48,48,.08)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'rgba(197,48,48,.25)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 8%, transparent)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 25%, transparent)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                     <span><AppIcon name="temp" size={14} style={{marginRight:6}} /> <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
                     {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
                   </div>
@@ -16923,7 +16923,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Compromisos B2B Restaurantes</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalComprometido} kg</div>
                     </div>
-                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'rgba(197,48,48,.08)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'color-mix(in srgb, var(--status-error) 8%, transparent)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',textTransform:'uppercase',fontWeight:700}}>
                         {coverage.superavit>0?'Superávit Comercial':'Déficit Comercial'}
                       </div>
@@ -16959,7 +16959,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* Alerta de siembra en caso de déficit */}
                   {coverage.deficit>0&&(
-                    <div style={{padding:14,background:'rgba(197,48,48,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{padding:14,background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--coral-700)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
                         <span>{deficit}</span> Déficit comercial proyectado: {coverage.deficit} kg de hongo fresco
                       </div>
@@ -17034,8 +17034,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ):(
                 <>
                 {an&&!balanced&&(
-                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
-                    <AppIcon name="alert" size={13} color="#C53030" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
+                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-error)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--r-sm)'}}>
+                    <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div className="prod-batch-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
@@ -17075,7 +17075,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
                     <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
-                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
+                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="var(--status-error)" /> sin sincronizar</span>}
                   </div>
                 </div>
                 </>
@@ -17818,7 +17818,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       if (tare !== null && !isNaN(tare)) {
                         if (tare > gross) {
                           return (
-                            <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
+                            <div style={{ padding: '6px 8px', background: 'var(--status-error-bg)', color: 'var(--status-error)', borderLeft: '3px solid var(--status-error)', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
                               <AppIcon name="close" size={13} color="var(--status-error)" style={{marginRight:4}} /> Tara ({tare}g) excede el peso bruto ({gross}g).
                             </div>
                           );
@@ -17879,7 +17879,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     {harvestError && (
-                      <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', fontSize: 11, marginBottom: 10 }}>
+                      <div style={{ padding: '6px 8px', background: 'var(--status-error-bg)', color: 'var(--status-error)', fontSize: 11, marginBottom: 10 }}>
                         {harvestError}
                       </div>
                     )}
@@ -17942,8 +17942,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     )}
 
                     {cameraError && (
-                      <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                        <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {cameraError}
+                      <div style={{ padding: '8px 10px', background: 'var(--status-error-bg)', color: 'var(--status-error)', borderLeft: '3px solid var(--status-error)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {cameraError}
                       </div>
                     )}
 
@@ -18029,8 +18029,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 key={item.bagId}
                                 style={{
                                   padding: '2px 6px',
-                                  background: item.estado === 'contaminada' ? '#FEE2E2' : 'var(--paper-1)',
-                                  color: item.estado === 'contaminada' ? '#991B1B' : 'var(--ink-0)',
+                                  background: item.estado === 'contaminada' ? 'var(--status-error-bg)' : 'var(--paper-1)',
+                                  color: item.estado === 'contaminada' ? 'var(--status-error)' : 'var(--ink-0)',
                                   border: '1px solid var(--border-hairline)',
                                   borderRadius: 2,
                                   fontSize: 10,
@@ -20384,8 +20384,8 @@ interval:
                 </div>
 
                 {diagError && (
-                  <div style={{padding:'8px 12px',background:'#FEE2E2',color:'#991B1B',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
-                    <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {diagError}
+                  <div style={{padding:'8px 12px',background:'var(--status-error-bg)',color:'var(--status-error)',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
+                    <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {diagError}
                   </div>
                 )}
 
@@ -20575,8 +20575,8 @@ interval:
                 )}
 
                 {aiFormError && (
-                  <div style={{marginTop:10,padding:'8px 12px',background:'rgba(197,48,48,.1)',border:'1px solid #C53030',borderRadius:'var(--radius-sm)',fontSize:12,color:'#C53030'}}>
-                    <AppIcon name="alert" size={12} color="#C53030" style={{marginRight:4}} /> {aiFormError}
+                  <div style={{marginTop:10,padding:'8px 12px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--radius-sm)',fontSize:12,color:'var(--status-error)'}}>
+                    <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {aiFormError}
                   </div>
                 )}
 
