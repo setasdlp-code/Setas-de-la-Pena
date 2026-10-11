@@ -1,0 +1,262 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const assert = require('node:assert/strict');
+const os = require('node:os');
+const { execFileSync } = require('node:child_process');
+const root = path.resolve(__dirname, '../..');
+const { chromium } = require(path.join(root, 'field-os-simulador/setas-os/node_modules/@playwright/test'));
+const out = process.env.SETAS_WEBSITE_AUDIT_DIR || fs.mkdtempSync(path.join(os.tmpdir(), 'setas-public-website-'));
+fs.mkdirSync(out, { recursive: true });
+const base = (process.env.SETAS_WEBSITE_BASE_URL || 'http://127.0.0.1:4187/').replace(/\/?$/, '/');
+const report = { capturedAt: new Date().toISOString(), baseline: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), checks: [], renders: [], browserErrors: [], syntheticFixtures: 'Solo en rutas interceptadas del navegador de prueba; sin modificar commercial-data.js ni enviar mensajes.' };
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined), headless: true, args: ['--no-sandbox'] });
+  try {
+    async function contextWith(data, options = {}) {
+      const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce', ...options });
+      if (data !== undefined) await context.route('**/commercial-data.js', route => route.fulfill({ contentType: 'text/javascript', body: `window.SetasCommerce = ${JSON.stringify(data)};` }));
+      context.on('page', page => {
+        page.on('pageerror', error => report.browserErrors.push(error.message));
+        page.on('response', response => { if (response.status() >= 400) report.browserErrors.push(`${response.status()} ${response.url()}`); });
+        page.on('requestfailed', request => report.browserErrors.push(`${request.failure()?.errorText} ${request.url()}`));
+      });
+      return context;
+    }
+    async function visit(page, file) {
+      await page.goto(base + file, { waitUntil: 'networkidle' });
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        await Promise.all([...document.images].map(img => { img.loading = 'eager'; return img.decode().catch(() => {}); }));
+        document.activeElement?.blur();
+      });
+      await page.mouse.move(1439, 999);
+    }
+    async function capture(page, filename, selector) {
+      await page.evaluate(() => document.activeElement?.blur());
+      await page.mouse.move(1439, 999);
+      const target = path.join(out, filename);
+      const initialViewport = page.viewportSize();
+      if (selector) {
+        const bounds = await page.locator(selector).boundingBox();
+        await page.setViewportSize({ width: initialViewport.width, height: Math.max(initialViewport.height, Math.ceil(bounds.height) + 48) });
+        await page.locator(selector).evaluate(el => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+        await page.locator(selector).screenshot({ path: target });
+      } else await page.screenshot({ path: target, fullPage: true });
+      report.renders.push({ file: filename, url: page.url(), viewport: page.viewportSize(), state: filename.startsWith('mensaje-') ? 'Consulta de ejemplo: cantidad 250 g, municipio Tenjo; no enviada' : 'Estado inicial con datos comerciales sin confirmar', sha256: sha(target) });
+      await page.setViewportSize(initialViewport);
+    }
+    const context = await contextWith();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
+    const page = await context.newPage();
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'typography.html']) {
+        await visit(page, file);
+        const metrics = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth, brokenImages: [...document.images].filter(img => !img.complete || img.naturalWidth === 0).map(img => img.getAttribute('src')), pairing: document.documentElement.dataset.pairing }));
+        assert.ok(metrics.content <= width, `${file} overflow at ${width}`);
+        assert.deepEqual(metrics.brokenImages, []);
+        if (file !== 'typography.html') assert.equal(metrics.pairing, 'mono');
+        report.checks.push({ type: 'responsive', page: file, width, ...metrics });
+        if (width === 390 || width === 1440) await capture(page, `${file.replace('.html', '')}-${width}.png`);
+        if (file === 'shiitake.html' && [390, 1440].includes(width)) await capture(page, `consulta-${width}.png`, '#producto');
+      }
+    }
+    await visit(page, 'shiitake.html#producto');
+    assert.equal(await page.locator('#order-form').isVisible(), true);
+    assert.equal(await page.locator('#presentation-field').isVisible(), false);
+    assert.match(await page.locator('#order-subtotal').innerText(), /por confirmar/);
+    await page.locator('.purchase-submit').click();
+    assert.equal(await page.locator('#order-review').isVisible(), false);
+    for (const value of ['0', '-1', '2.5', '', '99999999999999999']) {
+      await page.getByLabel('Cantidad que necesitas').fill(value);
+      await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
+      await page.locator('.purchase-submit').click();
+      assert.equal(await page.locator('#order-review').isVisible(), false, `invalid quantity ${value}`);
+      assert.equal(await page.locator('#order-form').evaluate(form => form.checkValidity()), false);
+    }
+    await page.getByLabel('Cantidad que necesitas').fill('500');
+    await page.getByLabel('Municipio de entrega', { exact: true }).fill('   ');
+    await page.locator('.purchase-submit').click();
+    assert.equal(await page.locator('#order-review').isVisible(), false);
+    await page.getByLabel('Para restaurante', { exact: true }).check();
+    await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
+    await page.getByLabel('Municipio de entrega', { exact: true }).press('Enter');
+    assert.equal(await page.locator('#order-review').isVisible(), true);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'order-review');
+    const message = await page.locator('#order-message').inputValue();
+    assert.match(message, /mi restaurante/);
+    assert.match(message, /Cantidad solicitada: 500 g/);
+    assert.match(message, /Precio: por confirmar/);
+    assert.match(message, /Municipio de entrega: Tenjo/);
+    assert.equal(await page.locator('#order-whatsapp').getAttribute('href'), null);
+    assert.equal(await page.locator('#order-whatsapp').isVisible(), false);
+    await page.locator('#copy-order').click();
+    await page.waitForFunction(() => document.querySelector('#copy-status').textContent.includes('Mensaje copiado'));
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), message);
+    await page.getByLabel('Cantidad que necesitas').fill('250');
+    assert.equal(await page.locator('#order-review').isVisible(), false);
+    assert.equal(await page.locator('#order-message').inputValue(), '');
+    await page.getByLabel('Para casa', { exact: true }).check();
+    await page.locator('.purchase-submit').click();
+    await capture(page, 'mensaje-1440.png', '#producto');
+    await page.setViewportSize({ width: 390, height: 1000 });
+    await capture(page, 'mensaje-390.png', '#producto');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+    await page.reload({ waitUntil: 'networkidle' });
+    assert.equal(await page.locator('#order-municipality').inputValue(), '');
+    report.checks.push({ type: 'unconfigured-request', result: 'passed', covers: ['validation', 'keyboard submit and focus', 'restaurant/home', 'clipboard copy', 'no WhatsApp without phone', 'invalidated stale message', 'no saved customer data'] });
+
+    for (const entry of ['.hero-copy a.sdp-btn', '.card-actions a[href="shiitake.html#producto"]']) {
+      await visit(page, 'index.html');
+      await page.locator(entry).click();
+      await page.waitForURL('**/shiitake.html#producto');
+      assert.equal(await page.locator('#order-form').isVisible(), true);
+    }
+    await visit(page, 'index.html');
+    await page.locator('.specimen-button[data-species="shiitake"]').click();
+    assert.equal(await page.locator('#dialog-order').isVisible(), true);
+    await page.locator('#dialog-order').click();
+    await page.waitForURL('**/shiitake.html#producto');
+    await visit(page, 'index.html');
+    await page.locator('.specimen-button[data-species="melena"]').click();
+    assert.equal(await page.locator('#dialog-order').isVisible(), false);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'melena');
+    report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['hero', 'collection card', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
+    await visit(page, 'index.html?pairing=bricolage');
+    await page.locator('.hero-copy a.sdp-btn').click();
+    assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
+    assert.equal(new URL(page.url()).hash, '#producto');
+    report.checks.push({ type: 'typography-query-navigation', result: 'passed' });
+
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await visit(page, 'shiitake.html');
+    const fonts = await page.evaluate(() => ({ heading: getComputedStyle(document.querySelector('h1')).fontFamily, quantity: getComputedStyle(document.querySelector('#order-weight')).fontFamily, input: getComputedStyle(document.querySelector('#order-municipality')).fontFamily }));
+    assert.match(fonts.heading, /Gaya/);
+    assert.match(fonts.quantity, /IBM Plex Mono/);
+    assert.match(fonts.input, /IBM Plex Sans/);
+    report.fonts = fonts;
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    assert.equal(await page.locator('details:not([open])').count(), 0);
+    await page.emulateMedia({ media: 'print' });
+    assert.equal(await page.locator('#order-form').isVisible(), false);
+    assert.equal(await page.locator('#order-review').isVisible(), false);
+    await page.pdf({ path: path.join(out, 'shiitake.pdf'), format: 'A4', printBackground: true, margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' } });
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    assert.equal(await page.locator('details[open]').count(), 0);
+    report.checks.push({ type: 'print', result: 'passed', covers: ['details expanded', 'form excluded', 'PDF generated', 'details restored'] });
+
+    for (const fragment of ['receta-arepa', 'receta-sopa', 'receta-patacones']) {
+      await visit(page, 'index.html#en-la-cocina');
+      await page.locator(`.kitchen-routes a[href="recetas.html#${fragment}"]`).click();
+      await page.waitForURL(`**/recetas.html#${fragment}`);
+      assert.equal(await page.locator(`#${fragment} details`).evaluate(el => el.open), true);
+    }
+    await visit(page, 'recetas.html#receta-arepa');
+    const recipeSummary = page.locator('#receta-arepa summary');
+    await recipeSummary.focus();
+    await recipeSummary.press('Enter');
+    assert.equal(await page.locator('#receta-arepa details').evaluate(el => el.open), false);
+    await page.locator('.recipe-shortcuts a[href="#receta-arepa"]').click();
+    assert.equal(await page.locator('#receta-arepa details').evaluate(el => el.open), true);
+    const priorDetails = await page.locator('details').evaluateAll(elements => elements.map(el => el.open));
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    assert.equal(await page.locator('details:not([open])').count(), 0);
+    await page.emulateMedia({ media: 'print' });
+    await page.pdf({ path: path.join(out, 'recetas.pdf'), format: 'A4', printBackground: true, margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' } });
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    assert.deepEqual(await page.locator('details').evaluateAll(elements => elements.map(el => el.open)), priorDetails);
+    report.checks.push({ type: 'recipe-navigation-keyboard-print', result: 'passed', covers: ['three home recipe links', 'hash opens recipe', 'keyboard toggles instructions', 'shortcut reopens same hash', 'print expands and restores instructions'] });
+
+    const brokenLinks = [];
+    for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'typography.html']) {
+      await visit(page, file);
+      const ids = await page.locator('[id]').evaluateAll(elements => elements.map(el => el.id));
+      assert.equal(ids.length, new Set(ids).size, `${file} duplicate IDs`);
+      const links = await page.locator('a[href]').evaluateAll(links => [...new Set(links.map(el => el.href))]);
+      for (const link of links.filter(link => link.startsWith(base))) {
+        const url = new URL(link);
+        const filePath = path.join(root, decodeURIComponent(url.pathname));
+        if (!fs.existsSync(filePath)) { brokenLinks.push(link); continue; }
+        if (url.hash && url.pathname.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
+      }
+    }
+    assert.deepEqual(brokenLinks, []);
+    report.checks.push({ type: 'links-and-ids', result: 'passed' });
+    await context.close();
+
+    const fixture = { whatsapp: '+57 (999) 999-9999', availability: 'available', presentations: [{ id: 'test250', name: 'Presentación de prueba 250', weightGrams: 250, priceCOP: 18000 }, { id: 'test500', name: 'Presentación de prueba 500', weightGrams: 500, priceCOP: 34000 }], deliveryAreas: 'Zona de prueba', deliveryDays: 'Día de prueba', deliveryFeeCOP: 8000, paymentMethods: 'Medio de prueba', batch: 'TEST-NO-VENTA', harvestDate: 'Fecha de prueba' };
+    const configured = await contextWith(fixture);
+    const known = await configured.newPage();
+    await visit(known, 'shiitake.html#producto');
+    assert.equal(await known.locator('.purchase-option').count(), 2);
+    await known.locator('input[name="presentation"][value="1"]').check();
+    await known.getByLabel('Número de presentaciones', { exact: true }).fill('3');
+    await known.getByLabel('Municipio de entrega', { exact: true }).fill('Municipio de prueba');
+    assert.equal(await known.locator('#order-weight').innerText(), '1.500 g');
+    assert.equal((await known.locator('#order-subtotal').innerText()).replace(/\s/g, ''), '$102.000COP');
+    await known.locator('.purchase-submit').click();
+    const knownMessage = await known.locator('#order-message').inputValue();
+    const whatsappUrl = new URL(await known.locator('#order-whatsapp').getAttribute('href'));
+    assert.equal(whatsappUrl.origin, 'https://wa.me');
+    assert.equal(whatsappUrl.pathname, '/579999999999');
+    assert.equal(whatsappUrl.searchParams.get('text'), knownMessage);
+    assert.match(knownMessage, /3 presentaciones \(1.500 g en total\)/);
+    assert.match(knownMessage, /102\.000/);
+    assert.match(knownMessage, /sin envío/);
+    assert.match(knownMessage, /8\.000/);
+    assert.match(await known.locator('#order-whatsapp').innerText(), /Solicitar pedido/i);
+    assert.equal(await known.locator('#product-batch').textContent(), 'TEST-NO-VENTA');
+    await known.locator('input[name="presentation"][value="0"]').check();
+    assert.equal(await known.locator('#order-review').isVisible(), false);
+    assert.equal(await known.locator('#order-whatsapp').getAttribute('href'), null);
+    assert.equal((await known.locator('#order-subtotal').innerText()).replace(/\s/g, ''), '$54.000COP');
+    await configured.close();
+    report.checks.push({ type: 'synthetic-priced-presentations', result: 'passed', covers: ['quantity and price calculation', 'shipping separated', 'E.164 normalization', 'encoded WhatsApp message', 'changed selection invalidates old message', 'lot metadata'] });
+
+    const partial = await contextWith({ availability: 'unavailable', whatsapp: 'javascript:alert(1)', presentations: [{ id: 'single', name: 'Prueba sin precio', weightGrams: 250, priceCOP: '18000' }], deliveryFeeCOP: 0 });
+    const partialPage = await partial.newPage();
+    await visit(partialPage, 'shiitake.html');
+    await partialPage.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
+    await partialPage.locator('.purchase-submit').click();
+    assert.match(await partialPage.locator('#order-message').inputValue(), /Cuándo esperan tener disponibilidad/);
+    assert.equal(await partialPage.locator('#order-whatsapp').getAttribute('href'), null);
+    assert.match(await partialPage.locator('#order-subtotal').innerText(), /por confirmar/);
+    assert.match(await partialPage.locator('#delivery-fee').innerText(), /Sin costo/);
+    await partial.close();
+    report.checks.push({ type: 'synthetic-partial-and-out-of-stock', result: 'passed', covers: ['single presentation', 'invalid phone cannot create link', 'non-numeric price remains unknown', 'out-of-stock inquiry', 'zero delivery fee recognized'] });
+
+    const fallback = await contextWith();
+    await fallback.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('Simulated clipboard denial'); } }, configurable: true }));
+    const fallbackPage = await fallback.newPage();
+    await visit(fallbackPage, 'shiitake.html');
+    await fallbackPage.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
+    await fallbackPage.locator('.purchase-submit').click();
+    await fallbackPage.locator('#copy-order').click();
+    await fallbackPage.waitForFunction(() => document.querySelector('#copy-status').textContent.includes('Seleccionamos'));
+    const selectedRange = await fallbackPage.locator('#order-message').evaluate(el => ({ start: el.selectionStart, end: el.selectionEnd, length: el.value.length, active: document.activeElement.id }));
+    assert.equal(selectedRange.start, 0);
+    assert.equal(selectedRange.end, selectedRange.length);
+    assert.equal(selectedRange.active, 'order-message');
+    await fallback.close();
+    report.checks.push({ type: 'clipboard-denied-fallback', result: 'passed' });
+
+    const noJs = await contextWith(undefined, { javaScriptEnabled: false });
+    const staticPage = await noJs.newPage();
+    await staticPage.goto(base + 'shiitake.html');
+    assert.equal(await staticPage.locator('#order-form').isVisible(), false);
+    assert.equal(await staticPage.locator('noscript').isVisible(), true);
+    assert.equal(await staticPage.locator('#order-whatsapp').getAttribute('href'), null);
+    await noJs.close();
+    report.checks.push({ type: 'no-js-fallback', result: 'passed' });
+    assert.deepEqual(report.browserErrors, []);
+    report.sources = ['index.html', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
+    fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
+    console.log(JSON.stringify({ result: 'passed', checks: report.checks.length, renders: report.renders.length, browserErrors: report.browserErrors.length, auditDirectory: out }));
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
