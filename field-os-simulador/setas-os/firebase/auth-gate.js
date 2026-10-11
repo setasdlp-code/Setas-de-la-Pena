@@ -306,23 +306,23 @@ export function buildGate() {
   Object.assign(gate.style, {
     position: "fixed", inset: "0", zIndex: "var(--z-overlay, 1000)", display: "flex",
     alignItems: "center", justifyContent: "center",
-    padding: "16px", background: "var(--paper-1, #efebe0)",
+    padding: "16px", background: "var(--surface-recessed)",
     contain: "strict",
   });
 
   if (!prebuilt) gate.innerHTML = `
-    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:var(--paper-2,#e5dfd0);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
-      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--paper-0,#f7f4ec);border:1px solid var(--border-hairline,#8c7f5b);">
-        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-terracotta,#a85c32);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
-        <h1 style="margin:2px 0 0;font-family:var(--font-display,Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--ink-0,#1a1410);">Setas de la Peña</h1>
-        <p style="margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--ink-2,#6b6759);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
-        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:var(--ink-2,#6b6759);">Conectando…</div>
-        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Correo</label>
-        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
-        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--ink-0,#1a1410);">Contraseña</label>
-        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline,#8c7f5b);border-radius:var(--radius-sm,2px);background:var(--paper-0,#f7f4ec);color:var(--ink-0,#1a1410);font:inherit;display:none;">
-        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--status-error,#c53030);font-size:12px;font-family:var(--font-mono,monospace);"></div>
-        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--ink-0,#1a1410);color:var(--paper-0,#f7f4ec);border:1px solid var(--ink-0,#1a1410);border-radius:var(--radius-sm,2px);font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
+    <form id="setas-auth-form" style="width:min(396px,calc(100vw - 32px));padding:6px;background:color-mix(in srgb, var(--sand-500) 35%, var(--paper-100));border:1px solid var(--text-primary);border-radius:var(--radius-md,3px);box-shadow:var(--shadow-panel-lift,0 18px 50px rgba(26,20,16,.16));font-family:var(--font-sans,Georgia,serif);content-visibility:auto;contain-intrinsic-size:396px 420px;">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:26px 24px 24px;background:var(--surface-page);border:1px solid var(--border-hairline);">
+        <div style="display:flex;align-items:center;gap:9px;font-family:var(--font-mono,monospace);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--brand-accent-text);"><span aria-hidden="true" style="width:22px;height:2px;background:currentColor;"></span>Setas OS · Operación Tenjo</div>
+        <h1 style="margin:2px 0 0;font-family:var(--font-display,Georgia,serif);font-size:30px;line-height:1.05;font-weight:700;color:var(--text-primary);">Setas de la Peña</h1>
+        <p style="margin:0 0 4px;font-size:13px;line-height:1.5;color:var(--text-metadata);">Acceso reservado al equipo de cultivo, trazabilidad y formulación.</p>
+        <div id="setas-auth-status" role="status" aria-live="polite" style="font-family:var(--font-mono,monospace);font-size:11px;color:var(--text-metadata);">Conectando…</div>
+        <label for="setas-auth-email" style="display:none;font-size:12px;font-weight:700;color:var(--text-primary);">Correo</label>
+        <input id="setas-auth-email" name="email" type="email" required autocomplete="email" spellcheck="false" placeholder="correo@ejemplo.com" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline);border-radius:var(--radius-sm,2px);background:var(--surface-page);color:var(--text-primary);font:inherit;display:none;">
+        <label for="setas-auth-password" style="display:none;font-size:12px;font-weight:700;color:var(--text-primary);">Contraseña</label>
+        <input id="setas-auth-password" name="password" type="password" required autocomplete="current-password" placeholder="Contraseña" style="min-height:46px;padding:10px 12px;border:1px solid var(--border-hairline);border-radius:var(--radius-sm,2px);background:var(--surface-page);color:var(--text-primary);font:inherit;display:none;">
+        <div id="setas-auth-err" role="alert" aria-live="assertive" style="min-height:18px;color:var(--status-error);font-size:12px;font-family:var(--font-mono,monospace);"></div>
+        <button id="setas-auth-submit" type="submit" style="min-height:46px;padding:11px 14px;background:var(--text-primary);color:var(--surface-page);border:1px solid var(--text-primary);border-radius:var(--radius-sm,2px);font-weight:700;letter-spacing:.04em;cursor:pointer;display:none;">Ingresar al sistema</button>
       </div>
     </form>
   `;
@@ -332,9 +332,9 @@ export function buildGate() {
   signoutBtn.textContent = "Cerrar sesión";
   Object.assign(signoutBtn.style, {
     position: "fixed", top: "10px", right: "10px", zIndex: "var(--z-fab, 65)",
-    minHeight: "44px", padding: "8px 12px", background: "var(--paper-0,#f7f4ec)", border: "1px solid var(--border-hairline,#8c7f5b)",
+    minHeight: "44px", padding: "8px 12px", background: "var(--surface-page)", border: "1px solid var(--border-hairline)",
     borderRadius: "var(--radius-sm,2px)", fontFamily: "var(--font-mono,monospace)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: "700",
-    color: "var(--ink-2,#6b6759)", cursor: "pointer", display: "none",
+    color: "var(--text-metadata)", cursor: "pointer", display: "none",
   });
 
   if (!gate.isConnected) document.body.appendChild(gate);
