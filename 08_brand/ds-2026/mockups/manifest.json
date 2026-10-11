@@ -110,5 +110,69 @@
     "height": 900,
     "scale": 2,
     "fullPage": true
+  },
+  {
+    "name": "05-ficha-melena-de-leon",
+    "file": "mockups/market/05-ficha-melena-de-leon.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "06-ficha-shiitake",
+    "file": "mockups/market/06-ficha-shiitake.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "07-ficha-reishi",
+    "file": "mockups/market/07-ficha-reishi.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "08-ficha-orellana-rosada",
+    "file": "mockups/market/08-ficha-orellana-rosada.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "09-ficha-seta-de-cardo",
+    "file": "mockups/market/09-ficha-seta-de-cardo.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "10-ficha-orellana-gris",
+    "file": "mockups/market/10-ficha-orellana-gris.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "11-ficha-enoki",
+    "file": "mockups/market/11-ficha-enoki.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
+  },
+  {
+    "name": "12-ficha-orellana-blanca",
+    "file": "mockups/market/12-ficha-orellana-blanca.html",
+    "width": 1200,
+    "height": 900,
+    "scale": 2,
+    "fullPage": true
   }
 ]
