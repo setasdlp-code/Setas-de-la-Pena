@@ -152,7 +152,7 @@ function BioCheck() {
   return (
     <div className="bio-check" style={{padding: '24px', maxWidth: 800, margin: '0 auto'}}>
       <h2 style={{fontFamily: 'var(--font-serif, serif)', fontSize: '1.5rem', marginBottom: 8, color: 'var(--ink-900)'}}>Checklist Digital de Bioseguridad</h2>
-      {allChecked && <div className="badge" style={{display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'var(--moss-100, #e8f0e4)', color:'var(--moss-800, #2e5a36)', borderRadius:4, fontWeight:700, marginBottom:16}}><AppIcon name="check" size={13} color="var(--moss-800, #2e5a36)" /> Bio‑Check OK</div>}
+      {allChecked && <div className="badge" style={{display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'var(--moss-tint)', color:'var(--moss-700)', borderRadius:4, fontWeight:700, marginBottom:16}}><AppIcon name="check" size={13} color="var(--moss-700)" /> Bio‑Check OK</div>}
       <ul style={{listStyle:'none', padding:0}}>
         {items.map(item => (
           <li key={item.id} style={{marginBottom: '1rem', background:'var(--paper-50)', border:'1px solid var(--border-soft)', padding:'14px', borderRadius:6}}>
@@ -664,7 +664,7 @@ function LabExtraction() {
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Extracto Seco Estimado
                 </span>
-                <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-800, #2e5a36)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" }}>
                   {yieldGrams} g
                 </span>
                 <span style={{ display: "block", fontSize: "0.8rem", color: "var(--ink-600)" }}>
@@ -757,7 +757,7 @@ function LabExtraction() {
                     <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" }}>
                       {b.biomassGrams} g
                     </td>
-                    <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-800, #2e5a36)" }}>
+                    <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" }}>
                       {b.yieldGrams} g ({b.yieldPct}%)
                     </td>
                     <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" }}>
@@ -2570,7 +2570,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
             <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
             <div>
               <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300)'}}>
-                <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
+                <AppIcon name="globe" size={13} color="var(--moss-500)" /> Trazabilidad de Origen · Tenjo, Colombia
               </div>
               <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50)',margin:'4px 0 2px',letterSpacing:'-.01em'}}>
                 {lote?.especie||'Seta Cultivada'}
@@ -2596,8 +2596,8 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: 3,
-              background: syncResult?.status === 'synced' ? 'var(--moss-100,#E8F0E0)' : syncResult?.status === 'failed' ? 'var(--coral-100)' : 'var(--paper-200)',
-              color: syncResult?.status === 'synced' ? 'var(--moss-800,#3B5A24)' : syncResult?.status === 'failed' ? 'var(--coral-800,#9B1C1C)' : 'var(--ink-600)'
+              background: syncResult?.status === 'synced' ? 'var(--moss-tint)' : syncResult?.status === 'failed' ? 'var(--coral-100)' : 'var(--paper-200)',
+              color: syncResult?.status === 'synced' ? 'var(--moss-700)' : syncResult?.status === 'failed' ? 'var(--status-error)' : 'var(--ink-600)'
             }}>
               {syncResult?.status === 'synced' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Publicado</span> : syncResult?.status === 'failed' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} /> Error al publicar</span> : 'Pendiente de Sincronización'}
             </span>
@@ -2650,7 +2650,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-900)'}}>Lote #{lote?.codigo||'SDP-LOTE'}</strong>
-              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-100,#E8F0E0)',color:'var(--moss-800,#3B5A24)',borderRadius:3,textTransform:'uppercase'}}>
+              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-tint)',color:'var(--moss-700)',borderRadius:3,textTransform:'uppercase'}}>
                 {lote?.estado||'Activo'}
               </span>
             </div>
@@ -2695,7 +2695,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               {recetaItems.map((item,idx)=>{
                 const g=typeof INGS!=='undefined'?INGS.find(i=>i.id===item.id):null;
                 return (
-                  <span key={idx} style={{fontSize:11,padding:'2px 8px',background:'var(--paper-100)',borderRadius:3,border:'1px solid var(--border-subtle,#E2DACD)',color:'var(--ink-800)'}}>
+                  <span key={idx} style={{fontSize:11,padding:'2px 8px',background:'var(--paper-100)',borderRadius:3,border:'1px solid var(--border-soft)',color:'var(--ink-800)'}}>
                     <strong>{item.p||item.pct}%</strong> {g?.name||item.id}
                   </span>
                 );
@@ -10219,7 +10219,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{maxWidth:560}}>
                   {cmpConfirm?(
                     <div>
-                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
+                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'#FBF6E8':'var(--moss-tint)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name={cmpConfirm.pendiente?'clipboard':'check'} size={13} color="var(--ink-800)" /> {cmpConfirm.pendiente?'Pedido registrado':'Compra registrada'}</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                         {cmpConfirm.pendiente&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:6}}>El stock físico de bodega NO cambió. Estos kilos quedan en camino hasta que confirmes la recepción.</div>}
@@ -10303,7 +10303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const total=cmpItems.length;
                     const sinMatch=cmpItems.filter(it=>!it.ingId).length;
                     return(
-                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-tint)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
                         Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
                         {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
                       </div>
@@ -11158,7 +11158,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               {live && live.health && live.health.overallStatus !== 'offline' && (
                 <div className="today-climate-card__health" style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',fontSize:10.5,fontFamily:'var(--font-mono)',marginTop:4,padding:'3px 6px',background:'var(--paper-1)',borderRadius:'var(--r-xs,2px)',border:'1px solid var(--border-hairline)'}}>
-                  <span style={{fontWeight:700,color:live.health.overallStatus==='healthy'?'var(--status-success,#2e7d32)':live.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
+                  <span style={{fontWeight:700,color:live.health.overallStatus==='healthy'?'var(--status-ok)':live.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
                     {live.health.overallStatus==='healthy'?'● Confiable':`▲ ${live.health.overallStatus.toUpperCase()}`}
                   </span>
                   {live.health.metrics && Object.entries(live.health.metrics).filter(([_,m])=>m.value!=null).map(([mKey,m])=>(
@@ -12403,12 +12403,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             {roomLive && roomLive.health && (
               <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)',marginTop:4}}>
-                <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-success,#2e7d32)':roomLive.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
+                <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-ok)':roomLive.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
                   SALUD: {roomLive.health.overallStatus.toUpperCase()}
                 </span>
                 {roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d])=>(
                   <span key={devId}>
-                    {devId}: <strong style={{color:d.status==='healthy'?'var(--status-success,#2e7d32)':'var(--ink-1)'}}>{d.status.toUpperCase()}</strong>
+                    {devId}: <strong style={{color:d.status==='healthy'?'var(--status-ok)':'var(--ink-1)'}}>{d.status.toUpperCase()}</strong>
                   </span>
                 ))}
               </div>
@@ -12498,7 +12498,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       fontWeight: 800,
                       padding: '4px 10px',
                       borderRadius: 2,
-                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-100, #FDF0DE)' : 'var(--coral-100)',
+                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200)' : coCultRoomOpt.groupScore >= 55 ? 'var(--warning-tint)' : 'var(--coral-100)',
                       color: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-700)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-700)' : 'var(--coral-700)',
                       border: `1px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--moss-600)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500)' : 'var(--coral-500)'}`,
                     }}
@@ -16355,7 +16355,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             {optUseStock?(()=>{const sc=[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length;
                               return sc>0?(
-                                <div style={{padding:'8px 12px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
+                                <div style={{padding:'8px 12px',background:'var(--moss-tint)',border:'1px solid var(--moss-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
                                   Usando solo ingredientes en stock · {sc} disponibles en inventario
                                 </div>
                               ):(
@@ -16364,7 +16364,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               );
                             })():(
-                              <div style={{padding:'8px 12px',background:'var(--coral-50,#FCEEE9)',border:'1px solid var(--coral-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600)',marginBottom:12}}>
+                              <div style={{padding:'8px 12px',background:'var(--coral-tint)',border:'1px solid var(--coral-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600)',marginBottom:12}}>
                                 Generando con toda la paleta compatible con {SPP[optTarget]?.name} · ignora inventario · ideal para diseñar la receta antes de comprar
                               </div>
                             )}
@@ -16376,7 +16376,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
                                   return(
-                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-50,#F0F4EB)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
+                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-tint)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
                                       {evi.hasEvidence
                                         ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
                                         :`Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
@@ -16756,7 +16756,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* Badge cinético térmico Q10 */}
                 {sch&&(
-                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 8%, transparent)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 25%, transparent)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 8%, transparent)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 25%, transparent)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-700)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                     <span><AppIcon name="temp" size={14} style={{marginRight:6}} /> <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
                     {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
                   </div>
@@ -17274,7 +17274,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </table>
                 </div>
                 {/* C:N efectivo tras redondeo / humedad real */}
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-50,#FCEEE9)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300)':'var(--paper-300)'}`}}>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-tint)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300)':'var(--paper-300)'}`}}>
                   C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
                 </div>
                 {/* Agua / spawn / húmedo */}
@@ -17552,11 +17552,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{
                           padding: '6px 8px',
                           borderRadius: 2,
-                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100)' : 'var(--moss-100, #EAEFD9)',
+                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100)' : 'var(--moss-tint)',
                           border: `1px solid ${postHarvestCondensation.condensationRisk ? 'var(--coral-500)' : 'var(--moss-600)'}`,
                           fontFamily: 'var(--font-mono)',
                           fontSize: 11,
-                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700)' : 'var(--moss-800, #2E3A1F)',
+                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700)' : 'var(--moss-700)',
                         }}
                       >
                         <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
@@ -18797,7 +18797,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               fontWeight: 700,
                               padding: '2px 8px',
                               borderRadius: 2,
-                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200)' : 'var(--ochre-100, #FDF0DE)',
+                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200)' : 'var(--warning-tint)',
                               color: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-700)' : 'var(--ochre-700)',
                             }}
                           >
