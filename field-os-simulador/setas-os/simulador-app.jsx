@@ -19491,7 +19491,7 @@ interval:
                           borderRadius: 20,
                           background: isSelected ? 'var(--accent-olive)' : 'var(--paper-1)',
                           borderColor: isSelected ? 'var(--accent-olive)' : 'var(--line-0)',
-                          color: isSelected ? '#FFFFFF' : 'var(--ink-0)',
+                          color: isSelected ? 'var(--text-inverse)' : 'var(--ink-0)',
                         }}
                       >
                         {isSelected ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : '+ '}{sp.name.split(' (')[0]}

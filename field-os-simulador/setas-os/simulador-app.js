@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 06af7951c8b16231d279e7f021f07f39509c3f89a1e61842711c452e460b1b2d
+// source-hash: 763df24f38d3d8fc8bba46bee126ffcdfefb16872be985d8bf285725e8637a22
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -12772,7 +12772,7 @@ interval:
               borderRadius: 20,
               background: isSelected ? "var(--accent-olive)" : "var(--paper-1)",
               borderColor: isSelected ? "var(--accent-olive)" : "var(--line-0)",
-              color: isSelected ? "#FFFFFF" : "var(--ink-0)"
+              color: isSelected ? "var(--text-inverse)" : "var(--ink-0)"
             }
           },
           isSelected ? /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, style: { marginRight: 4 } }) : "+ ",
