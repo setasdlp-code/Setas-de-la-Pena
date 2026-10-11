@@ -521,7 +521,7 @@ function LabExtraction() {
               <select
                 value={speciesKey}
                 onChange={e => setSpeciesKey(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "#fff", fontSize: "0.9rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--paper-50)", fontSize: "0.9rem" }}
               >
                 {Object.entries(factors).map(([k, d]) => (
                   <option key={k} value={k}>{d.name}</option>
@@ -639,7 +639,7 @@ function LabExtraction() {
                 width: "100%",
                 padding: "10px 16px",
                 background: "var(--accent-terracotta)",
-                color: "#fff",
+                color: "var(--paper-50)",
                 border: "none",
                 borderRadius: 6,
                 fontWeight: 700,
@@ -660,7 +660,7 @@ function LabExtraction() {
             </h3>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-              <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
+              <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Extracto Seco Estimado
                 </span>
@@ -672,7 +672,7 @@ function LabExtraction() {
                 </span>
               </div>
 
-              <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
+              <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Costo por Gramo
                 </span>
@@ -685,7 +685,7 @@ function LabExtraction() {
               </div>
             </div>
 
-            <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 }}>
+            <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 }}>
               <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" }}>
                 Desglose de Costo Operativo
               </span>
@@ -782,7 +782,7 @@ function LabExtraction() {
                         <button
                           onClick={() => handleDeleteBatch(b.id)}
                           title="Eliminar registro"
-                          style={{ padding: "4px 8px", background: "transparent", border: "1px solid #e57373", color: "#c62828", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "transparent", border: "1px solid var(--status-error)", color: "var(--status-error)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           <AppIcon name="close" size={12} />
                         </button>
@@ -808,7 +808,7 @@ function LabExtraction() {
           padding: 16
         }}>
           <div style={{
-            background: "#fff",
+            background: "var(--paper-50)",
             borderRadius: 8,
             padding: 24,
             maxWidth: 380,
@@ -819,14 +819,14 @@ function LabExtraction() {
             <h4 style={{ margin: "0 0 12px 0", fontSize: "1.1rem" }}>
               Trazabilidad QR · {selectedQrBatch.id}
             </h4>
-            <div style={{ margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f8f8", borderRadius: 6, border: "1px solid #ddd" }}>
+            <div style={{ margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-recessed)", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
               {generateBatchQrDataUrl(selectedQrBatch) ? (
                 <img src={generateBatchQrDataUrl(selectedQrBatch)} alt="QR Lote" style={{ width: 160, height: 160 }} />
               ) : (
-                <span style={{ fontSize: "0.8rem", color: "#888" }}>Generando código QR...</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-metadata)" }}>Generando código QR...</span>
               )}
             </div>
-            <div style={{ fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "#f9f9f9", padding: 10, borderRadius: 6, marginBottom: 16 }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "var(--surface-recessed)", padding: 10, borderRadius: 6, marginBottom: 16 }}>
               <div><b>Especie:</b> {selectedQrBatch.speciesName}</div>
               <div><b>Método:</b> {selectedQrBatch.methodName}</div>
               <div><b>Extracto:</b> {selectedQrBatch.yieldGrams} g ({selectedQrBatch.yieldPct}%)</div>
@@ -837,7 +837,7 @@ function LabExtraction() {
                 width: "100%",
                 padding: "8px 14px",
                 background: "var(--ink-900)",
-                color: "#fff",
+                color: "var(--paper-50)",
                 border: "none",
                 borderRadius: 4,
                 cursor: "pointer",
@@ -1939,7 +1939,7 @@ const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
   if(!change) return null;
   const cite=classCitation(change.to);
   return(
-    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'#7A5A10',fontFamily:'var(--font-mono)',marginTop:3}}>
+    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginTop:3}}>
       <span style={{fontWeight:700}}>Cambia la clase de sustrato:</span> {change.from.label} → {change.to.label}.
       {fmtClassRanges(change.to)?` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite?` (${cite})`:''}.`:''} El índice estimado ya usa esos rangos.
     </div>
@@ -2012,11 +2012,11 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
     <div className="pi-body">
       <div className="pi-head">
         <span className="pi-label">{item.label}</span>
-        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#8C4020',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
+        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
       {deltaSim?.diff&&(
@@ -2644,7 +2644,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
 
         {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
         <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft)'}}>
-          <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'var(--paper-50)',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
             <img src={qrDataUrl} alt={`QR Lote ${lote?.codigo||''}`} width="76" height="76" style={{display:'block'}} />
           </div>
           <div style={{flex:1,minWidth:0}}>
@@ -3087,7 +3087,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
       dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
     >
       {/* Header */}
-      <div className="iot-hub-header" style={{ background: 'var(--ink-0)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="iot-hub-header" style={{ background: 'var(--ink-0)', color: 'var(--paper-50)', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <AppIcon name="temp" size={20} color="var(--accent-olive)" />
           <div>
@@ -3099,7 +3099,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
             </div>
           </div>
         </div>
-        <button type="button" className="modal-icon-close" aria-label="Cerrar Hub IoT" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
+        <button type="button" className="modal-icon-close" aria-label="Cerrar Hub IoT" style={{ color: 'var(--paper-50)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
       </div>
 
       <div className="iot-hub-navigation">
@@ -3336,7 +3336,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               id="iot-webhook-json" name="iot-webhook-json" spellCheck={false}
               className="field-input"
               rows={8}
-              style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: '#181512', color: '#E6E1D8', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
+              style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--ink-900)', color: 'var(--surface-recessed)', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
               value={webhookJson}
               onChange={e => setWebhookJson(e.target.value)}
             />
@@ -3904,10 +3904,10 @@ const FieldActionModal = ({
           style={{
             padding: '12px 14px',
             marginBottom: 14,
-            background: '#EFF6FF',
-            border: '1px solid #3B82F6',
+            background: 'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))',
+            border: '1px solid var(--status-info)',
             borderRadius: 3,
-            color: '#1E40AF',
+            color: 'var(--status-info)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
@@ -3925,7 +3925,7 @@ const FieldActionModal = ({
           style={{
             padding: '12px 14px',
             marginBottom: 14,
-            background: '#FEF2F2',
+            background: 'var(--status-error-bg)',
             border: '1.5px solid var(--status-error)',
             borderRadius: 3,
             color: 'var(--status-error)',
@@ -3940,7 +3940,7 @@ const FieldActionModal = ({
           <button
             type="button"
             className="inv-btn inv-btn-sec"
-            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
+            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: 'var(--paper-50)' }}
             onClick={handleRefresh}
           >
             <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar lote
@@ -3954,7 +3954,7 @@ const FieldActionModal = ({
         </div>
       )}
       {actionSuccess && (
-        <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+        <div style={{ padding: '8px 10px', background: 'var(--status-ok-bg)', color: 'var(--status-ok)', borderLeft: '3px solid var(--status-ok-marker)', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
           <><AppIcon name="check" size={12} style={{marginRight:4}} /> {actionSuccess}</>
         </div>
       )}
@@ -3983,7 +3983,7 @@ const FieldActionModal = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '10px 12px',
-                    background: isSelected ? 'var(--paper-0)' : '#fff',
+                    background: isSelected ? 'var(--paper-0)' : 'var(--paper-50)',
                     border: isSelected ? '2px solid var(--accent-olive)' : '1px solid var(--border-hairline)',
                     borderRadius: 3,
                     cursor: model.canConfirm ? 'pointer' : 'default',
@@ -4012,8 +4012,8 @@ const FieldActionModal = ({
                     textTransform: 'uppercase',
                     padding: '2px 6px',
                     borderRadius: 2,
-                    background: isDiscard ? 'var(--status-error-bg)' : (isException ? '#FEF3C7' : '#E0E7FF'),
-                    color: isDiscard ? 'var(--status-error)' : (isException ? '#92400E' : '#3730A3'),
+                    background: isDiscard ? 'var(--status-error-bg)' : (isException ? 'var(--status-warn-bg)' : 'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))'),
+                    color: isDiscard ? 'var(--status-error)' : (isException ? 'var(--status-warn-text)' : 'var(--status-info)'),
                   }}>
                     {{advance:'Avance',exception:'Excepción',discard:'Descarte'}[opt.transitionClass]||'Cambio'}
                   </span>
@@ -4072,14 +4072,14 @@ const FieldActionModal = ({
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
 const CAT_COLORS={
-  base:'#5A7042',       // moss (base carbons)
-  sup:'#C68F2C',        // ochre (supplements)
-  est:'#8C6B4A',        // bark (manure)
-  cafe:'#4A3728',       // dark brown (coffee)
-  trop:'#B8694B',       // warm brown (tropical)
-  circ:'#6B7C5F',       // sage (circular)
-  local:'#7A5A3F',      // tan (local),
-  default:'#999'
+  base:'var(--cat-base)',       // moss (base carbons)
+  sup:'var(--cat-sup)',        // ochre (supplements)
+  est:'var(--status-warn-text)',        // bark (manure)
+  cafe:'var(--bark-700)',       // dark brown (coffee)
+  trop:'var(--cat-trop)',       // warm brown (tropical)
+  circ:'var(--cat-circ)',       // sage (circular)
+  local:'var(--cat-local)',      // tan (local),
+  default:'var(--text-metadata)'
 };
 
 // ── MICRO SVG ICONS (sin emojis) ──────────────────────────────
@@ -4100,7 +4100,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   const digPct=ing.dig/10;                                    // 0–10 → 0–1
   return (
     <div className={'ing-item '+(expanded?'expanded':'')}>
-      <div className="ing-badge" style={{background:cat, color:(ing.cat==='sup'?'var(--ink-900)':'#ffffff')}} title={ing.cat} aria-hidden="true">{ing.cat.substring(0,2).toUpperCase()}</div>
+      <div className="ing-badge" style={{background:cat, color:(ing.cat==='sup'?'var(--ink-900)':'var(--paper-50)')}} title={ing.cat} aria-hidden="true">{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
         <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
         <div className="ing-meta">
@@ -4133,7 +4133,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
             </div>
             <div className="ing-profile-row">
               <span className="k">Dig.</span>
-              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.dig/10)*100+'%',background:'#B6532A'}}></div></div>
+              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.dig/10)*100+'%',background:'var(--brand-accent-text)'}}></div></div>
               <span className="v">{ing.dig}<span className="unit">/10</span></span>
             </div>
             <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--paper-300)'}}>
@@ -4161,7 +4161,7 @@ const EBDial=({an,sp})=>{
   const pt=(v,r)=>[cx+r*Math.cos(rad(ang(v))), cy+r*Math.sin(rad(ang(v)))];
   const arc=(v0,v1,r)=>{const[x0,y0]=pt(v0,r);const[x1,y1]=pt(v1,r);const large=(ang(v1)-ang(v0))>180?1:0;return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;};
   const status=eb<base?'low':eb<=opt?'good':'high';
-  const needleCol=status==='low'?'var(--coral-500)':status==='high'?'#3D4A38':'var(--accent-olive)';
+  const needleCol=status==='low'?'var(--coral-500)':status==='high'?'var(--status-ok)':'var(--accent-olive)';
   const stLabel=status==='low'?'Por debajo del rango':status==='high'?'Excelente — sobre el óptimo':'Dentro del rango óptimo';
   const [nx,ny]=pt(eb,R-8);
   const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round((f*maxV)/5)*5);
@@ -4169,7 +4169,7 @@ const EBDial=({an,sp})=>{
     <div className="ebdial">
       <svg viewBox="0 0 260 200" width="100%" style={{maxWidth:288}}>
         <path d={arc(0,maxV,R)} fill="none" stroke="var(--paper-300)" strokeWidth="10" strokeLinecap="round"/>
-        <path d={arc(base,opt,R)} fill="none" stroke="#9FB07F" strokeWidth="10" strokeLinecap="round"/>
+        <path d={arc(base,opt,R)} fill="none" stroke="var(--status-ok-marker)" strokeWidth="10" strokeLinecap="round"/>
         <path d={arc(0,maxV,R+9)} fill="none" stroke="var(--ink-900)" strokeWidth="1"/>
         <path d={arc(0,maxV,R-9)} fill="none" stroke="var(--ink-900)" strokeWidth="0.7" opacity="0.45"/>
         {ticks.map((tv,i)=>{const[a0,b0]=pt(tv,R-9);const[a1,b1]=pt(tv,R+9);const[lx,ly]=pt(tv,R+24);return (
@@ -4181,7 +4181,7 @@ const EBDial=({an,sp})=>{
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'transform .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
         <circle cx={cx} cy={cy} r="7" fill="var(--paper-50)" stroke="var(--ink-900)" strokeWidth="1.6"/>
         <circle cx={cx} cy={cy} r="2.4" fill="var(--ink-900)"/>
-        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="#9C3F1F">{an.ebLow}–{an.ebHigh}</text>
+        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="var(--brand-accent-text)">{an.ebLow}–{an.ebHigh}</text>
         <text x={cx} y={cy+52} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-400)">% RANGO ESPERADO</text>
         <text x={cx} y={cy+66} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="9" fill="var(--ink-300)">central {eb.toFixed(0)}% · índice {an.ebIndex}/100</text>
       </svg>
@@ -4193,7 +4193,7 @@ const EBDial=({an,sp})=>{
 
 
 // ── BAND GAUGES ──────────────────────────────────────────────────────────────────────────
-const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='#A8432A',provenance})=>{
+const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='var(--brand-accent-text)',provenance})=>{
   const sMin=scaleMin??min*0.5;
   const sMax=scaleMax??max*1.5;
   const range=sMax-sMin;
@@ -4520,20 +4520,20 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
       <BandGauge label="C:N" unit=":1"
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
-        color="var(--accent-olive)" warnColor="#A8432A"
+        color="var(--accent-olive)" warnColor="var(--brand-accent-text)"
         provenance={procedenciaNutriente('cn')}/>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Calculado en base seca · corrige H₂O por insumo</div>
       <BandGauge label="N" unit="%"
         min={sp.n_optimal.min} max={sp.n_optimal.max} ideal={sp.n_optimal.ideal}
         value={an.avgN} scaleMin={0} scaleMax={3.5}
-        color="var(--accent-blue-grey)" warnColor="#A8432A"
+        color="var(--accent-blue-grey)" warnColor="var(--brand-accent-text)"
         provenance={procedenciaNutriente('n')}/>
       <BandGauge label="EB estimado" unit="%"
         min={sp.eb_baseline} max={sp.eb_optimal} ideal={sp.eb_optimal}
         value={an?Math.round(blendedEB):null}
         reference={optimalAn?Math.round(optimalAn.eb):null}
         scaleMin={0} scaleMax={Math.max(200,Math.ceil(sp.eb_optimal*1.4/10)*10)}
-        color="#A8432A" warnColor="var(--accent-terracotta)"/>
+        color="var(--brand-accent-text)" warnColor="var(--accent-terracotta)"/>
       {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {an.ebLow}–{an.ebHigh}% · índice {an.ebIndex}/100 · la aguja es el valor central</div>}
       <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft)')}}>
         {hasHist?(
@@ -8461,8 +8461,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
                     <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 8%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 30%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="var(--status-error)"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="var(--status-error)"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="var(--status-warn-text)"/>:<AppIcon name="sprout" size={16} color="var(--status-ok)"/>}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':restrictiveFactor.severity==='warning'?'var(--status-warn-text)':'var(--status-ok)'}}>
                           Factor Restrictivo Estimado: {restrictiveFactor.label}
                         </span>
                       </div>
@@ -8475,7 +8475,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         </div>
                       )}
                       {restrictiveFactor.actionRequired&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':'#5A4008',fontWeight:700}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':'var(--status-warn-text)',fontWeight:700}}>
                           → Acción correctiva: {restrictiveFactor.actionRequired}
                         </div>
                       )}
@@ -8489,7 +8489,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
                         <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
                       </div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'var(--paper-50)',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
                         All American 1941X: {reqPsi.toFixed(2)} psig
                       </span>
                     </div>
@@ -8562,13 +8562,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                           Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
                         </div>}
                       {similarTrial&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-warn-text)',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
                           Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
                         </div>}
                       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
                         {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 12%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'var(--status-warn-text)',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'var(--status-ok)'}}>Todos los parámetros en rango</span>}
                         {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 25%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
@@ -10219,7 +10219,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{maxWidth:560}}>
                   {cmpConfirm?(
                     <div>
-                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'#FBF6E8':'var(--moss-tint)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
+                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name={cmpConfirm.pendiente?'clipboard':'check'} size={13} color="var(--ink-800)" /> {cmpConfirm.pendiente?'Pedido registrado':'Compra registrada'}</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                         {cmpConfirm.pendiente&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:6}}>El stock físico de bodega NO cambió. Estos kilos quedan en camino hasta que confirmes la recepción.</div>}
@@ -10303,7 +10303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const total=cmpItems.length;
                     const sinMatch=cmpItems.filter(it=>!it.ingId).length;
                     return(
-                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-tint)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
                         Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
                         {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
                       </div>
@@ -11282,7 +11282,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
-                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
+                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['var(--status-ok)','var(--border-hairline)','var(--status-warn-text)'][i%3]||'var(--text-metadata)'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
                 ))}
               </div>
               <div className="os-flush-list">
@@ -12440,7 +12440,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               type="button"
               onClick={() => setShowPostHarvestModal(true)}
               className="inv-btn inv-btn-sec"
-              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--status-info)', color: 'var(--status-info)', fontWeight: 700 }}
               title="Predicción de vida útil, transpiración y empaque en frío"
             >
               <AppIcon name="snowflake" size={13} style={{marginRight:4}} /> Poscosecha & Frío
@@ -12983,7 +12983,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* Sombreado de banda óptima */}
                   <rect x="0" y="20" width="500" height="60" fill="rgba(56, 120, 180, 0.12)" />
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
-                  <polyline fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
+                  <polyline fill="none" stroke="var(--status-info)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
                 </svg>
               </div>
             </div>
@@ -14786,7 +14786,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const bars=[
                         {lbl:'Ef. Biológica',min:sp.eb_baseline,max:sp.eb_optimal,abs:150,unit:'%',color:'var(--coral-500)'},
                         {lbl:'Spawn',min:sp.spawn_rate,max:sp.spawn_rate,abs:20,unit:'%',color:'var(--moss-600)'},
-                        {lbl:'C:N',min:sp.cn_optimal.min,max:sp.cn_optimal.max,abs:80,unit:'',color:'#594631'},
+                        {lbl:'C:N',min:sp.cn_optimal.min,max:sp.cn_optimal.max,abs:80,unit:'',color:'var(--bark-700)'},
                         {lbl:'pH',min:sp.ph_optimal.min,max:sp.ph_optimal.max,abs:10,unit:'',color:'var(--ochre-500)'},
                       ];
                       return(
@@ -15069,9 +15069,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const ebBase=sp?.eb_baseline||80;
               const ebOk=ebVal>=ebOpt;
               const ebMid=ebVal>=ebBase;
-              const ebColor=ebOk?'var(--moss-700)':(ebMid?'#976E1A':'#A8432A');
+              const ebColor=ebOk?'var(--moss-700)':(ebMid?'var(--status-warn-text)':'var(--brand-accent-text)');
               const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=MASS_BALANCE_TOL:false;
-              const totColor=totOk?'var(--moss-700)':'#A8432A';
+              const totColor=totOk?'var(--moss-700)':'var(--brand-accent-text)';
 
               return(
                 <div>
@@ -15132,10 +15132,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button
                           onClick={()=>autoBalance(balanceMode)}
                           className="live-dash-btn"
-                          style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
+                          style={{background:'var(--coral-500)',color:'var(--paper-50)',borderColor:'var(--coral-600)'}}
                           aria-label="Ajustar ingredientes libres al 100%"
                           title="Ajustar ingredientes libres al 100%">
-                          <IconBolt size={10} color="#fff" />
+                          <IconBolt size={10} color="var(--paper-50)" />
                           <span>100%</span>
                         </button>
                       )}
@@ -15164,10 +15164,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           }
                         }}
                         className="live-dash-btn"
-                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'#fff',borderColor:'var(--ink-900)'}}
+                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'var(--paper-50)',borderColor:'var(--ink-900)'}}
                         aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
                         title="Guardar receta en Recetario">
-                        {flash ? <IconCheck size={11} color="#fff" /> : <IconDisk size={11} color="#fff" />}
+                        {flash ? <IconCheck size={11} color="var(--paper-50)" /> : <IconDisk size={11} color="var(--paper-50)" />}
                       </button>
                     </div>
                   </div>
@@ -15255,7 +15255,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </button>
                             <div style={{flex:'1 1 100px',minWidth:0,display:'flex',alignItems:'center',gap:4}} title={`${g.name} · C:N ${g.cn||'—'} · N ${g.n||'—'}%${rowFlag?` · ${rowFlag.label}`:''}`}>
                               <span style={{fontSize:"var(--text-sm)",fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.name}</span>
-                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0,display:'inline-flex',alignItems:'center'}}><AppIcon name="alert" size={11} color="currentColor" /></span>}
+                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'var(--status-warn-text)',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0,display:'inline-flex',alignItems:'center'}}><AppIcon name="alert" size={11} color="currentColor" /></span>}
                               <span className="sr-only">C:N {g.cn||'—'} · N {g.n||'—'}%{rowFlag?`, ${rowFlag.label}`:''}</span>
                             </div>
                             <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
@@ -15733,7 +15733,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
                 </div>
               </div>
-              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
+              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500)':'var(--coral-500)';const bg=sc>=80?'var(--status-ok-bg)':sc>=60?'var(--status-warn-bg)':'var(--status-error-bg)';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
                 <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                     <div>
@@ -15761,14 +15761,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const idealPct=(m.ideal/m.scale)*100;
                     const minPct=(m.min/m.scale)*100;
                     const maxPct=(m.max/m.scale)*100;
-                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'#d4a04a';
+                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'var(--status-warn)';
                     return(
                       <div key={m.label} style={{background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'8px 10px'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
                           <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
                           <span style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
                         </div>
-                        <div style={{position:'relative',height:6,background:'#e0dbd3',borderRadius:3}}>
+                        <div style={{position:'relative',height:6,background:'var(--border-soft)',borderRadius:3}}>
                           <div style={{position:'absolute',left:`${minPct}%`,width:`${maxPct-minPct}%`,height:'100%',background:'rgba(77,98,53,.2)',borderRadius:3}}/>
                           <div style={{position:'absolute',left:`${idealPct}%`,width:2,height:'160%',top:'-30%',background:'rgba(77,98,53,.5)',borderRadius:1}}/>
                           <div style={{position:'absolute',left:0,width:`${pct}%`,height:'100%',background:barColor,borderRadius:3,transition:'width .3s'}}/>
@@ -15808,14 +15808,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       ))}
                       <div className="brow" style={{borderTop:'2px solid var(--border-soft)',marginTop:4,paddingTop:8}}>
-                        <span className="bn" style={{color:'#2A5078',fontWeight:600}}> Agua a agregar (obj. {bd.hObj}%)</span>
-                        <span className="bq" style={{background:'#E8F2FA',border:'1px solid #9AC0D8',color:'#2A5078'}}>{bd.agua.toFixed(2)} L</span>
+                        <span className="bn" style={{color:'var(--status-info)',fontWeight:600}}> Agua a agregar (obj. {bd.hObj}%)</span>
+                        <span className="bq" style={{background:'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))',border:'1px solid var(--status-info)',color:'var(--status-info)'}}>{bd.agua.toFixed(2)} L</span>
                       </div>
                       <div className="brow" style={{borderTop:'1px solid var(--paper-300)',marginTop:4,paddingTop:8}}>
                         <span className="bn"> Spawn ({an?.dynSpawn||8}% · {bd.spawn.toFixed(2)} kg)</span>
                         <div style={{display:'flex',gap:8,alignItems:'center'}}>
                           <span className="bc">${Math.round(bd.spawnCostTotal).toLocaleString()}</span>
-                          <span className="bq" style={{background:'#E8F5E8',border:'1px solid #7AB87A',color:'#2A5A2A'}}>{bd.spawn.toFixed(2)} kg</span>
+                          <span className="bq" style={{background:'var(--status-ok-bg)',border:'1px solid var(--status-ok-marker)',color:'var(--status-ok)'}}>{bd.spawn.toFixed(2)} kg</span>
                         </div>
                       </div>
                       <div className="btots" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
@@ -15841,7 +15841,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const marginPct=revenue>0?((margin/revenue)*100).toFixed(1):0;
                         const positive=margin>=0;
                         return(
-                          <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'#F2F5EE':'#F9EDEA'}}>
+                          <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'var(--status-ok-bg)':'var(--status-error-bg)'}}>
                             <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
                             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:positive?'var(--moss-500)':'var(--coral-500)'}}>
                               {[
@@ -15925,7 +15925,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)'}}>
                     <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="#fff" /> Auto-mejorar</button>}
+                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> Auto-mejorar</button>}
                   </div>
                 )}
                 </div>
@@ -16360,7 +16360,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   Usando solo ingredientes en stock · {sc} disponibles en inventario
                                 </div>
                               ):(
-                                <div style={{padding:'10px 14px',background:'#FBF6E8',border:'1px solid #D4A838',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'#7A5A10',marginBottom:12}}>
+                                <div style={{padding:'10px 14px',background:'var(--status-warn-bg)',border:'1px solid var(--status-warn)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-warn-text)',marginBottom:12}}>
                                   Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
                                 </div>
                               );
@@ -16403,7 +16403,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
-                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
@@ -16471,10 +16471,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         const t=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
-                                          ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
+                                          ?{bg:'var(--status-error-bg)',br:'color-mix(in srgb, var(--status-error) 35%, var(--paper-50))',fg:'var(--brand-accent-text)',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
                                           ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention-text)',lbl:'Pasteurización 65–75°C núcleo'}
-                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'',lbl:'CWLP — Cal en Frío pH≥12'};
+                                          :{bg:'var(--status-ok-bg)',br:'var(--status-ok-marker)',fg:'var(--status-ok)',icon:'',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
                                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
@@ -16512,14 +16512,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
                                     {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún suplemento N en bodega es compatible con esta especie.</div>}
                                     {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="#7A5A10" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
+                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'var(--status-warn-text)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--status-warn-text)" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'var(--status-warn-bg)'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </button>
                             )}
@@ -16748,8 +16748,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <label htmlFor="sch-temp">Temp. Incubación (°C)</label>
                     <div style={{display:'flex',gap:4}}>
                       <input id="sch-temp" type="number" min="8" max="32" step="1" value={schTemp} onChange={e=>setSchTemp(parseFloat(e.target.value)||16)} style={{width:65}}/>
-                      <button type="button" onClick={()=>setSchTemp(16)} title="Tenjo ambiente" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===16?'var(--accent-olive)':'var(--paper-100)',color:schTemp===16?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>16° Tenjo</button>
-                      <button type="button" onClick={()=>setSchTemp(24)} title="Cámara térmica" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===24?'var(--accent-olive)':'var(--paper-100)',color:schTemp===24?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>24° Control</button>
+                      <button type="button" onClick={()=>setSchTemp(16)} title="Tenjo ambiente" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===16?'var(--accent-olive)':'var(--paper-100)',color:schTemp===16?'var(--paper-50)':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>16° Tenjo</button>
+                      <button type="button" onClick={()=>setSchTemp(24)} title="Cámara térmica" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===24?'var(--accent-olive)':'var(--paper-100)',color:schTemp===24?'var(--paper-50)':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>24° Control</button>
                     </div>
                   </div>
                   {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
@@ -17003,10 +17003,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const bt=BAG_TYPES.find(b=>b.id===prodBagType);
                 if(!bt) return null;
                 const tc=bt.tratamiento==='thermal'
-                  ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
+                  ?{bg:'var(--status-warn-bg)',br:'var(--status-warn)',fg:'var(--status-warn-text)',icon:'',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
                   :bt.tratamiento==='cwlp_thermal'
-                  ?{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
-                  :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
+                  ?{bg:'var(--status-ok-bg)',br:'var(--status-ok-marker)',fg:'var(--status-ok)',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
+                  :{bg:'var(--status-error-bg)',br:'color-mix(in srgb, var(--status-error) 35%, var(--paper-50))',fg:'var(--brand-accent-text)',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
                 return(
                   <div>
                     <div style={{padding:'7px 11px',background:tc.bg,border:`1px solid ${tc.br}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,marginBottom:7}}>
@@ -17229,10 +17229,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div className="econ-pills-row">
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#5E7080'}}></span>Sustrato: ${Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-blue-grey)'}}></span>Sustrato: ${Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString('es-CO')}/bolsa</span>
                     <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-olive)'}}></span>Micelio: ${Math.round(pb.costBreakdownPerBag.spawn).toLocaleString('es-CO')}/bolsa</span>
                     <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-terracotta)'}}></span>Tratamiento Térmico: ${Math.round(pb.costBreakdownPerBag.energia).toLocaleString('es-CO')}/bolsa</span>
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#7A6A52'}}></span>Bolsa PP: ${Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-mushroom)'}}></span>Bolsa PP: ${Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString('es-CO')}/bolsa</span>
                   </div>
                 </div>
 
@@ -17825,7 +17825,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         }
                         const net = gross - tare;
                         return (
-                          <div style={{ padding: '8px 10px', background: '#DCFCE7', color: '#15803D', borderLeft: '3px solid #16A34A', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ padding: '8px 10px', background: 'var(--status-ok-bg)', color: 'var(--status-ok)', borderLeft: '3px solid var(--status-ok-marker)', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
                             <span><AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Peso Neto: {net} g</span>
                             <span>({(net / 1000).toFixed(3)} kg)</span>
                           </div>
@@ -17926,7 +17926,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button
                           type="button"
                           onClick={stopCameraScanner}
-                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'var(--paper-50)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
                         >
                           <AppIcon name="close" size={10} style={{marginRight:4}} /> Detener Cámara
                         </button>
@@ -18703,7 +18703,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {f.plan?.shortfalls?.length > 0 && (
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'var(--status-error-bg)',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
                       <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
                     </div>
                   )}
@@ -18720,7 +18720,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </thead>
                       <tbody>
                         {f.insumos.map((ins, i) => (
-                          <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
+                          <tr key={i} style={{background: ins.ok ? 'transparent' : 'var(--status-error-bg)'}}>
                             <td style={{fontWeight:600}}>{ins.name}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} {ins.unit || 'kg'}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
@@ -18750,7 +18750,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{
                           padding:'10px 12px',
                           border:`1.5px solid ${f.sala === r.id ? 'var(--moss-700)' : 'var(--border-hairline)'}`,
-                          background: f.sala === r.id ? 'var(--paper-0)' : '#ffffff',
+                          background: f.sala === r.id ? 'var(--paper-0)' : 'var(--paper-50)',
                           borderRadius:'var(--radius-sm)',
                           textAlign:'left',
                           cursor:'pointer'
@@ -19347,9 +19347,9 @@ interval:
               <div style={{
                 padding: '12px 14px',
                 borderRadius: 'var(--radius-sm)',
-                background: cycle.riskLevel === 'seguro' ? 'var(--moss-100)' : cycle.riskLevel === 'moderado' ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
-                border: `1px solid ${cycle.riskLevel === 'seguro' ? 'var(--moss-600)' : cycle.riskLevel === 'moderado' ? '#D97706' : 'var(--accent-terracotta)'}`,
-                color: cycle.riskLevel === 'seguro' ? 'var(--moss-800)' : cycle.riskLevel === 'moderado' ? '#92400E' : 'var(--accent-rust)',
+                background: cycle.riskLevel === 'seguro' ? 'var(--moss-100)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
+                border: `1px solid ${cycle.riskLevel === 'seguro' ? 'var(--moss-600)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
+                color: cycle.riskLevel === 'seguro' ? 'var(--moss-800)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn-text)' : 'var(--accent-rust)',
                 marginBottom: 16
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -19507,9 +19507,9 @@ interval:
                   <div style={{
                     padding: '12px 14px',
                     borderRadius: 'var(--radius-sm)',
-                    background: opt.groupScore >= 70 ? 'var(--moss-100)' : opt.groupScore >= 50 ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
-                    border: `1px solid ${opt.groupScore >= 70 ? 'var(--moss-600)' : opt.groupScore >= 50 ? '#D97706' : 'var(--accent-terracotta)'}`,
-                    color: opt.groupScore >= 70 ? 'var(--moss-800)' : opt.groupScore >= 50 ? '#92400E' : 'var(--accent-rust)',
+                    background: opt.groupScore >= 70 ? 'var(--moss-100)' : opt.groupScore >= 50 ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
+                    border: `1px solid ${opt.groupScore >= 70 ? 'var(--moss-600)' : opt.groupScore >= 50 ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
+                    color: opt.groupScore >= 70 ? 'var(--moss-800)' : opt.groupScore >= 50 ? 'var(--status-warn-text)' : 'var(--accent-rust)',
                     marginBottom: 16
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -19611,7 +19611,7 @@ interval:
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1D4ED8' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--status-info)' }}>
                     Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -19713,9 +19713,9 @@ interval:
                   <div style={{
                     padding: '12px 14px',
                     borderRadius: 'var(--radius-sm)',
-                    background: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-100)' : slResult.marketableShelfLifeDays >= 3 ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
-                    border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-600)' : slResult.marketableShelfLifeDays >= 3 ? '#D97706' : 'var(--accent-terracotta)'}`,
-                    color: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-800)' : slResult.marketableShelfLifeDays >= 3 ? '#92400E' : 'var(--accent-rust)',
+                    background: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-100)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
+                    border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-600)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
+                    color: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-800)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn-text)' : 'var(--accent-rust)',
                     marginBottom: 16
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -19781,7 +19781,7 @@ interval:
 
                   {/* Especificación de Empaque MAP */}
                   <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#1D4ED8', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--status-info)', marginBottom: 4 }}>
                       <AppIcon name="box" size={14} style={{marginRight:6}} /> Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
@@ -19998,7 +19998,7 @@ interval:
                             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
                               {p.commonName}
                             </span>
-                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : '#FEF3C7', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : '#B45309' }}>
+                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--status-warn-bg)', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : 'var(--status-warn-text)' }}>
                               {p.dangerLevel === 'critical' ? 'Crítico' : p.dangerLevel === 'high' ? 'Alto' : 'Medio'}
                             </span>
                           </div>
@@ -20396,7 +20396,7 @@ interval:
                     minHeight:44,
                     cursor:(!diagImageBase64||diagRunning)?'not-allowed':'pointer',
                     background:(!diagImageBase64||diagRunning)?'var(--paper-2)':'var(--accent-terracotta)',
-                    color:(!diagImageBase64||diagRunning)?'var(--ink-2)':'#ffffff',
+                    color:(!diagImageBase64||diagRunning)?'var(--ink-2)':'var(--paper-50)',
                     border:'none',
                     borderRadius:'var(--radius-md)',
                     fontFamily:'var(--font-sans)',
@@ -20447,7 +20447,7 @@ interval:
                           minHeight:42,
                           cursor:'pointer',
                           background:'var(--moss-700)',
-                          color:'#ffffff',
+                          color:'var(--paper-50)',
                           border:'none',
                           borderRadius:'var(--radius-sm)',
                           fontFamily:'var(--font-sans)',
@@ -20561,7 +20561,7 @@ interval:
                       width:'100%',
                       minHeight:42,
                       background:aiFormLoading?'var(--ink-500)':'var(--moss-700)',
-                      color:'#fff',
+                      color:'var(--paper-50)',
                       border:'none',
                       borderRadius:'var(--radius-sm)',
                       fontFamily:'var(--font-sans)',
@@ -20609,7 +20609,7 @@ interval:
                           flex:1,
                           minHeight:42,
                           background:'var(--moss-700)',
-                          color:'#fff',
+                          color:'var(--paper-50)',
                           border:'none',
                           borderRadius:'var(--radius-sm)',
                           fontFamily:'var(--font-sans)',
@@ -20697,7 +20697,7 @@ interval:
                 <option value="" disabled>Elegir especie…</option>
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
-              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
+              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'var(--paper-50)',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
                 Ver catálogo
               </button>
             </div>
@@ -20714,7 +20714,7 @@ interval:
             <select className="bridge-select" value={sKey} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();setSKey(e.target.value);}} aria-label="Cambiar especie" title="Cambiar especie sin salir del formulador">
               {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
             </select>
-            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
+            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'var(--paper-50)',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
               Ver catálogo
             </button>}
             <button type="button" className="bridge-toggle" aria-expanded={bridgeOpen} aria-label={bridgeOpen?'Ocultar parámetros de especie':'Mostrar parámetros de especie'} onClick={()=>setBridgeOpen(o=>!o)}>
