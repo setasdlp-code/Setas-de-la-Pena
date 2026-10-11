@@ -100,6 +100,17 @@
   --bark-300: var(--bark-tint);
 
   --slate-900: var(--slate-500);
+
+  /* Escalones que simulador-app.jsx usa sin definición (sin esto el color cae a
+     transparente/heredado). Alias a los roles DS-2026 más cercanos. */
+  --slate-800: var(--slate-500);
+  --moss-800:  var(--moss-700);
+  --moss-400:  var(--moss-500);
+  --moss-100:  var(--moss-tint);
+  --ochre-600: var(--warning-text);
+  --ochre-300: var(--warning);
+  --ochre-100: var(--warning-tint);
+  --paper-400: var(--paper-200);
   --slate-700: var(--slate-500);
   --slate-300: var(--accent-blue-grey-dim);
   --slate-200: var(--accent-blue-grey-dim);
@@ -402,6 +413,7 @@ code, pre { font-family: var(--font-mono); font-size: 0.92em; }
   --cat-adit:  var(--accent-blue-grey);
   --cat-adit-text: #505F6D;
 
+  /* --role-* y --perito-*: ver ds-2026/tokens/tokens.css (domain.json). */
   --cat-base-hover:  color-mix(in oklab, var(--cat-base)  12%, var(--paper-0));
   --cat-cafe-hover:  color-mix(in oklab, var(--cat-cafe)  12%, var(--paper-0));
   --cat-circ-hover:  color-mix(in oklab, var(--cat-circ)  12%, var(--paper-0));

@@ -218,6 +218,27 @@
   --sync-error-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5' fill='none' stroke='%23000' stroke-width='1.75'/%3E%3C/svg%3E");
   --sync-offline-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M7 .75 2.5 7H6L5 11.25 9.5 5H6Z'/%3E%3C/svg%3E");
   --status-quarantine-border-style: dashed;
+
+  /* Domain colours: ingredient role in the mix + perito verdict */
+  --role-base-carbono: #5A7042;
+  --role-suplemento-n: #C68F2C;
+  --role-suplemento-medio: #D4A838;
+  --role-aireador: #4E7A6A;
+  --role-aditivo-ph: #8B5C28;
+  --role-aditivo-estructura: #7A6B58;
+  --role-aditivo-micronutriente: #2A6A7A;
+  --role-aditivo-arrancador: #9B4F3A;
+  --perito-excellent-bg: #EDF4E8;
+  --perito-excellent-border: #7FA05A;
+  --perito-excellent-txt: #3D4A38;
+  --perito-good-bg: #F5F0E0;
+  --perito-good-border: #C8A840;
+  --perito-good-badge: #7A5A10;
+  --perito-good-txt: #5A4010;
+  --perito-needs-work-bg: #FBF0E8;
+  --perito-needs-work-border: #C87040;
+  --perito-needs-work-badge: #8C4020;
+  --perito-needs-work-txt: #6A3010;
 }
 
 /* Density profiles are semantic surface modes, never viewport aliases. */

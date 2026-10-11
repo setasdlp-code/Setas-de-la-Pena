@@ -152,10 +152,10 @@ function BioCheck() {
   return (
     <div className="bio-check" style={{padding: '24px', maxWidth: 800, margin: '0 auto'}}>
       <h2 style={{fontFamily: 'var(--font-serif, serif)', fontSize: '1.5rem', marginBottom: 8, color: 'var(--ink-900)'}}>Checklist Digital de Bioseguridad</h2>
-      {allChecked && <div className="badge" style={{display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'var(--moss-100, #e8f0e4)', color:'var(--moss-800, #2e5a36)', borderRadius:4, fontWeight:700, marginBottom:16}}><AppIcon name="check" size={13} color="var(--moss-800, #2e5a36)" /> Bio‑Check OK</div>}
+      {allChecked && <div className="badge" style={{display:'inline-flex', alignItems:'center', gap:4, padding:'4px 10px', background:'var(--moss-tint)', color:'var(--moss-700)', borderRadius:4, fontWeight:700, marginBottom:16}}><AppIcon name="check" size={13} color="var(--moss-700)" /> Bio‑Check OK</div>}
       <ul style={{listStyle:'none', padding:0}}>
         {items.map(item => (
-          <li key={item.id} style={{marginBottom: '1rem', background:'var(--paper-50, #fff)', border:'1px solid var(--border-soft, #e2e4dd)', padding:'14px', borderRadius:6}}>
+          <li key={item.id} style={{marginBottom: '1rem', background:'var(--paper-50)', border:'1px solid var(--border-soft)', padding:'14px', borderRadius:6}}>
             <label style={{fontWeight:600, display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
               <input
                 type="checkbox"
@@ -169,7 +169,7 @@ function BioCheck() {
               value={item.comment || ''}
               onChange={e => setComment(item.id, e.target.value)}
               rows={2}
-              style={{width: '100%', marginTop:8, padding:'6px 8px', borderRadius:4, border:'1px solid var(--border-strong, #ccc)', boxSizing:'border-box', fontSize:'0.85rem'}}
+              style={{width: '100%', marginTop:8, padding:'6px 8px', borderRadius:4, border:'1px solid var(--border-strong)', boxSizing:'border-box', fontSize:'0.85rem'}}
             />
           </li>
         ))}
@@ -508,8 +508,8 @@ function LabExtraction() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 32 }}>
-        <div style={{ background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft, #e2e4dd)", paddingBottom: 8 }}>
+        <div style={{ background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 }}>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 }}>
             Configurar Lote de Extracción
           </h3>
           
@@ -521,7 +521,7 @@ function LabExtraction() {
               <select
                 value={speciesKey}
                 onChange={e => setSpeciesKey(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", background: "#fff", fontSize: "0.9rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--paper-50)", fontSize: "0.9rem" }}
               >
                 {Object.entries(factors).map(([k, d]) => (
                   <option key={k} value={k}>{d.name}</option>
@@ -559,7 +559,7 @@ function LabExtraction() {
                   step="1"
                   value={biomassGrams}
                   onChange={e => setBiomassGrams(e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.9rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.9rem", boxSizing: "border-box" }}
                 />
               </div>
 
@@ -573,7 +573,7 @@ function LabExtraction() {
                   step="0.1"
                   value={solventLiters}
                   onChange={e => setSolventLiters(e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.9rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.9rem", boxSizing: "border-box" }}
                 />
               </div>
             </div>
@@ -589,7 +589,7 @@ function LabExtraction() {
                   max="100"
                   value={alcoholPct}
                   onChange={e => setAlcoholPct(e.target.value)}
-                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
                 />
               </div>
               <div>
@@ -602,7 +602,7 @@ function LabExtraction() {
                   step="0.1"
                   value={timeHrs}
                   onChange={e => setTimeHrs(e.target.value)}
-                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
                 />
               </div>
               <div>
@@ -615,7 +615,7 @@ function LabExtraction() {
                   max="120"
                   value={tempC}
                   onChange={e => setTempC(e.target.value)}
-                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
                 />
               </div>
             </div>
@@ -629,7 +629,7 @@ function LabExtraction() {
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Observaciones de molienda, reactivos o filtrado..."
                 rows={2}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
               />
             </div>
 
@@ -638,8 +638,8 @@ function LabExtraction() {
               style={{
                 width: "100%",
                 padding: "10px 16px",
-                background: "var(--accent-terracotta, #c05a3e)",
-                color: "#fff",
+                background: "var(--accent-terracotta)",
+                color: "var(--paper-50)",
                 border: "none",
                 borderRadius: 6,
                 fontWeight: 700,
@@ -653,18 +653,18 @@ function LabExtraction() {
           </form>
         </div>
 
-        <div style={{ background: "var(--paper-100, #f8f9f6)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft, #e2e4dd)", paddingBottom: 8 }}>
+            <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 }}>
               Proyección de Rendimiento & Costos
             </h3>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-              <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)" }}>
+              <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Extracto Seco Estimado
                 </span>
-                <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-800, #2e5a36)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" }}>
                   {yieldGrams} g
                 </span>
                 <span style={{ display: "block", fontSize: "0.8rem", color: "var(--ink-600)" }}>
@@ -672,7 +672,7 @@ function LabExtraction() {
                 </span>
               </div>
 
-              <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)" }}>
+              <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Costo por Gramo
                 </span>
@@ -685,7 +685,7 @@ function LabExtraction() {
               </div>
             </div>
 
-            <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)", marginBottom: 14 }}>
+            <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 }}>
               <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" }}>
                 Desglose de Costo Operativo
               </span>
@@ -697,9 +697,9 @@ function LabExtraction() {
                 <span style={{ color: "var(--ink-600)" }}>Solvente & Insumos ({solventLiters} L):</span>
                 <span style={{ fontWeight: 600, fontFamily: "var(--font-mono, monospace)" }}>${Math.round(solventCost).toLocaleString("es-CO")}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong, #ccc)", paddingTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong)", paddingTop: 6 }}>
                 <span>Costo Total Lote:</span>
-                <span style={{ color: "var(--accent-terracotta, #c05a3e)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span style={{ color: "var(--accent-terracotta)", fontFamily: "var(--font-mono, monospace)" }}>
                   ${totalCost.toLocaleString("es-CO")} COP
                 </span>
               </div>
@@ -714,7 +714,7 @@ function LabExtraction() {
         </div>
       </div>
 
-      <div style={{ background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20 }}>
+      <div style={{ background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" }}>
             Lotes de Extracción Registrados ({batches.length})
@@ -729,7 +729,7 @@ function LabExtraction() {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
               <thead>
-                <tr style={{ borderBottom: "2px solid var(--border-strong, #333)", color: "var(--ink-800)" }}>
+                <tr style={{ borderBottom: "2px solid var(--border-strong)", color: "var(--ink-800)" }}>
                   <th style={{ padding: "8px 6px" }}>ID Lote</th>
                   <th style={{ padding: "8px 6px" }}>Especie</th>
                   <th style={{ padding: "8px 6px" }}>Método</th>
@@ -741,7 +741,7 @@ function LabExtraction() {
               </thead>
               <tbody>
                 {batches.map(b => (
-                  <tr key={b.id} style={{ borderBottom: "1px solid var(--border-soft, #e2e4dd)" }}>
+                  <tr key={b.id} style={{ borderBottom: "1px solid var(--border-soft)" }}>
                     <td style={{ padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" }}>
                       {b.id}
                       <div style={{ fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 }}>
@@ -750,14 +750,14 @@ function LabExtraction() {
                     </td>
                     <td style={{ padding: "10px 6px" }}>{b.speciesName || b.speciesKey}</td>
                     <td style={{ padding: "10px 6px" }}>
-                      <span style={{ fontSize: "0.8rem", background: "var(--paper-200, #eee)", padding: "2px 6px", borderRadius: 4 }}>
+                      <span style={{ fontSize: "0.8rem", background: "var(--paper-200)", padding: "2px 6px", borderRadius: 4 }}>
                         {b.methodName || b.methodKey}
                       </span>
                     </td>
                     <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" }}>
                       {b.biomassGrams} g
                     </td>
-                    <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-800, #2e5a36)" }}>
+                    <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" }}>
                       {b.yieldGrams} g ({b.yieldPct}%)
                     </td>
                     <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" }}>
@@ -768,21 +768,21 @@ function LabExtraction() {
                         <button
                           onClick={() => setSelectedQrBatch(b)}
                           title="Generar QR de Trazabilidad"
-                          style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "var(--paper-200)", border: "1px solid var(--border-soft)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           <AppIcon name="qr" size={12} style={{marginRight:4}} /> QR
                         </button>
                         <button
                           onClick={() => exportBatchPdfStub(b)}
                           title="Exportar Certificado"
-                          style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "var(--paper-200)", border: "1px solid var(--border-soft)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           <AppIcon name="file" size={12} style={{marginRight:4}} /> Cert
                         </button>
                         <button
                           onClick={() => handleDeleteBatch(b.id)}
                           title="Eliminar registro"
-                          style={{ padding: "4px 8px", background: "transparent", border: "1px solid #e57373", color: "#c62828", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "transparent", border: "1px solid var(--status-error)", color: "var(--status-error)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           <AppIcon name="close" size={12} />
                         </button>
@@ -808,7 +808,7 @@ function LabExtraction() {
           padding: 16
         }}>
           <div style={{
-            background: "#fff",
+            background: "var(--paper-50)",
             borderRadius: 8,
             padding: 24,
             maxWidth: 380,
@@ -819,14 +819,14 @@ function LabExtraction() {
             <h4 style={{ margin: "0 0 12px 0", fontSize: "1.1rem" }}>
               Trazabilidad QR · {selectedQrBatch.id}
             </h4>
-            <div style={{ margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f8f8", borderRadius: 6, border: "1px solid #ddd" }}>
+            <div style={{ margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-recessed)", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
               {generateBatchQrDataUrl(selectedQrBatch) ? (
                 <img src={generateBatchQrDataUrl(selectedQrBatch)} alt="QR Lote" style={{ width: 160, height: 160 }} />
               ) : (
-                <span style={{ fontSize: "0.8rem", color: "#888" }}>Generando código QR...</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-metadata)" }}>Generando código QR...</span>
               )}
             </div>
-            <div style={{ fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "#f9f9f9", padding: 10, borderRadius: 6, marginBottom: 16 }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "var(--surface-recessed)", padding: 10, borderRadius: 6, marginBottom: 16 }}>
               <div><b>Especie:</b> {selectedQrBatch.speciesName}</div>
               <div><b>Método:</b> {selectedQrBatch.methodName}</div>
               <div><b>Extracto:</b> {selectedQrBatch.yieldGrams} g ({selectedQrBatch.yieldPct}%)</div>
@@ -836,8 +836,8 @@ function LabExtraction() {
               style={{
                 width: "100%",
                 padding: "8px 14px",
-                background: "var(--ink-900, #222)",
-                color: "#fff",
+                background: "var(--ink-900)",
+                color: "var(--paper-50)",
                 border: "none",
                 borderRadius: 4,
                 cursor: "pointer",
@@ -1623,7 +1623,7 @@ const FlushChart=({an,sKey})=>{
     {flushNumber:2,pct:0.30,daysAfterInoc:55,label:'2ª Cosecha'},
     {flushNumber:3,pct:0.15,daysAfterInoc:75,label:'3ª Cosecha'}
   ];
-  const colors=['var(--coral-500)','var(--accent-olive)','var(--ochre-500,#A07828)'];
+  const colors=['var(--coral-500)','var(--accent-olive)','var(--ochre-500)'];
   const bgs=['rgba(184,97,77,.08)','rgba(77,98,53,.07)','rgba(160,120,40,.07)'];
   const flushes=fProfile.map((f,i)=>({
     label:`${f.flushNumber||i+1}ª`,
@@ -1676,7 +1676,7 @@ const FlushChart=({an,sKey})=>{
 const CompositionChart=({recipe})=>{
   if(!recipe||!recipe.length) return null;
   const ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
-  const ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
+  const ROLE_COLORS={base_carbono:'var(--role-base-carbono)',suplemento_n:'var(--role-suplemento-n)',suplemento_medio:'var(--role-suplemento-medio)',aireador:'var(--role-aireador)',aditivo_ph:'var(--role-aditivo-ph)',aditivo_estructura:'var(--role-aditivo-estructura)',aditivo_micronutriente:'var(--role-aditivo-micronutriente)',aditivo_arrancador:'var(--role-aditivo-arrancador)'};
   const groups={};
   recipe.forEach(r=>{
     const g=INGS.find(i=>i.id===r.id);
@@ -1847,10 +1847,10 @@ const SpeciesRecommender=({recipe})=>{
 
 // ── PERITO: componente estable a nivel módulo (no redefinido en cada render) ──
 const PERITO_STATUS={
-  excellent:{label:'Ajuste favorable',veredicto:'Ajuste favorable del modelo',accion:'Revisar preparación y aprobación humana antes de producir.',bg:'#EDF4E8',border:'#7FA05A',badge:'var(--accent-olive)',txt:'#3D4A38'},
-  good:{label:'Revisar ajustes',veredicto:'Modelo con ajustes pendientes',accion:'Revisar recomendaciones, existencias y proceso antes de escalar.',bg:'#F5F0E0',border:'#C8A840',badge:'#7A5A10',txt:'#5A4010'},
-  needs_work:{label:'Requiere validación',veredicto:'Requiere validación',accion:'Definir una prueba y su seguimiento con el responsable antes de escalar.',bg:'#FBF0E8',border:'#C87040',badge:'#8C4020',txt:'#6A3010'},
-  critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'#FBE8E8',border:'#C53030',badge:'#8B1A1A',txt:'#6A0000'},
+  excellent:{label:'Ajuste favorable',veredicto:'Ajuste favorable del modelo',accion:'Revisar preparación y aprobación humana antes de producir.',bg:'var(--perito-excellent-bg)',border:'var(--perito-excellent-border)',badge:'var(--accent-olive)',txt:'var(--perito-excellent-txt)'},
+  good:{label:'Revisar ajustes',veredicto:'Modelo con ajustes pendientes',accion:'Revisar recomendaciones, existencias y proceso antes de escalar.',bg:'var(--perito-good-bg)',border:'var(--perito-good-border)',badge:'var(--perito-good-badge)',txt:'var(--perito-good-txt)'},
+  needs_work:{label:'Requiere validación',veredicto:'Requiere validación',accion:'Definir una prueba y su seguimiento con el responsable antes de escalar.',bg:'var(--perito-needs-work-bg)',border:'var(--perito-needs-work-border)',badge:'var(--perito-needs-work-badge)',txt:'var(--perito-needs-work-txt)'},
+  critical:{label:'No ejecutar',veredicto:'No ejecutar — Riesgo alto',accion:'Corregir problemas críticos antes de cualquier producción.',bg:'var(--status-error-bg)',border:'var(--status-error)',badge:'var(--status-error)',txt:'var(--status-error)'},
   sin_receta:{label:'—',veredicto:'—',accion:'',bg:'var(--paper-50)',border:'var(--border-soft)',badge:'var(--ink-500)',txt:'var(--ink-500)'},
 };
 // Color del estado del CICLO DE VIDA de la receta (recipe-lifecycle.js), no
@@ -1866,7 +1866,6 @@ const RECIPE_LIFECYCLE_COLOR={
   legacy:'var(--ink-400)',
 };
 const FORM_ROLE_LABELS={base_carbono:'Base C',suplemento_n:'Supl. N',suplemento_medio:'Supl. Medio',aireador:'Aireador',aditivo_ph:'pH',aditivo_estructura:'Estructura',aditivo_micronutriente:'Micronut.',aditivo_arrancador:'Arrancador'};
-const FORM_ROLE_COLORS={base_carbono:'#5A7042',suplemento_n:'#C68F2C',suplemento_medio:'#D4A838',aireador:'#4E7A6A',aditivo_ph:'#8B5C28',aditivo_estructura:'#7A6B58',aditivo_micronutriente:'#2A6A7A',aditivo_arrancador:'#9B4F3A'};
 const peritoMainLimiter=(opt,an)=>{
   if(!opt||!an) return null;
   const first=opt.items.find(i=>i.priority==='critical')||opt.items.find(i=>i.priority==='warning');
@@ -1940,7 +1939,7 @@ const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
   if(!change) return null;
   const cite=classCitation(change.to);
   return(
-    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'#7A5A10',fontFamily:'var(--font-mono)',marginTop:3}}>
+    <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginTop:3}}>
       <span style={{fontWeight:700}}>Cambia la clase de sustrato:</span> {change.from.label} → {change.to.label}.
       {fmtClassRanges(change.to)?` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite?` (${cite})`:''}.`:''} El índice estimado ya usa esos rangos.
     </div>
@@ -2013,19 +2012,19 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
     <div className="pi-body">
       <div className="pi-head">
         <span className="pi-label">{item.label}</span>
-        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#8C4020',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'#7A5A10',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
+        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'#7A5A10',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
       {deltaSim?.diff&&(
         <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
-          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
-          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
+          <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
             ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({Math.round(deltaSim.diff.newEb)}%)
           </span>
           {deltaSim.diff.confidence&&(
@@ -2034,7 +2033,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             </span>
           )}
           {deltaSim.diff.deltaCost!==0&&(
-            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'rgba(197,48,48,.15)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
+            <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaCost<=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaCost<=0?'var(--moss-800)':'var(--coral-700)'}}>
               ΔCosto: {deltaSim.diff.deltaCost<=0?`-$${Math.abs(deltaSim.diff.deltaCost)}/kg`:`+$${deltaSim.diff.deltaCost}/kg`}
             </span>
           )}
@@ -2047,12 +2046,12 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       )}
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
-      {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
+      {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
       <ClassChangeNote change={classChange}/>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
-      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600,#B5451F)" /> {item.sideEffect}</span></div>}
+      {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600)" /> {item.sideEffect}</span></div>}
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
@@ -2563,20 +2562,20 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
     <AccessibleModal
       onClose={onClose}
       label="Pasaporte Digital de Trazabilidad · Setas de la Peña"
-      dialogStyle={{width:'min(560px,94vw)',padding:0,background:'var(--paper-50,#FDFCF7)',border:'1px solid var(--border-soft,#D8D3C5)',borderRadius:'var(--r-md,6px)',overflow:'hidden',boxShadow:'var(--shadow-lift)'}}
+      dialogStyle={{width:'min(560px,94vw)',padding:0,background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-md,6px)',overflow:'hidden',boxShadow:'var(--shadow-lift)'}}
     >
-      <div style={{background:'var(--ink-900,#1B1A17)',color:'var(--paper-50,#FDFCF7)',padding:'22px 22px 18px',position:'relative'}}>
+      <div style={{background:'var(--ink-900)',color:'var(--paper-50)',padding:'22px 22px 18px',position:'relative'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
           <div style={{display:'flex',gap:14,alignItems:'center'}}>
             <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{width:60,height:'auto',maxHeight:34,objectFit:'contain',filter:'brightness(1.1) drop-shadow(0 2px 8px rgba(0,0,0,0.4))'}} />
             <div>
-              <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300,#C8C3B5)'}}>
-                <AppIcon name="globe" size={13} color="var(--moss-400,#8BA870)" /> Trazabilidad de Origen · Tenjo, Colombia
+              <div style={{display:'flex',alignItems:'center',gap:6,fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--paper-300)'}}>
+                <AppIcon name="globe" size={13} color="var(--moss-500)" /> Trazabilidad de Origen · Tenjo, Colombia
               </div>
-              <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50,#FDFCF7)',margin:'4px 0 2px',letterSpacing:'-.01em'}}>
+              <h2 style={{fontFamily:'var(--font-body)',fontSize:22,fontWeight:900,color:'var(--paper-50)',margin:'4px 0 2px',letterSpacing:'-.01em'}}>
                 {lote?.especie||'Seta Cultivada'}
               </h2>
-              <div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:13,color:'var(--paper-200,#E5E0D3)'}}>
+              <div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:13,color:'var(--paper-200)'}}>
                 {lote?.especieCientifico||'Pleurotus ostreatus'}
               </div>
             </div>
@@ -2587,7 +2586,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
 
       <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:16}}>
         {/* ESTADO DE SINCRONIZACIÓN EN FIRESTORE */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--paper-100,#F5F2E9)',borderRadius:4,border:'1px solid var(--border-soft,#D8D3C5)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'var(--paper-100)',borderRadius:4,border:'1px solid var(--border-soft)'}}>
           <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
             <span style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--ink-500)'}}>
               Ficha en Nube:
@@ -2597,8 +2596,8 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: 3,
-              background: syncResult?.status === 'synced' ? 'var(--moss-100,#E8F0E0)' : syncResult?.status === 'failed' ? 'var(--coral-100,#FDE8E8)' : 'var(--paper-200,#E5E0D3)',
-              color: syncResult?.status === 'synced' ? 'var(--moss-800,#3B5A24)' : syncResult?.status === 'failed' ? 'var(--coral-800,#9B1C1C)' : 'var(--ink-600)'
+              background: syncResult?.status === 'synced' ? 'var(--moss-tint)' : syncResult?.status === 'failed' ? 'var(--coral-100)' : 'var(--paper-200)',
+              color: syncResult?.status === 'synced' ? 'var(--moss-700)' : syncResult?.status === 'failed' ? 'var(--status-error)' : 'var(--ink-600)'
             }}>
               {syncResult?.status === 'synced' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="check" size={11} /> Publicado</span> : syncResult?.status === 'failed' ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} /> Error al publicar</span> : 'Pendiente de Sincronización'}
             </span>
@@ -2644,14 +2643,14 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
         </div>
 
         {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
-        <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100,#F5F2E9)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft,#D8D3C5)'}}>
-          <div style={{background:'#fff',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft)'}}>
+          <div style={{background:'var(--paper-50)',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
             <img src={qrDataUrl} alt={`QR Lote ${lote?.codigo||''}`} width="76" height="76" style={{display:'block'}} />
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-900)'}}>Lote #{lote?.codigo||'SDP-LOTE'}</strong>
-              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-100,#E8F0E0)',color:'var(--moss-800,#3B5A24)',borderRadius:3,textTransform:'uppercase'}}>
+              <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',background:'var(--moss-tint)',color:'var(--moss-700)',borderRadius:3,textTransform:'uppercase'}}>
                 {lote?.estado||'Activo'}
               </span>
             </div>
@@ -2666,19 +2665,19 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
 
         {/* TIMELINE BIOLÓGICO Y RENDIMIENTO */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+          <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Inoculación</div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:12.5,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
               {lote?.fechaInoculacion||'—'}
             </div>
           </div>
-          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+          <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Días en Proceso</div>
             <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>
               {diasIncubacion!=null?`${diasIncubacion} días`:'—'}
             </div>
           </div>
-          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+          <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)'}}>Cosecha Total</div>
             <div style={{fontFamily:'var(--font-num)',fontSize:14,fontWeight:700,color:'var(--moss-700)',marginTop:2}}>
               {totalKg>0?`${totalKg.toFixed(2)} kg`:'En sala'}
@@ -2688,7 +2687,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
 
         {/* COMPOSICIÓN DE SUSTRATO & CERTIFICACIÓN LIMPIA */}
         {recetaItems.length>0&&(
-          <div style={{background:'var(--paper-0,#FFFFFF)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
+          <div style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:4,padding:'10px 12px'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:9.5,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:6}}>
               Fórmula de Sustrato Lignocelulósico
             </div>
@@ -2696,7 +2695,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
               {recetaItems.map((item,idx)=>{
                 const g=typeof INGS!=='undefined'?INGS.find(i=>i.id===item.id):null;
                 return (
-                  <span key={idx} style={{fontSize:11,padding:'2px 8px',background:'var(--paper-100,#F5F2E9)',borderRadius:3,border:'1px solid var(--border-subtle,#E2DACD)',color:'var(--ink-800)'}}>
+                  <span key={idx} style={{fontSize:11,padding:'2px 8px',background:'var(--paper-100)',borderRadius:3,border:'1px solid var(--border-soft)',color:'var(--ink-800)'}}>
                     <strong>{item.p||item.pct}%</strong> {g?.name||item.id}
                   </span>
                 );
@@ -2705,7 +2704,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
           </div>
         )}
 
-        <div style={{background:'var(--surface-accent-soft,#E8F0E0)',border:'1px solid var(--moss-300,#A8C090)',borderRadius:4,padding:'12px 14px'}}>
+        <div style={{background:'var(--surface-accent-soft)',border:'1px solid var(--moss-300)',borderRadius:4,padding:'12px 14px'}}>
           <div style={{display:'flex',alignItems:'center',gap:6,color:'var(--moss-900)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:12}}>
             <AppIcon name="check" size={14} color="var(--moss-700)" /> Sustrato 100% Botánico Limpio
           </div>
@@ -3085,22 +3084,22 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
       label="Hub de Integración IoT & Telemetría"
       dialogClassName="inv-modal iot-hub-dialog"
       backdropClassName="inv-modal-bg iot-hub-backdrop"
-      dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
+      dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
     >
       {/* Header */}
-      <div className="iot-hub-header" style={{ background: 'var(--ink-0, #1A1410)', color: '#FAF8F5', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="iot-hub-header" style={{ background: 'var(--ink-0)', color: 'var(--paper-50)', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <AppIcon name="temp" size={20} color="var(--accent-olive, #5B6B44)" />
+          <AppIcon name="temp" size={20} color="var(--accent-olive)" />
           <div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, margin: 0, fontWeight: 700 }}>
               Hub de Integración IoT & Hardware de Bajo Costo
             </h2>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--paper-300, #C8C3B5)', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--paper-300)', marginTop: 2 }}>
               Setas de la Peña · Tenjo (2.587 msnm) · ESP32 / Sonoff / SHT3x / SCD30
             </div>
           </div>
         </div>
-        <button type="button" className="modal-icon-close" aria-label="Cerrar Hub IoT" style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
+        <button type="button" className="modal-icon-close" aria-label="Cerrar Hub IoT" style={{ color: 'var(--paper-50)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 28, height: 28, cursor: 'pointer' }} onClick={onClose}><AppIcon name="close" size={12} /></button>
       </div>
 
       <div className="iot-hub-navigation">
@@ -3337,7 +3336,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               id="iot-webhook-json" name="iot-webhook-json" spellCheck={false}
               className="field-input"
               rows={8}
-              style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: '#181512', color: '#E6E1D8', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
+              style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--ink-900)', color: 'var(--surface-recessed)', padding: 12, borderRadius: 4, boxSizing: 'border-box' }}
               value={webhookJson}
               onChange={e => setWebhookJson(e.target.value)}
             />
@@ -3825,21 +3824,21 @@ const FieldActionModal = ({
       dialogStyle={{
         width: 'min(480px, 94vw)',
         padding: '20px 18px',
-        background: 'var(--paper-1, #EFEBE0)',
-        border: '1px solid var(--border-hairline, #8C7F5B)',
+        background: 'var(--paper-1)',
+        border: '1px solid var(--border-hairline)',
         borderRadius: 'var(--radius-md, 3px)',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2, #6B7280)', marginBottom: 2 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 2 }}>
             Registro de campo · Acciones del lote
           </div>
-          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: 'var(--ink-0, #1F2937)', fontWeight: 700 }}>
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-serif, "Gaya", Georgia, serif)', fontSize: 18, color: 'var(--ink-0)', fontWeight: 700 }}>
             {model.title}
           </h2>
           {model.subtitle && (
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #4B5563)', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', marginTop: 2 }}>
               {model.subtitle}
             </div>
           )}
@@ -3855,16 +3854,16 @@ const FieldActionModal = ({
         </button>
       </div>
 
-      <div style={{ padding: '10px 12px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '10px 12px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2, #6B7280)', display: 'block' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)', display: 'block' }}>
             Estado Actual
           </span>
-          <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0, #111827)' }}>
+          <strong style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-0)' }}>
             {actionSheetModule?.STATE_LABELS?.[model.state] || model.state}
           </strong>
         </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2, #6B7280)', background: 'var(--paper-100, #E5E0D0)', padding: '3px 7px', borderRadius: 2 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)', background: 'var(--paper-100)', padding: '3px 7px', borderRadius: 2 }}>
           Rol: {operatorRole}
         </span>
       </div>
@@ -3905,10 +3904,10 @@ const FieldActionModal = ({
           style={{
             padding: '12px 14px',
             marginBottom: 14,
-            background: '#EFF6FF',
-            border: '1px solid #3B82F6',
+            background: 'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))',
+            border: '1px solid var(--status-info)',
             borderRadius: 3,
-            color: '#1E40AF',
+            color: 'var(--status-info)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
@@ -3926,10 +3925,10 @@ const FieldActionModal = ({
           style={{
             padding: '12px 14px',
             marginBottom: 14,
-            background: '#FEF2F2',
-            border: '1.5px solid #DC2626',
+            background: 'var(--status-error-bg)',
+            border: '1.5px solid var(--status-error)',
             borderRadius: 3,
-            color: '#991B1B',
+            color: 'var(--status-error)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12 }}>
@@ -3941,7 +3940,7 @@ const FieldActionModal = ({
           <button
             type="button"
             className="inv-btn inv-btn-sec"
-            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: '#fff' }}
+            style={{ marginTop: 8, padding: '5px 10px', fontSize: 11, background: 'var(--paper-50)' }}
             onClick={handleRefresh}
           >
             <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar lote
@@ -3950,23 +3949,23 @@ const FieldActionModal = ({
       )}
 
       {actionError && (
-        <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+        <div style={{ padding: '8px 10px', background: 'var(--status-error-bg)', color: 'var(--status-error)', borderLeft: '3px solid var(--status-error)', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
           <><AppIcon name="alert" size={12} style={{marginRight:4}} /> {actionError}</>
         </div>
       )}
       {actionSuccess && (
-        <div style={{ padding: '8px 10px', background: '#D1FAE5', color: '#065F46', borderLeft: '3px solid #10B981', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
+        <div style={{ padding: '8px 10px', background: 'var(--status-ok-bg)', color: 'var(--status-ok)', borderLeft: '3px solid var(--status-ok-marker)', borderRadius: 2, fontSize: 11, marginBottom: 12 }}>
           <><AppIcon name="check" size={12} style={{marginRight:4}} /> {actionSuccess}</>
         </div>
       )}
 
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-1, #374151)', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 8 }}>
           Transiciones Disponibles
         </div>
 
         {model.options.length === 0 ? (
-          <div style={{ padding: '12px', background: 'var(--paper-0, #F7F4EC)', border: '1px dashed var(--border-hairline, #8C7F5B)', borderRadius: 3, fontSize: 12, color: 'var(--ink-2, #6B7280)', textAlign: 'center' }}>
+          <div style={{ padding: '12px', background: 'var(--paper-0)', border: '1px dashed var(--border-hairline)', borderRadius: 3, fontSize: 12, color: 'var(--ink-2)', textAlign: 'center' }}>
             No hay transiciones disponibles para este lote en su estado actual ({model.state}).
           </div>
         ) : (
@@ -3984,8 +3983,8 @@ const FieldActionModal = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '10px 12px',
-                    background: isSelected ? 'var(--paper-0, #F7F4EC)' : '#fff',
-                    border: isSelected ? '2px solid var(--accent-olive, #5B6B44)' : '1px solid var(--border-hairline, #8C7F5B)',
+                    background: isSelected ? 'var(--paper-0)' : 'var(--paper-50)',
+                    border: isSelected ? '2px solid var(--accent-olive)' : '1px solid var(--border-hairline)',
                     borderRadius: 3,
                     cursor: model.canConfirm ? 'pointer' : 'default',
                     opacity: model.canConfirm ? 1 : 0.7,
@@ -4001,7 +4000,7 @@ const FieldActionModal = ({
                       onChange={() => setSelectedTo(opt.to)}
                     />
                     <div>
-                      <strong style={{ fontSize: 13, color: isDiscard ? 'var(--coral-700, #C53030)' : (isException ? 'var(--ochre-700, #B45309)' : 'var(--ink-0, #111827)') }}>
+                      <strong style={{ fontSize: 13, color: isDiscard ? 'var(--coral-700)' : (isException ? 'var(--ochre-700)' : 'var(--ink-0)') }}>
                         {opt.label}
                       </strong>
 
@@ -4013,8 +4012,8 @@ const FieldActionModal = ({
                     textTransform: 'uppercase',
                     padding: '2px 6px',
                     borderRadius: 2,
-                    background: isDiscard ? '#FEE2E2' : (isException ? '#FEF3C7' : '#E0E7FF'),
-                    color: isDiscard ? '#991B1B' : (isException ? '#92400E' : '#3730A3'),
+                    background: isDiscard ? 'var(--status-error-bg)' : (isException ? 'var(--status-warn-bg)' : 'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))'),
+                    color: isDiscard ? 'var(--status-error)' : (isException ? 'var(--status-warn-text)' : 'var(--status-info)'),
                   }}>
                     {{advance:'Avance',exception:'Excepción',discard:'Descarte'}[opt.transitionClass]||'Cambio'}
                   </span>
@@ -4040,7 +4039,7 @@ const FieldActionModal = ({
             type="button"
             className="inv-btn inv-btn-pri"
             onClick={handleRefresh}
-            style={{ minHeight: 48, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta, #A85C32)' }}
+            style={{ minHeight: 48, padding: '0 16px', fontSize: 12, background: 'var(--accent-terracotta)' }}
           >
             <AppIcon name="rotate" size={12} style={{marginRight:4}} /> Refrescar Lote
           </button>
@@ -4058,7 +4057,7 @@ const FieldActionModal = ({
             padding: '8px 16px',
             fontSize: 12,
             fontWeight: 700,
-            background: model.canConfirm && selectedTo ? 'var(--accent-olive, #5B6B44)' : 'var(--border-soft)',
+            background: model.canConfirm && selectedTo ? 'var(--accent-olive)' : 'var(--border-soft)',
             cursor: model.canConfirm && selectedTo ? 'pointer' : 'not-allowed',
           }}
         >
@@ -4073,14 +4072,14 @@ const FieldActionModal = ({
 // ── NOVEL SIGNATURE VISUAL — inked "barómetro" of biological efficiency ──
 // ── COLOR MAP for ingredient category badges ──
 const CAT_COLORS={
-  base:'#5A7042',       // moss (base carbons)
-  sup:'#C68F2C',        // ochre (supplements)
-  est:'#8C6B4A',        // bark (manure)
-  cafe:'#4A3728',       // dark brown (coffee)
-  trop:'#B8694B',       // warm brown (tropical)
-  circ:'#6B7C5F',       // sage (circular)
-  local:'#7A5A3F',      // tan (local),
-  default:'#999'
+  base:'var(--cat-base)',       // moss (base carbons)
+  sup:'var(--cat-sup)',        // ochre (supplements)
+  est:'var(--status-warn-text)',        // bark (manure)
+  cafe:'var(--bark-700)',       // dark brown (coffee)
+  trop:'var(--cat-trop)',       // warm brown (tropical)
+  circ:'var(--cat-circ)',       // sage (circular)
+  local:'var(--cat-local)',      // tan (local),
+  default:'var(--text-metadata)'
 };
 
 // ── MICRO SVG ICONS (sin emojis) ──────────────────────────────
@@ -4101,9 +4100,9 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   const digPct=ing.dig/10;                                    // 0–10 → 0–1
   return (
     <div className={'ing-item '+(expanded?'expanded':'')}>
-      <div className="ing-badge" style={{background:cat, color:(ing.cat==='sup'?'var(--ink-900)':'#ffffff')}} title={ing.cat} aria-hidden="true">{ing.cat.substring(0,2).toUpperCase()}</div>
+      <div className="ing-badge" style={{background:cat, color:(ing.cat==='sup'?'var(--ink-900)':'var(--paper-50)')}} title={ing.cat} aria-hidden="true">{ing.cat.substring(0,2).toUpperCase()}</div>
       <div className="ing-info">
-        <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500,#A07828)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
+        <div className="ing-name">{(()=>{const{hasBlock,hasWarn,clean}=parseIngName(ing.name);return(<>{stockKg>0&&<span className="ing-stock-dot" style={{background:stockKg>5?'var(--accent-olive)':'var(--ochre-500)'}}></span>}{hasBlock&&<IcoBlock/>}{hasWarn&&<IcoWarn/>}{clean}</>);})()}</div>
         <div className="ing-meta">
           <span>C:N {ing.cn}</span>
           <span>N {ing.n.toFixed(1)}%</span>
@@ -4114,7 +4113,7 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
           <div className="ing-profile">
             <div className="ing-profile-row">
               <span className="k">Carbono</span>
-              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.c/50)*100+'%',background:'#5A7042'}}></div></div>
+              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.c/50)*100+'%',background:'var(--cat-base)'}}></div></div>
               <span className="v">{ing.c}<span className="unit">%</span></span>
             </div>
             <div className="ing-profile-row">
@@ -4129,12 +4128,12 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
             </div>
             <div className="ing-profile-row">
               <span className="k">pH</span>
-              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:((ing.ph-4)/3)*100+'%',background:'#C68F2C'}}></div></div>
+              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:((ing.ph-4)/3)*100+'%',background:'var(--cat-sup)'}}></div></div>
               <span className="v">{ing.ph}</span>
             </div>
             <div className="ing-profile-row">
               <span className="k">Dig.</span>
-              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.dig/10)*100+'%',background:'#B6532A'}}></div></div>
+              <div className="ing-profile-bar"><div className="ing-profile-bar-fill" style={{width:(ing.dig/10)*100+'%',background:'var(--brand-accent-text)'}}></div></div>
               <span className="v">{ing.dig}<span className="unit">/10</span></span>
             </div>
             <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--paper-300)'}}>
@@ -4162,7 +4161,7 @@ const EBDial=({an,sp})=>{
   const pt=(v,r)=>[cx+r*Math.cos(rad(ang(v))), cy+r*Math.sin(rad(ang(v)))];
   const arc=(v0,v1,r)=>{const[x0,y0]=pt(v0,r);const[x1,y1]=pt(v1,r);const large=(ang(v1)-ang(v0))>180?1:0;return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;};
   const status=eb<base?'low':eb<=opt?'good':'high';
-  const needleCol=status==='low'?'var(--coral-500)':status==='high'?'#3D4A38':'var(--accent-olive)';
+  const needleCol=status==='low'?'var(--coral-500)':status==='high'?'var(--status-ok)':'var(--accent-olive)';
   const stLabel=status==='low'?'Por debajo del rango':status==='high'?'Excelente — sobre el óptimo':'Dentro del rango óptimo';
   const [nx,ny]=pt(eb,R-8);
   const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round((f*maxV)/5)*5);
@@ -4170,7 +4169,7 @@ const EBDial=({an,sp})=>{
     <div className="ebdial">
       <svg viewBox="0 0 260 200" width="100%" style={{maxWidth:288}}>
         <path d={arc(0,maxV,R)} fill="none" stroke="var(--paper-300)" strokeWidth="10" strokeLinecap="round"/>
-        <path d={arc(base,opt,R)} fill="none" stroke="#9FB07F" strokeWidth="10" strokeLinecap="round"/>
+        <path d={arc(base,opt,R)} fill="none" stroke="var(--status-ok-marker)" strokeWidth="10" strokeLinecap="round"/>
         <path d={arc(0,maxV,R+9)} fill="none" stroke="var(--ink-900)" strokeWidth="1"/>
         <path d={arc(0,maxV,R-9)} fill="none" stroke="var(--ink-900)" strokeWidth="0.7" opacity="0.45"/>
         {ticks.map((tv,i)=>{const[a0,b0]=pt(tv,R-9);const[a1,b1]=pt(tv,R+9);const[lx,ly]=pt(tv,R+24);return (
@@ -4182,7 +4181,7 @@ const EBDial=({an,sp})=>{
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'transform .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
         <circle cx={cx} cy={cy} r="7" fill="var(--paper-50)" stroke="var(--ink-900)" strokeWidth="1.6"/>
         <circle cx={cx} cy={cy} r="2.4" fill="var(--ink-900)"/>
-        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="#9C3F1F">{an.ebLow}–{an.ebHigh}</text>
+        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="var(--brand-accent-text)">{an.ebLow}–{an.ebHigh}</text>
         <text x={cx} y={cy+52} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-400)">% RANGO ESPERADO</text>
         <text x={cx} y={cy+66} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="9" fill="var(--ink-300)">central {eb.toFixed(0)}% · índice {an.ebIndex}/100</text>
       </svg>
@@ -4194,7 +4193,7 @@ const EBDial=({an,sp})=>{
 
 
 // ── BAND GAUGES ──────────────────────────────────────────────────────────────────────────
-const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='#A8432A',provenance})=>{
+const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,color='var(--accent-olive)',warnColor='var(--brand-accent-text)',provenance})=>{
   const sMin=scaleMin??min*0.5;
   const sMax=scaleMax??max*1.5;
   const range=sMax-sMin;
@@ -4521,28 +4520,28 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
       <BandGauge label="C:N" unit=":1"
         min={sp.cn_optimal.min} max={sp.cn_optimal.max} ideal={sp.cn_optimal.ideal}
         value={an.cn} scaleMin={10} scaleMax={90}
-        color="var(--accent-olive)" warnColor="#A8432A"
+        color="var(--accent-olive)" warnColor="var(--brand-accent-text)"
         provenance={procedenciaNutriente('cn')}/>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Calculado en base seca · corrige H₂O por insumo</div>
       <BandGauge label="N" unit="%"
         min={sp.n_optimal.min} max={sp.n_optimal.max} ideal={sp.n_optimal.ideal}
         value={an.avgN} scaleMin={0} scaleMax={3.5}
-        color="var(--accent-blue-grey)" warnColor="#A8432A"
+        color="var(--accent-blue-grey)" warnColor="var(--brand-accent-text)"
         provenance={procedenciaNutriente('n')}/>
       <BandGauge label="EB estimado" unit="%"
         min={sp.eb_baseline} max={sp.eb_optimal} ideal={sp.eb_optimal}
         value={an?Math.round(blendedEB):null}
         reference={optimalAn?Math.round(optimalAn.eb):null}
         scaleMin={0} scaleMax={Math.max(200,Math.ceil(sp.eb_optimal*1.4/10)*10)}
-        color="#A8432A" warnColor="var(--accent-terracotta)"/>
+        color="var(--brand-accent-text)" warnColor="var(--accent-terracotta)"/>
       {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {an.ebLow}–{an.ebHigh}% · índice {an.ebIndex}/100 · la aguja es el valor central</div>}
-      <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft, #ddd)')}}>
+      <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft)')}}>
         {hasHist?(
-          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800,#333)',lineHeight:1.5}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800)',lineHeight:1.5}}>
             <b>Proyección ajustada con {historical.n} lote{historical.n>1?'s':''} real{historical.n>1?'es':''}{historical.matched?' con receta similar':''}</b> · EB histórica {historical.avg.toFixed(0)}% ({historical.subs.join(', ')}) · mezcla {Math.round(historical.weight*100)}% histórico / {Math.round((1-historical.weight)*100)}% fórmula
           </div>
         ):(
-          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700,#666)',lineHeight:1.5}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',lineHeight:1.5}}>
             Estimación teórica — sin lotes previos de {sp.name} en el registro para proyectar EB real.
           </div>
         )}
@@ -8433,7 +8432,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
                           {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
                           {(()=>{const causa=peritoMainLimiter(opt,an);return causa?<div style={{opacity:.8,marginTop:2}}><b>Causa:</b> {causa}</div>:null;})()}
-                          {an.trichoderma&&<div style={{color:'#C53030',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
+                          {an.trichoderma&&<div style={{color:'var(--status-error)',fontWeight:700,marginTop:2}}>Autoclave 121°C × 90 min obligatorio</div>}
                           {!an.trichoderma&&tr&&<div style={{opacity:.6,marginTop:2}}>Trat.: {tr.name}</div>}
                         </div>
               {isWorkbench&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4}}>Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})</div>}
@@ -8460,10 +8459,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         {isWorkbench&&<>
                   {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
-                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'rgba(197,48,48,.08)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'rgba(197,48,48,.3)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 8%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 30%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="#C53030"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="#7A5A10"/>:<AppIcon name="sprout" size={16} color="#2F4A24"/>}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'#C53030':restrictiveFactor.severity==='warning'?'#7A5A10':'#2F4A24'}}>
+                        <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="var(--status-error)"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="var(--status-warn-text)"/>:<AppIcon name="sprout" size={16} color="var(--status-ok)"/>}</span>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':restrictiveFactor.severity==='warning'?'var(--status-warn-text)':'var(--status-ok)'}}>
                           Factor Restrictivo Estimado: {restrictiveFactor.label}
                         </span>
                       </div>
@@ -8476,7 +8475,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         </div>
                       )}
                       {restrictiveFactor.actionRequired&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'#9B2C2C':'#5A4008',fontWeight:700}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':'var(--status-warn-text)',fontWeight:700}}>
                           → Acción correctiva: {restrictiveFactor.actionRequired}
                         </div>
                       )}
@@ -8490,13 +8489,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
                         <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
                       </div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'#fff',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'var(--paper-50)',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
                         All American 1941X: {reqPsi.toFixed(2)} psig
                       </span>
                     </div>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(180px, 1fr))',gap:10,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-800)'}}>
                       <div>
-                        <b>Presión manométrica:</b> <span style={{color:'#C53030',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
+                        <b>Presión manométrica:</b> <span style={{color:'var(--status-error)',fontWeight:700}}>{reqPsi.toFixed(2)} psig</span> (vs 15 psig a nivel del mar) para vapor saturado a 121.1°C.
                       </div>
                       <div>
                         <b>Tiempo de meseta (Hold):</b> {optHold?.holdTimeMin||90} min en bolsa de {kgBag||2.0} kg a {hObj||65}% HR.
@@ -8543,7 +8542,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                       </div>
                       <div className="gauge-tr">
                         <div className="gauge-zn" style={{left:`${(oMin/max)*100}%`,width:`${((oMax-oMin)/max)*100}%`}}/>
-                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500,#A07828)'}}/>
+                        <div className="gauge-nd" style={{left:`${(cur/max)*100}%`,background:cnOk?'var(--accent-olive)':an.cn<oMin?'var(--coral-500)':'var(--ochre-500)'}}/>
                       </div>
                       <div className="gauge-ft"><span>0</span><span>{oMin}–{oMax}</span><span>150+</span></div>
                     </div>
@@ -8563,17 +8562,17 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                           Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
                         </div>}
                       {similarTrial&&
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#7A5A10',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-warn-text)',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
                           Ya probaste algo parecido (<b>{Math.round(similarTrial.similarity*100)}%</b> de ingredientes en común, "{similarTrial.name}"): dio <b>EB real {similarTrial.ebReal}%</b> (estimado entonces: {similarTrial.eb}%).
                         </div>}
                       <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
-                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.12)',border:'1px solid rgba(197,48,48,.3)',borderRadius:3,color:'#C53030',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
-                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'#7A5A10',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
-                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'#3D5A38'}}>Todos los parámetros en rango</span>}
-                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(197,48,48,.1)',border:'1px solid rgba(197,48,48,.25)',borderRadius:3,color:'#C53030',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> Total {an.tot.toFixed(1)}%</span>}
+                        {criticals.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 12%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700}}>{criticals.length} crítico{criticals.length!==1?'s':''}</span>}
+                        {warnings.length>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(160,120,40,.1)',border:'1px solid rgba(160,120,40,.25)',borderRadius:3,color:'var(--status-warn-text)',fontWeight:700}}>{warnings.length} ajuste{warnings.length!==1?'s':''}</span>}
+                        {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'var(--status-ok)'}}>Todos los parámetros en rango</span>}
+                        {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 25%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
-            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'#C53030',padding:'5px 10px',background:'rgba(197,48,48,.07)',borderBottom:'1px solid rgba(197,48,48,.2)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
+            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
             {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
             {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
@@ -10017,7 +10016,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const alertaAm=alertaMin*2.5;
                       // El estado (punto, badge) se decide contra DISPONIBLE, no contra el
                       // físico: es el único número con el que se puede comprometer bodega.
-                      const dotColor=disponible<alertaMin?'var(--coral-500)':disponible<alertaAm?'var(--ochre-500,#A07828)':'var(--accent-olive)';
+                      const dotColor=disponible<alertaMin?'var(--coral-500)':disponible<alertaAm?'var(--ochre-500)':'var(--accent-olive)';
                       const provId=provOverride[id]||(invProveedores.find(p=>p.id===invCompras.find(c=>c.id===invLotes.filter(l=>l.activo&&l.ingredienteId===id).sort((a,b)=>new Date(b.fechaIngreso)-new Date(a.fechaIngreso))[0]?.compraId)?.proveedorId)?.id)||'';
                       const prov=invProveedores.find(p=>p.id===provId);
                       return{id,name:g?.name||id,stock,disponible,reservado,sobrereservado,entrante,pp,prov,dotColor,alertaMin,provId};
@@ -10110,7 +10109,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       )}
                                     </td>
                                     {/* ENTRANTE — pedidos "por recibir" que aún no son físico */}
-                                    <td data-label="Entrante" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",minWidth:90,color:r.entrante>0?'var(--ochre-700,#A07828)':'var(--ink-500)'}}>
+                                    <td data-label="Entrante" style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",minWidth:90,color:r.entrante>0?'var(--ochre-700)':'var(--ink-500)'}}>
                                       {r.entrante>0?`${r.entrante.toFixed(1)} kg`:'—'}
                                     </td>
                                     {/* PRECIO */}
@@ -10220,7 +10219,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{maxWidth:560}}>
                   {cmpConfirm?(
                     <div>
-                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
+                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name={cmpConfirm.pendiente?'clipboard':'check'} size={13} color="var(--ink-800)" /> {cmpConfirm.pendiente?'Pedido registrado':'Compra registrada'}</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                         {cmpConfirm.pendiente&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:6}}>El stock físico de bodega NO cambió. Estos kilos quedan en camino hasta que confirmes la recepción.</div>}
@@ -10304,7 +10303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const total=cmpItems.length;
                     const sinMatch=cmpItems.filter(it=>!it.ingId).length;
                     return(
-                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'#FBF6E8':'var(--moss-50,#F0F4EB)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300,#B8C9A0)'}`,color:'var(--ink-800)'}}>
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
                         Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
                         {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
                       </div>
@@ -10529,7 +10528,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
   const contaminationWorkflow=typeof window!=='undefined'?window.SetasContaminationWorkflow:null;
   const lifecycleLabel={incubation:'Incubación',fruiting:'Fructificación',closed:'Cerrado',discarded:'Descartado',quarantine:'Cuarentena'};
-  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta, #B24C27)'};
+  const lifecycleColor={incubation:'var(--status-info)',fruiting:'var(--status-active)',closed:'var(--status-archived)',discarded:'var(--status-error)',quarantine:'var(--accent-terracotta)'};
   const actionLabel={inspection:'Inspeccionar',move:'Mover lote',contamination:'Reportar contaminación',note:'Foto / nota',advance_stage:'Avanzar etapa',harvest:'Registrar cosecha',close_batch:'Finalizar lote',close:'Cerrar lote',discard:'Descartar lote'};
   const openBatchDetail=(id)=>{setBitActiveLoteId(id);goTab('bitacora');goBitTab('bit_ficha',true);};
   const openContaminationTriage=(loteId)=>{
@@ -10788,7 +10787,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {qrAllowedActions.has('inspection') && (<button
                           type="button"
                           data-action="evento-observacion"
-                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>setQrEventoObsAbierta(v=>!v)}
                         >
                           <AppIcon name="edit" size={13} style={{marginRight:4}} /> Observación
@@ -10796,7 +10795,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {qrAllowedActions.has('riego') && (<button
                           type="button"
                           data-action="evento-riego"
-                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('riego',currentLote,scannedBag)}
                         >
                           <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Riego
@@ -10804,7 +10803,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {qrAllowedActions.has('contamination') && (<button
                           type="button"
                           data-action="evento-contaminacion"
-                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('contaminacion',currentLote,scannedBag)}
                         >
                           <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> Contaminación
@@ -10812,7 +10811,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {qrAllowedActions.has('harvest') && (<button
                           type="button"
                           data-action="evento-cosecha_parcial"
-                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
+                          style={{minHeight:48,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('cosecha_parcial',currentLote,scannedBag)}
                         >
                           <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Cosecha parcial
@@ -11159,7 +11158,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               {live && live.health && live.health.overallStatus !== 'offline' && (
                 <div className="today-climate-card__health" style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',fontSize:10.5,fontFamily:'var(--font-mono)',marginTop:4,padding:'3px 6px',background:'var(--paper-1)',borderRadius:'var(--r-xs,2px)',border:'1px solid var(--border-hairline)'}}>
-                  <span style={{fontWeight:700,color:live.health.overallStatus==='healthy'?'var(--status-success,#2e7d32)':live.health.overallStatus==='stale'?'var(--ink-2,#6b6759)':'var(--accent-terracotta,#a85c32)'}}>
+                  <span style={{fontWeight:700,color:live.health.overallStatus==='healthy'?'var(--status-ok)':live.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
                     {live.health.overallStatus==='healthy'?'● Confiable':`▲ ${live.health.overallStatus.toUpperCase()}`}
                   </span>
                   {live.health.metrics && Object.entries(live.health.metrics).filter(([_,m])=>m.value!=null).map(([mKey,m])=>(
@@ -11196,7 +11195,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8,flexWrap:'wrap'}}>
         <button className="os-action os-detail-back" type="button" onClick={()=>goBitTab('bit_dash')}>Volver a lotes</button>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="clipboard" size={13} color="var(--accent-olive,#5B6B44)" /> Hoja de Acción (QR)</button>
+          <button className="os-action" type="button" data-testid="btn-field-action-sheet" onClick={()=>{setQrSelectedLoteId(lote.id);setShowFieldActionModal(true);}} style={{display:'flex',alignItems:'center',gap:6,fontWeight:600}} title="Abrir hoja de acción de campo para registrar transiciones de estado"><AppIcon name="clipboard" size={13} color="var(--accent-olive)" /> Hoja de Acción (QR)</button>
           <button className="os-action" type="button" onClick={()=>setPublicTraceModalLoteId(lote.id)} style={{display:'flex',alignItems:'center',gap:6}} title="Ver ficha pública de trazabilidad botánica"><AppIcon name="globe" size={13} color="var(--moss-700)" /> Ver Ficha Pública QR</button>
           <button className="os-action" type="button" onClick={()=>openThermalForLote(lote.id)} style={{display:'flex',alignItems:'center',gap:6}}><AppIcon name="print" size={13} /> Imprimir Etiquetas Térmicas</button>
         </div>
@@ -11250,7 +11249,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
             {stats.totalFresco>0&&(
-              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:stats.margenRealTotal>=0?'var(--moss-200,#DCE1D1)':'var(--coral-100,#FDE8E8)',color:stats.margenRealTotal>=0?'var(--moss-700,#404D2E)':'var(--coral-700,#A83232)'}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:stats.margenRealTotal>=0?'var(--moss-200)':'var(--coral-100)',color:stats.margenRealTotal>=0?'var(--moss-700)':'var(--coral-700)'}}>
                 {stats.margenRealTotal>=0?'+':''}${Math.round(stats.margenRealTotal).toLocaleString('es-CO')} ({stats.margenRealPct.toFixed(1)}% margen estimado)
               </span>
             )}
@@ -11272,7 +11271,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <span className="econ-metric-value">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</span>
               <span className="econ-metric-sub">{stats.varianzaEB!=null?`${stats.varianzaEB>=0?'+':''}${stats.varianzaEB.toFixed(1)}% vs receta (${stats.ebEstimada}%)`:'Sin receta base'}</span>
             </div>
-            <div className="econ-metric-box" style={{background:stats.margenRealTotal>=0?'var(--paper-100,#EFEBE0)':'var(--paper-50)'}}>
+            <div className="econ-metric-box" style={{background:stats.margenRealTotal>=0?'var(--paper-100)':'var(--paper-50)'}}>
               <span className="econ-metric-label">Costo / kg Cosechado</span>
               <span className="econ-metric-value">{stats.costoRealPorKgCosechado!=null?'$'+Math.round(stats.costoRealPorKgCosechado).toLocaleString('es-CO'):'—'}</span>
               <span className="econ-metric-sub">{stats.totalFresco>0?'Costo unitario estimado':'Pendiente cosecha'}</span>
@@ -11283,7 +11282,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
-                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['#5B6B44','#8C7F5B','#A85C32'][i%3]||'#555'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
+                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['var(--status-ok)','var(--border-hairline)','var(--status-warn-text)'][i%3]||'var(--text-metadata)'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
                 ))}
               </div>
               <div className="os-flush-list">
@@ -11332,7 +11331,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   Modelo cinético Arrhenius / Q10 · Especie: <b>{flushesForecast.speciesName}</b> · T° base: {flushesForecast.ambientTemp}°C (Factor térmico: {flushesForecast.thermalFactor.toFixed(2)}×)
                 </div>
               </div>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:'var(--moss-200,#DCE1D1)',color:'var(--moss-700,#404D2E)'}}>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:2,background:'var(--moss-200)',color:'var(--moss-700)'}}>
                 {flushesForecast.remainingFlushes.length} oleadas restantes · {flushesForecast.remainingExpectedKg.toFixed(2)} kg pendientes
               </span>
             </div>
@@ -11410,7 +11409,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
                 onClick={()=>runBatchAction(a.action,lote,sheet)}>{a.label}</button>
             ))}
-            <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
+            <button className="os-action" type="button" style={{marginTop:8,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',color:'var(--ink-0)'}} onClick={()=>{setThermalLote(lote);setThermalBagEnd(lote.numBolsas||12);setThermalScope('all');setShowThermalModal(true);}}>
               <AppIcon name="print" size={14} style={{marginRight:6}} /> Imprimir Etiquetas Térmicas (50×30 / 40×30)
             </button>
           </div>
@@ -12053,6 +12052,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
+      const tk = (n, fb) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || fb;
       const w = canvas.width;
       const h = canvas.height;
       const cx = w / 2;
@@ -12076,7 +12076,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         ctx.stroke();
       });
 
-      ctx.fillStyle = '#6B6759';
+      ctx.fillStyle = tk('--text-metadata', '#6B6759');
       ctx.font = '9px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
       ctx.fillText('CO₂ (FAE)', cx, cy - 83);
@@ -12112,18 +12112,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
       const ptTempAct = { x: cx + Math.cos(angles[1]) * vTempAct * rMax, y: cy + Math.sin(angles[1]) * vTempAct * rMax };
       const ptHumAct = { x: cx + Math.cos(angles[2]) * vHumAct * rMax, y: cy + Math.sin(angles[2]) * vHumAct * rMax };
 
-      ctx.fillStyle = 'rgba(91, 107, 68, 0.18)'; 
-      ctx.strokeStyle = '#5B6B44'; 
+      ctx.globalAlpha = 0.18; ctx.fillStyle = tk('--status-ok', '#2E3B2F'); 
+      ctx.strokeStyle = tk('--status-ok', '#2E3B2F'); 
       ctx.lineWidth = 2.0;
       ctx.beginPath();
       ctx.moveTo(ptCO2Act.x, ptCO2Act.y);
       ctx.lineTo(ptTempAct.x, ptTempAct.y);
       ctx.lineTo(ptHumAct.x, ptHumAct.y);
       ctx.closePath();
-      ctx.fill();
+      ctx.fill(); ctx.globalAlpha = 1;
       ctx.stroke();
 
-      ctx.fillStyle = '#5B6B44';
+      ctx.fillStyle = tk('--status-ok', '#2E3B2F');
       [ptCO2Act, ptTempAct, ptHumAct].forEach(pt => {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI);
@@ -12138,7 +12138,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       ptTempProj.current = { x: cx + Math.cos(angles[1]) * vTempProj * rMax, y: cy + Math.sin(angles[1]) * vTempProj * rMax };
       ptHumProj.current = { x: cx + Math.cos(angles[2]) * vHumProj * rMax, y: cy + Math.sin(angles[2]) * vHumProj * rMax };
 
-      ctx.strokeStyle = '#A85C32'; 
+      ctx.strokeStyle = tk('--status-warn-text', '#866629'); 
       ctx.lineWidth = 2.5;
       ctx.setLineDash([4, 3]); 
       ctx.beginPath();
@@ -12149,7 +12149,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       ctx.stroke();
       ctx.setLineDash([]); 
 
-      ctx.fillStyle = '#A85C32';
+      ctx.fillStyle = tk('--status-warn-text', '#866629');
       [ptCO2Proj.current, ptTempProj.current, ptHumProj.current].forEach(pt => {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 4.5, 0, 2 * Math.PI);
@@ -12404,12 +12404,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             {roomLive && roomLive.health && (
               <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-2)',marginTop:4}}>
-                <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-success,#2e7d32)':roomLive.health.overallStatus==='stale'?'var(--ink-2,#6b6759)':'var(--accent-terracotta,#a85c32)'}}>
+                <span style={{fontWeight:700,color:roomLive.health.overallStatus==='healthy'?'var(--status-ok)':roomLive.health.overallStatus==='stale'?'var(--ink-2)':'var(--accent-terracotta)'}}>
                   SALUD: {roomLive.health.overallStatus.toUpperCase()}
                 </span>
                 {roomLive.health.devices && Object.entries(roomLive.health.devices).map(([devId, d])=>(
                   <span key={devId}>
-                    {devId}: <strong style={{color:d.status==='healthy'?'var(--status-success,#2e7d32)':'var(--ink-1)'}}>{d.status.toUpperCase()}</strong>
+                    {devId}: <strong style={{color:d.status==='healthy'?'var(--status-ok)':'var(--ink-1)'}}>{d.status.toUpperCase()}</strong>
                   </span>
                 ))}
               </div>
@@ -12422,7 +12422,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               type="button"
               onClick={() => setShowCoCultivationModal(true)}
               className="inv-btn inv-btn-sec"
-              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-olive, #5B6B44)', color: 'var(--accent-olive, #5B6B44)', fontWeight: 700 }}
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-olive)', color: 'var(--accent-olive)', fontWeight: 700 }}
               title="Analizar compatibilidad de especies e intersección de setpoints en la misma carpa"
             >
               <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Co-Cultivo Multiespecie
@@ -12431,7 +12431,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               type="button"
               onClick={() => setShowAutoclaveModal(true)}
               className="inv-btn inv-btn-sec"
-              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-terracotta, #C46238)', color: 'var(--accent-terracotta, #C46238)', fontWeight: 700 }}
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--accent-terracotta)', color: 'var(--accent-terracotta)', fontWeight: 700 }}
               title="Simulador de ciclo de autoclave All American a 2.600 msnm (19.04 PSI / F0)"
             >
               <AppIcon name="flame" size={13} style={{marginRight:4}} /> Autoclave Tenjo (F₀)
@@ -12440,7 +12440,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               type="button"
               onClick={() => setShowPostHarvestModal(true)}
               className="inv-btn inv-btn-sec"
-              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
+              style={{ minHeight: 34, padding: '4px 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, borderColor: 'var(--status-info)', color: 'var(--status-info)', fontWeight: 700 }}
               title="Predicción de vida útil, transpiración y empaque en frío"
             >
               <AppIcon name="snowflake" size={13} style={{marginRight:4}} /> Poscosecha & Frío
@@ -12477,14 +12477,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 width: '100%',
                 padding: '14px 16px',
                 borderRadius: 'var(--radius-sm, 3px)',
-                background: 'var(--paper-0, #F7F4EC)',
-                border: `1.5px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-700, #A83232)'}`,
+                background: 'var(--paper-0)',
+                border: `1.5px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--accent-olive)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500)' : 'var(--coral-700)'}`,
                 marginBottom: 12,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive, #5B6B44)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--accent-olive)' }}>
                     <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo Multiespecie · Sala Compartida
                   </div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--ink-0)', marginTop: 2 }}>
@@ -12499,9 +12499,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       fontWeight: 800,
                       padding: '4px 10px',
                       borderRadius: 2,
-                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-100, #FDF0DE)' : 'var(--coral-100, #FDE8E8)',
-                      color: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-700, #8A4B09)' : 'var(--coral-700, #A83232)',
-                      border: `1px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--moss-600, #617346)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500, #C97A2C)' : 'var(--coral-500, #E05252)'}`,
+                      background: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-200)' : coCultRoomOpt.groupScore >= 55 ? 'var(--warning-tint)' : 'var(--coral-100)',
+                      color: coCultRoomOpt.groupScore >= 75 ? 'var(--moss-700)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-700)' : 'var(--coral-700)',
+                      border: `1px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--moss-600)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500)' : 'var(--coral-500)'}`,
                     }}
                   >
                     Compatibilidad Grupal: {coCultRoomOpt.groupScore}% · {coCultRoomOpt.verdict}
@@ -12983,7 +12983,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {/* Sombreado de banda óptima */}
                   <rect x="0" y="20" width="500" height="60" fill="rgba(56, 120, 180, 0.12)" />
                   <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
-                  <polyline fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
+                  <polyline fill="none" stroke="var(--status-info)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
                 </svg>
               </div>
             </div>
@@ -13153,7 +13153,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
                   const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
                   const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
-                  return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'#C53030':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
+                  return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:st.stuck>0?'var(--status-error)':(st.pending>0?'var(--ink-500)':'inherit'),marginLeft:8,alignSelf:'center',display:'flex',alignItems:'center',gap:6}}>
                     {label}
                     {remoteSyncNote()}
                     {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>{
@@ -13659,10 +13659,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           const copilotTopActions = copilotBriefing ? copilotBriefing.actions.slice(0, 5) : [];
           const copilotActionColor = (priority) => (
-            priority === 'critical' ? 'var(--status-error,#B53A25)'
-            : priority === 'high' ? 'var(--ochre-700,#A66A1E)'
-            : priority === 'normal' ? 'var(--ink-1,#3A362E)'
-            : 'var(--ink-2,#6B6759)'
+            priority === 'critical' ? 'var(--status-error)'
+            : priority === 'high' ? 'var(--ochre-700)'
+            : priority === 'normal' ? 'var(--ink-1)'
+            : 'var(--ink-2)'
           );
           const copilotConfidenceLabel = (c) => (c === 'medium' ? 'confianza media' : 'confianza baja');
 
@@ -13730,9 +13730,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:operationStatus.color}}>
                         CONTROL · TURNO ACTUAL
                       </span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2, #6B6759)'}}>· Tenjo · 2.592 msnm</span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>· Tenjo · 2.592 msnm</span>
                     </div>
-                    <h1 style={{fontFamily:'var(--font-serif, "Gaya", serif)',fontWeight:700,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.01em',color:'var(--ink-0, #1E1D19)',margin:0}}>
+                    <h1 style={{fontFamily:'var(--font-serif, "Gaya", serif)',fontWeight:700,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.01em',color:'var(--ink-0)',margin:0}}>
                       Tablero de Control
                     </h1>
                   </div>
@@ -13777,11 +13777,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
-                <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-error,#B53A25)',padding:'16px 18px'}}>
+                <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-error)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{width:8,height:8,background:'var(--status-error,#B53A25)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error,#B53A25)'}}>
+                      <span style={{width:8,height:8,background:'var(--status-error)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error)'}}>
                         Banda 1 · Atención
                       </span>
                       <span className="sdp-provenance">Sensores · Sincronización · Cuarentena · Insumos</span>
@@ -13803,7 +13803,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <ul data-testid="today-exceptions" style={{listStyle:'none',margin:'0 0 12px',padding:0,display:'flex',flexDirection:'column',gap:8}}>
                       {todayExceptions.map(item=>{
                         const alarma=item.severity==='alarma';
-                        const ink=alarma?'var(--status-error,#B53A25)':'var(--status-warn-text)';
+                        const ink=alarma?'var(--status-error)':'var(--status-warn-text)';
                         return <li key={item.id} data-exception-kind={item.kind} data-severity={item.severity} className={`sdp-task ${alarma?'sdp-task--critical':''}`} style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12,padding:'10px 14px',borderLeft:`3px solid ${ink}`}}>
                           <div style={{minWidth:0,flex:'1 1 240px'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
@@ -13886,11 +13886,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
 
                 {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
-                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--status-ok,#2E3B2F)',padding:'16px 18px'}}>
+                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-ok)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{width:8,height:8,background:'var(--status-ok,#2E3B2F)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok,#2E3B2F)'}}>
+                      <span style={{width:8,height:8,background:'var(--status-ok)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok)'}}>
                         Banda 2 · Ahora
                       </span>
                       <span className="sdp-provenance">Registro de campo</span>
@@ -14039,7 +14039,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <details className="home-secondary-summary" data-testid="today-record-summary">
                   <summary>Resumen del registro de cultivo</summary>
                 <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--border-hairline)'}}>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:'var(--ink-2, #6B6759)',flexShrink:0}}>
+                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:'var(--ink-2)',flexShrink:0}}>
                     Registro de cultivo · vista previa
                   </span>
                   <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
@@ -14070,11 +14070,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </details>
 
                 {/* ── BANDA 3: DESPUÉS (Transiciones programadas & Monitoreo) ── */}
-                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo" style={{background:'var(--surface-page,#F6F4EC)',border:'1px solid var(--border-heavy,#222222)',borderLeft:'5px solid var(--text-secondary,#6B6759)',padding:'16px 18px'}}>
+                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--text-secondary)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{width:8,height:8,background:'var(--text-secondary,#6B6759)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary,#6B6759)'}}>
+                      <span style={{width:8,height:8,background:'var(--text-secondary)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)'}}>
                         Banda 3 · Después
                       </span>
                       <span className="sdp-provenance">Planificación / Tarde</span>
@@ -14201,7 +14201,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </label>
 
                       {copilotVisionError && (
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error,#B53A25)',marginTop:8}}>{copilotVisionError}</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)',marginTop:8}}>{copilotVisionError}</div>
                       )}
 
                       {copilotVisionResult && (
@@ -14679,11 +14679,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <div className="dash-card-body">
                               <div className="dash-kv">
                                 <span className="dk">EB estimada</span>
-                                <span className="dv" style={{color:eb>=100?'var(--moss-500)':eb>=80?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{e.eb}%</span>
+                                <span className="dv" style={{color:eb>=100?'var(--moss-500)':eb>=80?'var(--ochre-500)':'var(--coral-500)'}}>{e.eb}%</span>
                               </div>
                               {sc>0&&<div className="dash-kv">
                                 <span className="dk">Score</span>
-                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
+                                <span className="dv" style={{color:sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500)':'var(--coral-500)'}}>{sc}<span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>/100</span></span>
                               </div>}
                               <div className="dash-kv">
                                 <span className="dk">C:N</span>
@@ -14733,7 +14733,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <button type="button" className="inv-btn inv-btn-sec" style={{minHeight:44,marginTop:8}} onClick={()=>setEbRealFor(e.id)}>Registrar resultado final</button>
                             </div>
                             <div className="dash-card-foot" style={{display:'flex',gap:6}}>
-                              <button type="button" className="dash-sload" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje"><AppIcon name="wine" size={12} style={{marginRight:4}} /> Cata</button>
+                              <button type="button" className="dash-sload" style={{background:'var(--paper-0)',color:'var(--accent-olive)',border:'1px solid var(--border-hairline)',padding:'4px 10px'}} onClick={()=>{setTastingSpeciesKey(e.sKey);setShowTastingModal(true);}} title="Abrir dossier gastronómico y maridaje"><AppIcon name="wine" size={12} style={{marginRight:4}} /> Cata</button>
                               <button className="dash-sload" style={{flex:1}} onClick={()=>{loadR(e);}}>Cargar</button>
                               <button type="button" className="dash-sdel" onClick={()=>requireAdmin(delR)(e.id)} aria-label={`Eliminar receta ${e.name}`}><AppIcon name="close" size={12} /></button>
                             </div>
@@ -14786,7 +14786,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       const bars=[
                         {lbl:'Ef. Biológica',min:sp.eb_baseline,max:sp.eb_optimal,abs:150,unit:'%',color:'var(--coral-500)'},
                         {lbl:'Spawn',min:sp.spawn_rate,max:sp.spawn_rate,abs:20,unit:'%',color:'var(--moss-600)'},
-                        {lbl:'C:N',min:sp.cn_optimal.min,max:sp.cn_optimal.max,abs:80,unit:'',color:'#594631'},
+                        {lbl:'C:N',min:sp.cn_optimal.min,max:sp.cn_optimal.max,abs:80,unit:'',color:'var(--bark-700)'},
                         {lbl:'pH',min:sp.ph_optimal.min,max:sp.ph_optimal.max,abs:10,unit:'',color:'var(--ochre-500)'},
                       ];
                       return(
@@ -14830,7 +14830,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div className="spp-cta-row" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                     <span className="spp-cta-note">Dificultad: {SPP_DIFFICULTY[sKey]||'Media'}</span>
-                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0,#F7F4EC)',color:'var(--accent-olive,#5B6B44)',border:'1px solid var(--border-hairline,#8C7F5B)'}}><AppIcon name="wine" size={12} style={{marginRight:4}} /> Ficha de Cata</button>
+                    <button type="button" onClick={()=>{setTastingSpeciesKey(sKey);setShowTastingModal(true);}} className="spp-cta" style={{background:'var(--paper-0)',color:'var(--accent-olive)',border:'1px solid var(--border-hairline)'}}><AppIcon name="wine" size={12} style={{marginRight:4}} /> Ficha de Cata</button>
                     <button onClick={()=>{setCatalogModalOpen(false);openBuilderSubTab('formular');goTab('formular');}} className="spp-cta">Formular con {sp.name} →</button>
                   </div>
                 </div>
@@ -15069,9 +15069,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               const ebBase=sp?.eb_baseline||80;
               const ebOk=ebVal>=ebOpt;
               const ebMid=ebVal>=ebBase;
-              const ebColor=ebOk?'var(--moss-700,#2E3B2F)':(ebMid?'#976E1A':'#A8432A');
+              const ebColor=ebOk?'var(--moss-700)':(ebMid?'var(--status-warn-text)':'var(--brand-accent-text)');
               const totOk=an&&an.tot!=null?Math.abs(an.tot-100)<=MASS_BALANCE_TOL:false;
-              const totColor=totOk?'var(--moss-700,#2E3B2F)':'#A8432A';
+              const totColor=totOk?'var(--moss-700)':'var(--brand-accent-text)';
 
               return(
                 <div>
@@ -15132,10 +15132,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button
                           onClick={()=>autoBalance(balanceMode)}
                           className="live-dash-btn"
-                          style={{background:'var(--coral-500)',color:'#fff',borderColor:'var(--coral-600)'}}
+                          style={{background:'var(--coral-500)',color:'var(--paper-50)',borderColor:'var(--coral-600)'}}
                           aria-label="Ajustar ingredientes libres al 100%"
                           title="Ajustar ingredientes libres al 100%">
-                          <IconBolt size={10} color="#fff" />
+                          <IconBolt size={10} color="var(--paper-50)" />
                           <span>100%</span>
                         </button>
                       )}
@@ -15164,10 +15164,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           }
                         }}
                         className="live-dash-btn"
-                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'#fff',borderColor:'var(--ink-900)'}}
+                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'var(--paper-50)',borderColor:'var(--ink-900)'}}
                         aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
                         title="Guardar receta en Recetario">
-                        {flash ? <IconCheck size={11} color="#fff" /> : <IconDisk size={11} color="#fff" />}
+                        {flash ? <IconCheck size={11} color="var(--paper-50)" /> : <IconDisk size={11} color="var(--paper-50)" />}
                       </button>
                     </div>
                   </div>
@@ -15255,7 +15255,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </button>
                             <div style={{flex:'1 1 100px',minWidth:0,display:'flex',alignItems:'center',gap:4}} title={`${g.name} · C:N ${g.cn||'—'} · N ${g.n||'—'}%${rowFlag?` · ${rowFlag.label}`:''}`}>
                               <span style={{fontSize:"var(--text-sm)",fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.name}</span>
-                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'#7A5A10',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0,display:'inline-flex',alignItems:'center'}}><AppIcon name="alert" size={11} color="currentColor" /></span>}
+                              {rowFlag&&<span aria-hidden="true" style={{color:rowFlag.priority==='critical'?'var(--coral-500)':'var(--status-warn-text)',fontWeight:700,fontSize:"var(--text-xs)",flexShrink:0,display:'inline-flex',alignItems:'center'}}><AppIcon name="alert" size={11} color="currentColor" /></span>}
                               <span className="sr-only">C:N {g.cn||'—'} · N {g.n||'—'}%{rowFlag?`, ${rowFlag.label}`:''}</span>
                             </div>
                             <div className="mix-steppers" role="group" aria-label={`Ajustar porcentaje de ${g.name}`}>
@@ -15733,7 +15733,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
                 </div>
               </div>
-              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500,#A07828)':'var(--coral-500)';const bg=sc>=80?'#F2F5EE':sc>=60?'#FBF6E8':'#F9EDEA';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
+              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500)':'var(--coral-500)';const bg=sc>=80?'var(--status-ok-bg)':sc>=60?'var(--status-warn-bg)':'var(--status-error-bg)';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
                 <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                     <div>
@@ -15761,14 +15761,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const idealPct=(m.ideal/m.scale)*100;
                     const minPct=(m.min/m.scale)*100;
                     const maxPct=(m.max/m.scale)*100;
-                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'#d4a04a';
+                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'var(--status-warn)';
                     return(
                       <div key={m.label} style={{background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'8px 10px'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
                           <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
                           <span style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
                         </div>
-                        <div style={{position:'relative',height:6,background:'#e0dbd3',borderRadius:3}}>
+                        <div style={{position:'relative',height:6,background:'var(--border-soft)',borderRadius:3}}>
                           <div style={{position:'absolute',left:`${minPct}%`,width:`${maxPct-minPct}%`,height:'100%',background:'rgba(77,98,53,.2)',borderRadius:3}}/>
                           <div style={{position:'absolute',left:`${idealPct}%`,width:2,height:'160%',top:'-30%',background:'rgba(77,98,53,.5)',borderRadius:1}}/>
                           <div style={{position:'absolute',left:0,width:`${pct}%`,height:'100%',background:barColor,borderRadius:3,transition:'width .3s'}}/>
@@ -15808,14 +15808,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       ))}
                       <div className="brow" style={{borderTop:'2px solid var(--border-soft)',marginTop:4,paddingTop:8}}>
-                        <span className="bn" style={{color:'#2A5078',fontWeight:600}}> Agua a agregar (obj. {bd.hObj}%)</span>
-                        <span className="bq" style={{background:'#E8F2FA',border:'1px solid #9AC0D8',color:'#2A5078'}}>{bd.agua.toFixed(2)} L</span>
+                        <span className="bn" style={{color:'var(--status-info)',fontWeight:600}}> Agua a agregar (obj. {bd.hObj}%)</span>
+                        <span className="bq" style={{background:'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))',border:'1px solid var(--status-info)',color:'var(--status-info)'}}>{bd.agua.toFixed(2)} L</span>
                       </div>
                       <div className="brow" style={{borderTop:'1px solid var(--paper-300)',marginTop:4,paddingTop:8}}>
                         <span className="bn"> Spawn ({an?.dynSpawn||8}% · {bd.spawn.toFixed(2)} kg)</span>
                         <div style={{display:'flex',gap:8,alignItems:'center'}}>
                           <span className="bc">${Math.round(bd.spawnCostTotal).toLocaleString()}</span>
-                          <span className="bq" style={{background:'#E8F5E8',border:'1px solid #7AB87A',color:'#2A5A2A'}}>{bd.spawn.toFixed(2)} kg</span>
+                          <span className="bq" style={{background:'var(--status-ok-bg)',border:'1px solid var(--status-ok-marker)',color:'var(--status-ok)'}}>{bd.spawn.toFixed(2)} kg</span>
                         </div>
                       </div>
                       <div className="btots" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
@@ -15841,7 +15841,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const marginPct=revenue>0?((margin/revenue)*100).toFixed(1):0;
                         const positive=margin>=0;
                         return(
-                          <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'#F2F5EE':'#F9EDEA'}}>
+                          <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'var(--status-ok-bg)':'var(--status-error-bg)'}}>
                             <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
                             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:positive?'var(--moss-500)':'var(--coral-500)'}}>
                               {[
@@ -15920,12 +15920,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <input name="recipeName" aria-label="Nombre de la receta" autoComplete="off" placeholder="Nombre de la receta…" value={saveName} onChange={e=>setSaveName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveR()} maxLength={60}/>
                   <button className={`sbtn${flash?' fl':''}`} onClick={saveR} disabled={!saveName.trim()||!readyForProduction} title={readyForProduction?'':productionBlockMsg}>{flash?<><AppIcon name="check" size={11} style={{marginRight:4}} /> Guardada</>:'Guardar'}</button>
                   {recipe.length>0&&an&&<button className="btn-launch-prod" type="button" onClick={openProdLauncher} disabled={!readyForProduction} title={readyForProduction?'Lanzar producción de lote con descuento en bodega y asignación de sala':productionBlockMsg} style={{padding:'7px 14px',fontSize:'12px',display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="rocket" size={13} /> Lanzar Lote</button>}
-                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
+                  {saveSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)',display:'inline-flex',alignItems:'center',gap:4}} title={saveSyncErr}><AppIcon name="alert" size={11} color="var(--status-error)" /> sin sincronizar</span>}
                 </div>
                 {!readyForProduction&&(
-                  <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030'}}>
-                    <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="#C53030" /> {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'#fff',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="#fff" /> Auto-mejorar</button>}
+                  <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)'}}>
+                    <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> {productionBlockMsg}</span>
+                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> Auto-mejorar</button>}
                   </div>
                 )}
                 </div>
@@ -16006,8 +16006,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',background:'var(--paper-200)',padding:'2px 7px',borderRadius:3,fontWeight:600}}>{s2?.name}</span>
                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:600}}>C:N {e.cn}:1</span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500,#A07828)':'#C53030'}}>EB estimada {e.eb}%</span>
-                            {e.ebReal!=null&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:Math.abs(e.ebReal-parseFloat(e.eb))<=10?'var(--accent-olive)':'#C53030'}}>EB real {e.ebReal}% ({e.ebReal>=parseFloat(e.eb)?'+':''}{Math.round((e.ebReal-parseFloat(e.eb))*10)/10})</span>}
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:e.eb>=100?'var(--accent-olive)':e.eb>=70?'var(--ochre-500)':'var(--status-error)'}}>EB estimada {e.eb}%</span>
+                            {e.ebReal!=null&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,color:Math.abs(e.ebReal-parseFloat(e.eb))<=10?'var(--accent-olive)':'var(--status-error)'}}>EB real {e.ebReal}% ({e.ebReal>=parseFloat(e.eb)?'+':''}{Math.round((e.ebReal-parseFloat(e.eb))*10)/10})</span>}
                             {liveScoreFor(e)>0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--coral-500)',fontWeight:600}}>Score {liveScoreFor(e)}/100</span>}
                             {e.cost&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>${e.cost}/kg</span>}
                           </div>
@@ -16148,8 +16148,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                     <div>
                       {!isMorphFeasible&&trajectoryAnalysis&&(
-                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'rgba(197,48,48,.08)',border:'1px solid rgba(197,48,48,.3)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'#9B2C2C'}}>
-                          <b><AppIcon name="alert" size={13} color="#9B2C2C" style={{marginRight:4}} /> Esta mezcla ({(morphAlpha*100).toFixed(0)} % de la candidata) no cumple los criterios agronómicos:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
+                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)'}}>
+                          <b><AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> Esta mezcla ({(morphAlpha*100).toFixed(0)} % de la candidata) no cumple los criterios agronómicos:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
                           {trajectoryAnalysis.feasibleInterval&&(
                             <div style={{marginTop:4,color:'var(--ink-800)'}}>
                               → Mezclas que sí cumplen para esta especie: <b>entre {(trajectoryAnalysis.feasibleInterval[0]*100).toFixed(0)} % y {(trajectoryAnalysis.feasibleInterval[1]*100).toFixed(0)} % de la candidata</b>
@@ -16162,7 +16162,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
                             Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
                           </span>
-                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'#C53030'}}>
+                          <span style={{fontFamily:'var(--font-mono)',fontWeight:800,fontSize:'var(--text-md)',color:isMorphFeasible?'var(--moss-800)':'var(--status-error)'}}>
                             {(morphAlpha*100).toFixed(0)} % candidata {!isMorphFeasible?'(fuera de criterio)':''}
                           </span>
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
@@ -16239,7 +16239,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {/* ── SECCIÓN 3: GENERADOR DE RECETAS (OPTIMIZADOR) ── */}
             {['all','optimizador'].includes(workbenchMode)&&(
             <section id="gen-panel" className="panel opt-panel" aria-labelledby="gen-panel-title" aria-busy={optRunning} style={{marginTop:18}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50,#fff)'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)',position:'sticky',top:0,zIndex:'var(--z-sticky-panel)',background:'var(--paper-50)'}}>
                 <h2 className="sec" id="gen-panel-title" style={{margin:0,borderBottom:'none'}}>Automejora · Generador de recetas</h2>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
                   <button type="button" className="tog" onClick={()=>openBuilderSubTab('formular')}>← Mesa de Mezcla</button>
@@ -16276,7 +16276,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             </div>
                             {/* El origen se define una sola vez en el paso 02 del flujo. */}
-                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50,#fff)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
+                            <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                 <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
                                 <div className="chip-row">
@@ -16356,16 +16356,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             {optUseStock?(()=>{const sc=[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length;
                               return sc>0?(
-                                <div style={{padding:'8px 12px',background:'var(--moss-50,#F0F4EB)',border:'1px solid var(--moss-300,#B8C9A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
+                                <div style={{padding:'8px 12px',background:'var(--moss-tint)',border:'1px solid var(--moss-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
                                   Usando solo ingredientes en stock · {sc} disponibles en inventario
                                 </div>
                               ):(
-                                <div style={{padding:'10px 14px',background:'#FBF6E8',border:'1px solid #D4A838',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'#7A5A10',marginBottom:12}}>
+                                <div style={{padding:'10px 14px',background:'var(--status-warn-bg)',border:'1px solid var(--status-warn)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-warn-text)',marginBottom:12}}>
                                   Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
                                 </div>
                               );
                             })():(
-                              <div style={{padding:'8px 12px',background:'var(--coral-50,#FCEEE9)',border:'1px solid var(--coral-300,#E8B4A0)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600,#B5451F)',marginBottom:12}}>
+                              <div style={{padding:'8px 12px',background:'var(--coral-tint)',border:'1px solid var(--coral-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600)',marginBottom:12}}>
                                 Generando con toda la paleta compatible con {SPP[optTarget]?.name} · ignora inventario · ideal para diseñar la receta antes de comprar
                               </div>
                             )}
@@ -16377,7 +16377,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
                                   return(
-                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-50,#F0F4EB)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300,#B8C9A0)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
+                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-tint)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
                                       {evi.hasEvidence
                                         ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
                                         :`Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
@@ -16403,7 +16403,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
                                           <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
-                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'#fff'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
+                                          <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
                                       </div>
                                       <div className="opt-metrics">
@@ -16433,7 +16433,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       <div style={{display:'flex',gap:0,background:'var(--paper-100)',borderTop:'1px solid var(--border-soft)'}}>
                                         <div style={{flex:1,padding:'7px 10px',borderRight:'1px solid var(--border-soft)'}}>
                                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Riesgo</div>
-                                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500,#A07828)':'#C53030'}}>{r.riskScore??'—'}/100</div>
+                                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500)':'var(--status-error)'}}>{r.riskScore??'—'}/100</div>
                                         </div>
                                         {r.maxKgWet!=null&&(
                                           <div style={{flex:2,padding:'7px 10px'}}>
@@ -16471,10 +16471,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         const t=calcTreatment(r.an, optTarget, {[optTarget]:r.an.sp});
                                         if(!t) return null;
                                         const tc=t.col==='autoclave'
-                                          ?{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Autoclave 121°C / 18.5–19 PSI'}
+                                          ?{bg:'var(--status-error-bg)',br:'color-mix(in srgb, var(--status-error) 35%, var(--paper-50))',fg:'var(--brand-accent-text)',lbl:'Autoclave 121°C / 18.5–19 PSI'}
                                           :t.col==='thermal'
                                           ?{bg:'var(--status-attention-bg)',br:'var(--status-attention)',fg:'var(--status-attention-text)',lbl:'Pasteurización 65–75°C núcleo'}
-                                          :{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',icon:'',lbl:'CWLP — Cal en Frío pH≥12'};
+                                          :{bg:'var(--status-ok-bg)',br:'var(--status-ok-marker)',fg:'var(--status-ok)',icon:'',lbl:'CWLP — Cal en Frío pH≥12'};
                                         return(
                                           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 14px',background:tc.bg,borderTop:`1px solid ${tc.br}`}}>
                                             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,fontWeight:700}}>{tc.icon} {tc.lbl} · {t.time.split('(')[0].trim()}</span>
@@ -16512,14 +16512,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
                                     {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún suplemento N en bodega es compatible con esta especie.</div>}
                                     {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'#7A5A10',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="#7A5A10" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
+                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'var(--status-warn-text)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--status-warn-text)" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'#FBF6E8'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'var(--status-warn-bg)'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </button>
                             )}
@@ -16748,8 +16748,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <label htmlFor="sch-temp">Temp. Incubación (°C)</label>
                     <div style={{display:'flex',gap:4}}>
                       <input id="sch-temp" type="number" min="8" max="32" step="1" value={schTemp} onChange={e=>setSchTemp(parseFloat(e.target.value)||16)} style={{width:65}}/>
-                      <button type="button" onClick={()=>setSchTemp(16)} title="Tenjo ambiente" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===16?'var(--accent-olive)':'var(--paper-100)',color:schTemp===16?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>16° Tenjo</button>
-                      <button type="button" onClick={()=>setSchTemp(24)} title="Cámara térmica" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===24?'var(--accent-olive)':'var(--paper-100)',color:schTemp===24?'#fff':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>24° Control</button>
+                      <button type="button" onClick={()=>setSchTemp(16)} title="Tenjo ambiente" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===16?'var(--accent-olive)':'var(--paper-100)',color:schTemp===16?'var(--paper-50)':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>16° Tenjo</button>
+                      <button type="button" onClick={()=>setSchTemp(24)} title="Cámara térmica" style={{fontSize:"var(--text-xs)",padding:'2px 6px',cursor:'pointer',background:schTemp===24?'var(--accent-olive)':'var(--paper-100)',color:schTemp===24?'var(--paper-50)':'var(--ink-700)',border:'1px solid var(--border-soft)'}}>24° Control</button>
                     </div>
                   </div>
                   {an&&<div style={{padding:'9px 13px',border:'1px solid var(--border-soft)',background:'var(--paper-100)',fontSize:"var(--text-sm)",color:'var(--coral-500)',fontFamily:"var(--font-mono)",alignSelf:'flex-end'}}>EB {an.eb.toFixed(0)}% → tiempos ajustados</div>}
@@ -16757,7 +16757,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* Badge cinético térmico Q10 */}
                 {sch&&(
-                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'rgba(197,48,48,.08)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'rgba(197,48,48,.25)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700,#9B2C2C)':'var(--moss-800,#2F4A24)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 8%, transparent)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 25%, transparent)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-700)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                     <span><AppIcon name="temp" size={14} style={{marginRight:6}} /> <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
                     {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
                   </div>
@@ -16864,9 +16864,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--accent-olive)',marginTop:4}}>{proj.flush2.kg} kg</div>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush2.pct * 100)}% de la cosecha</div>
                       </div>
-                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(160,120,40,.07)',border:'1px solid var(--ochre-500,#A07828)',borderRadius:'var(--r-sm)'}}>
-                        <div style={{fontWeight:700,color:'var(--ochre-500,#A07828)',fontSize:"var(--text-sm)"}}>3ª Oleada (Fl. 3)</div>
-                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--ochre-500,#A07828)',marginTop:4}}>{proj.flush3.kg} kg</div>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(160,120,40,.07)',border:'1px solid var(--ochre-500)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{fontWeight:700,color:'var(--ochre-500)',fontSize:"var(--text-sm)"}}>3ª Oleada (Fl. 3)</div>
+                        <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--ochre-500)',marginTop:4}}>{proj.flush3.kg} kg</div>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush3.pct * 100)}% de la cosecha</div>
                       </div>
                     </div>
@@ -16923,7 +16923,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Compromisos B2B Restaurantes</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalComprometido} kg</div>
                     </div>
-                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'rgba(197,48,48,.08)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'color-mix(in srgb, var(--status-error) 8%, transparent)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',textTransform:'uppercase',fontWeight:700}}>
                         {coverage.superavit>0?'Superávit Comercial':'Déficit Comercial'}
                       </div>
@@ -16959,8 +16959,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* Alerta de siembra en caso de déficit */}
                   {coverage.deficit>0&&(
-                    <div style={{padding:14,background:'rgba(197,48,48,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--coral-700,#9B2C2C)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{padding:14,background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--coral-700)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
                         <span>{deficit}</span> Déficit comercial proyectado: {coverage.deficit} kg de hongo fresco
                       </div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800)'}}>
@@ -17003,10 +17003,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 const bt=BAG_TYPES.find(b=>b.id===prodBagType);
                 if(!bt) return null;
                 const tc=bt.tratamiento==='thermal'
-                  ?{bg:'#FBF6E8',br:'#D4A838',fg:'#7A5A10',icon:'',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
+                  ?{bg:'var(--status-warn-bg)',br:'var(--status-warn)',fg:'var(--status-warn-text)',icon:'',lbl:'Requiere pasteurización térmica (núcleo 65–75°C · 6–8h + 25% altitud)'}
                   :bt.tratamiento==='cwlp_thermal'
-                  ?{bg:'#EEF3EA',br:'#90A870',fg:'#3D5520',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
-                  :{bg:'#FCEEE9',br:'#E8B4A0',fg:'#B5451F',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
+                  ?{bg:'var(--status-ok-bg)',br:'var(--status-ok-marker)',fg:'var(--status-ok)',lbl:'Compatible con CWLP (cal en frío) o pasteurización'}
+                  :{bg:'var(--status-error-bg)',br:'color-mix(in srgb, var(--status-error) 35%, var(--paper-50))',fg:'var(--brand-accent-text)',lbl:'Requiere autoclave 121°C / 18.5–19 PSI'};
                 return(
                   <div>
                     <div style={{padding:'7px 11px',background:tc.bg,border:`1px solid ${tc.br}`,borderRadius:'var(--r-xs)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:tc.fg,marginBottom:7}}>
@@ -17034,8 +17034,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               ):(
                 <>
                 {an&&!balanced&&(
-                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'#C53030',background:'rgba(197,48,48,.08)',border:'1px solid #C53030',borderRadius:'var(--r-sm)'}}>
-                    <AppIcon name="alert" size={13} color="#C53030" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
+                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-error)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--r-sm)'}}>
+                    <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div className="prod-batch-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
@@ -17075,7 +17075,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
                     <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:!hasPickedSpecies?productionBlockMsg:'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
-                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'#C53030',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="#C53030" /> sin sincronizar</span>}
+                    {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="var(--status-error)" /> sin sincronizar</span>}
                   </div>
                 </div>
                 </>
@@ -17154,10 +17154,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               <div className="panel prod-sheet" data-preparation-revision={preparation.revision} style={{padding:'26px 28px'}}>
                 {/* Encabezado */}
-                <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900,#222)',paddingBottom:12,marginBottom:16}}>
+                <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900)',paddingBottom:12,marginBottom:16}}>
                   <div>
                     <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Tenjo 2.600 msnm</div>
-                    <div style={{fontFamily:'var(--font-serif)',fontSize:28,fontWeight:700,color:'var(--ink-900,#222)',lineHeight:1.1,marginTop:2}}>Hoja de Producción</div>
+                    <div style={{fontFamily:'var(--font-serif)',fontSize:28,fontWeight:700,color:'var(--ink-900)',lineHeight:1.1,marginTop:2}}>Hoja de Producción</div>
                     <div style={{fontFamily:'var(--font-serif)',fontSize:"var(--text-lg)",color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i style={{fontFamily:'var(--font-serif)'}}>{an.sp?.scientific}</i></div>
                   </div>
                   <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
@@ -17192,10 +17192,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="economic-summary-card" style={{marginBottom: 20}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2,#6B6759)'}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)'}}>
                         <AppIcon name="scale" size={14} style={{marginRight:6}} /> Análisis Económico & Rentabilidad por Bolsa
                       </div>
-                      <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1,#3C392F)',marginTop:2}}>
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-1)',marginTop:2}}>
                         Costeo unitario real en Tenjo para bolsa de {prodKg} kg húmedo al {prodH}% H₂O
                       </div>
                     </div>
@@ -17221,18 +17221,18 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span className="econ-metric-value">${Math.round(pb.productionCostPerKgFresh).toLocaleString('es-CO')}</span>
                       <span className="econ-metric-sub">Costo unitario de cosecha</span>
                     </div>
-                    <div className="econ-metric-box" style={{background:'var(--accent-olive-dim, #DCE1D1)',borderColor:'var(--accent-olive, #5B6B44)'}}>
-                      <span className="econ-metric-label" style={{color:'var(--accent-olive, #5B6B44)'}}>Margen Bruto / Bolsa</span>
-                      <span className="econ-metric-value" style={{color:'var(--accent-olive, #5B6B44)'}}>+${Math.round(pb.projectedGrossMarginPerBag).toLocaleString('es-CO')}</span>
-                      <span className="econ-metric-sub" style={{fontWeight:700,color:'var(--accent-olive, #5B6B44)'}}>{pb.projectedMarginPct.toFixed(1)}% margen</span>
+                    <div className="econ-metric-box" style={{background:'var(--accent-olive-dim)',borderColor:'var(--accent-olive)'}}>
+                      <span className="econ-metric-label" style={{color:'var(--accent-olive)'}}>Margen Bruto / Bolsa</span>
+                      <span className="econ-metric-value" style={{color:'var(--accent-olive)'}}>+${Math.round(pb.projectedGrossMarginPerBag).toLocaleString('es-CO')}</span>
+                      <span className="econ-metric-sub" style={{fontWeight:700,color:'var(--accent-olive)'}}>{pb.projectedMarginPct.toFixed(1)}% margen</span>
                     </div>
                   </div>
 
                   <div className="econ-pills-row">
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#5E7080'}}></span>Sustrato: ${Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString('es-CO')}/bolsa</span>
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#5B6B44'}}></span>Micelio: ${Math.round(pb.costBreakdownPerBag.spawn).toLocaleString('es-CO')}/bolsa</span>
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#A85C32'}}></span>Tratamiento Térmico: ${Math.round(pb.costBreakdownPerBag.energia).toLocaleString('es-CO')}/bolsa</span>
-                    <span className="econ-pill"><span className="econ-dot" style={{background:'#7A6A52'}}></span>Bolsa PP: ${Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-blue-grey)'}}></span>Sustrato: ${Math.round(pb.costBreakdownPerBag.sustrato).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-olive)'}}></span>Micelio: ${Math.round(pb.costBreakdownPerBag.spawn).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-terracotta)'}}></span>Tratamiento Térmico: ${Math.round(pb.costBreakdownPerBag.energia).toLocaleString('es-CO')}/bolsa</span>
+                    <span className="econ-pill"><span className="econ-dot" style={{background:'var(--accent-mushroom)'}}></span>Bolsa PP: ${Math.round(pb.costBreakdownPerBag.consumibles).toLocaleString('es-CO')}/bolsa</span>
                   </div>
                 </div>
 
@@ -17275,7 +17275,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </table>
                 </div>
                 {/* C:N efectivo tras redondeo / humedad real */}
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600,#B5451F)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-50,#FCEEE9)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300,#E8B4A0)':'var(--paper-300)'}`}}>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:cnDrift>0.5?'var(--coral-600)':'var(--ink-500)',marginBottom:16,padding:'5px 9px',background:cnDrift>0.5?'var(--coral-tint)':'var(--paper-50)',border:`1px solid ${cnDrift>0.5?'var(--coral-300)':'var(--paper-300)'}`}}>
                   C:N teórico {an.cn.toFixed(1)} → <b style={{color:'var(--ink-900)'}}>efectivo {anR.cn.toFixed(1)}</b> · N {anR.avgN.toFixed(2)}% · EB ~{anR.eb.toFixed(0)}%{cnDrift>0.5?' · el redondeo desvía el C:N: considera un lote más grande':' · desvío despreciable a esta resolución'}
                 </div>
                 {/* Agua / spawn / húmedo */}
@@ -17287,7 +17287,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ].map(([l,v,s])=>(
                     <div key={l} style={{border:'1px solid var(--paper-300)',padding:'10px 12px',background:'var(--paper-50)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
-                      <div style={{fontFamily:'var(--font-num)',fontSize:20,fontWeight:600,color:'var(--ink-900,#222)'}}>{v}</div>
+                      <div style={{fontFamily:'var(--font-num)',fontSize:20,fontWeight:600,color:'var(--ink-900)'}}>{v}</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:1,fontWeight:500}}>{s}</div>
                     </div>
                   ))}
@@ -17331,7 +17331,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {fechas.map(([l,v])=>(
                         <div key={l} style={{background:'var(--paper-0)',padding:'8px 6px',textAlign:'center'}}>
                           <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{l}</div>
-                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-900,#222)'}}>{v}</div>
+                          <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-900)'}}>{v}</div>
                         </div>
                       ))}
                     </div></div>
@@ -17526,8 +17526,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     style={{
                       padding: '10px 12px',
                       borderRadius: 'var(--radius-sm, 3px)',
-                      background: 'var(--paper-1, #EFEBE0)',
-                      border: '1px solid var(--border-hairline, #8C7F5B)',
+                      background: 'var(--paper-1)',
+                      border: '1px solid var(--border-hairline)',
                       marginBottom: 14,
                     }}
                   >
@@ -17553,11 +17553,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{
                           padding: '6px 8px',
                           borderRadius: 2,
-                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100, #FDE8E8)' : 'var(--moss-100, #EAEFD9)',
-                          border: `1px solid ${postHarvestCondensation.condensationRisk ? 'var(--coral-500, #E05252)' : 'var(--moss-600, #617346)'}`,
+                          background: postHarvestCondensation.condensationRisk ? 'var(--coral-100)' : 'var(--moss-tint)',
+                          border: `1px solid ${postHarvestCondensation.condensationRisk ? 'var(--coral-500)' : 'var(--moss-600)'}`,
                           fontFamily: 'var(--font-mono)',
                           fontSize: 11,
-                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700, #9B1C1C)' : 'var(--moss-800, #2E3A1F)',
+                          color: postHarvestCondensation.condensationRisk ? 'var(--coral-700)' : 'var(--moss-700)',
                         }}
                       >
                         <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
@@ -17686,7 +17686,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <AccessibleModal
               onClose={()=>{stopCameraScanner();setShowQrSheet(false);setQrScannedBagId('');setScanMiss('');setManualScanCode('');setCameraError('');setQrEventoObsAbierta(false);setQrEventoObsNota('');}}
               label="Captura rápida de campo"
-              dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1,#EFEBE0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+              dialogStyle={{width:'min(460px,94vw)',padding:'18px 16px',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)'}}
             >
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-0)',display:'flex',alignItems:'center',gap:6}}>
@@ -17696,7 +17696,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* SELECTOR DE MODO DE ESCANEO */}
-                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2, #E5DFC8)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
                   <button
                     type="button"
                     className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
@@ -17725,11 +17725,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}
                 {qrScanMode === 'harvest' && harvestActiveCrate ? (
-                  <div style={{ padding: '12px 14px', background: 'var(--paper-0, #F7F4EC)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 'var(--radius-md, 3px)', marginBottom: 12 }}>
+                  <div style={{ padding: '12px 14px', background: 'var(--paper-0)', border: '2px solid var(--accent-olive)', borderRadius: 'var(--radius-md, 3px)', marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       <div>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)' }}>Canastilla</span>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-olive, #5B6B44)' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-olive)' }}>
                           {harvestActiveCrate.crateCode}
                         </div>
                       </div>
@@ -17742,7 +17742,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     {/* TARA CARD */}
-                    <div style={{ padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, marginBottom: 10, fontSize: 11 }}>
+                    <div style={{ padding: '8px 10px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 2, marginBottom: 10, fontSize: 11 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontWeight: 600, color: 'var(--ink-1)' }}>
                           Tara: {harvestTareInput ? `${harvestTareInput} g` : 'Sin verificar'}
@@ -17753,7 +17753,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       {(!harvestTareInput || harvestTareSource === 'unverified') && (
                         <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 10, color: 'var(--warning-text, #8C6B2E)', flex: 1 }}>
+                          <span style={{ fontSize: 10, color: 'var(--warning-text)', flex: 1 }}>
                             <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Ingresa la tara (g) para calcular peso neto honesto:
                           </span>
                           <input
@@ -17789,7 +17789,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             handleSaveHarvestCrate();
                           }
                         }}
-                        style={{ width: '100%', minHeight: 48, fontSize: 24, fontWeight: 700, textAlign: 'center', fontFamily: 'var(--font-mono)', border: '2px solid var(--accent-olive, #5B6B44)', borderRadius: 2 }}
+                        style={{ width: '100%', minHeight: 48, fontSize: 24, fontWeight: 700, textAlign: 'center', fontFamily: 'var(--font-mono)', border: '2px solid var(--accent-olive)', borderRadius: 2 }}
                       />
                       {/* QUICK PRESETS */}
                       <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
@@ -17818,21 +17818,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       if (tare !== null && !isNaN(tare)) {
                         if (tare > gross) {
                           return (
-                            <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
+                            <div style={{ padding: '6px 8px', background: 'var(--status-error-bg)', color: 'var(--status-error)', borderLeft: '3px solid var(--status-error)', fontSize: 11, marginBottom: 10, fontWeight: 700 }}>
                               <AppIcon name="close" size={13} color="var(--status-error)" style={{marginRight:4}} /> Tara ({tare}g) excede el peso bruto ({gross}g).
                             </div>
                           );
                         }
                         const net = gross - tare;
                         return (
-                          <div style={{ padding: '8px 10px', background: '#DCFCE7', color: '#15803D', borderLeft: '3px solid #16A34A', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ padding: '8px 10px', background: 'var(--status-ok-bg)', color: 'var(--status-ok)', borderLeft: '3px solid var(--status-ok-marker)', fontSize: 12, marginBottom: 10, fontWeight: 700, display: 'flex', justifyContent: 'space-between' }}>
                             <span><AppIcon name="check" size={13} color="var(--status-ok)" style={{marginRight:4}} /> Peso Neto: {net} g</span>
                             <span>({(net / 1000).toFixed(3)} kg)</span>
                           </div>
                         );
                       }
                       return (
-                        <div style={{ padding: '6px 8px', background: 'var(--paper-2, #E5DFC8)', color: 'var(--ink-1)', borderLeft: '3px solid var(--accent-terracotta)', fontSize: 11, marginBottom: 10 }}>
+                        <div style={{ padding: '6px 8px', background: 'var(--paper-2)', color: 'var(--ink-1)', borderLeft: '3px solid var(--accent-terracotta)', fontSize: 11, marginBottom: 10 }}>
                           Bruto: {gross} g · Neto: No calculado (bloqueado por falta de tara verificada)
                         </div>
                       );
@@ -17879,7 +17879,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
 
                     {harvestError && (
-                      <div style={{ padding: '6px 8px', background: '#FEE2E2', color: '#991B1B', fontSize: 11, marginBottom: 10 }}>
+                      <div style={{ padding: '6px 8px', background: 'var(--status-error-bg)', color: 'var(--status-error)', fontSize: 11, marginBottom: 10 }}>
                         {harvestError}
                       </div>
                     )}
@@ -17926,7 +17926,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <button
                           type="button"
                           onClick={stopCameraScanner}
-                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
+                          style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'var(--paper-50)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 2, fontSize: 10, padding: '4px 8px', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}
                         >
                           <AppIcon name="close" size={10} style={{marginRight:4}} /> Detener Cámara
                         </button>
@@ -17935,15 +17935,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button
                         type="button"
                         onClick={startCameraScanner}
-                        style={{ minHeight: 44, width: '100%', cursor: 'pointer', background: 'var(--paper-0,#F7F4EC)', color: 'var(--accent-olive,#5B6B44)', border: '1px solid var(--accent-olive,#5B6B44)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
+                        style={{ minHeight: 44, width: '100%', cursor: 'pointer', background: 'var(--paper-0)', color: 'var(--accent-olive)', border: '1px solid var(--accent-olive)', borderRadius: 'var(--radius-md,3px)', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}
                       >
                         <AppIcon name="camera" size={14} style={{marginRight:6}} /> Iniciar Escaneo con Cámara Móvil
                       </button>
                     )}
 
                     {cameraError && (
-                      <div style={{ padding: '8px 10px', background: '#FEE2E2', color: '#991B1B', borderLeft: '3px solid #DC2626', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                        <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {cameraError}
+                      <div style={{ padding: '8px 10px', background: 'var(--status-error-bg)', color: 'var(--status-error)', borderLeft: '3px solid var(--status-error)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                        <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {cameraError}
                       </div>
                     )}
 
@@ -17961,7 +17961,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         autoComplete="off"
                         autoCapitalize="characters"
                         spellCheck={false}
-                        style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)'}}
+                        style={{flex:1,minHeight:42,padding:'8px 10px',fontFamily:'var(--font-mono)',fontSize:12,background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)'}}
                       />
                       <button
                         type="submit"
@@ -17974,7 +17974,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </form>
 
                     {scanMiss && (
-                      <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim,#EFE0D3)', color: 'var(--accent-terracotta,#A85C32)', borderLeft: '3px solid var(--accent-terracotta,#A85C32)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
+                      <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim)', color: 'var(--accent-terracotta)', borderLeft: '3px solid var(--accent-terracotta)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
                         {scanMiss} Elige el lote manualmente o vuelve a escanear.
                       </div>
                     )}
@@ -17982,7 +17982,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {/* MODO BÁSCULA: RESUMEN DE SESIÓN Y SELECCIÓN DE LOTE */}
                     {qrScanMode === 'harvest' && (
                       <div style={{ marginBottom: 12 }}>
-                        <div style={{ padding: '8px 10px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 2, fontSize: 11, fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <div style={{ padding: '8px 10px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 2, fontSize: 11, fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                           <span><AppIcon name="box" size={13} style={{marginRight:4}} /> Sesión de Pesaje: <b>{harvestSessionStats.count}</b> canastillas</span>
                           <span><b>{(harvestSessionStats.totalNetGrams / 1000).toFixed(2)} kg</b> netos</span>
                         </div>
@@ -18006,7 +18006,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {/* MODO BARRIDO: COLA DE BOLSAS Y ACCIONES MASIVAS */}
                     {qrScanMode === 'sweep' && (
-                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-sm, 2px)' }}>
+                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                           <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-0)' }}>
                             <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
@@ -18029,8 +18029,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 key={item.bagId}
                                 style={{
                                   padding: '2px 6px',
-                                  background: item.estado === 'contaminada' ? '#FEE2E2' : 'var(--paper-1)',
-                                  color: item.estado === 'contaminada' ? '#991B1B' : 'var(--ink-0)',
+                                  background: item.estado === 'contaminada' ? 'var(--status-error-bg)' : 'var(--paper-1)',
+                                  color: item.estado === 'contaminada' ? 'var(--status-error)' : 'var(--ink-0)',
                                   border: '1px solid var(--border-hairline)',
                                   borderRadius: 2,
                                   fontSize: 10,
@@ -18183,7 +18183,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     </div>
 
-                    <div style={{padding:'10px 12px',background:'var(--paper-0,#F7F4EC)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-sm,2px)',marginBottom:12}}>
+                    <div style={{padding:'10px 12px',background:'var(--paper-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm,2px)',marginBottom:12}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
                         <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-0)'}}>{currentLote.codigo}</strong>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
@@ -18194,12 +18194,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           :`Estado: ${currentLote.estado} · ${currentLote.numBolsas||0} bolsas`}
                       </div>
                       {(scannedBag||qrScannedBagId)&&(
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive,#5B6B44)',marginTop:3}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--accent-olive)',marginTop:3}}>
                           Etiqueta leída: bolsa {scannedBag ? scannedBag.codigo : qrScannedBagId}
                         </div>
                       )}
                       {currentSheet&&currentSheet.blocks.length>0&&(
-                        <div style={{fontFamily:'var(--font-sans)',fontSize:10,color:'var(--accent-terracotta,#A85C32)',marginTop:4}}>
+                        <div style={{fontFamily:'var(--font-sans)',fontSize:10,color:'var(--accent-terracotta)',marginTop:4}}>
                           {currentSheet.blocks.map(b=>b.detail).join(' · ')}
                         </div>
                       )}
@@ -18281,9 +18281,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           disabled={Boolean(a.blockedBy)}
                           title={a.blockedBy?`Bloqueado por: ${a.blockedBy}`:(a.requires&&a.requires.length?`Pide: ${a.requires.join(', ')}`:undefined)}
                           style={{minHeight:48,cursor:a.blockedBy?'not-allowed':'pointer',opacity:a.blockedBy?0.5:1,
-                            background:a.action==='contamination'?'var(--accent-terracotta-dim,#EFE0D3)':(i===0?'var(--accent-olive,#5B6B44)':'var(--paper-0,#F7F4EC)'),
-                            color:a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--paper-0,#F7F4EC)':'var(--ink-0)'),
-                            border:`1px solid ${a.action==='contamination'?'var(--accent-terracotta,#A85C32)':(i===0?'var(--accent-olive,#5B6B44)':'var(--border-hairline,#8C7F5B)')}`,
+                            background:a.action==='contamination'?'var(--accent-terracotta-dim)':(i===0?'var(--accent-olive)':'var(--paper-0)'),
+                            color:a.action==='contamination'?'var(--accent-terracotta)':(i===0?'var(--paper-0)':'var(--ink-0)'),
+                            border:`1px solid ${a.action==='contamination'?'var(--accent-terracotta)':(i===0?'var(--accent-olive)':'var(--border-hairline)')}`,
                             borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:i===0?700:600,
                             display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                           onClick={()=>{
@@ -18305,7 +18305,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                       <button
                         type="button"
-                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setShowQrSheet(false);
                           goTab('control');
@@ -18315,7 +18315,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
-                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim,#EFE0D3)',color:'var(--accent-terracotta,#A85C32)',border:'1px solid var(--accent-terracotta,#A85C32)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        style={{minHeight:44,cursor:'pointer',background:'var(--accent-terracotta-dim)',color:'var(--accent-terracotta)',border:'1px solid var(--accent-terracotta)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setShowQrSheet(false);
                           openContaminationTriage(currentLote.id);
@@ -18325,7 +18325,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
-                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-0)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setThermalLote(currentLote);
                           setThermalBagEnd(currentLote.numBolsas||12);
@@ -18338,7 +18338,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                       <button
                         type="button"
-                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0,#F7F4EC)',color:'var(--ink-1)',border:'1px solid var(--border-hairline,#8C7F5B)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
+                        style={{minHeight:44,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-1)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}
                         onClick={()=>{
                           setShowQrSheet(false);
                           setPublicTraceModalLoteId(currentLote.id);
@@ -18424,7 +18424,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <AccessibleModal
               onClose={() => setShowThermalModal(false)}
               label="Generador de etiquetas térmicas"
-              dialogStyle={{ width: 'min(580px, 95vw)', padding: '20px 18px', background: 'var(--paper-1, #EFEBE0)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+              dialogStyle={{ width: 'min(580px, 95vw)', padding: '20px 18px', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-md, 3px)' }}
             >
                 <style dangerouslySetInnerHTML={{__html: `
                   @media print {
@@ -18456,7 +18456,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     }
                   }
                 `}} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline, #8C7F5B)', paddingBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: '1px solid var(--border-hairline)', paddingBottom: 10 }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-0)' }}>
                       <AppIcon name="print" size={14} style={{marginRight:6}} /> Impresión Térmica · Rollo Adhesivo
@@ -18479,21 +18479,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <button
                         type="button"
                         onClick={() => setThermalSize('40x30')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '40x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '40x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '40x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '40x30' ? 'var(--accent-olive)' : 'var(--border-hairline)'}`, background: thermalSize === '40x30' ? 'var(--accent-olive-dim)' : 'var(--paper-0)', color: thermalSize === '40x30' ? 'var(--accent-olive)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         40 × 30 mm
                       </button>
                       <button
                         type="button"
                         onClick={() => setThermalSize('50x30')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x30' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x30' ? 'var(--accent-olive)' : 'var(--border-hairline)'}`, background: thermalSize === '50x30' ? 'var(--accent-olive-dim)' : 'var(--paper-0)', color: thermalSize === '50x30' ? 'var(--accent-olive)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         50 × 30 mm
                       </button>
                       <button
                         type="button"
                         onClick={() => setThermalSize('50x70')}
-                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x70' ? 'var(--accent-olive, #5B6B44)' : 'var(--border-hairline, #8C7F5B)'}`, background: thermalSize === '50x70' ? 'var(--accent-olive-dim, #DCE1D1)' : 'var(--paper-0, #F7F4EC)', color: thermalSize === '50x70' ? 'var(--accent-olive, #5B6B44)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
+                        style={{ minHeight: 44, padding: '6px 8px', border: `1px solid ${thermalSize === '50x70' ? 'var(--accent-olive)' : 'var(--border-hairline)'}`, background: thermalSize === '50x70' ? 'var(--accent-olive-dim)' : 'var(--paper-0)', color: thermalSize === '50x70' ? 'var(--accent-olive)' : 'var(--ink-0)', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, borderRadius: 2, cursor: 'pointer' }}
                       >
                         50 × 70 mm
                       </button>
@@ -18526,7 +18526,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {thermalScope === 'custom' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, background: 'var(--paper-0, #F7F4EC)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline, #8C7F5B)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, background: 'var(--paper-0)', padding: '8px 10px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
                     <label htmlFor="thermal-bag-start" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Desde bolsa:</label>
                     <input id="thermal-bag-start" name="thermal-bag-start" type="number" min={1} max={totalBags} value={thermalBagStart} onChange={e => setThermalBagStart(parseInt(e.target.value) || 1)} style={{ width: 68, minHeight: 44, fontSize: 11, textAlign: 'center' }} />
                     <label htmlFor="thermal-bag-end" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Hasta:</label>
@@ -18571,7 +18571,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* BOTONES DE ACCIÓN */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid var(--border-hairline, #8C7F5B)', paddingTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, borderTop: '1px solid var(--border-hairline)', paddingTop: 12 }}>
                   <button type="button" onClick={() => setShowThermalModal(false)} className="inv-btn inv-btn-sec" style={{ minHeight: 44, padding: '8px 14px' }}>
                     Cancelar
                   </button>
@@ -18618,7 +18618,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       try { window.print(); } catch (e) { console.error(e); }
                     }}
                     className="inv-btn inv-btn-pri"
-                    style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
+                    style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive)', borderColor: 'var(--accent-olive)' }}
                   >
                     <AppIcon name="print" size={13} style={{marginRight:4}} /> Imprimir {items.length} etiqueta{items.length === 1 ? '' : 's'}
                   </button>
@@ -18703,7 +18703,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {f.plan?.shortfalls?.length > 0 && (
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'#FFF5F5',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'var(--status-error-bg)',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
                       <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
                     </div>
                   )}
@@ -18720,7 +18720,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </thead>
                       <tbody>
                         {f.insumos.map((ins, i) => (
-                          <tr key={i} style={{background: ins.ok ? 'transparent' : '#FFF5F5'}}>
+                          <tr key={i} style={{background: ins.ok ? 'transparent' : 'var(--status-error-bg)'}}>
                             <td style={{fontWeight:600}}>{ins.name}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)'}}>{ins.krKg.toFixed(2)} {ins.unit || 'kg'}</td>
                             <td style={{textAlign:'right',fontFamily:'var(--font-num)',color: ins.ok ? 'var(--ink-1)' : 'var(--coral-500)'}}>
@@ -18750,7 +18750,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{
                           padding:'10px 12px',
                           border:`1.5px solid ${f.sala === r.id ? 'var(--moss-700)' : 'var(--border-hairline)'}`,
-                          background: f.sala === r.id ? 'var(--paper-0)' : '#ffffff',
+                          background: f.sala === r.id ? 'var(--paper-0)' : 'var(--paper-50)',
                           borderRadius:'var(--radius-sm)',
                           textAlign:'left',
                           cursor:'pointer'
@@ -18783,12 +18783,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           marginTop: 10,
                           padding: '12px 14px',
                           borderRadius: 'var(--radius-sm, 3px)',
-                          background: 'var(--paper-0, #F7F4EC)',
-                          border: `1.5px solid ${coCultAssignOpt.groupScore >= 75 ? 'var(--accent-olive, #5B6B44)' : 'var(--ochre-500, #C97A2C)'}`,
+                          background: 'var(--paper-0)',
+                          border: `1.5px solid ${coCultAssignOpt.groupScore >= 75 ? 'var(--accent-olive)' : 'var(--ochre-500)'}`,
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                             <AppIcon name="sprout" size={13} style={{marginRight:4}} /> Asesor de Co-Cultivo al Asignar {targetRoom.name}: {assignedSpeciesList.join(' + ')}
                           </span>
                           <span
@@ -18798,8 +18798,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               fontWeight: 700,
                               padding: '2px 8px',
                               borderRadius: 2,
-                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200, #DCE1D1)' : 'var(--ochre-100, #FDF0DE)',
-                              color: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-700, #404D2E)' : 'var(--ochre-700, #8A4B09)',
+                              background: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-200)' : 'var(--warning-tint)',
+                              color: coCultAssignOpt.groupScore >= 75 ? 'var(--moss-700)' : 'var(--ochre-700)',
                             }}
                           >
                             Compatibilidad: {coCultAssignOpt.groupScore}% · {coCultAssignOpt.verdict}
@@ -18893,19 +18893,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <AccessibleModal
               onClose={() => setShowTastingModal(false)}
               label={`Dossier Gastronómico: ${gastro.title}`}
-              dialogStyle={{ width: 'min(720px, 95vw)', padding: '24px 22px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+              dialogStyle={{ width: 'min(720px, 95vw)', padding: '24px 22px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-md, 3px)' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive, #5B6B44)', paddingBottom: 12, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--accent-olive)', paddingBottom: 12, marginBottom: 16 }}>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
                   <img src={resolveLogo('_standalone_imgs/logo-sdlp.png')} alt="Setas de la Peña" width="60" height="32" style={{ width: 60, height: 'auto', maxHeight: 34, objectFit: 'contain' }} />
                   <div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                       Ficha Técnica Comercial & Maridaje · Restaurantes de Alta Gama
                     </div>
-                    <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0, #1A1410)', margin: '4px 0 2px 0' }}>
+                    <h2 style={{ fontFamily: 'var(--font-display, Georgia, serif)', fontSize: 22, fontWeight: 700, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
                       {gastro.title}
                     </h2>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2, #6E6246)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                       {gastro.botanical} · Cultivo Agroecológico en Tenjo (2.592 m)
                     </div>
                   </div>
@@ -18915,25 +18915,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginBottom: 18 }}>
                 {/* COLUMNA 1: PERFIL SENSORIAL & RADAR */}
-                <div style={{ background: 'var(--paper-1, #EFEBE0)', padding: '16px 14px', borderRadius: 2, border: '1px solid var(--border-hairline, #8C7F5B)' }}>
+                <div style={{ background: 'var(--paper-1)', padding: '16px 14px', borderRadius: 2, border: '1px solid var(--border-hairline)' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 10 }}>
                     Notas de Cata & Organolépticas
                   </div>
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Aroma:</div>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.aroma}</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', lineHeight: 1.35 }}>{gastro.organoleptic.aroma}</div>
                   </div>
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Sabor & Umami:</div>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.flavor}</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', lineHeight: 1.35 }}>{gastro.organoleptic.flavor}</div>
                   </div>
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>Textura en Boca:</div>
-                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1, #382E2B)', lineHeight: 1.35 }}>{gastro.organoleptic.texture}</div>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', lineHeight: 1.35 }}>{gastro.organoleptic.texture}</div>
                   </div>
 
                   {/* BARRAS DE INTENSIDAD */}
-                  <div style={{ borderTop: '1px dashed var(--border-hairline, #8C7F5B)', paddingTop: 10 }}>
+                  <div style={{ borderTop: '1px dashed var(--border-hairline)', paddingTop: 10 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 24px', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>Umami</span>
                       <div className="tasting-radar-bar"><div className="tasting-radar-fill" style={{ width: `${(gastro.metrics.umami/5)*100}%` }} /></div>
@@ -18959,7 +18959,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Técnicas Sugeridas por el Chef
                     </div>
                     {gastro.cooking.map((c, i) => (
-                      <div key={i} style={{ marginBottom: 8, background: 'var(--paper-50, #F3EFE6)', padding: '8px 10px', borderRadius: 2, borderLeft: '3px solid var(--accent-olive, #5B6B44)' }}>
+                      <div key={i} style={{ marginBottom: 8, background: 'var(--paper-50)', padding: '8px 10px', borderRadius: 2, borderLeft: '3px solid var(--accent-olive)' }}>
                         <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--ink-0)' }}>{c.method}</div>
                         <div style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-1)', marginTop: 2 }}>{c.tip}</div>
                       </div>
@@ -18972,13 +18972,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                     {gastro.pairings.map((p, i) => (
                       <div key={i} style={{ marginBottom: 6, display: 'flex', gap: 6, alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, color: 'var(--accent-olive, #5B6B44)', minWidth: 70 }}>{p.category}:</span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, color: 'var(--accent-olive)', minWidth: 70 }}>{p.category}:</span>
                         <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-0)' }}>{p.item}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div style={{ marginTop: 12, padding: '8px 10px', background: 'var(--paper-1, #EFEBE0)', borderRadius: 2, border: '1px dashed var(--border-hairline, #8C7F5B)' }}>
+                  <div style={{ marginTop: 12, padding: '8px 10px', background: 'var(--paper-1)', borderRadius: 2, border: '1px dashed var(--border-hairline)' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, color: 'var(--ink-2)' }}>Presentación Óptima: </span>
                     <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11.5, color: 'var(--ink-0)' }}>{gastro.presentation}</span>
                   </div>
@@ -18986,7 +18986,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
 
               {/* BOTONES */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline, #8C7F5B)', paddingTop: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-hairline)', paddingTop: 14 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-2)' }}>
                   Setas de la Peña · Sabana Centro · info@setasdelapena.co
                 </div>
@@ -18998,7 +18998,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     type="button"
                     onClick={() => { try { window.print(); } catch(e) { console.error(e); } }}
                     className="inv-btn inv-btn-pri"
-                    style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}
+                    style={{ minHeight: 44, padding: '8px 18px', background: 'var(--accent-olive)', borderColor: 'var(--accent-olive)' }}
                   >
                     <AppIcon name="print" size={13} style={{marginRight:4}} /> Imprimir Ficha de Cata
                   </button>
@@ -19170,11 +19170,11 @@ interval:
             <AccessibleModal
               onClose={() => setShowEsp32ConfigModal(false)}
               label={`Configuración ESPHome YAML: ${room.name}`}
-              dialogStyle={{ width: 'min(720px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+              dialogStyle={{ width: 'min(720px, 95vw)', padding: '22px 20px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-md, 3px)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                     Firmware de Microcontrolador · ESPHome / ESP32
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -19202,7 +19202,7 @@ interval:
                   <button type="button" onClick={copyYaml} className="inv-btn inv-btn-sec" style={{ minHeight: 40, padding: '6px 14px' }}>
                     <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Copiar YAML
                   </button>
-                  <button type="button" onClick={downloadYaml} className="inv-btn inv-btn-pri" style={{ minHeight: 40, padding: '6px 16px', background: 'var(--accent-olive, #5B6B44)', borderColor: 'var(--accent-olive, #5B6B44)' }}>
+                  <button type="button" onClick={downloadYaml} className="inv-btn inv-btn-pri" style={{ minHeight: 40, padding: '6px 16px', background: 'var(--accent-olive)', borderColor: 'var(--accent-olive)' }}>
                     <AppIcon name="box" size={13} style={{marginRight:4}} /> Descargar .yaml
                   </button>
                 </div>
@@ -19231,11 +19231,11 @@ interval:
             <AccessibleModal
               onClose={() => setShowAutoclaveModal(false)}
               label="Simulador Cinético de Autoclave All American 1941X · Altitud Tenjo"
-              dialogStyle={{ width: 'min(780px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+              dialogStyle={{ width: 'min(780px, 95vw)', padding: '22px 20px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-md, 3px)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-terracotta, #C46238)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-terracotta)' }}>
                     Física Térmica en Altitud · All American 1941X (2.600 msnm / 74.5 kPa)
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -19347,9 +19347,9 @@ interval:
               <div style={{
                 padding: '12px 14px',
                 borderRadius: 'var(--radius-sm)',
-                background: cycle.riskLevel === 'seguro' ? 'var(--moss-100)' : cycle.riskLevel === 'moderado' ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
-                border: `1px solid ${cycle.riskLevel === 'seguro' ? 'var(--moss-600)' : cycle.riskLevel === 'moderado' ? '#D97706' : 'var(--accent-terracotta)'}`,
-                color: cycle.riskLevel === 'seguro' ? 'var(--moss-800)' : cycle.riskLevel === 'moderado' ? '#92400E' : 'var(--accent-rust)',
+                background: cycle.riskLevel === 'seguro' ? 'var(--moss-100)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
+                border: `1px solid ${cycle.riskLevel === 'seguro' ? 'var(--moss-600)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
+                color: cycle.riskLevel === 'seguro' ? 'var(--moss-800)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn-text)' : 'var(--accent-rust)',
                 marginBottom: 16
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -19453,11 +19453,11 @@ interval:
             <AccessibleModal
               onClose={() => setShowCoCultivationModal(false)}
               label="Matriz de Co-Cultivo e Intersección Climática · Cámara Multiespecie"
-              dialogStyle={{ width: 'min(820px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+              dialogStyle={{ width: 'min(820px, 95vw)', padding: '22px 20px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-md, 3px)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive, #5B6B44)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-olive)' }}>
                     Intersección Climática 4D · Lógica Difusa Trapezoidal & Liebig
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -19489,9 +19489,9 @@ interval:
                           fontSize: 11,
                           padding: '5px 10px',
                           borderRadius: 20,
-                          background: isSelected ? 'var(--accent-olive, #5B6B44)' : 'var(--paper-1)',
-                          borderColor: isSelected ? 'var(--accent-olive, #5B6B44)' : 'var(--line-0)',
-                          color: isSelected ? '#FFFFFF' : 'var(--ink-0)',
+                          background: isSelected ? 'var(--accent-olive)' : 'var(--paper-1)',
+                          borderColor: isSelected ? 'var(--accent-olive)' : 'var(--line-0)',
+                          color: isSelected ? 'var(--text-inverse)' : 'var(--ink-0)',
                         }}
                       >
                         {isSelected ? <AppIcon name="check" size={11} style={{marginRight:4}} /> : '+ '}{sp.name.split(' (')[0]}
@@ -19507,9 +19507,9 @@ interval:
                   <div style={{
                     padding: '12px 14px',
                     borderRadius: 'var(--radius-sm)',
-                    background: opt.groupScore >= 70 ? 'var(--moss-100)' : opt.groupScore >= 50 ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
-                    border: `1px solid ${opt.groupScore >= 70 ? 'var(--moss-600)' : opt.groupScore >= 50 ? '#D97706' : 'var(--accent-terracotta)'}`,
-                    color: opt.groupScore >= 70 ? 'var(--moss-800)' : opt.groupScore >= 50 ? '#92400E' : 'var(--accent-rust)',
+                    background: opt.groupScore >= 70 ? 'var(--moss-100)' : opt.groupScore >= 50 ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
+                    border: `1px solid ${opt.groupScore >= 70 ? 'var(--moss-600)' : opt.groupScore >= 50 ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
+                    color: opt.groupScore >= 70 ? 'var(--moss-800)' : opt.groupScore >= 50 ? 'var(--status-warn-text)' : 'var(--accent-rust)',
                     marginBottom: 16
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -19607,11 +19607,11 @@ interval:
             <AccessibleModal
               onClose={() => setShowPostHarvestModal(false)}
               label="Fisiología Poscosecha y Cadena de Frío · Shelf-Life Predictor"
-              dialogStyle={{ width: 'min(800px, 95vw)', padding: '22px 20px', background: 'var(--paper-0, #F7F4EC)', border: '1px solid var(--border-hairline, #8C7F5B)', borderRadius: 'var(--radius-md, 3px)' }}
+              dialogStyle={{ width: 'min(800px, 95vw)', padding: '22px 20px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-md, 3px)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-hairline)', paddingBottom: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1D4ED8' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--status-info)' }}>
                     Modelado Cinético Q₁₀ & Respiración Poscosecha · Setas de la Peña
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-0)', margin: '4px 0 2px 0' }}>
@@ -19713,9 +19713,9 @@ interval:
                   <div style={{
                     padding: '12px 14px',
                     borderRadius: 'var(--radius-sm)',
-                    background: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-100)' : slResult.marketableShelfLifeDays >= 3 ? '#FEF3C7' : 'var(--accent-terracotta-dim)',
-                    border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-600)' : slResult.marketableShelfLifeDays >= 3 ? '#D97706' : 'var(--accent-terracotta)'}`,
-                    color: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-800)' : slResult.marketableShelfLifeDays >= 3 ? '#92400E' : 'var(--accent-rust)',
+                    background: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-100)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
+                    border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-600)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
+                    color: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-800)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn-text)' : 'var(--accent-rust)',
                     marginBottom: 16
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -19781,7 +19781,7 @@ interval:
 
                   {/* Especificación de Empaque MAP */}
                   <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#1D4ED8', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--status-info)', marginBottom: 4 }}>
                       <AppIcon name="box" size={14} style={{marginRight:6}} /> Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
                     </div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-1)', lineHeight: 1.5 }}>
@@ -19998,7 +19998,7 @@ interval:
                             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
                               {p.commonName}
                             </span>
-                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : '#FEF3C7', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : '#B45309' }}>
+                            <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', padding: '1px 4px', borderRadius: 2, background: p.dangerLevel === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--status-warn-bg)', color: p.dangerLevel === 'critical' ? 'var(--accent-terracotta)' : 'var(--status-warn-text)' }}>
                               {p.dangerLevel === 'critical' ? 'Crítico' : p.dangerLevel === 'high' ? 'Alto' : 'Medio'}
                             </span>
                           </div>
@@ -20172,7 +20172,7 @@ interval:
                     <button
                       type="button"
                       className="inv-btn inv-btn-pri"
-                      style={{ background: 'var(--accent-terracotta, #B24C27)', borderColor: 'var(--accent-terracotta, #B24C27)' }}
+                      style={{ background: 'var(--accent-terracotta)', borderColor: 'var(--accent-terracotta)' }}
                       onClick={handleConfirmTriage}
                     >
                       <AppIcon name="trace" size={14} style={{marginRight:6}} /> Confirmar & Aplicar Bioseguridad
@@ -20384,8 +20384,8 @@ interval:
                 </div>
 
                 {diagError && (
-                  <div style={{padding:'8px 12px',background:'#FEE2E2',color:'#991B1B',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
-                    <AppIcon name="alert" size={12} color="#991B1B" style={{marginRight:4}} /> {diagError}
+                  <div style={{padding:'8px 12px',background:'var(--status-error-bg)',color:'var(--status-error)',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
+                    <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {diagError}
                   </div>
                 )}
 
@@ -20396,7 +20396,7 @@ interval:
                     minHeight:44,
                     cursor:(!diagImageBase64||diagRunning)?'not-allowed':'pointer',
                     background:(!diagImageBase64||diagRunning)?'var(--paper-2)':'var(--accent-terracotta)',
-                    color:(!diagImageBase64||diagRunning)?'var(--ink-2)':'#ffffff',
+                    color:(!diagImageBase64||diagRunning)?'var(--ink-2)':'var(--paper-50)',
                     border:'none',
                     borderRadius:'var(--radius-md)',
                     fontFamily:'var(--font-sans)',
@@ -20446,8 +20446,8 @@ interval:
                           flex:1,
                           minHeight:42,
                           cursor:'pointer',
-                          background:'var(--moss-700,#385933)',
-                          color:'#ffffff',
+                          background:'var(--moss-700)',
+                          color:'var(--paper-50)',
                           border:'none',
                           borderRadius:'var(--radius-sm)',
                           fontFamily:'var(--font-sans)',
@@ -20561,7 +20561,7 @@ interval:
                       width:'100%',
                       minHeight:42,
                       background:aiFormLoading?'var(--ink-500)':'var(--moss-700)',
-                      color:'#fff',
+                      color:'var(--paper-50)',
                       border:'none',
                       borderRadius:'var(--radius-sm)',
                       fontFamily:'var(--font-sans)',
@@ -20575,8 +20575,8 @@ interval:
                 )}
 
                 {aiFormError && (
-                  <div style={{marginTop:10,padding:'8px 12px',background:'rgba(197,48,48,.1)',border:'1px solid #C53030',borderRadius:'var(--radius-sm)',fontSize:12,color:'#C53030'}}>
-                    <AppIcon name="alert" size={12} color="#C53030" style={{marginRight:4}} /> {aiFormError}
+                  <div style={{marginTop:10,padding:'8px 12px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--radius-sm)',fontSize:12,color:'var(--status-error)'}}>
+                    <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {aiFormError}
                   </div>
                 )}
 
@@ -20609,7 +20609,7 @@ interval:
                           flex:1,
                           minHeight:42,
                           background:'var(--moss-700)',
-                          color:'#fff',
+                          color:'var(--paper-50)',
                           border:'none',
                           borderRadius:'var(--radius-sm)',
                           fontFamily:'var(--font-sans)',
@@ -20697,7 +20697,7 @@ interval:
                 <option value="" disabled>Elegir especie…</option>
                 {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
               </select>
-              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
+              <button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'var(--paper-50)',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
                 Ver catálogo
               </button>
             </div>
@@ -20714,7 +20714,7 @@ interval:
             <select className="bridge-select" value={sKey} onClick={e=>e.stopPropagation()} onChange={e=>{e.stopPropagation();setSKey(e.target.value);}} aria-label="Cambiar especie" title="Cambiar especie sin salir del formulador">
               {Object.entries(SPP).map(([k,d])=><option key={k} value={k}>{d.name}</option>)}
             </select>
-            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'#fff',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
+            {bridgeOpen&&<button className="bridge-cambiar" onClick={e=>{e.stopPropagation();goTab('catalogo');}} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',padding:'6px 12px',background:'var(--accent-terracotta)',color:'var(--paper-50)',border:'1px solid var(--accent-terracotta)',cursor:'pointer',transition:'background-color .15s,border-color .15s,color .15s,transform .15s',whiteSpace:'nowrap',flexShrink:0}}>
               Ver catálogo
             </button>}
             <button type="button" className="bridge-toggle" aria-expanded={bridgeOpen} aria-label={bridgeOpen?'Ocultar parámetros de especie':'Mostrar parámetros de especie'} onClick={()=>setBridgeOpen(o=>!o)}>

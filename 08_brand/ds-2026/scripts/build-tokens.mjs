@@ -54,6 +54,7 @@ function generateCss(){
  L.push('','  /* Domain marks: SVG drawn via mask + currentColor, identical on every device */');
  for(const g of ['provenance','sync']) for(const [k,v] of Object.entries(domain.domain[g])) if(v.mark) L.push('  --'+g+'-'+k+'-mark: '+markUrl(v.mark)+';');
  if(domain.domain.status?.quarantine?.treatment) L.push('  --status-quarantine-border-style: '+domain.domain.status.quarantine.treatment+';');
+ if(domain.domain.color){ L.push('','  /* Domain colours: ingredient role in the mix + perito verdict */'); for(const g of ['role','perito']) for(const [k,v] of Object.entries(domain.domain.color[g]||{})) L.push('  --'+g+'-'+k+': '+v.value+';'); }
  L.push('}','','/* Density profiles are semantic surface modes, never viewport aliases. */');
  for(const [mode] of Object.entries(spacing.grid.modes)) L.push('[data-mode="'+mode+'"] { --gutter: var(--gutter-'+mode+'); --page-margin: var(--margin-'+mode+'); }');
  L.push('[data-mode="culinary-market"] { --gutter: var(--gutter-culinary); --page-margin: var(--margin-culinary); }','[data-mode="archive"] { --accent-warm: var(--brand-accent); }','','@media print {','  :root { --size-micro: var(--size-micro-print); }','}');

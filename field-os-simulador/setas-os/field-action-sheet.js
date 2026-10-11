@@ -56,13 +56,13 @@
 
   const PALETTES = Object.freeze({
     idle:        Object.freeze({ bg: 'transparent', border: 'transparent', fg: 'inherit', sub: 'inherit' }),
-    saved_local: Object.freeze({ bg: '#FFFBEB', border: '#D97706', fg: '#92400E', sub: '#B45309' }),
-    sending:     Object.freeze({ bg: '#EFF6FF', border: '#2563EB', fg: '#1E3A8A', sub: '#1D4ED8' }),
-    confirmed:   Object.freeze({ bg: '#ECFDF5', border: '#059669', fg: '#065F46', sub: '#047857' }),
-    conflict:    Object.freeze({ bg: '#FEF2F2', border: '#DC2626', fg: '#991B1B', sub: '#B91C1C' }),
-    rejected:    Object.freeze({ bg: '#FEF2F2', border: '#DC2626', fg: '#991B1B', sub: '#B91C1C' }),
+    saved_local: Object.freeze({ bg: 'var(--status-warn-bg)', border: 'var(--status-warn)', fg: 'var(--status-warn-text)', sub: 'var(--status-warn-text)' }),
+    sending:     Object.freeze({ bg: 'color-mix(in srgb, var(--status-info) 10%, var(--paper-50))', border: 'var(--status-info)', fg: 'var(--status-info)', sub: 'var(--status-info)' }),
+    confirmed:   Object.freeze({ bg: 'var(--status-ok-bg)', border: 'var(--status-ok-marker)', fg: 'var(--status-ok)', sub: 'var(--status-ok)' }),
+    conflict:    Object.freeze({ bg: 'var(--status-error-bg)', border: 'var(--status-error)', fg: 'var(--status-error)', sub: 'var(--status-error)' }),
+    rejected:    Object.freeze({ bg: 'var(--status-error-bg)', border: 'var(--status-error)', fg: 'var(--status-error)', sub: 'var(--status-error)' }),
   });
-  const SIMULATED_PALETTE = Object.freeze({ bg: '#F1F5F9', border: '#64748B', fg: '#334155', sub: '#475569' });
+  const SIMULATED_PALETTE = Object.freeze({ bg: 'var(--surface-recessed)', border: 'var(--border-hairline)', fg: 'var(--text-secondary)', sub: 'var(--text-metadata)' });
 
   const STATUS_HEADINGS = Object.freeze({
     saved_local: 'GUARDADO EN ESTE EQUIPO',

@@ -308,8 +308,8 @@ export default function LabExtraction() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 32 }}>
-        <div style={{ background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft, #e2e4dd)", paddingBottom: 8 }}>
+        <div style={{ background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 }}>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 }}>
             Configurar Lote de Extracción
           </h3>
           
@@ -321,7 +321,7 @@ export default function LabExtraction() {
               <select
                 value={speciesKey}
                 onChange={e => setSpeciesKey(e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", background: "#fff", fontSize: "0.9rem" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--paper-50)", fontSize: "0.9rem" }}
               >
                 {Object.entries(factors).map(([k, d]) => (
                   <option key={k} value={k}>{d.name}</option>
@@ -359,7 +359,7 @@ export default function LabExtraction() {
                   step="1"
                   value={biomassGrams}
                   onChange={e => setBiomassGrams(e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.9rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.9rem", boxSizing: "border-box" }}
                 />
               </div>
 
@@ -373,7 +373,7 @@ export default function LabExtraction() {
                   step="0.1"
                   value={solventLiters}
                   onChange={e => setSolventLiters(e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.9rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.9rem", boxSizing: "border-box" }}
                 />
               </div>
             </div>
@@ -389,7 +389,7 @@ export default function LabExtraction() {
                   max="100"
                   value={alcoholPct}
                   onChange={e => setAlcoholPct(e.target.value)}
-                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
                 />
               </div>
               <div>
@@ -402,7 +402,7 @@ export default function LabExtraction() {
                   step="0.1"
                   value={timeHrs}
                   onChange={e => setTimeHrs(e.target.value)}
-                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
                 />
               </div>
               <div>
@@ -415,7 +415,7 @@ export default function LabExtraction() {
                   max="120"
                   value={tempC}
                   onChange={e => setTempC(e.target.value)}
-                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
                 />
               </div>
             </div>
@@ -429,7 +429,7 @@ export default function LabExtraction() {
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Observaciones de molienda, reactivos o filtrado..."
                 rows={2}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong, #ccc)", fontSize: "0.85rem", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", fontSize: "0.85rem", boxSizing: "border-box" }}
               />
             </div>
 
@@ -438,8 +438,8 @@ export default function LabExtraction() {
               style={{
                 width: "100%",
                 padding: "10px 16px",
-                background: "var(--accent-terracotta, #c05a3e)",
-                color: "#fff",
+                background: "var(--accent-terracotta)",
+                color: "var(--paper-50)",
                 border: "none",
                 borderRadius: 6,
                 fontWeight: 700,
@@ -453,18 +453,18 @@ export default function LabExtraction() {
           </form>
         </div>
 
-        <div style={{ background: "var(--paper-100, #f8f9f6)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft, #e2e4dd)", paddingBottom: 8 }}>
+            <h3 style={{ margin: "0 0 16px 0", fontSize: "1.1rem", borderBottom: "1px solid var(--border-soft)", paddingBottom: 8 }}>
               Proyección de Rendimiento & Costos
             </h3>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-              <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)" }}>
+              <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Extracto Seco Estimado
                 </span>
-                <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-800, #2e5a36)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--moss-700)", fontFamily: "var(--font-mono, monospace)" }}>
                   {yieldGrams} g
                 </span>
                 <span style={{ display: "block", fontSize: "0.8rem", color: "var(--ink-600)" }}>
@@ -472,7 +472,7 @@ export default function LabExtraction() {
                 </span>
               </div>
 
-              <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)" }}>
+              <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
                 <span style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase", color: "var(--ink-500)", fontWeight: 700 }}>
                   Costo por Gramo
                 </span>
@@ -485,7 +485,7 @@ export default function LabExtraction() {
               </div>
             </div>
 
-            <div style={{ background: "#fff", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft, #e2e4dd)", marginBottom: 14 }}>
+            <div style={{ background: "var(--paper-50)", padding: "12px 14px", borderRadius: 6, border: "1px solid var(--border-soft)", marginBottom: 14 }}>
               <span style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, marginBottom: 8, color: "var(--ink-800)" }}>
                 Desglose de Costo Operativo
               </span>
@@ -497,9 +497,9 @@ export default function LabExtraction() {
                 <span style={{ color: "var(--ink-600)" }}>Solvente & Insumos ({solventLiters} L):</span>
                 <span style={{ fontWeight: 600, fontFamily: "var(--font-mono, monospace)" }}>${Math.round(solventCost).toLocaleString("es-CO")}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong, #ccc)", paddingTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.95rem", fontWeight: 800, borderTop: "1px dashed var(--border-strong)", paddingTop: 6 }}>
                 <span>Costo Total Lote:</span>
-                <span style={{ color: "var(--accent-terracotta, #c05a3e)", fontFamily: "var(--font-mono, monospace)" }}>
+                <span style={{ color: "var(--accent-terracotta)", fontFamily: "var(--font-mono, monospace)" }}>
                   ${totalCost.toLocaleString("es-CO")} COP
                 </span>
               </div>
@@ -514,7 +514,7 @@ export default function LabExtraction() {
         </div>
       </div>
 
-      <div style={{ background: "var(--paper-50, #fff)", border: "1px solid var(--border-soft, #e2e4dd)", borderRadius: 8, padding: 20 }}>
+      <div style={{ background: "var(--paper-50)", border: "1px solid var(--border-soft)", borderRadius: 8, padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: "1.15rem", color: "var(--ink-900)" }}>
             Lotes de Extracción Registrados ({batches.length})
@@ -529,7 +529,7 @@ export default function LabExtraction() {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
               <thead>
-                <tr style={{ borderBottom: "2px solid var(--border-strong, #333)", color: "var(--ink-800)" }}>
+                <tr style={{ borderBottom: "2px solid var(--border-strong)", color: "var(--ink-800)" }}>
                   <th style={{ padding: "8px 6px" }}>ID Lote</th>
                   <th style={{ padding: "8px 6px" }}>Especie</th>
                   <th style={{ padding: "8px 6px" }}>Método</th>
@@ -541,7 +541,7 @@ export default function LabExtraction() {
               </thead>
               <tbody>
                 {batches.map(b => (
-                  <tr key={b.id} style={{ borderBottom: "1px solid var(--border-soft, #e2e4dd)" }}>
+                  <tr key={b.id} style={{ borderBottom: "1px solid var(--border-soft)" }}>
                     <td style={{ padding: "10px 6px", fontWeight: 700, fontFamily: "var(--font-mono, monospace)" }}>
                       {b.id}
                       <div style={{ fontSize: "0.72rem", color: "var(--ink-500)", fontWeight: 400 }}>
@@ -550,14 +550,14 @@ export default function LabExtraction() {
                     </td>
                     <td style={{ padding: "10px 6px" }}>{b.speciesName || b.speciesKey}</td>
                     <td style={{ padding: "10px 6px" }}>
-                      <span style={{ fontSize: "0.8rem", background: "var(--paper-200, #eee)", padding: "2px 6px", borderRadius: 4 }}>
+                      <span style={{ fontSize: "0.8rem", background: "var(--paper-200)", padding: "2px 6px", borderRadius: 4 }}>
                         {b.methodName || b.methodKey}
                       </span>
                     </td>
                     <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" }}>
                       {b.biomassGrams} g
                     </td>
-                    <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-800, #2e5a36)" }}>
+                    <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)", fontWeight: 700, color: "var(--moss-700)" }}>
                       {b.yieldGrams} g ({b.yieldPct}%)
                     </td>
                     <td style={{ padding: "10px 6px", textAlign: "right", fontFamily: "var(--font-mono, monospace)" }}>
@@ -568,21 +568,21 @@ export default function LabExtraction() {
                         <button
                           onClick={() => setSelectedQrBatch(b)}
                           title="Generar QR de Trazabilidad"
-                          style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "var(--paper-200)", border: "1px solid var(--border-soft)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           📱 QR
                         </button>
                         <button
                           onClick={() => exportBatchPdfStub(b)}
                           title="Exportar Certificado"
-                          style={{ padding: "4px 8px", background: "var(--paper-200, #eaeaea)", border: "1px solid var(--border-soft, #ccc)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "var(--paper-200)", border: "1px solid var(--border-soft)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           📄 Cert
                         </button>
                         <button
                           onClick={() => handleDeleteBatch(b.id)}
                           title="Eliminar registro"
-                          style={{ padding: "4px 8px", background: "transparent", border: "1px solid #e57373", color: "#c62828", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
+                          style={{ padding: "4px 8px", background: "transparent", border: "1px solid var(--status-error)", color: "var(--status-error)", borderRadius: 4, cursor: "pointer", fontSize: "0.78rem" }}
                         >
                           ✕
                         </button>
@@ -608,7 +608,7 @@ export default function LabExtraction() {
           padding: 16
         }}>
           <div style={{
-            background: "#fff",
+            background: "var(--paper-50)",
             borderRadius: 8,
             padding: 24,
             maxWidth: 380,
@@ -619,14 +619,14 @@ export default function LabExtraction() {
             <h4 style={{ margin: "0 0 12px 0", fontSize: "1.1rem" }}>
               Trazabilidad QR · {selectedQrBatch.id}
             </h4>
-            <div style={{ margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f8f8", borderRadius: 6, border: "1px solid #ddd" }}>
+            <div style={{ margin: "16px auto", width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-recessed)", borderRadius: 6, border: "1px solid var(--border-soft)" }}>
               {generateBatchQrDataUrl(selectedQrBatch) ? (
                 <img src={generateBatchQrDataUrl(selectedQrBatch)} alt="QR Lote" style={{ width: 160, height: 160 }} />
               ) : (
-                <span style={{ fontSize: "0.8rem", color: "#888" }}>Generando código QR...</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-metadata)" }}>Generando código QR...</span>
               )}
             </div>
-            <div style={{ fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "#f9f9f9", padding: 10, borderRadius: 6, marginBottom: 16 }}>
+            <div style={{ fontSize: "0.82rem", color: "var(--ink-700)", textAlign: "left", background: "var(--surface-recessed)", padding: 10, borderRadius: 6, marginBottom: 16 }}>
               <div><b>Especie:</b> {selectedQrBatch.speciesName}</div>
               <div><b>Método:</b> {selectedQrBatch.methodName}</div>
               <div><b>Extracto:</b> {selectedQrBatch.yieldGrams} g ({selectedQrBatch.yieldPct}%)</div>
@@ -636,8 +636,8 @@ export default function LabExtraction() {
               style={{
                 width: "100%",
                 padding: "8px 14px",
-                background: "var(--ink-900, #222)",
-                color: "#fff",
+                background: "var(--ink-900)",
+                color: "var(--paper-50)",
                 border: "none",
                 borderRadius: 4,
                 cursor: "pointer",
