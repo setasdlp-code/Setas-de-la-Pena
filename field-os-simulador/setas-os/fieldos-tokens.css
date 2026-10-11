@@ -402,6 +402,23 @@ code, pre { font-family: var(--font-mono); font-size: 0.92em; }
   --cat-adit:  var(--accent-blue-grey);
   --cat-adit-text: #505F6D;
 
+  /* Colores de rol de ingrediente en la mezcla (barra/leyenda de composición).
+     Mismos valores que usaba simulador-app.jsx en línea; --cat-* donde coincide. */
+  --role-base-carbono:       var(--cat-base);
+  --role-suplemento-n:       var(--cat-sup);
+  --role-suplemento-medio:   #D4A838;
+  --role-aireador:           #4E7A6A;
+  --role-aditivo-ph:         #8B5C28;
+  --role-aditivo-estructura: #7A6B58;
+  --role-aditivo-micronutriente: #2A6A7A;
+  --role-aditivo-arrancador: #9B4F3A;
+
+  /* Veredicto del perito (viabilidad técnica): bg / borde / insignia / texto.
+     'critical' usa --status-error* (rojo de error unificado). */
+  --perito-excellent-bg: #EDF4E8;  --perito-excellent-border: #7FA05A;  --perito-excellent-txt: #3D4A38;
+  --perito-good-bg:      #F5F0E0;  --perito-good-border:      #C8A840;  --perito-good-badge: #7A5A10;  --perito-good-txt: #5A4010;
+  --perito-needs-work-bg: #FBF0E8; --perito-needs-work-border: #C87040; --perito-needs-work-badge: #8C4020; --perito-needs-work-txt: #6A3010;
+
   --cat-base-hover:  color-mix(in oklab, var(--cat-base)  12%, var(--paper-0));
   --cat-cafe-hover:  color-mix(in oklab, var(--cat-cafe)  12%, var(--paper-0));
   --cat-circ-hover:  color-mix(in oklab, var(--cat-circ)  12%, var(--paper-0));

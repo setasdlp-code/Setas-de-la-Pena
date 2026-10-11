@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 763df24f38d3d8fc8bba46bee126ffcdfefb16872be985d8bf285725e8637a22
+// source-hash: 2739a5f4465326ce81a5e0fd4e0409f132ef92b9d147450b438a6bbbc82b8fbe
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -1380,7 +1380,7 @@ const FlushChart = ({ an, sKey }) => {
 const CompositionChart = ({ recipe }) => {
   if (!recipe || !recipe.length) return null;
   const ROLE_LABELS = { base_carbono: "Base C", suplemento_n: "Supl. N", suplemento_medio: "Supl. Medio", aireador: "Aireador", aditivo_ph: "pH", aditivo_estructura: "Estructura", aditivo_micronutriente: "Micronut.", aditivo_arrancador: "Arrancador" };
-  const ROLE_COLORS = { base_carbono: "#5A7042", suplemento_n: "#C68F2C", suplemento_medio: "#D4A838", aireador: "#4E7A6A", aditivo_ph: "#8B5C28", aditivo_estructura: "#7A6B58", aditivo_micronutriente: "#2A6A7A", aditivo_arrancador: "#9B4F3A" };
+  const ROLE_COLORS = { base_carbono: "var(--role-base-carbono)", suplemento_n: "var(--role-suplemento-n)", suplemento_medio: "var(--role-suplemento-medio)", aireador: "var(--role-aireador)", aditivo_ph: "var(--role-aditivo-ph)", aditivo_estructura: "var(--role-aditivo-estructura)", aditivo_micronutriente: "var(--role-aditivo-micronutriente)", aditivo_arrancador: "var(--role-aditivo-arrancador)" };
   const groups = {};
   recipe.forEach((r) => {
     const g = INGS.find((i) => i.id === r.id);
@@ -1439,10 +1439,10 @@ const SpeciesRecommender = ({ recipe }) => {
   }));
 };
 const PERITO_STATUS = {
-  excellent: { label: "Ajuste favorable", veredicto: "Ajuste favorable del modelo", accion: "Revisar preparación y aprobación humana antes de producir.", bg: "#EDF4E8", border: "#7FA05A", badge: "var(--accent-olive)", txt: "#3D4A38" },
-  good: { label: "Revisar ajustes", veredicto: "Modelo con ajustes pendientes", accion: "Revisar recomendaciones, existencias y proceso antes de escalar.", bg: "#F5F0E0", border: "#C8A840", badge: "#7A5A10", txt: "#5A4010" },
-  needs_work: { label: "Requiere validación", veredicto: "Requiere validación", accion: "Definir una prueba y su seguimiento con el responsable antes de escalar.", bg: "#FBF0E8", border: "#C87040", badge: "#8C4020", txt: "#6A3010" },
-  critical: { label: "No ejecutar", veredicto: "No ejecutar — Riesgo alto", accion: "Corregir problemas críticos antes de cualquier producción.", bg: "#FBE8E8", border: "#C53030", badge: "#8B1A1A", txt: "#6A0000" },
+  excellent: { label: "Ajuste favorable", veredicto: "Ajuste favorable del modelo", accion: "Revisar preparación y aprobación humana antes de producir.", bg: "var(--perito-excellent-bg)", border: "var(--perito-excellent-border)", badge: "var(--accent-olive)", txt: "var(--perito-excellent-txt)" },
+  good: { label: "Revisar ajustes", veredicto: "Modelo con ajustes pendientes", accion: "Revisar recomendaciones, existencias y proceso antes de escalar.", bg: "var(--perito-good-bg)", border: "var(--perito-good-border)", badge: "var(--perito-good-badge)", txt: "var(--perito-good-txt)" },
+  needs_work: { label: "Requiere validación", veredicto: "Requiere validación", accion: "Definir una prueba y su seguimiento con el responsable antes de escalar.", bg: "var(--perito-needs-work-bg)", border: "var(--perito-needs-work-border)", badge: "var(--perito-needs-work-badge)", txt: "var(--perito-needs-work-txt)" },
+  critical: { label: "No ejecutar", veredicto: "No ejecutar — Riesgo alto", accion: "Corregir problemas críticos antes de cualquier producción.", bg: "var(--status-error-bg)", border: "var(--status-error)", badge: "var(--status-error)", txt: "var(--status-error)" },
   sin_receta: { label: "—", veredicto: "—", accion: "", bg: "var(--paper-50)", border: "var(--border-soft)", badge: "var(--ink-500)", txt: "var(--ink-500)" }
 };
 const RECIPE_LIFECYCLE_COLOR = {
@@ -1453,7 +1453,6 @@ const RECIPE_LIFECYCLE_COLOR = {
   legacy: "var(--ink-400)"
 };
 const FORM_ROLE_LABELS = { base_carbono: "Base C", suplemento_n: "Supl. N", suplemento_medio: "Supl. Medio", aireador: "Aireador", aditivo_ph: "pH", aditivo_estructura: "Estructura", aditivo_micronutriente: "Micronut.", aditivo_arrancador: "Arrancador" };
-const FORM_ROLE_COLORS = { base_carbono: "#5A7042", suplemento_n: "#C68F2C", suplemento_medio: "#D4A838", aireador: "#4E7A6A", aditivo_ph: "#8B5C28", aditivo_estructura: "#7A6B58", aditivo_micronutriente: "#2A6A7A", aditivo_arrancador: "#9B4F3A" };
 const peritoMainLimiter = (opt, an) => {
   if (!opt || !an) return null;
   const first = opt.items.find((i) => i.priority === "critical") || opt.items.find((i) => i.priority === "warning");
