@@ -131,23 +131,23 @@
   --btn-disabled-opacity: 0.4;
 
   /* ── SURFACE VARIANTS — specialized backgrounds ── */
-  --surface-accent-soft: #e8f0e0;  /* soft olive for status badges, stock indicators */
-  --surface-accent-soft-text: #3a5a28;  /* dark olive text on soft olive bg */
-  --surface-selected: #F4F7F8;  /* card selection highlight (cool blue-gray) */
-  --surface-cream: #F7F4EC;  /* warm cream for sections, emphasis areas */
-  --surface-cream-alt: #FFFBF7;  /* lighter cream variant */
-  --surface-green-light: #F0F7ED;  /* pale green for growth/positive contexts */
-  --surface-hover-overlay: #EFECE1;  /* soft beige for hover state backgrounds, subtle emphasis */
+  --surface-accent-soft: var(--status-ok-bg);  /* soft olive for status badges, stock indicators */
+  --surface-accent-soft-text: var(--status-ok);  /* dark olive text on soft olive bg */
+  --surface-selected: color-mix(in srgb, var(--status-info) 10%, var(--paper-50));  /* card selection highlight (cool blue-gray) */
+  --surface-cream: var(--surface-page);  /* warm cream for sections, emphasis areas */
+  --surface-cream-alt: var(--paper-50);  /* lighter cream variant */
+  --surface-green-light: var(--status-ok-bg);  /* pale green for growth/positive contexts */
+  --surface-hover-overlay: var(--surface-recessed);  /* soft beige for hover state backgrounds, subtle emphasis */
 
   /* ── SPECIALTY COLORS (chemical, strain, botanical indicators) ── */
-  --color-species-name: #8C7F5B;  /* muted brown for species scientific names */
-  --color-dark-rich: #1E1D19;  /* near-black for strong contrast */
-  --color-dark-secondary: #385933;  /* dark green-brown for secondary emphasis */
-  --color-terracotta: #A85C32;  /* warm earth tone for warnings/attention */
-  --color-brick: #B8614D;  /* brick red for botanical strain indicators */
-  --color-attention: #C5562D;  /* attention/status color (coral-brown) */
-  --color-norm-bar: #6B8E5A;  /* moss-green for normalization/balance indicators */
-  --color-investigacion: #f0b093;  /* peach for investigation/experimental mode */
+  --color-species-name: var(--border-hairline);  /* muted brown for species scientific names */
+  --color-dark-rich: var(--text-secondary);  /* near-black for strong contrast */
+  --color-dark-secondary: var(--status-ok);  /* dark green-brown for secondary emphasis */
+  --color-terracotta: var(--status-warn-text);  /* warm earth tone for warnings/attention */
+  --color-brick: var(--brand-accent);  /* brick red for botanical strain indicators */
+  --color-attention: var(--brand-accent);  /* attention/status color (coral-brown) */
+  --color-norm-bar: var(--status-ok-marker);  /* moss-green for normalization/balance indicators */
+  --color-investigacion: color-mix(in srgb, var(--brand-accent) 40%, var(--paper-50));  /* peach for investigation/experimental mode */
 
   /* ── INGREDIENT CATEGORY COLORS ──
      Moved into the design system: see tokens/colors.css, section
@@ -287,7 +287,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:var(--paper-50);
 }
 
-.sim-root .sub-tab.on{ color:var(--coral-600,#A8432A); }
+.sim-root .sub-tab.on{ color:var(--coral-600); }
 .sim-root .sub-tab.on::after{
   content:''; position:absolute; bottom:0; left:6px; right:6px; height:1.5px;
   background:var(--coral-500);
@@ -377,7 +377,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .spp-card:hover{
-  background: #FEFDF9;
+  background: var(--paper-50);
 }
 
 /* header strip */
@@ -490,7 +490,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── INGREDIENT LIST (laboratory inventory) ────────────────────────── */
 .sim-root .search{ 
-  width:100%; padding:12px 14px; border:1px solid var(--slate-300,#9BB5C4); border-radius:0; 
+  width:100%; padding:12px 14px; border:1px solid var(--slate-300); border-radius:0; 
   background:var(--paper-0); font-family:var(--font-mono); font-size:13px;
   color:var(--ink-1); margin-bottom:14px; transition:border-color var(--duration-standard) var(--ease),box-shadow var(--duration-standard) var(--ease);
   box-shadow:var(--shadow-none);
@@ -501,7 +501,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* the outline above is the focus cue; the old glow was a second, softer copy */
   box-shadow:var(--shadow-none);
 }
-.sim-root .search::placeholder{ color:var(--ink-3,#96907C); opacity:1; }
+.sim-root .search::placeholder{ color:var(--ink-3); opacity:1; }
 
 /* Antes había dos reglas .sim-root .cats seguidas — la primera (flex-wrap:wrap, causante
    del salto a 3 líneas) quedaba muerta porque la segunda, idéntica en especificidad y
@@ -513,13 +513,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, var(--paper-1) 100%); pointer-events:none; z-index:10; }
 .sim-root .cat{ 
   font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:.08em; 
-  text-transform:uppercase; padding:8px 14px; min-height:44px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300,#9BB5C4); border-radius:0;
+  text-transform:uppercase; padding:8px 14px; min-height:44px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300); border-radius:0;
   background:var(--paper-0); cursor:pointer; color:var(--slate-600,var(--accent-blue-grey)); transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),transform var(--duration-quick) var(--ease),box-shadow var(--duration-quick) var(--ease); white-space:nowrap;
 }
 .sim-root .cat:hover{ 
   border-color:var(--slate-600,var(--accent-blue-grey));
-  background:color-mix(in oklab,var(--slate-200,#C5D5DE) 30%,var(--paper-0));
-  color:var(--slate-700,#3A5466);
+  background:color-mix(in oklab,var(--slate-200) 30%,var(--paper-0));
+  color:var(--slate-700);
 }
 .sim-root .cat.on{ 
   background:var(--slate-600,var(--accent-blue-grey)); color:var(--paper-0); border-color:var(--slate-600,var(--accent-blue-grey)); 
@@ -957,7 +957,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .tle.inoculation::before{ background:var(--coral-500); }
 .sim-root .tle.harvest{ border-color:var(--moss-300); }
 .sim-root .tle.harvest::before{ border-color:var(--moss-500); background:var(--moss-500); }
-.sim-root .tle.warning{ border-color:var(--status-attention, var(--color-attention)); background:var(--status-attention-bg, #FCEEE9); }
+.sim-root .tle.warning{ border-color:var(--status-attention, var(--color-attention)); background:var(--status-attention-bg); }
 .sim-root .tle.warning::before{ border-color:var(--status-attention, var(--color-attention)); background:var(--status-attention, var(--color-attention)); }
 .sim-root .tle-dt{ font-family:var(--font-mono); font-size:13px; color:var(--ink-500); margin-bottom:3px; }
 .sim-root .tle-t{ font-size:14px; font-weight:700; color:var(--ink-900); }
@@ -1012,7 +1012,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .sbtn:hover:not(:disabled){ background:var(--accent-olive); }
 .sim-root .sbtn:disabled{ background:var(--ink-300); color:var(--ink-600); opacity:var(--btn-disabled-opacity, 0.4); cursor:not-allowed; pointer-events:none; transform:none; }
 .sim-root .sbtn.fl{ background:var(--accent-terracotta); }
-.sim-root .sbtn.fl:hover{ background:#A74624; }
+.sim-root .sbtn.fl:hover{ background:var(--brand-accent-text); }
 
 /* ── DASHBOARD ──────────────────────────────────────────────────── */
 .sim-root .dash-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; margin-top:18px; }
@@ -1507,7 +1507,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .lock-btn.on{ opacity:1; color:var(--accent-terracotta); }
 .sim-root .norm-bar{ 
   display:flex; align-items:center; gap:8px; padding:9px 14px; 
-  background:linear-gradient(135deg, var(--surface-green-light), #E8F0E5);
+  background:linear-gradient(135deg, var(--surface-green-light), var(--status-ok-bg));
   border:1px solid var(--color-norm-bar); border-top:none; border-radius:0;
   font-size:11px; color:var(--color-norm-bar); font-family:var(--font-mono);
 }
@@ -1661,7 +1661,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 /* ── Builder sub-tabs ── */
 .sim-root .builder-subtabs{display:flex;gap:0;border-bottom:2px solid var(--border-soft);margin-bottom:20px;background:var(--paper-100);}
 
-.sim-root .bst.on{color:var(--coral-500);border-bottom-color:var(--coral-500);background:color-mix(in oklab,var(--coral-500) 6%,var(--paper-50,#fff));}
+.sim-root .bst.on{color:var(--coral-500);border-bottom-color:var(--coral-500);background:color-mix(in oklab,var(--coral-500) 6%,var(--paper-50));}
 .sim-root .bst:hover:not(.on){color:var(--ink-900);background:rgba(0,0,0,.03);}
 .sim-root .loaded-toast{background:var(--moss-500,var(--accent-olive));color:var(--text-on-dark);font-family:var(--font-mono);font-size:12px;font-weight:700;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;animation:fadeInSlide var(--duration-notice) ease;}
 @keyframes fadeInSlide{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
@@ -1725,10 +1725,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .prod-sheet{background:var(--paper-0);}
 .sim-root .prod-tbl{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:14px;}
-.sim-root .prod-tbl th{text-align:left;font-family:var(--font-body);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-800);border-bottom:1.5px solid var(--ink-900,#222);padding:8px 8px;font-weight:700;}
+.sim-root .prod-tbl th{text-align:left;font-family:var(--font-body);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-800);border-bottom:1.5px solid var(--ink-900);padding:8px 8px;font-weight:700;}
 .sim-root .prod-tbl td{padding:7px 8px;border-bottom:1px solid var(--paper-300);color:var(--ink-900);}
 .sim-root .prod-tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
-.sim-root .prod-tbl tr.tot td{border-top:1.5px solid var(--ink-900,#222);font-weight:700;border-bottom:none;}
+.sim-root .prod-tbl tr.tot td{border-top:1.5px solid var(--ink-900);font-weight:700;border-bottom:none;}
 .sim-root .prod-step{display:flex;gap:11px;padding:7px 0;border-bottom:1px dotted var(--paper-300);}
 .sim-root .prod-step-n{font-family:var(--font-num);font-size:18px;font-weight:700;color:var(--coral-500,var(--color-brick));min-width:22px;line-height:1.2;font-variant-numeric:tabular-nums;}
 .sim-root .prod-step-t{font-size:14px;line-height:1.45;color:var(--ink-900);}
@@ -2269,8 +2269,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 /* ── PERITO OPTIMIZER (priority items) ─────────────────────────── */
 .sim-root .pi-critical{--pi-color:var(--coral-500);}
-.sim-root .pi-warning{--pi-color:var(--ochre-700,#A07828);}
-.sim-root .pi-tip{--pi-color:#4A6B4A;}
+.sim-root .pi-warning{--pi-color:var(--ochre-700);}
+.sim-root .pi-tip{--pi-color:var(--status-ok);}
 
 .sim-root .perito-item{display:grid;grid-template-columns:36px 1fr auto;gap:0;border-bottom:1px solid var(--paper-300);align-items:start;}
 .sim-root .pi-icon-col{display:flex;align-items:center;justify-content:center;padding:11px 4px;border-right:1px solid var(--paper-300);}
@@ -2794,8 +2794,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 
 
-.sim-root .sguide-chip.added{background:color-mix(in oklab,var(--moss-200) 35%,var(--paper-50));border-color:var(--moss-400,#7A9B60);color:var(--moss-700);}
-.sim-root .sguide-chip.added:hover{background:color-mix(in oklab,var(--coral-200) 50%,var(--paper-50));border-color:var(--coral-400,#d97a4f);color:var(--coral-700);}
+.sim-root .sguide-chip.added{background:color-mix(in oklab,var(--moss-200) 35%,var(--paper-50));border-color:var(--moss-500);color:var(--moss-700);}
+.sim-root .sguide-chip.added:hover{background:color-mix(in oklab,var(--coral-200) 50%,var(--paper-50));border-color:var(--coral-500);color:var(--coral-700);}
 
 
 
@@ -4026,7 +4026,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .thermal-card-preview {
   background: var(--paper-0);
   color: var(--ink-900);
-  border: 1px dashed #777777;
+  border: 1px dashed var(--text-metadata);
   border-radius: 2px;
   box-shadow: var(--shadow-card-rest, 0 1px 4px rgba(26,20,16,0.05));
   display: flex;
@@ -4065,7 +4065,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   min-height: 45mm;
   padding: 4mm 6mm;
   border: 1px solid var(--ink-0);
-  background: var(--paper-0, #F7F4EC);
+  background: var(--paper-0);
 }
 
 .sim-root .thermal-card-kraft-tray {
@@ -4074,7 +4074,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   min-height: 90mm;
   padding: 4mm 5mm;
   border: 1px solid var(--ink-0);
-  background: var(--paper-0, #F7F4EC);
+  background: var(--paper-0);
 }
 
 .sim-root .thermal-card-apothecary-50 {
@@ -4083,7 +4083,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   min-height: 42mm;
   padding: 3mm 4mm;
   border: 1px solid var(--ink-0);
-  background: var(--paper-0, #F7F4EC);
+  background: var(--paper-0);
 }
 
 .sim-root .thermal-qr-img {
@@ -4185,7 +4185,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .thermal-badge {
   display: inline-block;
   background: #000000 !important;
-  color: #ffffff !important;
+  color: var(--paper-50) !important;
   font-family: var(--font-mono, monospace);
   font-weight: 800;
   font-size: 6px;
@@ -4266,7 +4266,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   width: 4mm;
   margin: 0;
   background: #000000 !important;
-  color: #ffffff !important;
+  color: var(--paper-50) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4278,7 +4278,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   transform: rotate(180deg);
   font-size: 7px;
   letter-spacing: 0.14em;
-  color: #ffffff;
+  color: var(--paper-50);
 }
 .sim-root .thermal-card-50x70 .thermal-species {
   order: 2;
@@ -4535,7 +4535,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--ink-2, #6B6759);
+  color: var(--ink-2);
   letter-spacing: .04em;
 }
 
@@ -4550,7 +4550,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .econ-metric-sub {
   font-family: var(--font-sans, sans-serif);
   font-size: 10.5px;
-  color: var(--ink-1, #3C392F);
+  color: var(--ink-1);
   margin-top: 2px;
 }
 
@@ -4560,7 +4560,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius: 2px;
   overflow: hidden;
   margin-top: 10px;
-  background: var(--paper-2, #E5DFD0);
+  background: var(--paper-2);
 }
 
 .sim-root .econ-pills-row {
@@ -4647,7 +4647,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius: 2px;
   overflow: hidden;
   margin-top: 8px;
-  background: var(--paper-2, #E5DFD0);
+  background: var(--paper-2);
 }
 
 /* ── Diagnóstico Visual de Contaminaciones con Gemini AI ─────────────────────── */
@@ -4656,7 +4656,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   max-height: calc(100vh - 32px);
   overflow-y: auto;
   background: var(--paper-0, var(--surface-cream));
-  border: 1px solid var(--border-medium, #4A4433);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md, 3px);
   padding: 20px;
   box-shadow: var(--shadow-lg); /* modal: scrim separates it, keyline defines it */
@@ -4685,27 +4685,27 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .os-diag-urgency-critica,
 .sim-root .os-diag-urgency-alta {
-  background: var(--accent-terracotta-dim, #EFE0D3);
+  background: var(--accent-terracotta-dim);
   color: var(--accent-terracotta, var(--color-terracotta));
   border: 1px solid var(--accent-terracotta, var(--color-terracotta));
 }
 
 .sim-root .os-diag-urgency-media {
-  background: #FEF3C7;
-  color: #B45309;
-  border: 1px solid #D97706;
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+  border: 1px solid var(--status-warn);
 }
 
 .sim-root .os-diag-urgency-baja,
 .sim-root .os-diag-urgency-ninguna {
-  background: var(--moss-100, #E2ECD8);
-  color: var(--moss-800, #2C4A28);
-  border: 1px solid var(--moss-600, #4A6E42);
+  background: var(--moss-tint);
+  color: var(--moss-700);
+  border: 1px solid var(--moss-600);
 }
 
 .sim-root .os-diag-protocol-box {
   padding: 10px 12px;
-  background: var(--paper-1, #EFECE1);
+  background: var(--paper-1);
   border-left: 3px solid var(--accent-terracotta, var(--color-terracotta));
   font-family: var(--font-sans, system-ui);
   font-size: 12px;
@@ -4811,7 +4811,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .climate-cycle-banner {
   padding: 12px 16px;
-  background: var(--paper-1, #EFECE1);
+  background: var(--paper-1);
   border: 1px solid var(--border-hairline, var(--color-species-name));
   border-radius: var(--radius-sm, 2px);
   display: flex;
@@ -4850,7 +4850,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .climate-kpi-grid [data-freshness="stale"] {
-  color: var(--warning-text, #8C6B2E);
+  color: var(--warning-text);
   border-color: currentColor;
 }
 
@@ -5162,13 +5162,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .climate-actuator-badge.pulse {
-  background: #2563EB;
+  background: var(--status-info);
   color: var(--text-on-dark);
 }
 
 .sim-root .climate-actuator-badge.off {
-  background: var(--paper-200, #DCD8CD);
-  color: var(--ink-1, #4A473E);
+  background: var(--paper-200);
+  color: var(--ink-1);
 }
 
 .sim-root .climate-actuator-meta {
@@ -5209,7 +5209,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .climate-log-row {
   padding: 6px 10px;
-  background: var(--paper-1, #EFECE1);
+  background: var(--paper-1);
   border-left: 3px solid var(--moss-700, var(--color-dark-secondary));
   border-radius: 2px;
   display: flex;
@@ -5223,9 +5223,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 /* ── Lanzador de Producción Unificado ────────────────────────────────────────── */
 .sim-root .btn-launch-prod {
   padding: 10px 18px;
-  background: var(--moss-700, #385933);
-  color: #ffffff;
-  border: 1px solid var(--moss-800, #2E3B2F);
+  background: var(--moss-700);
+  color: var(--paper-50);
+  border: 1px solid var(--moss-700);
   border-radius: var(--radius-sm, 2px);
   font-family: var(--font-body);
   font-size: var(--text-sm, 13px);
@@ -5241,15 +5241,15 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .btn-launch-prod:hover:not(:disabled) {
-  background: var(--moss-800, #2E3B2F);
+  background: var(--moss-700);
   box-shadow: var(--shadow-none); /* background shift + lift is the hover cue */
   transform: translateY(-1px);
 }
 
 .sim-root .btn-launch-prod:disabled {
-  background: var(--paper-300, #C5C0B3);
-  color: var(--ink-500, #7D786D);
-  border-color: var(--paper-400, #ADA89B);
+  background: var(--paper-300);
+  color: var(--ink-500);
+  border-color: var(--paper-200);
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
@@ -5266,8 +5266,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   padding: 12px;
-  background: var(--paper-0, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 2px);
 }
 
@@ -5282,14 +5282,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: .15em;
-  color: var(--ink-2, #7D786D);
+  color: var(--ink-2);
 }
 
 .sim-root .prod-launch-stat-val {
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
 }
 
 .sim-root .prod-launch-table {
@@ -5301,7 +5301,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .prod-launch-table th {
   padding: 8px 10px;
-  background: var(--paper-1, #EFECE1);
+  background: var(--paper-1);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
@@ -5393,11 +5393,11 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── TASTING DOSSIER & RESTAURANT PAIRING (FOS-11 / FOS-16) ──────── */
 .sim-root .tasting-dossier-sheet {
-  background: var(--paper-0, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 2px);
   padding: 24px 20px;
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
   box-shadow: var(--shadow-none);
 }
 
@@ -5405,7 +5405,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 2px solid var(--accent-olive, #5B6B44);
+  border-bottom: 2px solid var(--accent-olive);
   padding-bottom: 12px;
   margin-bottom: 16px;
 }
@@ -5414,21 +5414,21 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-family: var(--font-display, Georgia, serif);
   font-size: 20px;
   font-weight: 700;
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
   margin: 0 0 4px 0;
 }
 
 .sim-root .tasting-dossier-subtitle {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  color: var(--ink-2, #6E6246);
+  color: var(--ink-2);
   letter-spacing: .06em;
   text-transform: uppercase;
 }
 
 .sim-root .tasting-radar-bar {
   height: 6px;
-  background: var(--paper-200, #E0D9C8);
+  background: var(--paper-200);
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -5436,7 +5436,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .tasting-radar-fill {
   height: 100%;
-  background: var(--accent-olive, #5B6B44);
+  background: var(--accent-olive);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -5444,12 +5444,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .pairing-tag {
   display: inline-block;
   padding: 4px 8px;
-  background: var(--paper-100, #ECE7DB);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-100);
+  border: 1px solid var(--border-hairline);
   border-radius: 2px;
   font-size: 11px;
   font-family: var(--font-mono, monospace);
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
   margin-right: 6px;
   margin-bottom: 6px;
 }
@@ -5474,7 +5474,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline);
 }
 
 .sim-root .qr-scanner-video {
@@ -5487,7 +5487,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   position: absolute;
   width: 140px;
   height: 140px;
-  border: 2px solid var(--accent-olive, #5B6B44);
+  border: 2px solid var(--accent-olive);
   /* SHADOW POLICY EXCEPTION (1 of 2): not a shadow — a 0-blur scrim that dims
      the camera feed outside the reticle. Renders over live video, not paper. */
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
@@ -5501,10 +5501,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--coral-500, #E06D53);
+  background: var(--coral-500);
   /* SHADOW POLICY EXCEPTION (2 of 2): the glow IS the scanning-laser metaphor,
      and it renders over live video, not paper. Keep. */
-  box-shadow: 0 0 8px var(--coral-500, #E06D53);
+  box-shadow: 0 0 8px var(--coral-500);
   animation: qrLaserScan 2s infinite ease-in-out;
 }
 
@@ -5518,24 +5518,24 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-family: var(--font-mono, monospace);
   font-size: 11.5px;
   line-height: 1.45;
-  background: var(--ink-0, #1A1410);
-  color: var(--paper-0, #F7F4EC);
+  background: var(--ink-0);
+  color: var(--paper-0);
   padding: 14px 16px;
   border-radius: var(--radius-sm, 2px);
   max-height: 340px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline);
 }
 
 /* ── IOT INTEGRATION HUB & FIRMWARE GENERATOR ───────────────────── */
 .sim-root .iot-hub-sheet {
-  background: var(--paper-0, #F7F4EC);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 2px);
   padding: 24px;
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
   box-shadow: var(--shadow-lg);
   max-width: 860px;
   width: 100%;
@@ -5563,12 +5563,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 .sim-root .iot-hub-pill.on {
   background: var(--accent-olive);
-  color: #FAF8F5;
+  color: var(--paper-50);
   border-color: var(--accent-olive);
   font-weight: 700;
 }
 .sim-root .iot-node-card {
-  background: var(--paper-50, #FAF8F2);
+  background: var(--paper-50);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
@@ -5600,8 +5600,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border: 1px solid var(--moss-500);
 }
 .sim-root .iot-code-box {
-  background: #181512;
-  color: #E6E1D8;
+  background: var(--ink-900);
+  color: var(--surface-recessed);
   font-family: var(--font-mono);
   font-size: 11.5px;
   line-height: 1.5;
@@ -5609,7 +5609,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   border-radius: var(--radius-md);
   overflow-x: auto;
   max-height: 380px;
-  border: 1px solid #332B24;
+  border: 1px solid var(--text-secondary);
 }
 .sim-root .iot-copy-btn {
   display: inline-flex;
@@ -5669,11 +5669,11 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .recetario-act{
   font-family:var(--font-body);font-weight:800;font-size:11px;letter-spacing:var(--tracking-button);
   text-transform:uppercase;padding:9px 14px;min-height:44px;cursor:pointer;
-  background:var(--paper-0);color:var(--ink-700);border:1px solid var(--border-hairline,#8C7F5B);border-radius:var(--radius-sm);
+  background:var(--paper-0);color:var(--ink-700);border:1px solid var(--border-hairline);border-radius:var(--radius-sm);
   transition:background-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease);
 }
 .sim-root .recetario-act:hover{background:var(--paper-100);}
-.sim-root .recetario-act.is-primary{background:var(--accent-terracotta);color:#fff;border-color:var(--accent-terracotta);}
+.sim-root .recetario-act.is-primary{background:var(--accent-terracotta);color:var(--paper-50);border-color:var(--accent-terracotta);}
 .sim-root .recetario-act.is-primary:hover{background:color-mix(in oklab,var(--accent-terracotta) 85%,black);}
 
 /* Tira de promedios del recetario. Sustituye los estilos inline que traía #218
@@ -5982,8 +5982,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    ════════════════════════════════════════════════════════════════ */
 
 .sim-root .os-editorial-card {
-  background: var(--paper-0, #FAF5E9);
-  border: 1px solid var(--border-hairline, #888888);
+  background: var(--paper-0);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 2px);
   padding: var(--sp-6, 12px);
   box-shadow: none;
@@ -5994,7 +5994,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-4, 8px);
-  border-bottom: 1px solid var(--border-soft, #D3CBBE);
+  border-bottom: 1px solid var(--border-soft);
   padding-bottom: var(--sp-3, 6px);
   margin-bottom: var(--sp-4, 8px);
 }
@@ -6003,7 +6003,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-family: var(--font-editorial, 'Gaya Patched', Georgia, serif);
   font-size: var(--text-md, 15px);
   font-weight: 700;
-  color: var(--ink-900, #222222);
+  color: var(--ink-900);
   margin: 0;
   line-height: 1.2;
 }
@@ -6013,13 +6013,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: var(--text-2xs, 8px);
   letter-spacing: var(--tracking-label, 0.08em);
   text-transform: uppercase;
-  color: var(--text-metadata, #555555);
+  color: var(--text-metadata);
 }
 
 .sim-root .os-editorial-card__body {
   font-family: var(--font-sans);
   font-size: var(--text-sm, 11.5px);
-  color: var(--ink-800, #333333);
+  color: var(--ink-800);
   line-height: 1.45;
 }
 
@@ -6028,7 +6028,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4, 8px);
-  border-top: 1px solid var(--border-soft, #D3CBBE);
+  border-top: 1px solid var(--border-soft);
   padding-top: var(--sp-3, 6px);
   margin-top: var(--sp-4, 8px);
 }
@@ -6037,8 +6037,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: var(--sp-3, 6px);
-  background: var(--paper-panel, #F3EEE2);
-  border: 1px solid var(--border-soft, #D3CBBE);
+  background: var(--paper-panel);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm, 2px);
   padding: var(--sp-3, 6px) var(--sp-4, 8px);
   margin: var(--sp-3, 6px) 0;
@@ -6056,7 +6056,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: var(--text-micro, 7.5px);
   letter-spacing: var(--tracking-button, 0.14em);
   text-transform: uppercase;
-  color: var(--ink-muted, #555555);
+  color: var(--ink-muted);
 }
 
 .sim-root .os-data-cell__v {
@@ -6064,7 +6064,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: var(--text-sm, 12px);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--ink-900, #222222);
+  color: var(--ink-900);
 }
 
 .sim-root .os-provenance-line {
@@ -6075,7 +6075,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: var(--text-micro, 8px);
   letter-spacing: var(--tracking-label, 0.08em);
   text-transform: uppercase;
-  color: var(--ink-muted, #666666);
+  color: var(--ink-muted);
   margin-top: 2px;
 }
 
@@ -6157,7 +6157,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
-  color: var(--ink-700, #444444);
+  color: var(--ink-700);
   cursor: pointer;
   background: none;
   border: none;
@@ -6169,7 +6169,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 .sim-root .fos-status__action:hover,
 .fos-status__action:hover {
-  color: var(--ink-900, #000000);
+  color: var(--ink-900);
 }
 
 /* 1. Dentro del rango / Verificado */
@@ -6179,9 +6179,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .fos-status--within-target,
 .fos-status--verified,
 .fos-status--verificado {
-  background: var(--moss-tint, #E5E4D5);
-  border-color: var(--moss, #4E6B3F);
-  color: var(--moss-700, #385933);
+  background: var(--moss-tint);
+  border-color: var(--moss);
+  color: var(--moss-700);
 }
 
 /* 2. Disponible */
@@ -6189,9 +6189,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .fos-status--disponible,
 .fos-status--available,
 .fos-status--disponible {
-  background: var(--moss-tint, #E5E4D5);
-  border-color: var(--moss, #4E6B3F);
-  color: var(--moss-700, #385933);
+  background: var(--moss-tint);
+  border-color: var(--moss);
+  color: var(--moss-700);
 }
 
 /* 3. Atención */
@@ -6199,18 +6199,18 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .fos-status--atencion,
 .fos-status--attention,
 .fos-status--atencion {
-  background: var(--warning-tint, #F4EAD6);
-  border-color: var(--warning, #C49A4C);
-  color: var(--warning-text, #8C6B2E);
+  background: var(--warning-tint);
+  border-color: var(--warning);
+  color: var(--warning-text);
 }
 
 /* Alertas críticas de cámara usan el rust de error; el ochre queda reservado
    para vigilancia. */
 .sim-root .fos-status--error,
 .fos-status--error {
-  background: var(--rust-tint, #EDDDCF);
-  border-color: var(--rust, #8E2C14);
-  color: var(--rust, #8E2C14);
+  background: var(--rust-tint);
+  border-color: var(--rust);
+  color: var(--rust);
 }
 
 /* 4. En cuarentena */
@@ -6220,9 +6220,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .fos-status--quarantine,
 .fos-status--pending,
 .fos-status--por-confirmar {
-  background: var(--paper-recessed, #EAE4D8);
-  border-color: var(--rule, #888888);
-  color: var(--ink-muted, #555555);
+  background: var(--paper-recessed);
+  border-color: var(--rule);
+  color: var(--ink-muted);
 }
 
 /* 5. Falló / No disponible */
@@ -6232,9 +6232,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .fos-status--failed,
 .fos-status--unavailable,
 .fos-status--no-disponible {
-  background: var(--rust-tint, #EDDDCF);
-  border-color: var(--rust, #8E2C14);
-  color: var(--rust, #8E2C14);
+  background: var(--rust-tint);
+  border-color: var(--rust);
+  color: var(--rust);
 }
 
 /* 6. Descartado */
@@ -6242,9 +6242,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .fos-status--descartado,
 .fos-status--discarded,
 .fos-status--descartado {
-  background: var(--rust-tint, #EDDDCF);
-  border-color: var(--rust, #8E2C14);
-  color: var(--rust, #8E2C14);
+  background: var(--rust-tint);
+  border-color: var(--rust);
+  color: var(--rust);
 }
 
 /* ── ENCABEZADO EDITORIAL Y RESUMEN DEL FORMULADOR ──────────────── */
@@ -6404,8 +6404,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   width: min(640px, calc(100vw - 24px));
   max-height: calc(100vh - 32px);
   overflow-y: auto;
-  background: var(--paper-0, #F7F4EC);
-  border: 1px solid var(--border-medium, #4A4433);
+  background: var(--paper-0);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md, 4px);
   padding: 24px;
   box-shadow: var(--shadow-lg);
@@ -6421,10 +6421,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .triage-pathogen-card {
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 3px);
   padding: 10px;
-  background: var(--paper-1, #EFEADF);
+  background: var(--paper-1);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -6434,22 +6434,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .triage-pathogen-card:hover {
-  background: var(--paper-0, #F7F4EC);
-  border-color: var(--ink-2, #5C5441);
+  background: var(--paper-0);
+  border-color: var(--ink-2);
 }
 
 .sim-root .triage-pathogen-card.is-selected {
-  border-color: var(--accent-terracotta, #B24C27);
-  background: #F9EFE9;
-  box-shadow: 0 0 0 1px var(--accent-terracotta, #B24C27);
+  border-color: var(--accent-terracotta);
+  background: var(--status-error-bg);
+  box-shadow: 0 0 0 1px var(--accent-terracotta);
 }
 
 .sim-root .triage-impact-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  background: var(--paper-1, #EFEADF);
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  background: var(--paper-1);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 3px);
   padding: 12px;
 }
@@ -6465,24 +6465,24 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ink-2, #5C5441);
+  color: var(--ink-2);
 }
 
 .sim-root .triage-impact-val {
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 700;
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
 }
 
 .sim-root .triage-protocol-banner {
-  border-left: 3px solid var(--accent-terracotta, #B24C27);
-  background: #FDF6F2;
+  border-left: 3px solid var(--accent-terracotta);
+  background: var(--status-error-bg);
   padding: 12px 14px;
   border-radius: 0 var(--radius-sm, 3px) var(--radius-sm, 3px) 0;
   font-size: 12px;
   line-height: 1.45;
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
 }
 
 .sim-root .triage-protocol-list {
@@ -6495,22 +6495,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 }
 
 .sim-root .triage-decision-option {
-  border: 1px solid var(--border-hairline, #8C7F5B);
+  border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm, 3px);
   padding: 10px 12px;
-  background: var(--paper-0, #F7F4EC);
+  background: var(--paper-0);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 13px;
   font-family: var(--font-sans);
-  color: var(--ink-0, #1A1410);
+  color: var(--ink-0);
 }
 
 .sim-root .triage-decision-option.is-selected {
-  border-color: var(--moss-800, #2E3B2F);
-  background: #F2F5F2;
+  border-color: var(--moss-700);
+  background: var(--status-ok-bg);
   font-weight: 600;
 }
 
