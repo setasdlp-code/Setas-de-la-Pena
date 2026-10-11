@@ -105,6 +105,78 @@
         "treatment": "dashed",
         "labelKey": "status.quarantine"
       }
+    },
+    "color": {
+      "role": {
+        "base-carbono": {
+          "value": "#5A7042",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "suplemento-n": {
+          "value": "#C68F2C",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "suplemento-medio": {
+          "value": "#D4A838",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "aireador": {
+          "value": "#4E7A6A",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "aditivo-ph": {
+          "value": "#8B5C28",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "aditivo-estructura": {
+          "value": "#7A6B58",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "aditivo-micronutriente": {
+          "value": "#2A6A7A",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        },
+        "aditivo-arrancador": {
+          "value": "#9B4F3A",
+          "description": "Rol de ingrediente en la mezcla (barra/leyenda de composición)."
+        }
+      },
+      "perito": {
+        "excellent-bg": {
+          "value": "#EDF4E8"
+        },
+        "excellent-border": {
+          "value": "#7FA05A"
+        },
+        "excellent-txt": {
+          "value": "#3D4A38"
+        },
+        "good-bg": {
+          "value": "#F5F0E0"
+        },
+        "good-border": {
+          "value": "#C8A840"
+        },
+        "good-badge": {
+          "value": "#7A5A10"
+        },
+        "good-txt": {
+          "value": "#5A4010"
+        },
+        "needs-work-bg": {
+          "value": "#FBF0E8"
+        },
+        "needs-work-border": {
+          "value": "#C87040"
+        },
+        "needs-work-badge": {
+          "value": "#8C4020"
+        },
+        "needs-work-txt": {
+          "value": "#6A3010"
+        }
+      },
+      "description": "Colores de dominio de Setas OS. role: rol del ingrediente en la mezcla. perito: veredicto de viabilidad (el estado 'critical' usa --status-error*)."
     }
   },
   "markGrid": {
