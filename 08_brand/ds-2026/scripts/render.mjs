@@ -90,7 +90,7 @@ for (const job of jobs) {
     const specs = {
       gaya: '700 28px "Gaya Patched"',
       gayaBlack: '900 64px "Gaya Patched"',
-      gayaItalic: 'italic 400 18px "Gaya Patched"',
+      gayaItalic: 'italic 500 18px "Gaya Patched"',
       plexSans: '400 16px "IBM Plex Sans"',
       plexMono: '400 13px "IBM Plex Mono"',
     };
