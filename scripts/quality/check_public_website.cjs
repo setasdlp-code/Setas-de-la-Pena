@@ -126,6 +126,57 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'melena');
     report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['hero', 'collection card', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
+    // Fase 4: guía de preparación sobre la colección.
+    const visibleSpecies = () => page.locator('.species-card:not([hidden]) h3').allTextContents();
+    await visit(page, 'index.html#coleccion');
+    assert.equal(await page.locator('#prep-guide').isVisible(), true);
+    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Orellana gris']);
+    const prepCases = [['sopa', ['Shiitake', 'Melena de león']], ['saltear', ['Shiitake', 'Orellana gris']], ['asar', ['Orellana gris']], ['desmenuzar', ['Melena de león']]];
+    for (const [prep, expected] of prepCases) {
+      await page.locator(`[data-prep="${prep}"]`).click();
+      assert.deepEqual(await visibleSpecies(), expected, prep);
+      assert.equal(await page.locator(`[data-prep="${prep}"]`).getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('.species-card[data-category="archive"]').isVisible(), false, 'archive never matches a preparation');
+      assert.equal(await page.locator('#filter-reset').isVisible(), true);
+    }
+    await page.locator('[data-prep="asar"]').click();
+    assert.match(await page.locator('.species-card:not([hidden]) .card-reason').innerText(), /otra variedad/);
+    await page.locator('[data-prep="sopa"]').click();
+    assert.match(await page.locator('#filter-status').textContent(), /2 especies visibles para sopa o caldo/);
+    await page.locator('.species-card:not([hidden]) .card-reason a').first().click();
+    await page.waitForURL('**/recetas.html#receta-sopa');
+    await visit(page, 'index.html#coleccion');
+    await page.locator('[data-prep="saltear"]').click();
+    await page.locator('[data-filter="archive"]').click();
+    assert.deepEqual(await visibleSpecies(), []);
+    assert.equal(await page.locator('#filter-empty').isVisible(), true);
+    await page.locator('#filter-reset').click();
+    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Orellana gris', 'Reishi']);
+    assert.equal(await page.locator('#filter-reset').isVisible(), false);
+    assert.equal(await page.locator('#filter-empty').isVisible(), false);
+    assert.equal(await page.locator('[data-prep="any"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('.card-reason:visible').count(), 0);
+    assert.equal(await page.locator('.species-card[data-category="archive"] a[href*="shiitake"]').count(), 0);
+    await page.locator('[data-prep="sopa"]').focus();
+    await page.keyboard.press('Enter');
+    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león']);
+    await page.locator('.species-card:not([hidden]) [data-species="melena"]').first().click();
+    assert.equal(await page.locator('#dialog-order').isVisible(), false);
+    await page.keyboard.press('Escape');
+    await page.locator('.species-card:not([hidden]) a[href="shiitake.html"]').click();
+    await page.waitForURL('**/shiitake.html');
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await visit(page, 'index.html#coleccion');
+      await page.locator('[data-prep="asar"]').click();
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= width, `guide overflow ${width}`);
+      if (width === 390) await capture(page, 'guia-asar-390.png', '#coleccion');
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await visit(page, 'index.html#coleccion');
+    await page.locator('[data-prep="sopa"]').click();
+    await capture(page, 'guia-sopa-1440.png', '#coleccion');
+    report.checks.push({ type: 'preparation-guide', result: 'passed', covers: ['four preparations map to sourced uses', 'archive never matches', 'orellana variety caveat', 'reset and empty state', 'recipe link from guide', 'keyboard', 'melena dialog has no purchase', 'overflow 320/390'] });
     await visit(page, 'index.html?pairing=bricolage');
     await page.locator('.hero-copy a.sdp-btn').click();
     assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');

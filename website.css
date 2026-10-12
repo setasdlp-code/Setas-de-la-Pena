@@ -421,3 +421,11 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
   .species-page .purchase-origin { margin-block: 16px; }
   .species-page .purchase-delivery { margin-top: 16px; }
 }
+
+.prep-guide { margin-block: 24px 0; }
+.prep-guide[hidden], .card-reason[hidden], .collection-empty[hidden], #filter-reset[hidden] { display: none; }
+.prep-guide .filters { margin-top: 12px; }
+.prep-note { margin: 12px 0 0; color: var(--text-secondary); }
+.card-reason { margin: 12px 0 0; color: var(--text-secondary); }
+.collection-empty { margin-block: 24px; }
+#filter-reset { margin-block: 16px 0; }
