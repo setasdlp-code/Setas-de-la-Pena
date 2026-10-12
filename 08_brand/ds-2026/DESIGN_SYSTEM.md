@@ -670,3 +670,29 @@ you get a page that is neither system.
 > roles appear inverted relative to how every other FOS document describes them
 > (Gaya is the identity/display face). This was not changed, since FOS was out
 > of scope here, but it is worth a look.
+
+
+## 11 · Firma de marca y aplicaciones de referencia
+
+La firma principal usa **Gaya Patched Bold**, caja mixta y tracking de display.
+La composición apilada divide «Setas» / «de la Peña»; la variante compacta
+conserva la misma familia y caja en una sola línea. Los nombres de especies
+son títulos de producto, no sustitutos de la firma.
+
+- Área de protección propuesta: al menos la altura de la «S» alrededor de la firma.
+- Piso digital de referencia: 24px para la variante compacta; 44px para la apilada.
+  Son mínimos de diseño propuestos, pendientes de validación física para impresión.
+- Versiones: moss sobre papel, tinta sobre papel y papel sobre moss o tinta.
+  La firma no se recolorea con estados operativos ni se deforma para encajar.
+- La firma editorial en mayúsculas de empaques existentes es una variante
+  secundaria de rotulación; no reemplaza la firma principal en portadas.
+- La referencia de marca es `mockups/market/04-brand-board.html`: sus muestras
+  usan tokens y sus rótulos están fuera del pigmento, especialmente coral.
+
+En `mockups/operations/07-mobile-workflow.html`, las acciones usan **Plex Sans**,
+caja de frase y tracking normal. Las cantidades permanecen en **Plex Mono**
+y se separan de la acción. Esta adaptación está acotada al mockup; el contrato
+compartido de `.sdp-btn` no cambia ni se distribuye a Setas OS en esta revisión.
+
+Ambas referencias muestran contenido ilustrativo. Una lámina de especie no
+es evidencia de un lote real; los datos del ejemplo no certifican producción.
