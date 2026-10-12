@@ -10,11 +10,12 @@
     const validRows = recipe.length > 0 && ids.size === recipe.length && recipe.every(r => ingredients.has(r.id) && number(r.p) !== null && number(r.p) > 0);
     const total = recipe.reduce((sum, r) => sum + (number(r.p) || 0), 0);
     // Same acceptance tolerance as SetasFormulatorAPI.validateRecipe.
-    const balanced = validRows && Math.abs(total - 100) <= 0.15;
+    const balanceApi = globalThis.SetasMassBalance || (typeof require === 'function' ? require('./mass-balance.js') : null);
+    const balanced = validRows && !!balanceApi?.isMassBalancedTotal(total);
     const checks = [];
     const add = (id, label, status, detail, action, actionLabel) => checks.push({id,label,status,detail,action,actionLabel});
     add('species','Especie',input.species?.confirmed === true ? 'ready' : 'unknown',input.species?.confirmed === true ? 'Especie seleccionada para esta receta.' : 'Confirma la especie antes de evaluar la preparación del lote.','species','Elegir especie');
-    add('composition','Composición',balanced ? 'ready' : 'blocked',balanced ? 'Ingredientes identificados y mezcla al 100% en base seca.' : 'Revisa ingredientes, porcentajes y total de la mezcla (100% ±0,15%).','recipe','Revisar receta');
+    add('composition','Composición',balanced ? 'ready' : 'blocked',balanced ? 'Ingredientes identificados y mezcla al 100% en base seca.' : `Revisa ingredientes, porcentajes y total de la mezcla (100% ±${balanceApi?.MASS_BALANCE_TOLERANCE_PP ?? '?'}%).`,'recipe','Revisar receta');
     const safety = model?.dimensions?.safety?.status;
     add('model','Evaluación del modelo',safety === 'hold' ? 'blocked' : safety === 'approved' ? 'ready' : 'unknown',safety === 'hold' ? 'El modelo detecta restricciones que requieren corrección.' : safety === 'approved' ? 'Sin bloqueo en esta evaluación. No equivale a aprobación de producción.' : 'Revisa las advertencias y recomendaciones de esta receta.','recommendations','Ver recomendaciones');
     const preparation=input.preparation;

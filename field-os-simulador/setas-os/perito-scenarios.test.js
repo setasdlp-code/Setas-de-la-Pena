@@ -66,6 +66,21 @@ test('normaliza receta a 100 sin perder proporciones', () => {
   assert.ok(r[0].p > r[1].p);
 });
 
+test('search diagnostics report actual rejection constraints with deterministic counts', () => {
+  const params={recipe:[{id:'sawdust',p:80},{id:'bran',p:20}],ingredients,analyze:r=>({...analyze(r),cost:2000}),score,
+    maxCost:1,generations:2,beamWidth:6};
+  const out=searchScenarios(params);
+  assert.equal(out.ranked.length,0);
+  const reason=out.diagnostics.rejectionReasons.find(r=>r.code==='maxCost');
+  assert.ok(reason?.count>0);
+  assert.equal(reason.count,out.evaluations-1,'count alternatives, excluding baseline');
+  assert.ok(out.diagnostics.baselineFailures.includes('maxCost'));
+  assert.deepEqual(out.diagnostics,searchScenarios(params).diagnostics);
+  const valid=searchScenarios({...params,maxCost:0});
+  assert.ok(valid.ranked.length>0);
+  assert.ok(!valid.diagnostics.rejectionReasons.some(r=>r.code==='maxCost'));
+});
+
 test('distancia y novedad detectan recetas diferentes', () => {
   const a = [{ id: 'a', p: 80 }, { id: 'b', p: 20 }];
   const b = [{ id: 'a', p: 50 }, { id: 'c', p: 50 }];

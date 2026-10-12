@@ -4897,7 +4897,26 @@ const hybridOptimizerDiag=(out,targetKey,ingredients,useStock,invLotes,profileKe
     targetKey,
     baseNames:bases.map(g=>g.name),
     suppNames:supps.map(g=>g.name),
+    rejectionReasons:out?.diagnostics?.rejectionReasons||[],
+    baselineFailures:out?.diagnostics?.baselineFailures||[],
   };
+};
+const describeSearchRejection=(code,ingredients=INGS)=>{
+  const [kind,id]=String(code).split(':');
+  const name=ingredients.find(g=>g.id===id)?.name||id;
+  return ({
+    maxCost:'Supera el costo máximo de insumos por kg seco. Aumenta el límite o busca insumos de menor costo.',
+    maxSupp:'Supera la suplementación permitida por especie y perfil. Revisa las bases o reduce el suplemento.',
+    maxCafe:'Supera el límite de café del perfil. Reduce su proporción.',
+    locked:'No conserva los porcentajes fijados. Revisa los bloqueos de la receta activa.',
+    stock:'Incluye ingredientes sin existencias. Revisa Bodega o cambia el origen a Catálogo.',
+    mass_balance:'No cierra el balance de masa. Revisa la composición.',
+    analysis:'No se pudo analizar la composición. Revisa los datos de los ingredientes.',
+    ingredient:`${name}: supera el máximo permitido para este ingrediente.`,
+    role:`Supera el máximo del rol ${id}. Revisa la distribución de ingredientes.`,
+    ingredient_unknown:`${name}: no está disponible en el catálogo de búsqueda.`,
+    species_incompatible:`${name}: no es compatible con la especie seleccionada.`,
+  })[kind]||`Restricción de búsqueda: ${code}.`;
 };
 
 // Traduce setas.historical-evidence.v1 (production-learning-bridge.js) a texto
@@ -6100,6 +6119,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [generatorStatus,setGeneratorStatus]=useState('');
   const [generatorFocusTarget,setGeneratorFocusTarget]=useState(null);
   const [optProfile,setOptProfile]=useState('produccion');
+  const activeGeneratorResults=optResults?.[optProfile]||[];
+  const activeGeneratorError=optResults?.[`_diag_${optProfile}`]?.diag?.error;
+  const generatorDisplayStatus=!optResults?generatorStatus:activeGeneratorError
+    ?'No se pudieron calcular escenarios. Revisa el diagnóstico del Generador.'
+    :optResults.noStock?'No hay ingredientes en stock registrados. Ve a Bodega para agregar ingredientes.'
+    :activeGeneratorResults.length?`${activeGeneratorResults.length} escenario${activeGeneratorResults.length===1?'':'s'} disponible${activeGeneratorResults.length===1?'':'s'} para ${OPT_PROFILES[optProfile]?.label||optProfile}.`
+    :`No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label||optProfile}. Revisa el diagnóstico del Generador.`;
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
   const [showFieldActionModal,setShowFieldActionModal]=useState(false);
@@ -8169,6 +8195,14 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   },[launchRevision]);
   const stockIds=useMemo(()=>new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId)),[invLotes]);
   const stockMap=useMemo(()=>{const m={};invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).forEach(l=>{m[l.ingredienteId]=(m[l.ingredienteId]||0)+l.cantidadKgDisponible;});return m;},[invLotes]);
+  // An old result is not applicable after its recipe, locks, prices, stock or
+  // search constraints change. Also cancel the pending deferred calculation.
+  useEffect(()=>{
+    ++peritoRequestIdRef.current;
+    setOptResults(null);
+    setOptRunning(false);
+    setGeneratorStatus(previous=>previous?'Cambió el contexto. Calcula de nuevo para ver escenarios actualizados.':'');
+  },[recipe,lockedIds,optTarget,optUseStock,optMaxCost,optimizerINGS,invLotes]);
   const stockAlerts=window.SetasInventoryLedger.lowStockAlerts({
     ingredients:INGS,lots:invLotes,ledger:invReservas,
     incoming:window.SetasPurchases?window.SetasPurchases.incomingFromCompras(invCompras):[],
@@ -8208,10 +8242,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       }
       const formatted=cand.recipe.map(item=>({id:item.id,p:Number(item.p??item.pct??0)}));
       setRecipe(formatted);
-      const maxBatch=calcMaxBatchFromStock(cand.recipe,stockMap,10,sp?.moisture?.ideal||65,INGS);
+      const targetMoisture=cand.evaluation.analysis?.moistureTarget??cand.evaluation.analysis?.sp?.moisture?.ideal??65;
+      const maxKgWet=calcMaxBatchFromStock(cand.recipe,stockMap,10,targetMoisture,INGS);
       setNoticeDlg({
         title:'Receta formulada con stock de bodega',
-        msg:`Se cargó la fórmula óptima para ${sp?.name||'la especie'} usando exclusivamente insumos en existencia. Capacidad estimada: ${maxBatch?.maxBolsas||10} bolsas (${(maxBatch?.maxKgWet||15).toFixed(1)} kg sustrato húmedo).`
+        msg:`Se cargó una alternativa para ${sp?.name||'la especie'} usando insumos en existencia. Capacidad estimada: ${maxKgWet.toFixed(1)} kg de sustrato húmedo al ${targetMoisture}% de humedad. Revisa el Perito y las cantidades del lote antes de preparar.`
       });
     }catch(err){
       setNoticeDlg({
@@ -8443,8 +8478,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
-              {!isWorkbench&&<>
                         <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
+              {!isWorkbench&&<>
                         {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
                         <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
@@ -9434,18 +9469,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
   const updP=(id,p)=>{
+    if(lockedIds.includes(id)) return;
     if(!normMode){setRecipe(recipe.map(r=>r.id===id?{...r,p}:r));return;}
-    const pVal=Math.max(0,Math.min(100,parseFloat(p)||0));
-    const free=recipe.filter(r=>r.id!==id&&!lockedIds.includes(r.id));
     const sumLocked=recipe.filter(r=>r.id!==id&&lockedIds.includes(r.id)).reduce((s,r)=>s+(parseFloat(r.p)||0),0);
-    const remaining=Math.max(0,100-pVal-sumLocked);
-    const sumFree=free.reduce((s,r)=>s+(parseFloat(r.p)||0),0);
-    setRecipe(recipe.map(r=>{
-      if(r.id===id) return{...r,p:pVal};
-      if(lockedIds.includes(r.id)) return r;
-      if(sumFree===0) return{...r,p:Math.round((remaining/free.length)*10)/10};
-      return{...r,p:Math.round((parseFloat(r.p)/sumFree)*remaining*10)/10};
-    }));
+    const pVal=Math.max(0,Math.min(Math.max(0,100-sumLocked),parseFloat(p)||0));
+    const updated=recipe.map(r=>r.id===id?{...r,p:pVal}:r);
+    const result=SetasMassBalanceApi.balanceRecipe(updated,{lockedIds:[...lockedIds,id]});
+    if(result.ok) setRecipe(result.recipe);
+    else setNoticeDlg({title:'No se pudo mantener el balance',msg:result.message});
   };
   const remI=id=>setRecipe(recipe.filter(r=>r.id!==id));
 
@@ -9845,42 +9876,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
   };
 
   const autoBalance=(mode=balanceMode)=>{
-    if(recipe.length===0) return;
-    const free=recipe.filter(r=>!lockedIds.includes(r.id));
-    if(free.length===0) return;
-    const sumLocked=recipe.filter(r=>lockedIds.includes(r.id)).reduce((s,r)=>s+(parseFloat(r.p)||0),0);
-    const target=Math.max(0,100-sumLocked);
-    if(mode==='proportional'){
-      const sumFree=free.reduce((s,r)=>s+(parseFloat(r.p)||0),0);
-      if(sumFree===0){
-        const eq=Math.round((target/free.length)*10)/10;
-        setRecipe(recipe.map(r=>lockedIds.includes(r.id)?r:{...r,p:eq}));
-      } else {
-        const factor=target/sumFree;
-        setRecipe(recipe.map(r=>lockedIds.includes(r.id)?r:{...r,p:Math.round(parseFloat(r.p)*factor*10)/10}));
-      }
-    } else if(mode==='equal'){
-      const eq=Math.round((target/free.length)*10)/10;
-      setRecipe(recipe.map(r=>lockedIds.includes(r.id)?r:{...r,p:eq}));
-    } else {
-      // 'last': ajusta el último ingrediente libre
-      const lastFree=[...recipe].reverse().find(r=>!lockedIds.includes(r.id));
-      if(!lastFree) return;
-      const sumOthers=recipe.reduce((s,r)=>r.id!==lastFree.id?s+(parseFloat(r.p)||0):s,0);
-      const newP=Math.max(0,Math.round((100-sumOthers)*10)/10);
-      setRecipe(recipe.map(r=>r.id===lastFree.id?{...r,p:newP}:r));
-    }
+    const result=SetasMassBalanceApi.balanceRecipe(recipe,{lockedIds,mode});
+    if(!result.ok){setNoticeDlg({title:'No se pudo balancear',msg:result.message});return;}
+    if(JSON.stringify(result.recipe)===JSON.stringify(recipe)) return;
+    setRecipeHistory(h=>[...h,recipe]);
+    setRecipe(result.recipe);
   };
-  const formNextState=!hasPickedSpecies?'species':!balanced?'balance':'produce';
-  const formNextLabel=formNextState==='species'?'Elegir especie':formNextState==='balance'?'Balancear 100%':'Preparar lote';
+  const formCriticals=(opt?.items||[]).filter(item=>item.priority==='critical');
+  const formNextState=!hasPickedSpecies?'species':!balanced?'balance':formCriticals.length?'review':'produce';
+  const formNextLabel=formNextState==='species'?'Elegir especie':formNextState==='balance'?'Balancear 100%':formNextState==='review'?'Corregir receta':'Preparar lote';
   const runFormNextAction=()=>{
     if(formNextState==='species'){
+      if(builderSubTab==='generador'){setWorkbenchMode('all');setShowOptimizer(true);}
       focusFormTop();
-      requestAnimationFrame(()=>document.getElementById('form-species-context-select')?.focus());
+      requestAnimationFrame(()=>(document.getElementById('form-species-context-select')||document.getElementById('generator-species-select'))?.focus());
       return;
     }
     if(formNextState==='balance'){
       autoBalance(balanceMode);
+      return;
+    }
+    if(formNextState==='review'){
+      const panel=document.getElementById('bl-perito')||document.querySelector('[data-perito-variant="workbench"]');
+      panel?.scrollIntoView({behavior:'smooth',block:'start'});
+      const target=panel?.querySelector('.perito-item button')||panel;
+      if(target){if(!target.hasAttribute('tabindex')&&target===panel)target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
       return;
     }
     goTab('produccion');
@@ -14984,8 +15004,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               onClick={focusActiveRecipe}
               aria-label={`Revisar receta activa: ${recipe.length} ingrediente${recipe.length===1?'':'s'}`}>
               <span>Ruta de producción</span>
-              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':'Composición lista · revisar Perito'}</strong>
-              <em>{recipe.length} ingrediente{recipe.length===1?'':'s'} · Revisar receta · Autoguardado</em>
+              <strong>{formNextState==='species'?'Falta definir la especie':formNextState==='balance'?'Falta cerrar el balance':formNextState==='review'?`${formCriticals.length} restricción${formCriticals.length===1?'':'es'} crítica${formCriticals.length===1?'':'s'} del modelo`:'Composición lista · planificar preparación'}</strong>
+              <em>{formNextState==='review'?formCriticals[0].label:`${recipe.length} ingrediente${recipe.length===1?'':'s'} · Revisar receta · Autoguardado`}</em>
             </button>
             <button
               type="button"
@@ -16246,7 +16266,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <button type="button" className="tog" aria-pressed={showOptimizer} onClick={()=>setShowOptimizer(s=>!s)}>{showOptimizer?'Ocultar':'Mostrar'}</button>
                 </div>
               </div>
-              <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{generatorStatus}</div>
+              {generatorDisplayStatus&&<p className="generator-status" role="status" aria-live="polite" aria-atomic="true">{generatorDisplayStatus}</p>}
               {showOptimizer&&(<>
                 <div style={{marginTop:0}}>
                   <div className="seg-row" style={{marginBottom:14}}>
@@ -16261,18 +16281,31 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {formularMode==='auto'&&(
               <div>
                           <div style={{marginBottom:16}}>
+                            <div className="generator-origin-control">
+                              <div className="form-species-origin-toggle">
+                                <span>Origen de ingredientes</span>
+                                <div role="group" aria-label="Origen de ingredientes del generador">
+                                  <button type="button" className={globalMode==='produccion'?'is-active':''} aria-pressed={globalMode==='produccion'} onClick={()=>setGlobalWorkMode('produccion')}>Bodega</button>
+                                  <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
+                                </div>
+                              </div>
+                              <p>{lockedIds.length?`${lockedIds.length} porcentaje${lockedIds.length===1?'':'s'} fijado${lockedIds.length===1?'':'s'} de la receta activa: la búsqueda debe conservarlos.`:'Busca una nueva composición. Fija porcentajes en la Mesa de Mezcla para conservarlos.'}</p>
+                            </div>
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</div>
-                                <div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}}>{SPP[optTarget]?.name}</div>
+                                <label htmlFor="generator-species-select" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</label>
+                                <select id="generator-species-select" value={hasPickedSpecies?optTarget:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
+                                  <option value="" disabled>Elegir especie…</option>
+                                  {Object.entries(SPP).map(([key,species])=><option key={key} value={key}>{species.name}</option>)}
+                                </select>
                               </div>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Costo máximo por kg</label>
+                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Insumos · COP/kg seco máximo</label>
                                 <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
                                   autoComplete="off" aria-describedby="opt-max-cost-help"
                                   style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}} placeholder="Sin límite"/>
-                                <span id="opt-max-cost-help" className="sr-only">Deja el campo vacío para no aplicar un límite de costo.</span>
+                                <span id="opt-max-cost-help" className="generator-cost-help">Sin límite si está vacío. Excluye tratamiento, spawn y empaque.</span>
                               </div>
                             </div>
                             {/* El origen se define una sola vez en el paso 02 del flujo. */}
@@ -16288,7 +16321,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <button
                                 type="button"
                                 className="btn dark"
-                                disabled={optRunning}
+                                disabled={optRunning||!hasPickedSpecies}
                                 onClick={()=>{
                                   setOptRunning(true);setOptResults(null);setGeneratorStatus('Calculando escenarios…');
                                   const reqId=++peritoRequestIdRef.current;
@@ -16372,7 +16405,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {optResults&&optResults[optProfile]&&(
                               <div>
                                 <h3 id="generator-results-heading" tabIndex={-1} className="generator-results-heading" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',margin:'0 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
-                                  {optResults[optProfile].length} combinaciones exclusivas · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · C:N objetivo {SPP[optTarget]?.cn_optimal.ideal}:1
+                                  {optResults[optProfile].length} alternativas del modelo · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · objetivos resueltos por composición
                                 </h3>
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
@@ -16402,9 +16435,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                         <div style={{display:'flex',flexDirection:'column',gap:4}}>
                                           <button className="opt-load" onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));openBuilderSubTab('formular');goTab('formular');setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}><AppIcon name="bowl" size={12} style={{marginRight:4}} /> Cargar en Mesa</button>
-                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Producir</button>
+                                          <button className="opt-load" style={{background:'var(--moss-600,var(--accent-olive))',borderColor:'var(--moss-700,var(--accent-olive))'}} onClick={()=>{setSKey(optTarget);setRecipe(r.recipe);setLockedIds(lockedIds.filter(id=>r.recipe.some(item=>item.id===id)));goTab('produccion');}}>Planificar lote</button>
                                           <button type="button" className="opt-load" style={{background:'var(--slate-800)',borderColor:'var(--slate-900)',color:'var(--paper-50)'}} onClick={()=>{setMorphTargetRecipe(r.recipe);setWorkbenchMode('morphing');}}><AppIcon name="scale" size={12} style={{marginRight:4}} /> Comparar</button>
                                         </div>
+                                      </div>
+                                      <div className="generator-candidate-context" data-testid="generator-candidate-context">
+                                        C:N objetivo {r.an.sp?.cn_optimal?.min}–{r.an.sp?.cn_optimal?.max}:1
+                                        {' · '}Humedad objetivo {r.an.moistureTarget??r.an.sp?.moisture?.ideal}%
+                                        {' · '}{calcTreatment(r.an,optTarget,{[optTarget]:r.an.sp})?.name}
                                       </div>
                                       <div className="opt-metrics">
                                         {(()=>{
@@ -16415,7 +16453,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                             {l:'C:N',v:`${r.an.cn.toFixed(1)}:1`},
                                             {l:'N%',v:`${r.an.avgN.toFixed(2)}%`},
                                             {l:'EB',v:r.an.ebLow&&r.an.ebHigh?`${r.an.ebLow}–${r.an.ebHigh}%`:`${r.an.eb.toFixed(0)}%`},
-                                            {l:'Costo total/kg',v:totalCost>0?`${totalCost.toLocaleString('es-CO')}`:'--',
+                                            {l:'Insumos + trat./kg seco',v:totalCost>0?`${totalCost.toLocaleString('es-CO')}`:'--',
                                              sub:eCost>0?`ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}`:null},
                                           ];
                                         })().map(m=>(
@@ -16432,7 +16470,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       {/* Riesgo + bodega produce */}
                                       <div style={{display:'flex',gap:0,background:'var(--paper-100)',borderTop:'1px solid var(--border-soft)'}}>
                                         <div style={{flex:1,padding:'7px 10px',borderRight:'1px solid var(--border-soft)'}}>
-                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Riesgo</div>
+                                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-600)',marginBottom:2}}>Seguridad modelada</div>
                                           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-base)",fontWeight:700,color:r.riskScore>=80?'var(--accent-olive)':r.riskScore>=55?'var(--ochre-500)':'var(--status-error)'}}>{r.riskScore??'—'}/100</div>
                                         </div>
                                         {r.maxKgWet!=null&&(
@@ -16450,7 +16488,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           {nom:'Bolsa 18×35',kgH:1.0},
                                           {nom:'Punch bag',kgH:3.5},
                                         ];
-                                        const hFactor=optTarget.includes('shiitake')||optTarget.includes('lions')||optTarget.includes('reishi')?0.40:0.35;
+                                        const hFactor=1-(r.an.moistureTarget??r.an.sp?.moisture?.ideal??65)/100;
                                         return(
                                           <div style={{display:'flex',gap:0,borderTop:'1px solid var(--border-soft)',borderBottom:'none'}}>
                                             {bags.map(b=>{
@@ -16460,7 +16498,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                                 <div key={b.nom} style={{flex:1,padding:'5px 8px',borderRight:'1px solid var(--border-soft)',textAlign:'center',background:'var(--paper-50)'}}>
                                                   <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginBottom:2,letterSpacing:'var(--tracking-label)',fontWeight:600}}>{b.nom}</div>
                                                   <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",color:'var(--coral-700)',fontWeight:700}}>${costBolsa.toLocaleString('es-CO')}</div>
-                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>COP / bolsa</div>
+                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>COP / bolsa · insumos + tratamiento</div>
                                                 </div>
                                               );
                                             })}
@@ -16509,10 +16547,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                         </div>
                                       ))}
                                     </div>
-                                    {diag.bases===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún ingrediente en bodega tiene rol <b>base carbono</b> compatible con esta especie.</div>}
-                                    {diag.supps===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> Ningún suplemento N en bodega es compatible con esta especie.</div>}
-                                    {diag.bases>0&&diag.supps>0&&diag.tried===0&&<div style={{color:'var(--coral-700)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-700)" /> C y N de base y suplemento son demasiado similares para resolver la ecuación.</div>}
-                                    {diag.tried>0&&diag.resultsRaw===0&&<div style={{color:'var(--status-warn-text)',marginBottom:6,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--status-warn-text)" /> Tus bases requieren más suplementación de la que permite el perfil <b>{OPT_PROFILES[optProfile]?.label}</b> (límite {diag.suppLimit}%). Prueba con perfil <b>Producción</b> o añade paja de trigo/cebada a tu bodega.</div>}
+                                    {diag.error&&<p role="alert">No se pudo completar la búsqueda: {diag.error}</p>}
+                                    {diag.bases===0&&<p>No hay una base de carbono compatible en {optUseStock?'Bodega':'el catálogo habilitado'}.</p>}
+                                    {diag.rejectionReasons?.length>0&&<div data-testid="generator-rejection-reasons">
+                                      <strong>Restricciones encontradas en la búsqueda</strong>
+                                      <ul>{diag.rejectionReasons.slice(0,5).map(reason=><li key={reason.code}>{describeSearchRejection(reason.code,optimizerINGS)} <span>({reason.count} evaluaciones)</span></li>)}</ul>
+                                      <p>Un escenario puede incumplir varias restricciones. Este diagnóstico describe la búsqueda explorada, no demuestra que no exista otra fórmula.</p>
+                                    </div>}
+                                    {!diag.error&&!diag.rejectionReasons?.length&&<p>No se encontraron alternativas con este contexto. Revisa ingredientes habilitados, porcentajes fijados y perfil; vuelve a calcular después de cambiar una restricción.</p>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>

@@ -1548,9 +1548,10 @@
 
     const baselineAnchorRecipe = isPartial && partialRecipe.length ? partialRecipe : baseRecipe;
     let evaluationCount = 0;
+    const rejectionCounts = new Map();
     const evaluate = candidateRecipe => {
       evaluationCount += 1;
-      return evaluateScenario({
+      const result = evaluateScenario({
         recipe: candidateRecipe,
         context,
         analyze,
@@ -1569,6 +1570,12 @@
         isPartial,
         strictPartialLocks: hasExplicitLocks,
       });
+      // Count evaluated alternatives, never the baseline. A candidate may
+      // violate several constraints; counts are not mutually exclusive.
+      if (evaluationCount > 1) (result.constraintFailures || []).forEach(code => {
+        rejectionCounts.set(code, (rejectionCounts.get(code) || 0) + 1);
+      });
+      return result;
     };
 
     const baseline = {
@@ -1614,6 +1621,8 @@
           maxCost,
           stockMapKeys: Object.keys(stockMap || {}).length,
           allowedCount: 0,
+          rejectionReasons: [],
+          baselineFailures: baseline.evaluation.constraintFailures || [],
         },
       };
     }
@@ -1854,6 +1863,9 @@
         maxCost,
         stockMapKeys: Object.keys(stockMap || {}).length,
         allowedCount: allowed.length,
+        rejectionReasons: [...rejectionCounts].map(([code, count]) => ({ code, count }))
+          .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code)),
+        baselineFailures: baseline.evaluation.constraintFailures || [],
       },
     };
   };
