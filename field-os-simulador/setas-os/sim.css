@@ -6756,3 +6756,32 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
  .sim-root .builder-wrap .bodega-bar-right > .inv-btn{min-height:44px;white-space:normal!important;}
  .sim-root .builder-wrap .bodega-bar-refresh{width:44px;height:44px;}
 }
+
+
+/* Cosecha por bolsa: acciones Sans, medidas Mono y estado separado del CTA.
+   Acotado al diálogo; no cambia la captura por canastilla ni su persistencia. */
+.harvest-capture-dialog .harvest-capture-header { border-bottom: var(--rule-hairline); margin-bottom: var(--space-2); padding-bottom: var(--space-2); }
+.harvest-capture-dialog .harvest-capture-title { font: var(--t-heading-02); color: var(--text-primary); margin: 0 0 var(--space-1); }
+.harvest-capture-dialog .harvest-capture-context { font: var(--t-small); margin: 0; color: var(--text-secondary); overflow-wrap: anywhere; }
+.harvest-capture-dialog .harvest-capture-context span { font-family: var(--font-mono); }
+.harvest-capture-dialog .harvest-capture-help { font: var(--t-body); color: var(--text-secondary); }
+.sim-root .harvest-capture-dialog :is(input, select, button, summary) { min-height: var(--field-cell-min-height) !important; }
+.harvest-capture-dialog :is(input, select) { font-size: var(--size-body); max-width: 100%; min-width: 0; }
+.harvest-capture-dialog input[type="number"], .harvest-capture-dialog #harvest-bag { font-family: var(--font-mono); letter-spacing: var(--tracking-normal); }
+.harvest-capture-dialog .inv-label { font: var(--t-small); letter-spacing: var(--tracking-normal); text-transform: none; color: var(--text-secondary); }
+.harvest-capture-dialog .inv-row > div { min-width: 0; }
+.sim-root .harvest-capture-dialog .inv-btn { min-height: var(--field-cell-min-height) !important; font: var(--t-body); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-normal); text-transform: none; padding: var(--space-1) var(--space-2); }
+.harvest-capture-dialog .harvest-quality-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-half); padding-top: var(--space-half); }
+.harvest-capture-dialog .harvest-quality-choice { font: var(--t-data); font-size: var(--size-body); cursor: pointer; border: var(--rule-hairline); border-radius: var(--radius-none); background: var(--surface-panel); color: var(--text-primary); padding: var(--space-half); }
+.harvest-capture-dialog .harvest-quality-choice[data-filled="true"] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
+.harvest-capture-dialog .harvest-quality-choice:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.harvest-capture-dialog .harvest-capture-save-note { border-top: var(--rule-hairline); padding-top: var(--space-2); margin-bottom: var(--space-2); font: var(--t-small); color: var(--text-secondary); }
+.harvest-capture-dialog .harvest-capture-save-note p { margin: 0 0 var(--space-1); }
+.harvest-capture-dialog .harvest-capture-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); }
+.harvest-capture-dialog .harvest-capture-actions .inv-btn { min-width: 0; white-space: normal; }
+.harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1 / -1; grid-row: 1; background: var(--action-primary); color: var(--text-inverse); border-color: var(--action-primary); }
+@media (max-width: 560px) {
+  .harvest-capture-dialog .inv-row { grid-template-columns: 1fr !important; }
+  .harvest-capture-dialog .harvest-capture-actions { grid-template-columns: 1fr; }
+  .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1; }
+}
