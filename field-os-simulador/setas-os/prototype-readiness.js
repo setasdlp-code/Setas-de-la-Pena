@@ -4,7 +4,7 @@
   const PENDING='sdp_pending_write_v1';
   const PLANS='sdp_experiments_v1';
   const ARCHIVE='sdp_recovery_archive_v1';
-  const KEYS=Object.freeze(['sdp_proveedores','sdp_compras','sdp_lotes','sdp_movimientos','sdp_bit_lotes','sdp_bit_bolsas','sdp_bit_cosechas','sdp_bit_tasks','sdp_room_events','sdp_inv_reservas','sdp_sync_queue','sdp_inventory_ops','setas_v6',PLANS,'sdp_room_cycles','sdp_telemetry_v1','sdp_cycle_evidence_v1','sdp_inv_ledger','sdp_sync_base_v1']);
+  const KEYS=Object.freeze(['sdp_proveedores','sdp_compras','sdp_lotes','sdp_movimientos','sdp_bit_lotes','sdp_bit_bolsas','sdp_bit_cosechas','sdp_bit_tasks','sdp_room_events','sdp_inv_reservas','sdp_sync_queue','sdp_inventory_ops','setas_v6',PLANS,'sdp_room_cycles','sdp_telemetry_v1','sdp_cycle_evidence_v1','sdp_inv_ledger','sdp_sync_base_v1','sdp_production_readiness']);
   const clone=x=>JSON.parse(JSON.stringify(x));
   const read=(storage,key)=>{
     const raw=storage.getItem(key);

@@ -22,6 +22,60 @@ function BagObservationEditor({bolsa,onSave}) {
   </div>;
 }
 
+function ReadinessEvidenceForm({check,onSave}) {
+  const [form,setForm]=useState({requirementId:check.id,status:'unknown',reviewer:check.record?.reviewer||'',reference:check.record?.reference||'',notes:'',details:{}});
+  const [error,setError]=useState('');
+  const set=(key,value)=>setForm(p=>({...p,[key]:value}));
+  const detail=(key,value)=>setForm(p=>({...p,details:{...p.details,[key]:value}}));
+  const fields={spawn:[['strainId','ID de cepa'],['supplier','Proveedor de semilla'],['thermalClass','Clase térmica documentada de la cepa']],equipment:[['equipmentId','Equipo identificado'],['protocol','Protocolo y carga validados']],sensors:[['deviceIds','IDs de los sensores / nodos (separados por coma)'],['calibrationReference','Registro de calibración o verificación cruzada']]}[check.id]||[];
+  return <form className="readiness-evidence-form" aria-label={`Evidencia: ${check.label}`} onSubmit={event=>{event.preventDefault();try{onSave(form);setError('');}catch(e){setError(e.message);}}}>
+    <label>Resultado de la revisión<select value={form.status} onChange={e=>set('status',e.target.value)}><option value="unknown">Sin verificar</option><option value="verified">Verificado con evidencia</option><option value="blocked">Bloqueado</option></select></label>
+    <label>Responsable de la revisión<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)} required/></label>
+    <label>Referencia de evidencia<input placeholder="Registro, informe o URL" value={form.reference} onChange={e=>set('reference',e.target.value)} required={form.status==='verified'}/></label>
+    {fields.map(([key,label])=><label key={key}>{label}<input value={form.details[key]||''} onChange={e=>detail(key,e.target.value)} required={form.status==='verified'}/></label>)}
+    {check.id==='room'&&<>
+      <label>Capacidad documentada de la sala (bolsas)<input type="number" min="1" step="1" value={form.details.capacityBags||''} onChange={e=>detail('capacityBags',e.target.value)} required={form.status==='verified'}/></label>
+      <label className="readiness-check"><input type="checkbox" checked={!!form.details.sanitized} onChange={e=>detail('sanitized',e.target.checked)}/> Verifiqué limpieza y condiciones físicas de la sala.</label>
+      <label className="readiness-check"><input type="checkbox" checked={!!form.details.targetsReviewed} onChange={e=>detail('targetsReviewed',e.target.checked)}/> Revisé las condiciones aprobadas para la especie, cepa y etapa.</label>
+    </>}
+    <label>Observaciones / motivo<textarea value={form.notes} onChange={e=>set('notes',e.target.value)} required={form.status!=='verified'}/></label>
+    {error&&<p role="alert">{error}</p>}
+    <button type="submit" className="inv-btn inv-btn-sec">Guardar revisión de {check.label}</button>
+  </form>;
+}
+
+function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAction,onSave,error}) {
+  const [message,setMessage]=useState('');
+  useEffect(()=>setMessage(''),[assessment.scope]);
+  const labels={verified:'Verificado',blocked:'Bloqueado',unknown:'Sin verificar'};
+  const manual=SetasProductionReadiness.MANUAL_IDS;
+  const exportReport=()=>{
+    const report={schema:'setas.readiness-report.v1',generatedAt:new Date().toISOString(),scope:'pre-production-documentation',species:input.speciesKey,roomId:input.roomId,lotCode:input.lotCode,assessment};
+    const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download='preparacion-produccion-'+(input.lotCode||'plan')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  return <section id="production-readiness" className="production-readiness no-print" aria-labelledby="production-readiness-title" data-testid="production-readiness-dashboard">
+    <header className="readiness-header"><div><span className="readiness-kicker">Antes de producir</span><h2 id="production-readiness-title">Preparación para producción</h2><p>{input.lotCode||'Plan sin código'} · {input.speciesName||'Especie pendiente'} · {assessment.preparationRevision||'Cantidades pendientes'}</p></div><button type="button" className="inv-btn inv-btn-sec" onClick={exportReport}>Exportar informe</button></header>
+    <div className={`readiness-summary is-${assessment.status}`} role="status" aria-live="polite" aria-atomic="true">
+      <strong>{assessment.status==='verified'?'Requisitos documentados · revisar autorización del ensayo':'Requisitos pendientes antes de producir'}</strong>
+      <span>{assessment.counts.verified} verificados · {assessment.counts.blocked} bloqueados · {assessment.counts.unknown} sin verificar</span>
+    </div>
+    <p className="readiness-boundary">Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico.</p>
+    <div className="readiness-context"><label>Sala prevista<select aria-label="Sala prevista para preparación" value={input.roomId} onChange={e=>onRoomChange(e.target.value)}>{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>{assessment.next&&<p><strong>Siguiente requisito:</strong> {assessment.next.label}. {assessment.next.detail}</p>}</div>
+    {error&&<p role="alert">{error} No se puede registrar una nueva revisión hasta recuperar estos datos.</p>}
+    <p className="readiness-local-note">Las revisiones manuales se guardan en este equipo y se incluyen en el respaldo de ensayos. El informe permite compartir esta evaluación.</p>
+    {message&&<p role="status">{message}</p>}
+    <div className="readiness-grid">{assessment.checks.map(check=><article key={check.id} className={`readiness-card is-${check.status}`} data-testid={`readiness-${check.id}`}>
+      <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
+      {check.record&&<p className="readiness-record">Registro de {check.record.reviewer} · {new Date(check.record.at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p>}
+      {check.id==='spawn'&&assessment.spawnLots.length>0&&<p>Lotes de semilla asignados: {assessment.spawnLots.map(l=>l.lotId).join(', ')}</p>}
+      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm check={check} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
+        :<button type="button" className="inv-btn inv-btn-sec" onClick={()=>onAction(check.action)}>Revisar {check.action==='recipe'?'Formulador':check.action==='batch'?'cantidades':check.action==='inventory'?'Bodega':'Perito'}</button>}
+    </article>)}</div>
+    <p className="readiness-boundary">El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales.</p>
+  </section>;
+}
+
 function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
   const [open,setOpen]=useState(false),[step,setStep]=useState(1),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [form,setForm]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('sdp_experiment_draft')||'{}');}catch{return {};}});
@@ -6841,6 +6895,17 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
   const [selectedClimateRoom,setSelectedClimateRoom]=useState('martha_01');
+  const [productionEvidence,setProductionEvidence]=useState(()=>{
+    try{SetasPrototype.recover(localStorage);return {records:SetasProductionReadiness.readRecords(localStorage),error:''};}
+    catch(e){return {records:[],error:e.message};}
+  });
+  useEffect(()=>{
+    const refresh=event=>{if(event.key!==SetasProductionReadiness.KEY&&event.key!==SetasPrototype.PENDING&&event.key!==null)return;
+      try{SetasPrototype.recover(localStorage);setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}
+      catch(e){setProductionEvidence({records:[],error:e.message});}
+    };
+    window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
+  },[]);
   // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
   // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
   // de React no pueden llamarse condicionalmente — ese bloque solo se ejecuta
@@ -8281,6 +8346,39 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
   const substrateClassInfo=useMemo(()=>SetasSpeciesTargetsApi.describeSubstrateClass?SetasSpeciesTargetsApi.describeSubstrateClass({speciesId:sKey,recipe,ings:effectiveINGS,legacySpp:SPP}):null,[sKey,recipe,effectiveINGS]);
   const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
+  const productionReadinessInput=useMemo(()=>{
+    const bag=BAG_TYPES.find(b=>b.id===prodBagType);
+    let plan=null,stockCheck=null;
+    try{if(preparation)plan=SetasLaunchPlanApi.buildLaunchPlan({preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bag?.stockId?{ingredientId:bag.stockId,units:preparation.target.bags}:null,unitIngredientIds:UNIT_INGREDIENT_IDS});
+      if(plan){stockCheck=window.SetasInventoryLedger.checkPlan(plan,{lots:invLotes,ledger:invReservas,nowMs:cycleClock});
+        stockCheck={...stockCheck,lines:stockCheck.lines.map(l=>({...l,name:prodIngs.find(g=>g.id===l.ingredienteId)?.name||(l.ingredienteId==='spawn_grano'?'Semilla (grano)':bag?.name||l.ingredienteId)}))};}}catch{}
+    const roomState=bitLotesLoaded&&!metricsLoadError&&window.SetasRoomState?window.SetasRoomState.buildRoomBoard({rooms:Object.values(ROOMS_CONFIG),lotes:bitLotes,bolsas:bitBolsas,events:roomEvents,telemetry:{},nowMs:cycleClock}).find(r=>r.roomId===selectedClimateRoom):null;
+    return {speciesKey:sKey,speciesName:hasPickedSpecies?sp?.name:'Especie pendiente',speciesConfirmed:hasPickedSpecies,preparation,preparationError:preparationResult.error,
+      model:an?{criticals:(opt?.items||[]).filter(i=>i.priority==='critical').length}:null,
+      treatment:tr?{col:tr.col,temp:tr.temp,time:tr.time}:null,
+      plan,stockCheck,reservations:invReservas,inventoryLoaded:peritoInventoryLoaded,inventoryLots:invLotes,containerId:prodBagType,containerStockId:bag?.stockId,
+      roomId:selectedClimateRoom,roomState,telemetry:liveTelemetry.roomLive(selectedClimateRoom),lotCode:prodLoteNum,plannedDate:prodDate,lotCodeAlreadyUsed:bitLotes.some(l=>String(l.codigo||'').trim()===String(prodLoteNum||'').trim()&&!!prodLoteNum)};
+  },[sKey,sp,hasPickedSpecies,preparation,preparationResult.error,prodIngs,invLotes,invReservas,prodBagType,an,opt,tr,peritoInventoryLoaded,bitLotesLoaded,metricsLoadError,bitLotes,bitBolsas,roomEvents,selectedClimateRoom,liveTelemetry.snapshot,cycleClock,prodLoteNum,prodDate]);
+  const productionReadiness=useMemo(()=>SetasProductionReadiness.assessProductionReadiness(productionReadinessInput,productionEvidence.records),[productionReadinessInput,productionEvidence.records]);
+  const saveProductionEvidence=form=>{
+    if(productionEvidence.error)throw Error(productionEvidence.error);
+    const current=SetasProductionReadiness.readRecords(localStorage);
+    const record=SetasProductionReadiness.createEvidence(form,productionReadinessInput,current,{id:crypto.randomUUID()});
+    const records=[...current,record];
+    SetasPrototype.persist(localStorage,[[SetasProductionReadiness.KEY,records]]);
+    setProductionEvidence({records,error:''});
+  };
+  const openProductionReadiness=()=>{
+    goTab('produccion');
+    requestAnimationFrame(()=>{const panel=document.getElementById('production-readiness');panel?.scrollIntoView({block:'start'});const title=panel?.querySelector('h2');if(title){title.setAttribute('tabindex','-1');title.focus({preventScroll:true});}});
+  };
+  const readinessAction=action=>{
+    if(action==='inventory'){goTab('inventario');return;}
+    if(action==='batch'){const target=document.getElementById(!prodLoteNum?'prod-lote':'prod-bags');target?.scrollIntoView({block:'center'});target?.focus({preventScroll:true});return;}
+    openBuilderSubTab('formular');goTab('formular');
+    if(action==='recommendations')requestAnimationFrame(()=>document.getElementById('bl-perito')?.scrollIntoView({block:'start'}));
+  };
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
   const peritoRevisionRef=React.useRef(0);
@@ -13931,6 +14029,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                      {label:'Preparación para producción',sub:`${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`,icon:IconBox,onClick:openProductionReadiness},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
                       const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
@@ -17024,6 +17123,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='produccion'&&(
           <div>
+            <ProductionReadinessDashboard assessment={productionReadiness} input={productionReadinessInput} rooms={Object.values(ROOMS_CONFIG)} onRoomChange={setSelectedClimateRoom} onAction={readinessAction} onSave={saveProductionEvidence} error={productionEvidence.error}/>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
               <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>

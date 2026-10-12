@@ -208,7 +208,7 @@
       room_id: data.room_id || roomId,
       device_id: data.device_id || `firestore-${roomId}`,
       observed_at: observedAt,
-      source: 'firestore_snapshot',
+      source: data.source || 'firestore_snapshot',
     };
     if (data.temperature_c != null) packet.temperature_c = Number(data.temperature_c);
     if (data.rh_pct != null) packet.rh_pct = Number(data.rh_pct);

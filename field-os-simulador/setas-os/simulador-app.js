@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: da6c8527d3d57805821db00a233024b7e5035f85e44d64bb6005d76cc003d63b
+// source-hash: 9471b417196b7333ec12f7bb66c4108a95deb8e5e1b108eff97d513e799c84a4
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -53,6 +53,42 @@ function BagObservationEditor({ bolsa, onSave }) {
       discard();
     }
   } }), /* @__PURE__ */ React.createElement("span", { id: `bag-observation-status-${bolsa.id}`, role: error ? "alert" : "status" }, error || (dirty ? "Borrador sin guardar" : "Registro local · sincronización independiente")), dirty && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save, "aria-label": `Guardar observaciones de ${bolsa.codigo}` }, error ? "Reintentar" : "Guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: discard, "aria-label": `Cancelar observaciones de ${bolsa.codigo}` }, "Cancelar")));
+}
+function ReadinessEvidenceForm({ check, onSave }) {
+  const [form, setForm] = useState({ requirementId: check.id, status: "unknown", reviewer: check.record?.reviewer || "", reference: check.record?.reference || "", notes: "", details: {} });
+  const [error, setError] = useState("");
+  const set = (key, value) => setForm((p) => ({ ...p, [key]: value }));
+  const detail = (key, value) => setForm((p) => ({ ...p, details: { ...p.details, [key]: value } }));
+  const fields = { spawn: [["strainId", "ID de cepa"], ["supplier", "Proveedor de semilla"], ["thermalClass", "Clase térmica documentada de la cepa"]], equipment: [["equipmentId", "Equipo identificado"], ["protocol", "Protocolo y carga validados"]], sensors: [["deviceIds", "IDs de los sensores / nodos (separados por coma)"], ["calibrationReference", "Registro de calibración o verificación cruzada"]] }[check.id] || [];
+  return /* @__PURE__ */ React.createElement("form", { className: "readiness-evidence-form", "aria-label": `Evidencia: ${check.label}`, onSubmit: (event) => {
+    event.preventDefault();
+    try {
+      onSave(form);
+      setError("");
+    } catch (e) {
+      setError(e.message);
+    }
+  } }, /* @__PURE__ */ React.createElement("label", null, "Resultado de la revisión", /* @__PURE__ */ React.createElement("select", { value: form.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "unknown" }, "Sin verificar"), /* @__PURE__ */ React.createElement("option", { value: "verified" }, "Verificado con evidencia"), /* @__PURE__ */ React.createElement("option", { value: "blocked" }, "Bloqueado"))), /* @__PURE__ */ React.createElement("label", null, "Responsable de la revisión", /* @__PURE__ */ React.createElement("input", { value: form.reviewer, onChange: (e) => set("reviewer", e.target.value), required: true })), /* @__PURE__ */ React.createElement("label", null, "Referencia de evidencia", /* @__PURE__ */ React.createElement("input", { placeholder: "Registro, informe o URL", value: form.reference, onChange: (e) => set("reference", e.target.value), required: form.status === "verified" })), fields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key }, label, /* @__PURE__ */ React.createElement("input", { value: form.details[key] || "", onChange: (e) => detail(key, e.target.value), required: form.status === "verified" }))), check.id === "room" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Capacidad documentada de la sala (bolsas)", /* @__PURE__ */ React.createElement("input", { type: "number", min: "1", step: "1", value: form.details.capacityBags || "", onChange: (e) => detail("capacityBags", e.target.value), required: form.status === "verified" })), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.sanitized, onChange: (e) => detail("sanitized", e.target.checked) }), " Verifiqué limpieza y condiciones físicas de la sala."), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.targetsReviewed, onChange: (e) => detail("targetsReviewed", e.target.checked) }), " Revisé las condiciones aprobadas para la especie, cepa y etapa.")), /* @__PURE__ */ React.createElement("label", null, "Observaciones / motivo", /* @__PURE__ */ React.createElement("textarea", { value: form.notes, onChange: (e) => set("notes", e.target.value), required: form.status !== "verified" })), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "inv-btn inv-btn-sec" }, "Guardar revisión de ", check.label));
+}
+function ProductionReadinessDashboard({ assessment, input, rooms, onRoomChange, onAction, onSave, error }) {
+  const [message, setMessage] = useState("");
+  useEffect(() => setMessage(""), [assessment.scope]);
+  const labels = { verified: "Verificado", blocked: "Bloqueado", unknown: "Sin verificar" };
+  const manual = SetasProductionReadiness.MANUAL_IDS;
+  const exportReport = () => {
+    const report = { schema: "setas.readiness-report.v1", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), scope: "pre-production-documentation", species: input.speciesKey, roomId: input.roomId, lotCode: input.lotCode, assessment };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "preparacion-produccion-" + (input.lotCode || "plan") + ".json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+  };
+  return /* @__PURE__ */ React.createElement("section", { id: "production-readiness", className: "production-readiness no-print", "aria-labelledby": "production-readiness-title", "data-testid": "production-readiness-dashboard" }, /* @__PURE__ */ React.createElement("header", { className: "readiness-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "readiness-kicker" }, "Antes de producir"), /* @__PURE__ */ React.createElement("h2", { id: "production-readiness-title" }, "Preparación para producción"), /* @__PURE__ */ React.createElement("p", null, input.lotCode || "Plan sin código", " · ", input.speciesName || "Especie pendiente", " · ", assessment.preparationRevision || "Cantidades pendientes")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportReport }, "Exportar informe")), /* @__PURE__ */ React.createElement("div", { className: `readiness-summary is-${assessment.status}`, role: "status", "aria-live": "polite", "aria-atomic": "true" }, /* @__PURE__ */ React.createElement("strong", null, assessment.status === "verified" ? "Requisitos documentados · revisar autorización del ensayo" : "Requisitos pendientes antes de producir"), /* @__PURE__ */ React.createElement("span", null, assessment.counts.verified, " verificados · ", assessment.counts.blocked, " bloqueados · ", assessment.counts.unknown, " sin verificar")), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico."), /* @__PURE__ */ React.createElement("div", { className: "readiness-context" }, /* @__PURE__ */ React.createElement("label", null, "Sala prevista", /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala prevista para preparación", value: input.roomId, onChange: (e) => onRoomChange(e.target.value) }, rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), assessment.next && /* @__PURE__ */ React.createElement("p", null, /* @__PURE__ */ React.createElement("strong", null, "Siguiente requisito:"), " ", assessment.next.label, ". ", assessment.next.detail)), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error, " No se puede registrar una nueva revisión hasta recuperar estos datos."), /* @__PURE__ */ React.createElement("p", { className: "readiness-local-note" }, "Las revisiones manuales se guardan en este equipo y se incluyen en el respaldo de ensayos. El informe permite compartir esta evaluación."), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message), /* @__PURE__ */ React.createElement("div", { className: "readiness-grid" }, assessment.checks.map((check) => /* @__PURE__ */ React.createElement("article", { key: check.id, className: `readiness-card is-${check.status}`, "data-testid": `readiness-${check.id}` }, /* @__PURE__ */ React.createElement("div", { className: "readiness-card-heading" }, /* @__PURE__ */ React.createElement("h3", null, check.label), /* @__PURE__ */ React.createElement("span", { className: "readiness-status" }, labels[check.status])), /* @__PURE__ */ React.createElement("p", null, check.detail), check.record && /* @__PURE__ */ React.createElement("p", { className: "readiness-record" }, "Registro de ", check.record.reviewer, " · ", new Date(check.record.at).toLocaleString("es-CO", { timeZone: "America/Bogota" })), check.id === "spawn" && assessment.spawnLots.length > 0 && /* @__PURE__ */ React.createElement("p", null, "Lotes de semilla asignados: ", assessment.spawnLots.map((l) => l.lotId).join(", ")), manual.includes(check.id) ? /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Registrar evidencia de ", check.label), /* @__PURE__ */ React.createElement(ReadinessEvidenceForm, { check, onSave: (form) => {
+    if (error) throw Error(error);
+    onSave(form);
+    setMessage(`Revisión de ${check.label} guardada para este plan.`);
+  } })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => onAction(check.action) }, "Revisar ", check.action === "recipe" ? "Formulador" : check.action === "batch" ? "cantidades" : check.action === "inventory" ? "Bodega" : "Perito")))), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales."));
 }
 function PrototypeTrialsPanel({ saved, active, onPrepare, onReload }) {
   const [open, setOpen] = useState(false), [step, setStep] = useState(1), [message, setMessage] = useState(""), [error, setError] = useState("");
@@ -4978,6 +5014,27 @@ function SimuladorShell(props) {
     }
   };
   const [selectedClimateRoom, setSelectedClimateRoom] = useState("martha_01");
+  const [productionEvidence, setProductionEvidence] = useState(() => {
+    try {
+      SetasPrototype.recover(localStorage);
+      return { records: SetasProductionReadiness.readRecords(localStorage), error: "" };
+    } catch (e) {
+      return { records: [], error: e.message };
+    }
+  });
+  useEffect(() => {
+    const refresh = (event) => {
+      if (event.key !== SetasProductionReadiness.KEY && event.key !== SetasPrototype.PENDING && event.key !== null) return;
+      try {
+        SetasPrototype.recover(localStorage);
+        setProductionEvidence({ records: SetasProductionReadiness.readRecords(localStorage), error: "" });
+      } catch (e) {
+        setProductionEvidence({ records: [], error: e.message });
+      }
+    };
+    window.addEventListener("storage", refresh);
+    return () => window.removeEventListener("storage", refresh);
+  }, []);
   const [copilotVisionResult, setCopilotVisionResult] = useState(null);
   const [copilotVisionError, setCopilotVisionError] = useState(null);
   const [copilotVisionBusy, setCopilotVisionBusy] = useState(false);
@@ -6410,6 +6467,83 @@ function SimuladorShell(props) {
   const peritoEvaluate = useMemo(() => createRecipeEvaluator({ sKey, ings: effectiveINGS, resolveSpp: resolvePeritoSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze }), [sKey, effectiveINGS, resolvePeritoSpp, stockIds, histStats]);
   const substrateClassInfo = useMemo(() => SetasSpeciesTargetsApi.describeSubstrateClass ? SetasSpeciesTargetsApi.describeSubstrateClass({ speciesId: sKey, recipe, ings: effectiveINGS, legacySpp: SPP }) : null, [sKey, recipe, effectiveINGS]);
   const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate]);
+  const productionReadinessInput = useMemo(() => {
+    const bag = BAG_TYPES.find((b) => b.id === prodBagType);
+    let plan = null, stockCheck = null;
+    try {
+      if (preparation) plan = SetasLaunchPlanApi.buildLaunchPlan({
+        preparation,
+        ingredients: prodIngs,
+        inventoryLots: invLotes,
+        bagUnit: bag?.stockId ? { ingredientId: bag.stockId, units: preparation.target.bags } : null,
+        unitIngredientIds: UNIT_INGREDIENT_IDS
+      });
+      if (plan) {
+        stockCheck = window.SetasInventoryLedger.checkPlan(plan, { lots: invLotes, ledger: invReservas, nowMs: cycleClock });
+        stockCheck = { ...stockCheck, lines: stockCheck.lines.map((l) => ({ ...l, name: prodIngs.find((g) => g.id === l.ingredienteId)?.name || (l.ingredienteId === "spawn_grano" ? "Semilla (grano)" : bag?.name || l.ingredienteId) })) };
+      }
+    } catch {
+    }
+    const roomState = bitLotesLoaded && !metricsLoadError && window.SetasRoomState ? window.SetasRoomState.buildRoomBoard({ rooms: Object.values(ROOMS_CONFIG), lotes: bitLotes, bolsas: bitBolsas, events: roomEvents, telemetry: {}, nowMs: cycleClock }).find((r) => r.roomId === selectedClimateRoom) : null;
+    return {
+      speciesKey: sKey,
+      speciesName: hasPickedSpecies ? sp?.name : "Especie pendiente",
+      speciesConfirmed: hasPickedSpecies,
+      preparation,
+      preparationError: preparationResult.error,
+      model: an ? { criticals: (opt?.items || []).filter((i) => i.priority === "critical").length } : null,
+      treatment: tr ? { col: tr.col, temp: tr.temp, time: tr.time } : null,
+      plan,
+      stockCheck,
+      reservations: invReservas,
+      inventoryLoaded: peritoInventoryLoaded,
+      inventoryLots: invLotes,
+      containerId: prodBagType,
+      containerStockId: bag?.stockId,
+      roomId: selectedClimateRoom,
+      roomState,
+      telemetry: liveTelemetry.roomLive(selectedClimateRoom),
+      lotCode: prodLoteNum,
+      plannedDate: prodDate,
+      lotCodeAlreadyUsed: bitLotes.some((l) => String(l.codigo || "").trim() === String(prodLoteNum || "").trim() && !!prodLoteNum)
+    };
+  }, [sKey, sp, hasPickedSpecies, preparation, preparationResult.error, prodIngs, invLotes, invReservas, prodBagType, an, opt, tr, peritoInventoryLoaded, bitLotesLoaded, metricsLoadError, bitLotes, bitBolsas, roomEvents, selectedClimateRoom, liveTelemetry.snapshot, cycleClock, prodLoteNum, prodDate]);
+  const productionReadiness = useMemo(() => SetasProductionReadiness.assessProductionReadiness(productionReadinessInput, productionEvidence.records), [productionReadinessInput, productionEvidence.records]);
+  const saveProductionEvidence = (form) => {
+    if (productionEvidence.error) throw Error(productionEvidence.error);
+    const current = SetasProductionReadiness.readRecords(localStorage);
+    const record = SetasProductionReadiness.createEvidence(form, productionReadinessInput, current, { id: crypto.randomUUID() });
+    const records = [...current, record];
+    SetasPrototype.persist(localStorage, [[SetasProductionReadiness.KEY, records]]);
+    setProductionEvidence({ records, error: "" });
+  };
+  const openProductionReadiness = () => {
+    goTab("produccion");
+    requestAnimationFrame(() => {
+      const panel = document.getElementById("production-readiness");
+      panel?.scrollIntoView({ block: "start" });
+      const title = panel?.querySelector("h2");
+      if (title) {
+        title.setAttribute("tabindex", "-1");
+        title.focus({ preventScroll: true });
+      }
+    });
+  };
+  const readinessAction = (action) => {
+    if (action === "inventory") {
+      goTab("inventario");
+      return;
+    }
+    if (action === "batch") {
+      const target = document.getElementById(!prodLoteNum ? "prod-lote" : "prod-bags");
+      target?.scrollIntoView({ block: "center" });
+      target?.focus({ preventScroll: true });
+      return;
+    }
+    openBuilderSubTab("formular");
+    goTab("formular");
+    if (action === "recommendations") requestAnimationFrame(() => document.getElementById("bl-perito")?.scrollIntoView({ block: "start" }));
+  };
   const peritoRevisionRef = React.useRef(0);
   useEffect(() => {
     const input = {
@@ -10117,6 +10251,7 @@ BATCH (${numBags}×${kgBag} kg):
         setInvTab("compra");
       } },
       { label: "Formular Sustrato", sub: "Balance C:N & Perito", icon: IconBolt, tab: "formular", onClick: () => goTab("formular") },
+      { label: "Preparación para producción", sub: `${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`, icon: IconBox, onClick: openProductionReadiness },
       { label: "Registrar Evento", sub: "Observación, traslado o corrección", icon: IconEdit, onClick: () => props.onGoSesion && props.onGoSesion() }
     ].map((btn) => {
       const accent = btn.jornada ? "var(--accent-terracotta)" : btn.pri ? "var(--accent-olive)" : null;
@@ -11359,7 +11494,7 @@ Click para ver análisis completo`
     const coverage = matchWeeklyCoverage(currentLotProj, b2bCommitments);
     const statusIcon = coverage.superavit > 0 ? superavit : coverage.deficit > 0 ? deficit : cobertura;
     return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", fontWeight: 700 } }, "Matriz B2B: Oferta Semanal Proyectada vs Compromisos Comerciales"), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 12px", borderRadius: "var(--r-sm)", background: "var(--paper-100)", border: "1px solid var(--border-soft)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, "Estado general: ", statusIcon, " ", /* @__PURE__ */ React.createElement("b", null, coverage.cobertura, "% de cobertura"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 150, padding: 12, background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", textTransform: "uppercase", fontWeight: 700 } }, "Cosecha Disponible Proyectada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--ink-900)", marginTop: 4 } }, coverage.totalProyectado, " kg")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 150, padding: 12, background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", textTransform: "uppercase", fontWeight: 700 } }, "Compromisos B2B Restaurantes"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--ink-900)", marginTop: 4 } }, coverage.totalComprometido, " kg")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 150, padding: 12, background: coverage.superavit > 0 ? "rgba(77,98,53,.08)" : "color-mix(in srgb, var(--status-error) 8%, transparent)", border: `1px solid ${coverage.superavit > 0 ? "var(--accent-olive)" : "var(--coral-500)"}`, borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: coverage.superavit > 0 ? "var(--moss-800)" : "var(--coral-600)", textTransform: "uppercase", fontWeight: 700 } }, coverage.superavit > 0 ? "Superávit Comercial" : "Déficit Comercial"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: coverage.superavit > 0 ? "var(--moss-800)" : "var(--coral-600)", marginTop: 4 } }, coverage.superavit > 0 ? `+${coverage.superavit} kg` : `-${coverage.deficit} kg`))), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", overflow: "hidden", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--paper-100)", borderBottom: "1px solid var(--border-soft)", textAlign: "left" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Semana"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Cliente B2B"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right" } }, "Compromiso"))), /* @__PURE__ */ React.createElement("tbody", null, b2bCommitments.map((c, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { borderBottom: i < b2bCommitments.length - 1 ? "1px solid var(--border-soft)" : "none" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px", fontWeight: 700 } }, c.semana), /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px" } }, c.cliente), /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px" } }, SPP[c.speciesKey]?.name || c.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px", textAlign: "right", fontWeight: 700 } }, c.kgComprometidos, " kg")))))), coverage.deficit > 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 14, background: "color-mix(in srgb, var(--status-error) 8%, transparent)", border: "1px solid var(--coral-500)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--coral-700)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, deficit), " Déficit comercial proyectado: ", coverage.deficit, " kg de hongo fresco"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("b", null, "Acción requerida:"), " ", sowingRecommendation(coverage.deficit, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb }))), coverage.superavit > 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 12, background: "rgba(77,98,53,.08)", border: "1px solid var(--accent-olive)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-800)" } }, /* @__PURE__ */ React.createElement("span", null, superavit), " Cobertura plena (", coverage.cobertura, "%). Cuentas con ", coverage.superavit, " kg de superávit para nuevos clientes o venta directa en granja Tenjo."));
-  })()), tab === "produccion" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 10 } }, "Tipo de contenedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, BAG_TYPES.map((bt) => {
+  })()), tab === "produccion" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(ProductionReadinessDashboard, { assessment: productionReadiness, input: productionReadinessInput, rooms: Object.values(ROOMS_CONFIG), onRoomChange: setSelectedClimateRoom, onAction: readinessAction, onSave: saveProductionEvidence, error: productionEvidence.error }), /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 10 } }, "Tipo de contenedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, BAG_TYPES.map((bt) => {
     const on = prodBagType === bt.id;
     const stockUds = bt.stockId ? stockActual(bt.stockId, invLotes) : 0;
     const noStock = !bt.stockId || stockUds <= 0;
