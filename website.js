@@ -41,19 +41,68 @@ document.querySelectorAll('[data-hero]').forEach(button => button.addEventListen
   document.querySelector('#hero-code').textContent = item.code;
   document.querySelector('#hero-status').textContent = `Especie de portada: ${item.name}.`;
 }));
-document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('[data-filter]').forEach(filter => {
-    const active = filter === button;
-    filter.classList.toggle('active', active);
-    filter.setAttribute('aria-pressed', String(active));
-  });
+// Filtros de la colección: categoría + preparación. La guía solo ordena ideas de referencia; no crea disponibilidad.
+const preparations = {
+  sopa: { label: 'sopa o caldo', reasons: {
+    shiitake: { text: 'Smallhold lo propone para sopas y otras preparaciones cocinadas.', link: ['recetas.html#receta-sopa', 'Ver la sopa de coco y jengibre'] },
+    melena: { text: 'La guía de Smallhold propone incorporarla a sopas.' } } },
+  saltear: { label: 'saltear', reasons: {
+    shiitake: { text: 'Nuestras recetas de arepa y patacones lo saltean.', link: ['recetas.html#receta-arepa', 'Ver la arepa con shiitake'] },
+    orellana: { text: 'La guía de Smallhold propone saltear las orellanas. Su descripción corresponde a otra variedad; no es una cata de la orellana gris.' } } },
+  asar: { label: 'asar', reasons: {
+    orellana: { text: 'La guía de Smallhold propone asar las orellanas. Su descripción corresponde a otra variedad; no es una cata de la orellana gris.' } } },
+  desmenuzar: { label: 'desmenuzar o en piezas', reasons: {
+    melena: { text: 'La guía de Smallhold propone desmenuzarla o prepararla en piezas.' } } }
+};
+const filterState = { category: 'culinary', prep: 'any' };
+function applyFilters() {
+  const prep = preparations[filterState.prep];
   let count = 0;
   document.querySelectorAll('.species-card').forEach(card => {
-    card.hidden = button.dataset.filter !== 'all' && card.dataset.category !== button.dataset.filter;
+    const speciesKey = card.querySelector('[data-species]').dataset.species;
+    const inCategory = filterState.category === 'all' || card.dataset.category === filterState.category;
+    const inPrep = !prep || (card.dataset.uses || '').split(' ').includes(filterState.prep);
+    card.hidden = !(inCategory && inPrep);
     if (!card.hidden) count++;
+    const reason = card.querySelector('.card-reason');
+    if (!reason) return;
+    reason.replaceChildren();
+    const entry = prep?.reasons[speciesKey];
+    reason.hidden = card.hidden || !entry;
+    if (!reason.hidden) {
+      reason.append(entry.text);
+      if (entry.link) {
+        const link = document.createElement('a');
+        link.className = 'text-link';
+        link.href = entry.link[0];
+        link.textContent = `${entry.link[1]} ↗`;
+        reason.append(' ', link);
+      }
+    }
   });
-  document.querySelector('#filter-status').textContent = `${count} ${count === 1 ? 'especie visible' : 'especies visibles'}.`;
-}));
+  document.querySelectorAll('[data-filter]').forEach(button => {
+    const active = button.dataset.filter === filterState.category;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  document.querySelectorAll('[data-prep]').forEach(button => {
+    const active = button.dataset.prep === filterState.prep;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  document.querySelector('#filter-empty').hidden = count !== 0;
+  document.querySelector('#filter-reset').hidden = filterState.category === 'all' && filterState.prep === 'any';
+  document.querySelector('#filter-status').textContent = count === 0 ? 'Ninguna especie coincide con los filtros.' : `${count} ${count === 1 ? 'especie visible' : 'especies visibles'}${prep ? ` para ${prep.label}` : ''}.`;
+}
+document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { filterState.category = button.dataset.filter; applyFilters(); }));
+document.querySelectorAll('[data-prep]').forEach(button => button.addEventListener('click', () => { filterState.prep = button.dataset.prep; applyFilters(); }));
+document.querySelector('#filter-reset').addEventListener('click', () => {
+  filterState.category = 'all';
+  filterState.prep = 'any';
+  applyFilters();
+  document.querySelector('[data-filter="all"]').focus();
+});
+document.querySelector('#prep-guide').hidden = false;
 document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
 dialog.addEventListener('click', event => {
   const bounds = dialog.getBoundingClientRect();
