@@ -252,7 +252,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await rp.locator('#order-municipality').inputValue(), 'Cota');
     await visit(rp, 'recetas.html?pairing=bricolage');
     assert.equal(new URL(await rp.locator('#receta-sopa .recipe-cta a').evaluate(a => a.href)).searchParams.get('pairing'), 'bricolage');
-    for (const bad of ['recipe=__proto__&scale=1', 'recipe=receta-x&scale=1', 'recipe=receta-arepa&scale=2', 'recipe=receta-arepa&scale=abc', 'recipe=%3Cimg%20src%3Dx%3E', 'scale=1']) {
+    for (const bad of ['recipe=__proto__&scale=1', 'recipe=receta-x&scale=1', 'recipe=receta-arepa&scale=4', 'recipe=receta-arepa&scale=0', 'recipe=receta-arepa&scale=01', 'recipe=receta-arepa&scale=abc', 'recipe=%3Cimg%20src%3Dx%3E', 'scale=1']) {
       await visit(rp, `shiitake.html?${bad}#producto`);
       assert.equal(await rp.locator('#recipe-context').isVisible(), false, bad);
       assert.equal(await rp.locator('#order-quantity').inputValue(), '250', bad);
@@ -267,6 +267,97 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await rp.evaluate(() => document.documentElement.scrollWidth), 390);
     await rp.setViewportSize({ width: 1440, height: 1000 });
     await recipeCtx.close();
+
+    // Fase 2: cantidades ajustables.
+    const scaleCtx = await contextWith();
+    const sp = await scaleCtx.newPage();
+    await visit(sp, 'recetas.html');
+    const snapshot = () => sp.evaluate(() => [...document.querySelectorAll('.recipe')].map(a => ({ id: a.id, yield: a.querySelector('[data-yield]').textContent, ings: [...a.querySelectorAll('.recipe-ingredients li')].map(li => [li.dataset.ing, li.textContent]) })));
+    const baseSnap = await snapshot();
+    // Concordancia modelo/HTML: mismos IDs y mismos textos en ×1.
+    const modelBase = await sp.evaluate(() => Object.entries(window.SetasRecipes).map(([id, r]) => ({ id, ids: r.ingredients.map(i => i.id), r1: r.render(1) })));
+    for (const m of modelBase) {
+      const html = baseSnap.find(b => b.id === m.id);
+      assert.deepEqual(html.ings.map(([id]) => id), m.ids, `${m.id} ids`);
+      assert.deepEqual(Object.fromEntries(html.ings), m.r1.ingredients, `${m.id} ingredient texts`);
+      assert.equal(html.yield, m.r1.yield, `${m.id} yield`);
+    }
+    const sig = id => sp.locator(`#${id}`);
+    const ing = async (id, key) => (await sp.locator(`#${id} [data-ing="${key}"]`).textContent());
+    assert.equal(await sp.locator('.recipe-scale').first().isVisible(), true);
+    await sp.locator('#receta-arepa input[value="2"]').check();
+    assert.equal(await ing('receta-arepa', 'shiitake'), '600 g de shiitake fresco limpio, en láminas');
+    assert.equal(await ing('receta-arepa', 'aguacate'), '2 aguacates medianos');
+    assert.equal(await ing('receta-arepa', 'cebolla'), '4 cucharadas de cebolla larga picada');
+    assert.equal(await ing('receta-arepa', 'sal'), 'Sal y pimienta al gusto');
+    assert.equal(await sp.locator('#receta-arepa [data-yield]').textContent(), '4 personas · 8 arepas pequeñas');
+    assert.match(await sp.locator('#receta-arepa .recipe-scale-status').innerText(), /doble.*×2.*tiempo/s);
+    assert.equal(await ing('receta-sopa', 'shiitake'), '300 g de shiitake fresco limpio, en láminas', 'factor no se hereda');
+    assert.equal(new URL(sp.url()).searchParams.get('recipe'), 'receta-arepa');
+    assert.equal(new URL(sp.url()).searchParams.get('scale'), '2');
+    await sp.locator('#receta-patacones input[value="3"]').check();
+    assert.equal(await ing('receta-patacones', 'shiitake'), '750 g de shiitake fresco limpio, en láminas');
+    assert.equal(await ing('receta-patacones', 'platanos'), '6 plátanos verdes');
+    assert.equal(await sp.locator('#receta-patacones [data-yield]').textContent(), '24 bases pequeñas · 6–12 personas');
+    await sp.locator('#receta-sopa input[value="3"]').check();
+    assert.equal(await ing('receta-sopa', 'limon'), '3–6 cucharadas de jugo de limón');
+    assert.equal(await sp.locator('#receta-sopa [data-yield]').textContent(), '12 entradas o 6 porciones grandes');
+    assert.equal(await ing('receta-sopa', 'coco'), '1200 ml de leche de coco culinaria sin azúcar añadida');
+    for (const id of ['receta-arepa', 'receta-sopa', 'receta-patacones']) await sp.locator(`#${id} input[value="1"]`).check();
+    assert.deepEqual(await snapshot(), baseSnap, '×1→×3→×1 restaura exactamente');
+    assert.equal(new URL(sp.url()).searchParams.get('scale'), null);
+    // Teclado: foco en el grupo y flechas.
+    await sp.locator('#receta-arepa input[value="1"]').focus();
+    await sp.keyboard.press('ArrowRight');
+    assert.equal(await sp.locator('#receta-arepa input[value="2"]').isChecked(), true);
+    assert.equal(await sp.locator('#receta-arepa input[value="2"]').evaluate(el => el === document.activeElement), true);
+    // Consulta con el factor elegido.
+    await sp.locator('#receta-arepa .recipe-cta a').click();
+    await sp.waitForURL('**/shiitake.html?recipe=receta-arepa&scale=2#producto');
+    assert.equal(await sp.locator('#order-quantity').inputValue(), '600');
+    assert.match(await sp.locator('#recipe-context-text').innerText(), /×2.*600 g/);
+    await sp.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
+    await sp.locator('.purchase-submit').click();
+    const scaledMsg = await sp.locator('#order-message').inputValue();
+    assert.match(scaledMsg, /Cantidad solicitada: 600 g/);
+    assert.match(scaledMsg, /versión ×2; la receta base usa 300 g/);
+    await visit(sp, 'recetas.html?recipe=receta-patacones&scale=3&pairing=bricolage#receta-patacones');
+    assert.equal(await sp.locator('#receta-patacones input[value="3"]').isChecked(), true);
+    assert.equal(await sp.locator('#receta-arepa input[value="1"]').isChecked(), true);
+    assert.equal(await ing('receta-patacones', 'shiitake'), '750 g de shiitake fresco limpio, en láminas');
+    const ctaUrl = new URL(await sp.locator('#receta-patacones .recipe-cta a').evaluate(a => a.href));
+    assert.equal(ctaUrl.searchParams.get('scale'), '3');
+    assert.equal(ctaUrl.searchParams.get('pairing'), 'bricolage');
+    assert.match(await sp.locator('#receta-patacones .recipe-cta p').innerText(), /750 g/);
+    for (const bad of ['recipe=receta-patacones&scale=9', 'recipe=__proto__&scale=2', 'recipe=receta-x&scale=2', 'scale=2']) {
+      await visit(sp, `recetas.html?${bad}`);
+      assert.deepEqual(await snapshot(), baseSnap, bad);
+    }
+    // Impresión con factor elegido.
+    await visit(sp, 'recetas.html?recipe=receta-sopa&scale=2#receta-sopa');
+    await sp.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    await sp.emulateMedia({ media: 'print' });
+    assert.equal(await sp.locator('#receta-sopa .recipe-scale').isVisible(), false);
+    assert.match(await sp.locator('#receta-sopa .recipe-scale-status').innerText(), /doble.*×2.*estimaciones/is);
+    assert.equal(await ing('receta-sopa', 'caldo'), '1200 ml de caldo vegetal');
+    assert.equal(await sp.locator('#receta-sopa .recipe-scale-status').isVisible(), true);
+    await sp.pdf({ path: path.join(out, 'recetas-x2.pdf'), format: 'A4', printBackground: true, margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' } });
+    await sp.emulateMedia({ media: 'screen' });
+    await sp.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await capture(sp, 'recetas-x2-1440.png', '#receta-sopa');
+    await sp.setViewportSize({ width: 390, height: 1000 });
+    await capture(sp, 'recetas-x2-390.png', '#receta-sopa');
+    assert.equal(await sp.evaluate(() => document.documentElement.scrollWidth), 390);
+    await sp.setViewportSize({ width: 320, height: 1000 });
+    assert.ok(await sp.evaluate(() => document.documentElement.scrollWidth) <= 320);
+    await scaleCtx.close();
+    const noJsR = await contextWith(undefined, { javaScriptEnabled: false });
+    const staticR = await noJsR.newPage();
+    await staticR.goto(base + 'recetas.html');
+    assert.equal(await staticR.locator('.recipe-scale').first().isVisible(), false);
+    assert.equal(await staticR.locator('#receta-arepa [data-ing="shiitake"]').textContent(), '300 g de shiitake fresco limpio, en láminas');
+    await noJsR.close();
+    report.checks.push({ type: 'recipe-scaling', result: 'passed', covers: ['model/HTML concordance', '×1/×2/×3 per recipe', 'exact restore', 'ranges and optional', 'text items unscaled', 'yield ranges', 'no inherited factor', 'keyboard arrows', 'consultation 600 g', 'reload via URL', 'malformed params', 'print status and PDF', '320/390 overflow', 'no-JS base quantities'] });
 
     const packs = [{ id: 'p250', name: 'Presentación de prueba 250', weightGrams: 250, priceCOP: 18000 }, { id: 'p500', name: 'Presentación de prueba 500', weightGrams: 500, priceCOP: null }];
     const packCtx = await contextWith({ whatsapp: '+57 999 999 9999', availability: 'available', presentations: packs });
