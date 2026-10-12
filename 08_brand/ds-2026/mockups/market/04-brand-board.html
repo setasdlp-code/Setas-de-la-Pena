@@ -2,144 +2,97 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>04 · Brand board · Setas de la Peña (DS-2026 · Criterio)</title>
   <link rel="stylesheet" href="../../market.css">
   <link rel="stylesheet" href="../_shell.css">
   <style>
-    .deck-container { width: 1200px; padding: 40px; background: var(--surface-page); border: 1px solid var(--border-hairline); }
-    .deck-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .deck-panel {
-      background: var(--surface-panel);
-      border: 1px solid var(--border-hairline);
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      min-height: 360px;
-    }
-    .panel-hdr {
-      display: flex; justify-content: space-between; align-items: baseline;
-      border-bottom: 1px solid var(--border-hairline); padding-bottom: 8px; margin-bottom: 16px;
-    }
-    .swatch-bar { display: flex; gap: 6px; margin-top: auto; padding-top: 12px; }
-    .swatch-item { flex: 1; height: 32px; font: var(--t-micro); display: flex; align-items: flex-end; padding: 2px; color: #fff; border-radius: 1px; }
+    .deck-container { width: min(1200px, 100%); padding: var(--space-5); background: var(--surface-page); border: var(--rule-hairline); }
+    .deck-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); align-items: baseline; border-bottom: var(--rule-heavy); padding-bottom: var(--space-2); margin-bottom: var(--space-3); }
+    .deck-header h1 { margin: 0; font: var(--t-heading-02); color: var(--brand-primary); }
+    .deck-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+    .deck-panel { min-width: 0; padding: var(--space-3); background: var(--surface-panel); display: flex; flex-direction: column; gap: var(--space-2); }
+    .deck-cover { grid-column: span 2; min-height: 320px; justify-content: space-between; background: var(--brand-primary); color: var(--text-inverse); }
+    .deck-wordmark { font: var(--t-display-01); font-weight: var(--weight-bold); letter-spacing: var(--tracking-display); margin: 0; }
+    .deck-panel h2 { font: var(--t-label); letter-spacing: var(--tracking-label); text-transform: uppercase; margin: 0; color: var(--brand-accent-text); }
+    .deck-cover h2, .deck-cover .t-small { color: var(--text-inverse); }
+    .deck-panel p { margin: 0; }
+    .deck-specimens { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between; margin: auto 0; }
+    .deck-specimens figure { flex: 1; min-width: 120px; margin: 0; }
+    .deck-specimens img { height: 144px; max-width: 100%; object-fit: contain; }
+    .deck-latin { font: var(--t-latin); text-transform: none; letter-spacing: 0; }
+    .deck-package { border: var(--rule-hairline); background: var(--surface-recessed); padding: var(--space-2); margin: auto 0; }
+    .deck-package-inner { background: var(--surface-page); padding: var(--space-2); text-align: center; display: grid; gap: var(--space-1); }
+    .deck-signature { font: var(--t-heading-02); font-weight: var(--weight-bold); color: var(--brand-primary); letter-spacing: var(--tracking-tight); }
+    .deck-swatches { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-1); margin-top: var(--space-2); }
+    .deck-swatch { margin: 0; min-width: 0; }
+    .deck-chip { height: 32px; border: var(--rule-hairline); margin-bottom: var(--space-half); }
+    .deck-chip--paper { background: var(--surface-page); }
+    .deck-chip--moss { background: var(--brand-primary); }
+    .deck-chip--coral { background: var(--brand-accent); }
+    .deck-chip--slate { background: var(--brand-secondary); }
+    .deck-chip--ink { background: var(--text-primary); }
+    .deck-swatch figcaption { font: var(--t-micro); color: var(--text-primary); }
+    .deck-type { display: grid; gap: var(--space-2); }
+    .deck-essence { font: var(--t-heading-01); color: var(--brand-primary); }
+    .deck-footer { margin-top: var(--space-3); border-top: var(--rule-hairline); padding-top: var(--space-2); }
+    @media (max-width: 900px) { body { padding: var(--space-2); } .deck-container { padding: var(--space-2); } .deck-grid { grid-template-columns: 1fr; } .deck-cover { grid-column: auto; } .deck-wordmark { font-size: var(--size-display-02); } }
   </style>
 </head>
 <body data-mode="archive" data-content-status="illustrative">
-  <div class="stage stage--col">
+  <main class="stage stage--col">
     <div class="deck-container">
-      <header style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--border-heavy); padding-bottom: 12px; margin-bottom: 24px;">
-        <div>
-          <h1 style="margin: 0; font: var(--t-display-02); color: var(--brand-primary);">Setas de la Peña</h1>
-          <div class="t-label">DS-2026 · Criterio edition · Brand deck</div>
-        </div>
-        <div class="t-micro">Tenjo · 2.600 msnm · Sabana de Bogotá</div>
+      <header class="deck-header">
+        <div><h1>Setas de la Peña</h1><div class="t-label">DS-2026 · Criterio · Sistema de marca</div></div>
+        <div class="t-micro">Tenjo · Sabana de Bogotá</div>
       </header>
-
       <div class="deck-grid">
-        <!-- 01 Wordmark -->
-        <div class="deck-panel">
-          <div class="panel-hdr"><span class="t-label" style="color: var(--brand-accent-text);">01 / Marca</span><span class="t-micro">Wordmark y guía</span></div>
-          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-            <div style="font: var(--t-display-02); color: var(--brand-primary); margin-bottom: 8px;">Setas<br>de la Peña</div>
-            <div class="t-micro" style="letter-spacing: 0.2em;">TENJO · 2.600 M</div>
+        <section class="deck-panel deck-cover">
+          <h2>01 / Firma principal</h2>
+          <p class="deck-wordmark">Setas<br>de la Peña</p>
+          <p class="t-small">Cultivadas en la Sabana. Cosechadas con criterio.</p>
+        </section>
+        <section class="deck-panel">
+          <h2>02 / Herbario</h2>
+          <div class="deck-specimens">
+            <figure><img src="../../assets/img/species/shiitake.png" alt="Ilustración de shiitake"><figcaption><div class="t-small">Shiitake</div><div class="deck-latin">Lentinula edodes</div></figcaption></figure>
+            <figure><img src="../../assets/img/species/lions-mane.png" alt="Ilustración de melena de león"><figcaption><div class="t-small">Melena de león</div><div class="deck-latin">Hericium erinaceus</div></figcaption></figure>
           </div>
-          <div class="t-micro" style="border-top: 1px dashed var(--border-hairline); padding-top: 8px; text-align: center;">Gaya Patched Display</div>
-        </div>
-
-        <!-- 02 Botanical Plate -->
-        <div class="deck-panel">
-          <div class="panel-hdr"><span class="t-label" style="color: var(--brand-accent-text);">02 / Herbario</span><span class="t-micro">Lámina botánica</span></div>
-          <div style="flex: 1; display: flex; justify-content: space-around; align-items: flex-end; padding: 12px 0;">
-            <div style="text-align: center;">
-              <img src="../../assets/img/species/shiitake.png" style="max-height: 110px; margin: 0 auto 6px;" alt="Shiitake">
-              <div class="t-small" style="font-weight: bold;">Shiitake</div>
-              <div class="t-micro" style="font-style: italic;">L. edodes</div>
-            </div>
-            <div style="text-align: center;">
-              <img src="../../assets/img/species/lions-mane.png" style="max-height: 110px; margin: 0 auto 6px;" alt="Melena">
-              <div class="t-small" style="font-weight: bold;">Melena</div>
-              <div class="t-micro" style="font-style: italic;">H. erinaceus</div>
-            </div>
+          <p class="t-micro">Ilustración de especie · no registro de lote</p>
+        </section>
+        <section class="deck-panel">
+          <h2>03 / Firma compacta</h2>
+          <div class="deck-package"><div class="deck-package-inner">
+            <div class="deck-signature">Setas de la Peña</div>
+            <div class="t-small">Shiitake</div><div class="deck-latin">Lentinula edodes</div>
+            <div class="t-micro">Lote ilustrativo · SHI-01</div>
+          </div></div>
+          <p class="t-small">La misma firma, en una línea para superficies pequeñas.</p>
+        </section>
+        <section class="deck-panel">
+          <h2>04 / Tipos y pigmentos</h2>
+          <div class="deck-type">
+            <div><div class="t-micro">Gaya Patched · editorial</div><div class="deck-signature">Cultivo con criterio</div></div>
+            <div><div class="t-micro">IBM Plex Sans · lectura y acción</div><div class="t-small">Registrar una cosecha</div></div>
+            <div><div class="t-micro">IBM Plex Mono · datos</div><div class="t-data">SHI-01 · 14,25 kg</div></div>
           </div>
-          <div class="t-micro" style="border-top: 1px dashed var(--border-hairline); padding-top: 8px; text-align: center;">Grabado científico tinta</div>
-        </div>
-
-        <!-- 03 Packaging Mockup -->
-        <div class="deck-panel">
-          <div class="panel-hdr"><span class="t-label" style="color: var(--brand-accent-text);">03 / Empaque</span><span class="t-micro">Caja rígida kraft</span></div>
-          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-            <div style="background: #D8C3A5; padding: 16px; border: 1px solid #B59E7F;">
-              <div style="background: var(--surface-panel); padding: 12px; text-align: center; border: 1px solid var(--border-hairline);">
-                <div class="t-small" style="font-weight: bold; color: var(--brand-primary);">Setas de la Peña</div>
-                <div class="t-micro" style="font-style: italic; margin-bottom: 6px;">Shiitake · Lentinula edodes</div>
-                <div class="t-micro" style="color: var(--brand-accent-text);">Lote 026 · SHI-01 · 2.600 m</div>
-              </div>
-            </div>
+          <div class="deck-swatches">
+            <figure class="deck-swatch"><div class="deck-chip deck-chip--paper"></div><figcaption>PAPER</figcaption></figure>
+            <figure class="deck-swatch"><div class="deck-chip deck-chip--moss"></div><figcaption>MOSS</figcaption></figure>
+            <figure class="deck-swatch"><div class="deck-chip deck-chip--coral"></div><figcaption>CORAL</figcaption></figure>
+            <figure class="deck-swatch"><div class="deck-chip deck-chip--slate"></div><figcaption>SLATE</figcaption></figure>
+            <figure class="deck-swatch"><div class="deck-chip deck-chip--ink"></div><figcaption>INK</figcaption></figure>
           </div>
-          <div class="t-micro" style="border-top: 1px dashed var(--border-hairline); padding-top: 8px; text-align: center;">Etiqueta verjurada sello</div>
-        </div>
-
-        <!-- 04 Agronomy Spec -->
-        <div class="deck-panel">
-          <div class="panel-hdr"><span class="t-label" style="color: var(--brand-accent-text);">04 / Telemetría</span><span class="t-micro">Ficha agronómica</span></div>
-          <div style="flex: 1; display: grid; gap: 8px; font-size: 12px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding-bottom: 4px;">
-              <span class="t-label">Sustrato Roble</span><span class="t-data">80 %</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding-bottom: 4px;">
-              <span class="t-label">Salvado Trigo</span><span class="t-data">20 %</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding-bottom: 4px;">
-              <span class="t-label">Humedad Sala</span><span class="t-data">88 % HR</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-hairline); padding-bottom: 4px;">
-              <span class="t-label">Temp. Fructificación</span><span class="t-data">18.5 °C</span>
-            </div>
-          </div>
-          <div class="t-micro" style="border-top: 1px dashed var(--border-hairline); padding-top: 8px; text-align: center;">IBM Plex Mono 13px</div>
-        </div>
-
-        <!-- 05 Typography Trinity & Palette -->
-        <div class="deck-panel">
-          <div class="panel-hdr"><span class="t-label" style="color: var(--brand-accent-text);">05 / Tipografía</span><span class="t-micro">Tipos y pigmentos</span></div>
-          <div style="flex: 1; display: grid; gap: 6px;">
-            <div>
-              <div class="t-micro" style="color: var(--brand-accent-text);">GAYA PATCHED</div>
-              <div style="font: var(--t-heading-02); color: var(--brand-primary); line-height: 1;">Setas de la Peña</div>
-            </div>
-            <div>
-              <div class="t-micro" style="color: var(--brand-accent-text);">IBM PLEX SANS</div>
-              <div class="t-small" style="line-height: 1.2;">Cultivo técnico en la Sabana de Bogotá.</div>
-            </div>
-            <div>
-              <div class="t-micro" style="color: var(--brand-accent-text);">IBM PLEX MONO</div>
-              <div class="t-data" style="font-size: 11px;">LOTE 026 · SHI-01 · 2.600 M</div>
-            </div>
-            <div class="swatch-bar">
-              <div class="swatch-item" style="background: #F6F4EC; border: 1px solid #1A1410; color: #1A1410;">PAPER</div>
-              <div class="swatch-item" style="background: #2E3B2F;">MOSS</div>
-              <div class="swatch-item" style="background: #B8614D;">CORAL</div>
-              <div class="swatch-item" style="background: #4E6A7A;">SLATE</div>
-              <div class="swatch-item" style="background: #1A1410;">INK</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 06 Brand Essence -->
-        <div class="deck-panel">
-          <div class="panel-hdr"><span class="t-label" style="color: var(--brand-accent-text);">06 / Esencia</span><span class="t-micro">Horizonte territorial</span></div>
-          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font: var(--t-heading-01); color: var(--brand-primary); line-height: 1.15; margin-bottom: 16px;">
-              «Cultivadas en la Sabana.<br>Cosechadas con criterio.»
-            </div>
-            <svg viewBox="0 0 300 40" style="width: 100%; height: 32px; stroke: var(--brand-primary); stroke-width: 1.5; fill: none; margin-top: auto;">
-              <path d="M 0 35 Q 50 32, 100 25 T 160 14 T 210 8 T 260 22 T 300 32" />
-            </svg>
-          </div>
-          <div class="t-micro" style="border-top: 1px dashed var(--border-hairline); padding-top: 8px; text-align: center;">Serranía de Tenjo · Juaica</div>
-        </div>
+        </section>
+        <section class="deck-panel">
+          <h2>05 / Del campo a la mesa</h2>
+          <p class="deck-essence">El origen se registra.<br>La especie se reconoce.</p>
+          <p class="t-small">Código, especie y procedencia acompañan la lectura culinaria.</p>
+          <p class="t-micro">Tenjo · Cundinamarca</p>
+        </section>
       </div>
+      <footer class="deck-footer t-small">Firma Gaya en caja mixta · datos en Mono · acciones en Sans · pigmentos de tokens canónicos.</footer>
     </div>
-  </div>
+  </main>
 </body>
 </html>
