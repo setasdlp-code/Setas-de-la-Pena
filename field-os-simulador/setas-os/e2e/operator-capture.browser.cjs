@@ -76,12 +76,38 @@ const root=path.resolve(__dirname,'..');
   await expect(harvest.getByLabel('Peso fresco (g)',{exact:true})).toHaveValue('0');
   assert.ok(await harvest.evaluate(el=>el.scrollWidth<=el.clientWidth),'harvest mobile overflow');
   assert.ok((await harvest.getByRole('button',{name:'1 de 5 estrellas',exact:true}).boundingBox()).height>=44);
+  for (const width of [390,430]) {
+    await page.setViewportSize({width,height:844});
+    assert.ok(await harvest.evaluate(el=>el.scrollWidth<=el.clientWidth),`harvest overflow at ${width}px`);
+    assert.equal(await harvest.locator('.harvest-capture-actions').evaluate(el=>getComputedStyle(el).display),'grid');
+    const save=harvest.getByRole('button',{name:'Guardar cosecha',exact:true});
+    const style=await save.evaluate(el=>{const cs=getComputedStyle(el);const r=document.createRange();r.selectNodeContents(el);return {font:cs.fontFamily,tracking:cs.letterSpacing,transform:cs.textTransform,height:el.getBoundingClientRect().height,lines:r.getClientRects().length};});
+    assert.match(style.font,/IBM Plex Sans/);assert.equal(style.transform,'none');assert.ok(style.height>=48);assert.equal(style.lines,1);
+    assert.match(await harvest.getByLabel('Peso fresco (g)',{exact:true}).evaluate(el=>getComputedStyle(el).fontFamily),/IBM Plex Mono/);
+    assert.equal(await harvest.getByRole('heading',{name:'Registrar cosecha',exact:true}).evaluate(el=>getComputedStyle(el).fontSize),'24px');
+    for(const button of await harvest.locator('button:visible').all())assert.ok((await button.boundingBox()).height>=48,`touch target at ${width}px`);
+  }
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>window.dispatchEvent(new Event('offline')));
+  await expect(harvest.locator('#harvest-save-note')).toContainText('Sin conexión');
+  await expect(harvest.locator('#harvest-save-note')).not.toContainText('Sincronizado');
+  await harvest.getByRole('button',{name:'5 de 5 estrellas',exact:true}).click();
+  await expect(harvest.getByRole('button',{name:'5 de 5 estrellas',exact:true})).toHaveAttribute('aria-pressed','true');
+  await harvest.getByRole('button',{name:'5 de 5 estrellas',exact:true}).click();
+  await expect(harvest.getByRole('button',{name:'5 de 5 estrellas',exact:true})).toHaveAttribute('aria-pressed','false');
+  await harvest.getByLabel('Peso fresco (g)',{exact:true}).focus();
   await harvest.screenshot({path:'/tmp/setas-capture-harvest-mobile.png'});
+  await harvest.getByRole('button',{name:'Guardar cosecha',exact:true}).scrollIntoViewIfNeeded();
+  await harvest.screenshot({path:'/tmp/setas-capture-harvest-actions-mobile.png'});
+  await harvest.getByLabel('Peso fresco (g)',{exact:true}).focus();
   await harvest.getByLabel('Peso fresco (g)',{exact:true}).press('Enter');
   await expect(harvest).toHaveCount(0);
   let crops=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_bit_cosechas')));
   assert.equal(crops[0].pesoFresco,0);assert.equal(crops[0].calidad,null);
+  const queued=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_sync_queue')));
+  assert.ok(queued.some(op=>op.type==='guardarCosecha'&&op.key==='cosecha:'+crops[0].id),'saved harvest must remain queued for sync');
   await page.getByRole('button',{name:'Registrar cosecha para la bolsa CAPTURE-FIXTURE-B01',exact:true}).click();
+  await expect(harvest.locator('#harvest-save-note')).toContainText('pendiente');
   await harvest.getByLabel('Peso fresco (g)',{exact:true}).fill('430');
   await page.evaluate(()=>{window.__setItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='sdp_bit_cosechas')throw Error('fixture quota');return window.__setItem.call(this,k,v);};});
   await harvest.getByRole('button',{name:'Guardar cosecha',exact:true}).click();
@@ -110,7 +136,7 @@ const root=path.resolve(__dirname,'..');
   await page.reload();await expect(moisture).toHaveValue('');
   await moisture.fill('0');await page.reload();await expect(moisture).toHaveValue('0');
   await page.screenshot({path:'/tmp/setas-capture-preparation-mobile.png',fullPage:true});
-  console.log('PASS: trial/harvest blanks, optional null vs zero, kg/g, quota failure preservation, draft reopen/reload, keyboard submit/focus, 390px controls, preparation blanks/zero and print validation.');
+  console.log('PASS: trial/harvest blanks, optional null vs zero, kg/g, quota failure preservation, draft reopen/reload, keyboard submit/focus, 390/430px typography and touch targets, offline queue, quality toggle, preparation blanks/zero and print validation.');
 
   assert.deepEqual(errors,[]);
 
