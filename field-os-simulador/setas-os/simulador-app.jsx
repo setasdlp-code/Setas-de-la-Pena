@@ -17498,17 +17498,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
         )}
         {/* MODAL NUEVA COSECHA */}
         {showBitCosecha&&(
-          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
-              <style>{`[aria-label="Registrar cosecha"] input,[aria-label="Registrar cosecha"] select,[aria-label="Registrar cosecha"] button{min-height:44px;font-size:16px} @media(max-width:560px){[aria-label="Registrar cosecha"] .inv-row{grid-template-columns:1fr!important}}`}</style><div className="inv-modal-title">Registrar cosecha</div>{captureSaveError&&<p role="alert">{captureSaveError}</p>}<p>Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición. Borrador conservado en esta pestaña.</p>
+          <AccessibleModal onClose={()=>setShowBitCosecha(false)} label="Registrar cosecha" dialogClassName="inv-modal harvest-capture-dialog" dialogStyle={{width:'min(500px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}>
+              <header className="harvest-capture-header">
+                <h2 className="harvest-capture-title">Registrar cosecha</h2>
+                <p className="harvest-capture-context">Lote <span>{bitLotes.find(l=>l.id===(bitCosechaForm.loteId||bitActiveLoteId))?.codigo||bitCosechaForm.loteId||bitActiveLoteId}</span></p>
+              </header>
+              {captureSaveError&&<p role="alert">{captureSaveError}</p>}
+              <p id="harvest-weight-help" className="harvest-capture-help">Peso en gramos (1000 g = 1 kg). Cero registra una medición de 0 g; vacío no registra una medición.</p>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="harvest-bag">Bolsa</label><select id="harvest-bag" aria-invalid={!!captureErrors["harvest-bag"]} aria-describedby={captureErrors["harvest-bag"]?"harvest-bag-error":undefined} onBlur={()=>validateCaptureField("harvest-bag")} name="harvestBag" className="inv-input" value={bitCosechaForm.bolsaId||''} onChange={e=>{const b=bitBolsas.find(x=>x.id===e.target.value);setBitCosechaForm(p=>({...p,bolsaId:e.target.value,codigo:b?.codigo||'',loteId:b?.loteId||p.loteId}));}}><option value="">— seleccionar —</option>{bitBolsas.filter(b=>b.loteId===(bitCosechaForm.loteId||bitActiveLoteId)).map(b=><option key={b.id} value={b.id}>{b.codigo}</option>)}</select>{captureErrorNode("harvest-bag")}</div>
-                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" aria-invalid={!!captureErrors["harvest-flush"]} aria-describedby={captureErrors["harvest-flush"]?"harvest-flush-error":undefined} onBlur={()=>validateCaptureField("harvest-flush")} name="harvestFlush" type="number" className="inv-input" min={1} value={bitCosechaForm.flush??''} onChange={e=>setBitCosechaForm(p=>({...p,flush:e.target.value}))}/>{captureErrorNode("harvest-flush")}</div>
+                <div><label className="inv-label" htmlFor="harvest-flush">Flush #</label><input id="harvest-flush" aria-invalid={!!captureErrors["harvest-flush"]} aria-describedby={captureErrors["harvest-flush"]?"harvest-flush-error":undefined} onBlur={()=>validateCaptureField("harvest-flush")} name="harvestFlush" type="number" inputMode="numeric" className="inv-input" min={1} value={bitCosechaForm.flush??''} onChange={e=>setBitCosechaForm(p=>({...p,flush:e.target.value}))}/>{captureErrorNode("harvest-flush")}</div>
               </div>
               <div className="inv-row inv-row-2" style={{marginBottom:12}}>
                 <div><label className="inv-label" htmlFor="harvest-date">Fecha</label><input id="harvest-date" aria-invalid={!!captureErrors["harvest-date"]} aria-describedby={captureErrors["harvest-date"]?"harvest-date-error":undefined} onBlur={()=>validateCaptureField("harvest-date")} name="harvestDate" type="date" className="inv-input" value={bitCosechaForm.fecha||''} onChange={e=>setBitCosechaForm(p=>({...p,fecha:e.target.value}))}/>{captureErrorNode("harvest-date")}</div>
-                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-error":undefined} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
+                <div><label className="inv-label" htmlFor="harvest-weight">Peso fresco (g)</label><input id="harvest-weight" aria-invalid={!!captureErrors["harvest-weight"]} aria-describedby={captureErrors["harvest-weight"]?"harvest-weight-help harvest-weight-error":"harvest-weight-help"} onBlur={()=>validateCaptureField("harvest-weight")} name="harvestWeight" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 430…" value={bitCosechaForm.pesoFresco??''} onChange={e=>setBitCosechaForm(p=>({...p,pesoFresco:e.target.value}))}/>{captureErrorNode("harvest-weight")}</div>
               </div>
-              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" style={{display:'flex',gap:6,paddingTop:4}}>{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} style={{padding:'6px 12px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",cursor:'pointer',background:(bitCosechaForm.calidad||0)>=n?'var(--ochre-500)':'var(--paper-50)',color:(bitCosechaForm.calidad||0)>=n?'var(--paper-0)':'var(--ink-500)',transition:'background-color .1s,color .1s,border-color .1s'}}>{n}</button>))}</div></div>
+              <div style={{marginBottom:12}}><span className="inv-label">Calidad · opcional (sin evaluar hasta seleccionar)</span><div role="group" aria-label="Calidad de la cosecha" className="harvest-quality-options">{[1,2,3,4,5].map(n=>(<button key={n} aria-label={`${n} de 5 estrellas`} aria-pressed={(bitCosechaForm.calidad||0)===n} onClick={()=>setBitCosechaForm(p=>({...p,calidad:p.calidad===n?'':n}))} type="button" className="harvest-quality-choice" data-filled={(bitCosechaForm.calidad||0)>=n}>{n}</button>))}</div></div>
               {/* Fenotipo · phenotype_dictionary_v0.1. Todo opcional: es la
                   variable de respuesta que falta para relacionar la exposición a
                   CO₂ con la morfología, y ninguna fuente publicada trae la curva
@@ -17520,8 +17525,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   Vocabulario <code>phenotype_dictionary_v0.1</code>. Aún no canónico: estas medidas se usan para construir evidencia propia, no como objetivo de cultivo.
                 </p>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-                  <div><label className="inv-label" htmlFor="harvest-cap-diameter">Diámetro de píleo (mm)</label><input id="harvest-cap-diameter" name="harvestCapDiameter" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 60…" value={bitCosechaForm.capDiameterMm??''} onChange={e=>setBitCosechaForm(p=>({...p,capDiameterMm:e.target.value}))}/></div>
-                  <div><label className="inv-label" htmlFor="harvest-stipe-length">Largo de estípite (mm)</label><input id="harvest-stipe-length" name="harvestStipeLength" type="number" className="inv-input" min={0} step={1} placeholder="Ej. 30…" value={bitCosechaForm.stipeLengthMm??''} onChange={e=>setBitCosechaForm(p=>({...p,stipeLengthMm:e.target.value}))}/></div>
+                  <div><label className="inv-label" htmlFor="harvest-cap-diameter">Diámetro de píleo (mm)</label><input id="harvest-cap-diameter" name="harvestCapDiameter" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 60…" value={bitCosechaForm.capDiameterMm??''} onChange={e=>setBitCosechaForm(p=>({...p,capDiameterMm:e.target.value}))}/></div>
+                  <div><label className="inv-label" htmlFor="harvest-stipe-length">Largo de estípite (mm)</label><input id="harvest-stipe-length" name="harvestStipeLength" type="number" inputMode="numeric" className="inv-input" min={0} step={1} placeholder="Ej. 30…" value={bitCosechaForm.stipeLengthMm??''} onChange={e=>setBitCosechaForm(p=>({...p,stipeLengthMm:e.target.value}))}/></div>
                 </div>
                 <div style={{marginBottom:10}}>
                   <span className="inv-label">Códigos de defecto</span>
@@ -17614,7 +17619,30 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 );
               })()}
-              <div className="inv-modal-actions">
+              <div className="harvest-capture-save-note" id="harvest-save-note" role="status" aria-live="polite" aria-atomic="true">
+                <p>{isOnline?'Con conexión':'Sin conexión'} · al guardar, la cosecha se conserva en este dispositivo y se encola para sincronizar.</p>
+                {(()=>{
+                  const api=window.SetasSyncQueue;
+                  if(!api)return null;
+                  const stats=api.stats(syncQueue,Date.now());
+                  return <p>Cola de Bitácora: {stats.pending||stats.stuck?api.describeForOperator(stats):'sin envíos pendientes'}.</p>;
+                })()}
+                {remoteSyncNote()}
+                <p>Borrador conservado en esta pestaña hasta guardar.</p>
+              </div>
+              <div className="inv-modal-actions harvest-capture-actions">
+                <button
+                  type="button"
+                  onClick={()=>{
+                    if(!validateCapture('harvest'))return;
+                    if(!addBitCosecha(SetasBitacora.normalizeHarvestCapture(bitCosechaForm)))return;clearHarvestCapture();
+                    setShowBitCosecha(false);
+                  }}
+                  aria-describedby="harvest-save-note"
+                  className="inv-btn inv-btn-pri"
+                >
+                  Guardar cosecha
+                </button>
                 <button type="button" onClick={()=>setShowBitCosecha(false)} className="inv-btn inv-btn-sec">Cancelar</button>
                 <button
                   type="button"
@@ -17630,17 +17658,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 >
                   Guardar y <AppIcon name="print" size={13} /> Canastilla
                 </button>
-                <button
-                  type="button"
-                  onClick={()=>{
-                    if(!validateCapture('harvest'))return;
-                    if(!addBitCosecha(SetasBitacora.normalizeHarvestCapture(bitCosechaForm)))return;clearHarvestCapture();
-                    setShowBitCosecha(false);
-                  }}
-                  className="inv-btn inv-btn-pri"
-                >
-                  Guardar cosecha
-                </button>
+
               </div>
           </AccessibleModal>
         )}
