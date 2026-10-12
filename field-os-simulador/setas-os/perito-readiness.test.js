@@ -35,6 +35,14 @@ test('composition rejects invalid totals, duplicates and unknown ingredients',()
   assert.equal(check(assessReadiness(input,model,null),'composition').status,'blocked');
  }
 });
+test('readiness uses the same balance boundary as the Formulador and native API',()=>{
+ const balance=require('./mass-balance.js');
+ for(const pct of [99.49,99.5,99.8,100.2,100.5,100.51]){
+  const input=snapshot();input.recipe[0].p=pct;
+  assert.equal(check(assessReadiness(input,model,null),'composition').status,
+    balance.isMassBalancedTotal(pct)?'ready':'blocked');
+ }
+});
 test('evidence distinguishes comparable history from extrapolation',()=>{
  assert.equal(check(assessReadiness(snapshot(),model,{n:3,matched:false}),'evidence').status,'unknown');
  assert.equal(check(assessReadiness(snapshot(),model,{n:3,matched:true}),'evidence').status,'ready');

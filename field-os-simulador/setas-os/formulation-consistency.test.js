@@ -54,7 +54,7 @@ function stockAction(stockMap) {
   assert.ok(start >= 0 && end > start);
   let loaded = null, notice;
   const handler = new Function('stockMap', 'setNoticeDlg', 'runHybridRecipeSearch', 'sKey', 'invLotes', 'INGS', 'optProfile', 'SetasSpeciesTargetsApi', 'SPP', 'setRecipe', 'calcMaxBatchFromStock', 'sp', src.slice(start, end) + '\nreturn formularConStockBodega;')(
-    stockMap, n => notice = n, X.runHybridRecipeSearch, sk, [], X.INGS, 'produccion', T, X.SPP, r => loaded = r, () => ({ maxBolsas: 10, maxKgWet: 15 }), X.SPP[sk]);
+    stockMap, n => notice = n, X.runHybridRecipeSearch, sk, [], X.INGS, 'produccion', T, X.SPP, r => loaded = r, RO.calcMaxBatchFromStock, X.SPP[sk]);
   handler();
   return { loaded, notice };
 }
@@ -64,6 +64,15 @@ test('Bodega carga porcentajes canónicos analizables', () => {
   assert.ok(loaded?.length);
   assert.equal(loaded.reduce((s, r) => s + r.p, 0), 100);
   assert.ok(X.analyze(loaded, sk, X.INGS, resolve(loaded)));
+});
+
+test('Bodega muestra la capacidad calculada, sin cantidades de fallback', () => {
+  const stock={ paja_trigo: 10 };
+  const { loaded, notice } = stockAction(stock);
+  const analysis=X.analyze(loaded,sk,X.INGS,resolve(loaded));
+  const capacity=RO.calcMaxBatchFromStock(loaded,stock,10,analysis.moistureTarget,X.INGS);
+  assert.match(notice.msg,new RegExp(`${capacity.toFixed(1).replace('.', '\\.') } kg`));
+  assert.doesNotMatch(notice.msg,/fórmula óptima|10 bolsas/);
 });
 
 test('Bodega conserva el rechazo del buscador', () => {

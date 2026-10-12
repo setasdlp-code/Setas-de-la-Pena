@@ -3877,6 +3877,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   box-shadow:var(--shadow-none); /* 1px ink border + 5px accent edge already carry it */
 }
 .sim-root .form-production-command.is-species,
+.sim-root .form-production-command.is-review,
 .sim-root .form-production-command.is-balance{border-left-color:var(--coral-600)}
 .sim-root .form-production-command-copy{display:grid;gap:3px;min-width:0;margin-right:auto;padding:0;border:0;background:transparent;text-align:left;cursor:pointer}
 .sim-root .form-production-command-copy span{color:var(--ink-500);font:800 var(--text-micro)/1 var(--font-mono);letter-spacing:var(--tracking-button);text-transform:uppercase}
@@ -3901,7 +3902,22 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   white-space:nowrap;
 }
 .sim-root .form-production-command-btn.is-species,
+.sim-root .form-production-command-btn.is-review,
 .sim-root .form-production-command-btn.is-balance{border-color:var(--accent-terracotta-hover);background:var(--coral-600)}
+.sim-root .generator-cost-help{display:block;font:400 var(--text-xs)/1.5 var(--font-body);color:var(--text-metadata);margin-top:var(--space-half)}
+.sim-root .generator-status{font:400 var(--text-sm)/1.5 var(--font-body);color:var(--text-secondary);padding:var(--space-1);border-left:2px solid var(--status-info);overflow-wrap:anywhere}
+.sim-root .generator-origin-control{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2)}
+.sim-root .generator-origin-control p{flex:1 1 200px;margin:0;font:400 var(--text-xs)/1.5 var(--font-body);color:var(--text-metadata)}
+.sim-root .generator-origin-control .form-species-origin-toggle{display:grid;gap:var(--space-half)}
+.sim-root .generator-origin-control .form-species-origin-toggle > span{color:var(--text-metadata)}
+.sim-root .generator-origin-control .form-species-origin-toggle button{background:var(--surface-page);color:var(--text-primary);border:var(--rule-hairline);padding:var(--space-1) var(--space-2)}
+.sim-root .generator-origin-control .form-species-origin-toggle button.is-active{background:var(--action-primary);color:var(--text-inverse);border-color:var(--action-primary)}
+.sim-root .generator-origin-control .form-species-origin-toggle button:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.sim-root #generator-species-select{width:100%;min-width:0;min-height:44px;font:400 var(--text-sm)/1.5 var(--font-body);background:var(--surface-page);color:var(--text-primary);border:0}
+.sim-root .generator-candidate-context{padding:var(--space-1);font:400 var(--text-xs)/1.5 var(--font-mono);color:var(--text-secondary);overflow-wrap:anywhere;border-top:var(--rule-hairline)}
+.sim-root [data-testid="generator-rejection-reasons"]{line-height:1.6;overflow-wrap:anywhere}
+.sim-root [data-testid="generator-rejection-reasons"] ul{padding-left:20px}
+.sim-root .form-production-command-copy em{overflow-wrap:anywhere}
 .sim-root .form-production-command-btn:hover,
 .sim-root .form-production-command-btn:focus-visible{filter:brightness(.94);outline:2px solid var(--ink-900);outline-offset:2px}
 .sim-root .mix-lock-btn,

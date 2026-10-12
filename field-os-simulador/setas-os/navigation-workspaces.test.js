@@ -188,7 +188,7 @@ test('Formular V2 separates Mesa and Generator without undefined replacement hel
 test('Generator exposes semantic headings, live status, and mobile-safe manual controls', () => {
   assert.match(jsx, /<section id="gen-panel"[\s\S]*?aria-busy=\{optRunning\}/);
   assert.match(jsx, /<h2 className="sec" id="gen-panel-title"/);
-  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true">\{generatorStatus\}/);
+  assert.match(jsx, /role="status" aria-live="polite" aria-atomic="true">\{generatorDisplayStatus\}/);
   assert.match(jsx, /id="generator-results-heading" tabIndex=\{-1\}/);
   assert.match(jsx, /className="manual-species-summary"/);
   assert.match(jsx, /name="manualBaseIngredient"/);
@@ -203,7 +203,7 @@ test('mobile production flow resets scroll and exposes one progressive next acti
   assert.match(jsx, /const focusFormTop=.*getElementById\('setas-main'\)/s);
   assert.match(jsx, /const focusIngredientCatalog=.*#bl-ingredientes \.search/s);
   assert.match(jsx, /const focusActiveRecipe=.*#bl-receta \.rec-pct-input/s);
-  assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':'produce'/);
+  assert.match(jsx, /const formNextState=!hasPickedSpecies\?'species':!balanced\?'balance':formCriticals\.length\?'review':'produce'/);
   assert.match(jsx, /data-testid="formulator-next-action"/);
   assert.match(jsx, /data-testid="formulator-review-recipe"[\s\S]*onClick=\{focusActiveRecipe\}/);
   assert.match(jsx, /data-testid="form-mobile-start"[\s\S]*id="form-mobile-species-select"[\s\S]*Elegir insumos[\s\S]*Usar generador/);
