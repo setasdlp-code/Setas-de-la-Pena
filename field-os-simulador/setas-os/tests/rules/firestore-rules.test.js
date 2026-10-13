@@ -113,3 +113,35 @@ test('un cliente sin sesión no puede leer eventos de campo', async () => {
   await seed('field_events/e_4', { batchId: 'l_1', accountId: 'op_1' });
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'field_events/e_4')));
 });
+
+// Lotes de Bitácora: son los que la app crea y los que avanza acceptFieldEvent.
+test('un cliente puede crear un lote de Bitácora sin campos de flujo', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_lotes/b_new'), { codigo: 'B-1', estado: 'planificado' }));
+});
+
+test('un cliente no puede crear un lote de Bitácora con etapa o revisión', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'bitacora_lotes/b_ls'), { codigo: 'B-2', lifecycleState: 'fruiting' }));
+  await assertFails(setDoc(doc(asOperator(), 'bitacora_lotes/b_rv'), { codigo: 'B-3', revision: 4 }));
+});
+
+test('un cliente no puede mover la etapa ni la revisión de un lote de Bitácora', async () => {
+  await seed('bitacora_lotes/b_1', { codigo: 'B-4', estado: 'incubacion', lifecycleState: 'incubation', revision: 2 });
+  await assertFails(updateDoc(doc(asOperator(), 'bitacora_lotes/b_1'), { lifecycleState: 'closed' }));
+  await assertFails(updateDoc(doc(asOperator(), 'bitacora_lotes/b_1'), { revision: 3 }));
+});
+
+test('con etapa aceptada, el cliente no cambia el estado en español', async () => {
+  await seed('bitacora_lotes/b_2', { codigo: 'B-5', estado: 'incubacion', lifecycleState: 'incubation', revision: 1 });
+  await assertFails(updateDoc(doc(asOperator(), 'bitacora_lotes/b_2'), { estado: 'fructificacion' }));
+  await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_2'), { veredicto: 'prometedora', notas: 'ok' }));
+});
+
+test('sin etapa aceptada, el estado en español sigue siendo editable', async () => {
+  await seed('bitacora_lotes/b_3', { codigo: 'B-6', estado: 'planificado' });
+  await assertSucceeds(updateDoc(doc(asOperator(), 'bitacora_lotes/b_3'), { estado: 'incubacion' }));
+});
+
+test('un lote de Bitácora se puede marcar como borrado (lápida)', async () => {
+  await seed('bitacora_lotes/b_4', { codigo: 'B-7', estado: 'incubacion', lifecycleState: 'incubation', revision: 1 });
+  await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_lotes/b_4'), { deleted: true }, { merge: true }));
+});
