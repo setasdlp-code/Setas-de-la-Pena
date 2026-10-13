@@ -8416,6 +8416,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const id={batch:'bl-batch',process:'bl-tratamiento',recommendations:'perito-recommendations'}[action];
       if(id) requestAnimationFrame(()=>{
         const target=document.getElementById(id);
+        if(target?.tagName==='DETAILS')target.open=true;
         target?.scrollIntoView({behavior:'smooth',block:'start'});
         if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
       });
@@ -15288,7 +15289,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             return (
                               <button
                                 key={s.id}
-                                onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+                                onClick={()=>{const target=document.getElementById(s.id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth',block:'start'});}}
                                 style={{
                                   fontFamily:'var(--font-body)',fontSize:'11px',fontWeight:700,
                                   textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
@@ -15386,85 +15387,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })()}
           </div>
-          {recipe.length>0&&(
-          <details className="form-support-details" data-testid="formulator-provenance-details">
-            <summary>Resumen y procedencia de la receta</summary>
-          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
-              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
-              teórico o de uno mezclado con el historial real de la finca, y
-              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
-              procedencia. Una etiqueta fija que no sigue al dato es peor que
-              no tener etiqueta: afirma algo que puede ser falso. */}
-          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
-          {recipe.length>0&&(
-            <section className="form-summary-strip" aria-label="Resumen de receta activa">
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Especie</span>
-                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
-                <span className="os-provenance-line">Manual</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Objetivo</span>
-                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
-                <span className="os-provenance-line">Modo activo</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Peso total</span>
-                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
-                <span className="os-provenance-line">Calculado</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Humedad objetivo</span>
-                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">BE estimada</span>
-                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  if(!prov) return 'Estimado';
-                  // El número que se muestra pasa por blendEBWithHistory, así que
-                  // la etiqueta tiene que decir si de verdad entró historial de la
-                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
-                  // le sirve a nadie para decidir. No se pinta ningún nivel de
-                  // confianza aquí porque la banda de predicción la calcula
-                  // scoring.js y no está en alcance en esta franja — inventarle un
-                  // nivel sería exactamente el defecto que esto viene a corregir.
-                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
-                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
-                  if(!d) return 'Estimado';
-                  const muestra=conHistorial
-                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
-                    : '';
-                  return `${d.label} · ${d.detail}${muestra}`;
-                })()}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                {/* El valor de esta celda es an.cost, SIEMPRE precio de catálogo; el
-                    costo real de bodega (realCostPerKg) se muestra aparte cuando
-                    se separan, en vez de dejar creer que el de arriba lo es. */}
-                <span className="os-provenance-line" data-testid="prov-costo">{procedenciaCosto(an?.cost,realCostPerKg).texto}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Revisión</span>
-                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
-                  Perito {Math.round(opt?.score||0)}/100
-                </span>
-                <span className="os-provenance-line">Perito · Requiere revisión</span>
-              </div>
-            </section>
-          )}
-
-          </details>
-          )}
           <details className="form-support-details form-method-details" data-testid="formulator-method-details">
             <summary>Guía de formulación · cinco pasos</summary>
             <div className="form-species-targets" aria-label="Objetivos de la especie activa">
@@ -15566,8 +15488,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <header className="active-recipe-workspace-head">
               <div>
                 <span className="ingredient-section-eyebrow">Área de trabajo principal</span>
-                <h2 id="active-recipe-workspace-title">Puntaje, gauges y lote</h2>
-                <p>Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.</p>
+                <h2 id="active-recipe-workspace-title">Ingredientes y revisión</h2>
+                <p>Edita los porcentajes en la receta activa y revisa aquí los requisitos para preparar el lote.</p>
               </div>
               <span className="active-recipe-count" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'}</span>
             </header>
@@ -15826,72 +15748,130 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             </div>
             <div className="builder-right">
-            <header className="form-advanced-tools-head" id="form-advanced-tools-title">
-              <div>
-                <span className="ingredient-section-eyebrow">Herramientas avanzadas</span>
-                <h2>Perito + Automejora</h2>
-                <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
+            <section className="form-unified-review" id="formulator-review" aria-labelledby="formulator-review-title">
+              <header className="form-review-header">
+                <div>
+                  <span className="ingredient-section-eyebrow">Revisión de la receta activa</span>
+                  <h2 id="formulator-review-title" tabIndex={-1}>Revisión y preparación</h2>
+                  <p>Balance, compatibilidad, bodega y tratamiento en una sola revisión.</p>
+                </div>
+                <button type="button" className="inv-btn inv-btn-sec" onClick={openProductionReadiness}>Ver preparación para producción</button>
+              </header>
+              {recipe.length>0?(
+                <div className="form-review-checks" aria-label="Comprobaciones de receta" aria-live="polite">
+                  {(()=>{
+                    const undocumented=hasPickedSpecies?recipe.filter(r=>!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
+                    const checks=[
+                      {id:'balance',label:'Balance de masa',status:balanced?'verified':'blocked',detail:`${an?.tot?.toFixed(1)||'0'}% / 100%${balanced?' · Composición cerrada':` · ${balMsg}`}`,action:'recipe'},
+                      {id:'compatibility',label:'Compatibilidad documentada',status:!hasPickedSpecies||undocumented.length?'unknown':'verified',detail:!hasPickedSpecies?'Selecciona una especie.':undocumented.length?`Sin compatibilidad documentada con ${sp.name}: ${undocumented.map(r=>effectiveINGS.find(g=>g.id===r.id)?.name||r.id).join(', ')}.`:`Todos los ingredientes tienen compatibilidad documentada con ${sp.name}.`,action:'recipe'},
+                      ...productionReadiness.checks.filter(c=>['model','stock','moisture','equipment'].includes(c.id)),
+                    ];
+                    const labels={verified:'Comprobado',blocked:'Requiere atención',unknown:'Por verificar'};
+                    return checks.map(check=><article key={check.id} className={`form-review-check is-${check.status}`} data-testid={`form-review-${check.id}`}>
+                      <h3>{check.label}</h3><span className="form-review-status">{labels[check.status]}</span><p>{check.detail}</p>
+                      {check.id==='equipment'&&tr&&<p>Recomendación del modelo: {tr.name} · {tr.temp} · {tr.time}.</p>}
+                      {check.status!=='verified'&&<button type="button" onClick={()=>{
+                        if(check.action==='recipe'){focusActiveRecipe();return;}
+                        if(check.action==='recommendations'){const panel=document.getElementById('bl-perito');panel?.scrollIntoView({block:'start'});if(panel){panel.setAttribute('tabindex','-1');panel.focus({preventScroll:true});}return;}
+                        if(check.action==='inventory'){goTab('inventario');return;}
+                        openProductionReadiness();
+                      }}>{check.action==='recipe'?'Editar receta':check.action==='recommendations'?'Revisar ajustes':check.action==='inventory'?'Revisar bodega':'Revisar preparación'}</button>}
+                    </article>);
+                  })()}
+                </div>
+              ):<p className="form-review-empty">Agrega ingredientes para revisar la receta. La revisión se actualiza con cada cambio.</p>}
+              {renderPeritoPanel('formulador')}
+              <details className="review-details" data-testid="form-review-gauges">
+                <summary>Medidores y comparación del modelo</summary>
+                <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+              </details>
+          {recipe.length>0&&(
+          <details className="form-support-details" data-testid="formulator-provenance-details">
+            <summary>Resumen y procedencia de la receta</summary>
+          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
+              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
+              teórico o de uno mezclado con el historial real de la finca, y
+              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
+              procedencia. Una etiqueta fija que no sigue al dato es peor que
+              no tener etiqueta: afirma algo que puede ser falso. */}
+          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
+          {recipe.length>0&&(
+            <section className="form-summary-strip" aria-label="Resumen de receta activa">
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Especie</span>
+                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
+                <span className="os-provenance-line">Manual</span>
               </div>
-              <button type="button" onClick={()=>openBuilderSubTab('generador')}>Abrir generador</button>
-            </header>
-            {renderPeritoPanel('formulador')}            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Objetivo</span>
+                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
+                <span className="os-provenance-line">Modo activo</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Peso total</span>
+                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">C:N</span>
+                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">BE estimada</span>
+                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  if(!prov) return 'Estimado';
+                  // El número que se muestra pasa por blendEBWithHistory, así que
+                  // la etiqueta tiene que decir si de verdad entró historial de la
+                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
+                  // le sirve a nadie para decidir. No se pinta ningún nivel de
+                  // confianza aquí porque la banda de predicción la calcula
+                  // scoring.js y no está en alcance en esta franja — inventarle un
+                  // nivel sería exactamente el defecto que esto viene a corregir.
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
+                  if(!d) return 'Estimado';
+                  const muestra=conHistorial
+                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
+                    : '';
+                  return `${d.label} · ${d.detail}${muestra}`;
+                })()}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Costo/kg</span>
+                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                {/* El valor de esta celda es an.cost, SIEMPRE precio de catálogo; el
+                    costo real de bodega (realCostPerKg) se muestra aparte cuando
+                    se separan, en vez de dejar creer que el de arriba lo es. */}
+                <span className="os-provenance-line" data-testid="prov-costo">{procedenciaCosto(an?.cost,realCostPerKg).texto}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Revisión</span>
+                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
+                  Perito {Math.round(opt?.score||0)}/100
+                </span>
+                <span className="os-provenance-line">Perito · Requiere revisión</span>
+              </div>
+            </section>
+          )}
+
+          </details>
+          )}
             {recipe.length>0&&<div className="panel panel-accent" id="bl-receta-summary">
               {/* ── HEADER EDITORIAL ── */}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
                 <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-                  <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:20,color:'var(--ink-900)',lineHeight:1}}>Puntaje y lote</span>
+                  <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:20,color:'var(--ink-900)',lineHeight:1}}>Lote y guardado</span>
                   <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
                 </div>
               </div>
-              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500)':'var(--coral-500)';const bg=sc>=80?'var(--status-ok-bg)':sc>=60?'var(--status-warn-bg)':'var(--status-error-bg)';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
-                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                    <div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
-                      <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
-                    </div>
-                    <div style={{display:'flex',alignItems:'baseline',gap:2}}>
-                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>{sc}</span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
-                    </div>
-                  </div>
-                  <div style={{height:3,background:'rgba(26,20,16,0.08)',borderRadius:2,overflow:'hidden'}}>
-                    <div style={{height:'100%',width:`${sc}%`,background:col,borderRadius:2,transition:'width .6s cubic-bezier(.32,.72,.36,1)'}}></div>
-                  </div>
-                </div>
-              );})()}
-              {an&&an.sp&&(
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'10px 0 4px'}}>
-                  {[
-                    {label:'C:N',val:an.cn,min:an.sp.cn_optimal.min,max:an.sp.cn_optimal.max,ideal:an.sp.cn_optimal.ideal,fmt:v=>`${v.toFixed(1)}:1`,scale:Math.max(an.sp.cn_optimal.max*1.5,an.cn*1.1||1)},
-                    {label:'N%',val:an.avgN,min:an.sp.n_optimal.min,max:an.sp.n_optimal.max,ideal:an.sp.n_optimal.ideal,fmt:v=>`${v.toFixed(2)}%`,scale:Math.max(an.sp.n_optimal.max*1.5,an.avgN*1.1||1)}
-                  ].map(m=>{
-                    const inRange=m.val>=m.min&&m.val<=m.max;
-                    const pct=Math.min(100,(m.val/m.scale)*100);
-                    const idealPct=(m.ideal/m.scale)*100;
-                    const minPct=(m.min/m.scale)*100;
-                    const maxPct=(m.max/m.scale)*100;
-                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'var(--status-warn)';
-                    return(
-                      <div key={m.label} style={{background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'8px 10px'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
-                          <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
-                          <span style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
-                        </div>
-                        <div style={{position:'relative',height:6,background:'var(--border-soft)',borderRadius:3}}>
-                          <div style={{position:'absolute',left:`${minPct}%`,width:`${maxPct-minPct}%`,height:'100%',background:'rgba(77,98,53,.2)',borderRadius:3}}/>
-                          <div style={{position:'absolute',left:`${idealPct}%`,width:2,height:'160%',top:'-30%',background:'rgba(77,98,53,.5)',borderRadius:1}}/>
-                          <div style={{position:'absolute',left:0,width:`${pct}%`,height:'100%',background:barColor,borderRadius:3,transition:'width .3s'}}/>
-                        </div>
-                        <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>
-                          <span>{m.fmt(m.min)}</span><span style={{opacity:.7}}>↑{m.fmt(m.ideal)}</span><span>{m.fmt(m.max)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
               {recipe.length>0&&(
                 <div className="bwrap" id="bl-batch">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:13}}>
@@ -16041,15 +16021,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
               )}
             </div>}
-
-
-
-
-
-            </div>
-          </section>
           {tab==='formular'&&tr&&recipe.length>0&&(
-            <div className="panel treatment-section" id="bl-tratamiento">
+            <details className="panel treatment-section review-details" id="bl-tratamiento"><summary>Tratamiento recomendado · {tr.name}</summary><div>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Tratamiento recomendado</div>
                 <button className={`tog${showGuide?' on':''}`} aria-pressed={showGuide} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
@@ -16081,9 +16054,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
               {showGuide&&<PasteGuide tr={tr} recipe={recipe} numBags={numBags} kgBag={kgBag}/>}
-            </div>
+            </div></details>
           )}
 
+            </section>
+
+
+
+
+
+            </div>
+          </section>
                         <div className="panel rec-panel" style={{display:'none'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>
@@ -17275,7 +17256,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
                     {psSections.map(s=>(
-                      <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+                      <button key={s.id} onClick={()=>{const target=document.getElementById(s.id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
                     ))}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
