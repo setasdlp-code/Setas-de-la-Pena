@@ -137,6 +137,14 @@ declaración que se mueva a un módulo propio es una menos que re-parsear.
 
 ## 4. Build de `simulador-app.jsx`
 
+### Preparación para producción
+
+`production-readiness.js` deriva diez requisitos del plan activo: especie, preparación, críticos del Perito, disponibilidad descontando reservas, semilla, humedad medida, equipo/ciclo, sala, sensores y revisión humana. El panel vive en Preparar mezcla y tiene acceso desde Hoy. No ejecuta transiciones, reserva ni consume inventario.
+
+Las inspecciones manuales requieren responsable y referencia, se vinculan a especie, revisión de preparación, sala, contenedor, código/fecha y lotes de semilla asignados. Los cambios invalidan su vigencia. La revisión final también depende del stock, reservas, ocupación y estado de los demás requisitos. Las lecturas de sensores requieren origen físico conocido, calidad válida y frescura por métrica; transportar una prueba por Firestore no la convierte en evidencia física.
+
+`sdp_production_readiness` conserva las inspecciones localmente mediante el registro de recuperación existente y se incluye en exportación/restauración de respaldos. El informe JSON permite compartir una evaluación, pero estas inspecciones no se sincronizan entre equipos ni sustituyen la autorización del ensayo en Bitácora. Las referencias son declaraciones del revisor; el sistema no certifica el contenido de un informe físico. Pruebas: `production-readiness.test.js` y `e2e/production-readiness.browser.cjs`.
+
 `simulador-app.jsx` es el fuente editable. El navegador consume `simulador-app.js`, generado con esbuild vía `node build.js` (requiere `npm install` una vez — `esbuild` es devDependency).
 
 Después de cualquier cambio en `simulador-app.jsx`:
