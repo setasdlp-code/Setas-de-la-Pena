@@ -30,7 +30,7 @@ const PROJECT='e2e-ciclo';
 const UID='op_e2e';
 const clone=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));
 
-const COLECCIONES=['bitacora_lotes','bitacora_bolsas','bitacora_cosechas','inventario_asientos','inventario_movimientos','inventario_compras','inventario_proveedores','inventario_reservas','room_cycles'];
+const COLECCIONES=['bitacora_lotes','bitacora_bolsas','bitacora_cosechas','inventario_asientos','inventario_movimientos','inventario_compras','inventario_proveedores','inventario_reservas','room_cycles','production_readiness'];
 
 class FakeFirestore{
   constructor(){this.cols=Object.fromEntries([...COLECCIONES,'field_events','contenedores'].map(c=>[c,new Map()]));this.clientWrites=[];}
