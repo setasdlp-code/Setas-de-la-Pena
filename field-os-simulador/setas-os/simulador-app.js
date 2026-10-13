@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: f8e2ec07d89794e780eb05dc180898ba13ea5e145b1da58b30f8b71c48ba9daa
+// source-hash: f8012c6a1f8a0e029eee610acdb900b0cfe9ba09fe9e380e70ac565c86cadf06
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -6878,7 +6878,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote = SetasPrototype.read(localStorage, "sdp_bit_lotes").find((l) => l.id === releaseBatchId);
     const result = SetasPrototype.prepareBatch(localStorage, { loteId: lote.id, trialRelease: record, sheet: buildSheetFor(lote), role: operatorRole, operatorId: lote.operador || "operador-local", at: (/* @__PURE__ */ new Date()).toISOString() });
     applyPrototypeEntries(result.entries);
-    enqueueFieldTransition(result.lote, result.lote.pendingPreparationTransition?.from || "planned", result.transition);
+    requestLotTransition(result.lote, result.transition, { from: result.lote.pendingPreparationTransition?.from || "planned", logged: true });
     if (taskEngine) mergeIntoTasks(taskEngine.tasksFromTransition({ batchId: lote.id, toState: result.transition, at: (/* @__PURE__ */ new Date()).toISOString() }));
     runInventorySync();
     setReleaseBatchId(null);
@@ -8625,6 +8625,48 @@ BATCH (${numBags}×${kgBag} kg):
       setNoticeDlg({ title: "No se pudo registrar la transición", msg: err.message });
     }
   };
+  const requestLotTransition = (lote, to, { from = null, reason = null, logged = false } = {}) => {
+    if (!lote || !workflow) return false;
+    const origin = from || loteLifecycleState(lote);
+    const label = (s) => batchSheetApi && batchSheetApi.stateLabel ? batchSheetApi.stateLabel(s) : s;
+    if (!workflow.canTransition(origin, to)) {
+      setNoticeDlg({ title: "Cambio de etapa no permitido", msg: `${lote.codigo || lote.id} está en ${label(origin)} y no puede pasar a ${label(to)}.` });
+      return false;
+    }
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || null;
+    if (!uid && lote.lifecycleState) {
+      setNoticeDlg({ title: "Se necesita iniciar sesión", msg: `La etapa de ${lote.codigo || lote.id} ya la registra el servidor. Inicia sesión para cambiarla.` });
+      return false;
+    }
+    const event = logged ? null : workflow.transitionEvent({ batchId: lote.id, from: origin, to, operatorId: lote.operador || "operador-local", reason });
+    const log = event ? { lifecycleEvents: [...lote.lifecycleEvents || [], event] } : {};
+    if (uid) {
+      if (event) updateBitLote(lote.id, log);
+      enqueueFieldTransition(lote, origin, to);
+    } else {
+      updateBitLote(lote.id, { estado: batchSheetApi?.legacyEstadoFor?.(to) || to, ...log });
+    }
+    return true;
+  };
+  useEffect(() => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi) return;
+    const descartados = new Set(bitLotes.filter((l) => loteLifecycleState(l) === "discarded").map((l) => l.id));
+    if (!descartados.size) return;
+    setInvReservas((prev) => {
+      if (!prev.some((r) => r.status === "held" && descartados.has(r.batchId))) return prev;
+      const at = (/* @__PURE__ */ new Date()).toISOString();
+      let upd = prev;
+      descartados.forEach((id) => {
+        upd = ledgerApi.releaseForBatch(upd, id, { reason: "Lote de producción descartado", at });
+      });
+      try {
+        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+  }, [bitLotes]);
   const enqueueContainerFieldTransition = async (bolsa, lote, from, to, reasonCode = null, notes = null) => {
     const SHEET = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
     const uid = window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser ? window.SetasFirebase.auth.currentUser.uid : null;
@@ -8672,7 +8714,7 @@ BATCH (${numBags}×${kgBag} kg):
         }
       });
       if (consequences.transition) {
-        enqueueFieldTransition(lote, sheet.state, consequences.transition);
+        requestLotTransition(lote, consequences.transition, { from: sheet.state, logged: true });
       }
       if (consequences.transition && taskEngine) {
         const sopTasks = taskEngine.tasksFromTransition({
@@ -8711,14 +8753,9 @@ BATCH (${numBags}×${kgBag} kg):
     if (action === "advance_stage") {
       const activeSheet = sheet || buildSheetFor(lote);
       if (activeSheet && commitSheetAction(activeSheet, lote, "advance_stage")) return;
-      const next = lote.estado === "incubacion" ? "fructificacion" : lote.estado;
       const from = loteLifecycleState(lote);
-      const to = loteLifecycleState({ estado: next });
-      if (next !== lote.estado && workflow && workflow.canTransition(from, to)) {
-        const event = workflow.transitionEvent({ batchId: lote.id, from, to, operatorId: lote.operador || "operador-local" });
-        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
-        enqueueFieldTransition(lote, from, to);
-      }
+      const to = (workflow?.DEFAULT_TRANSITIONS?.[from] || [])[0];
+      if (to) requestLotTransition(lote, to, { from });
       return;
     }
     if (action === "prepare_mix") {
@@ -8739,17 +8776,31 @@ BATCH (${numBags}×${kgBag} kg):
       });
       return;
     }
+    if (action === "start_thermal_treatment" || action === "complete_thermal_treatment") {
+      commitSheetAction(sheet || buildSheetFor(lote), lote, action);
+      return;
+    }
+    if (action === "inoculate") {
+      setPromptDlg({
+        title: "Inocular",
+        label: "Lote de semilla usado",
+        defaultValue: lote.spawnLotId || "",
+        placeholder: "Ej. SPW-260101-01",
+        confirmLabel: "Registrar inoculación",
+        onSubmit: (spawnLotId) => {
+          const conSemilla = { ...lote, spawnLotId };
+          if (spawnLotId !== lote.spawnLotId) updateBitLote(lote.id, { spawnLotId });
+          commitSheetAction(buildSheetFor(conSemilla), conSemilla, "inoculate", { spawnLotId });
+        }
+      });
+      return;
+    }
     if (action === "close") {
-      updateBitLote(lote.id, { estado: "completado" });
+      requestLotTransition(lote, "closed");
       return;
     }
     if (action === "discard") {
-      const from = loteLifecycleState(lote);
-      if (workflow && workflow.canTransition(from, "discarded")) {
-        const event = workflow.transitionEvent({ batchId: lote.id, from, to: "discarded", operatorId: lote.operador || "operador-local", reason: "Descarte manual de lote" });
-        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
-        enqueueFieldTransition(lote, from, "discarded");
-      }
+      requestLotTransition(lote, "discarded", { reason: "Descarte manual de lote" });
       return;
     }
     if (action === "move") {
@@ -9951,7 +10002,7 @@ BATCH (${numBags}×${kgBag} kg):
       " Imprimir Rollo QR (",
       lote.numBolsas || 12,
       " bolsas)"
-    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("select", { name: `loteStatus-${lote.id}`, "aria-label": `Estado del lote ${lote.codigo}`, value: lote.estado, onChange: (e) => updateBitLote(lote.id, { estado: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, ["incubacion", "fructificacion", "completado", "descartado"].map((st) => /* @__PURE__ */ React.createElement("option", { key: st, value: st }, st))))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("span", { "data-testid": `lote-stage-${lote.id}`, className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px", display: "inline-flex", alignItems: "center" } }, "Etapa: ", batchSheetApi?.stateLabel ? batchSheetApi.stateLabel(loteLifecycleState(lote)) : loteLifecycleState(lote)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => openBatchSheetModal(lote), style: { fontSize: "var(--text-sm)", padding: "6px 12px" } }, "Cambiar etapa"))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
       ColonizationScaleSelector,
       {
         value: (() => {
@@ -9969,8 +10020,8 @@ BATCH (${numBags}×${kgBag} kg):
             up.colonizationPct = pct;
             return updateBitBolsa(b.id, up);
           })) return;
-          if (pct >= 100 && lote.estado === "incubacion") {
-            updateBitLote(lote.id, { estado: "fructificacion" });
+          if (pct >= 100 && workflow?.canTransition(loteLifecycleState(lote), "fruiting")) {
+            requestLotTransition(lote, "fruiting");
           }
           setNoticeDlg({
             title: "Avance registrado",
@@ -9983,8 +10034,8 @@ BATCH (${numBags}×${kgBag} kg):
             if (!bolsas.every((b) => {
               return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
             })) return;
-            updateBitLote(lote.id, { estado: "fructificacion" });
-            setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${lote.codigo} actualizado a fructificación.` });
+            const aFruct = workflow?.canTransition(loteLifecycleState(lote), "fruiting") && requestLotTransition(lote, "fruiting");
+            setNoticeDlg({ title: "Primordios confirmados", msg: aFruct ? `Lote ${lote.codigo}: paso a fructificación registrado.` : `Primordios registrados en ${lote.codigo}. La etapa no cambió.` });
           } else if (act === "riego") {
             setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad registrada para ${lote.codigo}.` });
           } else if (act === "ventilacion") {
@@ -11709,8 +11760,7 @@ Click para ver análisis completo`
         operatorRole: operatorRole2,
         operatorId,
         accountId,
-        onTransitionConfirmed: (batchId, nextState) => {
-          updateBitLote(batchId, { estado: nextState, workflowState: nextState });
+        onTransitionConfirmed: () => {
         }
       }
     );
@@ -12146,8 +12196,8 @@ Click para ver análisis completo`
               up.colonizationPct = pct;
               return updateBitBolsa(b.id, up);
             })) return;
-            if (pct >= 100 && currentLote.estado === "incubacion") {
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
+            if (pct >= 100 && workflow?.canTransition(loteLifecycleState(currentLote), "fruiting")) {
+              requestLotTransition(currentLote, "fruiting");
             }
             setNoticeDlg({
               title: "Avance registrado",
@@ -12161,8 +12211,8 @@ Click para ver análisis completo`
               if (!loteBolsas.every((b) => {
                 return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
               })) return;
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
-              setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${currentLote.codigo} pasado a etapa de fructificación.` });
+              const aFruct = workflow?.canTransition(loteLifecycleState(currentLote), "fruiting") && requestLotTransition(currentLote, "fruiting");
+              setNoticeDlg({ title: "Primordios confirmados", msg: aFruct ? `Lote ${currentLote.codigo}: paso a fructificación registrado.` : `Primordios registrados en ${currentLote.codigo}. La etapa no cambió.` });
             } else if (act === "riego") {
               setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad y niebla registrada para ${currentLote.codigo}.` });
             } else if (act === "ventilacion") {
@@ -13076,19 +13126,18 @@ interval:
           obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
         });
       });
-      const nextEstado = targetState === "quarantine" ? "cuarentena" : targetState === "discarded" ? "descartado" : currentLote.estado;
       const updatedEvents = [
         ...currentLote.lifecycleEvents || [],
         contamEvent,
         ...transitionEvt ? [transitionEvt] : []
       ];
+      const loteConEventos = { ...currentLote, lifecycleEvents: updatedEvents };
       updateBitLote(currentLote.id, {
-        estado: nextEstado,
         numBolsas: lossCalc.healthyBags,
         lifecycleEvents: updatedEvents
       });
       if (changesState) {
-        enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+        requestLotTransition(loteConEventos, targetState, { from: currentLifecycle, logged: true });
       }
       setShowTriageModal(false);
       setNoticeDlg({
@@ -13343,10 +13392,9 @@ interval:
             operatorId: currentLote.operador || "operador-local",
             reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
           });
-          updateBitLote(currentLote.id, {
-            lifecycleEvents: [...currentLote.lifecycleEvents || [], evt]
-          });
-          enqueueFieldTransition(currentLote, fromState, massTarget);
+          const conEvento = { ...currentLote, lifecycleEvents: [...currentLote.lifecycleEvents || [], evt] };
+          updateBitLote(currentLote.id, { lifecycleEvents: conEvento.lifecycleEvents });
+          requestLotTransition(conEvento, massTarget, { from: fromState, logged: true });
         }
       }
       setShowDiagModal(false);

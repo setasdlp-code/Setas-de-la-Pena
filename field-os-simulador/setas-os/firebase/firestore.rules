@@ -198,9 +198,23 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    // El flujo del lote (lifecycleState, revision) lo escribe solo la función de
+    // aceptación (functions/accept-field-event.js), igual que en
+    // lotes_produccion. Una vez que el lote tiene etapa aceptada, `estado` es su
+    // espejo en español y tampoco lo cambia el cliente: si pudiera, el teléfono
+    // diría "fructificación" mientras el servidor sigue en incubación. Un lote
+    // sin etapa aceptada (planificado, o creado sin sesión) conserva `estado`
+    // editable, que es de donde el servidor toma la primera etapa.
     match /bitacora_lotes/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow create: if signedIn()
+        && !('lifecycleState' in request.resource.data)
+        && !('revision' in request.resource.data);
+      allow update: if signedIn()
+        && transicionIntacta()
+        && (!('lifecycleState' in resource.data)
+            || request.resource.data.get('estado', null) == resource.data.get('estado', null));
+      allow delete: if signedIn();
     }
     match /bitacora_bolsas/{id} {
       allow read: if signedIn();
