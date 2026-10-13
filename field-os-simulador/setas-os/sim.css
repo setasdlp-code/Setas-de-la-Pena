@@ -3480,6 +3480,25 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font:700 var(--text-xs)/1 var(--font-mono);
   white-space:nowrap;
 }
+/* Ingredient selection: search first, secondary tools on demand. */
+.sim-root .builder-wrap .ingredient-search-controls{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sim-root .builder-wrap .ingredient-search-field{flex:1 1 220px;min-width:0;display:grid;gap:6px;font:var(--t-label);color:var(--ink-700)}
+.sim-root .builder-wrap .ingredient-search-field .search{width:100%;min-width:0;margin:0;min-height:44px}
+.sim-root .builder-wrap .ingredient-options{margin-bottom:12px;border:1px solid var(--border-soft);border-radius:var(--form-control-radius);background:var(--paper-0)}
+.sim-root .builder-wrap .ingredient-options summary{min-height:44px;box-sizing:border-box;padding:12px;cursor:pointer;font:var(--t-label);color:var(--ink-700);overflow-wrap:anywhere}
+.sim-root .builder-wrap .ingredient-options summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.sim-root .builder-wrap .ingredient-options-body{padding:0 12px 12px}
+.sim-root .builder-wrap .ingredient-options .cats{flex-wrap:wrap;overflow:visible}
+.sim-root .builder-wrap .ingredient-options .cats::after{display:none}
+.sim-root .builder-wrap .ingredient-option-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.sim-root .builder-wrap :is(.ingredient-search-controls,.ingredient-options) :is(.cat,.tog){min-height:44px;white-space:normal;max-width:100%;margin:0}
+.sim-root .builder-wrap .ingredient-search-controls .cat:disabled{opacity:var(--opacity-subtle,.6);cursor:default}
+.sim-root .builder-wrap :is(.ingredient-view-toolbar,.ingredient-no-results) button{min-height:44px}
+@media(max-width:600px){
+  .sim-root .builder-wrap .ingredient-search-field{flex-basis:100%}
+  .sim-root .builder-wrap .ingredient-view-toolbar{font:var(--t-label)}
+}
+
 .sim-root .ingredient-view-toolbar{
   display:flex;
   align-items:center;
@@ -6831,3 +6850,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .harvest-capture-dialog .harvest-capture-actions { grid-template-columns: 1fr; }
   .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1; }
 }
+
+/* Recipe editing keeps the main flow separate from optional settings. */
+.sim-root .builder-wrap .recipe-start-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.sim-root .builder-wrap .recipe-edit-options{margin-bottom:8px;border:1px solid var(--border-soft);background:var(--paper-0)}
+.sim-root .builder-wrap .recipe-edit-options summary{min-height:44px;box-sizing:border-box;padding:12px;cursor:pointer;font:var(--t-label);color:var(--ink-700)}
+.sim-root .builder-wrap .recipe-edit-options summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.sim-root .builder-wrap .recipe-edit-options-body{display:grid;gap:8px;padding:0 12px 12px}
+.sim-root .builder-wrap .recipe-edit-options-body p{margin:0;color:var(--ink-600);font:var(--t-caption)}
+.sim-root .builder-wrap .recipe-balance-strategy{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:var(--t-label)}
+.sim-root .builder-wrap .recipe-balance-strategy select{min-height:44px;max-width:100%}
+.sim-root .builder-wrap .recipe-edit-options .tog{min-height:44px;justify-self:start;white-space:normal;margin:0}

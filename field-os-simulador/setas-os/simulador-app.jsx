@@ -8174,11 +8174,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return ing;
   }),[priceOverrides,invLotes]);
   const optimizerINGS=useMemo(()=>effectiveINGS.filter(g=>!disabledIngIds.includes(g.id)),[effectiveINGS,disabledIngIds]);
-  const fings=useMemo(()=>effectiveINGS.filter(g=>{
-    const ms=search===''||g.name.toLowerCase().includes(search.toLowerCase())||g.tags.some(t=>t.toLowerCase().includes(search.toLowerCase()));
+  const fings=useMemo(()=>{
+    const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const terms=normalize(search).trim().split(/\s+/).filter(Boolean);
+    return effectiveINGS.filter(g=>{
+    const text=normalize([g.name,...(g.tags||[])].join(' '));
+    const ms=terms.every(term=>text.includes(term));
     const roleMatch=cat==='all'||(cat==='aditivo'?['aditivo_ph','aditivo_estructura','aditivo_micronutriente','aditivo_arrancador'].includes(g.role):g.role===cat);
     return ms&&roleMatch;
-  }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+  },[search,cat,effectiveINGS]);
   const visibleIngredients=useMemo(()=>{
     let rows=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
     if(showCompatOnly){
@@ -15191,7 +15196,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
                     <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
-                    <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                    <div className="recipe-start-actions">
+                      <button type="button" className="rec-empty-action" onClick={focusIngredientCatalog}>Elegir ingredientes</button>
+                      <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -15262,17 +15270,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {/* Acciones compactas */}
                     <div className="live-dash-actions">
-                      {an&&!totOk&&(
-                        <button
-                          onClick={()=>autoBalance(balanceMode)}
-                          className="live-dash-btn"
-                          style={{background:'var(--coral-500)',color:'var(--paper-50)',borderColor:'var(--coral-600)'}}
-                          aria-label="Ajustar ingredientes libres al 100%"
-                          title="Ajustar ingredientes libres al 100%">
-                          <IconBolt size={10} color="var(--paper-50)" />
-                          <span>100%</span>
-                        </button>
-                      )}
                       <button
                         onClick={()=>setShowLiveChips(!showLiveChips)}
                         className="live-dash-btn live-dash-recipe-toggle"
@@ -15285,24 +15282,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span>{recipe.length}</span>
                         {showLiveChips ? <IconChevronUp size={9} color="var(--ink-700)" /> : <IconChevronDown size={9} color="var(--ink-700)" />}
                       </button>
-                      <button
-                        onClick={()=>{
-                          if(saveName.trim()){
-                            saveR();
-                          } else {
-                            document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
-                            setTimeout(()=>{
-                              const inp=document.querySelector('.sbar input');
-                              if(inp){ inp.focus(); inp.style.outline='2px solid var(--coral-500)'; setTimeout(()=>inp.style.outline='',1200); }
-                            },300);
-                          }
-                        }}
-                        className="live-dash-btn"
-                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'var(--paper-50)',borderColor:'var(--ink-900)'}}
-                        aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
-                        title="Guardar receta en Recetario">
-                        {flash ? <IconCheck size={11} color="var(--paper-50)" /> : <IconDisk size={11} color="var(--paper-50)" />}
-                      </button>
+
                     </div>
                   </div>
 
@@ -15316,7 +15296,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
                             {id:'bl-receta',l:'Receta',icon:IconRecipe},
                             {id:'bl-perito',l:'Perito',icon:IconTarget},
-                            {id:'bl-batch',l:'Batch',icon:IconBox},
+                            {id:'bl-batch',l:'Lote',icon:IconBox},
                             ...(tr?[{id:'bl-tratamiento',l:'Tratamiento',icon:IconFlame}]:[]),
                           ].map(s=>{
                             const IconComp=s.icon;
@@ -15353,21 +15333,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       )}
 
-                      {/* Acciones de balance y edición de la receta (antes en el header de #bl-receta) */}
-                      <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                        {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
-                          <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Auto-balancear 100%</button>
-                            <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
+                      <details className="recipe-edit-options" data-testid="recipe-edit-options">
+                        <summary>Opciones de edición{normMode?' · Auto-ajustar activo':''}</summary>
+                        <div className="recipe-edit-options-body">
+                          <label className="recipe-balance-strategy">
+                            <span>Estrategia al balancear 100%</span>
+                            <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)}>
                               <option value="proportional">Proporcional</option>
                               <option value="equal">Igualando</option>
                               <option value="last">Al último</option>
                             </select>
-                          </div>
-                        )}
-                        <button className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
-                        <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
-                      </div>
+                          </label>
+                          <p>El botón de siguiente paso aplica esta estrategia y respeta los porcentajes bloqueados.</p>
+                          <button type="button" className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)}>Auto-ajustar al editar</button>
+                          <p>Al cambiar un porcentaje, redistribuye los demás proporcionalmente sin cambiar los bloqueados.</p>
+                          <button type="button" className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar receta</button>
+                        </div>
+                      </details>
 
                       {/* Receta editable: ingredientes con % ajustable, lock y remove */}
                       <div style={{border:'1px solid var(--paper-300)'}}>
@@ -15610,51 +15592,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
                   <h2>Ingredientes</h2>
-                  <p>Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.</p>
+                  <p>Busca por nombre o etiqueta y agrega los insumos a tu receta.</p>
                 </div>
                 <span className="ingredient-section-count" aria-live="polite">
                   {visibleIngredients.length} de {effectiveINGS.length}
                 </span>
               </div>
-              <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
-                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+              <div className="ingredient-search-controls">
+                <label className="ingredient-search-field">
+                  <span>Buscar ingrediente</span>
+                  <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" placeholder="Ej. aserrín, paja, calcio…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                </label>
+                {search.length>0&&<button type="button" className="cat" onClick={()=>{setSearch('');document.querySelector('#bl-ingredientes input[name="ingredientSearch"]')?.focus();}}>Limpiar búsqueda</button>}
+                <button type="button" className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} disabled={!hasPickedSpecies} onClick={()=>setShowCompatOnly(v=>!v)} title={hasPickedSpecies?`Compatibles con ${sp.name}`:'Selecciona una especie para filtrar compatibilidad'}>Solo compatibles</button>
               </div>
-              {showPrices&&(
-                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
-                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
-                    {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
-                    )}
-                  </div>
-                  <div>
-                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
-                      const isEdited=priceOverrides[ing.id]!==undefined;
-                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
-                      return(
-                        <div key={ing.id} className="price-row">
-                          <div>
-                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
-                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
-                          </div>
-                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
-                            aria-label={`Precio ${ing.name} por kg`}
-                            className={`price-inp${isEdited?' edited':''}`}
-                            value={ing.cost}
-                            onChange={e=>{
-                              const v=Math.max(0,parseInt(e.target.value)||0);
-                              const n={...priceOverrides,[ing.id]:v};
-                              setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
                 <div className="bodega-bar" title="Abrir bodega / inventario">
                 <button
                   type="button"
@@ -15690,24 +15641,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
-              <div className="cats" role="group" aria-label="Filtrar por categoría">
-                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}>Solo compatibles <AppIcon name="close" size={10} /></span> : 'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por rol':'Lista simple'}</button>
-              </div>
-              <div className="ingredient-view-toolbar">
-                <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
-                <div>
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
-                  {hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}
+              <details className="ingredient-options" data-testid="ingredient-options">
+                <summary>Más opciones{cat!=='all'?` · ${CATS[cat]}`:''}{showPrices?' · Precios abiertos':''}</summary>
+                <div className="ingredient-options-body">
+                  <div className="cats" role="group" aria-label="Filtrar por categoría">
+                    {Object.entries(CATS).map(([k,l])=><button type="button" key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
+                  </div>
+                  <div className="ingredient-option-actions">
+                    <button type="button" className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)}>Agrupar por función</button>
+                    {showRoleGroups&&<button type="button" className="cat" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
+                    {showRoleGroups&&<button type="button" className="cat" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
+                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+                  </div>
+              {showPrices&&(
+                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
+                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
+                    {Object.keys(priceOverrides).length>0&&(
+                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
+                    )}
+                  </div>
+                  <div>
+                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
+                      const isEdited=priceOverrides[ing.id]!==undefined;
+                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
+                      return(
+                        <div key={ing.id} className="price-row">
+                          <div>
+                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
+                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
+                          </div>
+                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
+                            aria-label={`Precio ${ing.name} por kg`}
+                            className={`price-inp${isEdited?' edited':''}`}
+                            value={ing.cost}
+                            onChange={e=>{
+                              const v=Math.max(0,parseInt(e.target.value)||0);
+                              const n={...priceOverrides,[ing.id]:v};
+                              setPriceOverrides(n);
+                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+                </div>
+              </details>
+              <div className="ingredient-view-toolbar">
+                <span role="status" aria-live="polite" aria-atomic="true">{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} · {usePantry?'Bodega':'Catálogo'}{cat!=='all'?` · ${CATS[cat]}`:''}{showCompatOnly?` · Compatibles con ${sp.name}`:''}</span>
+                <div>{hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}</div>
               </div>
               <div className={`ing-list${showRoleGroups?' is-grouped':' is-simple'}`}>
                 {(()=>{
                   const base=visibleIngredients;
                   if(usePantry&&pantryIds.length===0){
-                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
+                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Catálogo”.</span></button>;
                   }
                   if(base.length===0){
                     return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
@@ -16059,7 +16050,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)'}}>
                     <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> Auto-mejorar</button>}
+                    {!balanced&&<button type="button" onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> {formNextLabel}</button>}
                   </div>
                 )}
                 </div>
