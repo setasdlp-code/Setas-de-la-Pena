@@ -29,7 +29,7 @@ const root=path.resolve(__dirname,'..');
    await telemetry.locator('summary').press('Enter');await expect(telemetry).toHaveAttribute('open','');
    await expect(telemetry.getByTestId('today-climate-strip')).toBeVisible();
    await telemetry.locator('summary').press('Enter');await expect(telemetry).not.toHaveAttribute('open','');
-   const buttons=now.locator('.home-quick-action');assert.equal(await buttons.count(),5);
+   const buttons=now.locator('.home-quick-action');assert.equal(await buttons.count(),6);
    assert.ok(await buttons.evaluateAll(els=>els.every(e=>e.getBoundingClientRect().height>=44)));
    await now.getByRole('button',{name:/Escanear lote/}).click();await expect(page.getByRole('dialog')).toBeVisible();
    await page.getByRole('dialog').press('Escape');
