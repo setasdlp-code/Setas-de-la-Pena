@@ -31,7 +31,7 @@ after(async () => {
 });
 
 const wipe = async () => {
-  for (const col of ['lotes_produccion', 'field_events', 'contenedores']) {
+  for (const col of ['bitacora_lotes', 'field_events', 'contenedores']) {
     const snap = await db.collection(col).get();
     await Promise.all(snap.docs.map(d => d.ref.delete()));
   }
@@ -43,7 +43,7 @@ beforeEach(async () => {
 });
 
 const seedBatch = (id, extra = {}) =>
-  db.collection('lotes_produccion').doc(id).set({ codigo: id, ...extra });
+  db.collection('bitacora_lotes').doc(id).set({ codigo: id, ...extra });
 
 const envelopeFor = (batchId, from, to, revision) => {
   const event = createFieldEvent(batchId, from, to, 'ignored_by_server', '2026-09-06T14:30:00Z', revision);
@@ -78,10 +78,24 @@ test('acepta la primera transición y devuelve un recibo válido', async () => {
   assert.equal(receipt.batchRevisionAfter, 1);
   assert.equal(receipt.serverEventPath, `field_events/${env.event.id}`);
 
-  const batch = (await db.collection('lotes_produccion').doc('l1').get()).data();
+  const batch = (await db.collection('bitacora_lotes').doc('l1').get()).data();
   assert.equal(batch.lifecycleState, 'incubation');
   assert.equal(batch.revision, 1);
   assert.equal(batch.codigo, 'l1', 'no debe borrar campos existentes');
+  assert.equal(batch.estado, 'incubacion', 'el estado en español acompaña a la etapa aceptada');
+});
+
+test('un lote de Bitácora planificado arranca desde su estado en español', async () => {
+  await seedBatch('l_plan', { estado: 'planificado' });
+  await accept(envelopeFor('l_plan', 'planned', 'mix_prepared', 0), AUTH);
+  const batch = (await db.collection('bitacora_lotes').doc('l_plan').get()).data();
+  assert.equal(batch.lifecycleState, 'mix_prepared');
+  assert.equal(batch.estado, 'mezcla_preparada');
+});
+
+test('un lote borrado (lápida) no admite transiciones', async () => {
+  await seedBatch('l_tomb', { deleted: true });
+  await assert.rejects(accept(envelopeFor('l_tomb', 'inoculated', 'incubation', 0), AUTH), err => err.code === 'batch_not_found');
 });
 
 test('el reenvío del mismo evento devuelve el recibo original y no avanza dos veces', async () => {
@@ -92,7 +106,7 @@ test('el reenvío del mismo evento devuelve el recibo original y no avanza dos v
   const second = await accept(env, AUTH);
 
   assert.deepEqual(second, first, 'el recibo debe ser idéntico');
-  const batch = (await db.collection('lotes_produccion').doc('l2').get()).data();
+  const batch = (await db.collection('bitacora_lotes').doc('l2').get()).data();
   assert.equal(batch.revision, 1, 'la revisión sólo debe avanzar una vez');
 });
 
@@ -107,7 +121,7 @@ test('el mismo id con contenido distinto se rechaza', async () => {
   };
   await assert.rejects(() => accept(tampered, AUTH), /content_mismatch/);
 
-  const batch = (await db.collection('lotes_produccion').doc('l3').get()).data();
+  const batch = (await db.collection('bitacora_lotes').doc('l3').get()).data();
   assert.equal(batch.lifecycleState, 'incubation', 'el lote no debe cambiar');
 });
 
@@ -124,7 +138,7 @@ test('dos transiciones desde la misma revisión: una gana, la otra entra en conf
   assert.equal(bad.length, 1);
   assert.match(bad[0].reason.message, /revision_conflict/);
 
-  const batch = (await db.collection('lotes_produccion').doc('l4').get()).data();
+  const batch = (await db.collection('bitacora_lotes').doc('l4').get()).data();
   assert.equal(batch.revision, 1, 'la revisión avanza exactamente uno');
 });
 
@@ -189,8 +203,8 @@ test('un lote recién creado admite el recorrido principal inoculado -> incubaci
   const receipt = await accept(envelopeFor('l11', 'inoculated', 'incubation', 0), AUTH);
   assert.equal(receipt.batchRevisionAfter, 1);
 
-  const batch = (await db.collection('lotes_produccion').doc('l11').get()).data();
-  assert.equal(batch.estado, 'activo', 'el campo heredado no se toca');
+  const batch = (await db.collection('bitacora_lotes').doc('l11').get()).data();
+  assert.equal(batch.estado, 'incubacion', 'el estado en español sigue a la etapa aceptada');
   assert.equal(batch.lifecycleState, 'incubation');
 });
 
@@ -207,7 +221,7 @@ test('un lote heredado en español se interpreta con su propio alias', async () 
 
   const receipt = await accept(envelopeFor('l12', 'incubation', 'maturation', 0), AUTH);
   assert.equal(receipt.batchRevisionAfter, 1);
-  assert.equal((await db.collection('lotes_produccion').doc('l12').get()).data().lifecycleState, 'maturation');
+  assert.equal((await db.collection('bitacora_lotes').doc('l12').get()).data().lifecycleState, 'maturation');
 });
 
 // --- FieldEvent v2: Contenedores ------------------------------------------
@@ -229,7 +243,7 @@ test('acepta un evento v2 de contenedor, avanza la revisión del contenedor y pr
   assert.equal(containerDoc.batchId, 'l_v2_1');
   assert.equal(containerDoc.lastEventId, env.event.id);
 
-  const batchDoc = (await db.collection('lotes_produccion').doc('l_v2_1').get()).data();
+  const batchDoc = (await db.collection('bitacora_lotes').doc('l_v2_1').get()).data();
   assert.equal(batchDoc.revision, 1);
   assert.equal(batchDoc.lastEventId, env.event.id);
 });
@@ -244,7 +258,7 @@ test('el reenvío del mismo evento v2 devuelve el recibo original de forma idemp
   assert.deepEqual(second, first);
   const containerDoc = (await db.collection('contenedores').doc('BAG-002').get()).data();
   assert.equal(containerDoc.revision, 1, 'la revisión del contenedor sólo debe avanzar una vez');
-  const batchDoc = (await db.collection('lotes_produccion').doc('l_v2_2').get()).data();
+  const batchDoc = (await db.collection('bitacora_lotes').doc('l_v2_2').get()).data();
   assert.equal(batchDoc.revision, 1, 'la revisión del lote sólo debe avanzar una vez');
 });
 
@@ -273,7 +287,7 @@ test('dos contenedores distintos del mismo lote avanzan concurrentemente sin blo
   assert.equal(docA.revision, 1);
   assert.equal(docB.revision, 1);
 
-  const batchDoc = (await db.collection('lotes_produccion').doc('l_v2_4').get()).data();
+  const batchDoc = (await db.collection('bitacora_lotes').doc('l_v2_4').get()).data();
   assert.equal(batchDoc.revision, 2, 'el lote proyecta ambos eventos y suma 2 revisiones');
 });
 
