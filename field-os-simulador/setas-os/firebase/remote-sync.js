@@ -27,6 +27,7 @@ export const COLECCIONES = Object.freeze([
   "inventario_proveedores",
   "inventario_reservas",
   "room_cycles",
+  "production_readiness",
 ]);
 
 function ref(path) {
