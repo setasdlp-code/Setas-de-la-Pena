@@ -110,3 +110,25 @@ test('corrupt evidence is preserved; write-ahead recovery and portable backup re
  map.set(P.PENDING,JSON.stringify({schema:'setas.local-write.v1',entries:[{key:R.KEY,before:JSON.stringify(records),after:JSON.stringify([...records,blocked])}]}));
  P.recover(storage);assert.equal(R.readRecords(storage).at(-1).status,'blocked');
 });
+test('autoclave sterilization needs a run with a bioindicator showing no growth',()=>{
+ const input=fixture();input.treatment={col:'autoclave',temp:'121°C',time:'90 min'};
+ assert.throws(()=>evidence(input,'equipment'),/bioindicador sin crecimiento/);
+ assert.throws(()=>evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'con_crecimiento'}}),/bioindicador sin crecimiento/);
+ const ok=evidence(input,'equipment',[],{details:{...details.equipment,cycleId:'AC-0412',bioindicatorResult:'sin_crecimiento'}});
+ const others=R.MANUAL_IDS.filter(id=>id!=='review'&&id!=='equipment').map(id=>evidence(input,id));
+ assert.equal(check(R.assessProductionReadiness(input,[...others,ok],MS),'equipment').status,'verified');
+ // A run whose bioindicator grew is documented as blocked and blocks the plan.
+ const grew=evidence(input,'equipment',[],{id:'REC-grew',status:'blocked',notes:'Bioindicador con crecimiento',details:{...details.equipment,cycleId:'AC-0413',bioindicatorResult:'con_crecimiento'}});
+ const result=R.assessProductionReadiness(input,[...others,grew],MS);
+ assert.equal(check(result,'equipment').status,'blocked');assert.equal(result.status,'blocked');
+});
+test('pasteurization does not ask for a bioindicator',()=>{
+ const input=fixture();input.treatment={col:'thermal',temp:'65-75°C',time:'6 h'};
+ const records=complete(input);
+ assert.equal(check(R.assessProductionReadiness(input,records,MS),'equipment').status,'verified');
+ assert.equal(R.requiresBioindicator(input),false);
+});
+test('an unknown bioindicator value is not a valid record',()=>{
+ const input=fixture();
+ assert.throws(()=>evidence(input,'equipment',[],{details:{...details.equipment,bioindicatorResult:'tal vez'}}),/Completa responsable/);
+});

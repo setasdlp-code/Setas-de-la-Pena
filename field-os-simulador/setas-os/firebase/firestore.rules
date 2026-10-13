@@ -198,6 +198,22 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    // Revisiones de requisitos antes de producir (production-readiness.js).
+    // Cada revisión es un registro inmutable firmado por su responsable: una
+    // revisión nueva reemplaza a la anterior por fecha, nunca la edita. Por eso
+    // solo se crean; corregir o borrar una dejaría sin rastro qué se declaró.
+    match /production_readiness/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.schema == 'setas.production-readiness.v1'
+        && request.resource.data.id == id
+        && request.resource.data.requirementId in ['spawn', 'equipment', 'room', 'sensors', 'review']
+        && request.resource.data.status in ['verified', 'blocked', 'unknown']
+        && request.resource.data.reviewer is string
+        && request.resource.data.reviewer.size() > 0;
+      allow update, delete: if false;
+    }
+
     match /bitacora_lotes/{id} {
       allow read: if signedIn();
       allow write: if signedIn();

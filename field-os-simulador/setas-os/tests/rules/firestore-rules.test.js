@@ -113,3 +113,31 @@ test('un cliente sin sesión no puede leer eventos de campo', async () => {
   await seed('field_events/e_4', { batchId: 'l_1', accountId: 'op_1' });
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'field_events/e_4')));
 });
+
+// Revisiones de requisitos antes de producir: se crean y no se editan.
+const REVISION = {
+  schema: 'setas.production-readiness.v1', id: 'pr_1', requirementId: 'equipment', status: 'verified',
+  reviewer: 'Operador', reference: 'AC-0412', notes: '', scope: '["shiitake"]', at: '2026-10-13T10:00:00.000Z',
+  details: { equipmentId: 'AUTOCLAVE-1941X', protocol: 'Carga validada', cycleId: 'AC-0412', bioindicatorResult: 'sin_crecimiento' },
+};
+
+test('un cliente puede registrar una revisión de requisitos', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'production_readiness/pr_1'), REVISION));
+});
+
+test('una revisión de requisitos no se edita ni se borra', async () => {
+  await seed('production_readiness/pr_2', { ...REVISION, id: 'pr_2' });
+  await assertFails(updateDoc(doc(asOperator(), 'production_readiness/pr_2'), { status: 'blocked' }));
+  await assertFails(setDoc(doc(asOperator(), 'production_readiness/pr_2'), { deleted: true }, { merge: true }));
+});
+
+test('una revisión sin responsable o con requisito desconocido se rechaza', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'production_readiness/pr_3'), { ...REVISION, id: 'pr_3', reviewer: '' }));
+  await assertFails(setDoc(doc(asOperator(), 'production_readiness/pr_4'), { ...REVISION, id: 'pr_4', requirementId: 'otro' }));
+  await assertFails(setDoc(doc(asOperator(), 'production_readiness/pr_5'), { ...REVISION, id: 'otro_id' }));
+});
+
+test('sin sesión no se leen revisiones de requisitos', async () => {
+  await seed('production_readiness/pr_6', { ...REVISION, id: 'pr_6' });
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'production_readiness/pr_6')));
+});

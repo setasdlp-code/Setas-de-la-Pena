@@ -33,6 +33,15 @@ function ReadinessEvidenceForm({check,onSave}) {
     <label>Responsable de la revisión<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)} required/></label>
     <label>Referencia de evidencia<input placeholder="Registro, informe o URL" value={form.reference} onChange={e=>set('reference',e.target.value)} required={form.status==='verified'}/></label>
     {fields.map(([key,label])=><label key={key}>{label}<input value={form.details[key]||''} onChange={e=>detail(key,e.target.value)} required={form.status==='verified'}/></label>)}
+    {check.id==='equipment'&&<>
+      <label>Corrida del autoclave (ID del ciclo) · obligatoria si se esteriliza<input value={form.details.cycleId||''} onChange={e=>detail('cycleId',e.target.value)}/></label>
+      <label>Bioindicador de la corrida<select value={form.details.bioindicatorResult||''} onChange={e=>detail('bioindicatorResult',e.target.value)}>
+        <option value="">No aplica (pasteurización o cal)</option>
+        <option value="sin_crecimiento">Sin crecimiento</option>
+        <option value="con_crecimiento">Con crecimiento</option>
+        <option value="pendiente">Pendiente de lectura</option>
+      </select></label>
+    </>}
     {check.id==='room'&&<>
       <label>Capacidad documentada de la sala (bolsas)<input type="number" min="1" step="1" value={form.details.capacityBags||''} onChange={e=>detail('capacityBags',e.target.value)} required={form.status==='verified'}/></label>
       <label className="readiness-check"><input type="checkbox" checked={!!form.details.sanitized} onChange={e=>detail('sanitized',e.target.checked)}/> Verifiqué limpieza y condiciones físicas de la sala.</label>
@@ -63,7 +72,7 @@ function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAct
     <p className="readiness-boundary">Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico.</p>
     <div className="readiness-context"><label>Sala prevista<select aria-label="Sala prevista para preparación" value={input.roomId} onChange={e=>onRoomChange(e.target.value)}>{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>{assessment.next&&<p><strong>Siguiente requisito:</strong> {assessment.next.label}. {assessment.next.detail}</p>}</div>
     {error&&<p role="alert">{error} No se puede registrar una nueva revisión hasta recuperar estos datos.</p>}
-    <p className="readiness-local-note">Las revisiones manuales se guardan en este equipo y se incluyen en el respaldo de ensayos. El informe permite compartir esta evaluación.</p>
+    <p className="readiness-local-note">Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación.</p>
     {message&&<p role="status">{message}</p>}
     <div className="readiness-grid">{assessment.checks.map(check=><article key={check.id} className={`readiness-card is-${check.status}`} data-testid={`readiness-${check.id}`}>
       <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
@@ -7486,7 +7495,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
         return;
       }
-      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles};
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles,
+        // Las revisiones se releen con readRecords: un registro inválido llegado
+        // de otro equipo se muestra como error, igual que uno dañado en local.
+        [SetasProductionReadiness.KEY]:()=>{try{setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}catch(e){setProductionEvidence({records:[],error:e.message});}}};
       for(const [key,value] of plan.entries){
         if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
         else if(setters[key]) setters[key](value);
@@ -8368,6 +8380,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const records=[...current,record];
     SetasPrototype.persist(localStorage,[[SetasProductionReadiness.KEY,records]]);
     setProductionEvidence({records,error:''});
+    // Cada revisión es un documento inmutable: sube una vez y llega a los demás
+    // equipos por la sincronización de colecciones (ADR-0009).
+    encolarSync({type:'crearDocumento',key:'production_readiness:'+record.id,args:['production_readiness/'+record.id,record]});
   };
   const openProductionReadiness=()=>{
     goTab('produccion');

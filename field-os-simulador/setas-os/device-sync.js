@@ -43,6 +43,10 @@
     inventario_reservas: { localKey: 'sdp_inv_reservas', resolvers: () => ({ status: mergeApi().byRank(RESERVATION_RANK) }) },
     // Ciclos de sala: un ciclo cerrado o cancelado no vuelve a activo.
     room_cycles: { localKey: 'sdp_room_cycles', resolvers: () => ({ state: mergeApi().byRank(CYCLE_STATE_RANK) }) },
+    // Revisiones de requisitos antes de producir (production-readiness.js):
+    // cada una es un registro inmutable; una revisión nueva reemplaza a la
+    // anterior por fecha, nunca la edita. Por eso no necesitan resolvedores.
+    production_readiness: { localKey: 'sdp_production_readiness' },
   });
 
   const BODEGA_COLLECTIONS = Object.freeze(['inventario_movimientos', 'inventario_compras', 'inventario_proveedores', 'inventario_reservas']);
