@@ -17,6 +17,8 @@ import yaml
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RUTA_YAML = os.path.join(AQUI, "incubadora_piloto.yaml")
 RUTA_SECRETOS = os.path.join(AQUI, "secrets.example.yaml")
+# Valores de prueba para `esphome config`; NO son parámetros operativos.
+VALORES_SOLO_PRUEBA = {"setpoint_c": "20.0", "histeresis_c": "0.5"}
 
 
 class _Cargador(yaml.SafeLoader):
@@ -81,20 +83,30 @@ class IncubadoraYamlTest(unittest.TestCase):
             self.assertIsInstance(valor, str, nombre)
             self.assertTrue(valor.startswith("!secret "), f"{nombre} no es !secret: {valor!r}")
 
-    @unittest.skipUnless(_esphome_bin(), "ESPHOME_BIN no apunta a un ejecutable: se omite `esphome config`")
-    def test_esphome_config_valido(self):
+    def _esphome_config(self, sustituciones=None):
+        """Ejecuta `esphome config` sobre una copia del YAML con secretos de ejemplo."""
         with tempfile.TemporaryDirectory() as tmp:
             shutil.copy(RUTA_YAML, os.path.join(tmp, "incubadora_piloto.yaml"))
             shutil.copy(RUTA_SECRETOS, os.path.join(tmp, "secrets.yaml"))
-            r = subprocess.run(
-                [_esphome_bin(), "config", "incubadora_piloto.yaml"],
-                cwd=tmp,
-                capture_output=True,
-                text=True,
-                timeout=600,
-            )
+            cmd = [_esphome_bin()]
+            for clave, valor in (sustituciones or {}).items():
+                cmd += ["-s", clave, valor]
+            cmd += ["config", "incubadora_piloto.yaml"]
+            return subprocess.run(cmd, cwd=tmp, capture_output=True, text=True, timeout=600)
+
+    @unittest.skipUnless(_esphome_bin(), "ESPHOME_BIN no apunta a un ejecutable: se omite `esphome config`")
+    def test_esphome_config_valido(self):
+        # Valores SOLO de prueba para validar la estructura: el YAML no trae setpoint
+        # ni histéresis (los fija la especificación del lote).
+        r = self._esphome_config(VALORES_SOLO_PRUEBA)
         self.assertEqual(r.returncode, 0, r.stdout[-2000:] + r.stderr[-2000:])
 
+    @unittest.skipUnless(_esphome_bin(), "ESPHOME_BIN no apunta a un ejecutable: se omite `esphome config`")
+    def test_esphome_config_rechaza_marcador_de_setpoint(self):
+        # Sin especificación de lote (setpoint_c/histeresis_c son marcadores) la
+        # configuración NO debe compilar: el piloto no arranca sin esa especificación.
+        r = self._esphome_config()
+        self.assertNotEqual(r.returncode, 0, "el marcador PENDIENTE_ESPECIFICACION_LOTE no debe validar")
 
     # ------------------------------------------------------------------
     # Tarea 2: sensores
@@ -175,6 +187,96 @@ class IncubadoraYamlTest(unittest.TestCase):
             self.assertEqual(len(tos), 1, id_)
             self.assertEqual(tos[0]["timeout"], "120s", id_)
             self.assertIn(str(tos[0]["value"]).lower(), (".nan", "nan"), id_)
+
+
+    # ------------------------------------------------------------------
+    # Tarea 3: termostato, interbloqueo y alarmas
+    # ------------------------------------------------------------------
+    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire", "alarma_sensor_invalido", "alarma_ventilador")
+
+    def _climate(self, id_):
+        for c in self.cfg.get("climate", []):
+            if c.get("id") == id_:
+                return c
+        self.fail(f"no existe el climate {id_}")
+
+    def _binary(self, id_):
+        for b in self.cfg.get("binary_sensor", []):
+            if b.get("id") == id_:
+                return b
+        self.fail(f"no existe el binary_sensor {id_}")
+
+    def _on_boot(self):
+        entradas = self.cfg["esphome"].get("on_boot", [])
+        return entradas if isinstance(entradas, list) else [entradas]
+
+    def test_termostato_usa_aire_y_arranca_apagado(self):
+        self.assertEqual(self._climate("incubadora")["sensor"], "t_aire")
+        acciones = [a for e in self._on_boot() for a in e.get("then", [])]
+        control = [a["climate.control"] for a in acciones if isinstance(a, dict) and "climate.control" in a]
+        self.assertTrue(
+            any(c.get("id") == "incubadora" and c.get("mode") == "OFF" for c in control),
+            "falta on_boot con climate.control mode OFF (caso límite 2)",
+        )
+        apagados = [a["switch.turn_off"] for a in acciones if isinstance(a, dict) and "switch.turn_off" in a]
+        self.assertIn("rele_calefactor", apagados)
+
+    def test_sin_setpoint_operativo_hardcodeado(self):
+        marcador = self.cfg["substitutions"]["setpoint_c"]
+        with self.assertRaises(ValueError):
+            float(marcador)
+        with self.assertRaises(ValueError):
+            float(self.cfg["substitutions"]["histeresis_c"])
+        with open(RUTA_YAML, encoding="utf-8") as f:
+            texto = f.read()
+        self.assertIsNone(
+            re.search(r"default_target_temperature\w*:\s*[-+]?\d", texto),
+            "default_target_temperature con número literal",
+        )
+
+    def test_umbrales_nucleo(self):
+        self.assertRegex(self._binary("alarma_sobretemp_nucleo")["lambda"], r">\s*28(\.0*)?\b")
+        self.assertRegex(self._binary("alarma_dt_nucleo_aire")["lambda"], r">\s*5(\.0*)?\b")
+
+    def test_interbloqueo_apaga_calefactor(self):
+        seguridad = [i for i in self.cfg["interval"] if "switch.turn_off" in json.dumps(i)]
+        self.assertEqual(len(seguridad), 1)
+        self.assertLessEqual(self._segundos(seguridad[0]["interval"]), 5)
+        acc = seguridad[0]["then"][0]["if"]
+        condicion = json.dumps(acc["condition"])
+        for alarma in self.ALARMAS:
+            self.assertIn(alarma, condicion)
+        self.assertIn("or", acc["condition"], "las alarmas deben unirse con `or`")
+        entonces = json.dumps(acc["then"])
+        self.assertIn('"switch.turn_off": "rele_calefactor"', entonces)
+        self.assertIn('"mode": "OFF"', entonces)  # reencendido solo por el operador
+
+    def test_gracia_arranque_ventilador(self):
+        # La gracia se mide con un indicador que se activa tras `fan_arranque_gracia_s`
+        # desde el arranque (sin depender de millis(), que se reinicia a los 49 días).
+        arranque = json.dumps(self._on_boot())
+        self.assertIn("${fan_arranque_gracia_s}", arranque)
+        indicador = re.search(r"id\((\w+)\)\s*=\s*true", arranque)
+        self.assertIsNotNone(indicador, "on_boot no activa el indicador de gracia")
+        lam = self._binary("alarma_ventilador")["lambda"]
+        self.assertIn(indicador.group(1), lam)
+        self.assertIn("${fan_min_rpm}", lam)
+        # Antes de terminar la gracia la alarma no dispara (devuelve false).
+        self.assertRegex(lam, r"if\s*\(\s*!\s*id\(" + indicador.group(1) + r"\)\s*\)\s*return\s+false")
+        # Si el tacómetro es NaN o cae bajo el mínimo, después de la gracia, sí.
+        self.assertIn("isnan", lam)
+
+    def test_alarma_sensor_invalido(self):
+        lam = self._binary("alarma_sensor_invalido")["lambda"]
+        self.assertIn("t_aire", lam)
+        self.assertIn("t_nucleo", lam)
+        self.assertIn("isnan", lam)
+
+    def test_ventilador_tacometro(self):
+        rpm = self._sensores_por_id()["rpm_ventilador"]
+        self.assertEqual(rpm["pin"]["number"], "${fan_pin}")
+        self.assertTrue(rpm["pin"]["mode"]["pullup"])
+        self.assertEqual(self._segundos(rpm["update_interval"]), 10)
 
 
 if __name__ == "__main__":
