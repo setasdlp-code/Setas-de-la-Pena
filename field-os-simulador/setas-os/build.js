@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { releaseHash, runtimeAssets, VERSION_LINE, ASSETS_LINE } = require('./release-assets.cjs');
 
 const SRC = path.join(__dirname, 'simulador-app.jsx');
 const OUT = path.join(__dirname, 'simulador-app.js');
@@ -74,30 +75,34 @@ function build() {
   fs.writeFileSync(OUT, banner + code);
   console.log(`Built ${path.relative(process.cwd(), OUT)} (${code.length} bytes)`);
 
-  stampServiceWorker(sourceHash(src));
+  stampServiceWorker(releaseHash(__dirname));
 }
 
 /**
- * Estampa el hash del fuente como versión de caché del service worker.
+ * Estampa el hash de todos los assets de runtime como versión de caché.
  *
  * Es lo que evita que alguien quede con un shell viejo tras un despliegue: al
  * cambiar sw.js byte a byte, el navegador instala el nuevo, y su `activate`
  * borra las cachés que no lleven esta versión. Sin esto habría que acordarse de
  * subir un número a mano en cada build, y nadie se acuerda.
  */
-function stampServiceWorker(hash) {
-  if (!fs.existsSync(SW)) return;
-  const sw = fs.readFileSync(SW, 'utf8');
+function stampServiceWorker(hash, root = __dirname) {
+  const worker = path.join(root, 'sw.js');
+  if (!fs.existsSync(worker)) return;
+  const sw = fs.readFileSync(worker, 'utf8');
+  if (!VERSION_LINE.test(sw) || !ASSETS_LINE.test(sw)) throw new Error('sw.js no contiene las marcas de versión y assets.');
+  const assets = runtimeAssets(root).filter(name => name !== 'sw.js')
+    .map(name => './' + name.split('/').map(encodeURIComponent).join('/'));
   const stamped = sw.replace(
-    /(\/\/ build:cache-version\n)const CACHE_VERSION = '[^']*';/,
+    VERSION_LINE,
     `$1const CACHE_VERSION = '${hash.slice(0, 12)}';`
-  );
+  ).replace(ASSETS_LINE, (_match, marker) => `${marker}const RELEASE_ASSETS = ${JSON.stringify(assets)};`);
   if (stamped !== sw) {
-    fs.writeFileSync(SW, stamped);
-    console.log(`Stamped ${path.relative(process.cwd(), SW)} (cache ${hash.slice(0, 12)})`);
+    fs.writeFileSync(worker, stamped);
+    console.log(`Stamped ${path.relative(process.cwd(), worker)} (cache ${hash.slice(0, 12)}, ${assets.length} assets)`);
   }
 }
 
-module.exports = { SRC, OUT, SW, sourceHash };
+module.exports = { SRC, OUT, SW, sourceHash, stampServiceWorker };
 
 if (require.main === module) build();

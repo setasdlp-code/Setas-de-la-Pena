@@ -1,4 +1,5 @@
 'use strict';
+const { skipIfAuthUnavailable } = require('./auth-policy.cjs');
 
 /**
  * Task 13 — Recorrido real del cuaderno de campo.
@@ -17,17 +18,10 @@ const { test, expect } = require('@playwright/test');
 const APP = '/Setas%20OS%20v5.dc.html';
 
 async function openApp(page) {
-  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
-    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
-  }
+  skipIfAuthUnavailable(test);
   await page.goto(APP);
   const gate = page.locator('#setas-auth-gate');
-  try {
-    await gate.waitFor({ state: 'hidden', timeout: 7000 });
-  } catch {
-    test.skip(true, 'Sesión de Firebase Auth no disponible en el entorno');
-    return;
-  }
+  await gate.waitFor({ state: 'hidden', timeout: 7000 });
   await page.locator('main.app-main').waitFor({ state: 'visible' });
   await page.waitForFunction(() => !!(window.SetasFieldActionSheet && window.SetasFieldEventSync && window.SetasFirebase));
 }
