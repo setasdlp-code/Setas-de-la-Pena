@@ -33,6 +33,15 @@ function ReadinessEvidenceForm({check,onSave}) {
     <label>Responsable de la revisión<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)} required/></label>
     <label>Referencia de evidencia<input placeholder="Registro, informe o URL" value={form.reference} onChange={e=>set('reference',e.target.value)} required={form.status==='verified'}/></label>
     {fields.map(([key,label])=><label key={key}>{label}<input value={form.details[key]||''} onChange={e=>detail(key,e.target.value)} required={form.status==='verified'}/></label>)}
+    {check.id==='equipment'&&<>
+      <label>Corrida del autoclave (ID del ciclo) · obligatoria si se esteriliza<input value={form.details.cycleId||''} onChange={e=>detail('cycleId',e.target.value)}/></label>
+      <label>Bioindicador de la corrida<select value={form.details.bioindicatorResult||''} onChange={e=>detail('bioindicatorResult',e.target.value)}>
+        <option value="">No aplica (pasteurización o cal)</option>
+        <option value="sin_crecimiento">Sin crecimiento</option>
+        <option value="con_crecimiento">Con crecimiento</option>
+        <option value="pendiente">Pendiente de lectura</option>
+      </select></label>
+    </>}
     {check.id==='room'&&<>
       <label>Capacidad documentada de la sala (bolsas)<input type="number" min="1" step="1" value={form.details.capacityBags||''} onChange={e=>detail('capacityBags',e.target.value)} required={form.status==='verified'}/></label>
       <label className="readiness-check"><input type="checkbox" checked={!!form.details.sanitized} onChange={e=>detail('sanitized',e.target.checked)}/> Verifiqué limpieza y condiciones físicas de la sala.</label>
@@ -63,7 +72,7 @@ function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAct
     <p className="readiness-boundary">Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico.</p>
     <div className="readiness-context"><label>Sala prevista<select aria-label="Sala prevista para preparación" value={input.roomId} onChange={e=>onRoomChange(e.target.value)}>{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>{assessment.next&&<p><strong>Siguiente requisito:</strong> {assessment.next.label}. {assessment.next.detail}</p>}</div>
     {error&&<p role="alert">{error} No se puede registrar una nueva revisión hasta recuperar estos datos.</p>}
-    <p className="readiness-local-note">Las revisiones manuales se guardan en este equipo y se incluyen en el respaldo de ensayos. El informe permite compartir esta evaluación.</p>
+    <p className="readiness-local-note">Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación.</p>
     {message&&<p role="status">{message}</p>}
     <div className="readiness-grid">{assessment.checks.map(check=><article key={check.id} className={`readiness-card is-${check.status}`} data-testid={`readiness-${check.id}`}>
       <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
@@ -7486,7 +7495,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
         return;
       }
-      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles};
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles,
+        // Las revisiones se releen con readRecords: un registro inválido llegado
+        // de otro equipo se muestra como error, igual que uno dañado en local.
+        [SetasProductionReadiness.KEY]:()=>{try{setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}catch(e){setProductionEvidence({records:[],error:e.message});}}};
       for(const [key,value] of plan.entries){
         if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
         else if(setters[key]) setters[key](value);
@@ -7649,6 +7661,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Un ciclo puede empezar o terminar sin que nadie toque nada (startAt en el
   // futuro, endAt en el pasado): se reevalúa cada minuto.
   const [cycleClock,setCycleClock]=useState(()=>Date.now());
+  // Una edición o sincronización puede cruzar un minuto antes del próximo tick.
+  useEffect(()=>setCycleClock(Date.now()),[roomCycles]);
   useEffect(()=>{const t=setInterval(()=>setCycleClock(Date.now()),60000);return ()=>clearInterval(t);},[]);
   const cycleTargetsApi=typeof window!=='undefined'?window.SetasRoomCycleTargets:null;
   const effectiveRoomBands=cycleTargetsApi?cycleTargetsApi.effectiveBands(ROOM_TARGET_BANDS,roomCycles,cycleClock):ROOM_TARGET_BANDS;
@@ -8373,6 +8387,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const records=[...current,record];
     SetasPrototype.persist(localStorage,[[SetasProductionReadiness.KEY,records]]);
     setProductionEvidence({records,error:''});
+    // Cada revisión es un documento inmutable: sube una vez y llega a los demás
+    // equipos por la sincronización de colecciones (ADR-0009).
+    encolarSync({type:'crearDocumento',key:'production_readiness:'+record.id,args:['production_readiness/'+record.id,record]});
   };
   const openProductionReadiness=()=>{
     goTab('produccion');
@@ -8873,7 +8890,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote=SetasPrototype.read(localStorage,'sdp_bit_lotes').find(l=>l.id===releaseBatchId);
     const result=SetasPrototype.prepareBatch(localStorage,{loteId:lote.id,trialRelease:record,sheet:buildSheetFor(lote),role:operatorRole,operatorId:lote.operador||'operador-local',at:new Date().toISOString()});
     applyPrototypeEntries(result.entries);
-    enqueueFieldTransition(result.lote,result.lote.pendingPreparationTransition?.from||'planned',result.transition);
+    requestLotTransition(result.lote,result.transition,{from:result.lote.pendingPreparationTransition?.from||'planned',logged:true});
     if(taskEngine)mergeIntoTasks(taskEngine.tasksFromTransition({batchId:lote.id,toState:result.transition,at:new Date().toISOString()}));
     runInventorySync();
     setReleaseBatchId(null);
@@ -10996,6 +11013,62 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
+  /**
+   * Único punto por el que la app cambia la etapa de un lote.
+   *
+   * Con sesión, la etapa la decide el servidor: se encola la transición y el
+   * lote cambia cuando acceptFieldEvent la acepta y la sincronización la trae
+   * (las reglas no dejan que el cliente escriba lifecycleState ni, después de
+   * la primera etapa aceptada, `estado`). Sin sesión (equipo sin cuenta, banco
+   * de pruebas) no hay servidor que acepte nada, así que la etapa se registra
+   * en `estado`, que es de donde el servidor tomará la primera etapa cuando el
+   * lote suba.
+   *
+   * `logged` indica que quien llama ya agregó el evento de transición a la
+   * bitácora del lote (la ficha lo hace con applyConsequences).
+   */
+  const requestLotTransition=(lote,to,{from=null,reason=null,logged=false}={})=>{
+    if(!lote||!workflow) return false;
+    const origin=from||loteLifecycleState(lote);
+    const label=s=>(batchSheetApi&&batchSheetApi.stateLabel?batchSheetApi.stateLabel(s):s);
+    if(!workflow.canTransition(origin,to)){
+      setNoticeDlg({title:'Cambio de etapa no permitido',msg:`${lote.codigo||lote.id} está en ${label(origin)} y no puede pasar a ${label(to)}.`});
+      return false;
+    }
+    const uid=window.SetasFirebase?.auth?.currentUser?.uid||null;
+    if(!uid&&lote.lifecycleState){
+      setNoticeDlg({title:'Se necesita iniciar sesión',msg:`La etapa de ${lote.codigo||lote.id} ya la registra el servidor. Inicia sesión para cambiarla.`});
+      return false;
+    }
+    const event=logged?null:workflow.transitionEvent({batchId:lote.id,from:origin,to,operatorId:lote.operador||'operador-local',reason});
+    const log=event?{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]}:{};
+    if(uid){
+      if(event) updateBitLote(lote.id,log);
+      enqueueFieldTransition(lote,origin,to);
+    }else{
+      updateBitLote(lote.id,{estado:batchSheetApi?.legacyEstadoFor?.(to)||to,...log});
+    }
+    return true;
+  };
+
+  // Un descarte aceptado por el servidor llega por la sincronización, no por
+  // updateBitLote, así que las reservas held del lote se liberan aquí: si no,
+  // un lote descartado en otro equipo bloquearía sus kilos para siempre.
+  useEffect(()=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi) return;
+    const descartados=new Set(bitLotes.filter(l=>loteLifecycleState(l)==='discarded').map(l=>l.id));
+    if(!descartados.size) return;
+    setInvReservas(prev=>{
+      if(!prev.some(r=>r.status==='held'&&descartados.has(r.batchId))) return prev;
+      const at=new Date().toISOString();
+      let upd=prev;
+      descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+  },[bitLotes]);
+
   const enqueueContainerFieldTransition=async(bolsa,lote,from,to,reasonCode=null,notes=null)=>{
     const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
     const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
@@ -11050,7 +11123,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
 
       if(consequences.transition){
-        enqueueFieldTransition(lote,sheet.state,consequences.transition);
+        requestLotTransition(lote,consequences.transition,{from:sheet.state,logged:true});
       }
 
       // Si hubo transición, generar las tareas SOP del nuevo estado.
@@ -11096,13 +11169,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // sólo ocurre si la transición es válida y no hay un bloqueo declarado.
       const activeSheet=sheet||buildSheetFor(lote);
       if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
-      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
-      const from=loteLifecycleState(lote);const to=loteLifecycleState({estado:next});
-      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
-        enqueueFieldTransition(lote,from,to);
-      }
+      const from=loteLifecycleState(lote);
+      const to=(workflow?.DEFAULT_TRANSITIONS?.[from]||[])[0];
+      if(to) requestLotTransition(lote,to,{from});
       return;
     }
     if(action==='prepare_mix'){
@@ -11124,15 +11193,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
       return;
     }
-    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    // Tratamiento térmico e inoculación caían en el aviso genérico del final y
+    // no registraban nada: el botón principal de la ficha no movía el lote.
+    if(action==='start_thermal_treatment'||action==='complete_thermal_treatment'){
+      commitSheetAction(sheet||buildSheetFor(lote),lote,action);
+      return;
+    }
+    if(action==='inoculate'){
+      // Inocular exige el lote de semilla (ACTION_CATALOG.inoculate.requires):
+      // es la trazabilidad que el lote necesita para todo lo que sigue.
+      setPromptDlg({
+        title:'Inocular',
+        label:'Lote de semilla usado',
+        defaultValue:lote.spawnLotId||'',
+        placeholder:'Ej. SPW-260101-01',
+        confirmLabel:'Registrar inoculación',
+        onSubmit:spawnLotId=>{
+          const conSemilla={...lote,spawnLotId};
+          if(spawnLotId!==lote.spawnLotId) updateBitLote(lote.id,{spawnLotId});
+          commitSheetAction(buildSheetFor(conSemilla),conSemilla,'inoculate',{spawnLotId});
+        },
+      });
+      return;
+    }
+    if(action==='close'){requestLotTransition(lote,'closed');return;}
     if(action==='discard'){
-      const from=loteLifecycleState(lote);
-      if(workflow&&workflow.canTransition(from,'discarded')){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
-        // El estado canónico lo escribe acceptFieldEvent; aquí sólo la bitácora.
-        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
-        enqueueFieldTransition(lote,from,'discarded');
-      }
+      requestLotTransition(lote,'discarded',{reason:'Descarte manual de lote'});
       return;
     }
     if(action==='move'){
@@ -13399,9 +13485,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <option value="">— veredicto —</option>
                         {['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}
                       </select>
-                      <select name={`loteStatus-${lote.id}`} aria-label={`Estado del lote ${lote.codigo}`} value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
-                        {['incubacion','fructificacion','completado','descartado'].map(st=><option key={st} value={st}>{st}</option>)}
-                      </select>
+                      {/* La etapa no se elige en un selector libre: cambia con las
+                          acciones del flujo (ficha del lote), que validan la
+                          transición y, con sesión, las acepta el servidor. */}
+                      <span data-testid={`lote-stage-${lote.id}`} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px',display:'inline-flex',alignItems:'center'}}>
+                        Etapa: {batchSheetApi?.stateLabel?batchSheetApi.stateLabel(loteLifecycleState(lote)):loteLifecycleState(lote)}
+                      </span>
+                      <button type="button" className="inv-btn inv-btn-sec" onClick={()=>openBatchSheetModal(lote)} style={{fontSize:"var(--text-sm)",padding:'6px 12px'}}>Cambiar etapa</button>
                     </div>
                   </div>
                   {stats&&(<div className="inv-stat-row" style={{marginBottom:14}}><div className="inv-stat"><div className="inv-stat-val">{stats.bolsasSanas}/{stats.numBolsas}</div><div className="inv-stat-lbl">Sanas</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:stats.contPct>20?'var(--coral-700)':'inherit'}}>{stats.contPct.toFixed(0)}%</div><div className="inv-stat-lbl">Contam.</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.totalFresco.toFixed(3)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>)}
@@ -13423,8 +13513,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           up.colonizationPct=pct;
                           return updateBitBolsa(b.id,up);
                         })) return;
-                        if(pct>=100&&lote.estado==='incubacion'){
-                          updateBitLote(lote.id,{estado:'fructificacion'});
+                        if(pct>=100&&workflow?.canTransition(loteLifecycleState(lote),'fruiting')){
+                          requestLotTransition(lote,'fruiting');
                         }
                         setNoticeDlg({
                           title:'Avance registrado',
@@ -13438,8 +13528,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           if(!bolsas.every(b=>{
                             return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
                           })) return;
-                          updateBitLote(lote.id,{estado:'fructificacion'});
-                          setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${lote.codigo} actualizado a fructificación.`});
+                          const aFruct=workflow?.canTransition(loteLifecycleState(lote),'fruiting')&&requestLotTransition(lote,'fruiting');
+                          setNoticeDlg({title:'Primordios confirmados',msg:aFruct?`Lote ${lote.codigo}: paso a fructificación registrado.`:`Primordios registrados en ${lote.codigo}. La etapa no cambió.`});
                         } else if(act==='riego'){
                           setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad registrada para ${lote.codigo}.`});
                         } else if(act==='ventilacion'){
@@ -17798,9 +17888,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               operatorRole={operatorRole}
               operatorId={operatorId}
               accountId={accountId}
-              onTransitionConfirmed={(batchId, nextState) => {
-                updateBitLote(batchId, { estado: nextState, workflowState: nextState });
-              }}
+              // La etapa la escribe acceptFieldEvent (con su `estado` en español) y
+              // llega por la sincronización; escribirla aquí la duplicaría con
+              // otro vocabulario y las reglas la rechazarían.
+              onTransitionConfirmed={() => {}}
             />
           );
         })()}
@@ -18372,8 +18463,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             up.colonizationPct=pct;
                             return updateBitBolsa(b.id,up);
                           })) return;
-                          if(pct>=100&&currentLote.estado==='incubacion'){
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
+                          if(pct>=100&&workflow?.canTransition(loteLifecycleState(currentLote),'fruiting')){
+                            requestLotTransition(currentLote,'fruiting');
                           }
                           setNoticeDlg({
                             title:'Avance registrado',
@@ -18388,8 +18479,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             if(!loteBolsas.every(b=>{
                               return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
                             })) return;
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
-                            setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${currentLote.codigo} pasado a etapa de fructificación.`});
+                            const aFruct=workflow?.canTransition(loteLifecycleState(currentLote),'fruiting')&&requestLotTransition(currentLote,'fruiting');
+                            setNoticeDlg({title:'Primordios confirmados',msg:aFruct?`Lote ${currentLote.codigo}: paso a fructificación registrado.`:`Primordios registrados en ${currentLote.codigo}. La etapa no cambió.`});
                           } else if(act==='riego'){
                             setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad y niebla registrada para ${currentLote.codigo}.`});
                           } else if(act==='ventilacion'){
@@ -20029,23 +20120,22 @@ interval:
               });
             });
 
-            const nextEstado = targetState === 'quarantine' ? 'cuarentena' : targetState === 'discarded' ? 'descartado' : currentLote.estado;
             const updatedEvents = [
               ...(currentLote.lifecycleEvents || []),
               contamEvent,
               ...(transitionEvt ? [transitionEvt] : [])
             ];
 
-            // `lifecycleState` es del servidor: las reglas lo deniegan al cliente
-            // y updateBitLote sincroniza después de pintar, así que un rechazo
-            // dejaba el lote en cuarentena en el teléfono y activo en el servidor.
+            // La etapa (cuarentena o descarte) pasa por requestLotTransition: con
+            // sesión la acepta el servidor; escribir `estado` aquí dejaba el lote
+            // en cuarentena en el teléfono y activo en el servidor.
+            const loteConEventos = { ...currentLote, lifecycleEvents: updatedEvents };
             updateBitLote(currentLote.id, {
-              estado: nextEstado,
               numBolsas: lossCalc.healthyBags,
               lifecycleEvents: updatedEvents
             });
             if (changesState) {
-              enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+              requestLotTransition(loteConEventos, targetState, { from: currentLifecycle, logged: true });
             }
 
             setShowTriageModal(false);
@@ -20422,10 +20512,9 @@ interval:
                 // fallo aterrizaba en un aviso lateral: el lote se veía
                 // descartado en el teléfono y seguía activo en el servidor, donde
                 // otro operario lo encontraba disponible.
-                updateBitLote(currentLote.id, {
-                  lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
-                });
-                enqueueFieldTransition(currentLote, fromState, massTarget);
+                const conEvento = { ...currentLote, lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt] };
+                updateBitLote(currentLote.id, { lifecycleEvents: conEvento.lifecycleEvents });
+                requestLotTransition(conEvento, massTarget, { from: fromState, logged: true });
               }
             }
 

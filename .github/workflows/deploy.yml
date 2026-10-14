@@ -1,5 +1,5 @@
 # Publica Setas OS v5 (field-os-simulador/setas-os/), la app canónica,
-# en GitHub Pages en cada push a main.
+# en GitHub Pages sólo después de validar el mismo commit.
 name: Deploy to GitHub Pages
 
 on:
@@ -17,7 +17,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  repository-quality:
+    uses: ./.github/workflows/quality.yml
+    permissions:
+      contents: read
+
+  app-quality:
+    uses: ./.github/workflows/field-os-simulador-quality.yml
+    permissions:
+      contents: read
+    with:
+      require-auth: true
+    secrets: inherit
+
   deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: [repository-quality, app-quality]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

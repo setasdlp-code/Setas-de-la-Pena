@@ -1,4 +1,5 @@
 'use strict';
+const { skipIfAuthUnavailable } = require('./auth-policy.cjs');
 
 /**
  * Task 13 — Recorrido real del cuaderno de campo.
@@ -17,41 +18,44 @@ const { test, expect } = require('@playwright/test');
 const APP = '/Setas%20OS%20v5.dc.html';
 
 async function openApp(page) {
-  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
-    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
-  }
+  skipIfAuthUnavailable(test);
   await page.goto(APP);
   const gate = page.locator('#setas-auth-gate');
-  try {
-    await gate.waitFor({ state: 'hidden', timeout: 7000 });
-  } catch {
-    test.skip(true, 'Sesión de Firebase Auth no disponible en el entorno');
-    return;
-  }
+  await gate.waitFor({ state: 'hidden', timeout: 7000 });
   await page.locator('main.app-main').waitFor({ state: 'visible' });
   await page.waitForFunction(() => !!(window.SetasFieldActionSheet && window.SetasFieldEventSync && window.SetasFirebase));
 }
 
-/** Crea el lote desechable y devuelve su id de Firestore. */
+/**
+ * Crea el lote desechable en Bitácora, que es donde la app crea los lotes y
+ * donde acceptFieldEvent los avanza. Devuelve su id.
+ */
 async function createThrowawayBatch(page, codigo) {
   return page.evaluate(async (code) => {
-    const ref = await window.SetasDB.crearLoteProduccion({
+    const id = `BIT_${code}`;
+    await window.SetasBitacoraDB.guardarLote({
+      id,
       codigo: code,
       especie: 'p_ostreatus_gris',
-      camara: 'martha_01',
+      sala: 'martha_01',
       operador: 'e2e',
-      receta: { ingredientes: [{ id: 'paja_trigo', pct: 80 }, { id: 'salvado_trigo', pct: 20 }] },
+      estado: 'activo',
+      numBolsas: 0,
+      createdAt: new Date().toISOString(),
     });
-    return ref.id;
+    return id;
   }, codigo);
 }
+
+// Misma tabla que batch-sheet.js LEGACY_ESTADO_BY_STATE (la que usa el servidor).
+const legacyEstadoFor = state => require('../batch-sheet.js').legacyEstadoFor(state);
 
 /** Lee el lote directamente de Firestore, sin pasar por el estado de React. */
 function readBatch(page, batchId) {
   return page.evaluate(async (id) => {
     const fb = window.SetasFirebase;
     const { doc, getDoc } = await import('../vendor/firebase/firebase-firestore.js');
-    const snap = await getDoc(doc(fb.db, 'lotes_produccion', id));
+    const snap = await getDoc(doc(fb.db, 'bitacora_lotes', id));
     return snap.exists() ? snap.data() : null;
   }, batchId);
 }
@@ -76,7 +80,7 @@ test('offline → confirmación explícita → reinicio → reconexión → exac
   expect(batchId, 'el lote desechable debe crearse').toBeTruthy();
 
   const initial = await readBatch(page, batchId);
-  expect(initial.estado, 'db.js crea el lote con estado activo').toBe('activo');
+  expect(initial.estado, 'el lote se crea con estado activo').toBe('activo');
   expect(initial.lifecycleState, 'un lote nuevo no lleva lifecycleState').toBeUndefined();
   expect(initial.revision, 'ni revision').toBeUndefined();
 
@@ -180,7 +184,8 @@ test('offline → confirmación explícita → reinicio → reconexión → exac
   const finalBatch = await readBatch(page, batchId);
   expect(finalBatch.lifecycleState, 'el lote avanzó al destino elegido').toBe(targetState);
   expect(finalBatch.revision, 'la revisión avanza exactamente uno').toBe(1);
-  expect(finalBatch.estado, 'el campo heredado no se toca').toBe('activo');
+  expect(finalBatch.estado, 'el estado en español sigue a la etapa aceptada')
+    .toBe(legacyEstadoFor(targetState));
 
   const events = await countAcceptedEvents(page, batchId);
   expect(events.length, 'debe existir un solo evento aceptado').toBe(1);
@@ -195,7 +200,7 @@ test('offline → confirmación explícita → reinicio → reconexión → exac
     try {
       const fb = window.SetasFirebase;
       const { doc, deleteDoc } = await import('../vendor/firebase/firebase-firestore.js');
-      await deleteDoc(doc(fb.db, 'lotes_produccion', id));
+      await deleteDoc(doc(fb.db, 'bitacora_lotes', id));
       return 'deleted';
     } catch (e) {
       return `kept: ${e.code || e.message}`;

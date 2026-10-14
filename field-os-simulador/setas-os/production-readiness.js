@@ -5,6 +5,11 @@
   const KEY='sdp_production_readiness';
   const SCHEMA='setas.production-readiness.v1';
   const MANUAL_IDS=['spawn','equipment','room','sensors','review'];
+  // Esterilizar en autoclave se valida con un bioindicador por corrida: sin
+  // crecimiento, el ciclo mató las esporas de referencia; con crecimiento, no.
+  // Pasteurización y cal en frío no usan bioindicador.
+  const BIOINDICATOR_RESULTS=['sin_crecimiento','con_crecimiento','pendiente'];
+  const requiresBioindicator=input=>input?.treatment?.col==='autoclave';
   const text=v=>typeof v==='string'?v.trim():'';
   const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
   const scopeFor=input=>JSON.stringify([
@@ -15,7 +20,7 @@
   ]);
   const validDetails=(id,d={})=>({
     spawn:()=>!!(text(d.strainId)&&text(d.supplier)&&text(d.thermalClass)),
-    equipment:()=>!!(text(d.equipmentId)&&text(d.protocol)),
+    equipment:()=>!!(text(d.equipmentId)&&text(d.protocol))&&(!text(d.bioindicatorResult)||BIOINDICATOR_RESULTS.includes(d.bioindicatorResult)),
     room:()=>finite(d.capacityBags)&&Number.isInteger(Number(d.capacityBags))&&Number(d.capacityBags)>0&&d.sanitized===true&&d.targetsReviewed===true,
     sensors:()=>!!(text(d.deviceIds)&&text(d.calibrationReference)),
     review:()=>true,
@@ -71,7 +76,12 @@
     if(spawn.status==='verified'&&!spawnLots.length){spawn.status='unknown';spawn.detail='No hay un lote físico de semilla asignado para vincular esta revisión.';}
     const estimated=prepValid?prep.items.filter(i=>i.moisture?.source!=='operator-measured').length:null;
     add('moisture','Humedad de los ingredientes',estimated===null?'unknown':estimated?'unknown':'verified',estimated===null?'Falta la preparación.':estimated?`${estimated} ingrediente(s) usan humedad de referencia. Registra las mediciones del lote.`:'Humedades ingresadas como mediciones por el operador.','batch');
-    manual('equipment','Equipo y ciclo de tratamiento','record');
+    const equipment=manual('equipment','Equipo y ciclo de tratamiento','record');
+    if(equipment.status==='verified'&&requiresBioindicator(input)){
+      const d=equipment.record.details||{};
+      if(d.bioindicatorResult==='con_crecimiento'){equipment.status='blocked';equipment.detail='El bioindicador de la corrida del autoclave mostró crecimiento: la esterilización no está validada.';}
+      else if(d.bioindicatorResult!=='sin_crecimiento'||!text(d.cycleId)){equipment.status='unknown';equipment.detail='Falta la corrida del autoclave con un bioindicador sin crecimiento.';}
+    }
     const room=manual('room','Sala, capacidad y condiciones','record');
     if(room.status==='verified'){
       if(!input.roomState||!finite(input.roomState.bagsPresent)){room.status='unknown';room.detail='No se pudo comprobar la ocupación actual de la sala.';}
@@ -101,6 +111,9 @@
     const result={schema:SCHEMA,id,requirementId:form.requirementId,status:form.status,reviewer:text(form.reviewer),reference:text(form.reference),notes:text(form.notes),details:{...form.details},scope:scopeFor(input),at};
     if(!validRecord(result))throw Error('Completa responsable, evidencia y los datos de la revisión. Para un bloqueo o pendiente, explica el motivo.');
     if(!input.preparation?.revision||!input.speciesConfirmed)throw Error('Selecciona la especie y completa las cantidades antes de registrar una revisión.');
+    if(result.requirementId==='equipment'&&result.status==='verified'&&requiresBioindicator(input)
+      &&(result.details.bioindicatorResult!=='sin_crecimiento'||!text(result.details.cycleId)))
+      throw Error('Para esterilizar en autoclave registra la corrida (ID del ciclo) y un bioindicador sin crecimiento. Si hubo crecimiento, registra la revisión como bloqueada.');
     if(result.requirementId==='review'&&result.status==='verified'){
       const assessment=assessProductionReadiness(input,records,Date.parse(at));
       if(assessment.checks.some(c=>c.id!=='review'&&c.status!=='verified'))throw Error('Completa los requisitos pendientes antes de documentar la revisión final.');
@@ -108,7 +121,7 @@
     }
     return result;
   }
-  const api={KEY,SCHEMA,MANUAL_IDS,scopeFor,readRecords,createEvidence,assessProductionReadiness};
+  const api={KEY,SCHEMA,MANUAL_IDS,BIOINDICATOR_RESULTS,requiresBioindicator,scopeFor,readRecords,createEvidence,assessProductionReadiness};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   globalThis.SetasProductionReadiness=api;
 })();

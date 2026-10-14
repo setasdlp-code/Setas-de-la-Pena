@@ -1,13 +1,12 @@
 'use strict';
+const { skipIfAuthUnavailable } = require('./auth-policy.cjs');
 
 const { test, expect } = require('@playwright/test');
 
 const APP = '/Setas%20OS%20v5.dc.html';
 
 async function openApp(page, init = null) {
-  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
-    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
-  }
+  skipIfAuthUnavailable(test);
   if (init) await page.addInitScript(init);
   await page.goto(APP);
   // No usar waitForLoadState('networkidle') aquí: Firebase Auth/Firestore
@@ -16,12 +15,7 @@ async function openApp(page, init = null) {
   // intermitente hasta el timeout en CI. La señal real de "app lista" es la
   // que ya comprobamos a continuación (auth-gate oculto, shell visible).
   const gate = page.locator('#setas-auth-gate');
-  try {
-    await gate.waitFor({ state: 'hidden', timeout: 7000 });
-  } catch {
-    test.skip(true, 'Sesión de Firebase Auth no disponible en el entorno');
-    return;
-  }
+  await gate.waitFor({ state: 'hidden', timeout: 7000 });
   await expect(page.locator('.app-shell')).toBeVisible();
   await page.locator('.rail-btn[data-workspace]:visible, .app-rail-mobile .rail-mobile-btn:visible').first().waitFor();
   await page.locator('main.app-main').waitFor({ state: 'visible' });

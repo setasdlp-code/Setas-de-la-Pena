@@ -15,6 +15,23 @@ npx playwright test
 
 La configuración levanta `python3 -m http.server` automáticamente en `127.0.0.1:4173`.
 
+## Autenticación de release
+
+Los despliegues establecen `E2E_REQUIRE_AUTH=true` y requieren los secrets
+`E2E_TEST_EMAIL` y `E2E_TEST_PASSWORD` de una cuenta de prueba. Si falta uno,
+falla el login o se pierde la sesión, la validación falla y Pages no publica.
+No se reutiliza una sesión guardada por una ejecución anterior tras un fallo.
+
+Localmente y en PR sin credenciales se permite la omisión explícita de las
+pruebas autenticadas. Si se proporcionan credenciales, un login fallido siempre
+falla la ejecución. Para reproducir la política de release usa
+`E2E_REQUIRE_AUTH=true npm run test:e2e`. No guardar credenciales en el repositorio.
+
+`npm run test:browser` incluye una regresión offline independiente de Firebase:
+`service-worker-upgrade.browser.cjs` usa el worker y el versionado reales con
+assets sintéticos, incluidos fallo de instalación, actualización de CSS/módulos/
+vendor sin cambiar el bundle, módulo nuevo y reapertura offline sin recarga online.
+
 ## Contratos cubiertos
 
 - Los cuatro workspaces mantienen sincronizados rail y pestaña contextual.

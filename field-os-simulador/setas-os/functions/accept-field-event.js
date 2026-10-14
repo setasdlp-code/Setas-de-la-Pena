@@ -18,9 +18,13 @@ const { validateReceipt, DEFAULT_INITIAL_STATE } = require('./shared/field-event
 // Misma normalización que usa la ficha del lote en el navegador. Si el servidor
 // interpretara `estado` de otra forma, la hoja ofrecería transiciones que el
 // servidor rechaza — el lote se vería en un estado y se validaría contra otro.
-const { normalizeLifecycleState } = require('./shared/batch-sheet.js');
+const { normalizeLifecycleState, legacyEstadoFor } = require('./shared/batch-sheet.js');
 
-const BATCHES = 'lotes_produccion';
+// Los lotes viven en Bitácora: es donde la app los crea (Nueva prueba, Planificar
+// desde Formulador o Producción) y lo que sincroniza entre equipos (ADR-0009).
+// Antes se aceptaba sobre lotes_produccion, que ninguna pantalla crea, así que
+// toda transición de un lote real terminaba en batch_not_found.
+const BATCHES = 'bitacora_lotes';
 const EVENTS = 'field_events';
 const CONTAINERS = 'contenedores';
 
@@ -83,7 +87,8 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
       }
 
       const batchSnap = await tx.get(batchRef);
-      if (!batchSnap.exists) throw fail('batch_not_found', event.batchId);
+      // Un lote borrado queda como lápida (ADR-0009): para el flujo no existe.
+      if (!batchSnap.exists || batchSnap.data().deleted === true) throw fail('batch_not_found', event.batchId);
 
       const batch = batchSnap.data();
       const currentBatchRevision = Number.isInteger(batch.revision) ? batch.revision : 0;
@@ -175,7 +180,13 @@ const createAcceptFieldEvent = ({ db, resolveRole }) => {
       }
       validateReceipt(receipt);
 
-      tx.set(batchRef, { lifecycleState: event.payload.to, revision: nextRevision }, { merge: true });
+      // `estado` se escribe junto a lifecycleState para que los lectores de
+      // Bitácora que todavía leen el estado en español vean la misma etapa.
+      tx.set(batchRef, {
+        lifecycleState: event.payload.to,
+        estado: legacyEstadoFor(event.payload.to) || event.payload.to,
+        revision: nextRevision,
+      }, { merge: true });
       tx.set(eventRef, { ...event, operatorId, accountId, receipt });
 
       return receipt;

@@ -25,6 +25,9 @@ const root=path.resolve(__dirname,'..');
   browser=await chromium.launch({executablePath:process.env.SETAS_CHROMIUM_EXECUTABLE||undefined});
   for(const [width,height] of [[1280,900],[390,844]]){
    const page=await browser.newPage({viewport:{width,height}});
+   // El formulario se abre después de cruzar un minuto, antes de que se
+   // actualice el reloj periódico: el ciclo guardado debe verse de inmediato.
+   await page.clock.setFixedTime(new Date('2026-10-14T10:00:59.500Z'));
    const errores=[];page.on('pageerror',e=>errores.push(e.message));
    await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
    await page.addInitScript(()=>{
@@ -38,6 +41,7 @@ const root=path.resolve(__dirname,'..');
 
    const panel=page.getByTestId('room-cycle-panel');
    await expect(panel).toContainText('Sin ciclo activo');
+   await page.clock.setFixedTime(new Date('2026-10-14T10:01:01.000Z'));
    await panel.getByTestId('room-cycle-start').click();
 
    // ── Formulario con bandas sugeridas y su origen
@@ -71,6 +75,7 @@ const root=path.resolve(__dirname,'..');
    assert.deepEqual(lista[0].batchIds,['BIT_RC']);
 
    // ── Avanzar a inducción: bandas de fructificación y la etapa anterior se cierra
+   await page.clock.setFixedTime(new Date('2026-10-14T10:01:10.000Z'));
    await panel.getByRole('button',{name:'Avanzar a Inducción'}).click();
    dialog=page.getByRole('dialog',{name:'Avanzar ciclo de sala'});
    await expect(dialog.getByLabel('Etapa del ciclo')).toHaveValue('induction');
@@ -89,6 +94,7 @@ const root=path.resolve(__dirname,'..');
    await expect(panel.locator('details summary')).toContainText('Ciclos anteriores (1)');
 
    // ── Cerrar
+   await page.clock.setFixedTime(new Date('2026-10-14T10:01:20.000Z'));
    await panel.getByRole('button',{name:'Cerrar ciclo'}).click();
    await page.getByRole('button',{name:'Cerrar ciclo'}).last().click();
    await expect(panel).toContainText('Sin ciclo activo');

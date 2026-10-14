@@ -143,7 +143,7 @@ declaración que se mueva a un módulo propio es una menos que re-parsear.
 
 Las inspecciones manuales requieren responsable y referencia, se vinculan a especie, revisión de preparación, sala, contenedor, código/fecha y lotes de semilla asignados. Los cambios invalidan su vigencia. La revisión final también depende del stock, reservas, ocupación y estado de los demás requisitos. Las lecturas de sensores requieren origen físico conocido, calidad válida y frescura por métrica; transportar una prueba por Firestore no la convierte en evidencia física.
 
-`sdp_production_readiness` conserva las inspecciones localmente mediante el registro de recuperación existente y se incluye en exportación/restauración de respaldos. El informe JSON permite compartir una evaluación, pero estas inspecciones no se sincronizan entre equipos ni sustituyen la autorización del ensayo en Bitácora. Las referencias son declaraciones del revisor; el sistema no certifica el contenido de un informe físico. Pruebas: `production-readiness.test.js` y `e2e/production-readiness.browser.cjs`.
+`sdp_production_readiness` conserva las inspecciones localmente mediante el registro de recuperación existente y se incluye en exportación/restauración de respaldos. Cada inspección es un registro inmutable que sube a `production_readiness` (una revisión nueva reemplaza a la anterior por fecha; las reglas solo permiten crear) y llega a los demás equipos por la sincronización de colecciones (ADR-0009). Las inspecciones no sustituyen la autorización del ensayo en Bitácora. Cuando el tratamiento es esterilización en autoclave, la revisión de equipo exige la corrida (ID del ciclo) y un bioindicador sin crecimiento; con crecimiento, el requisito queda bloqueado. Las referencias son declaraciones del revisor; el sistema no certifica el contenido de un informe físico. Pruebas: `production-readiness.test.js` y `e2e/production-readiness.browser.cjs`.
 
 `simulador-app.jsx` es el fuente editable. El navegador consume `simulador-app.js`, generado con esbuild vía `node build.js` (requiere `npm install` una vez — `esbuild` es devDependency).
 
@@ -181,6 +181,33 @@ Ninguna CI corre `node build.js`. Lo que hay es verificación: `build.test.js` l
 banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un hash
 fresco de `simulador-app.jsx`. Por eso el bundle generado tiene que ir en el mismo
 commit — la CI detecta el desfase, pero no lo corrige.
+
+### Release, autenticación y actualización offline
+
+`deploy.yml` ejecuta los workflows reutilizables de calidad del repositorio y de
+Setas OS contra el mismo commit. Pages sólo publica `main` cuando ambos terminan
+correctamente; una ejecución manual tiene las mismas compuertas. La validación
+de release establece `E2E_REQUIRE_AUTH=true`: faltan credenciales, falla el login
+o se pierde la sesión durante el recorrido → falla la validación. Un entorno
+local/PR sin credenciales puede omitir explícitamente los recorridos autenticados;
+con credenciales configuradas, un login fallido siempre es un fallo.
+
+`build.js` conserva el hash JSX del bundle y genera además la versión de caché y
+la lista de assets desde `release-assets.cjs`: shell, módulos, CSS, vendor,
+fuentes e imágenes. Cualquier cambio de runtime requiere `npm run build`, incluso
+si no cambia JSX. Los directorios de tests, sesiones, funciones y datos de campo
+no se leen. Las marcas generadas del propio worker se normalizan para que dos
+builds consecutivos produzcan los mismos bytes.
+
+La primera instalación sólo precachea BOOT y conserva la carga diferida del gate.
+Al actualizar una caché que ya contiene el bundle autenticado, el nuevo worker
+descarga todos los assets de la versión antes de activar y purgar las cachés
+anteriores de Setas OS. Si una descarga o la cuota falla, sigue disponible el
+worker anterior. Esta actualización requiere descargar el conjunto de assets
+estáticos (aproximadamente 22 MB actualmente); no descarga datos de Firestore.
+Una respuesta online válida sigue disponible aunque falle su guardado en caché.
+`e2e/service-worker-upgrade.browser.cjs` prueba actualización en segundo plano,
+instalación fallida y reapertura offline en un subdirectorio como GitHub Pages.
 
 ## 5. Datos compartidos entre dispositivos (ADR-0009)
 

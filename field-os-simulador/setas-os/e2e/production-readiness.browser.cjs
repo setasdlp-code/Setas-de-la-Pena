@@ -36,10 +36,19 @@ const root=path.resolve(__dirname,'..');
   await form.getByLabel('Referencia de evidencia').fill('INFORME-CARGA-SINTETICA');
   await form.getByLabel('Equipo identificado').fill('EQ-01');
   await form.getByLabel('Protocolo y carga validados').fill('Solo fixture de software, sin validación física real');
+  // Shiitake se esteriliza en autoclave: sin corrida y bioindicador no se verifica.
+  await form.getByRole('button',{name:/Guardar revisión/}).click();
+  await expect(form.getByRole('alert')).toContainText('bioindicador sin crecimiento');
+  await expect(equipment.locator('.readiness-status')).toHaveText('Sin verificar');
+  await form.getByLabel(/Corrida del autoclave/).fill('AC-FIXTURE-01');
+  await form.getByLabel('Bioindicador de la corrida').selectOption('sin_crecimiento');
   await form.getByRole('button',{name:/Guardar revisión/}).click();
   await expect(equipment.locator('.readiness-status')).toHaveText('Verificado');
   const record=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_production_readiness'))[0]);
   assert.equal(record.requirementId,'equipment');assert.ok(record.scope.includes('shiitake'));
+  // La revisión queda en cola para subir a production_readiness (ADR-0009).
+  const queued=await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_sync_queue')||'[]'));
+  assert.ok(queued.some(op=>op.type==='crearDocumento'&&op.args[0]==='production_readiness/'+record.id&&op.args[1].id===record.id),'la revisión no quedó en cola de sincronización');
   assert.deepEqual(await page.evaluate(()=>['sdp_lotes','sdp_bit_lotes','sdp_bit_bolsas','sdp_inventory_ops'].map(k=>JSON.parse(localStorage.getItem(k)||'[]'))),before);
   await page.reload();await expect(equipment.locator('.readiness-status')).toHaveText('Verificado');
   console.log('PASS dashboard entry, unknown physical evidence, local inspection persistence and no production/stock writes.');

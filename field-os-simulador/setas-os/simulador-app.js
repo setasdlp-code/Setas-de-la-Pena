@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 58eeb82dec14460048db15c5a874ee53aa15c4da7d648ed6847b18db77b77478
+// source-hash: 1669fe22e9cafe2b2c0f085fe95da7f38b9669c4faee9178447eb72b979cc330
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -68,7 +68,7 @@ function ReadinessEvidenceForm({ check, onSave }) {
     } catch (e) {
       setError(e.message);
     }
-  } }, /* @__PURE__ */ React.createElement("label", null, "Resultado de la revisión", /* @__PURE__ */ React.createElement("select", { value: form.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "unknown" }, "Sin verificar"), /* @__PURE__ */ React.createElement("option", { value: "verified" }, "Verificado con evidencia"), /* @__PURE__ */ React.createElement("option", { value: "blocked" }, "Bloqueado"))), /* @__PURE__ */ React.createElement("label", null, "Responsable de la revisión", /* @__PURE__ */ React.createElement("input", { value: form.reviewer, onChange: (e) => set("reviewer", e.target.value), required: true })), /* @__PURE__ */ React.createElement("label", null, "Referencia de evidencia", /* @__PURE__ */ React.createElement("input", { placeholder: "Registro, informe o URL", value: form.reference, onChange: (e) => set("reference", e.target.value), required: form.status === "verified" })), fields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key }, label, /* @__PURE__ */ React.createElement("input", { value: form.details[key] || "", onChange: (e) => detail(key, e.target.value), required: form.status === "verified" }))), check.id === "room" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Capacidad documentada de la sala (bolsas)", /* @__PURE__ */ React.createElement("input", { type: "number", min: "1", step: "1", value: form.details.capacityBags || "", onChange: (e) => detail("capacityBags", e.target.value), required: form.status === "verified" })), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.sanitized, onChange: (e) => detail("sanitized", e.target.checked) }), " Verifiqué limpieza y condiciones físicas de la sala."), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.targetsReviewed, onChange: (e) => detail("targetsReviewed", e.target.checked) }), " Revisé las condiciones aprobadas para la especie, cepa y etapa.")), /* @__PURE__ */ React.createElement("label", null, "Observaciones / motivo", /* @__PURE__ */ React.createElement("textarea", { value: form.notes, onChange: (e) => set("notes", e.target.value), required: form.status !== "verified" })), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "inv-btn inv-btn-sec" }, "Guardar revisión de ", check.label));
+  } }, /* @__PURE__ */ React.createElement("label", null, "Resultado de la revisión", /* @__PURE__ */ React.createElement("select", { value: form.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "unknown" }, "Sin verificar"), /* @__PURE__ */ React.createElement("option", { value: "verified" }, "Verificado con evidencia"), /* @__PURE__ */ React.createElement("option", { value: "blocked" }, "Bloqueado"))), /* @__PURE__ */ React.createElement("label", null, "Responsable de la revisión", /* @__PURE__ */ React.createElement("input", { value: form.reviewer, onChange: (e) => set("reviewer", e.target.value), required: true })), /* @__PURE__ */ React.createElement("label", null, "Referencia de evidencia", /* @__PURE__ */ React.createElement("input", { placeholder: "Registro, informe o URL", value: form.reference, onChange: (e) => set("reference", e.target.value), required: form.status === "verified" })), fields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key }, label, /* @__PURE__ */ React.createElement("input", { value: form.details[key] || "", onChange: (e) => detail(key, e.target.value), required: form.status === "verified" }))), check.id === "equipment" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Corrida del autoclave (ID del ciclo) · obligatoria si se esteriliza", /* @__PURE__ */ React.createElement("input", { value: form.details.cycleId || "", onChange: (e) => detail("cycleId", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Bioindicador de la corrida", /* @__PURE__ */ React.createElement("select", { value: form.details.bioindicatorResult || "", onChange: (e) => detail("bioindicatorResult", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "No aplica (pasteurización o cal)"), /* @__PURE__ */ React.createElement("option", { value: "sin_crecimiento" }, "Sin crecimiento"), /* @__PURE__ */ React.createElement("option", { value: "con_crecimiento" }, "Con crecimiento"), /* @__PURE__ */ React.createElement("option", { value: "pendiente" }, "Pendiente de lectura")))), check.id === "room" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Capacidad documentada de la sala (bolsas)", /* @__PURE__ */ React.createElement("input", { type: "number", min: "1", step: "1", value: form.details.capacityBags || "", onChange: (e) => detail("capacityBags", e.target.value), required: form.status === "verified" })), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.sanitized, onChange: (e) => detail("sanitized", e.target.checked) }), " Verifiqué limpieza y condiciones físicas de la sala."), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.targetsReviewed, onChange: (e) => detail("targetsReviewed", e.target.checked) }), " Revisé las condiciones aprobadas para la especie, cepa y etapa.")), /* @__PURE__ */ React.createElement("label", null, "Observaciones / motivo", /* @__PURE__ */ React.createElement("textarea", { value: form.notes, onChange: (e) => set("notes", e.target.value), required: form.status !== "verified" })), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "inv-btn inv-btn-sec" }, "Guardar revisión de ", check.label));
 }
 function ProductionReadinessDashboard({ assessment, input, rooms, onRoomChange, onAction, onSave, error }) {
   const [message, setMessage] = useState("");
@@ -84,7 +84,7 @@ function ProductionReadinessDashboard({ assessment, input, rooms, onRoomChange, 
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1e3);
   };
-  return /* @__PURE__ */ React.createElement("section", { id: "production-readiness", className: "production-readiness no-print", "aria-labelledby": "production-readiness-title", "data-testid": "production-readiness-dashboard" }, /* @__PURE__ */ React.createElement("header", { className: "readiness-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "readiness-kicker" }, "Antes de producir"), /* @__PURE__ */ React.createElement("h2", { id: "production-readiness-title" }, "Preparación para producción"), /* @__PURE__ */ React.createElement("p", null, input.lotCode || "Plan sin código", " · ", input.speciesName || "Especie pendiente", " · ", assessment.preparationRevision || "Cantidades pendientes")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportReport }, "Exportar informe")), /* @__PURE__ */ React.createElement("div", { className: `readiness-summary is-${assessment.status}`, role: "status", "aria-live": "polite", "aria-atomic": "true" }, /* @__PURE__ */ React.createElement("strong", null, assessment.status === "verified" ? "Requisitos documentados · revisar autorización del ensayo" : "Requisitos pendientes antes de producir"), /* @__PURE__ */ React.createElement("span", null, assessment.counts.verified, " verificados · ", assessment.counts.blocked, " bloqueados · ", assessment.counts.unknown, " sin verificar")), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico."), /* @__PURE__ */ React.createElement("div", { className: "readiness-context" }, /* @__PURE__ */ React.createElement("label", null, "Sala prevista", /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala prevista para preparación", value: input.roomId, onChange: (e) => onRoomChange(e.target.value) }, rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), assessment.next && /* @__PURE__ */ React.createElement("p", null, /* @__PURE__ */ React.createElement("strong", null, "Siguiente requisito:"), " ", assessment.next.label, ". ", assessment.next.detail)), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error, " No se puede registrar una nueva revisión hasta recuperar estos datos."), /* @__PURE__ */ React.createElement("p", { className: "readiness-local-note" }, "Las revisiones manuales se guardan en este equipo y se incluyen en el respaldo de ensayos. El informe permite compartir esta evaluación."), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message), /* @__PURE__ */ React.createElement("div", { className: "readiness-grid" }, assessment.checks.map((check) => /* @__PURE__ */ React.createElement("article", { key: check.id, className: `readiness-card is-${check.status}`, "data-testid": `readiness-${check.id}` }, /* @__PURE__ */ React.createElement("div", { className: "readiness-card-heading" }, /* @__PURE__ */ React.createElement("h3", null, check.label), /* @__PURE__ */ React.createElement("span", { className: "readiness-status" }, labels[check.status])), /* @__PURE__ */ React.createElement("p", null, check.detail), check.record && /* @__PURE__ */ React.createElement("p", { className: "readiness-record" }, "Registro de ", check.record.reviewer, " · ", new Date(check.record.at).toLocaleString("es-CO", { timeZone: "America/Bogota" })), check.id === "spawn" && assessment.spawnLots.length > 0 && /* @__PURE__ */ React.createElement("p", null, "Lotes de semilla asignados: ", assessment.spawnLots.map((l) => l.lotId).join(", ")), manual.includes(check.id) ? /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Registrar evidencia de ", check.label), /* @__PURE__ */ React.createElement(ReadinessEvidenceForm, { check, onSave: (form) => {
+  return /* @__PURE__ */ React.createElement("section", { id: "production-readiness", className: "production-readiness no-print", "aria-labelledby": "production-readiness-title", "data-testid": "production-readiness-dashboard" }, /* @__PURE__ */ React.createElement("header", { className: "readiness-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "readiness-kicker" }, "Antes de producir"), /* @__PURE__ */ React.createElement("h2", { id: "production-readiness-title" }, "Preparación para producción"), /* @__PURE__ */ React.createElement("p", null, input.lotCode || "Plan sin código", " · ", input.speciesName || "Especie pendiente", " · ", assessment.preparationRevision || "Cantidades pendientes")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportReport }, "Exportar informe")), /* @__PURE__ */ React.createElement("div", { className: `readiness-summary is-${assessment.status}`, role: "status", "aria-live": "polite", "aria-atomic": "true" }, /* @__PURE__ */ React.createElement("strong", null, assessment.status === "verified" ? "Requisitos documentados · revisar autorización del ensayo" : "Requisitos pendientes antes de producir"), /* @__PURE__ */ React.createElement("span", null, assessment.counts.verified, " verificados · ", assessment.counts.blocked, " bloqueados · ", assessment.counts.unknown, " sin verificar")), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico."), /* @__PURE__ */ React.createElement("div", { className: "readiness-context" }, /* @__PURE__ */ React.createElement("label", null, "Sala prevista", /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala prevista para preparación", value: input.roomId, onChange: (e) => onRoomChange(e.target.value) }, rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), assessment.next && /* @__PURE__ */ React.createElement("p", null, /* @__PURE__ */ React.createElement("strong", null, "Siguiente requisito:"), " ", assessment.next.label, ". ", assessment.next.detail)), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error, " No se puede registrar una nueva revisión hasta recuperar estos datos."), /* @__PURE__ */ React.createElement("p", { className: "readiness-local-note" }, "Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación."), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message), /* @__PURE__ */ React.createElement("div", { className: "readiness-grid" }, assessment.checks.map((check) => /* @__PURE__ */ React.createElement("article", { key: check.id, className: `readiness-card is-${check.status}`, "data-testid": `readiness-${check.id}` }, /* @__PURE__ */ React.createElement("div", { className: "readiness-card-heading" }, /* @__PURE__ */ React.createElement("h3", null, check.label), /* @__PURE__ */ React.createElement("span", { className: "readiness-status" }, labels[check.status])), /* @__PURE__ */ React.createElement("p", null, check.detail), check.record && /* @__PURE__ */ React.createElement("p", { className: "readiness-record" }, "Registro de ", check.record.reviewer, " · ", new Date(check.record.at).toLocaleString("es-CO", { timeZone: "America/Bogota" })), check.id === "spawn" && assessment.spawnLots.length > 0 && /* @__PURE__ */ React.createElement("p", null, "Lotes de semilla asignados: ", assessment.spawnLots.map((l) => l.lotId).join(", ")), manual.includes(check.id) ? /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Registrar evidencia de ", check.label), /* @__PURE__ */ React.createElement(ReadinessEvidenceForm, { check, onSave: (form) => {
     if (error) throw Error(error);
     onSave(form);
     setMessage(`Revisión de ${check.label} guardada para este plan.`);
@@ -5627,7 +5627,25 @@ function SimuladorShell(props) {
         if (e && e.name === "QuotaExceededError") bitQuotaWarn();
         return;
       }
-      const setters = { sdp_bit_lotes: setBitLotes, sdp_bit_bolsas: setBitBolsas, sdp_bit_cosechas: setBitCosechas, sdp_movimientos: setInvMovimientos, sdp_compras: setInvCompras, sdp_proveedores: setInvProveedores, sdp_inv_reservas: setInvReservas, sdp_room_cycles: setRoomCycles };
+      const setters = {
+        sdp_bit_lotes: setBitLotes,
+        sdp_bit_bolsas: setBitBolsas,
+        sdp_bit_cosechas: setBitCosechas,
+        sdp_movimientos: setInvMovimientos,
+        sdp_compras: setInvCompras,
+        sdp_proveedores: setInvProveedores,
+        sdp_inv_reservas: setInvReservas,
+        sdp_room_cycles: setRoomCycles,
+        // Las revisiones se releen con readRecords: un registro inválido llegado
+        // de otro equipo se muestra como error, igual que uno dañado en local.
+        [SetasProductionReadiness.KEY]: () => {
+          try {
+            setProductionEvidence({ records: SetasProductionReadiness.readRecords(localStorage), error: "" });
+          } catch (e) {
+            setProductionEvidence({ records: [], error: e.message });
+          }
+        }
+      };
       for (const [key, value] of plan.entries) {
         if (key === "sdp_lotes") {
           invLotesRef.current = value;
@@ -5809,6 +5827,7 @@ function SimuladorShell(props) {
     return () => window.removeEventListener("setas-room-cycle-updated", reload);
   }, []);
   const [cycleClock, setCycleClock] = useState(() => Date.now());
+  useEffect(() => setCycleClock(Date.now()), [roomCycles]);
   useEffect(() => {
     const t = setInterval(() => setCycleClock(Date.now()), 6e4);
     return () => clearInterval(t);
@@ -6521,6 +6540,7 @@ function SimuladorShell(props) {
     const records = [...current, record];
     SetasPrototype.persist(localStorage, [[SetasProductionReadiness.KEY, records]]);
     setProductionEvidence({ records, error: "" });
+    encolarSync({ type: "crearDocumento", key: "production_readiness:" + record.id, args: ["production_readiness/" + record.id, record] });
   };
   const openProductionReadiness = () => {
     goTab("produccion");
@@ -6879,7 +6899,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote = SetasPrototype.read(localStorage, "sdp_bit_lotes").find((l) => l.id === releaseBatchId);
     const result = SetasPrototype.prepareBatch(localStorage, { loteId: lote.id, trialRelease: record, sheet: buildSheetFor(lote), role: operatorRole, operatorId: lote.operador || "operador-local", at: (/* @__PURE__ */ new Date()).toISOString() });
     applyPrototypeEntries(result.entries);
-    enqueueFieldTransition(result.lote, result.lote.pendingPreparationTransition?.from || "planned", result.transition);
+    requestLotTransition(result.lote, result.transition, { from: result.lote.pendingPreparationTransition?.from || "planned", logged: true });
     if (taskEngine) mergeIntoTasks(taskEngine.tasksFromTransition({ batchId: lote.id, toState: result.transition, at: (/* @__PURE__ */ new Date()).toISOString() }));
     runInventorySync();
     setReleaseBatchId(null);
@@ -8626,6 +8646,48 @@ BATCH (${numBags}×${kgBag} kg):
       setNoticeDlg({ title: "No se pudo registrar la transición", msg: err.message });
     }
   };
+  const requestLotTransition = (lote, to, { from = null, reason = null, logged = false } = {}) => {
+    if (!lote || !workflow) return false;
+    const origin = from || loteLifecycleState(lote);
+    const label = (s) => batchSheetApi && batchSheetApi.stateLabel ? batchSheetApi.stateLabel(s) : s;
+    if (!workflow.canTransition(origin, to)) {
+      setNoticeDlg({ title: "Cambio de etapa no permitido", msg: `${lote.codigo || lote.id} está en ${label(origin)} y no puede pasar a ${label(to)}.` });
+      return false;
+    }
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || null;
+    if (!uid && lote.lifecycleState) {
+      setNoticeDlg({ title: "Se necesita iniciar sesión", msg: `La etapa de ${lote.codigo || lote.id} ya la registra el servidor. Inicia sesión para cambiarla.` });
+      return false;
+    }
+    const event = logged ? null : workflow.transitionEvent({ batchId: lote.id, from: origin, to, operatorId: lote.operador || "operador-local", reason });
+    const log = event ? { lifecycleEvents: [...lote.lifecycleEvents || [], event] } : {};
+    if (uid) {
+      if (event) updateBitLote(lote.id, log);
+      enqueueFieldTransition(lote, origin, to);
+    } else {
+      updateBitLote(lote.id, { estado: batchSheetApi?.legacyEstadoFor?.(to) || to, ...log });
+    }
+    return true;
+  };
+  useEffect(() => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi) return;
+    const descartados = new Set(bitLotes.filter((l) => loteLifecycleState(l) === "discarded").map((l) => l.id));
+    if (!descartados.size) return;
+    setInvReservas((prev) => {
+      if (!prev.some((r) => r.status === "held" && descartados.has(r.batchId))) return prev;
+      const at = (/* @__PURE__ */ new Date()).toISOString();
+      let upd = prev;
+      descartados.forEach((id) => {
+        upd = ledgerApi.releaseForBatch(upd, id, { reason: "Lote de producción descartado", at });
+      });
+      try {
+        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+  }, [bitLotes]);
   const enqueueContainerFieldTransition = async (bolsa, lote, from, to, reasonCode = null, notes = null) => {
     const SHEET = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
     const uid = window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser ? window.SetasFirebase.auth.currentUser.uid : null;
@@ -8673,7 +8735,7 @@ BATCH (${numBags}×${kgBag} kg):
         }
       });
       if (consequences.transition) {
-        enqueueFieldTransition(lote, sheet.state, consequences.transition);
+        requestLotTransition(lote, consequences.transition, { from: sheet.state, logged: true });
       }
       if (consequences.transition && taskEngine) {
         const sopTasks = taskEngine.tasksFromTransition({
@@ -8712,14 +8774,9 @@ BATCH (${numBags}×${kgBag} kg):
     if (action === "advance_stage") {
       const activeSheet = sheet || buildSheetFor(lote);
       if (activeSheet && commitSheetAction(activeSheet, lote, "advance_stage")) return;
-      const next = lote.estado === "incubacion" ? "fructificacion" : lote.estado;
       const from = loteLifecycleState(lote);
-      const to = loteLifecycleState({ estado: next });
-      if (next !== lote.estado && workflow && workflow.canTransition(from, to)) {
-        const event = workflow.transitionEvent({ batchId: lote.id, from, to, operatorId: lote.operador || "operador-local" });
-        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
-        enqueueFieldTransition(lote, from, to);
-      }
+      const to = (workflow?.DEFAULT_TRANSITIONS?.[from] || [])[0];
+      if (to) requestLotTransition(lote, to, { from });
       return;
     }
     if (action === "prepare_mix") {
@@ -8740,17 +8797,31 @@ BATCH (${numBags}×${kgBag} kg):
       });
       return;
     }
+    if (action === "start_thermal_treatment" || action === "complete_thermal_treatment") {
+      commitSheetAction(sheet || buildSheetFor(lote), lote, action);
+      return;
+    }
+    if (action === "inoculate") {
+      setPromptDlg({
+        title: "Inocular",
+        label: "Lote de semilla usado",
+        defaultValue: lote.spawnLotId || "",
+        placeholder: "Ej. SPW-260101-01",
+        confirmLabel: "Registrar inoculación",
+        onSubmit: (spawnLotId) => {
+          const conSemilla = { ...lote, spawnLotId };
+          if (spawnLotId !== lote.spawnLotId) updateBitLote(lote.id, { spawnLotId });
+          commitSheetAction(buildSheetFor(conSemilla), conSemilla, "inoculate", { spawnLotId });
+        }
+      });
+      return;
+    }
     if (action === "close") {
-      updateBitLote(lote.id, { estado: "completado" });
+      requestLotTransition(lote, "closed");
       return;
     }
     if (action === "discard") {
-      const from = loteLifecycleState(lote);
-      if (workflow && workflow.canTransition(from, "discarded")) {
-        const event = workflow.transitionEvent({ batchId: lote.id, from, to: "discarded", operatorId: lote.operador || "operador-local", reason: "Descarte manual de lote" });
-        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
-        enqueueFieldTransition(lote, from, "discarded");
-      }
+      requestLotTransition(lote, "discarded", { reason: "Descarte manual de lote" });
       return;
     }
     if (action === "move") {
@@ -9952,7 +10023,7 @@ BATCH (${numBags}×${kgBag} kg):
       " Imprimir Rollo QR (",
       lote.numBolsas || 12,
       " bolsas)"
-    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("select", { name: `loteStatus-${lote.id}`, "aria-label": `Estado del lote ${lote.codigo}`, value: lote.estado, onChange: (e) => updateBitLote(lote.id, { estado: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, ["incubacion", "fructificacion", "completado", "descartado"].map((st) => /* @__PURE__ */ React.createElement("option", { key: st, value: st }, st))))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("span", { "data-testid": `lote-stage-${lote.id}`, className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px", display: "inline-flex", alignItems: "center" } }, "Etapa: ", batchSheetApi?.stateLabel ? batchSheetApi.stateLabel(loteLifecycleState(lote)) : loteLifecycleState(lote)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => openBatchSheetModal(lote), style: { fontSize: "var(--text-sm)", padding: "6px 12px" } }, "Cambiar etapa"))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
       ColonizationScaleSelector,
       {
         value: (() => {
@@ -9970,8 +10041,8 @@ BATCH (${numBags}×${kgBag} kg):
             up.colonizationPct = pct;
             return updateBitBolsa(b.id, up);
           })) return;
-          if (pct >= 100 && lote.estado === "incubacion") {
-            updateBitLote(lote.id, { estado: "fructificacion" });
+          if (pct >= 100 && workflow?.canTransition(loteLifecycleState(lote), "fruiting")) {
+            requestLotTransition(lote, "fruiting");
           }
           setNoticeDlg({
             title: "Avance registrado",
@@ -9984,8 +10055,8 @@ BATCH (${numBags}×${kgBag} kg):
             if (!bolsas.every((b) => {
               return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
             })) return;
-            updateBitLote(lote.id, { estado: "fructificacion" });
-            setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${lote.codigo} actualizado a fructificación.` });
+            const aFruct = workflow?.canTransition(loteLifecycleState(lote), "fruiting") && requestLotTransition(lote, "fruiting");
+            setNoticeDlg({ title: "Primordios confirmados", msg: aFruct ? `Lote ${lote.codigo}: paso a fructificación registrado.` : `Primordios registrados en ${lote.codigo}. La etapa no cambió.` });
           } else if (act === "riego") {
             setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad registrada para ${lote.codigo}.` });
           } else if (act === "ventilacion") {
@@ -11729,8 +11800,7 @@ Click para ver análisis completo`
         operatorRole: operatorRole2,
         operatorId,
         accountId,
-        onTransitionConfirmed: (batchId, nextState) => {
-          updateBitLote(batchId, { estado: nextState, workflowState: nextState });
+        onTransitionConfirmed: () => {
         }
       }
     );
@@ -12166,8 +12236,8 @@ Click para ver análisis completo`
               up.colonizationPct = pct;
               return updateBitBolsa(b.id, up);
             })) return;
-            if (pct >= 100 && currentLote.estado === "incubacion") {
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
+            if (pct >= 100 && workflow?.canTransition(loteLifecycleState(currentLote), "fruiting")) {
+              requestLotTransition(currentLote, "fruiting");
             }
             setNoticeDlg({
               title: "Avance registrado",
@@ -12181,8 +12251,8 @@ Click para ver análisis completo`
               if (!loteBolsas.every((b) => {
                 return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
               })) return;
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
-              setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${currentLote.codigo} pasado a etapa de fructificación.` });
+              const aFruct = workflow?.canTransition(loteLifecycleState(currentLote), "fruiting") && requestLotTransition(currentLote, "fruiting");
+              setNoticeDlg({ title: "Primordios confirmados", msg: aFruct ? `Lote ${currentLote.codigo}: paso a fructificación registrado.` : `Primordios registrados en ${currentLote.codigo}. La etapa no cambió.` });
             } else if (act === "riego") {
               setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad y niebla registrada para ${currentLote.codigo}.` });
             } else if (act === "ventilacion") {
@@ -13096,19 +13166,18 @@ interval:
           obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
         });
       });
-      const nextEstado = targetState === "quarantine" ? "cuarentena" : targetState === "discarded" ? "descartado" : currentLote.estado;
       const updatedEvents = [
         ...currentLote.lifecycleEvents || [],
         contamEvent,
         ...transitionEvt ? [transitionEvt] : []
       ];
+      const loteConEventos = { ...currentLote, lifecycleEvents: updatedEvents };
       updateBitLote(currentLote.id, {
-        estado: nextEstado,
         numBolsas: lossCalc.healthyBags,
         lifecycleEvents: updatedEvents
       });
       if (changesState) {
-        enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+        requestLotTransition(loteConEventos, targetState, { from: currentLifecycle, logged: true });
       }
       setShowTriageModal(false);
       setNoticeDlg({
@@ -13363,10 +13432,9 @@ interval:
             operatorId: currentLote.operador || "operador-local",
             reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
           });
-          updateBitLote(currentLote.id, {
-            lifecycleEvents: [...currentLote.lifecycleEvents || [], evt]
-          });
-          enqueueFieldTransition(currentLote, fromState, massTarget);
+          const conEvento = { ...currentLote, lifecycleEvents: [...currentLote.lifecycleEvents || [], evt] };
+          updateBitLote(currentLote.id, { lifecycleEvents: conEvento.lifecycleEvents });
+          requestLotTransition(conEvento, massTarget, { from: fromState, logged: true });
         }
       }
       setShowDiagModal(false);

@@ -46,6 +46,7 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 | All American 1941X (41 qt / 39 L) | 1 | En sitio | Tenjo — Esterilizador no eléctrico (autoclave) para comisionamiento |
 | Estufa Industrial a Propano (2 quemadores) | 1 | Operacional | Tenjo — Fuente térmica para esterilización |
 | Malla radiante QuietWarmth (90W, 120V) | 1 | Disponible | Tenjo — Calefacción para incubación |
+| Cable calefactor silicona + fibra de carbono 5,2 m (110/220 V, 33 Ω/m) | 2 | Disponible | Tenjo — Calefacción de la incubadora nueva (80 × 60 × 100 cm); datos del anuncio, pendiente de medir resistencia |
 | Racks metálicos y Mesón inox 1.50 m | 4 | Operacionales | Tenjo — Almacenamiento vertical y área de trabajo limpio |
 
 ---
@@ -78,6 +79,8 @@ No hay setpoints operacionales aprobados para el lote 1. *Lentinula edodes* pres
 | Criterio de cosecha | Pendiente | Estándar comercial y de calidad definido antes de la primera fructificación |
 
 Antes de inocular, `06_operations/quality_control.md` exige spawn trazable, formulación aprobada y ciclo de autoclave validado con carga representativa. Antes de inducir, el lote debe tener un criterio de madurez documentado. El choque frío no se presume obligatorio.
+
+Plantilla versionada de la especificación del lote 1: `06_operations/lote1_shiitake_especificacion_ambiental.md` (`DOC-0122`), **pendiente** (sin cepa ni banda). El protocolo del piloto de incubación está en `06_operations/piloto_shiitake_incubacion_protocolo.md` (`DOC-0123`); el firmware de la incubadora no compila hasta que esta especificación fije la banda y la histéresis.
 
 ---
 
