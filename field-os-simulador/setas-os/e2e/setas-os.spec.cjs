@@ -130,7 +130,7 @@ test.describe('desktop navigation contract', () => {
     const evaluation = page.locator('#recipe-live-evaluation');
     const summary = page.locator('#bl-receta-summary');
     const ingredients = page.locator('#bl-ingredientes');
-    const advanced = page.locator('.form-advanced-tools-head');
+    const review = page.locator('#formulator-review');
     const command = page.locator('.form-production-command');
 
     await expect(species).toBeVisible();
@@ -149,17 +149,18 @@ test.describe('desktop navigation contract', () => {
     await expect(evaluation).toContainText('Evaluación en vivo');
     // The score/gauges/batch summary panel only renders once a recipe exists.
     await expect(summary).toBeHidden();
-    await expect(advanced).toContainText('Perito + Automejora');
+    // Perito y las herramientas avanzadas ya no tienen cabecera propia: viven en el panel unificado.
+    await expect(review).toContainText('Revisión y preparación');
 
     const layoutBefore = await page.evaluate(() => {
       const rect = sel => document.querySelector(sel).getBoundingClientRect();
       const e = rect('#recipe-live-evaluation');
       const i = rect('#bl-ingredientes');
-      const a = rect('.form-advanced-tools-head');
-      return { evaluationTop:e.top, ingredientsTop:i.top, advancedTop:a.top };
+      const r = rect('#formulator-review');
+      return { evaluationTop:e.top, ingredientsTop:i.top, reviewTop:r.top };
     });
     expect(layoutBefore.ingredientsTop).toBeGreaterThan(layoutBefore.evaluationTop);
-    expect(layoutBefore.advancedTop).toBeGreaterThan(layoutBefore.ingredientsTop);
+    expect(layoutBefore.reviewTop).toBeLessThan(layoutBefore.evaluationTop);
 
     // A fresh workspace has no physical inventory. Recipe exploration must
     // explicitly use the catalog instead of relying on seeded Bodega stock.
