@@ -7,7 +7,7 @@ if (['bricolage', 'libre', 'mono'].includes(pairing)) {
     const href = link.getAttribute('href');
     if (href.startsWith('#')) return;
     const target = new URL(href, location.href);
-    if (target.origin === location.origin && /\/(index|shiitake|recetas)\.html$/.test(target.pathname)) {
+    if (target.origin === location.origin && /\/(index|home|shiitake|recetas)\.html$/.test(target.pathname)) {
       target.searchParams.set('pairing', pairing);
       link.href = target.href;
     }
