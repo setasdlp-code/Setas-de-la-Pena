@@ -45,6 +45,7 @@ El piloto busca dos cosas:
 | Incubadora | 80 × 60 × 100 cm, interior de mylar, varias capas de icopor, exterior de paneles de cielorraso PVC (como la caseta de la CLOUDLAB) | [Decisión] |
 | Calefactor | 2 cables de silicona con fibra de carbono de 5,2 m conectados **en serie** | [Decisión] |
 | Ubicación | Terraza | [Decisión] |
+| Ventilación | Un ventilador de 12 V con entrada y salida de aire pasivas | [Decisión] |
 | Fructificación posterior | CLOUDLAB 844, ya instalada en la terraza | [Mi decisión] |
 
 ## 4. Restricciones
@@ -91,7 +92,13 @@ El piloto busca dos cosas:
 - Bolsas elevadas del piso sobre rejilla lavable, sin apoyarse en agua ni en aislamiento poroso.
 - Los 30 bloques caben, según estimación mía, en dos niveles de repisa de 0,48 m² con espacio de aire (bolsa Unicorn de ~20 × 13 × 51 cm). Hay que probarlo con bolsas reales.
 - Cielorraso PVC en el exterior es compatible con el KB (piel exterior lavable y desmontable). El interior debe ser lavable y sin bordes de mylar que retengan condensación.
-- El calor metabólico del micelio puede subir el núcleo 4–8 °C sobre el aire [KB]. Con una caja bien aislada y 42 W, el riesgo principal puede ser sobrecalentar, no enfriar. La incubadora necesita una ventilación activa medible (diseño pendiente, sección 8).
+- El calor metabólico del micelio puede subir el núcleo 4–8 °C sobre el aire [KB]. Con una caja bien aislada y 42 W, el riesgo principal puede ser sobrecalentar, no enfriar.
+
+- **[Decisión]** Ventilación: un ventilador de 12 V, con entrada y salida de aire pasivas (aberturas sin ventilador propio).
+- **[Mi decisión]** El ventilador de 12 V del inventario (Noctua NF-P12 o GDSTIME IP68) se alimenta con la Mean Well LRS-50-12 y funciona en el plenum, repartiendo el aire caliente. El intercambio con el exterior depende solo de las aberturas pasivas, de modo que no hay renovación forzada. Esto es una interpretación mía de tu respuesta: confirma si el ventilador es de circulación o de extracción.
+- **[Mi decisión]** El tamaño y la posición de las aberturas no se fijan de antemano. Se ajustan en las fases 1 y 2 midiendo CO₂ dentro y fuera, y la temperatura de núcleo. Las aberturas deben llevar filtro o malla contra polvo y estar protegidas de lluvia y sol directo, y no pueden quedar bloqueadas por las bolsas.
+- **[Mi decisión]** Si el CO₂ o la temperatura de núcleo suben más de lo permitido y las aberturas pasivas no alcanzan, el diseño pasa a ventilación forzada. Se registra como cambio de diseño, no como ajuste del piloto.
+- El ventilador debe detectarse apagado: con un modelo con salida de tacómetro (el Noctua lo tiene) o midiendo la corriente. Si el ventilador falla, el calefactor se apaga (interbloqueo de la sección 5.2).
 
 ## 6. Plan de pruebas
 
@@ -123,7 +130,7 @@ Qué se aprende: estabilidad y sobreimpulso, consumo, diferencia entre núcleo y
 **De Sebastián (cambian lo que se construye):**
 1. **Cepa de shiitake:** el catálogo de Fungiilab no da nombre ni clase térmica. Pedirlos (y si necesita choque frío, dosis de inoculación, matriz del inóculo, fecha de elaboración).
 2. **Banda de temperatura de incubación** y su histéresis, definidas a partir de la cepa.
-3. **Ventilación de la incubadora:** entradas, salidas, ventilador y cómo se mide el CO₂ dentro.
+3. **Ventilación de la incubadora:** ya definida como ventilador de 12 V con entrada y salida pasivas. Falta confirmar el modelo y la función del ventilador (circulación o extracción) y las dimensiones de las aberturas, que se ajustan con las pruebas de las fases 1 y 2.
 4. **Formulación del sustrato** de los bloques de 2,0 kg (aprobada o pendiente) y validación del ciclo de autoclave con esa carga (cuántas bolsas caben en 39 L).
 
 **Compras o verificaciones (mi lectura del inventario):**
