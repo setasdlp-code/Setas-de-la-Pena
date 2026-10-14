@@ -264,8 +264,10 @@ test('canonical batch detail replaces bit_ficha and derives visible actions from
 });
 
 test('advancing a legacy lot writes the canonical transition event with the lot update', () => {
-  assert.match(source, /workflow\.canTransition\(from,to\)/);
-  assert.match(source, /workflow\.transitionEvent\(\{batchId:lote\.id,from,to,operatorId:/);
+  // Todo cambio de etapa pasa por requestLotTransition: valida, escribe el
+  // evento canónico en la bitácora del lote y encola o registra la etapa.
+  assert.match(source, /workflow\.canTransition\(origin,to\)/);
+  assert.match(source, /workflow\.transitionEvent\(\{batchId:lote\.id,from:origin,to,operatorId:/);
   assert.match(source, /lifecycleEvents:\[\.\.\.\(lote\.lifecycleEvents\|\|\[\]\),event\]/);
 });
 

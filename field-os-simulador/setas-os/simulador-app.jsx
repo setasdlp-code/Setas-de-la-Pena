@@ -22,6 +22,69 @@ function BagObservationEditor({bolsa,onSave}) {
   </div>;
 }
 
+function ReadinessEvidenceForm({check,onSave}) {
+  const [form,setForm]=useState({requirementId:check.id,status:'unknown',reviewer:check.record?.reviewer||'',reference:check.record?.reference||'',notes:'',details:{}});
+  const [error,setError]=useState('');
+  const set=(key,value)=>setForm(p=>({...p,[key]:value}));
+  const detail=(key,value)=>setForm(p=>({...p,details:{...p.details,[key]:value}}));
+  const fields={spawn:[['strainId','ID de cepa'],['supplier','Proveedor de semilla'],['thermalClass','Clase térmica documentada de la cepa']],equipment:[['equipmentId','Equipo identificado'],['protocol','Protocolo y carga validados']],sensors:[['deviceIds','IDs de los sensores / nodos (separados por coma)'],['calibrationReference','Registro de calibración o verificación cruzada']]}[check.id]||[];
+  return <form className="readiness-evidence-form" aria-label={`Evidencia: ${check.label}`} onSubmit={event=>{event.preventDefault();try{onSave(form);setError('');}catch(e){setError(e.message);}}}>
+    <label>Resultado de la revisión<select value={form.status} onChange={e=>set('status',e.target.value)}><option value="unknown">Sin verificar</option><option value="verified">Verificado con evidencia</option><option value="blocked">Bloqueado</option></select></label>
+    <label>Responsable de la revisión<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)} required/></label>
+    <label>Referencia de evidencia<input placeholder="Registro, informe o URL" value={form.reference} onChange={e=>set('reference',e.target.value)} required={form.status==='verified'}/></label>
+    {fields.map(([key,label])=><label key={key}>{label}<input value={form.details[key]||''} onChange={e=>detail(key,e.target.value)} required={form.status==='verified'}/></label>)}
+    {check.id==='equipment'&&<>
+      <label>Corrida del autoclave (ID del ciclo) · obligatoria si se esteriliza<input value={form.details.cycleId||''} onChange={e=>detail('cycleId',e.target.value)}/></label>
+      <label>Bioindicador de la corrida<select value={form.details.bioindicatorResult||''} onChange={e=>detail('bioindicatorResult',e.target.value)}>
+        <option value="">No aplica (pasteurización o cal)</option>
+        <option value="sin_crecimiento">Sin crecimiento</option>
+        <option value="con_crecimiento">Con crecimiento</option>
+        <option value="pendiente">Pendiente de lectura</option>
+      </select></label>
+    </>}
+    {check.id==='room'&&<>
+      <label>Capacidad documentada de la sala (bolsas)<input type="number" min="1" step="1" value={form.details.capacityBags||''} onChange={e=>detail('capacityBags',e.target.value)} required={form.status==='verified'}/></label>
+      <label className="readiness-check"><input type="checkbox" checked={!!form.details.sanitized} onChange={e=>detail('sanitized',e.target.checked)}/> Verifiqué limpieza y condiciones físicas de la sala.</label>
+      <label className="readiness-check"><input type="checkbox" checked={!!form.details.targetsReviewed} onChange={e=>detail('targetsReviewed',e.target.checked)}/> Revisé las condiciones aprobadas para la especie, cepa y etapa.</label>
+    </>}
+    <label>Observaciones / motivo<textarea value={form.notes} onChange={e=>set('notes',e.target.value)} required={form.status!=='verified'}/></label>
+    {error&&<p role="alert">{error}</p>}
+    <button type="submit" className="inv-btn inv-btn-sec">Guardar revisión de {check.label}</button>
+  </form>;
+}
+
+function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAction,onSave,error}) {
+  const [message,setMessage]=useState('');
+  useEffect(()=>setMessage(''),[assessment.scope]);
+  const labels={verified:'Verificado',blocked:'Bloqueado',unknown:'Sin verificar'};
+  const manual=SetasProductionReadiness.MANUAL_IDS;
+  const exportReport=()=>{
+    const report={schema:'setas.readiness-report.v1',generatedAt:new Date().toISOString(),scope:'pre-production-documentation',species:input.speciesKey,roomId:input.roomId,lotCode:input.lotCode,assessment};
+    const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download='preparacion-produccion-'+(input.lotCode||'plan')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  return <section id="production-readiness" className="production-readiness no-print" aria-labelledby="production-readiness-title" data-testid="production-readiness-dashboard">
+    <header className="readiness-header"><div><span className="readiness-kicker">Antes de producir</span><h2 id="production-readiness-title">Preparación para producción</h2><p>{input.lotCode||'Plan sin código'} · {input.speciesName||'Especie pendiente'} · {assessment.preparationRevision||'Cantidades pendientes'}</p></div><button type="button" className="inv-btn inv-btn-sec" onClick={exportReport}>Exportar informe</button></header>
+    <div className={`readiness-summary is-${assessment.status}`} role="status" aria-live="polite" aria-atomic="true">
+      <strong>{assessment.status==='verified'?'Requisitos documentados · revisar autorización del ensayo':'Requisitos pendientes antes de producir'}</strong>
+      <span>{assessment.counts.verified} verificados · {assessment.counts.blocked} bloqueados · {assessment.counts.unknown} sin verificar</span>
+    </div>
+    <p className="readiness-boundary">Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico.</p>
+    <div className="readiness-context"><label>Sala prevista<select aria-label="Sala prevista para preparación" value={input.roomId} onChange={e=>onRoomChange(e.target.value)}>{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>{assessment.next&&<p><strong>Siguiente requisito:</strong> {assessment.next.label}. {assessment.next.detail}</p>}</div>
+    {error&&<p role="alert">{error} No se puede registrar una nueva revisión hasta recuperar estos datos.</p>}
+    <p className="readiness-local-note">Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación.</p>
+    {message&&<p role="status">{message}</p>}
+    <div className="readiness-grid">{assessment.checks.map(check=><article key={check.id} className={`readiness-card is-${check.status}`} data-testid={`readiness-${check.id}`}>
+      <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
+      {check.record&&<p className="readiness-record">Registro de {check.record.reviewer} · {new Date(check.record.at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p>}
+      {check.id==='spawn'&&assessment.spawnLots.length>0&&<p>Lotes de semilla asignados: {assessment.spawnLots.map(l=>l.lotId).join(', ')}</p>}
+      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm check={check} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
+        :<button type="button" className="inv-btn inv-btn-sec" onClick={()=>onAction(check.action)}>Revisar {check.action==='recipe'?'Formulador':check.action==='batch'?'cantidades':check.action==='inventory'?'Bodega':'Perito'}</button>}
+    </article>)}</div>
+    <p className="readiness-boundary">El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales.</p>
+  </section>;
+}
+
 function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
   const [open,setOpen]=useState(false),[step,setStep]=useState(1),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [form,setForm]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('sdp_experiment_draft')||'{}');}catch{return {};}});
@@ -6841,6 +6904,17 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
   const [selectedClimateRoom,setSelectedClimateRoom]=useState('martha_01');
+  const [productionEvidence,setProductionEvidence]=useState(()=>{
+    try{SetasPrototype.recover(localStorage);return {records:SetasProductionReadiness.readRecords(localStorage),error:''};}
+    catch(e){return {records:[],error:e.message};}
+  });
+  useEffect(()=>{
+    const refresh=event=>{if(event.key!==SetasProductionReadiness.KEY&&event.key!==SetasPrototype.PENDING&&event.key!==null)return;
+      try{SetasPrototype.recover(localStorage);setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}
+      catch(e){setProductionEvidence({records:[],error:e.message});}
+    };
+    window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
+  },[]);
   // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
   // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
   // de React no pueden llamarse condicionalmente — ese bloque solo se ejecuta
@@ -7421,7 +7495,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
         return;
       }
-      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles};
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles,
+        // Las revisiones se releen con readRecords: un registro inválido llegado
+        // de otro equipo se muestra como error, igual que uno dañado en local.
+        [SetasProductionReadiness.KEY]:()=>{try{setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}catch(e){setProductionEvidence({records:[],error:e.message});}}};
       for(const [key,value] of plan.entries){
         if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
         else if(setters[key]) setters[key](value);
@@ -8097,11 +8174,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return ing;
   }),[priceOverrides,invLotes]);
   const optimizerINGS=useMemo(()=>effectiveINGS.filter(g=>!disabledIngIds.includes(g.id)),[effectiveINGS,disabledIngIds]);
-  const fings=useMemo(()=>effectiveINGS.filter(g=>{
-    const ms=search===''||g.name.toLowerCase().includes(search.toLowerCase())||g.tags.some(t=>t.toLowerCase().includes(search.toLowerCase()));
+  const fings=useMemo(()=>{
+    const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const terms=normalize(search).trim().split(/\s+/).filter(Boolean);
+    return effectiveINGS.filter(g=>{
+    const text=normalize([g.name,...(g.tags||[])].join(' '));
+    const ms=terms.every(term=>text.includes(term));
     const roleMatch=cat==='all'||(cat==='aditivo'?['aditivo_ph','aditivo_estructura','aditivo_micronutriente','aditivo_arrancador'].includes(g.role):g.role===cat);
     return ms&&roleMatch;
-  }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+  },[search,cat,effectiveINGS]);
   const visibleIngredients=useMemo(()=>{
     let rows=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
     if(showCompatOnly){
@@ -8281,6 +8363,42 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
   const substrateClassInfo=useMemo(()=>SetasSpeciesTargetsApi.describeSubstrateClass?SetasSpeciesTargetsApi.describeSubstrateClass({speciesId:sKey,recipe,ings:effectiveINGS,legacySpp:SPP}):null,[sKey,recipe,effectiveINGS]);
   const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
+  const productionReadinessInput=useMemo(()=>{
+    const bag=BAG_TYPES.find(b=>b.id===prodBagType);
+    let plan=null,stockCheck=null;
+    try{if(preparation)plan=SetasLaunchPlanApi.buildLaunchPlan({preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bag?.stockId?{ingredientId:bag.stockId,units:preparation.target.bags}:null,unitIngredientIds:UNIT_INGREDIENT_IDS});
+      if(plan){stockCheck=window.SetasInventoryLedger.checkPlan(plan,{lots:invLotes,ledger:invReservas,nowMs:cycleClock});
+        stockCheck={...stockCheck,lines:stockCheck.lines.map(l=>({...l,name:prodIngs.find(g=>g.id===l.ingredienteId)?.name||(l.ingredienteId==='spawn_grano'?'Semilla (grano)':bag?.name||l.ingredienteId)}))};}}catch{}
+    const roomState=bitLotesLoaded&&!metricsLoadError&&window.SetasRoomState?window.SetasRoomState.buildRoomBoard({rooms:Object.values(ROOMS_CONFIG),lotes:bitLotes,bolsas:bitBolsas,events:roomEvents,telemetry:{},nowMs:cycleClock}).find(r=>r.roomId===selectedClimateRoom):null;
+    return {speciesKey:sKey,speciesName:hasPickedSpecies?sp?.name:'Especie pendiente',speciesConfirmed:hasPickedSpecies,preparation,preparationError:preparationResult.error,
+      model:an?{criticals:(opt?.items||[]).filter(i=>i.priority==='critical').length}:null,
+      treatment:tr?{col:tr.col,temp:tr.temp,time:tr.time}:null,
+      plan,stockCheck,reservations:invReservas,inventoryLoaded:peritoInventoryLoaded,inventoryLots:invLotes,containerId:prodBagType,containerStockId:bag?.stockId,
+      roomId:selectedClimateRoom,roomState,telemetry:liveTelemetry.roomLive(selectedClimateRoom),lotCode:prodLoteNum,plannedDate:prodDate,lotCodeAlreadyUsed:bitLotes.some(l=>String(l.codigo||'').trim()===String(prodLoteNum||'').trim()&&!!prodLoteNum)};
+  },[sKey,sp,hasPickedSpecies,preparation,preparationResult.error,prodIngs,invLotes,invReservas,prodBagType,an,opt,tr,peritoInventoryLoaded,bitLotesLoaded,metricsLoadError,bitLotes,bitBolsas,roomEvents,selectedClimateRoom,liveTelemetry.snapshot,cycleClock,prodLoteNum,prodDate]);
+  const productionReadiness=useMemo(()=>SetasProductionReadiness.assessProductionReadiness(productionReadinessInput,productionEvidence.records),[productionReadinessInput,productionEvidence.records]);
+  const saveProductionEvidence=form=>{
+    if(productionEvidence.error)throw Error(productionEvidence.error);
+    const current=SetasProductionReadiness.readRecords(localStorage);
+    const record=SetasProductionReadiness.createEvidence(form,productionReadinessInput,current,{id:crypto.randomUUID()});
+    const records=[...current,record];
+    SetasPrototype.persist(localStorage,[[SetasProductionReadiness.KEY,records]]);
+    setProductionEvidence({records,error:''});
+    // Cada revisión es un documento inmutable: sube una vez y llega a los demás
+    // equipos por la sincronización de colecciones (ADR-0009).
+    encolarSync({type:'crearDocumento',key:'production_readiness:'+record.id,args:['production_readiness/'+record.id,record]});
+  };
+  const openProductionReadiness=()=>{
+    goTab('produccion');
+    requestAnimationFrame(()=>{const panel=document.getElementById('production-readiness');panel?.scrollIntoView({block:'start'});const title=panel?.querySelector('h2');if(title){title.setAttribute('tabindex','-1');title.focus({preventScroll:true});}});
+  };
+  const readinessAction=action=>{
+    if(action==='inventory'){goTab('inventario');return;}
+    if(action==='batch'){const target=document.getElementById(!prodLoteNum?'prod-lote':'prod-bags');target?.scrollIntoView({block:'center'});target?.focus({preventScroll:true});return;}
+    openBuilderSubTab('formular');goTab('formular');
+    if(action==='recommendations')requestAnimationFrame(()=>document.getElementById('bl-perito')?.scrollIntoView({block:'start'}));
+  };
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
   const peritoRevisionRef=React.useRef(0);
@@ -8769,7 +8887,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote=SetasPrototype.read(localStorage,'sdp_bit_lotes').find(l=>l.id===releaseBatchId);
     const result=SetasPrototype.prepareBatch(localStorage,{loteId:lote.id,trialRelease:record,sheet:buildSheetFor(lote),role:operatorRole,operatorId:lote.operador||'operador-local',at:new Date().toISOString()});
     applyPrototypeEntries(result.entries);
-    enqueueFieldTransition(result.lote,result.lote.pendingPreparationTransition?.from||'planned',result.transition);
+    requestLotTransition(result.lote,result.transition,{from:result.lote.pendingPreparationTransition?.from||'planned',logged:true});
     if(taskEngine)mergeIntoTasks(taskEngine.tasksFromTransition({batchId:lote.id,toState:result.transition,at:new Date().toISOString()}));
     runInventorySync();
     setReleaseBatchId(null);
@@ -10892,6 +11010,62 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
+  /**
+   * Único punto por el que la app cambia la etapa de un lote.
+   *
+   * Con sesión, la etapa la decide el servidor: se encola la transición y el
+   * lote cambia cuando acceptFieldEvent la acepta y la sincronización la trae
+   * (las reglas no dejan que el cliente escriba lifecycleState ni, después de
+   * la primera etapa aceptada, `estado`). Sin sesión (equipo sin cuenta, banco
+   * de pruebas) no hay servidor que acepte nada, así que la etapa se registra
+   * en `estado`, que es de donde el servidor tomará la primera etapa cuando el
+   * lote suba.
+   *
+   * `logged` indica que quien llama ya agregó el evento de transición a la
+   * bitácora del lote (la ficha lo hace con applyConsequences).
+   */
+  const requestLotTransition=(lote,to,{from=null,reason=null,logged=false}={})=>{
+    if(!lote||!workflow) return false;
+    const origin=from||loteLifecycleState(lote);
+    const label=s=>(batchSheetApi&&batchSheetApi.stateLabel?batchSheetApi.stateLabel(s):s);
+    if(!workflow.canTransition(origin,to)){
+      setNoticeDlg({title:'Cambio de etapa no permitido',msg:`${lote.codigo||lote.id} está en ${label(origin)} y no puede pasar a ${label(to)}.`});
+      return false;
+    }
+    const uid=window.SetasFirebase?.auth?.currentUser?.uid||null;
+    if(!uid&&lote.lifecycleState){
+      setNoticeDlg({title:'Se necesita iniciar sesión',msg:`La etapa de ${lote.codigo||lote.id} ya la registra el servidor. Inicia sesión para cambiarla.`});
+      return false;
+    }
+    const event=logged?null:workflow.transitionEvent({batchId:lote.id,from:origin,to,operatorId:lote.operador||'operador-local',reason});
+    const log=event?{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]}:{};
+    if(uid){
+      if(event) updateBitLote(lote.id,log);
+      enqueueFieldTransition(lote,origin,to);
+    }else{
+      updateBitLote(lote.id,{estado:batchSheetApi?.legacyEstadoFor?.(to)||to,...log});
+    }
+    return true;
+  };
+
+  // Un descarte aceptado por el servidor llega por la sincronización, no por
+  // updateBitLote, así que las reservas held del lote se liberan aquí: si no,
+  // un lote descartado en otro equipo bloquearía sus kilos para siempre.
+  useEffect(()=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi) return;
+    const descartados=new Set(bitLotes.filter(l=>loteLifecycleState(l)==='discarded').map(l=>l.id));
+    if(!descartados.size) return;
+    setInvReservas(prev=>{
+      if(!prev.some(r=>r.status==='held'&&descartados.has(r.batchId))) return prev;
+      const at=new Date().toISOString();
+      let upd=prev;
+      descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+  },[bitLotes]);
+
   const enqueueContainerFieldTransition=async(bolsa,lote,from,to,reasonCode=null,notes=null)=>{
     const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
     const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
@@ -10946,7 +11120,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
 
       if(consequences.transition){
-        enqueueFieldTransition(lote,sheet.state,consequences.transition);
+        requestLotTransition(lote,consequences.transition,{from:sheet.state,logged:true});
       }
 
       // Si hubo transición, generar las tareas SOP del nuevo estado.
@@ -10992,13 +11166,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // sólo ocurre si la transición es válida y no hay un bloqueo declarado.
       const activeSheet=sheet||buildSheetFor(lote);
       if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
-      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
-      const from=loteLifecycleState(lote);const to=loteLifecycleState({estado:next});
-      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
-        enqueueFieldTransition(lote,from,to);
-      }
+      const from=loteLifecycleState(lote);
+      const to=(workflow?.DEFAULT_TRANSITIONS?.[from]||[])[0];
+      if(to) requestLotTransition(lote,to,{from});
       return;
     }
     if(action==='prepare_mix'){
@@ -11020,15 +11190,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
       return;
     }
-    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    // Tratamiento térmico e inoculación caían en el aviso genérico del final y
+    // no registraban nada: el botón principal de la ficha no movía el lote.
+    if(action==='start_thermal_treatment'||action==='complete_thermal_treatment'){
+      commitSheetAction(sheet||buildSheetFor(lote),lote,action);
+      return;
+    }
+    if(action==='inoculate'){
+      // Inocular exige el lote de semilla (ACTION_CATALOG.inoculate.requires):
+      // es la trazabilidad que el lote necesita para todo lo que sigue.
+      setPromptDlg({
+        title:'Inocular',
+        label:'Lote de semilla usado',
+        defaultValue:lote.spawnLotId||'',
+        placeholder:'Ej. SPW-260101-01',
+        confirmLabel:'Registrar inoculación',
+        onSubmit:spawnLotId=>{
+          const conSemilla={...lote,spawnLotId};
+          if(spawnLotId!==lote.spawnLotId) updateBitLote(lote.id,{spawnLotId});
+          commitSheetAction(buildSheetFor(conSemilla),conSemilla,'inoculate',{spawnLotId});
+        },
+      });
+      return;
+    }
+    if(action==='close'){requestLotTransition(lote,'closed');return;}
     if(action==='discard'){
-      const from=loteLifecycleState(lote);
-      if(workflow&&workflow.canTransition(from,'discarded')){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
-        // El estado canónico lo escribe acceptFieldEvent; aquí sólo la bitácora.
-        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
-        enqueueFieldTransition(lote,from,'discarded');
-      }
+      requestLotTransition(lote,'discarded',{reason:'Descarte manual de lote'});
       return;
     }
     if(action==='move'){
@@ -13295,9 +13482,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <option value="">— veredicto —</option>
                         {['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}
                       </select>
-                      <select name={`loteStatus-${lote.id}`} aria-label={`Estado del lote ${lote.codigo}`} value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
-                        {['incubacion','fructificacion','completado','descartado'].map(st=><option key={st} value={st}>{st}</option>)}
-                      </select>
+                      {/* La etapa no se elige en un selector libre: cambia con las
+                          acciones del flujo (ficha del lote), que validan la
+                          transición y, con sesión, las acepta el servidor. */}
+                      <span data-testid={`lote-stage-${lote.id}`} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px',display:'inline-flex',alignItems:'center'}}>
+                        Etapa: {batchSheetApi?.stateLabel?batchSheetApi.stateLabel(loteLifecycleState(lote)):loteLifecycleState(lote)}
+                      </span>
+                      <button type="button" className="inv-btn inv-btn-sec" onClick={()=>openBatchSheetModal(lote)} style={{fontSize:"var(--text-sm)",padding:'6px 12px'}}>Cambiar etapa</button>
                     </div>
                   </div>
                   {stats&&(<div className="inv-stat-row" style={{marginBottom:14}}><div className="inv-stat"><div className="inv-stat-val">{stats.bolsasSanas}/{stats.numBolsas}</div><div className="inv-stat-lbl">Sanas</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:stats.contPct>20?'var(--coral-700)':'inherit'}}>{stats.contPct.toFixed(0)}%</div><div className="inv-stat-lbl">Contam.</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.totalFresco.toFixed(3)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>)}
@@ -13319,8 +13510,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           up.colonizationPct=pct;
                           return updateBitBolsa(b.id,up);
                         })) return;
-                        if(pct>=100&&lote.estado==='incubacion'){
-                          updateBitLote(lote.id,{estado:'fructificacion'});
+                        if(pct>=100&&workflow?.canTransition(loteLifecycleState(lote),'fruiting')){
+                          requestLotTransition(lote,'fruiting');
                         }
                         setNoticeDlg({
                           title:'Avance registrado',
@@ -13334,8 +13525,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           if(!bolsas.every(b=>{
                             return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
                           })) return;
-                          updateBitLote(lote.id,{estado:'fructificacion'});
-                          setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${lote.codigo} actualizado a fructificación.`});
+                          const aFruct=workflow?.canTransition(loteLifecycleState(lote),'fruiting')&&requestLotTransition(lote,'fruiting');
+                          setNoticeDlg({title:'Primordios confirmados',msg:aFruct?`Lote ${lote.codigo}: paso a fructificación registrado.`:`Primordios registrados en ${lote.codigo}. La etapa no cambió.`});
                         } else if(act==='riego'){
                           setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad registrada para ${lote.codigo}.`});
                         } else if(act==='ventilacion'){
@@ -13931,6 +14122,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                      {label:'Preparación para producción',sub:`${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`,icon:IconBox,onClick:openProductionReadiness},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
                       const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
@@ -15077,7 +15269,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
                     <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
-                    <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                    <div className="recipe-start-actions">
+                      <button type="button" className="rec-empty-action" onClick={focusIngredientCatalog}>Elegir ingredientes</button>
+                      <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -15148,17 +15343,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {/* Acciones compactas */}
                     <div className="live-dash-actions">
-                      {an&&!totOk&&(
-                        <button
-                          onClick={()=>autoBalance(balanceMode)}
-                          className="live-dash-btn"
-                          style={{background:'var(--coral-500)',color:'var(--paper-50)',borderColor:'var(--coral-600)'}}
-                          aria-label="Ajustar ingredientes libres al 100%"
-                          title="Ajustar ingredientes libres al 100%">
-                          <IconBolt size={10} color="var(--paper-50)" />
-                          <span>100%</span>
-                        </button>
-                      )}
                       <button
                         onClick={()=>setShowLiveChips(!showLiveChips)}
                         className="live-dash-btn live-dash-recipe-toggle"
@@ -15171,24 +15355,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span>{recipe.length}</span>
                         {showLiveChips ? <IconChevronUp size={9} color="var(--ink-700)" /> : <IconChevronDown size={9} color="var(--ink-700)" />}
                       </button>
-                      <button
-                        onClick={()=>{
-                          if(saveName.trim()){
-                            saveR();
-                          } else {
-                            document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
-                            setTimeout(()=>{
-                              const inp=document.querySelector('.sbar input');
-                              if(inp){ inp.focus(); inp.style.outline='2px solid var(--coral-500)'; setTimeout(()=>inp.style.outline='',1200); }
-                            },300);
-                          }
-                        }}
-                        className="live-dash-btn"
-                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'var(--paper-50)',borderColor:'var(--ink-900)'}}
-                        aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
-                        title="Guardar receta en Recetario">
-                        {flash ? <IconCheck size={11} color="var(--paper-50)" /> : <IconDisk size={11} color="var(--paper-50)" />}
-                      </button>
+
                     </div>
                   </div>
 
@@ -15202,7 +15369,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
                             {id:'bl-receta',l:'Receta',icon:IconRecipe},
                             {id:'bl-perito',l:'Perito',icon:IconTarget},
-                            {id:'bl-batch',l:'Batch',icon:IconBox},
+                            {id:'bl-batch',l:'Lote',icon:IconBox},
                             ...(tr?[{id:'bl-tratamiento',l:'Tratamiento',icon:IconFlame}]:[]),
                           ].map(s=>{
                             const IconComp=s.icon;
@@ -15239,21 +15406,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       )}
 
-                      {/* Acciones de balance y edición de la receta (antes en el header de #bl-receta) */}
-                      <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                        {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
-                          <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Auto-balancear 100%</button>
-                            <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
+                      <details className="recipe-edit-options" data-testid="recipe-edit-options">
+                        <summary>Opciones de edición{normMode?' · Auto-ajustar activo':''}</summary>
+                        <div className="recipe-edit-options-body">
+                          <label className="recipe-balance-strategy">
+                            <span>Estrategia al balancear 100%</span>
+                            <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)}>
                               <option value="proportional">Proporcional</option>
                               <option value="equal">Igualando</option>
                               <option value="last">Al último</option>
                             </select>
-                          </div>
-                        )}
-                        <button className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
-                        <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
-                      </div>
+                          </label>
+                          <p>El botón de siguiente paso aplica esta estrategia y respeta los porcentajes bloqueados.</p>
+                          <button type="button" className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)}>Auto-ajustar al editar</button>
+                          <p>Al cambiar un porcentaje, redistribuye los demás proporcionalmente sin cambiar los bloqueados.</p>
+                          <button type="button" className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar receta</button>
+                        </div>
+                      </details>
 
                       {/* Receta editable: ingredientes con % ajustable, lock y remove */}
                       <div style={{border:'1px solid var(--paper-300)'}}>
@@ -15496,51 +15665,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
                   <h2>Ingredientes</h2>
-                  <p>Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.</p>
+                  <p>Busca por nombre o etiqueta y agrega los insumos a tu receta.</p>
                 </div>
                 <span className="ingredient-section-count" aria-live="polite">
                   {visibleIngredients.length} de {effectiveINGS.length}
                 </span>
               </div>
-              <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
-                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+              <div className="ingredient-search-controls">
+                <label className="ingredient-search-field">
+                  <span>Buscar ingrediente</span>
+                  <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" placeholder="Ej. aserrín, paja, calcio…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                </label>
+                {search.length>0&&<button type="button" className="cat" onClick={()=>{setSearch('');document.querySelector('#bl-ingredientes input[name="ingredientSearch"]')?.focus();}}>Limpiar búsqueda</button>}
+                <button type="button" className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} disabled={!hasPickedSpecies} onClick={()=>setShowCompatOnly(v=>!v)} title={hasPickedSpecies?`Compatibles con ${sp.name}`:'Selecciona una especie para filtrar compatibilidad'}>Solo compatibles</button>
               </div>
-              {showPrices&&(
-                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
-                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
-                    {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
-                    )}
-                  </div>
-                  <div>
-                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
-                      const isEdited=priceOverrides[ing.id]!==undefined;
-                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
-                      return(
-                        <div key={ing.id} className="price-row">
-                          <div>
-                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
-                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
-                          </div>
-                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
-                            aria-label={`Precio ${ing.name} por kg`}
-                            className={`price-inp${isEdited?' edited':''}`}
-                            value={ing.cost}
-                            onChange={e=>{
-                              const v=Math.max(0,parseInt(e.target.value)||0);
-                              const n={...priceOverrides,[ing.id]:v};
-                              setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
                 <div className="bodega-bar" title="Abrir bodega / inventario">
                 <button
                   type="button"
@@ -15576,24 +15714,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
-              <div className="cats" role="group" aria-label="Filtrar por categoría">
-                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}>Solo compatibles <AppIcon name="close" size={10} /></span> : 'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por rol':'Lista simple'}</button>
-              </div>
-              <div className="ingredient-view-toolbar">
-                <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
-                <div>
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
-                  {hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}
+              <details className="ingredient-options" data-testid="ingredient-options">
+                <summary>Más opciones{cat!=='all'?` · ${CATS[cat]}`:''}{showPrices?' · Precios abiertos':''}</summary>
+                <div className="ingredient-options-body">
+                  <div className="cats" role="group" aria-label="Filtrar por categoría">
+                    {Object.entries(CATS).map(([k,l])=><button type="button" key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
+                  </div>
+                  <div className="ingredient-option-actions">
+                    <button type="button" className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)}>Agrupar por función</button>
+                    {showRoleGroups&&<button type="button" className="cat" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
+                    {showRoleGroups&&<button type="button" className="cat" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
+                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+                  </div>
+              {showPrices&&(
+                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
+                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
+                    {Object.keys(priceOverrides).length>0&&(
+                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
+                    )}
+                  </div>
+                  <div>
+                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
+                      const isEdited=priceOverrides[ing.id]!==undefined;
+                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
+                      return(
+                        <div key={ing.id} className="price-row">
+                          <div>
+                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
+                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
+                          </div>
+                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
+                            aria-label={`Precio ${ing.name} por kg`}
+                            className={`price-inp${isEdited?' edited':''}`}
+                            value={ing.cost}
+                            onChange={e=>{
+                              const v=Math.max(0,parseInt(e.target.value)||0);
+                              const n={...priceOverrides,[ing.id]:v};
+                              setPriceOverrides(n);
+                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+                </div>
+              </details>
+              <div className="ingredient-view-toolbar">
+                <span role="status" aria-live="polite" aria-atomic="true">{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} · {usePantry?'Bodega':'Catálogo'}{cat!=='all'?` · ${CATS[cat]}`:''}{showCompatOnly?` · Compatibles con ${sp.name}`:''}</span>
+                <div>{hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}</div>
               </div>
               <div className={`ing-list${showRoleGroups?' is-grouped':' is-simple'}`}>
                 {(()=>{
                   const base=visibleIngredients;
                   if(usePantry&&pantryIds.length===0){
-                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
+                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Catálogo”.</span></button>;
                   }
                   if(base.length===0){
                     return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
@@ -15945,7 +16123,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)'}}>
                     <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> Auto-mejorar</button>}
+                    {!balanced&&<button type="button" onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> {formNextLabel}</button>}
                   </div>
                 )}
                 </div>
@@ -17024,6 +17202,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='produccion'&&(
           <div>
+            <ProductionReadinessDashboard assessment={productionReadiness} input={productionReadinessInput} rooms={Object.values(ROOMS_CONFIG)} onRoomChange={setSelectedClimateRoom} onAction={readinessAction} onSave={saveProductionEvidence} error={productionEvidence.error}/>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
               <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
@@ -17726,9 +17905,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               operatorRole={operatorRole}
               operatorId={operatorId}
               accountId={accountId}
-              onTransitionConfirmed={(batchId, nextState) => {
-                updateBitLote(batchId, { estado: nextState, workflowState: nextState });
-              }}
+              // La etapa la escribe acceptFieldEvent (con su `estado` en español) y
+              // llega por la sincronización; escribirla aquí la duplicaría con
+              // otro vocabulario y las reglas la rechazarían.
+              onTransitionConfirmed={() => {}}
             />
           );
         })()}
@@ -18300,8 +18480,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             up.colonizationPct=pct;
                             return updateBitBolsa(b.id,up);
                           })) return;
-                          if(pct>=100&&currentLote.estado==='incubacion'){
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
+                          if(pct>=100&&workflow?.canTransition(loteLifecycleState(currentLote),'fruiting')){
+                            requestLotTransition(currentLote,'fruiting');
                           }
                           setNoticeDlg({
                             title:'Avance registrado',
@@ -18316,8 +18496,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             if(!loteBolsas.every(b=>{
                               return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
                             })) return;
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
-                            setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${currentLote.codigo} pasado a etapa de fructificación.`});
+                            const aFruct=workflow?.canTransition(loteLifecycleState(currentLote),'fruiting')&&requestLotTransition(currentLote,'fruiting');
+                            setNoticeDlg({title:'Primordios confirmados',msg:aFruct?`Lote ${currentLote.codigo}: paso a fructificación registrado.`:`Primordios registrados en ${currentLote.codigo}. La etapa no cambió.`});
                           } else if(act==='riego'){
                             setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad y niebla registrada para ${currentLote.codigo}.`});
                           } else if(act==='ventilacion'){
@@ -19957,23 +20137,22 @@ interval:
               });
             });
 
-            const nextEstado = targetState === 'quarantine' ? 'cuarentena' : targetState === 'discarded' ? 'descartado' : currentLote.estado;
             const updatedEvents = [
               ...(currentLote.lifecycleEvents || []),
               contamEvent,
               ...(transitionEvt ? [transitionEvt] : [])
             ];
 
-            // `lifecycleState` es del servidor: las reglas lo deniegan al cliente
-            // y updateBitLote sincroniza después de pintar, así que un rechazo
-            // dejaba el lote en cuarentena en el teléfono y activo en el servidor.
+            // La etapa (cuarentena o descarte) pasa por requestLotTransition: con
+            // sesión la acepta el servidor; escribir `estado` aquí dejaba el lote
+            // en cuarentena en el teléfono y activo en el servidor.
+            const loteConEventos = { ...currentLote, lifecycleEvents: updatedEvents };
             updateBitLote(currentLote.id, {
-              estado: nextEstado,
               numBolsas: lossCalc.healthyBags,
               lifecycleEvents: updatedEvents
             });
             if (changesState) {
-              enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+              requestLotTransition(loteConEventos, targetState, { from: currentLifecycle, logged: true });
             }
 
             setShowTriageModal(false);
@@ -20350,10 +20529,9 @@ interval:
                 // fallo aterrizaba en un aviso lateral: el lote se veía
                 // descartado en el teléfono y seguía activo en el servidor, donde
                 // otro operario lo encontraba disponible.
-                updateBitLote(currentLote.id, {
-                  lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
-                });
-                enqueueFieldTransition(currentLote, fromState, massTarget);
+                const conEvento = { ...currentLote, lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt] };
+                updateBitLote(currentLote.id, { lifecycleEvents: conEvento.lifecycleEvents });
+                requestLotTransition(conEvento, massTarget, { from: fromState, logged: true });
               }
             }
 

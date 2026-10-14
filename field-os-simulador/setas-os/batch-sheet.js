@@ -184,6 +184,29 @@
     return LEGACY_STATE_ALIASES[key] || fallback;
   };
 
+  // Inversa de LEGACY_STATE_ALIASES: el `estado` en español que se escribe junto
+  // a cada `lifecycleState` aceptado. Muchos lectores de Bitácora (filtros de
+  // lotes activos, métricas, ficha pública) leen `estado`; si el servidor solo
+  // escribiera lifecycleState, esos lectores verían el lote en su etapa vieja.
+  // normalizeLifecycleState(legacyEstadoFor(s)) === s para todo estado conocido.
+  const LEGACY_ESTADO_BY_STATE = Object.freeze({
+    planned: 'planificado',
+    mix_prepared: 'mezcla_preparada',
+    thermal_treatment: 'tratamiento_termico',
+    cooling: 'enfriamiento',
+    inoculated: 'inoculado',
+    incubation: 'incubacion',
+    maturation: 'maduracion',
+    induction: 'induccion',
+    fruiting: 'fructificacion',
+    resting: 'reposo',
+    closed: 'completado',
+    quarantine: 'cuarentena',
+    discarded: 'descartado',
+    failed: 'fallido',
+  });
+  const legacyEstadoFor = state => LEGACY_ESTADO_BY_STATE[state] || null;
+
   const stateLabel = state => STATE_LABELS[state] || state;
 
   // Catálogo inicial de canastillas plásticas reutilizables configuradas en Tenjo.
@@ -1086,6 +1109,8 @@
     ACTION_PRIORITY,
     MAX_CONTEXTUAL_ACTIONS,
     normalizeLifecycleState,
+    LEGACY_ESTADO_BY_STATE,
+    legacyEstadoFor,
     stateLabel,
     resolveScan,
     buildBatchSheet,

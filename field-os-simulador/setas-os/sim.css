@@ -3480,6 +3480,25 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font:700 var(--text-xs)/1 var(--font-mono);
   white-space:nowrap;
 }
+/* Ingredient selection: search first, secondary tools on demand. */
+.sim-root .builder-wrap .ingredient-search-controls{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sim-root .builder-wrap .ingredient-search-field{flex:1 1 220px;min-width:0;display:grid;gap:6px;font:var(--t-label);color:var(--ink-700)}
+.sim-root .builder-wrap .ingredient-search-field .search{width:100%;min-width:0;margin:0;min-height:44px}
+.sim-root .builder-wrap .ingredient-options{margin-bottom:12px;border:1px solid var(--border-soft);border-radius:var(--form-control-radius);background:var(--paper-0)}
+.sim-root .builder-wrap .ingredient-options summary{min-height:44px;box-sizing:border-box;padding:12px;cursor:pointer;font:var(--t-label);color:var(--ink-700);overflow-wrap:anywhere}
+.sim-root .builder-wrap .ingredient-options summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.sim-root .builder-wrap .ingredient-options-body{padding:0 12px 12px}
+.sim-root .builder-wrap .ingredient-options .cats{flex-wrap:wrap;overflow:visible}
+.sim-root .builder-wrap .ingredient-options .cats::after{display:none}
+.sim-root .builder-wrap .ingredient-option-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.sim-root .builder-wrap :is(.ingredient-search-controls,.ingredient-options) :is(.cat,.tog){min-height:44px;white-space:normal;max-width:100%;margin:0}
+.sim-root .builder-wrap .ingredient-search-controls .cat:disabled{opacity:var(--opacity-subtle,.6);cursor:default}
+.sim-root .builder-wrap :is(.ingredient-view-toolbar,.ingredient-no-results) button{min-height:44px}
+@media(max-width:600px){
+  .sim-root .builder-wrap .ingredient-search-field{flex-basis:100%}
+  .sim-root .builder-wrap .ingredient-view-toolbar{font:var(--t-label)}
+}
+
 .sim-root .ingredient-view-toolbar{
   display:flex;
   align-items:center;
@@ -3905,6 +3924,36 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .form-production-command-btn.is-review,
 .sim-root .form-production-command-btn.is-balance{border-color:var(--accent-terracotta-hover);background:var(--coral-600)}
 .sim-root .generator-cost-help{display:block;font:400 var(--text-xs)/1.5 var(--font-body);color:var(--text-metadata);margin-top:var(--space-half)}
+.production-readiness{background:var(--surface-page);border:var(--rule-heavy);padding:var(--space-3);margin-bottom:var(--space-3);color:var(--text-primary)}
+.readiness-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-2);flex-wrap:wrap}
+.readiness-header h2{font:var(--t-heading-02);margin:var(--space-1) 0}
+.readiness-kicker{font:var(--t-label);letter-spacing:var(--tracking-label);text-transform:uppercase}
+.production-readiness p{font:var(--t-small);line-height:1.6;overflow-wrap:anywhere}
+.readiness-summary{display:grid;gap:var(--space-half);padding:var(--space-2);border-left:4px solid var(--status-warn-marker);background:var(--status-warn-bg);margin:var(--space-2) 0}
+.readiness-summary.is-blocked{border-color:var(--status-error);background:var(--status-error-bg)}
+.readiness-summary.is-verified{border-color:var(--status-ok);background:var(--status-ok-bg)}
+.readiness-summary span,.readiness-record{font:var(--t-small);color:var(--text-secondary)}
+.readiness-context{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;margin-bottom:var(--space-2)}
+.readiness-context label{flex:0 1 260px}
+.readiness-context p{flex:1 1 260px}
+.readiness-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)}
+.readiness-card{min-width:0;border:var(--rule-hairline);border-top:3px solid var(--status-warn-marker);padding:var(--space-2)}
+.readiness-card.is-blocked{border-top-color:var(--status-error)}
+.readiness-card.is-verified{border-top-color:var(--status-ok)}
+.readiness-card-heading{display:flex;justify-content:space-between;gap:var(--space-1);flex-wrap:wrap;align-items:baseline}
+.readiness-card h3{font:var(--t-body);font-weight:var(--weight-semibold);margin:0}
+.readiness-status{font:var(--t-label);color:var(--text-metadata)}
+.readiness-card.is-blocked .readiness-status{color:var(--status-error)}
+.readiness-card.is-verified .readiness-status{color:var(--status-ok)}
+.readiness-card summary{min-height:44px;cursor:pointer;font:var(--t-small);display:list-item;padding:var(--space-1) 0}
+.readiness-evidence-form{display:grid;gap:var(--space-2);padding-top:var(--space-2);border-top:var(--rule-hairline)}
+.production-readiness label{display:grid;gap:var(--space-half);font:var(--t-small)}
+.production-readiness input,.production-readiness select,.production-readiness textarea{min-width:0;width:100%;min-height:44px;border:var(--rule-hairline);border-radius:0;background:var(--surface-panel);color:var(--text-primary);font:var(--t-body);padding:var(--space-1);box-sizing:border-box}
+.production-readiness .readiness-check{display:flex;align-items:center;gap:var(--space-1)}
+.production-readiness .readiness-check input{width:24px;height:24px;min-height:24px;flex:none}
+.production-readiness .inv-btn{min-height:44px;white-space:normal;font:var(--t-small);font-weight:var(--weight-semibold)}
+.production-readiness :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+@media(max-width:700px){.production-readiness{padding:var(--space-2)}.readiness-grid{grid-template-columns:1fr}}
 .sim-root .generator-status{font:400 var(--text-sm)/1.5 var(--font-body);color:var(--text-secondary);padding:var(--space-1);border-left:2px solid var(--status-info);overflow-wrap:anywhere}
 .sim-root .generator-origin-control{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2)}
 .sim-root .generator-origin-control p{flex:1 1 200px;margin:0;font:400 var(--text-xs)/1.5 var(--font-body);color:var(--text-metadata)}
@@ -6801,3 +6850,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .harvest-capture-dialog .harvest-capture-actions { grid-template-columns: 1fr; }
   .harvest-capture-dialog .harvest-capture-actions .inv-btn-pri { grid-column: 1; }
 }
+
+/* Recipe editing keeps the main flow separate from optional settings. */
+.sim-root .builder-wrap .recipe-start-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.sim-root .builder-wrap .recipe-edit-options{margin-bottom:8px;border:1px solid var(--border-soft);background:var(--paper-0)}
+.sim-root .builder-wrap .recipe-edit-options summary{min-height:44px;box-sizing:border-box;padding:12px;cursor:pointer;font:var(--t-label);color:var(--ink-700)}
+.sim-root .builder-wrap .recipe-edit-options summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.sim-root .builder-wrap .recipe-edit-options-body{display:grid;gap:8px;padding:0 12px 12px}
+.sim-root .builder-wrap .recipe-edit-options-body p{margin:0;color:var(--ink-600);font:var(--t-caption)}
+.sim-root .builder-wrap .recipe-balance-strategy{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:var(--t-label)}
+.sim-root .builder-wrap .recipe-balance-strategy select{min-height:44px;max-width:100%}
+.sim-root .builder-wrap .recipe-edit-options .tog{min-height:44px;justify-self:start;white-space:normal;margin:0}
