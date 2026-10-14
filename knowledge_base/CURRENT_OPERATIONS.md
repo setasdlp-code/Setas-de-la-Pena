@@ -80,6 +80,8 @@ No hay setpoints operacionales aprobados para el lote 1. *Lentinula edodes* pres
 
 Antes de inocular, `06_operations/quality_control.md` exige spawn trazable, formulación aprobada y ciclo de autoclave validado con carga representativa. Antes de inducir, el lote debe tener un criterio de madurez documentado. El choque frío no se presume obligatorio.
 
+Plantilla versionada de la especificación del lote 1: `06_operations/lote1_shiitake_especificacion_ambiental.md` (`DOC-0122`), **pendiente** (sin cepa ni banda). El protocolo del piloto de incubación está en `06_operations/piloto_shiitake_incubacion_protocolo.md` (`DOC-0123`); el firmware de la incubadora no compila hasta que esta especificación fije la banda y la histéresis.
+
 ---
 
 ## LOTES ACTIVOS
