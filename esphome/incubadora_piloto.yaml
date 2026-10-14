@@ -1,0 +1,67 @@
+# =============================================================================
+# ESPHome — Incubadora del piloto de shiitake
+# Setas de la Peña · Tenjo, Cundinamarca · 2600 m s.n.m.
+# STATUS: BANCO DE PRUEBAS / NO COMISIONADO / NO USAR EN PRODUCCIÓN
+# =============================================================================
+# Spec: docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
+#
+# PRINCIPIOS
+#   · El lazo de control y las protecciones de software viven en el ESP32.
+#     Home Assistant solo supervisa; si falla la red, el control sigue.
+#   · El relé del calefactor arranca en OFF tras cualquier reinicio.
+#   · La incubadora no controla humedad ni CO₂ (solo se registran).
+#   · No hay setpoint aprobado: la banda sale de la especificación del lote.
+#   · Las protecciones físicas (termostato bimetálico 35 °C, fusible térmico,
+#     diferencial, RETIE) son independientes de este firmware.
+#
+# ACTUADORES
+#   Relé Hosyond (aislamiento óptico) → calefactor, GPIO26.
+#   La polaridad (activo-LOW o HIGH) NO está verificada: confirmar en banco y
+#   ajustar la sustitución `relay_active_low`.
+# =============================================================================
+
+substitutions:
+  device_name: incubadora-piloto
+  friendly_name: "Incubadora piloto"
+
+  # --- Hardware ---
+  relay_heater_pin: GPIO26
+  # Módulo Hosyond sin verificar: "true" = activo-LOW. Confirmar en banco.
+  relay_active_low: "true"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "Banco de pruebas incubadora piloto · no comisionado"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# --- WiFi ---
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# --- Logger, API y OTA ---
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# --- Calefactor ---
+switch:
+  - platform: gpio
+    id: rele_calefactor
+    name: "Relé calefactor"
+    pin:
+      number: ${relay_heater_pin}
+      inverted: ${relay_active_low}
+    restore_mode: ALWAYS_OFF
