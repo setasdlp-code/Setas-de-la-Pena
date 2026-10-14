@@ -28,6 +28,18 @@ substitutions:
   relay_heater_pin: GPIO26
   # Módulo Hosyond sin verificar: "true" = activo-LOW. Confirmar en banco.
   relay_active_low: "true"
+  sda_pin: GPIO21
+  scl_pin: GPIO22
+  onewire_pin: GPIO4
+
+  # --- Direcciones DS18B20 (marcadores distintos entre sí) ---
+  # REEMPLAZAR por las direcciones reales tras el escaneo en banco. Se fijan por
+  # dirección, nunca por índice de escaneo. El protocolo (Tarea 5) exige que ya
+  # no sean marcadores antes de comisionar.
+  addr_base: "0x0000000000000001"
+  addr_centro: "0x0000000000000002"
+  addr_tope: "0x0000000000000003"
+  addr_nucleo: "0x0000000000000004"
 
 esphome:
   name: ${device_name}
@@ -65,3 +77,84 @@ switch:
       number: ${relay_heater_pin}
       inverted: ${relay_active_low}
     restore_mode: ALWAYS_OFF
+
+# --- Buses ---
+i2c:
+  sda: ${sda_pin}
+  scl: ${scl_pin}
+  scan: true
+
+# Hardware: pull-up físico de 4,7 kΩ entre DATA y 3V3 del bus 1-Wire (no es
+# configuración de software).
+one_wire:
+  - platform: gpio
+    pin: ${onewire_pin}
+
+# --- Sensores ---
+# Los sensores de control (t_aire, t_nucleo) llevan `timeout`: si dejan de
+# actualizar publican NaN, de modo que un sensor congelado se ve como inválido.
+sensor:
+  # Aire: SHT45 (control). Proteger de goteo y radiación; lejos del calefactor.
+  - platform: sht4x
+    address: 0x44
+    update_interval: 30s
+    temperature:
+      id: t_aire
+      name: "T aire"
+      filters:
+        - timeout:
+            timeout: 120s
+            value: .nan
+    humidity:
+      id: hr_aire
+      name: "HR aire (diagnóstico)"
+
+  # Mapa térmico (base, centro, parte superior): solo registro.
+  - platform: dallas_temp
+    address: ${addr_base}
+    id: t_base
+    name: "T base"
+    update_interval: 30s
+  - platform: dallas_temp
+    address: ${addr_centro}
+    id: t_centro
+    name: "T centro"
+    update_interval: 30s
+  - platform: dallas_temp
+    address: ${addr_tope}
+    id: t_tope
+    name: "T parte superior"
+    update_interval: 30s
+
+  # Núcleo: sonda inox en el centro de un bloque testigo, con EMA (α ≈ 0,1).
+  - platform: dallas_temp
+    address: ${addr_nucleo}
+    id: t_nucleo
+    name: "T núcleo"
+    update_interval: 30s
+    filters:
+      - exponential_moving_average:
+          alpha: 0.1
+          send_every: 1
+      - timeout:
+          timeout: 120s
+          value: .nan
+
+  # CO₂: SCD30 temporal, solo diagnóstico. Una sola estrategia de compensación:
+  # altitud fija 2600 m (no combinar con presión ambiente).
+  - platform: scd30
+    co2:
+      id: co2
+      name: "CO2 (diagnóstico)"
+    update_interval: 30s
+    altitude_compensation: 2600m
+
+  # Diferencia núcleo–aire (alerta si > 5 °C). NaN si falta cualquiera.
+  - platform: template
+    id: dt_nucleo_aire
+    name: "dT núcleo-aire"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 2
+    update_interval: 30s
+    lambda: |-
+      return id(t_nucleo).state - id(t_aire).state;
