@@ -140,6 +140,11 @@ test.describe('desktop navigation contract', () => {
     await expect(liveSummary).toBeVisible();
     await expect(recipe).toBeVisible();
     await expect(recipe).toContainText('Sin ingredientes aún');
+    // La evaluación en vivo vive dentro de "Medidores y comparación del modelo",
+    // un <details> cerrado por defecto en el panel unificado de revisión.
+    const gauges = page.getByTestId('form-review-gauges');
+    await expect(evaluation).toBeHidden();
+    await gauges.locator('summary').click();
     await expect(evaluation).toBeVisible();
     await expect(evaluation).toContainText('Evaluación en vivo');
     // The score/gauges/batch summary panel only renders once a recipe exists.
@@ -173,15 +178,11 @@ test.describe('desktop navigation contract', () => {
     await expect(summary).not.toContainText('Paja de trigo');
     await expect(command).toBeVisible();
 
-    // The score/gauges panel keeps its two-column layout alongside RecipeGauges.
-    const layoutAfter = await page.evaluate(() => {
-      const rect = sel => document.querySelector(sel).getBoundingClientRect();
-      const s = rect('#bl-receta-summary');
-      const e = rect('#recipe-live-evaluation');
-      return { summaryTop:s.top, evaluationTop:e.top, summaryLeft:s.left, evaluationLeft:e.left };
-    });
-    expect(Math.abs(layoutAfter.summaryTop-layoutAfter.evaluationTop)).toBeLessThan(3);
-    expect(layoutAfter.evaluationLeft).toBeGreaterThan(layoutAfter.summaryLeft);
+    // The score/gauges panel and RecipeGauges now live together in the unified review panel.
+    if (!(await gauges.evaluate(el => el.open))) await gauges.locator('summary').click();
+    await expect(evaluation).toBeVisible();
+    await expect(page.locator('#formulator-review #recipe-live-evaluation')).toHaveCount(1);
+    await expect(page.locator('#formulator-review #bl-receta-summary')).toHaveCount(1);
 
     await page.locator('main.app-main').evaluate(el => { el.scrollTop = el.scrollHeight / 2; });
     const sticky = await page.evaluate(() => {
