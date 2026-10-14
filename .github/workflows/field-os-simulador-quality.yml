@@ -5,11 +5,22 @@ on:
     paths:
       - "field-os-simulador/setas-os/**"
       - ".github/workflows/field-os-simulador-quality.yml"
-  push:
-    branches: [main]
-    paths:
-      - "field-os-simulador/setas-os/**"
-      - ".github/workflows/field-os-simulador-quality.yml"
+      - ".github/workflows/deploy.yml"
+      - ".github/workflows/quality.yml"
+  workflow_call:
+    inputs:
+      require-auth:
+        type: boolean
+        default: false
+    secrets:
+      E2E_TEST_EMAIL:
+        required: false
+      E2E_TEST_PASSWORD:
+        required: false
+      GROUND_TRUTH_CORPUS:
+        required: false
+      FIREBASE_SERVICE_ACCOUNT_SDLP_OS:
+        required: false
   workflow_dispatch:
 
 permissions:
@@ -69,6 +80,7 @@ jobs:
 
       - name: Gate 5 — Full Playwright E2E Matrix
         env:
+          E2E_REQUIRE_AUTH: ${{ (inputs['require-auth'] || github.ref == 'refs/heads/main') && 'true' || 'false' }}
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: npm run test:e2e

@@ -22,11 +22,11 @@ function loadServiceWorker() {
   const handlers = {};
   const self = {
     addEventListener: (type, fn) => { handlers[type] = fn; },
-    location: { origin: 'https://sdlp-os.web.app' },
+    location: { origin: 'https://sdlp-os.web.app', href: 'https://sdlp-os.web.app/sw.js' },
     skipWaiting: async () => {},
     clients: { claim: async () => {} },
   };
-  const sandbox = { self, caches: { open: async () => ({}), keys: async () => [], delete: async () => {} }, fetch: async () => ({}), URL, Response: { error: () => ({}) }, console };
+  const sandbox = { self, caches: { open: async () => ({}), keys: async () => [], delete: async () => {} }, fetch: async () => ({}), URL, Request, Response, console };
   sandbox.globalThis = sandbox;
   vm.runInNewContext(SW_SRC, sandbox, { filename: 'sw.js' });
   return { handlers, sandbox };
@@ -51,20 +51,23 @@ test('registra install, activate y fetch', () => {
 test('la versión de caché la estampa build.js, no una mano', () => {
   // Un número escrito a mano se olvida en el despliegue y alguien queda con el
   // shell viejo indefinidamente.
-  const { sourceHash, SRC } = require('./build.js');
-  const hash = sourceHash(fs.readFileSync(SRC, 'utf8')).slice(0, 12);
+  const { releaseHash } = require('./release-assets.cjs');
+  const hash = releaseHash(HERE).slice(0, 12);
   assert.match(SW_SRC, /\/\/ build:cache-version/, 'falta la marca que busca build.js');
   assert.ok(SW_SRC.includes(`const CACHE_VERSION = '${hash}'`),
-    'sw.js está desactualizado respecto a simulador-app.jsx — corre `node build.js` y súbelo');
+    'sw.js está desactualizado respecto a los assets de runtime — corre `node build.js` y súbelo');
 });
 
-test('no hay lista de assets escrita a mano que pueda desincronizarse', () => {
+test('la lista completa de assets se genera automáticamente y BOOT queda pequeño', () => {
   // El precacheo se limita al arranque; el resto se guarda al pedirse. Una lista
   // enumerando los 34 scripts de auth-gate.js se rompería al añadir un módulo.
   const boot = SW_SRC.match(/const BOOT = \[([^\]]*)\]/);
   assert.ok(boot, 'debe existir un conjunto mínimo de arranque');
   const count = [...boot[1].matchAll(/'/g)].length / 2;
   assert.ok(count <= 6, `BOOT enumera ${count} recursos; si crece, es una lista que se desincronizará`);
+  const { runtimeAssets } = require('./release-assets.cjs');
+  const generated = JSON.parse(SW_SRC.match(/const RELEASE_ASSETS = (\[[^\n]*\]);/)[1]);
+  assert.deepEqual(generated, runtimeAssets(HERE).filter(name => name !== 'sw.js').map(name => './' + name.split('/').map(encodeURIComponent).join('/')));
 });
 
 test('nada que no sea del mismo origen se intercepta', () => {
@@ -91,15 +94,15 @@ test('la navegación va primero a la red', () => {
 });
 
 test('activate borra las cachés de versiones anteriores', () => {
-  assert.match(SW_SRC, /names\.filter\(n => n !== CACHE\)\.map\(n => caches\.delete\(n\)\)/,
+  assert.match(SW_SRC, /names\.filter\(n => n\.startsWith\('setas-os-'\) && n !== CACHE\)\.map\(n => caches\.delete\(n\)\)/,
     'sin purga se acumulan shells viejos hasta llenar la cuota');
 });
 
 test('precachea vendor/jsQR.js para disponibilidad offline sin capturar Firestore', () => {
   assert.match(SW_SRC, /BOOT = \[[\s\S]*?'\.\/vendor\/jsQR\.js'[\s\S]*?\]/,
     'vendor/jsQR.js debe estar en la lista de arranque para Safari/iOS offline');
-  assert.match(SW_SRC, /cache\.add\(u\)\.catch\(\(\) => \{\}\)/,
-    'un fallo en un asset de arranque no debe abortar la instalación del service worker');
+  assert.match(SW_SRC, /cache\.addAll\(/,
+    'la instalación sólo debe completarse con todos los assets de la versión');
   assert.ok(fs.existsSync(path.join(HERE, 'vendor', 'jsQR.js')),
     'el archivo físico vendor/jsQR.js debe existir en el repositorio');
 });
@@ -111,4 +114,42 @@ test('precachea logo de Setas de la Peña para disponibilidad offline de la marc
     'el archivo físico _standalone_imgs/logo-sdlp.png debe existir en el repositorio');
   assert.match(SHELL, /<meta name="ext-resource-dependency" content="_standalone_imgs\/logo-sdlp\.png"/,
     'el shell debe declarar la dependencia del logo para el runtime offline');
+});
+
+test('a cache quota failure preserves successful online static and navigation responses', async () => {
+  for (const mode of ['cors', 'navigate']) {
+    const { handlers, sandbox } = loadServiceWorker();
+    const response = { ok: true, type: 'basic', status: 200, clone() { return this; } };
+    sandbox.fetch = async () => response;
+    sandbox.caches.open = async () => ({ match: async () => undefined, put: async () => { throw Error('QuotaExceededError'); } });
+    let result;
+    const background = [];
+    handlers.fetch({ request: { method: 'GET', url: 'https://sdlp-os.web.app/sim.css', mode }, respondWith(value) { result = value; }, waitUntil(value) { background.push(value); } });
+    assert.equal(await result, response);
+    await Promise.all(background);
+  }
+});
+
+test('fresh installs defer protected runtime; warmed upgrades install atomically and retain the old worker on failure', async () => {
+  for (const [warmed, fail] of [[false, false], [true, false], [true, true]]) {
+    const { handlers, sandbox } = loadServiceWorker();
+    let requests, active = false, installed;
+    const deleted = [];
+    sandbox.self.skipWaiting = async () => { active = true; };
+    sandbox.caches.keys = async () => ['setas-os-previous', 'another-app'];
+    sandbox.caches.delete = async name => { deleted.push(name); };
+    sandbox.caches.open = async name => name === 'setas-os-previous'
+      ? { match: async () => warmed ? {} : undefined }
+      : { addAll: async urls => { requests = urls; if (fail) throw Error('network failure'); } };
+    handlers.install({ waitUntil(value) { installed = value; } });
+    if (fail) await assert.rejects(installed, /network failure/);
+    else await installed;
+    assert.equal(requests.some(r => r.url.endsWith('/simulador-app.js')), warmed);
+    assert.equal(new Set(requests.map(r => r.url)).size, requests.length, 'encoded and unencoded shell paths must not duplicate requests');
+    assert.ok(requests.every(r => r.cache === 'reload'));
+    assert.equal(active, !fail);
+    assert.equal(deleted.includes('setas-os-previous'), false);
+    assert.equal(deleted.includes('another-app'), false);
+    assert.equal(deleted.length, fail ? 1 : 0);
+  }
 });

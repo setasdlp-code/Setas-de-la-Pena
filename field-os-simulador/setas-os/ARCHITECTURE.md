@@ -182,6 +182,33 @@ banner `// source-hash: <sha256>` de `simulador-app.js` y lo compara contra un h
 fresco de `simulador-app.jsx`. Por eso el bundle generado tiene que ir en el mismo
 commit — la CI detecta el desfase, pero no lo corrige.
 
+### Release, autenticación y actualización offline
+
+`deploy.yml` ejecuta los workflows reutilizables de calidad del repositorio y de
+Setas OS contra el mismo commit. Pages sólo publica `main` cuando ambos terminan
+correctamente; una ejecución manual tiene las mismas compuertas. La validación
+de release establece `E2E_REQUIRE_AUTH=true`: faltan credenciales, falla el login
+o se pierde la sesión durante el recorrido → falla la validación. Un entorno
+local/PR sin credenciales puede omitir explícitamente los recorridos autenticados;
+con credenciales configuradas, un login fallido siempre es un fallo.
+
+`build.js` conserva el hash JSX del bundle y genera además la versión de caché y
+la lista de assets desde `release-assets.cjs`: shell, módulos, CSS, vendor,
+fuentes e imágenes. Cualquier cambio de runtime requiere `npm run build`, incluso
+si no cambia JSX. Los directorios de tests, sesiones, funciones y datos de campo
+no se leen. Las marcas generadas del propio worker se normalizan para que dos
+builds consecutivos produzcan los mismos bytes.
+
+La primera instalación sólo precachea BOOT y conserva la carga diferida del gate.
+Al actualizar una caché que ya contiene el bundle autenticado, el nuevo worker
+descarga todos los assets de la versión antes de activar y purgar las cachés
+anteriores de Setas OS. Si una descarga o la cuota falla, sigue disponible el
+worker anterior. Esta actualización requiere descargar el conjunto de assets
+estáticos (aproximadamente 22 MB actualmente); no descarga datos de Firestore.
+Una respuesta online válida sigue disponible aunque falle su guardado en caché.
+`e2e/service-worker-upgrade.browser.cjs` prueba actualización en segundo plano,
+instalación fallida y reapertura offline en un subdirectorio como GitHub Pages.
+
 ## 5. Datos compartidos entre dispositivos (ADR-0009)
 
 Varios equipos escriben a la vez. Bitácora y Bodega se leen en vivo de Firestore (`firebase/remote-sync.js`) y se fusionan con la copia local a tres bandas (`sync-merge.js`, con la última versión vista del servidor en `sdp_sync_base_v1`). `device-sync.js` decide qué claves locales escribir y qué encolar; la app persiste esas claves en una sola escritura (`SetasPrototype.persist`) y encola en la misma cola de Bitácora.
