@@ -46,6 +46,7 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 | All American 1941X (41 qt / 39 L) | 1 | En sitio | Tenjo — Esterilizador no eléctrico (autoclave) para comisionamiento |
 | Estufa Industrial a Propano (2 quemadores) | 1 | Operacional | Tenjo — Fuente térmica para esterilización |
 | Malla radiante QuietWarmth (90W, 120V) | 1 | Disponible | Tenjo — Calefacción para incubación |
+| Cable calefactor silicona + fibra de carbono 5,2 m (110/220 V, 33 Ω/m) | 2 | Disponible | Tenjo — Calefacción de la incubadora nueva (80 × 60 × 100 cm); datos del anuncio, pendiente de medir resistencia |
 | Racks metálicos y Mesón inox 1.50 m | 4 | Operacionales | Tenjo — Almacenamiento vertical y área de trabajo limpio |
 
 ---

@@ -24,6 +24,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-10-13
+
+| Tipo | Descripción |
+|---|---|
+| `[EQUIP]` | Añadidos 2 cables calefactores de silicona con núcleo de fibra de carbono de 5,2 m (`EQ-HEATER-SILICONE-CABLE-001`, comprados en Mercado Libre) para la incubadora nueva de 80 × 60 × 100 cm. Datos tomados del anuncio y no verificados: 33 Ω/m, red de 110/220 V, 74 W a 110 V y 296 W a 220 V según el vendedor. El cálculo con 33 Ω/m da ~70 W a 110 V y ~84 W a 120 V, y ~42 W con dos cables en serie a 120 V. Pendiente: medir la resistencia con multímetro y registrar su `last_physical_verification`. |
+
 ### 2026-09-13
 
 | Tipo | Descripción |

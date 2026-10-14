@@ -72,6 +72,7 @@ Este documento detalla la relación completa de activos, equipamiento de climati
 | Componente | Cantidad | Especificación Técnica | Estado | Aplicación |
 |---|:---:|---|:---:|---|
 | **QuietWarmth QWARM1.5X5F120** | 1 | Malla radiante carbono 1.5 × 5 ft (45.7 × 152.4 cm), 120V / 90W | Disponible | Calefacción fondo de incubadora térmica. |
+| **Cable calefactor silicona + núcleo fibra de carbono, 5,2 m** | 2 | Cable de 2,0 mm (±0,2), aislamiento PTFE (200 °C), 33 Ω/m, red de 110/220 V. Según el anuncio: 74 W a 110 V y 296 W a 220 V. Valores del anuncio sin verificar; el cálculo con 33 Ω/m da ~70 W a 110 V y ~84 W a 120 V | Disponible (comprado en Mercado Libre) | Calefacción de la incubadora nueva de 80 × 60 × 100 cm. No se corta ni se superpone; se mide su resistencia antes de instalar. |
 | **Mean Well LRS-50-12** | 2 | Fuentes conmutadas 50 W, 12V DC, 4.2A | Disponibles | Bus de alimentación DC para ventiladores y relés. |
 | **Hosyond Relé 2 Canales** | 6 | Módulos de relé 5V DC con optoacoplador | Disponibles | Conmutación de cargas AC (T7, H4, Malla térmica). |
 | **Fastronix Relay Terminals** | 10 | Zócalos y conectores sellados para relés | Disponibles | Montaje limpio y seguro de potencia. |
