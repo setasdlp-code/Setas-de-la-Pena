@@ -32,6 +32,9 @@ window.addEventListener('afterprint', () => {
   const setText = (selector, value) => { document.querySelector(selector).textContent = value; };
   const recipes = window.SetasRecipes || {};
   const params = new URLSearchParams(location.search);
+  if (params.get('purpose') === 'restaurante') {
+    form.querySelector('input[name="purpose"][value="restaurante"]').checked = true;
+  }
   const scaleParam = params.get('scale');
   const recipeId = params.get('recipe');
   // Solo identificadores conocidos y factor 1, 2 o 3: cualquier otro valor deja la consulta normal.

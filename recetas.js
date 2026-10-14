@@ -26,6 +26,7 @@ function applyScale(article, scale, updateUrl) {
   const cta = article.querySelector('.recipe-cta a');
   const target = new URL(cta.href);
   target.searchParams.set('scale', String(scale));
+  if (startParams.get('purpose') === 'restaurante') target.searchParams.set('purpose', 'restaurante');
   cta.href = target.href;
   article.querySelector('.recipe-cta p').textContent = `Prepararás una consulta con ${grams} g de shiitake fresco limpio${scale > 1 ? ` (${scaleInfo.labels[scale].toLowerCase()}, ×${scale})` : ', la cantidad de esta receta'}. Podrás cambiarla.`;
   const status = article.querySelector('.recipe-scale-status');
