@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: a8f18f324db8067aadc073dc8099cc2189bdd2ae08b04a83881b07a8e3c25f08
+// source-hash: b66b0ba08035f6498bf02e065955a0d2036973f0f02a2b8fd7458406366f57dd
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -5827,6 +5827,7 @@ function SimuladorShell(props) {
     return () => window.removeEventListener("setas-room-cycle-updated", reload);
   }, []);
   const [cycleClock, setCycleClock] = useState(() => Date.now());
+  useEffect(() => setCycleClock(Date.now()), [roomCycles]);
   useEffect(() => {
     const t = setInterval(() => setCycleClock(Date.now()), 6e4);
     return () => clearInterval(t);

@@ -7661,6 +7661,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Un ciclo puede empezar o terminar sin que nadie toque nada (startAt en el
   // futuro, endAt en el pasado): se reevalúa cada minuto.
   const [cycleClock,setCycleClock]=useState(()=>Date.now());
+  // Una edición o sincronización puede cruzar un minuto antes del próximo tick.
+  useEffect(()=>setCycleClock(Date.now()),[roomCycles]);
   useEffect(()=>{const t=setInterval(()=>setCycleClock(Date.now()),60000);return ()=>clearInterval(t);},[]);
   const cycleTargetsApi=typeof window!=='undefined'?window.SetasRoomCycleTargets:null;
   const effectiveRoomBands=cycleTargetsApi?cycleTargetsApi.effectiveBands(ROOM_TARGET_BANDS,roomCycles,cycleClock):ROOM_TARGET_BANDS;
