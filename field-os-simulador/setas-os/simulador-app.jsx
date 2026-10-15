@@ -15968,13 +15968,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Batch</div>
                     <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
-                  <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
+                  <div className="bgrid bgrid-batch">
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:moistureInTargetRange(hObj,an?.targets?.moisture)?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
                     <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
-                    <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
+                    <div className="bf bf-total"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
                     <div>
@@ -15998,7 +15998,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <span className="bq" style={{background:'var(--status-ok-bg)',border:'1px solid var(--status-ok-marker)',color:'var(--status-ok)'}}>{bd.spawn.toFixed(2)} kg</span>
                         </div>
                       </div>
-                      <div className="btots" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
+                      <div className="btots btots-4">
                         <div className="btot"><div className="bv">{bd.wet.toFixed(1)} kg</div><div className="bl">Sustrato</div></div>
                         <div className="btot"><div className="bv">${Math.round(bd.cost).toLocaleString()}</div><div className="bl">Insumos</div></div>
                         <div className="btot"><div className="bv">${Math.round(bd.spawnCostTotal).toLocaleString()}</div><div className="bl">Spawn</div></div>
@@ -17919,31 +17919,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* SELECTOR DE MODO DE ESCANEO */}
-                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="scan" size={13} style={{marginRight:4}} /> Ronda Lote
-                  </button>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'harvest' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="scale" size={13} style={{marginRight:4}} /> Báscula Cosecha
-                  </button>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'sweep' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Barrido Sala
-                  </button>
+                <div role="group" aria-label="Modo de captura" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
+                  {[
+                    { mode: 'round', icon: 'scan', label: 'Ronda Lote' },
+                    { mode: 'harvest', icon: 'scale', label: 'Báscula Cosecha' },
+                    { mode: 'sweep', icon: 'bolt', label: 'Barrido Sala' },
+                  ].map(opt => (
+                    <button
+                      key={opt.mode}
+                      type="button"
+                      aria-pressed={qrScanMode === opt.mode}
+                      className={`inv-btn inv-btn-sm ${qrScanMode === opt.mode ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                      style={{ flex: '1 1 150px', minWidth: 0, minHeight: 44, fontSize: 12, fontWeight: qrScanMode === opt.mode ? 700 : 500, whiteSpace: 'normal', textAlign: 'center', justifyContent: 'center', alignItems: 'center', lineHeight: 1.2 }}
+                      onClick={() => { setQrScanMode(opt.mode); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                    >
+                      <AppIcon name={opt.icon} size={13} style={{marginRight:4, flexShrink:0}} /> {opt.label}
+                    </button>
+                  ))}
                 </div>
 
                 {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}

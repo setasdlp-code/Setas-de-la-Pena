@@ -17,9 +17,10 @@ const bitacoraModel = require('./bitacora-model.js');
 const batchSheet = require('./batch-sheet.js');
 
 test('simulador-app.jsx: implementa selector de tres modos (ronda, cosecha rápida, barrido)', () => {
-  assert.match(jsx, /setQrScanMode\(['"]round['"]\)/, 'Debe incluir botón para Modo Ronda');
-  assert.match(jsx, /setQrScanMode\(['"]harvest['"]\)/, 'Debe incluir botón para Modo Cosecha Rápida');
-  assert.match(jsx, /setQrScanMode\(['"]sweep['"]\)/, 'Debe incluir botón para Modo Barrido');
+  for (const mode of ['round', 'harvest', 'sweep']) {
+    assert.match(jsx, new RegExp(`mode: '${mode}', icon:`), `Debe incluir botón para modo ${mode}`);
+  }
+  assert.match(jsx, /setQrScanMode\(opt\.mode\)/, 'Cada botón del selector debe activar su modo');
   assert.match(jsx, /Báscula Cosecha/, 'Debe tener etiqueta visual Báscula Cosecha');
   assert.match(jsx, /Barrido Sala/, 'Debe tener etiqueta visual Barrido Sala');
 });
