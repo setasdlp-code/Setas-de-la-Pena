@@ -7017,7 +7017,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   }, []);
   const [showLiveChips,setShowLiveChips]=useState(true);
   const [groupByRole,setGroupByRole]=useState(true);
-  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false});
+  // Teléfono: el Formulador arranca compacto (catálogo y paneles técnicos del Perito
+  // plegados). Se evalúa una sola vez al montar, igual que isMobileViewport.
+  const [phoneCompact]=useState(()=>typeof window!=='undefined'&&window.innerWidth<=700);
+  const [collapsedRoles,setCollapsedRoles]=useState(()=>({base_carbono:phoneCompact,suplemento_n:phoneCompact,aditivo:phoneCompact,aireador:phoneCompact,otro:phoneCompact}));
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
@@ -8571,6 +8574,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
     const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
     const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+    const wrapDeep=(summary,node)=>(phoneCompact&&!isWorkbench)
+      ?<details className="perito-deep-details" data-testid="perito-deep-details"><summary className="summary-tap">{summary}</summary>{node}</details>
+      :node;
     const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
     const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
     return(
@@ -8664,7 +8670,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
         </>}
 
-        {/* ── MÉTRICAS ── */}
+        {wrapDeep(`Métricas del modelo · C:N ${an.cn>0?an.cn.toFixed(1)+':1':'—'} · N ${an.avgN>0?an.avgN.toFixed(2)+'%':'—'} · EB ${an.ebLow&&an.ebHigh?an.ebLow+'–'+an.ebHigh:an.eb.toFixed(0)}%`,<>
         <div className="mgrid" style={{marginBottom:12}}>
           {[
                         {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
@@ -8705,6 +8711,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                   )}
         </div>
         <NitrogenChart recipe={recipe}/>
+        </>)}
 
         {/* ── EVIDENCIA + SUGERENCIAS ── */}
         {hasPer&&(
@@ -8730,12 +8737,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
             {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
-            {tips.length>0&&<details open style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
+            {tips.length>0&&<details open={!phoneCompact} style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
             {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
           </>
         )}
 
-        {!isWorkbench&&<>
+        {!isWorkbench&&wrapDeep(`Evaluación técnica y gráficos · ${dg.sugs.length} nota${dg.sugs.length===1?'':'s'}`,<>
                   {/* ── CHARTS TOGGLE + CHARTS ── */}
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
                     <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
@@ -8755,7 +8762,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                     <div className="sec" style={{marginTop:8}}>A considerar</div>
                     {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
                   </>)}
-        </>}
+        </>)}
       </section>
     );
   };
