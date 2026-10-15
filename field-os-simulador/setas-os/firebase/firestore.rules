@@ -20,8 +20,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Una cuenta sin documento en usuarios/ no tiene rol: null, no un error de
+    // evaluación (que además abortaría cualquier regla que la consulte).
     function role() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol;
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol
+        : null;
     }
 
     function isAdmin() {
@@ -36,11 +40,15 @@ service cloud.firestore {
     function getPct(ingredientes, i) {
       return i < ingredientes.size() && ingredientes[i].pct is number ? ingredientes[i].pct : 0.0;
     }
+    // Las reglas no tienen bucles: se suman los índices 0 a 11. Más de 12
+    // ingredientes se rechazan de forma explícita; si no, los sobrantes quedarían
+    // fuera de la suma y una mezcla desbalanceada pasaría.
     function masaBalanceada(ingredientes) {
       let tot = getPct(ingredientes, 0) + getPct(ingredientes, 1) + getPct(ingredientes, 2)
               + getPct(ingredientes, 3) + getPct(ingredientes, 4) + getPct(ingredientes, 5)
-              + getPct(ingredientes, 6) + getPct(ingredientes, 7);
-      return tot >= 99.5 && tot <= 100.5;
+              + getPct(ingredientes, 6) + getPct(ingredientes, 7) + getPct(ingredientes, 8)
+              + getPct(ingredientes, 9) + getPct(ingredientes, 10) + getPct(ingredientes, 11);
+      return ingredientes.size() <= 12 && tot >= 99.5 && tot <= 100.5;
     }
 
     match /usuarios/{uid} {
@@ -230,17 +238,20 @@ service cloud.firestore {
         && transicionIntacta()
         && (!('lifecycleState' in resource.data)
             || request.resource.data.get('estado', null) == resource.data.get('estado', null));
-      allow delete: if signedIn();
+      // Un lote borrado en la app es una lápida (ADR-0009), nunca un delete.
+      allow delete: if false;
     }
     match /bitacora_bolsas/{id} {
       allow read: if signedIn();
       // foto (data URL base64) debe eliminarse antes de guardar (ver bitacora-sync.js)
       // para no inflar la base de datos de Firestore.
-      allow write: if signedIn() && !('foto' in request.resource.data);
+      allow create, update: if signedIn() && !('foto' in request.resource.data);
+      allow delete: if false;
     }
     match /bitacora_cosechas/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
     }
 
     // Eventos de cultivo reportados por QR desde dentro de la app (ver
