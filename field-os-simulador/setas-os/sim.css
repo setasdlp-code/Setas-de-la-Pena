@@ -6928,3 +6928,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .perito-deep-details > summary:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px}
 .sim-root .perito-deep-details[open] > summary{border-bottom:1px solid var(--border-soft)}
 .sim-root .perito-deep-details > :not(summary){padding:0 12px}
+
+/* Mobile audit 2026-10: per-suggestion secondary detail (phones only, via .pi-more). */
+.sim-root .pi-more{margin-top:6px}
+.sim-root .pi-more > summary{font-family:var(--font-body);font-size:13px;font-weight:700;color:var(--ink-800);line-height:1.3}
+.sim-root .pi-more > summary:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px}

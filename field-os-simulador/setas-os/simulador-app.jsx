@@ -2067,21 +2067,8 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
     return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
   },[evaluate,recipe,item.comboApply,lockedIds,ingredients]);
 
-  return(
-  <div className={`perito-item pi-${item.priority}`}>
-    <div className="pi-icon-col">
-      <span className="pi-icon">{item.icon}</span>
-    </div>
-    <div className="pi-body">
-      <div className="pi-head">
-        <span className="pi-label">{item.label}</span>
-        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
-        {item.delta&&<span className="pi-delta">{item.delta}</span>}
-      </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
-      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
-      <div className="pi-effect">{item.effect}</div>
+  const [compact]=React.useState(()=>typeof window!=='undefined'&&window.innerWidth<=700);
+  const bDeltas=<>
       {deltaSim?.diff&&(
         <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
@@ -2107,14 +2094,32 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           )}
         </div>
       )}
+  </>;
+  const bEvidence=<>
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
+  </>;
+  const bWhy=<>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
+  </>;
+  const bRisk=<>
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
+  </>;
+  const bIndice=<>
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+  </>;
+  const bDisclaimer=<>
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+  </>;
+  const bClassNote=<>
       <ClassChangeNote change={classChange}/>
+  </>;
+  const bPreview=<>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
+  </>;
+  const bSide=<>
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600)" /> {item.sideEffect}</span></div>}
+  </>;
+  const bCombo=<>
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
@@ -2122,6 +2127,23 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
         <PeritoChangePreview changes={comboChanges}/>
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
+  </>;
+  return(
+  <div className={`perito-item pi-${item.priority}`}>
+    <div className="pi-icon-col">
+      <span className="pi-icon">{item.icon}</span>
+    </div>
+    <div className="pi-body">
+      <div className="pi-head">
+        <span className="pi-label">{item.label}</span>
+        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
+        {item.delta&&<span className="pi-delta">{item.delta}</span>}
+      </div>
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
+      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
+      <div className="pi-effect">{item.effect}</div>
+      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bEvidence}{bWhy}{bRisk}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bSide}{bCombo}</>}
     </div>
     <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
