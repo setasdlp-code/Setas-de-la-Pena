@@ -35,6 +35,7 @@
         <p class="t-small"><a href="recetas.html#receta-arepa">Elegir una receta y traer su cantidad ↗</a></p>
       </div>
       <div class="species-section-content">
+        <aside class="purchase-notice" id="channel-notice" role="note" hidden><p class="t-label">Estado comercial</p><p><strong>Aún no recibimos consultas.</strong> Estamos en prelanzamiento: todavía no publicamos presentaciones, precios ni cobertura de entrega. Puedes preparar un borrador de mensaje para cuando el canal esté abierto, o conocer el producto mientras tanto.</p><p class="t-small"><a class="text-link" href="#perfil">Conocer sabor y textura ↓</a> · <a class="text-link" href="recetas.html">Explorar recetas ↗</a></p></aside>
         <div class="purchase-card">
           <div class="purchase-card-heading"><h3>Tu consulta de shiitake</h3><span class="t-label purchase-availability" data-availability>Disponibilidad por confirmar</span></div>
           <p class="t-small" id="availability-detail">La disponibilidad y las presentaciones se confirman al consultar.</p>
@@ -52,6 +53,7 @@
               <div class="sdp-field"><label class="sdp-field__label" for="order-quantity" id="quantity-label">Cantidad que necesitas (g)</label><input class="sdp-input" id="order-quantity" name="quantity" type="number" min="1" step="1" value="250" inputmode="numeric" required aria-describedby="quantity-hint"><span class="sdp-field__hint" id="quantity-hint">Cantidad solicitada; el formato se confirma al consultar.</span></div>
               <div class="sdp-field"><label class="sdp-field__label" for="order-municipality">Municipio de entrega</label><input class="sdp-input" id="order-municipality" name="municipality" type="text" maxlength="80" autocomplete="address-level2" placeholder="Escribe tu municipio" required aria-describedby="municipality-hint"><span class="sdp-field__hint" id="municipality-hint">Confirmaremos la cobertura para tu municipio.</span></div>
             </div>
+            <div class="purchase-fields purchase-restaurant" id="restaurant-fields" hidden><div class="sdp-field"><label class="sdp-field__label" for="order-frequency">Frecuencia de compra (opcional)</label><input class="sdp-input" id="order-frequency" name="frequency" type="text" maxlength="80" placeholder="Ej. semanal"></div><div class="sdp-field"><label class="sdp-field__label" for="order-date">Fecha deseada (opcional)</label><input class="sdp-input" id="order-date" name="desired" type="text" maxlength="80" placeholder="Ej. primera semana de noviembre"></div></div>
             <dl class="purchase-summary" aria-live="polite" aria-atomic="true"><div><dt>Cantidad solicitada</dt><dd id="order-weight">250 g</dd></div><div id="order-difference-row" hidden><dt>Peso entregado frente a la receta</dt><dd id="order-difference"></dd></div><div><dt>Subtotal del producto</dt><dd id="order-subtotal">Precio por confirmar</dd></div><div><dt>Entrega</dt><dd id="order-delivery">Cobertura y costo por confirmar</dd></div></dl>
             <button type="submit" class="sdp-btn sdp-btn--primary purchase-submit">Preparar consulta <span aria-hidden="true">↗</span></button>
             <p class="t-small purchase-confirmation">Revisa el mensaje antes de compartirlo. La disponibilidad, el valor final y la entrega se acuerdan con Setas de la Peña.</p>
@@ -61,7 +63,7 @@
             <p class="t-label">Tu mensaje está listo</p><h4 id="review-title">Revisa y comparte.</h4>
             <label class="sdp-field__label" for="order-message">Mensaje de consulta</label><textarea id="order-message" class="sdp-field__control" readonly rows="9"></textarea>
             <div class="purchase-message-actions"><a class="sdp-btn sdp-btn--primary" id="order-whatsapp" target="_blank" rel="noopener noreferrer" hidden>Consultar por WhatsApp ↗</a><button type="button" class="sdp-btn" id="copy-order">Copiar mensaje</button></div>
-            <p class="t-small" id="contact-note">El canal de pedidos se publicará aquí cuando esté confirmado. Puedes guardar este mensaje.</p>
+            <p class="t-small" id="contact-note">Este borrador no se ha enviado a nadie: el canal de consultas aún no está habilitado. Puedes copiarlo y guardarlo.</p>
             <p class="t-small" id="copy-status" role="status"></p>
           </section>
         </div>
