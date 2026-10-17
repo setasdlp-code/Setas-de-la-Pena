@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: da6c8527d3d57805821db00a233024b7e5035f85e44d64bb6005d76cc003d63b
+// source-hash: a8f18f324db8067aadc073dc8099cc2189bdd2ae08b04a83881b07a8e3c25f08
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -53,6 +53,42 @@ function BagObservationEditor({ bolsa, onSave }) {
       discard();
     }
   } }), /* @__PURE__ */ React.createElement("span", { id: `bag-observation-status-${bolsa.id}`, role: error ? "alert" : "status" }, error || (dirty ? "Borrador sin guardar" : "Registro local · sincronización independiente")), dirty && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", onClick: save, "aria-label": `Guardar observaciones de ${bolsa.codigo}` }, error ? "Reintentar" : "Guardar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: discard, "aria-label": `Cancelar observaciones de ${bolsa.codigo}` }, "Cancelar")));
+}
+function ReadinessEvidenceForm({ check, onSave }) {
+  const [form, setForm] = useState({ requirementId: check.id, status: "unknown", reviewer: check.record?.reviewer || "", reference: check.record?.reference || "", notes: "", details: {} });
+  const [error, setError] = useState("");
+  const set = (key, value) => setForm((p) => ({ ...p, [key]: value }));
+  const detail = (key, value) => setForm((p) => ({ ...p, details: { ...p.details, [key]: value } }));
+  const fields = { spawn: [["strainId", "ID de cepa"], ["supplier", "Proveedor de semilla"], ["thermalClass", "Clase térmica documentada de la cepa"]], equipment: [["equipmentId", "Equipo identificado"], ["protocol", "Protocolo y carga validados"]], sensors: [["deviceIds", "IDs de los sensores / nodos (separados por coma)"], ["calibrationReference", "Registro de calibración o verificación cruzada"]] }[check.id] || [];
+  return /* @__PURE__ */ React.createElement("form", { className: "readiness-evidence-form", "aria-label": `Evidencia: ${check.label}`, onSubmit: (event) => {
+    event.preventDefault();
+    try {
+      onSave(form);
+      setError("");
+    } catch (e) {
+      setError(e.message);
+    }
+  } }, /* @__PURE__ */ React.createElement("label", null, "Resultado de la revisión", /* @__PURE__ */ React.createElement("select", { value: form.status, onChange: (e) => set("status", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "unknown" }, "Sin verificar"), /* @__PURE__ */ React.createElement("option", { value: "verified" }, "Verificado con evidencia"), /* @__PURE__ */ React.createElement("option", { value: "blocked" }, "Bloqueado"))), /* @__PURE__ */ React.createElement("label", null, "Responsable de la revisión", /* @__PURE__ */ React.createElement("input", { value: form.reviewer, onChange: (e) => set("reviewer", e.target.value), required: true })), /* @__PURE__ */ React.createElement("label", null, "Referencia de evidencia", /* @__PURE__ */ React.createElement("input", { placeholder: "Registro, informe o URL", value: form.reference, onChange: (e) => set("reference", e.target.value), required: form.status === "verified" })), fields.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key }, label, /* @__PURE__ */ React.createElement("input", { value: form.details[key] || "", onChange: (e) => detail(key, e.target.value), required: form.status === "verified" }))), check.id === "equipment" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Corrida del autoclave (ID del ciclo) · obligatoria si se esteriliza", /* @__PURE__ */ React.createElement("input", { value: form.details.cycleId || "", onChange: (e) => detail("cycleId", e.target.value) })), /* @__PURE__ */ React.createElement("label", null, "Bioindicador de la corrida", /* @__PURE__ */ React.createElement("select", { value: form.details.bioindicatorResult || "", onChange: (e) => detail("bioindicatorResult", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "No aplica (pasteurización o cal)"), /* @__PURE__ */ React.createElement("option", { value: "sin_crecimiento" }, "Sin crecimiento"), /* @__PURE__ */ React.createElement("option", { value: "con_crecimiento" }, "Con crecimiento"), /* @__PURE__ */ React.createElement("option", { value: "pendiente" }, "Pendiente de lectura")))), check.id === "room" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("label", null, "Capacidad documentada de la sala (bolsas)", /* @__PURE__ */ React.createElement("input", { type: "number", min: "1", step: "1", value: form.details.capacityBags || "", onChange: (e) => detail("capacityBags", e.target.value), required: form.status === "verified" })), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.sanitized, onChange: (e) => detail("sanitized", e.target.checked) }), " Verifiqué limpieza y condiciones físicas de la sala."), /* @__PURE__ */ React.createElement("label", { className: "readiness-check" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!form.details.targetsReviewed, onChange: (e) => detail("targetsReviewed", e.target.checked) }), " Revisé las condiciones aprobadas para la especie, cepa y etapa.")), /* @__PURE__ */ React.createElement("label", null, "Observaciones / motivo", /* @__PURE__ */ React.createElement("textarea", { value: form.notes, onChange: (e) => set("notes", e.target.value), required: form.status !== "verified" })), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "inv-btn inv-btn-sec" }, "Guardar revisión de ", check.label));
+}
+function ProductionReadinessDashboard({ assessment, input, rooms, onRoomChange, onAction, onSave, error }) {
+  const [message, setMessage] = useState("");
+  useEffect(() => setMessage(""), [assessment.scope]);
+  const labels = { verified: "Verificado", blocked: "Bloqueado", unknown: "Sin verificar" };
+  const manual = SetasProductionReadiness.MANUAL_IDS;
+  const exportReport = () => {
+    const report = { schema: "setas.readiness-report.v1", generatedAt: (/* @__PURE__ */ new Date()).toISOString(), scope: "pre-production-documentation", species: input.speciesKey, roomId: input.roomId, lotCode: input.lotCode, assessment };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "preparacion-produccion-" + (input.lotCode || "plan") + ".json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+  };
+  return /* @__PURE__ */ React.createElement("section", { id: "production-readiness", className: "production-readiness no-print", "aria-labelledby": "production-readiness-title", "data-testid": "production-readiness-dashboard" }, /* @__PURE__ */ React.createElement("header", { className: "readiness-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "readiness-kicker" }, "Antes de producir"), /* @__PURE__ */ React.createElement("h2", { id: "production-readiness-title" }, "Preparación para producción"), /* @__PURE__ */ React.createElement("p", null, input.lotCode || "Plan sin código", " · ", input.speciesName || "Especie pendiente", " · ", assessment.preparationRevision || "Cantidades pendientes")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportReport }, "Exportar informe")), /* @__PURE__ */ React.createElement("div", { className: `readiness-summary is-${assessment.status}`, role: "status", "aria-live": "polite", "aria-atomic": "true" }, /* @__PURE__ */ React.createElement("strong", null, assessment.status === "verified" ? "Requisitos documentados · revisar autorización del ensayo" : "Requisitos pendientes antes de producir"), /* @__PURE__ */ React.createElement("span", null, assessment.counts.verified, " verificados · ", assessment.counts.blocked, " bloqueados · ", assessment.counts.unknown, " sin verificar")), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico."), /* @__PURE__ */ React.createElement("div", { className: "readiness-context" }, /* @__PURE__ */ React.createElement("label", null, "Sala prevista", /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala prevista para preparación", value: input.roomId, onChange: (e) => onRoomChange(e.target.value) }, rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), assessment.next && /* @__PURE__ */ React.createElement("p", null, /* @__PURE__ */ React.createElement("strong", null, "Siguiente requisito:"), " ", assessment.next.label, ". ", assessment.next.detail)), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error, " No se puede registrar una nueva revisión hasta recuperar estos datos."), /* @__PURE__ */ React.createElement("p", { className: "readiness-local-note" }, "Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación."), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message), /* @__PURE__ */ React.createElement("div", { className: "readiness-grid" }, assessment.checks.map((check) => /* @__PURE__ */ React.createElement("article", { key: check.id, className: `readiness-card is-${check.status}`, "data-testid": `readiness-${check.id}` }, /* @__PURE__ */ React.createElement("div", { className: "readiness-card-heading" }, /* @__PURE__ */ React.createElement("h3", null, check.label), /* @__PURE__ */ React.createElement("span", { className: "readiness-status" }, labels[check.status])), /* @__PURE__ */ React.createElement("p", null, check.detail), check.record && /* @__PURE__ */ React.createElement("p", { className: "readiness-record" }, "Registro de ", check.record.reviewer, " · ", new Date(check.record.at).toLocaleString("es-CO", { timeZone: "America/Bogota" })), check.id === "spawn" && assessment.spawnLots.length > 0 && /* @__PURE__ */ React.createElement("p", null, "Lotes de semilla asignados: ", assessment.spawnLots.map((l) => l.lotId).join(", ")), manual.includes(check.id) ? /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Registrar evidencia de ", check.label), /* @__PURE__ */ React.createElement(ReadinessEvidenceForm, { check, onSave: (form) => {
+    if (error) throw Error(error);
+    onSave(form);
+    setMessage(`Revisión de ${check.label} guardada para este plan.`);
+  } })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => onAction(check.action) }, "Revisar ", check.action === "recipe" ? "Formulador" : check.action === "batch" ? "cantidades" : check.action === "inventory" ? "Bodega" : "Perito")))), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales."));
 }
 function PrototypeTrialsPanel({ saved, active, onPrepare, onReload }) {
   const [open, setOpen] = useState(false), [step, setStep] = useState(1), [message, setMessage] = useState(""), [error, setError] = useState("");
@@ -4978,6 +5014,27 @@ function SimuladorShell(props) {
     }
   };
   const [selectedClimateRoom, setSelectedClimateRoom] = useState("martha_01");
+  const [productionEvidence, setProductionEvidence] = useState(() => {
+    try {
+      SetasPrototype.recover(localStorage);
+      return { records: SetasProductionReadiness.readRecords(localStorage), error: "" };
+    } catch (e) {
+      return { records: [], error: e.message };
+    }
+  });
+  useEffect(() => {
+    const refresh = (event) => {
+      if (event.key !== SetasProductionReadiness.KEY && event.key !== SetasPrototype.PENDING && event.key !== null) return;
+      try {
+        SetasPrototype.recover(localStorage);
+        setProductionEvidence({ records: SetasProductionReadiness.readRecords(localStorage), error: "" });
+      } catch (e) {
+        setProductionEvidence({ records: [], error: e.message });
+      }
+    };
+    window.addEventListener("storage", refresh);
+    return () => window.removeEventListener("storage", refresh);
+  }, []);
   const [copilotVisionResult, setCopilotVisionResult] = useState(null);
   const [copilotVisionError, setCopilotVisionError] = useState(null);
   const [copilotVisionBusy, setCopilotVisionBusy] = useState(false);
@@ -5570,7 +5627,25 @@ function SimuladorShell(props) {
         if (e && e.name === "QuotaExceededError") bitQuotaWarn();
         return;
       }
-      const setters = { sdp_bit_lotes: setBitLotes, sdp_bit_bolsas: setBitBolsas, sdp_bit_cosechas: setBitCosechas, sdp_movimientos: setInvMovimientos, sdp_compras: setInvCompras, sdp_proveedores: setInvProveedores, sdp_inv_reservas: setInvReservas, sdp_room_cycles: setRoomCycles };
+      const setters = {
+        sdp_bit_lotes: setBitLotes,
+        sdp_bit_bolsas: setBitBolsas,
+        sdp_bit_cosechas: setBitCosechas,
+        sdp_movimientos: setInvMovimientos,
+        sdp_compras: setInvCompras,
+        sdp_proveedores: setInvProveedores,
+        sdp_inv_reservas: setInvReservas,
+        sdp_room_cycles: setRoomCycles,
+        // Las revisiones se releen con readRecords: un registro inválido llegado
+        // de otro equipo se muestra como error, igual que uno dañado en local.
+        [SetasProductionReadiness.KEY]: () => {
+          try {
+            setProductionEvidence({ records: SetasProductionReadiness.readRecords(localStorage), error: "" });
+          } catch (e) {
+            setProductionEvidence({ records: [], error: e.message });
+          }
+        }
+      };
       for (const [key, value] of plan.entries) {
         if (key === "sdp_lotes") {
           invLotesRef.current = value;
@@ -6224,11 +6299,16 @@ function SimuladorShell(props) {
     return ing;
   }), [priceOverrides, invLotes]);
   const optimizerINGS = useMemo(() => effectiveINGS.filter((g) => !disabledIngIds.includes(g.id)), [effectiveINGS, disabledIngIds]);
-  const fings = useMemo(() => effectiveINGS.filter((g) => {
-    const ms = search === "" || g.name.toLowerCase().includes(search.toLowerCase()) || g.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
-    const roleMatch = cat === "all" || (cat === "aditivo" ? ["aditivo_ph", "aditivo_estructura", "aditivo_micronutriente", "aditivo_arrancador"].includes(g.role) : g.role === cat);
-    return ms && roleMatch;
-  }).sort((a, b) => a.name.localeCompare(b.name)), [search, cat, effectiveINGS]);
+  const fings = useMemo(() => {
+    const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const terms = normalize(search).trim().split(/\s+/).filter(Boolean);
+    return effectiveINGS.filter((g) => {
+      const text = normalize([g.name, ...g.tags || []].join(" "));
+      const ms = terms.every((term) => text.includes(term));
+      const roleMatch = cat === "all" || (cat === "aditivo" ? ["aditivo_ph", "aditivo_estructura", "aditivo_micronutriente", "aditivo_arrancador"].includes(g.role) : g.role === cat);
+      return ms && roleMatch;
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [search, cat, effectiveINGS]);
   const visibleIngredients = useMemo(() => {
     let rows = usePantry ? fings.filter((g) => pantryIds.includes(g.id)) : fings;
     if (showCompatOnly) {
@@ -6410,6 +6490,84 @@ function SimuladorShell(props) {
   const peritoEvaluate = useMemo(() => createRecipeEvaluator({ sKey, ings: effectiveINGS, resolveSpp: resolvePeritoSpp, stockIds, blendEB: (a) => blendEBWithHistory(a, histStats), analyzeFn: analyze }), [sKey, effectiveINGS, resolvePeritoSpp, stockIds, histStats]);
   const substrateClassInfo = useMemo(() => SetasSpeciesTargetsApi.describeSubstrateClass ? SetasSpeciesTargetsApi.describeSubstrateClass({ speciesId: sKey, recipe, ings: effectiveINGS, legacySpp: SPP }) : null, [sKey, recipe, effectiveINGS]);
   const opt = useMemo(() => generateOptimizer(an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate), [an, sKey, stockIds, recipe, optimizerINGS, lockedIds, blendedEB, optUseStock, appliedIcons, effectiveSPP, usageCounts, peritoEvaluate]);
+  const productionReadinessInput = useMemo(() => {
+    const bag = BAG_TYPES.find((b) => b.id === prodBagType);
+    let plan = null, stockCheck = null;
+    try {
+      if (preparation) plan = SetasLaunchPlanApi.buildLaunchPlan({
+        preparation,
+        ingredients: prodIngs,
+        inventoryLots: invLotes,
+        bagUnit: bag?.stockId ? { ingredientId: bag.stockId, units: preparation.target.bags } : null,
+        unitIngredientIds: UNIT_INGREDIENT_IDS
+      });
+      if (plan) {
+        stockCheck = window.SetasInventoryLedger.checkPlan(plan, { lots: invLotes, ledger: invReservas, nowMs: cycleClock });
+        stockCheck = { ...stockCheck, lines: stockCheck.lines.map((l) => ({ ...l, name: prodIngs.find((g) => g.id === l.ingredienteId)?.name || (l.ingredienteId === "spawn_grano" ? "Semilla (grano)" : bag?.name || l.ingredienteId) })) };
+      }
+    } catch {
+    }
+    const roomState = bitLotesLoaded && !metricsLoadError && window.SetasRoomState ? window.SetasRoomState.buildRoomBoard({ rooms: Object.values(ROOMS_CONFIG), lotes: bitLotes, bolsas: bitBolsas, events: roomEvents, telemetry: {}, nowMs: cycleClock }).find((r) => r.roomId === selectedClimateRoom) : null;
+    return {
+      speciesKey: sKey,
+      speciesName: hasPickedSpecies ? sp?.name : "Especie pendiente",
+      speciesConfirmed: hasPickedSpecies,
+      preparation,
+      preparationError: preparationResult.error,
+      model: an ? { criticals: (opt?.items || []).filter((i) => i.priority === "critical").length } : null,
+      treatment: tr ? { col: tr.col, temp: tr.temp, time: tr.time } : null,
+      plan,
+      stockCheck,
+      reservations: invReservas,
+      inventoryLoaded: peritoInventoryLoaded,
+      inventoryLots: invLotes,
+      containerId: prodBagType,
+      containerStockId: bag?.stockId,
+      roomId: selectedClimateRoom,
+      roomState,
+      telemetry: liveTelemetry.roomLive(selectedClimateRoom),
+      lotCode: prodLoteNum,
+      plannedDate: prodDate,
+      lotCodeAlreadyUsed: bitLotes.some((l) => String(l.codigo || "").trim() === String(prodLoteNum || "").trim() && !!prodLoteNum)
+    };
+  }, [sKey, sp, hasPickedSpecies, preparation, preparationResult.error, prodIngs, invLotes, invReservas, prodBagType, an, opt, tr, peritoInventoryLoaded, bitLotesLoaded, metricsLoadError, bitLotes, bitBolsas, roomEvents, selectedClimateRoom, liveTelemetry.snapshot, cycleClock, prodLoteNum, prodDate]);
+  const productionReadiness = useMemo(() => SetasProductionReadiness.assessProductionReadiness(productionReadinessInput, productionEvidence.records), [productionReadinessInput, productionEvidence.records]);
+  const saveProductionEvidence = (form) => {
+    if (productionEvidence.error) throw Error(productionEvidence.error);
+    const current = SetasProductionReadiness.readRecords(localStorage);
+    const record = SetasProductionReadiness.createEvidence(form, productionReadinessInput, current, { id: crypto.randomUUID() });
+    const records = [...current, record];
+    SetasPrototype.persist(localStorage, [[SetasProductionReadiness.KEY, records]]);
+    setProductionEvidence({ records, error: "" });
+    encolarSync({ type: "crearDocumento", key: "production_readiness:" + record.id, args: ["production_readiness/" + record.id, record] });
+  };
+  const openProductionReadiness = () => {
+    goTab("produccion");
+    requestAnimationFrame(() => {
+      const panel = document.getElementById("production-readiness");
+      panel?.scrollIntoView({ block: "start" });
+      const title = panel?.querySelector("h2");
+      if (title) {
+        title.setAttribute("tabindex", "-1");
+        title.focus({ preventScroll: true });
+      }
+    });
+  };
+  const readinessAction = (action) => {
+    if (action === "inventory") {
+      goTab("inventario");
+      return;
+    }
+    if (action === "batch") {
+      const target = document.getElementById(!prodLoteNum ? "prod-lote" : "prod-bags");
+      target?.scrollIntoView({ block: "center" });
+      target?.focus({ preventScroll: true });
+      return;
+    }
+    openBuilderSubTab("formular");
+    goTab("formular");
+    if (action === "recommendations") requestAnimationFrame(() => document.getElementById("bl-perito")?.scrollIntoView({ block: "start" }));
+  };
   const peritoRevisionRef = React.useRef(0);
   useEffect(() => {
     const input = {
@@ -6739,7 +6897,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote = SetasPrototype.read(localStorage, "sdp_bit_lotes").find((l) => l.id === releaseBatchId);
     const result = SetasPrototype.prepareBatch(localStorage, { loteId: lote.id, trialRelease: record, sheet: buildSheetFor(lote), role: operatorRole, operatorId: lote.operador || "operador-local", at: (/* @__PURE__ */ new Date()).toISOString() });
     applyPrototypeEntries(result.entries);
-    enqueueFieldTransition(result.lote, result.lote.pendingPreparationTransition?.from || "planned", result.transition);
+    requestLotTransition(result.lote, result.transition, { from: result.lote.pendingPreparationTransition?.from || "planned", logged: true });
     if (taskEngine) mergeIntoTasks(taskEngine.tasksFromTransition({ batchId: lote.id, toState: result.transition, at: (/* @__PURE__ */ new Date()).toISOString() }));
     runInventorySync();
     setReleaseBatchId(null);
@@ -8486,6 +8644,48 @@ BATCH (${numBags}×${kgBag} kg):
       setNoticeDlg({ title: "No se pudo registrar la transición", msg: err.message });
     }
   };
+  const requestLotTransition = (lote, to, { from = null, reason = null, logged = false } = {}) => {
+    if (!lote || !workflow) return false;
+    const origin = from || loteLifecycleState(lote);
+    const label = (s) => batchSheetApi && batchSheetApi.stateLabel ? batchSheetApi.stateLabel(s) : s;
+    if (!workflow.canTransition(origin, to)) {
+      setNoticeDlg({ title: "Cambio de etapa no permitido", msg: `${lote.codigo || lote.id} está en ${label(origin)} y no puede pasar a ${label(to)}.` });
+      return false;
+    }
+    const uid = window.SetasFirebase?.auth?.currentUser?.uid || null;
+    if (!uid && lote.lifecycleState) {
+      setNoticeDlg({ title: "Se necesita iniciar sesión", msg: `La etapa de ${lote.codigo || lote.id} ya la registra el servidor. Inicia sesión para cambiarla.` });
+      return false;
+    }
+    const event = logged ? null : workflow.transitionEvent({ batchId: lote.id, from: origin, to, operatorId: lote.operador || "operador-local", reason });
+    const log = event ? { lifecycleEvents: [...lote.lifecycleEvents || [], event] } : {};
+    if (uid) {
+      if (event) updateBitLote(lote.id, log);
+      enqueueFieldTransition(lote, origin, to);
+    } else {
+      updateBitLote(lote.id, { estado: batchSheetApi?.legacyEstadoFor?.(to) || to, ...log });
+    }
+    return true;
+  };
+  useEffect(() => {
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (!ledgerApi) return;
+    const descartados = new Set(bitLotes.filter((l) => loteLifecycleState(l) === "discarded").map((l) => l.id));
+    if (!descartados.size) return;
+    setInvReservas((prev) => {
+      if (!prev.some((r) => r.status === "held" && descartados.has(r.batchId))) return prev;
+      const at = (/* @__PURE__ */ new Date()).toISOString();
+      let upd = prev;
+      descartados.forEach((id) => {
+        upd = ledgerApi.releaseForBatch(upd, id, { reason: "Lote de producción descartado", at });
+      });
+      try {
+        localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+  }, [bitLotes]);
   const enqueueContainerFieldTransition = async (bolsa, lote, from, to, reasonCode = null, notes = null) => {
     const SHEET = typeof window !== "undefined" ? window.SetasFieldActionSheet : null;
     const uid = window.SetasFirebase && window.SetasFirebase.auth && window.SetasFirebase.auth.currentUser ? window.SetasFirebase.auth.currentUser.uid : null;
@@ -8533,7 +8733,7 @@ BATCH (${numBags}×${kgBag} kg):
         }
       });
       if (consequences.transition) {
-        enqueueFieldTransition(lote, sheet.state, consequences.transition);
+        requestLotTransition(lote, consequences.transition, { from: sheet.state, logged: true });
       }
       if (consequences.transition && taskEngine) {
         const sopTasks = taskEngine.tasksFromTransition({
@@ -8572,14 +8772,9 @@ BATCH (${numBags}×${kgBag} kg):
     if (action === "advance_stage") {
       const activeSheet = sheet || buildSheetFor(lote);
       if (activeSheet && commitSheetAction(activeSheet, lote, "advance_stage")) return;
-      const next = lote.estado === "incubacion" ? "fructificacion" : lote.estado;
       const from = loteLifecycleState(lote);
-      const to = loteLifecycleState({ estado: next });
-      if (next !== lote.estado && workflow && workflow.canTransition(from, to)) {
-        const event = workflow.transitionEvent({ batchId: lote.id, from, to, operatorId: lote.operador || "operador-local" });
-        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
-        enqueueFieldTransition(lote, from, to);
-      }
+      const to = (workflow?.DEFAULT_TRANSITIONS?.[from] || [])[0];
+      if (to) requestLotTransition(lote, to, { from });
       return;
     }
     if (action === "prepare_mix") {
@@ -8600,17 +8795,31 @@ BATCH (${numBags}×${kgBag} kg):
       });
       return;
     }
+    if (action === "start_thermal_treatment" || action === "complete_thermal_treatment") {
+      commitSheetAction(sheet || buildSheetFor(lote), lote, action);
+      return;
+    }
+    if (action === "inoculate") {
+      setPromptDlg({
+        title: "Inocular",
+        label: "Lote de semilla usado",
+        defaultValue: lote.spawnLotId || "",
+        placeholder: "Ej. SPW-260101-01",
+        confirmLabel: "Registrar inoculación",
+        onSubmit: (spawnLotId) => {
+          const conSemilla = { ...lote, spawnLotId };
+          if (spawnLotId !== lote.spawnLotId) updateBitLote(lote.id, { spawnLotId });
+          commitSheetAction(buildSheetFor(conSemilla), conSemilla, "inoculate", { spawnLotId });
+        }
+      });
+      return;
+    }
     if (action === "close") {
-      updateBitLote(lote.id, { estado: "completado" });
+      requestLotTransition(lote, "closed");
       return;
     }
     if (action === "discard") {
-      const from = loteLifecycleState(lote);
-      if (workflow && workflow.canTransition(from, "discarded")) {
-        const event = workflow.transitionEvent({ batchId: lote.id, from, to: "discarded", operatorId: lote.operador || "operador-local", reason: "Descarte manual de lote" });
-        updateBitLote(lote.id, { lifecycleEvents: [...lote.lifecycleEvents || [], event] });
-        enqueueFieldTransition(lote, from, "discarded");
-      }
+      requestLotTransition(lote, "discarded", { reason: "Descarte manual de lote" });
       return;
     }
     if (action === "move") {
@@ -9812,7 +10021,7 @@ BATCH (${numBags}×${kgBag} kg):
       " Imprimir Rollo QR (",
       lote.numBolsas || 12,
       " bolsas)"
-    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("select", { name: `loteStatus-${lote.id}`, "aria-label": `Estado del lote ${lote.codigo}`, value: lote.estado, onChange: (e) => updateBitLote(lote.id, { estado: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, ["incubacion", "fructificacion", "completado", "descartado"].map((st) => /* @__PURE__ */ React.createElement("option", { key: st, value: st }, st))))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("select", { name: `loteVerdict-${lote.id}`, "aria-label": `Veredicto del lote ${lote.codigo}`, value: lote.veredicto || "", onChange: (e) => updateBitLote(lote.id, { veredicto: e.target.value }), className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px" } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "— veredicto —"), ["prometedora", "descartar", "repetir", "ajustar humedad", "riesgo contaminación", "buena para escalar"].map((v) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, v))), /* @__PURE__ */ React.createElement("span", { "data-testid": `lote-stage-${lote.id}`, className: "inv-input", style: { width: "auto", fontSize: "var(--text-sm)", padding: "6px 10px", display: "inline-flex", alignItems: "center" } }, "Etapa: ", batchSheetApi?.stateLabel ? batchSheetApi.stateLabel(loteLifecycleState(lote)) : loteLifecycleState(lote)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => openBatchSheetModal(lote), style: { fontSize: "var(--text-sm)", padding: "6px 12px" } }, "Cambiar etapa"))), stats && /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.bolsasSanas, "/", stats.numBolsas), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Sanas")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val", style: { color: stats.contPct > 20 ? "var(--coral-700)" : "inherit" } }, stats.contPct.toFixed(0), "%"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Contam.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.be != null ? stats.be.toFixed(0) + "%" : "—"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "BE")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, stats.totalFresco.toFixed(3), " kg"), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Cosechado"))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement(
       ColonizationScaleSelector,
       {
         value: (() => {
@@ -9830,8 +10039,8 @@ BATCH (${numBags}×${kgBag} kg):
             up.colonizationPct = pct;
             return updateBitBolsa(b.id, up);
           })) return;
-          if (pct >= 100 && lote.estado === "incubacion") {
-            updateBitLote(lote.id, { estado: "fructificacion" });
+          if (pct >= 100 && workflow?.canTransition(loteLifecycleState(lote), "fruiting")) {
+            requestLotTransition(lote, "fruiting");
           }
           setNoticeDlg({
             title: "Avance registrado",
@@ -9844,8 +10053,8 @@ BATCH (${numBags}×${kgBag} kg):
             if (!bolsas.every((b) => {
               return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
             })) return;
-            updateBitLote(lote.id, { estado: "fructificacion" });
-            setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${lote.codigo} actualizado a fructificación.` });
+            const aFruct = workflow?.canTransition(loteLifecycleState(lote), "fruiting") && requestLotTransition(lote, "fruiting");
+            setNoticeDlg({ title: "Primordios confirmados", msg: aFruct ? `Lote ${lote.codigo}: paso a fructificación registrado.` : `Primordios registrados en ${lote.codigo}. La etapa no cambió.` });
           } else if (act === "riego") {
             setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad registrada para ${lote.codigo}.` });
           } else if (act === "ventilacion") {
@@ -10117,6 +10326,7 @@ BATCH (${numBags}×${kgBag} kg):
         setInvTab("compra");
       } },
       { label: "Formular Sustrato", sub: "Balance C:N & Perito", icon: IconBolt, tab: "formular", onClick: () => goTab("formular") },
+      { label: "Preparación para producción", sub: `${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`, icon: IconBox, onClick: openProductionReadiness },
       { label: "Registrar Evento", sub: "Observación, traslado o corrección", icon: IconEdit, onClick: () => props.onGoSesion && props.onGoSesion() }
     ].map((btn) => {
       const accent = btn.jornada ? "var(--accent-terracotta)" : btn.pri ? "var(--accent-olive)" : null;
@@ -10473,10 +10683,10 @@ BATCH (${numBags}×${kgBag} kg):
     },
     formNextState === "species" ? /* @__PURE__ */ React.createElement(IconTarget, { size: 15, color: "currentColor" }) : formNextState === "balance" ? /* @__PURE__ */ React.createElement(IconBolt, { size: 15, color: "currentColor" }) : /* @__PURE__ */ React.createElement(IconBox, { size: 15, color: "currentColor" }),
     /* @__PURE__ */ React.createElement("span", null, formNextLabel)
-  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Receta cargada en Mesa de Mezcla"), /* @__PURE__ */ React.createElement("section", { className: `form-species-context ${recipe.length > 0 ? "has-recipe" : "is-empty"}`, "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp?.name || "Especie activa" : "Selecciona una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp?.scientific || "Sin clasificar" : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-origin-toggle" }, /* @__PURE__ */ React.createElement("span", null, "Origen de ingredientes"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Origen de ingredientes en la receta activa" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Aún no hay ingredientes en la receta" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "sin ingredientes"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Añade insumos manualmente o genera una primera mezcla."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: () => {
+  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Receta cargada en Mesa de Mezcla"), /* @__PURE__ */ React.createElement("section", { className: `form-species-context ${recipe.length > 0 ? "has-recipe" : "is-empty"}`, "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp?.name || "Especie activa" : "Selecciona una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp?.scientific || "Sin clasificar" : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-origin-toggle" }, /* @__PURE__ */ React.createElement("span", null, "Origen de ingredientes"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Origen de ingredientes en la receta activa" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Aún no hay ingredientes en la receta" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "sin ingredientes"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Añade insumos manualmente o genera una primera mezcla."), /* @__PURE__ */ React.createElement("div", { className: "recipe-start-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: focusIngredientCatalog }, "Elegir ingredientes"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: () => {
     setShowOptimizer(true);
     openBuilderSubTab("generador");
-  } }, "Abrir Generador")))) : (() => {
+  } }, "Abrir Generador"))))) : (() => {
     const sm2 = PERITO_STATUS[opt?.status] || PERITO_STATUS.sin_receta;
     const limiter = peritoMainLimiter(opt, an);
     const ebVal = an ? blendEBWithHistory(an, histStats) : 0;
@@ -10507,18 +10717,7 @@ Click para ver análisis completo`
         title: `Balance de masa: ${an?.tot != null ? an.tot.toFixed(1) : "0"}% (ideal 100%)`
       },
       /* @__PURE__ */ React.createElement("span", { style: { color: totColor, display: "inline-flex", alignItems: "center", gap: 3 } }, an?.tot != null ? an.tot.toFixed(0) : "0", "%", totOk ? /* @__PURE__ */ React.createElement(IconCheck, { size: 10, color: totColor }) : /* @__PURE__ */ React.createElement(IconAlert, { size: 10, color: totColor }))
-    )), /* @__PURE__ */ React.createElement("div", { className: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, `Score Perito ${Math.round(opt?.score || 0)} de 100, ${sm2.label}. `, `Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk ? ", meta alcanzada" : ebMid ? ", por debajo de la meta" : ", por debajo de la línea base"}. `, `Balance de masa ${an?.tot != null ? an.tot.toFixed(0) : "0"} por ciento${totOk ? ", correcto" : ", requiere ajuste al 100 por ciento"}.`), /* @__PURE__ */ React.createElement("div", { className: "live-dash-actions" }, an && !totOk && /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => autoBalance(balanceMode),
-        className: "live-dash-btn",
-        style: { background: "var(--coral-500)", color: "var(--paper-50)", borderColor: "var(--coral-600)" },
-        "aria-label": "Ajustar ingredientes libres al 100%",
-        title: "Ajustar ingredientes libres al 100%"
-      },
-      /* @__PURE__ */ React.createElement(IconBolt, { size: 10, color: "var(--paper-50)" }),
-      /* @__PURE__ */ React.createElement("span", null, "100%")
-    ), /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { className: "sr-only", role: "status", "aria-live": "polite", "aria-atomic": "true" }, `Score Perito ${Math.round(opt?.score || 0)} de 100, ${sm2.label}. `, `Eficiencia biológica estimada ${Math.round(ebVal)} por ciento${ebOk ? ", meta alcanzada" : ebMid ? ", por debajo de la meta" : ", por debajo de la línea base"}. `, `Balance de masa ${an?.tot != null ? an.tot.toFixed(0) : "0"} por ciento${totOk ? ", correcto" : ", requiere ajuste al 100 por ciento"}.`), /* @__PURE__ */ React.createElement("div", { className: "live-dash-actions" }, /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => setShowLiveChips(!showLiveChips),
@@ -10532,35 +10731,11 @@ Click para ver análisis completo`
       /* @__PURE__ */ React.createElement(IconRecipe, { size: 11, color: "var(--ink-700)" }),
       /* @__PURE__ */ React.createElement("span", null, recipe.length),
       showLiveChips ? /* @__PURE__ */ React.createElement(IconChevronUp, { size: 9, color: "var(--ink-700)" }) : /* @__PURE__ */ React.createElement(IconChevronDown, { size: 9, color: "var(--ink-700)" })
-    ), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => {
-          if (saveName.trim()) {
-            saveR();
-          } else {
-            document.getElementById("bl-receta")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            setTimeout(() => {
-              const inp = document.querySelector(".sbar input");
-              if (inp) {
-                inp.focus();
-                inp.style.outline = "2px solid var(--coral-500)";
-                setTimeout(() => inp.style.outline = "", 1200);
-              }
-            }, 300);
-          }
-        },
-        className: "live-dash-btn",
-        style: { background: flash ? "var(--moss-600)" : "var(--ink-900)", color: "var(--paper-50)", borderColor: "var(--ink-900)" },
-        "aria-label": flash ? "Receta guardada" : "Guardar receta en Recetario",
-        title: "Guardar receta en Recetario"
-      },
-      flash ? /* @__PURE__ */ React.createElement(IconCheck, { size: 11, color: "var(--paper-50)" }) : /* @__PURE__ */ React.createElement(IconDisk, { size: 11, color: "var(--paper-50)" })
     ))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta", hidden: !showLiveChips }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-secondary-nav", style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap" } }, [
       { id: "bl-ingredientes", l: "Insumos", icon: IconSprout },
       { id: "bl-receta", l: "Receta", icon: IconRecipe },
       { id: "bl-perito", l: "Perito", icon: IconTarget },
-      { id: "bl-batch", l: "Batch", icon: IconBox },
+      { id: "bl-batch", l: "Lote", icon: IconBox },
       ...tr ? [{ id: "bl-tratamiento", l: "Tratamiento", icon: IconFlame }] : []
     ].map((s) => {
       const IconComp = s.icon;
@@ -10588,10 +10763,10 @@ Click para ver análisis completo`
         /* @__PURE__ */ React.createElement(IconComp, { size: 11, color: "var(--ink-600)" }),
         /* @__PURE__ */ React.createElement("span", null, s.l)
       );
-    })), /* @__PURE__ */ React.createElement("div", { className: `offline-status-chip ${isOnline ? "is-online" : "is-offline"}`, style: { fontSize: "11px", padding: "2px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "offline-status-dot" }), /* @__PURE__ */ React.createElement("span", null, isOnline ? "En línea" : "Sin conexión"))), limiter && /* @__PURE__ */ React.createElement("div", { className: "live-dash-limiter", style: { marginBottom: 6, padding: "3px 8px", background: sm2.bg || "var(--paper-100)", borderRadius: 2, fontSize: "11px", fontFamily: "var(--font-mono)", color: sm2.txt, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(IconAlert, { size: 11, color: sm2.txt }), /* @__PURE__ */ React.createElement("span", null, limiter)), /* @__PURE__ */ React.createElement("button", { onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }), style: { background: "none", border: "none", color: sm2.txt, fontWeight: 700, fontSize: "11px", cursor: "pointer", textDecoration: "underline" } }, "Ver dictamen")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", marginBottom: 8 } }, an && Math.abs(an.tot - 100) > MASS_BALANCE_TOL && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "tog mass-balance-action", onClick: () => autoBalance(balanceMode) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 13, style: { marginRight: 4 } }), " Auto-balancear 100%"), /* @__PURE__ */ React.createElement("select", { name: "balanceStrategy", "aria-label": "Estrategia de balanceo", className: "bal-mode", value: balanceMode, onChange: (e) => setBalanceMode(e.target.value), title: "Estrategia de balanceo" }, /* @__PURE__ */ React.createElement("option", { value: "proportional" }, "Proporcional"), /* @__PURE__ */ React.createElement("option", { value: "equal" }, "Igualando"), /* @__PURE__ */ React.createElement("option", { value: "last" }, "Al último"))), /* @__PURE__ */ React.createElement("button", { className: `tog${normMode ? " on" : ""}`, "aria-pressed": normMode, onClick: () => setNormMode(!normMode), title: "Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)" }, "Auto-ajustar"), /* @__PURE__ */ React.createElement("button", { className: "tog", onClick: () => setConfirmDlg({ title: "Limpiar receta", msg: "¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.", danger: true, confirmLabel: "Limpiar", onConfirm: () => {
+    })), /* @__PURE__ */ React.createElement("div", { className: `offline-status-chip ${isOnline ? "is-online" : "is-offline"}`, style: { fontSize: "11px", padding: "2px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "offline-status-dot" }), /* @__PURE__ */ React.createElement("span", null, isOnline ? "En línea" : "Sin conexión"))), limiter && /* @__PURE__ */ React.createElement("div", { className: "live-dash-limiter", style: { marginBottom: 6, padding: "3px 8px", background: sm2.bg || "var(--paper-100)", borderRadius: 2, fontSize: "11px", fontFamily: "var(--font-mono)", color: sm2.txt, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(IconAlert, { size: 11, color: sm2.txt }), /* @__PURE__ */ React.createElement("span", null, limiter)), /* @__PURE__ */ React.createElement("button", { onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" }), style: { background: "none", border: "none", color: sm2.txt, fontWeight: 700, fontSize: "11px", cursor: "pointer", textDecoration: "underline" } }, "Ver dictamen")), /* @__PURE__ */ React.createElement("details", { className: "recipe-edit-options", "data-testid": "recipe-edit-options" }, /* @__PURE__ */ React.createElement("summary", null, "Opciones de edición", normMode ? " · Auto-ajustar activo" : ""), /* @__PURE__ */ React.createElement("div", { className: "recipe-edit-options-body" }, /* @__PURE__ */ React.createElement("label", { className: "recipe-balance-strategy" }, /* @__PURE__ */ React.createElement("span", null, "Estrategia al balancear 100%"), /* @__PURE__ */ React.createElement("select", { name: "balanceStrategy", "aria-label": "Estrategia de balanceo", className: "bal-mode", value: balanceMode, onChange: (e) => setBalanceMode(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "proportional" }, "Proporcional"), /* @__PURE__ */ React.createElement("option", { value: "equal" }, "Igualando"), /* @__PURE__ */ React.createElement("option", { value: "last" }, "Al último"))), /* @__PURE__ */ React.createElement("p", null, "El botón de siguiente paso aplica esta estrategia y respeta los porcentajes bloqueados."), /* @__PURE__ */ React.createElement("button", { type: "button", className: `tog${normMode ? " on" : ""}`, "aria-pressed": normMode, onClick: () => setNormMode(!normMode) }, "Auto-ajustar al editar"), /* @__PURE__ */ React.createElement("p", null, "Al cambiar un porcentaje, redistribuye los demás proporcionalmente sin cambiar los bloqueados."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "tog", onClick: () => setConfirmDlg({ title: "Limpiar receta", msg: "¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.", danger: true, confirmLabel: "Limpiar", onConfirm: () => {
       setRecipe([]);
       setLockedIds([]);
-    } }) }, "Limpiar")), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--paper-300)" } }, recipe.map((r) => {
+    } }) }, "Limpiar receta"))), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--paper-300)" } }, recipe.map((r) => {
       const g = INGS.find((i) => i.id === r.id);
       if (!g) return null;
       const isLocked = lockedIds.includes(r.id);
@@ -10635,7 +10810,40 @@ Click para ver análisis completo`
       onClick: () => document.getElementById("bl-perito")?.scrollIntoView({ behavior: "smooth", block: "start" })
     },
     "Dictamen Perito"
-  ), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : (opt?.score || 0) >= 70 ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : `Score ${Math.round(opt?.score || 0)}/100`), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Auditoría agronómica, riesgo y tratamiento."))))), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Área de trabajo principal"), /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Puntaje, gauges y lote"), /* @__PURE__ */ React.createElement("p", null, "Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.")), /* @__PURE__ */ React.createElement("span", { className: "active-recipe-count", "aria-live": "polite" }, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "builder-left" }, /* @__PURE__ */ React.createElement("div", { className: "panel", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("div", { className: "ingredient-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Paso 03 · Selección manual"), /* @__PURE__ */ React.createElement("h2", null, "Ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.")), /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-count", "aria-live": "polite" }, visibleIngredients.length, " de ", effectiveINGS.length)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("input", { name: "ingredientSearch", type: "search", className: "search", "aria-label": "Buscar ingrediente o etiqueta", autoComplete: "off", style: { marginBottom: 0, flex: "1 1 auto", minWidth: "200px" }, placeholder: "Buscar ingrediente o etiqueta…", value: search, onChange: (e) => setSearch(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+  ), /* @__PURE__ */ React.createElement("span", { className: `form-step-state-badge ${recipe.length === 0 ? "is-pendiente" : (opt?.score || 0) >= 70 ? "is-completado" : "is-atencion"}` }, recipe.length === 0 ? "Pendiente" : `Score ${Math.round(opt?.score || 0)}/100`), /* @__PURE__ */ React.createElement("span", { className: "form-step-help" }, "Auditoría agronómica, riesgo y tratamiento."))))), /* @__PURE__ */ React.createElement("section", { className: "builder-cols form-recipe-workspace", "aria-labelledby": "active-recipe-workspace-title" }, /* @__PURE__ */ React.createElement("header", { className: "active-recipe-workspace-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Área de trabajo principal"), /* @__PURE__ */ React.createElement("h2", { id: "active-recipe-workspace-title" }, "Puntaje, gauges y lote"), /* @__PURE__ */ React.createElement("p", null, "Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.")), /* @__PURE__ */ React.createElement("span", { className: "active-recipe-count", "aria-live": "polite" }, recipe.length, " ingrediente", recipe.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement("div", { className: "builder-left" }, /* @__PURE__ */ React.createElement("div", { className: "panel", id: "bl-ingredientes" }, /* @__PURE__ */ React.createElement("div", { className: "ingredient-section-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-eyebrow" }, "Paso 03 · Selección manual"), /* @__PURE__ */ React.createElement("h2", null, "Ingredientes"), /* @__PURE__ */ React.createElement("p", null, "Busca por nombre o etiqueta y agrega los insumos a tu receta.")), /* @__PURE__ */ React.createElement("span", { className: "ingredient-section-count", "aria-live": "polite" }, visibleIngredients.length, " de ", effectiveINGS.length)), /* @__PURE__ */ React.createElement("div", { className: "ingredient-search-controls" }, /* @__PURE__ */ React.createElement("label", { className: "ingredient-search-field" }, /* @__PURE__ */ React.createElement("span", null, "Buscar ingrediente"), /* @__PURE__ */ React.createElement("input", { name: "ingredientSearch", type: "search", className: "search", "aria-label": "Buscar ingrediente o etiqueta", autoComplete: "off", placeholder: "Ej. aserrín, paja, calcio…", value: search, onChange: (e) => setSearch(e.target.value) })), search.length > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "cat", onClick: () => {
+    setSearch("");
+    document.querySelector('#bl-ingredientes input[name="ingredientSearch"]')?.focus();
+  } }, "Limpiar búsqueda"), /* @__PURE__ */ React.createElement("button", { type: "button", className: `cat${showCompatOnly ? " on" : ""}`, "aria-pressed": showCompatOnly, disabled: !hasPickedSpecies, onClick: () => setShowCompatOnly((v) => !v), title: hasPickedSpecies ? `Compatibles con ${sp.name}` : "Selecciona una especie para filtrar compatibilidad" }, "Solo compatibles")), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar", title: "Abrir bodega / inventario" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: () => goTab("inventario"),
+      style: { display: "flex", alignItems: "center", gap: "inherit", flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, margin: 0, font: "inherit", color: "inherit", textAlign: "left", cursor: "pointer" }
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "bodega-bar-icon", "aria-hidden": "true", style: { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)", display: "flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(IcoBox, { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)" })),
+    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-title" }, pantryIds.length > 0 ? pantryIds.length + " ingredientes en bodega" : "Bodega vacía — sin stock registrado"), pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-sub" }, Object.values(stockMap).reduce((a, b) => a + b, 0).toFixed(1), " kg disponibles"))
+  ), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-right", style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      className: "inv-btn inv-btn-pri inv-btn-sm",
+      style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" },
+      onClick: (e) => {
+        e.stopPropagation();
+        formularConStockBodega();
+      },
+      title: "Formular automáticamente la mejor receta usando exclusivamente el stock disponible en bodega"
+    },
+    /* @__PURE__ */ React.createElement(AppIcon, { name: "pantry", size: 13, color: "var(--paper-50)" }),
+    " Formular con Stock"
+  ), /* @__PURE__ */ React.createElement("button", { className: "bodega-bar-refresh", onClick: (e) => {
+    e.stopPropagation();
+    goTab("inventario");
+  }, title: "Actualizar stock", "aria-label": "Actualizar stock" }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", viewBox: "0 0 24 24", width: "14", height: "14", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" }))))), usePantry && pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "pantry-grid", style: { marginBottom: 8 } }, pantryIds.slice(0, 12).map((id) => {
+    const g = INGS.find((i) => i.id === id);
+    const kg = stockMap[id] || 0;
+    return g ? /* @__PURE__ */ React.createElement("button", { key: id, type: "button", className: "pantry-chip on", style: { borderColor: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "var(--moss-500)" : void 0, background: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))" : void 0 }, title: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "Compatible con " + sp.name : void 0, "aria-label": `Quitar ${g.name} de bodega`, onClick: () => setPantryIds((prev) => prev.filter((x) => x !== id)) }, INGS.find((i) => i.id === id)?.cs?.includes(sKey) && /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--moss-500)", marginRight: 4, verticalAlign: "middle", marginTop: -1 } }), g.name.length > 18 ? g.name.slice(0, 18) + "…" : g.name, kg > 0 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip-kg" }, kg.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { display: "inline-flex", alignItems: "center", marginLeft: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 10 }))) : null;
+  }), pantryIds.length > 12 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip", style: { opacity: 0.5 } }, "+", pantryIds.length - 12, " más")), /* @__PURE__ */ React.createElement("details", { className: "ingredient-options", "data-testid": "ingredient-options" }, /* @__PURE__ */ React.createElement("summary", null, "Más opciones", cat !== "all" ? ` · ${CATS[cat]}` : "", showPrices ? " · Precios abiertos" : ""), /* @__PURE__ */ React.createElement("div", { className: "ingredient-options-body" }, /* @__PURE__ */ React.createElement("div", { className: "cats", role: "group", "aria-label": "Filtrar por categoría" }, Object.entries(CATS).map(([k, l]) => /* @__PURE__ */ React.createElement("button", { type: "button", key: k, "data-cat": k, className: `cat${cat === k ? " on" : ""}`, "aria-pressed": cat === k, onClick: () => setCat(k) }, l))), /* @__PURE__ */ React.createElement("div", { className: "ingredient-option-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: `cat${groupByRole ? " on" : ""}`, "aria-pressed": groupByRole, onClick: () => setGroupByRole((g) => !g) }, "Agrupar por función"), showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", className: "cat", onClick: () => setAllRoleGroups(false) }, "Expandir grupos"), showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", className: "cat", onClick: () => setAllRoleGroups(true) }, "Colapsar grupos"), /* @__PURE__ */ React.createElement("button", { className: `tog${showPrices ? " on" : ""}`, "aria-pressed": showPrices, onClick: () => setShowPrices(!showPrices), title: "Editar precios por kg", style: { flexShrink: 0, whiteSpace: "nowrap" } }, "Precios")), showPrices && /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", marginBottom: 10, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 12px", background: "var(--paper-200)", borderBottom: "1px solid var(--border-soft)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-700)", fontWeight: 700 } }, "Precios por kg (COP) — se guardan localmente"), Object.keys(priceOverrides).length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setPriceOverrides({});
     try {
       localStorage.removeItem("setas_prices_v1");
@@ -10667,43 +10875,13 @@ Click para ver análisis completo`
         }
       }
     ));
-  }))), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar", title: "Abrir bodega / inventario" }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      onClick: () => goTab("inventario"),
-      style: { display: "flex", alignItems: "center", gap: "inherit", flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, margin: 0, font: "inherit", color: "inherit", textAlign: "left", cursor: "pointer" }
-    },
-    /* @__PURE__ */ React.createElement("span", { className: "bodega-bar-icon", "aria-hidden": "true", style: { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)", display: "flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(IcoBox, { color: pantryIds.length > 0 ? "var(--accent-olive)" : "var(--border-soft)" })),
-    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-title" }, pantryIds.length > 0 ? pantryIds.length + " ingredientes en bodega" : "Bodega vacía — sin stock registrado"), pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-sub" }, Object.values(stockMap).reduce((a, b) => a + b, 0).toFixed(1), " kg disponibles"))
-  ), /* @__PURE__ */ React.createElement("div", { className: "bodega-bar-right", style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      className: "inv-btn inv-btn-pri inv-btn-sm",
-      style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" },
-      onClick: (e) => {
-        e.stopPropagation();
-        formularConStockBodega();
-      },
-      title: "Formular automáticamente la mejor receta usando exclusivamente el stock disponible en bodega"
-    },
-    /* @__PURE__ */ React.createElement(AppIcon, { name: "pantry", size: 13, color: "var(--paper-50)" }),
-    " Formular con Stock"
-  ), /* @__PURE__ */ React.createElement("button", { className: "bodega-bar-refresh", onClick: (e) => {
-    e.stopPropagation();
-    goTab("inventario");
-  }, title: "Actualizar stock", "aria-label": "Actualizar stock" }, /* @__PURE__ */ React.createElement("svg", { "aria-hidden": "true", viewBox: "0 0 24 24", width: "14", height: "14", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" }))))), usePantry && pantryIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "pantry-grid", style: { marginBottom: 8 } }, pantryIds.slice(0, 12).map((id) => {
-    const g = INGS.find((i) => i.id === id);
-    const kg = stockMap[id] || 0;
-    return g ? /* @__PURE__ */ React.createElement("button", { key: id, type: "button", className: "pantry-chip on", style: { borderColor: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "var(--moss-500)" : void 0, background: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "color-mix(in oklab,var(--moss-500) 10%,var(--paper-50))" : void 0 }, title: INGS.find((i) => i.id === id)?.cs?.includes(sKey) ? "Compatible con " + sp.name : void 0, "aria-label": `Quitar ${g.name} de bodega`, onClick: () => setPantryIds((prev) => prev.filter((x) => x !== id)) }, INGS.find((i) => i.id === id)?.cs?.includes(sKey) && /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--moss-500)", marginRight: 4, verticalAlign: "middle", marginTop: -1 } }), g.name.length > 18 ? g.name.slice(0, 18) + "…" : g.name, kg > 0 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip-kg" }, kg.toFixed(1), " kg"), /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true", style: { display: "inline-flex", alignItems: "center", marginLeft: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 10 }))) : null;
-  }), pantryIds.length > 12 && /* @__PURE__ */ React.createElement("span", { className: "pantry-chip", style: { opacity: 0.5 } }, "+", pantryIds.length - 12, " más")), /* @__PURE__ */ React.createElement("div", { className: "cats", role: "group", "aria-label": "Filtrar por categoría" }, Object.entries(CATS).map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, "data-cat": k, className: `cat${cat === k ? " on" : ""}`, "aria-pressed": cat === k, onClick: () => setCat(k) }, l)), /* @__PURE__ */ React.createElement("button", { className: `cat${showCompatOnly ? " on" : ""}`, "aria-pressed": showCompatOnly, style: { borderColor: showCompatOnly ? "var(--moss-600)" : "", color: showCompatOnly ? "var(--moss-600)" : "", background: showCompatOnly ? "color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))" : "" }, onClick: () => setShowCompatOnly((s) => !s), title: "Ver solo ingredientes compatibles con la especie seleccionada" }, showCompatOnly ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, "Solo compatibles ", /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 10 })) : "Compatibles"), /* @__PURE__ */ React.createElement("button", { className: `cat${groupByRole ? " on" : ""}`, "aria-pressed": groupByRole, onClick: () => setGroupByRole((g) => !g), title: "Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)" }, groupByRole ? "Agrupado por rol" : "Lista simple")), /* @__PURE__ */ React.createElement("div", { className: "ingredient-view-toolbar" }, /* @__PURE__ */ React.createElement("span", null, visibleIngredients.length, " ingrediente", visibleIngredients.length === 1 ? "" : "s", " con el origen y filtros actuales"), /* @__PURE__ */ React.createElement("div", null, showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setAllRoleGroups(false) }, "Expandir grupos"), showRoleGroups && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setAllRoleGroups(true) }, "Colapsar grupos"), hasIngredientViewFilters && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: resetIngredientView }, "Restablecer vista"))), /* @__PURE__ */ React.createElement("div", { className: `ing-list${showRoleGroups ? " is-grouped" : " is-simple"}` }, (() => {
+  }))))), /* @__PURE__ */ React.createElement("div", { className: "ingredient-view-toolbar" }, /* @__PURE__ */ React.createElement("span", { role: "status", "aria-live": "polite", "aria-atomic": "true" }, visibleIngredients.length, " ingrediente", visibleIngredients.length === 1 ? "" : "s", " · ", usePantry ? "Bodega" : "Catálogo", cat !== "all" ? ` · ${CATS[cat]}` : "", showCompatOnly ? ` · Compatibles con ${sp.name}` : ""), /* @__PURE__ */ React.createElement("div", null, hasIngredientViewFilters && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: resetIngredientView }, "Restablecer vista"))), /* @__PURE__ */ React.createElement("div", { className: `ing-list${showRoleGroups ? " is-grouped" : " is-simple"}` }, (() => {
     const base = visibleIngredients;
     if (usePantry && pantryIds.length === 0) {
       return /* @__PURE__ */ React.createElement("button", { type: "button", className: "ingredient-empty-action", onClick: () => {
         goTab("inventario");
         setInvTab("compra");
-      } }, /* @__PURE__ */ React.createElement("strong", null, "Bodega sin ingredientes disponibles."), /* @__PURE__ */ React.createElement("span", null, "Registra una compra o cambia el origen a “Paleta completa”."));
+      } }, /* @__PURE__ */ React.createElement("strong", null, "Bodega sin ingredientes disponibles."), /* @__PURE__ */ React.createElement("span", null, "Registra una compra o cambia el origen a “Catálogo”."));
     }
     if (base.length === 0) {
       return /* @__PURE__ */ React.createElement("div", { className: "ingredient-no-results", role: "status" }, /* @__PURE__ */ React.createElement("strong", null, "No hay ingredientes para esta vista."), /* @__PURE__ */ React.createElement("span", null, "Prueba otra búsqueda o restablece los filtros."), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: resetIngredientView }, "Restablecer vista"));
@@ -10932,7 +11110,7 @@ Click para ver análisis completo`
       reader.readAsText(file);
     };
     input.click();
-  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↑"), " Importar")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "sbar" }, /* @__PURE__ */ React.createElement("input", { name: "recipeName", "aria-label": "Nombre de la receta", autoComplete: "off", placeholder: "Nombre de la receta…", value: saveName, onChange: (e) => setSaveName(e.target.value), onKeyDown: (e) => e.key === "Enter" && saveR(), maxLength: 60 }), /* @__PURE__ */ React.createElement("button", { className: `sbtn${flash ? " fl" : ""}`, onClick: saveR, disabled: !saveName.trim() || !readyForProduction, title: readyForProduction ? "" : productionBlockMsg }, flash ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, style: { marginRight: 4 } }), " Guardada") : "Guardar"), recipe.length > 0 && an && /* @__PURE__ */ React.createElement("button", { className: "btn-launch-prod", type: "button", onClick: openProdLauncher, disabled: !readyForProduction, title: readyForProduction ? "Lanzar producción de lote con descuento en bodega y asignación de sala" : productionBlockMsg, style: { padding: "7px 14px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "rocket", size: 13 }), " Lanzar Lote"), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error)", display: "inline-flex", alignItems: "center", gap: 4 }, title: saveSyncErr }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--status-error)" }), " sin sincronizar")), !readyForProduction && /* @__PURE__ */ React.createElement("div", { role: "status", "aria-live": "polite", style: { marginTop: 6, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--status-error)" }), " ", productionBlockMsg), !balanced && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: autoImprove, style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", padding: "5px 10px", background: "var(--coral-500)", color: "var(--paper-50)", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sparkles", size: 11, color: "var(--paper-50)" }), " Auto-mejorar")))))), tab === "formular" && tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 13, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento recomendado"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía paso a paso")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.alt && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-200)", border: "1px solid var(--paper-300)", padding: "6px 10px", borderLeft: "2px solid var(--border-soft)" } }, tr.alt), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14 }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString("es-CO")} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", opacity: 0.7, marginTop: 2 } }, tr.energy.detalle)), an && an.cost > 0 && tr.energy.cop_per_kg_seco > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 700 } }, "$", (Math.round(an.cost) + tr.energy.cop_per_kg_seco).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", opacity: 0.7 } }, "COP/kg total")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), /* @__PURE__ */ React.createElement("div", { className: "panel rec-panel", style: { display: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Recetario ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", saved.length, ")"))), showSaved && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, saved.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "sempty" }, "Sin recetas en el recetario aún.") : /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 15, top: 0, bottom: 0, width: "1px", background: "var(--border-soft)", opacity: 0 } }), saved.map((e, idx) => {
+  } }, /* @__PURE__ */ React.createElement("span", { "aria-hidden": "true" }, "↑"), " Importar")), recipe.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "sbar" }, /* @__PURE__ */ React.createElement("input", { name: "recipeName", "aria-label": "Nombre de la receta", autoComplete: "off", placeholder: "Nombre de la receta…", value: saveName, onChange: (e) => setSaveName(e.target.value), onKeyDown: (e) => e.key === "Enter" && saveR(), maxLength: 60 }), /* @__PURE__ */ React.createElement("button", { className: `sbtn${flash ? " fl" : ""}`, onClick: saveR, disabled: !saveName.trim() || !readyForProduction, title: readyForProduction ? "" : productionBlockMsg }, flash ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 11, style: { marginRight: 4 } }), " Guardada") : "Guardar"), recipe.length > 0 && an && /* @__PURE__ */ React.createElement("button", { className: "btn-launch-prod", type: "button", onClick: openProdLauncher, disabled: !readyForProduction, title: readyForProduction ? "Lanzar producción de lote con descuento en bodega y asignación de sala" : productionBlockMsg, style: { padding: "7px 14px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "rocket", size: 13 }), " Lanzar Lote"), saveSyncErr && /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error)", display: "inline-flex", alignItems: "center", gap: 4 }, title: saveSyncErr }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--status-error)" }), " sin sincronizar")), !readyForProduction && /* @__PURE__ */ React.createElement("div", { role: "status", "aria-live": "polite", style: { marginTop: 6, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 11, color: "var(--status-error)" }), " ", productionBlockMsg), !balanced && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: runFormNextAction, style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", padding: "5px 10px", background: "var(--coral-500)", color: "var(--paper-50)", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "sparkles", size: 11, color: "var(--paper-50)" }), " ", formNextLabel)))))), tab === "formular" && tr && recipe.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "panel treatment-section", id: "bl-tratamiento" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 13, borderBottom: "1px solid var(--paper-300)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Tratamiento recomendado"), /* @__PURE__ */ React.createElement("button", { className: `tog${showGuide ? " on" : ""}`, "aria-pressed": showGuide, onClick: () => setShowGuide(!showGuide) }, showGuide ? "Ocultar guía" : "Ver guía paso a paso")), /* @__PURE__ */ React.createElement("div", { className: `tcard ${tr.col}` }, /* @__PURE__ */ React.createElement("div", { className: "tttl" }, tr.name), /* @__PURE__ */ React.createElement("div", { className: "tparams" }, [tr.temp, tr.time, `Spawn ${tr.spawn}%`].map((p, i) => /* @__PURE__ */ React.createElement("span", { key: i, className: "tp" }, p))), /* @__PURE__ */ React.createElement("div", { className: "twhy" }, tr.reasons.map((r, i) => /* @__PURE__ */ React.createElement("span", { key: i }, r))), /* @__PURE__ */ React.createElement("div", { className: "tproc" }, tr.prep), tr.alt && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: "var(--text-sm)", color: "var(--ink-500)", background: "var(--paper-200)", border: "1px solid var(--paper-300)", padding: "6px 10px", borderLeft: "2px solid var(--border-soft)" } }, tr.alt), tr.energy && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", gap: 12, alignItems: "center", padding: "7px 10px", background: "rgba(0,0,0,.04)", borderRadius: "var(--r-xs)", borderTop: "1px solid rgba(0,0,0,.08)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "bolt", size: 14 }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, tr.energy.cop_per_kg_humedo > 0 ? `Consumo eléctrico estimado: ${tr.energy.kwh_per_kg} kWh/kg húmedo · $${tr.energy.cop_per_kg_humedo.toLocaleString("es-CO")} COP/kg húmedo · $${(tr.energy.cop_per_kg_seco || 0).toLocaleString("es-CO")} COP/kg seco` : "Sin consumo eléctrico — proceso en frío"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", opacity: 0.7, marginTop: 2 } }, tr.energy.detalle)), an && an.cost > 0 && tr.energy.cop_per_kg_seco > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-md)", fontWeight: 700 } }, "$", (Math.round(an.cost) + tr.energy.cop_per_kg_seco).toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", opacity: 0.7 } }, "COP/kg total")))), showGuide && /* @__PURE__ */ React.createElement(PasteGuide, { tr, recipe, numBags, kgBag })), /* @__PURE__ */ React.createElement("div", { className: "panel rec-panel", style: { display: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid rgba(26,20,16,.1)" } }, /* @__PURE__ */ React.createElement("div", { className: "sec", style: { marginBottom: 0, borderBottom: "none" } }, "Recetario ", /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", fontWeight: 400 } }, "(", saved.length, ")"))), showSaved && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 0 } }, saved.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "sempty" }, "Sin recetas en el recetario aún.") : /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 15, top: 0, bottom: 0, width: "1px", background: "var(--border-soft)", opacity: 0 } }), saved.map((e, idx) => {
     const s2 = SPP[e.sKey];
     const isEven = idx % 2 === 0;
     return /* @__PURE__ */ React.createElement("div", { key: e.id, style: { display: "flex", alignItems: "flex-start", marginBottom: 20, paddingLeft: 40 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 8, top: 6, width: 14, height: 14, background: "var(--coral-500)", border: "2px solid var(--paper-50)", borderRadius: "50%", zIndex: "var(--z-sticky)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-900)", marginBottom: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, e.name, e.status && (() => {
@@ -11359,7 +11537,7 @@ Click para ver análisis completo`
     const coverage = matchWeeklyCoverage(currentLotProj, b2bCommitments);
     const statusIcon = coverage.superavit > 0 ? superavit : coverage.deficit > 0 ? deficit : cobertura;
     return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", fontWeight: 700 } }, "Matriz B2B: Oferta Semanal Proyectada vs Compromisos Comerciales"), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 12px", borderRadius: "var(--r-sm)", background: "var(--paper-100)", border: "1px solid var(--border-soft)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)" } }, "Estado general: ", statusIcon, " ", /* @__PURE__ */ React.createElement("b", null, coverage.cobertura, "% de cobertura"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 150, padding: 12, background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", textTransform: "uppercase", fontWeight: 700 } }, "Cosecha Disponible Proyectada"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--ink-900)", marginTop: 4 } }, coverage.totalProyectado, " kg")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 150, padding: 12, background: "var(--paper-100)", border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-500)", textTransform: "uppercase", fontWeight: 700 } }, "Compromisos B2B Restaurantes"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--ink-900)", marginTop: 4 } }, coverage.totalComprometido, " kg")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 150, padding: 12, background: coverage.superavit > 0 ? "rgba(77,98,53,.08)" : "color-mix(in srgb, var(--status-error) 8%, transparent)", border: `1px solid ${coverage.superavit > 0 ? "var(--accent-olive)" : "var(--coral-500)"}`, borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: coverage.superavit > 0 ? "var(--moss-800)" : "var(--coral-600)", textTransform: "uppercase", fontWeight: 700 } }, coverage.superavit > 0 ? "Superávit Comercial" : "Déficit Comercial"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: coverage.superavit > 0 ? "var(--moss-800)" : "var(--coral-600)", marginTop: 4 } }, coverage.superavit > 0 ? `+${coverage.superavit} kg` : `-${coverage.deficit} kg`))), /* @__PURE__ */ React.createElement("div", { style: { border: "1px solid var(--border-soft)", borderRadius: "var(--r-sm)", overflow: "hidden", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--paper-100)", borderBottom: "1px solid var(--border-soft)", textAlign: "left" } }, /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Semana"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Cliente B2B"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px" } }, "Especie"), /* @__PURE__ */ React.createElement("th", { style: { padding: "8px 12px", textAlign: "right" } }, "Compromiso"))), /* @__PURE__ */ React.createElement("tbody", null, b2bCommitments.map((c, i) => /* @__PURE__ */ React.createElement("tr", { key: i, style: { borderBottom: i < b2bCommitments.length - 1 ? "1px solid var(--border-soft)" : "none" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px", fontWeight: 700 } }, c.semana), /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px" } }, c.cliente), /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px" } }, SPP[c.speciesKey]?.name || c.speciesKey), /* @__PURE__ */ React.createElement("td", { style: { padding: "8px 12px", textAlign: "right", fontWeight: 700 } }, c.kgComprometidos, " kg")))))), coverage.deficit > 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 14, background: "color-mix(in srgb, var(--status-error) 8%, transparent)", border: "1px solid var(--coral-500)", borderRadius: "var(--r-sm)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--coral-700)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, deficit), " Déficit comercial proyectado: ", coverage.deficit, " kg de hongo fresco"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("b", null, "Acción requerida:"), " ", sowingRecommendation(coverage.deficit, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb }))), coverage.superavit > 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 12, background: "rgba(77,98,53,.08)", border: "1px solid var(--accent-olive)", borderRadius: "var(--r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--moss-800)" } }, /* @__PURE__ */ React.createElement("span", null, superavit), " Cobertura plena (", coverage.cobertura, "%). Cuentas con ", coverage.superavit, " kg de superávit para nuevos clientes o venta directa en granja Tenjo."));
-  })()), tab === "produccion" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 10 } }, "Tipo de contenedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, BAG_TYPES.map((bt) => {
+  })()), tab === "produccion" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(ProductionReadinessDashboard, { assessment: productionReadiness, input: productionReadinessInput, rooms: Object.values(ROOMS_CONFIG), onRoomChange: setSelectedClimateRoom, onAction: readinessAction, onSave: saveProductionEvidence, error: productionEvidence.error }), /* @__PURE__ */ React.createElement("div", { className: "panel no-print", style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 800, fontSize: "var(--text-xs)", letterSpacing: "var(--tracking-wide)", textTransform: "uppercase", color: "var(--ink-500)", marginBottom: 10 } }, "Tipo de contenedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, BAG_TYPES.map((bt) => {
     const on = prodBagType === bt.id;
     const stockUds = bt.stockId ? stockActual(bt.stockId, invLotes) : 0;
     const noStock = !bt.stockId || stockUds <= 0;
@@ -11601,8 +11779,7 @@ Click para ver análisis completo`
         operatorRole: operatorRole2,
         operatorId,
         accountId,
-        onTransitionConfirmed: (batchId, nextState) => {
-          updateBitLote(batchId, { estado: nextState, workflowState: nextState });
+        onTransitionConfirmed: () => {
         }
       }
     );
@@ -12038,8 +12215,8 @@ Click para ver análisis completo`
               up.colonizationPct = pct;
               return updateBitBolsa(b.id, up);
             })) return;
-            if (pct >= 100 && currentLote.estado === "incubacion") {
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
+            if (pct >= 100 && workflow?.canTransition(loteLifecycleState(currentLote), "fruiting")) {
+              requestLotTransition(currentLote, "fruiting");
             }
             setNoticeDlg({
               title: "Avance registrado",
@@ -12053,8 +12230,8 @@ Click para ver análisis completo`
               if (!loteBolsas.every((b) => {
                 return updateBitBolsa(b.id, { col100: b.col100 || today, colonizationPct: 100 });
               })) return;
-              updateBitLote(currentLote.id, { estado: "fructificacion" });
-              setNoticeDlg({ title: "Primordios confirmados", msg: `Lote ${currentLote.codigo} pasado a etapa de fructificación.` });
+              const aFruct = workflow?.canTransition(loteLifecycleState(currentLote), "fruiting") && requestLotTransition(currentLote, "fruiting");
+              setNoticeDlg({ title: "Primordios confirmados", msg: aFruct ? `Lote ${currentLote.codigo}: paso a fructificación registrado.` : `Primordios registrados en ${currentLote.codigo}. La etapa no cambió.` });
             } else if (act === "riego") {
               setNoticeDlg({ title: "Riego y Humedad OK", msg: `Verificación de humedad y niebla registrada para ${currentLote.codigo}.` });
             } else if (act === "ventilacion") {
@@ -12968,19 +13145,18 @@ interval:
           obs: `[Bioseguridad] ${selectedPathogen.commonName}: ${triageDecision}. ${triageNotes}`
         });
       });
-      const nextEstado = targetState === "quarantine" ? "cuarentena" : targetState === "discarded" ? "descartado" : currentLote.estado;
       const updatedEvents = [
         ...currentLote.lifecycleEvents || [],
         contamEvent,
         ...transitionEvt ? [transitionEvt] : []
       ];
+      const loteConEventos = { ...currentLote, lifecycleEvents: updatedEvents };
       updateBitLote(currentLote.id, {
-        estado: nextEstado,
         numBolsas: lossCalc.healthyBags,
         lifecycleEvents: updatedEvents
       });
       if (changesState) {
-        enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+        requestLotTransition(loteConEventos, targetState, { from: currentLifecycle, logged: true });
       }
       setShowTriageModal(false);
       setNoticeDlg({
@@ -13235,10 +13411,9 @@ interval:
             operatorId: currentLote.operador || "operador-local",
             reason: `Contaminación masiva detectada por IA: ${diagResult.patogeno} (${contPct}%)`
           });
-          updateBitLote(currentLote.id, {
-            lifecycleEvents: [...currentLote.lifecycleEvents || [], evt]
-          });
-          enqueueFieldTransition(currentLote, fromState, massTarget);
+          const conEvento = { ...currentLote, lifecycleEvents: [...currentLote.lifecycleEvents || [], evt] };
+          updateBitLote(currentLote.id, { lifecycleEvents: conEvento.lifecycleEvents });
+          requestLotTransition(conEvento, massTarget, { from: fromState, logged: true });
         }
       }
       setShowDiagModal(false);

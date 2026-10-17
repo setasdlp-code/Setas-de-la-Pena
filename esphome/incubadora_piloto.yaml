@@ -1,12 +1,26 @@
 # =============================================================================
-# ESPHome — Incubadora del piloto de shiitake (80 x 60 x 100 cm)
+# ESPHome — Incubadora del piloto de shiitake
 # Setas de la Peña · Tenjo, Cundinamarca · 2600 m s.n.m.
 # STATUS: BANCO DE PRUEBAS / NO COMISIONADO / NO USAR EN PRODUCCIÓN
-# Spec: docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
 # =============================================================================
-# Control local de temperatura únicamente. Sin humedad ni CO2 como lazo.
-# La protección térmica física (bimetálico 35 °C + fusible térmico) es
-# independiente de este firmware y se instala en el cableado del calefactor.
+# Spec: docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
+#
+# PRINCIPIOS
+#   · El lazo de control y las protecciones de software viven en el ESP32.
+#     Home Assistant solo supervisa; si falla la red, el control sigue.
+#   · El relé del calefactor arranca en OFF tras cualquier reinicio. Pasada una
+#     estabilización de 90 s, sin alarmas y con "Calefacción habilitada"
+#     encendida, el control se reanuda solo (spec §7). Una alarma apaga el
+#     calefactor y la habilitación: el operador debe volver a habilitarla.
+#   · La incubadora no controla humedad ni CO₂ (solo se registran).
+#   · No hay setpoint aprobado: la banda sale de la especificación del lote.
+#   · Las protecciones físicas (termostato bimetálico 35 °C, fusible térmico,
+#     diferencial, RETIE) son independientes de este firmware.
+#
+# ACTUADORES
+#   Relé Hosyond (aislamiento óptico) → calefactor, GPIO26.
+#   La polaridad (activo-LOW o HIGH) NO está verificada: confirmar en banco y
+#   ajustar la sustitución `relay_active_low`.
 # =============================================================================
 
 substitutions:
@@ -14,59 +28,89 @@ substitutions:
   friendly_name: "Incubadora piloto"
 
   # --- Hardware ---
-  # Módulo de relé Hosyond: la polaridad activa no está verificada. Confirmar
-  # en el banco antes de conectar la carga de red (ver protocolo).
   relay_heater_pin: GPIO26
+  # Módulo Hosyond sin verificar: "true" = activo-LOW. Confirmar en banco.
   relay_active_low: "true"
   sda_pin: GPIO21
   scl_pin: GPIO22
-  onewire_pin: GPIO4   # bus 1-Wire con pull-up físico de 4,7 kΩ a 3,3 V
+  onewire_pin: GPIO4
+  fan_pin: GPIO25  # tacómetro del ventilador (pull-up interno, 2 pulsos/vuelta)
+  alarm_led_pin: GPIO27  # LED o zumbador externo de alarma local
 
-  # Direcciones 1-Wire de las DS18B20. Marcadores distintos entre sí: se
-  # reemplazan por las direcciones reales tras el escaneo en el banco. Cada
-  # sonda se identifica por su dirección fija, nunca por orden de escaneo.
+  # --- Parámetros del lote 1: SIN valor operativo por defecto ---
+  # Salen de la especificación del lote versionada (knowledge_base/06_operations/
+  # lote1_shiitake_especificacion_ambiental.md). Mientras sean marcadores, la
+  # configuración NO compila: el piloto no arranca sin especificación de lote.
+  # Para compilar, pasar los valores de la especificación:
+  #   esphome -s setpoint_c <°C> -s histeresis_c <°C> compile incubadora_piloto.yaml
+  setpoint_c: "PENDIENTE_ESPECIFICACION_LOTE"
+  histeresis_c: "PENDIENTE_ESPECIFICACION_LOTE"
+
+  # --- Interbloqueo del ventilador (a validar en banco) ---
+  fan_min_rpm: "500"            # bajo este valor se considera detenido
+  fan_arranque_gracia_s: "20"   # tras el arranque, el tacómetro en cero no alarma
+
+  # --- Reanudación tras arranque o corte (spec §7) ---
+  # Hasta que pasa esta estabilización (sensores y ventilador) el calefactor no se
+  # reanuda ni se apaga la habilitación del operador por alarmas de arranque.
+  arranque_estabilizacion_s: "90"
+  # Límite absoluto del aire: provisional (mismo tope que el KB da al núcleo)
+  # hasta que la especificación del lote defina la banda.
+  aire_max_c: "28.0"
+
+  # --- Direcciones DS18B20 (marcadores distintos entre sí) ---
+  # REEMPLAZAR por las direcciones reales tras el escaneo en banco. Se fijan por
+  # dirección, nunca por índice de escaneo. El protocolo (Tarea 5) exige que ya
+  # no sean marcadores antes de comisionar.
   addr_base: "0x0000000000000001"
   addr_centro: "0x0000000000000002"
   addr_tope: "0x0000000000000003"
   addr_nucleo: "0x0000000000000004"
 
-  # --- Control y seguridad ---
-  # El setpoint NO está en este archivo: depende de la cepa y se fija desde la
-  # especificación del lote 1 (el termostato arranca en OFF sin objetivo).
-  # La histéresis arranca en 0.5 °C (valor técnico por defecto de ESPHome, no
-  # biológico) y se sobrescribe con la especificación del lote.
-  histeresis_c: "0.5"
-  fan_min_rpm: "500"            # valor provisional, a validar en el banco
-  # Tras un arranque o corte, el calefactor espera esta estabilización (sensores
-  # y ventilador) antes de reanudar el control (spec §7). Mientras tanto no hay
-  # alarmas de ventilador ni se apaga la habilitación del operador.
-  arranque_estabilizacion_s: "90"
-  aire_max_c: "28.0"            # límite absoluto del aire; provisional, la banda sale del lote
-  alarm_led_pin: GPIO27         # LED o zumbador externo de alarma local
-  fan_tach_pin: GPIO25          # tacómetro del ventilador (Noctua NF-P12, 2 pulsos/vuelta)
-
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
   comment: "Banco de pruebas incubadora piloto · no comisionado"
-  # Tras cualquier reinicio o corte de energía el termostato arranca apagado,
-  # aunque ESPHome haya restaurado el modo calefacción desde la memoria flash.
   on_boot:
-    priority: -100
-    then:
-      - climate.control:
-          id: incubadora
-          mode: "OFF"
-      - delay: ${arranque_estabilizacion_s}s
-      - globals.set:
-          id: arranque_ok
-          value: "true"
+    - priority: -100
+      then:
+        # Tras cualquier reinicio el calefactor y el termostato arrancan apagados,
+        # aunque el modo HEAT se haya restaurado de la memoria flash.
+        - switch.turn_off: rele_calefactor
+        - climate.control:
+            id: incubadora
+            mode: "OFF"
+        # Fin de la gracia del tacómetro. Un indicador (no millis()) evita que la
+        # gracia se reabra cuando el contador de ms se desborda a los ~49 días.
+        - delay: ${fan_arranque_gracia_s}s
+        - lambda: |-
+            id(gracia_fan_terminada) = true;
+    # Fin de la estabilización: desde aquí el interval de seguridad puede
+    # reanudar el control o apagar la habilitación del operador.
+    - priority: -100
+      then:
+        - delay: ${arranque_estabilizacion_s}s
+        - globals.set:
+            id: arranque_ok
+            value: "true"
+
+globals:
+  - id: gracia_fan_terminada
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  # true cuando termina la estabilización posterior al arranque. No se restaura.
+  - id: arranque_ok
+    type: bool
+    restore_value: no
+    initial_value: "false"
 
 esp32:
   board: esp32dev
   framework:
     type: esp-idf
 
+# --- WiFi ---
 # reboot_timeout: 0s en wifi y api. Por defecto ESPHome reinicia el ESP32 tras
 # 15 min sin Home Assistant, y cada reinicio apaga el termostato: el control
 # debe seguir funcionando aunque falle la red (spec §5.3).
@@ -74,6 +118,10 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   reboot_timeout: 0s
+
+# --- Logger, API y OTA ---
+logger:
+  level: INFO
 
 api:
   reboot_timeout: 0s
@@ -84,15 +132,7 @@ ota:
   - platform: esphome
     password: !secret ota_password
 
-logger:
-
-# true cuando termina la estabilización posterior al arranque. No se restaura.
-globals:
-  - id: arranque_ok
-    type: bool
-    initial_value: "false"
-
-# --- Calefactor (cargas de 120 V solo a través de relé con aislamiento) ---
+# --- Calefactor, habilitación del operador e indicador local ---
 switch:
   # Habilitación del operador. Se restaura tras un corte; una alarma la apaga y
   # exige que el operador la encienda de nuevo.
@@ -121,16 +161,19 @@ i2c:
   scl: ${scl_pin}
   scan: true
 
+# Hardware: pull-up físico de 4,7 kΩ entre DATA y 3V3 del bus 1-Wire (no es
+# configuración de software).
 one_wire:
   - platform: gpio
     pin: ${onewire_pin}
 
 # --- Sensores ---
-# Los sensores de control (t_aire, t_nucleo) pasan a NaN si dejan de actualizar
-# durante 120 s, de modo que un valor congelado se trata como sensor inválido.
+# Los sensores de control (t_aire, t_nucleo) llevan `timeout`: si dejan de
+# actualizar publican NaN, de modo que un sensor congelado se ve como inválido.
 sensor:
-  # Aire: SHT45 con membrana, protegido de goteo y lejos del calefactor.
+  # Aire: SHT45 (control). Proteger de goteo y radiación; lejos del calefactor.
   - platform: sht4x
+    address: 0x44
     update_interval: 30s
     temperature:
       id: t_aire
@@ -143,7 +186,7 @@ sensor:
       id: hr_aire
       name: "HR aire (diagnóstico)"
 
-  # Mapa térmico vertical: base, centro y parte superior de la carga.
+  # Mapa térmico (base, centro, parte superior): solo registro.
   - platform: dallas_temp
     address: ${addr_base}
     id: t_base
@@ -157,10 +200,10 @@ sensor:
   - platform: dallas_temp
     address: ${addr_tope}
     id: t_tope
-    name: "T tope"
+    name: "T parte superior"
     update_interval: 30s
 
-  # Núcleo de un bloque testigo (sonda inox de 100 mm). Media móvil α = 0,1.
+  # Núcleo: sonda inox en el centro de un bloque testigo, con EMA (α ≈ 0,1).
   - platform: dallas_temp
     address: ${addr_nucleo}
     id: t_nucleo
@@ -174,81 +217,63 @@ sensor:
           timeout: 120s
           value: .nan
 
-  # CO2 solo diagnóstico. Una única estrategia de compensación: altitud fija.
+  # CO₂: SCD30 temporal, solo diagnóstico. Una sola estrategia de compensación:
+  # altitud fija 2600 m (no combinar con presión ambiente).
   - platform: scd30
-    update_interval: 30s
-    altitude_compensation: 2600m
     co2:
       id: co2
       name: "CO2 (diagnóstico)"
+    update_interval: 30s
+    altitude_compensation: 2600m
 
-  # Diferencia núcleo - aire.
+  # Tacómetro del ventilador (interbloqueo). 2 pulsos por vuelta → RPM = pulsos/min / 2.
+  - platform: pulse_counter
+    id: rpm_ventilador
+    name: "Ventilador RPM"
+    pin:
+      number: ${fan_pin}
+      mode:
+        input: true
+        pullup: true
+    unit_of_measurement: "RPM"
+    update_interval: 10s
+    count_mode:
+      rising_edge: INCREMENT
+      falling_edge: DISABLE
+    filters:
+      - multiply: 0.5
+
+  # Diferencia núcleo–aire (alerta si > 5 °C). NaN si falta cualquiera.
   - platform: template
     id: dt_nucleo_aire
-    name: "ΔT núcleo - aire"
+    name: "dT núcleo-aire"
     unit_of_measurement: "°C"
+    accuracy_decimals: 2
     update_interval: 30s
     lambda: |-
       return id(t_nucleo).state - id(t_aire).state;
 
-  # Ventilador del plenum: tacómetro. pulse_counter entrega pulsos/min; el
-  # Noctua da 2 pulsos por vuelta, de ahí el factor 0.5 para obtener rpm.
-  - platform: pulse_counter
-    id: rpm_ventilador
-    name: "RPM ventilador"
-    pin:
-      number: ${fan_tach_pin}
-      mode: INPUT_PULLUP
-    unit_of_measurement: "rpm"
-    update_interval: 10s
-    filters:
-      - multiply: 0.5
-
-# --- Alarmas (todas apagan el calefactor, ver interval de seguridad) ---
-binary_sensor:
-  - platform: template
-    id: alarma_sobretemp_nucleo
-    name: "ALARMA núcleo > 28 °C"
-    device_class: problem
-    lambda: |-
-      return !isnan(id(t_nucleo).state) && id(t_nucleo).state > 28.0;
-  - platform: template
-    id: alarma_dt_nucleo_aire
-    name: "ALARMA núcleo - aire > 5 °C"
-    device_class: problem
-    lambda: |-
-      return !isnan(id(dt_nucleo_aire).state) && id(dt_nucleo_aire).state > 5.0;
-  - platform: template
-    id: alarma_sensor_invalido
-    name: "ALARMA sensor inválido"
-    device_class: problem
-    lambda: |-
-      return isnan(id(t_aire).state) || isnan(id(t_nucleo).state);
-  - platform: template
-    id: alarma_sobretemp_aire
-    name: "ALARMA aire sobre el límite"
-    device_class: problem
-    lambda: |-
-      return !isnan(id(t_aire).state) && id(t_aire).state > ${aire_max_c};
-  - platform: template
-    id: alarma_ventilador
-    name: "ALARMA ventilador detenido"
-    device_class: problem
-    lambda: |-
-      if (!id(arranque_ok)) return false;
-      return isnan(id(rpm_ventilador).state) || id(rpm_ventilador).state < ${fan_min_rpm};
-
-# --- Termostato: calienta, no enfría ---
+# --- Termostato (solo calefacción, sobre el aire) ---
+# La banda y la histéresis vienen de la especificación del lote (ver sustituciones).
+# Los tiempos mínimos del relé son de protección del contacto, no de proceso.
 climate:
   - platform: thermostat
     id: incubadora
     name: "Incubadora"
     sensor: t_aire
-    min_heating_off_time: 60s
-    min_heating_run_time: 30s
-    min_idle_time: 30s
+    # El objetivo vive en un preset (ESPHome ya no admite default_target_temperature_low
+    # suelto). Al arrancar se usa siempre el preset, no el valor guardado en flash,
+    # para que mande la especificación de lote vigente.
+    default_preset: Lote
+    on_boot_restore_from: default_preset
+    preset:
+      - name: Lote
+        default_target_temperature_low: ${setpoint_c}
     heat_deadband: ${histeresis_c}
     heat_overrun: ${histeresis_c}
+    min_heating_off_time: 60s
+    min_heating_run_time: 60s
+    min_idle_time: 30s
     heat_action:
       - if:
           condition:
@@ -263,6 +288,50 @@ climate:
             - switch.turn_on: rele_calefactor
     idle_action:
       - switch.turn_off: rele_calefactor
+
+# --- Alarmas (cada una apaga el calefactor vía el interval de seguridad) ---
+binary_sensor:
+  # Núcleo > 28 °C (NaN compara falso: el sensor inválido lo cubre alarma_sensor_invalido).
+  - platform: template
+    id: alarma_sobretemp_nucleo
+    name: "ALARMA núcleo > 28 °C"
+    device_class: problem
+    lambda: |-
+      return id(t_nucleo).state > 28.0;
+
+  # Núcleo más de 5 °C sobre el aire.
+  - platform: template
+    id: alarma_dt_nucleo_aire
+    name: "ALARMA núcleo-aire > 5 °C"
+    device_class: problem
+    lambda: |-
+      return id(dt_nucleo_aire).state > 5.0;
+
+  # Sensor de control inválido (NaN: ausente, desconectado o congelado > 120 s).
+  - platform: template
+    id: alarma_sensor_invalido
+    name: "ALARMA sensor inválido"
+    device_class: problem
+    lambda: |-
+      return std::isnan(id(t_aire).state) || std::isnan(id(t_nucleo).state);
+
+  # Aire sobre el límite absoluto (NaN compara falso: lo cubre alarma_sensor_invalido).
+  - platform: template
+    id: alarma_sobretemp_aire
+    name: "ALARMA aire sobre el límite"
+    device_class: problem
+    lambda: |-
+      return id(t_aire).state > ${aire_max_c};
+
+  # Ventilador detenido: tacómetro NaN o bajo el mínimo, una vez pasada la gracia.
+  - platform: template
+    id: alarma_ventilador
+    name: "ALARMA ventilador detenido"
+    device_class: problem
+    lambda: |-
+      if (!id(gracia_fan_terminada)) return false;
+      float rpm = id(rpm_ventilador).state;
+      return std::isnan(rpm) || rpm < ${fan_min_rpm};
 
 # --- Interbloqueo y reanudación ---
 # Cualquier alarma apaga el relé y el termostato; pasada la estabilización del

@@ -28,13 +28,14 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
-| `[KB]` | Añadidos `06_operations/lote1_shiitake_especificacion_ambiental.md` (`DOC-0122`, plantilla versionada del lote 1, sin valores aprobados) y `06_operations/piloto_shiitake_incubacion_protocolo.md` (`DOC-0123`, compuertas físicas, fases 0–4, ensayos de fallo y hoja de registro) para el piloto de 30 bloques de 2,0 kg de shiitake con control de temperatura en la incubadora nueva. Firmware y analizador en `esphome/`; la spec está en `docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md`. |
+| `[KB]` | Reconciliadas dos implementaciones del plan del piloto de incubación (`esphome/`, `DOC-0122`, `DOC-0123`) en una sola. Se conserva la compuerta de la especificación del lote (`setpoint_c` e `histeresis_c` como marcadores que impiden compilar) y se incorporan las correcciones de la revisión final: sin reinicio por pérdida de red (`reboot_timeout: 0s`), reanudación tras un corte de energía (spec §7), alarma de aire sobre el límite, indicador local de alarma, y un analizador que mide la cobertura en el tiempo, exige 30 intervalos válidos e invalida filas con columnas desplazadas. |
 
 ### 2026-10-13
 
 | Tipo | Descripción |
 |---|---|
 | `[EQUIP]` | Añadidos 2 cables calefactores de silicona con núcleo de fibra de carbono de 5,2 m (`EQ-HEATER-SILICONE-CABLE-001`, comprados en Mercado Libre) para la incubadora nueva de 80 × 60 × 100 cm. Datos tomados del anuncio y no verificados: 33 Ω/m, red de 110/220 V, 74 W a 110 V y 296 W a 220 V según el vendedor. El cálculo con 33 Ω/m da ~70 W a 110 V y ~84 W a 120 V, y ~42 W con dos cables en serie a 120 V. Pendiente: medir la resistencia con multímetro y registrar su `last_physical_verification`. |
+| `[KB]` | Añadidos la plantilla de especificación ambiental del lote 1 de shiitake (`06_operations/lote1_shiitake_especificacion_ambiental.md`, `DOC-0122`, estado `PENDIENTE`, sin valores) y el protocolo del piloto de incubación (`06_operations/piloto_shiitake_incubacion_protocolo.md`, `DOC-0123`: compuertas físicas, fases 0–4, ensayos de fallo, evaluación del registro y hoja de lote). Acompañan al firmware ESPHome `esphome/incubadora_piloto.yaml` (banco de pruebas, no comisionado, que no compila hasta que la especificación aporte `setpoint_c` e `histeresis_c`) y a `esphome/analyze_incubation_log.py`. Sin setpoints aprobados ni cambios a SOPs. |
 
 ### 2026-09-13
 

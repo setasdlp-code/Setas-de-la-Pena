@@ -69,8 +69,6 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 
 No hay setpoints operacionales aprobados para el lote 1. *Lentinula edodes* presenta clases térmicas de cepa y respuestas de inducción distintas; los rangos de literatura en `01_species/lentinula_edodes.md` sirven para diseñar el piloto, no para controlar producción sin una especificación versionada.
 
-La plantilla versionada de la especificación del lote 1 está en `06_operations/lote1_shiitake_especificacion_ambiental.md` (estado: PENDIENTE). El protocolo de ensayos del piloto de incubación está en `06_operations/piloto_shiitake_incubacion_protocolo.md`.
-
 | Variable | Estado actual | Condición para aprobar |
 |---|---|---|
 | Temperatura de incubación y maduración | Pendiente | Identidad/clase de cepa, ficha del proveedor y prueba de cámara |
@@ -81,6 +79,8 @@ La plantilla versionada de la especificación del lote 1 está en `06_operations
 | Criterio de cosecha | Pendiente | Estándar comercial y de calidad definido antes de la primera fructificación |
 
 Antes de inocular, `06_operations/quality_control.md` exige spawn trazable, formulación aprobada y ciclo de autoclave validado con carga representativa. Antes de inducir, el lote debe tener un criterio de madurez documentado. El choque frío no se presume obligatorio.
+
+Plantilla versionada de la especificación del lote 1: `06_operations/lote1_shiitake_especificacion_ambiental.md` (`DOC-0122`), **pendiente** (sin cepa ni banda). El protocolo del piloto de incubación está en `06_operations/piloto_shiitake_incubacion_protocolo.md` (`DOC-0123`); el firmware de la incubadora no compila hasta que esta especificación fije la banda y la histéresis.
 
 ---
 

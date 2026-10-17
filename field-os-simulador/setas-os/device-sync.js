@@ -29,10 +29,13 @@
 
   const RESERVATION_RANK = Object.freeze({ held: 0, expired: 1, released: 2, consumed: 3 });
   const CYCLE_STATE_RANK = Object.freeze({ planned: 0, active: 1, cancelled: 2, closed: 3 });
+  const serverWins = (local, remote) => remote;
 
   // Colección de Firestore → clave local y reglas de fusión.
   const COLLECTIONS = Object.freeze({
-    bitacora_lotes: { localKey: 'sdp_bit_lotes', resolvers: () => ({ lifecycleEvents: mergeApi().unionList }) },
+    // lifecycleState y revision los escribe solo acceptFieldEvent: en conflicto
+    // gana siempre el servidor (las reglas rechazarían la copia local de todos modos).
+    bitacora_lotes: { localKey: 'sdp_bit_lotes', resolvers: () => ({ lifecycleEvents: mergeApi().unionList, lifecycleState: serverWins, revision: serverWins }) },
     // La foto vive solo en el dispositivo que la tomó (no sube a Firestore).
     bitacora_bolsas: { localKey: 'sdp_bit_bolsas', ignore: ['foto'] },
     bitacora_cosechas: { localKey: 'sdp_bit_cosechas' },
@@ -43,6 +46,10 @@
     inventario_reservas: { localKey: 'sdp_inv_reservas', resolvers: () => ({ status: mergeApi().byRank(RESERVATION_RANK) }) },
     // Ciclos de sala: un ciclo cerrado o cancelado no vuelve a activo.
     room_cycles: { localKey: 'sdp_room_cycles', resolvers: () => ({ state: mergeApi().byRank(CYCLE_STATE_RANK) }) },
+    // Revisiones de requisitos antes de producir (production-readiness.js):
+    // cada una es un registro inmutable; una revisión nueva reemplaza a la
+    // anterior por fecha, nunca la edita. Por eso no necesitan resolvedores.
+    production_readiness: { localKey: 'sdp_production_readiness' },
   });
 
   const BODEGA_COLLECTIONS = Object.freeze(['inventario_movimientos', 'inventario_compras', 'inventario_proveedores', 'inventario_reservas']);
