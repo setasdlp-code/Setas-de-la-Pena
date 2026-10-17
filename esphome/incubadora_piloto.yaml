@@ -1,0 +1,54 @@
+# =============================================================================
+# ESPHome — Incubadora del piloto de shiitake (80 x 60 x 100 cm)
+# Setas de la Peña · Tenjo, Cundinamarca · 2600 m s.n.m.
+# STATUS: BANCO DE PRUEBAS / NO COMISIONADO / NO USAR EN PRODUCCIÓN
+# Spec: docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
+# =============================================================================
+# Control local de temperatura únicamente. Sin humedad ni CO2 como lazo.
+# La protección térmica física (bimetálico 35 °C + fusible térmico) es
+# independiente de este firmware y se instala en el cableado del calefactor.
+# =============================================================================
+
+substitutions:
+  device_name: incubadora-piloto
+  friendly_name: "Incubadora piloto"
+
+  # --- Hardware ---
+  # Módulo de relé Hosyond: la polaridad activa no está verificada. Confirmar
+  # en el banco antes de conectar la carga de red (ver protocolo).
+  relay_heater_pin: GPIO26
+  relay_active_low: "true"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: "Banco de pruebas incubadora piloto · no comisionado"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+logger:
+
+# --- Calefactor (cargas de 120 V solo a través de relé con aislamiento) ---
+switch:
+  - platform: gpio
+    id: rele_calefactor
+    name: "Relé calefactor"
+    pin:
+      number: ${relay_heater_pin}
+      inverted: ${relay_active_low}
+    restore_mode: ALWAYS_OFF
