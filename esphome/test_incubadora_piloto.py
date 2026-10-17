@@ -192,7 +192,8 @@ class IncubadoraYamlTest(unittest.TestCase):
     # ------------------------------------------------------------------
     # Tarea 3: termostato, interbloqueo y alarmas
     # ------------------------------------------------------------------
-    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire", "alarma_sensor_invalido", "alarma_ventilador")
+    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire", "alarma_sensor_invalido",
+               "alarma_ventilador", "alarma_sobretemp_aire")
 
     def _climate(self, id_):
         for c in self.cfg.get("climate", []):
@@ -277,6 +278,45 @@ class IncubadoraYamlTest(unittest.TestCase):
         self.assertEqual(rpm["pin"]["number"], "${fan_pin}")
         self.assertTrue(rpm["pin"]["mode"]["pullup"])
         self.assertEqual(self._segundos(rpm["update_interval"]), 10)
+
+    # ------------------------------------------------------------------
+    # Correcciones de la revisión final (reconciliadas)
+    # ------------------------------------------------------------------
+    def test_sin_reinicio_por_perdida_de_red(self):
+        # ESPHome reinicia el ESP32 tras 15 min sin Home Assistant por defecto, y
+        # cada reinicio apaga el termostato: el control debe seguir sin red.
+        self.assertEqual(self.cfg["api"]["reboot_timeout"], "0s")
+        self.assertEqual(self.cfg["wifi"]["reboot_timeout"], "0s")
+
+    def test_reanudacion_tras_corte_sin_intervencion(self):
+        # Spec §7: tras un corte el sistema retoma el control sin intervención.
+        glob = next(g for g in self.cfg["globals"] if g["id"] == "arranque_ok")
+        self.assertEqual(glob["initial_value"], "false")
+        self.assertNotEqual(glob.get("restore_value"), True)
+        habilitar = self._switch("habilitar_calefaccion")
+        self.assertEqual(habilitar["restore_mode"], "RESTORE_DEFAULT_OFF")
+        boot = json.dumps(self._on_boot())
+        self.assertIn("${arranque_estabilizacion_s}", boot)
+        self.assertIn("arranque_ok", boot)
+        seguridad = json.dumps([i for i in self.cfg["interval"] if i["interval"] == "5s"])
+        for clave in ("arranque_ok", "habilitar_calefaccion", "CLIMATE_MODE_HEAT"):
+            self.assertIn(clave, seguridad)
+
+    def test_heat_action_condicionada_a_alarmas(self):
+        accion = json.dumps(self._climate("incubadora")["heat_action"])
+        for alarma in self.ALARMAS:
+            self.assertIn(alarma, accion)
+
+    def test_alarma_sobretemp_aire(self):
+        lam = self._binary("alarma_sobretemp_aire")["lambda"]
+        self.assertIn("id(t_aire).state", lam)
+        self.assertIn("${aire_max_c}", lam)
+        self.assertEqual(self.cfg["substitutions"]["aire_max_c"], "28.0")
+
+    def test_indicador_local_de_alarma(self):
+        led = self._switch("indicador_alarma")
+        self.assertEqual(led["restore_mode"], "ALWAYS_OFF")
+        self.assertIn("indicador_alarma", json.dumps(self.cfg["interval"]))
 
 
 if __name__ == "__main__":

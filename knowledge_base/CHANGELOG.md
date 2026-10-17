@@ -24,6 +24,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-10-17
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Reconciliadas dos implementaciones del plan del piloto de incubación (`esphome/`, `DOC-0122`, `DOC-0123`) en una sola. Se conserva la compuerta de la especificación del lote (`setpoint_c` e `histeresis_c` como marcadores que impiden compilar) y se incorporan las correcciones de la revisión final: sin reinicio por pérdida de red (`reboot_timeout: 0s`), reanudación tras un corte de energía (spec §7), alarma de aire sobre el límite, indicador local de alarma, y un analizador que mide la cobertura en el tiempo, exige 30 intervalos válidos e invalida filas con columnas desplazadas. |
+
 ### 2026-10-13
 
 | Tipo | Descripción |

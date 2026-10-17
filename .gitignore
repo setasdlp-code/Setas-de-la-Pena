@@ -98,3 +98,4 @@ knowledge_base.zip
 .claude/settings.local.json
 .claude/worktrees/
 .claude/.cc-writes
+esphome/secrets.yaml

@@ -19,7 +19,7 @@ related_documents:
 
 **Estado: `PENDIENTE`. Ningún campo tiene valor.** Esta es la plantilla de la especificación versionada que el piloto de incubación exige antes de arrancar (ver `piloto_shiitake_incubacion_protocolo.md`). No contiene setpoints: los rangos de literatura de `01_species/lentinula_edodes.md` sirven para diseñar el piloto, no para controlar.
 
-Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPECIFICACION_LOTE` en `esphome/incubadora_piloto.yaml`, ese firmware no compila. Eso es intencional.
+Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPECIFICACION_LOTE` en `esphome/incubadora_piloto.yaml`, ese firmware no compila. Eso es intencional. El objetivo de temperatura se aplica en cada arranque desde el preset `Lote`, de modo que tras un corte de energía manda siempre la especificación vigente y no un valor guardado en la memoria del equipo.
 
 # Reglas
 
@@ -54,5 +54,6 @@ Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPEC
 |---|---|---|
 | Banda de temperatura de incubación | `setpoint_c` | `esphome -s setpoint_c <°C> -s histeresis_c <°C> compile incubadora_piloto.yaml`, o editar la sustitución |
 | Histéresis | `histeresis_c` | Igual que arriba |
+| Límite de aire | `aire_max_c` | 28,0 °C, provisional (mismo tope que el KB da al núcleo); se ajusta con la banda aprobada |
 
 Los límites de seguridad del núcleo (28 °C, de `01_species/lentinula_edodes.md`; y 5 °C sobre el aire, de la spec del piloto §5.3) no dependen de la cepa en este piloto; si la especificación exige otros, es un cambio de diseño y se registra como tal.
