@@ -105,7 +105,9 @@ test('Formular keeps species, active recipe and live evaluation in the primary w
 });
 
 test('long UI collections use progressive disclosure and mobile-safe layouts', () => {
-  assert.match(jsx, /collapsedRoles.*base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false/);
+  // Escritorio abre los grupos; el teléfono arranca con el catálogo plegado.
+  assert.match(jsx, /const \[phoneCompact\]=useState\(\(\)=>typeof window!=='undefined'&&window\.innerWidth<=700\)/);
+  assert.match(jsx, /collapsedRoles.*base_carbono:phoneCompact,suplemento_n:phoneCompact,aditivo:phoneCompact,aireador:phoneCompact,otro:phoneCompact/);
   assert.match(jsx, /toggleRoleCollapse=.*\[roleKey\]:!prev\[roleKey\]/);
   assert.match(jsx, /setAllRoleGroups/);
   assert.match(jsx, /className="role-group-hdr"/);

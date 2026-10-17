@@ -806,6 +806,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin-top: var(--space-2);
   padding-top: 12px;
 }
+.sim-root .btots-4{ grid-template-columns: repeat(4,1fr); }
+.sim-root .bgrid-batch{ grid-template-columns: repeat(4,1fr); }
 .sim-root .btot{
   background: transparent;
   color: var(--ink-900);
@@ -1164,12 +1166,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Species cards ── */
   .sim-root .spp-grid{ grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:14px; }
   
-  .sim-root .p-family{ font-size:8px; }
+  .sim-root .p-family{ font-size:11px; }
   
   .sim-root .p-img{ padding:var(--space-half); aspect-ratio:1; }
   .sim-root .p-body{ padding:var(--space-1) 9px var(--space-1); }
   .sim-root .p-common{ font-size:var(--text-base); line-height:1.08; }
-  .sim-root .p-sci{ font-size:10px; margin-top:1px; }
+  .sim-root .p-sci{ font-size:12px; margin-top:1px; }
   
   
   
@@ -1194,7 +1196,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Recipe row ── */
   .sim-root .rec-row{ grid-template-columns:1fr 80px 24px; gap:var(--space-1); padding:10px 11px; }
   .sim-root .rec-row input[type=number]{ font-size:var(--text-md); padding:var(--space-1) 6px; min-height:44px; }
-  .sim-root .imeta{ font-size:8px; }
+  .sim-root .imeta{ font-size:12px; }
   
   /* ── Buttons ── */
   .sim-root .add-btn, .sim-root .tog, .sim-root .btn{ font-size:var(--text-xs); padding:9px 12px; min-height:44px; }
@@ -1203,13 +1205,16 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Metrics ── */
   .sim-root .mgrid{ grid-template-columns:1fr; gap:1px; }
   .sim-root .mval{ font-size:26px; }
-  .sim-root .mlbl{ font-size:10px; }
+  .sim-root .mlbl{ font-size:12px; }
   
   /* ── Batch ── */
-  .sim-root .bgrid{ grid-template-columns:1fr; margin-bottom:var(--sp-7); }
-  .sim-root .bf{ padding:0 0 10px 0; border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); }
-  .sim-root .bf label{ font-size:7px; }
-  .sim-root .bf input{ font-size:var(--text-sm); }
+  .sim-root .bgrid,
+  .sim-root .bgrid.bgrid-batch{ grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--space-2); margin-bottom:var(--sp-7); }
+  .sim-root .bf{ padding:0 0 10px 0; border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); min-width:0; }
+  .sim-root .bf.bf-total{ grid-column:1 / -1; }
+  .sim-root .bf label{ font-size:12px; letter-spacing:.06em; line-height:1.25; margin-bottom:4px; }
+  .sim-root .bf input{ font-size:var(--text-base); }
+  .sim-root .btots.btots-4{ grid-template-columns:1fr; }
   .sim-root .brow{ padding:6px 0; flex-direction:column; gap:2px; }
   .sim-root .brow .bn{ font-size:12px; }
   .sim-root .brow .bq{ font-size:var(--text-sm); text-align:left; }
@@ -1230,7 +1235,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Save bar ── */
   .sim-root .sbar{ gap:var(--space-half); flex-wrap:wrap; }
   .sim-root .sbar input{ font-size:var(--text-md); flex:1; min-width:60%; }
-  .sim-root .sbtn{ font-size:9px; padding:9px 12px; white-space:nowrap; }
+  .sim-root .sbtn{ font-size:11px; padding:9px 12px; white-space:nowrap; }
   
   /* ── Presets ── */
   .sim-root .presets{ gap:3px; margin-bottom:10px; }
@@ -1239,15 +1244,15 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .tcard{ padding:12px 12px; margin-bottom:var(--sp-7); }
   .sim-root .tttl{ font-size:17px; margin-bottom:var(--space-1); }
   .sim-root .tparams{ gap:var(--space-half); margin-bottom:var(--space-1); }
-  .sim-root .tp{ font-size:9px; padding:3px var(--space-1); }
+  .sim-root .tp{ font-size:11px; padding:3px var(--space-1); }
   .sim-root .twhy{ font-size:12px; }
   
   /* ── Diagnosis ── */
   .sim-root .dbox{ padding:10px 0; margin-bottom:var(--space-2); }
-  .sim-root .dttl{ font-size:9px; margin-bottom:var(--space-1); }
+  .sim-root .dttl{ font-size:12px; margin-bottom:var(--space-1); }
   .sim-root .dtxt{ font-size:var(--text-base); }
   .sim-root .sug{ font-size:var(--text-xs); padding:var(--space-1) 0; gap:10px; }
-  .sim-root .sug-mark{ font-size:8px; padding:2px 5px; }
+  .sim-root .sug-mark{ font-size:11px; padding:2px 5px; }
   
   /* ── Species info ── */
   .sim-root .spp-info{ padding:20px 12px; }
@@ -1262,7 +1267,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Saved recipes ── */
   
   
-  .sim-root .sload, .sim-root .sdel{ flex:1; text-align:center; font-size:10px; padding:var(--space-1) 10px; }
+  .sim-root .sload, .sim-root .sdel{ flex:1; text-align:center; font-size:12px; padding:var(--space-1) 10px; }
   
   /* ── Dashboard ── */
   .sim-root .dash-grid{ grid-template-columns:1fr; gap:10px; }
@@ -1275,7 +1280,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   
   
   /* ── Balance mode ── */
-  .sim-root .bal-mode{ font-size:9px; padding:3px 6px; }
+  .sim-root .bal-mode{ font-size:11px; padding:3px 6px; }
 }
 
 /* ── EXTRA SMALL (< 420px) ───────────────────────────────────────── */
@@ -1293,13 +1298,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Species cards ── */
   .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:var(--sp-7); }
   
-  .sim-root .p-family{ font-size:7px; letter-spacing:.08em; }
+  .sim-root .p-family{ font-size:11px; letter-spacing:.08em; }
   
   .sim-root .p-img{ padding:3px; aspect-ratio:1/1; }
   .sim-root .p-img img{ padding:0; }
   .sim-root .p-body{ padding:6px var(--space-1); }
   .sim-root .p-common{ font-size:var(--text-sm); line-height:1.1; }
-  .sim-root .p-sci{ font-size:9px; margin-top:1px; }
+  .sim-root .p-sci{ font-size:12px; margin-top:1px; }
   
   
   
@@ -1325,7 +1330,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .rec-row{ grid-template-columns:1fr 70px 20px; gap:6px; padding:var(--space-1) 10px; }
   .sim-root .rec-row input[type=number]{ font-size:var(--text-md); padding:7px 5px; min-height:44px; }
   .sim-root .pct{ font-size:var(--text-xs); }
-  .sim-root .imeta{ font-size:7px; }
+  .sim-root .imeta{ font-size:12px; }
   
   /* ── Buttons ── */
   .sim-root .add-btn, .sim-root .tog, .sim-root .btn{ font-size:var(--text-xs); padding:var(--space-1) 10px; min-height:44px; letter-spacing:.08em; }
@@ -1335,22 +1340,25 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .mgrid{ grid-template-columns:1fr; gap:0; }
   .sim-root .mc{ padding:12px 10px; }
   .sim-root .mval{ font-size:22px; }
-  .sim-root .mlbl{ font-size:9px; margin-bottom:6px; }
-  .sim-root .mbadge{ font-size:10px; padding:2px 6px; margin-top:6px; }
+  .sim-root .mlbl{ font-size:12px; margin-bottom:6px; }
+  .sim-root .mbadge{ font-size:12px; padding:2px 6px; margin-top:6px; }
   
   /* ── Batch ── */
-  .sim-root .bgrid{ grid-template-columns:1fr; margin-bottom:10px; }
-  .sim-root .bf{ padding:0 0 var(--space-1) 0; border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); }
-  .sim-root .bf label{ font-size:6.5px; margin-bottom:3px; }
-  .sim-root .bf input{ font-size:12px; }
+  .sim-root .bgrid,
+  .sim-root .bgrid.bgrid-batch{ grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--space-1); margin-bottom:10px; }
+  .sim-root .bf{ padding:0 0 var(--space-1) 0; border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); min-width:0; }
+  .sim-root .bf.bf-total{ grid-column:1 / -1; }
+  .sim-root .bf label{ font-size:12px; letter-spacing:.04em; line-height:1.25; margin-bottom:4px; }
+  .sim-root .bf input{ font-size:var(--text-base); }
   .sim-root .brow{ padding:5px 0; flex-direction:row; gap:var(--space-1); align-items:center; }
   .sim-root .brow .bn{ font-size:var(--text-xs); flex:1; }
   .sim-root .brow .bq{ font-size:var(--text-xs); text-align:right; min-width:40px; }
-  .sim-root .btots{ grid-template-columns:1fr; margin-top:10px; }
+  .sim-root .btots,
+  .sim-root .btots.btots-4{ grid-template-columns:1fr; margin-top:10px; }
   .sim-root .btot{ border-right:none; border-bottom:1px solid rgba(26,20,16,0.07); padding:6px 0; }
   .sim-root .btot:last-child{ border-bottom:none; }
   .sim-root .btot .bv{ font-size:18px; }
-  .sim-root .btot .bl{ font-size:6.5px; margin-top:3px; }
+  .sim-root .btot .bl{ font-size:12px; margin-top:3px; }
   
   /* ── Actions ── */
   .sim-root .act-row{ flex-direction:column; gap:var(--space-1); }
@@ -1358,17 +1366,17 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   
   /* ── Info rows ── */
   
-  .sim-root .kv .k{ font-size:8px; }
+  .sim-root .kv .k{ font-size:12px; }
   .sim-root .kv .v{ font-size:15px; }
   
   /* ── Sections ── */
   .sim-root .sec{ font-size:18px; margin-bottom:var(--space-1); padding-bottom:5px; }
-  .sim-root .sec::after{ font-size:7px; }
+  .sim-root .sec::after{ font-size:11px; }
   
   /* ── Save bar ── */
   .sim-root .sbar{ gap:var(--space-half); flex-direction:column; }
   .sim-root .sbar input{ font-size:var(--text-md); width:100%; padding:var(--space-1) 10px; }
-  .sim-root .sbtn{ font-size:8px; padding:var(--space-1) 10px; width:100%; }
+  .sim-root .sbtn{ font-size:11px; padding:var(--space-1) 10px; width:100%; }
   
   /* ── Presets ── */
   .sim-root .presets{ gap:2px; margin-bottom:var(--space-1); }
@@ -1377,16 +1385,16 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .tcard{ padding:10px 10px; margin-bottom:10px; }
   .sim-root .tttl{ font-size:15px; margin-bottom:6px; }
   .sim-root .tparams{ gap:3px; margin-bottom:6px; }
-  .sim-root .tp{ font-size:8px; padding:2px 6px; }
+  .sim-root .tp{ font-size:11px; padding:2px 6px; }
   .sim-root .twhy{ font-size:var(--text-xs); line-height:1.4; }
   .sim-root .tproc{ margin-top:var(--space-1); padding-top:var(--space-1); font-size:var(--text-xs); }
   
   /* ── Diagnosis ── */
   .sim-root .dbox{ padding:var(--space-1) 0; margin-bottom:var(--sp-7); }
-  .sim-root .dttl{ font-size:8px; margin-bottom:6px; }
+  .sim-root .dttl{ font-size:12px; margin-bottom:6px; }
   .sim-root .dtxt{ font-size:var(--text-sm); line-height:1.5; }
-  .sim-root .sug{ font-size:10px; padding:6px 0; gap:var(--space-1); }
-  .sim-root .sug-mark{ font-size:7px; padding:1px var(--space-half); margin-top:1px; }
+  .sim-root .sug{ font-size:12px; padding:6px 0; gap:var(--space-1); }
+  .sim-root .sug-mark{ font-size:11px; padding:1px var(--space-half); margin-top:1px; }
   
   /* ── Species info ── */
   .sim-root .spp-info{ padding:var(--space-2) 10px; }
@@ -1396,18 +1404,18 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Schedule ── */
   .sim-root .schctrl{ gap:6px; flex-direction:column; }
   .sim-root .schctl input, .sim-root .schctl select{ padding:7px var(--space-1); font-size:var(--text-md); }
-  .sim-root .schctl label{ font-size:10px; margin-bottom:var(--space-half); }
+  .sim-root .schctl label{ font-size:12px; margin-bottom:var(--space-half); }
   .sim-root .schsum{ grid-template-columns:1fr; gap:0; }
   .sim-root .ssc{ padding:10px var(--space-1); }
   .sim-root .ssv{ font-size:20px; }
-  .sim-root .ssl{ font-size:10px; }
+  .sim-root .ssl{ font-size:12px; }
   
   /* ── Saved recipes ── */
   
   
   .sim-root .sm{ font-size:var(--text-xs); width:100%; }
   
-  .sim-root .sload, .sim-root .sdel{ font-size:9px; padding:6px var(--space-1); flex:1; }
+  .sim-root .sload, .sim-root .sdel{ font-size:12px; padding:6px var(--space-1); flex:1; }
   .sim-root .sempty{ padding:var(--space-2) 12px; font-size:var(--text-base); }
   
   /* ── Dashboard ── */
@@ -1426,8 +1434,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .cval{ font-size:22px; }
   
   /* ── Balance ── */
-  .sim-root .bal-mode{ font-size:8px; padding:2px 5px; }
-  .sim-root .norm-bar{ padding:7px 10px; font-size:10px; }
+  .sim-root .bal-mode{ font-size:11px; padding:2px 5px; }
+  .sim-root .norm-bar{ padding:7px 10px; font-size:12px; }
   
   /* ── Gauge ── */
   .sim-root .gauge-cur{ font-size:20px; }
@@ -3348,7 +3356,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .live-dash-left{min-width:0}
   .sim-root .live-dash-metrics{margin-left:0}
   .sim-root .live-dash-actions{width:100%;margin-left:0}
-  .sim-root .live-dash-btn{min-height:36px!important;padding:6px!important}
+  .sim-root .live-dash-btn{min-height:44px!important;min-width:44px!important;padding:6px 10px!important}
   .sim-root .live-dash-tray{padding:6px var(--space-1)}
   .sim-root .live-ing-chip-del{min-height:24px!important;padding:0!important}
   .sim-root .builder-wrap #bl-ingredientes,
@@ -6889,3 +6897,39 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
  .sim-root .form-review-header>.inv-btn{width:100%;min-height:44px}
  .sim-root .form-review-check p{font-size:var(--text-base)}
 }
+
+/* Mobile audit 2026-10: disclosure summaries need a 44px touch target. */
+.sim-root .summary-tap{display:flex;align-items:center;min-height:44px;cursor:pointer}
+
+/* Mobile audit 2026-10: production table keeps ingredient identity visible and shows it scrolls sideways. */
+@media screen and (max-width:600px){
+  .sim-root .ps-tbl-wrap{
+    background:
+      linear-gradient(to right,var(--paper-50) 30%,transparent) left center / 24px 100% no-repeat local,
+      linear-gradient(to left,var(--paper-50) 30%,transparent) right center / 24px 100% no-repeat local,
+      linear-gradient(to right,rgba(26,20,16,.18),transparent) left center / 10px 100% no-repeat scroll,
+      linear-gradient(to left,rgba(26,20,16,.18),transparent) right center / 10px 100% no-repeat scroll;
+  }
+  .sim-root .ps-tbl-wrap::before{
+    content:"Desliza para ver todas las columnas →";
+    display:block;position:sticky;left:0;
+    padding:0 0 6px;font-family:var(--font-body);font-size:12px;color:var(--ink-600);
+  }
+  .sim-root .ps-tbl-wrap .prod-tbl th:first-child,
+  .sim-root .ps-tbl-wrap .prod-tbl td:first-child{
+    position:sticky;left:0;z-index:1;background:var(--paper-50);
+    box-shadow:1px 0 0 var(--paper-300);
+  }
+}
+
+/* Mobile audit 2026-10: collapsed technical blocks in the Perito panel (phones only). */
+.sim-root .perito-deep-details{margin:10px 0;border:1px solid var(--border-soft);background:var(--paper-50)}
+.sim-root .perito-deep-details > summary{padding:6px 12px;font-family:var(--font-body);font-size:13px;font-weight:700;color:var(--ink-800);line-height:1.3}
+.sim-root .perito-deep-details > summary:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px}
+.sim-root .perito-deep-details[open] > summary{border-bottom:1px solid var(--border-soft)}
+.sim-root .perito-deep-details > :not(summary){padding:0 12px}
+
+/* Mobile audit 2026-10: per-suggestion secondary detail (phones only, via .pi-more). */
+.sim-root .pi-more{margin-top:6px}
+.sim-root .pi-more > summary{font-family:var(--font-body);font-size:13px;font-weight:700;color:var(--ink-800);line-height:1.3}
+.sim-root .pi-more > summary:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px}

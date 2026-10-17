@@ -1954,7 +1954,7 @@ const describePeritoChanges=(recipe,apply,lockedIds,ingredients)=>{
 };
 const PeritoChangePreview=({changes})=>(
   <details style={{marginTop:6,fontSize:'var(--text-sm)'}}>
-    <summary style={{cursor:'pointer',fontWeight:700}}>Ver cambios de la receta ({changes.length})</summary>
+    <summary className="summary-tap" style={{cursor:'pointer',fontWeight:700}}>Ver cambios de la receta ({changes.length})</summary>
     <p style={{margin:'5px 0',color:'var(--ink-600)'}}>Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo.</p>
     <ul style={{margin:0,paddingLeft:18}}>{changes.map(row=><li key={row.id} style={{overflowWrap:'anywhere'}}>{row.name}: {Number(row.before.toFixed(2))}% → {Number(row.after.toFixed(2))}%</li>)}</ul>
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
@@ -2067,21 +2067,8 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
     return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
   },[evaluate,recipe,item.comboApply,lockedIds,ingredients]);
 
-  return(
-  <div className={`perito-item pi-${item.priority}`}>
-    <div className="pi-icon-col">
-      <span className="pi-icon">{item.icon}</span>
-    </div>
-    <div className="pi-body">
-      <div className="pi-head">
-        <span className="pi-label">{item.label}</span>
-        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
-        {item.delta&&<span className="pi-delta">{item.delta}</span>}
-      </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
-      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
-      <div className="pi-effect">{item.effect}</div>
+  const [compact]=React.useState(()=>typeof window!=='undefined'&&window.innerWidth<=700);
+  const bDeltas=<>
       {deltaSim?.diff&&(
         <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
@@ -2107,14 +2094,32 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           )}
         </div>
       )}
+  </>;
+  const bEvidence=<>
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
+  </>;
+  const bWhy=<>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
+  </>;
+  const bRisk=<>
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
+  </>;
+  const bIndice=<>
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+  </>;
+  const bDisclaimer=<>
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+  </>;
+  const bClassNote=<>
       <ClassChangeNote change={classChange}/>
+  </>;
+  const bPreview=<>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
+  </>;
+  const bSide=<>
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600)" /> {item.sideEffect}</span></div>}
+  </>;
+  const bCombo=<>
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
@@ -2122,6 +2127,23 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
         <PeritoChangePreview changes={comboChanges}/>
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
+  </>;
+  return(
+  <div className={`perito-item pi-${item.priority}`}>
+    <div className="pi-icon-col">
+      <span className="pi-icon">{item.icon}</span>
+    </div>
+    <div className="pi-body">
+      <div className="pi-head">
+        <span className="pi-label">{item.label}</span>
+        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
+        {item.delta&&<span className="pi-delta">{item.delta}</span>}
+      </div>
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
+      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
+      <div className="pi-effect">{item.effect}</div>
+      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bEvidence}{bWhy}{bRisk}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bSide}{bCombo}</>}
     </div>
     <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
@@ -7017,7 +7039,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   }, []);
   const [showLiveChips,setShowLiveChips]=useState(true);
   const [groupByRole,setGroupByRole]=useState(true);
-  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false});
+  // Teléfono: el Formulador arranca compacto (catálogo y paneles técnicos del Perito
+  // plegados). Se evalúa una sola vez al montar, igual que isMobileViewport.
+  const [phoneCompact]=useState(()=>typeof window!=='undefined'&&window.innerWidth<=700);
+  const [collapsedRoles,setCollapsedRoles]=useState(()=>({base_carbono:phoneCompact,suplemento_n:phoneCompact,aditivo:phoneCompact,aireador:phoneCompact,otro:phoneCompact}));
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
@@ -8571,6 +8596,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
     const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
     const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+    const wrapDeep=(summary,node)=>(phoneCompact&&!isWorkbench)
+      ?<details className="perito-deep-details" data-testid="perito-deep-details"><summary className="summary-tap">{summary}</summary>{node}</details>
+      :node;
     const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
     const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
     return(
@@ -8664,7 +8692,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
         </>}
 
-        {/* ── MÉTRICAS ── */}
+        {wrapDeep(`Métricas del modelo · C:N ${an.cn>0?an.cn.toFixed(1)+':1':'—'} · N ${an.avgN>0?an.avgN.toFixed(2)+'%':'—'} · EB ${an.ebLow&&an.ebHigh?an.ebLow+'–'+an.ebHigh:an.eb.toFixed(0)}%`,<>
         <div className="mgrid" style={{marginBottom:12}}>
           {[
                         {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
@@ -8705,6 +8733,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                   )}
         </div>
         <NitrogenChart recipe={recipe}/>
+        </>)}
 
         {/* ── EVIDENCIA + SUGERENCIAS ── */}
         {hasPer&&(
@@ -8730,12 +8759,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
             {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
-            {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
+            {tips.length>0&&<details open={!phoneCompact} style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
             {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
           </>
         )}
 
-        {!isWorkbench&&<>
+        {!isWorkbench&&wrapDeep(`Evaluación técnica y gráficos · ${dg.sugs.length} nota${dg.sugs.length===1?'':'s'}`,<>
                   {/* ── CHARTS TOGGLE + CHARTS ── */}
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
                     <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
@@ -8755,7 +8784,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                     <div className="sec" style={{marginTop:8}}>A considerar</div>
                     {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
                   </>)}
-        </>}
+        </>)}
       </section>
     );
   };
@@ -15968,13 +15997,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Batch</div>
                     <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
-                  <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
+                  <div className="bgrid bgrid-batch">
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:moistureInTargetRange(hObj,an?.targets?.moisture)?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
                     <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
-                    <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
+                    <div className="bf bf-total"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
                     <div>
@@ -15998,7 +16027,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <span className="bq" style={{background:'var(--status-ok-bg)',border:'1px solid var(--status-ok-marker)',color:'var(--status-ok)'}}>{bd.spawn.toFixed(2)} kg</span>
                         </div>
                       </div>
-                      <div className="btots" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
+                      <div className="btots btots-4">
                         <div className="btot"><div className="bv">{bd.wet.toFixed(1)} kg</div><div className="bl">Sustrato</div></div>
                         <div className="btot"><div className="bv">${Math.round(bd.cost).toLocaleString()}</div><div className="bl">Insumos</div></div>
                         <div className="btot"><div className="bv">${Math.round(bd.spawnCostTotal).toLocaleString()}</div><div className="bl">Spawn</div></div>
@@ -17919,31 +17948,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* SELECTOR DE MODO DE ESCANEO */}
-                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="scan" size={13} style={{marginRight:4}} /> Ronda Lote
-                  </button>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'harvest' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="scale" size={13} style={{marginRight:4}} /> Báscula Cosecha
-                  </button>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'sweep' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Barrido Sala
-                  </button>
+                <div role="group" aria-label="Modo de captura" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
+                  {[
+                    { mode: 'round', icon: 'scan', label: 'Ronda Lote' },
+                    { mode: 'harvest', icon: 'scale', label: 'Báscula Cosecha' },
+                    { mode: 'sweep', icon: 'bolt', label: 'Barrido Sala' },
+                  ].map(opt => (
+                    <button
+                      key={opt.mode}
+                      type="button"
+                      aria-pressed={qrScanMode === opt.mode}
+                      className={`inv-btn inv-btn-sm ${qrScanMode === opt.mode ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                      style={{ flex: '1 1 150px', minWidth: 0, minHeight: 44, fontSize: 12, fontWeight: qrScanMode === opt.mode ? 700 : 500, whiteSpace: 'normal', textAlign: 'center', justifyContent: 'center', alignItems: 'center', lineHeight: 1.2 }}
+                      onClick={() => { setQrScanMode(opt.mode); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                    >
+                      <AppIcon name={opt.icon} size={13} style={{marginRight:4, flexShrink:0}} /> {opt.label}
+                    </button>
+                  ))}
                 </div>
 
                 {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}
