@@ -6861,3 +6861,31 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .builder-wrap .recipe-balance-strategy{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:var(--t-label)}
 .sim-root .builder-wrap .recipe-balance-strategy select{min-height:44px;max-width:100%}
 .sim-root .builder-wrap .recipe-edit-options .tog{min-height:44px;justify-self:start;white-space:normal;margin:0}
+
+/* Unified review keeps operational checks and supporting detail in one surface. */
+.sim-root .builder-wrap .form-recipe-workspace{grid-template-columns:minmax(0,1fr);grid-template-areas:"active-head" "review" "ingredients"}
+.sim-root .form-unified-review{grid-area:review;min-width:0;padding:16px;border:1px solid var(--border-strong);border-top:3px solid var(--accent-olive);background:var(--paper-0)}
+.sim-root .form-review-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.sim-root .form-review-header h2{margin:4px 0;font:800 24px/1.2 var(--font-display);color:var(--ink-900)}
+.sim-root .form-review-header p,.sim-root .form-review-empty{margin:6px 0;color:var(--ink-600);font:var(--t-body-sm)}
+.sim-root .form-review-checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.sim-root .form-review-check{display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border:1px solid var(--border-soft);border-left:3px solid var(--border-strong);background:var(--paper-1);overflow-wrap:anywhere}
+.sim-root .form-review-check.is-blocked{border-left-color:var(--status-error)}
+.sim-root .form-review-check.is-verified{border-left-color:var(--accent-olive)}
+.sim-root .form-review-check h3{margin:0;font:700 var(--text-sm)/1.35 var(--font-body);color:var(--ink-900)}
+.sim-root .form-review-status{font:var(--t-label);color:var(--ink-700)}
+.sim-root .form-review-check p{margin:0;font:var(--t-body-sm);color:var(--ink-600)}
+.sim-root .form-review-check button{align-self:flex-start;margin-top:auto;min-height:44px;padding:8px 12px;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-900);font:var(--t-label);cursor:pointer}
+.sim-root .form-review-check button:focus-visible,.sim-root .form-unified-review summary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.sim-root .form-unified-review .review-details{margin:12px 0;border:1px solid var(--border-soft);background:var(--paper-0);min-width:0}
+.sim-root .form-unified-review .review-details>summary{min-height:44px;padding:12px;box-sizing:border-box;font:var(--t-label);color:var(--ink-900);cursor:pointer;overflow-wrap:anywhere}
+.sim-root .form-unified-review .review-details>.recipe-live-evaluation{margin:0;border:0}
+.sim-root .form-unified-review #bl-receta-summary{margin-top:12px}
+.sim-root .form-unified-review .form-support-details{margin:12px 0}
+@media(max-width:900px){.sim-root .form-review-checks{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+ .sim-root .form-unified-review{padding:12px}
+ .sim-root .form-review-checks{grid-template-columns:minmax(0,1fr)}
+ .sim-root .form-review-header>.inv-btn{width:100%;min-height:44px}
+ .sim-root .form-review-check p{font-size:var(--text-base)}
+}

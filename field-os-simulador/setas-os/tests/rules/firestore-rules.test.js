@@ -12,7 +12,7 @@ const {
   assertFails,
   assertSucceeds,
 } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, deleteDoc } = require('firebase/firestore');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -172,4 +172,91 @@ test('sin etapa aceptada, el estado en español sigue siendo editable', async ()
 test('un lote de Bitácora se puede marcar como borrado (lápida)', async () => {
   await seed('bitacora_lotes/b_4', { codigo: 'B-7', estado: 'incubacion', lifecycleState: 'incubation', revision: 1 });
   await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_lotes/b_4'), { deleted: true }, { merge: true }));
+});
+
+// Bitácora: un borrado es una lápida (ADR-0009). Un delete físico se rechaza
+// en las tres colecciones, para que ningún cliente (viejo o escrito a mano)
+// haga desaparecer un documento sin que los demás dispositivos lo vean.
+test('un lote de Bitácora no se borra físicamente', async () => {
+  await seed('bitacora_lotes/b_del', { codigo: 'B-8', estado: 'planificado' });
+  await assertFails(deleteDoc(doc(asOperator(), 'bitacora_lotes/b_del')));
+});
+
+test('una bolsa de Bitácora no se borra físicamente, pero sí se marca como borrada', async () => {
+  await seed('bitacora_bolsas/bg_del', { loteId: 'b_del', numero: 1 });
+  await assertFails(deleteDoc(doc(asOperator(), 'bitacora_bolsas/bg_del')));
+  await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_bolsas/bg_del'), { deleted: true }, { merge: true }));
+});
+
+test('una cosecha de Bitácora no se borra físicamente, pero sí se marca como borrada', async () => {
+  await seed('bitacora_cosechas/c_del', { loteId: 'b_del', pesoFresco: 800 });
+  await assertFails(deleteDoc(doc(asOperator(), 'bitacora_cosechas/c_del')));
+  await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_cosechas/c_del'), { deleted: true }, { merge: true }));
+});
+
+test('bolsas y cosechas siguen pudiendo crearse y leerse; la foto sigue prohibida', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_bolsas/bg_new'), { loteId: 'b_1', numero: 2 }));
+  await assertFails(setDoc(doc(asOperator(), 'bitacora_bolsas/bg_foto'), { loteId: 'b_1', foto: 'data:image/png;base64,AAAA' }));
+  await assertSucceeds(setDoc(doc(asOperator(), 'bitacora_cosechas/c_new'), { loteId: 'b_1', pesoFresco: 500 }));
+  await assertSucceeds(getDoc(doc(asOperator(), 'bitacora_cosechas/c_new')));
+  await assertSucceeds(getDoc(doc(asOperator(), 'bitacora_bolsas/bg_new')));
+});
+
+// Balance de masa: la suma se recalcula con hasta 12 ingredientes. Antes solo
+// contaba los 8 primeros y rechazaba recetas legítimas más largas.
+const ingredientes = (n, total = 100) => Array.from({ length: n }, () => ({ pct: total / n }));
+
+test('una receta balanceada se acepta con 8, 9 y 12 ingredientes', async () => {
+  for (const n of [8, 9, 12]) {
+    await assertSucceeds(setDoc(doc(asOperator(), `lotes_produccion/m_ok_${n}`), {
+      codigo: `M-${n}`, recetaSnapshot: { ingredientes: ingredientes(n) },
+    }));
+  }
+});
+
+test('una receta con 13 ingredientes se rechaza aunque los 12 primeros sumen 100', async () => {
+  const rec = [...ingredientes(12), { pct: 0 }];
+  await assertFails(setDoc(doc(asOperator(), 'lotes_produccion/m_13'), {
+    codigo: 'M-13', recetaSnapshot: { ingredientes: rec },
+  }));
+});
+
+test('una receta que no suma 100 se rechaza con 9 y con 12 ingredientes', async () => {
+  for (const n of [9, 12]) {
+    await assertFails(setDoc(doc(asOperator(), `lotes_produccion/m_bad_${n}`), {
+      codigo: `MB-${n}`, recetaSnapshot: { ingredientes: ingredientes(n, 90) },
+    }));
+  }
+});
+
+test('el ingrediente 9 o posterior cuenta: una mezcla que solo suma 100 sin él se rechaza', async () => {
+  const rec = [...ingredientes(8, 100), { pct: 20 }];
+  await assertFails(setDoc(doc(asOperator(), 'lotes_produccion/m_over'), {
+    codigo: 'M-OVER', recetaSnapshot: { ingredientes: rec },
+  }));
+});
+
+test('las recetas usan el mismo balance de masa', async () => {
+  await assertSucceeds(setDoc(doc(asOperator(), 'recetas/r_12'), { ingredientes: ingredientes(12) }));
+  await assertFails(setDoc(doc(asOperator(), 'recetas/r_13'), { ingredientes: [...ingredientes(12), { pct: 0 }] }));
+  await assertFails(setDoc(doc(asOperator(), 'recetas/r_bad'), { ingredientes: ingredientes(10, 80) }));
+});
+
+// role() no debe fallar cuando la cuenta no tiene documento en usuarios/.
+test('una cuenta sin documento en usuarios/ no es admin, y las reglas no se rompen', async () => {
+  await seed('recetas/r_admin', { ingredientes: ingredientes(2) });
+  await assertFails(deleteDoc(doc(asOperator(), 'recetas/r_admin')));
+  await assertFails(setDoc(doc(asOperator(), 'usuarios/otro'), { rol: 'admin' }));
+});
+
+test('un admin con documento en usuarios/ sigue pudiendo borrar recetas', async () => {
+  await seed('usuarios/adm_1', { rol: 'admin' });
+  await seed('recetas/r_admin2', { ingredientes: ingredientes(2) });
+  await assertSucceeds(deleteDoc(doc(env.authenticatedContext('adm_1').firestore(), 'recetas/r_admin2')));
+});
+
+test('la cuenta de sincronización escribe en public_lotes sin documento en usuarios/', async () => {
+  const svc = env.authenticatedContext('svc_1', { sync_service: true }).firestore();
+  await assertSucceeds(setDoc(doc(svc, 'public_lotes/SDP-X'), { codigo: 'SDP-X', estado: 'incubacion' }));
+  await assertFails(setDoc(doc(asOperator(), 'public_lotes/SDP-Y'), { codigo: 'SDP-Y', estado: 'incubacion' }));
 });

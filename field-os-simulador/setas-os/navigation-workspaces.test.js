@@ -95,10 +95,10 @@ test('Formular exposes one guided species-to-save flow and one shared ingredient
 test('Formular keeps species, active recipe and live evaluation in the primary workspace', () => {
   assert.match(jsx, /className=\{`form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}`\} aria-labelledby="form-species-context-title"/);
   assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
-  assert.match(jsx, /Puntaje, gauges y lote/);
+  assert.match(jsx, /Ingredientes y revisión/);
   assert.match(jsx, /className="bg-wrap recipe-live-evaluation/);
-  assert.match(jsx, /Perito \+ Automejora/);
-  assert.match(css, /\.form-recipe-workspace\{[\s\S]*"recipe evaluation"/);
+  assert.match(jsx, /Revisión y preparación/);
+  assert.match(css, /\.builder-wrap \.form-recipe-workspace\{[\s\S]*grid-template-areas:"active-head" "review" "ingredients"/);
   assert.match(css, /\.builder-wrap > \.sim-live-dashboard\{[\s\S]*position:sticky/);
   assert.match(jsx, /const \[showLiveChips,setShowLiveChips\]=useState\(true\)/);
   assert.match(jsx, /className="live-dash-btn live-dash-recipe-toggle"/);

@@ -1,4 +1,5 @@
 'use strict';
+const { skipIfAuthUnavailable } = require('./auth-policy.cjs');
 
 const { test } = require('@playwright/test');
 
@@ -6,17 +7,10 @@ const APP_PATH = '/Setas%20OS%20v5.dc.html';
 
 /** @param {import('@playwright/test').Page} page */
 async function openApp(page) {
-  if (process.env.E2E_AUTH_UNAVAILABLE === 'true') {
-    test.skip(true, 'Requiere credenciales E2E_TEST_EMAIL / E2E_TEST_PASSWORD');
-  }
+  skipIfAuthUnavailable(test);
   await page.goto(APP_PATH);
   const gate = page.locator('#setas-auth-gate');
-  try {
-    await gate.waitFor({ state: 'hidden', timeout: 7000 });
-  } catch {
-    test.skip(true, 'Sesión de Firebase Auth no disponible en el entorno');
-    return;
-  }
+  await gate.waitFor({ state: 'hidden', timeout: 7000 });
   // El rail visible depende del viewport: >=860px es .rail-btn (desktop,
   // Formular/Producción/Bitácora/Control); <=859px es .rail-mobile-btn
   // (Criterio: Hoy/Lotes/Scan/Salas/Más). Solo uno de los dos es :visible a
