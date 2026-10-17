@@ -18,6 +18,17 @@ substitutions:
   # en el banco antes de conectar la carga de red (ver protocolo).
   relay_heater_pin: GPIO26
   relay_active_low: "true"
+  sda_pin: GPIO21
+  scl_pin: GPIO22
+  onewire_pin: GPIO4   # bus 1-Wire con pull-up físico de 4,7 kΩ a 3,3 V
+
+  # Direcciones 1-Wire de las DS18B20. Marcadores distintos entre sí: se
+  # reemplazan por las direcciones reales tras el escaneo en el banco. Cada
+  # sonda se identifica por su dirección fija, nunca por orden de escaneo.
+  addr_base: "0x0000000000000001"
+  addr_centro: "0x0000000000000002"
+  addr_tope: "0x0000000000000003"
+  addr_nucleo: "0x0000000000000004"
 
 esphome:
   name: ${device_name}
@@ -52,3 +63,79 @@ switch:
       number: ${relay_heater_pin}
       inverted: ${relay_active_low}
     restore_mode: ALWAYS_OFF
+
+# --- Buses ---
+i2c:
+  sda: ${sda_pin}
+  scl: ${scl_pin}
+  scan: true
+
+one_wire:
+  - platform: gpio
+    pin: ${onewire_pin}
+
+# --- Sensores ---
+# Los sensores de control (t_aire, t_nucleo) pasan a NaN si dejan de actualizar
+# durante 120 s, de modo que un valor congelado se trata como sensor inválido.
+sensor:
+  # Aire: SHT45 con membrana, protegido de goteo y lejos del calefactor.
+  - platform: sht4x
+    update_interval: 30s
+    temperature:
+      id: t_aire
+      name: "T aire"
+      filters:
+        - timeout:
+            timeout: 120s
+            value: .nan
+    humidity:
+      id: hr_aire
+      name: "HR aire (diagnóstico)"
+
+  # Mapa térmico vertical: base, centro y parte superior de la carga.
+  - platform: dallas_temp
+    address: ${addr_base}
+    id: t_base
+    name: "T base"
+    update_interval: 30s
+  - platform: dallas_temp
+    address: ${addr_centro}
+    id: t_centro
+    name: "T centro"
+    update_interval: 30s
+  - platform: dallas_temp
+    address: ${addr_tope}
+    id: t_tope
+    name: "T tope"
+    update_interval: 30s
+
+  # Núcleo de un bloque testigo (sonda inox de 100 mm). Media móvil α = 0,1.
+  - platform: dallas_temp
+    address: ${addr_nucleo}
+    id: t_nucleo
+    name: "T núcleo"
+    update_interval: 30s
+    filters:
+      - exponential_moving_average:
+          alpha: 0.1
+          send_every: 1
+      - timeout:
+          timeout: 120s
+          value: .nan
+
+  # CO2 solo diagnóstico. Una única estrategia de compensación: altitud fija.
+  - platform: scd30
+    update_interval: 30s
+    altitude_compensation: 2600m
+    co2:
+      id: co2
+      name: "CO2 (diagnóstico)"
+
+  # Diferencia núcleo - aire.
+  - platform: template
+    id: dt_nucleo_aire
+    name: "ΔT núcleo - aire"
+    unit_of_measurement: "°C"
+    update_interval: 30s
+    lambda: |-
+      return id(t_nucleo).state - id(t_aire).state;
