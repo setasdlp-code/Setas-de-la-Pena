@@ -143,7 +143,7 @@ window.addEventListener('afterprint', () => {
     setText('#order-delivery', deliveryFee === null ? 'Cobertura y costo por confirmar' : deliveryText);
     setText('#offer-format', selected.item ? `${selected.item.name} · ${formatWeight(selected.item.weightGrams)}` : 'Acordamos el formato contigo');
     setText('#offer-price', selected.item && selected.item.priceCOP !== null ? `${formatPrice(selected.item.priceCOP)} / presentación` : 'Por confirmar');
-    document.querySelector('.purchase-submit').firstChild.textContent = available && selected.item && selected.item.priceCOP !== null ? 'Preparar solicitud ' : 'Preparar consulta ';
+    document.querySelector('.purchase-submit').firstChild.textContent = available && selected.item && selected.item.priceCOP !== null ? 'Preparar solicitud ' : noChannel ? 'Preparar borrador ' : 'Preparar consulta ';
   }
 
   function clearReview() {
@@ -191,6 +191,8 @@ window.addEventListener('afterprint', () => {
       ...(recipe && selected.needed !== null ? [`Peso que recibiría: ${describeDifference(selected)}.`] : []),
       selected.subtotal === null ? 'Precio: por confirmar.' : `Subtotal del producto: ${formatPrice(selected.subtotal)} (sin envío).`,
       `Municipio de entrega: ${location}.`,
+      ...(purpose === 'mi restaurante' && text(form.elements.namedItem('frequency').value) ? [`Frecuencia de compra: ${text(form.elements.namedItem('frequency').value)}.`] : []),
+      ...(purpose === 'mi restaurante' && text(form.elements.namedItem('desired').value) ? [`Fecha deseada: ${text(form.elements.namedItem('desired').value)}.`] : []),
       deliveryFee === null ? 'Costo de entrega: por confirmar.' : `Costo de entrega publicado: ${deliveryText}.`,
       '',
       data.availability === 'unavailable' ? '¿Cuándo esperan tener disponibilidad? Quisiera confirmar presentación, valor final, entrega y medios de pago.' : '¿Pueden confirmar disponibilidad, presentación, valor final, entrega y medios de pago?'
@@ -219,6 +221,17 @@ window.addEventListener('afterprint', () => {
       copyStatus.textContent = 'Seleccionamos el mensaje. Cópialo con el menú de tu dispositivo o con Ctrl/Cmd + C.';
     }
   });
+  const noChannel = !whatsapp;
+  document.querySelector('#channel-notice').hidden = !noChannel;
+  const submitButton = document.querySelector('.purchase-submit');
+  const restaurantFields = document.querySelector('#restaurant-fields');
+  const syncPurpose = () => { restaurantFields.hidden = form.elements.namedItem('purpose').value !== 'restaurante'; };
+  form.addEventListener('change', event => { if (event.target.name === 'purpose') syncPurpose(); });
+  syncPurpose();
+  if (noChannel) {
+    document.querySelector('#review-title').textContent = 'Borrador listo (aún no enviado).';
+    document.querySelector('.purchase-confirmation').textContent = 'Todavía no hay un canal de consultas habilitado: este mensaje es un borrador que se prepara en tu navegador y no se envía a nadie.';
+  }
   updateSummary();
   form.hidden = false;
 })();

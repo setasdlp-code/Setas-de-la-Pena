@@ -40,6 +40,7 @@ document.querySelectorAll('[data-hero]').forEach(button => button.addEventListen
   document.querySelector('#hero-latin').textContent = item.latin;
   document.querySelector('#hero-code').textContent = item.code;
   document.querySelector('#hero-status').textContent = `Especie de portada: ${item.name}.`;
+  document.querySelector('#hero-note').hidden = button.dataset.hero === 'shiitake';
 }));
 // Filtros de la colección: categoría + preparación. La guía solo ordena ideas de referencia; no crea disponibilidad.
 const preparations = {

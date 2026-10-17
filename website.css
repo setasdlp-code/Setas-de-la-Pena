@@ -468,3 +468,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .card-profile { min-height: 0; }
   .chapter-line > span:first-child { line-height: 1.8; }
 }
+
+.purchase-notice { border: 1px solid currentColor; padding: 16px 20px; margin-bottom: 24px; max-width: 70ch; }
+.purchase-notice p { margin: 0 0 8px; }
+.hero-species-note { margin: 8px 0 0; max-width: 40ch; color: var(--text-secondary); }
+.chef-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 640px) { .chef-steps { grid-template-columns: 1fr; } }
