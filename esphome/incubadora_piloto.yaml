@@ -30,10 +30,28 @@ substitutions:
   addr_tope: "0x0000000000000003"
   addr_nucleo: "0x0000000000000004"
 
+  # --- Control y seguridad ---
+  # El setpoint NO está en este archivo: depende de la cepa y se fija desde la
+  # especificación del lote 1 (el termostato arranca en OFF sin objetivo).
+  # La histéresis arranca en 0.5 °C (valor técnico por defecto de ESPHome, no
+  # biológico) y se sobrescribe con la especificación del lote.
+  histeresis_c: "0.5"
+  fan_min_rpm: "500"            # valor provisional, a validar en el banco
+  fan_arranque_gracia_s: "20"   # el tacómetro puede marcar cero al arrancar
+  fan_tach_pin: GPIO25          # tacómetro del ventilador (Noctua NF-P12, 2 pulsos/vuelta)
+
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
   comment: "Banco de pruebas incubadora piloto · no comisionado"
+  # Tras cualquier reinicio o corte de energía el termostato arranca apagado,
+  # aunque ESPHome haya restaurado el modo calefacción desde la memoria flash.
+  on_boot:
+    priority: -100
+    then:
+      - climate.control:
+          id: incubadora
+          mode: "OFF"
 
 esp32:
   board: esp32dev
@@ -139,3 +157,87 @@ sensor:
     update_interval: 30s
     lambda: |-
       return id(t_nucleo).state - id(t_aire).state;
+
+  # Ventilador del plenum: tacómetro. pulse_counter entrega pulsos/min; el
+  # Noctua da 2 pulsos por vuelta, de ahí el factor 0.5 para obtener rpm.
+  - platform: pulse_counter
+    id: rpm_ventilador
+    name: "RPM ventilador"
+    pin:
+      number: ${fan_tach_pin}
+      mode: INPUT_PULLUP
+    unit_of_measurement: "rpm"
+    update_interval: 10s
+    filters:
+      - multiply: 0.5
+
+# --- Alarmas (todas apagan el calefactor, ver interval de seguridad) ---
+binary_sensor:
+  - platform: template
+    id: alarma_sobretemp_nucleo
+    name: "ALARMA núcleo > 28 °C"
+    device_class: problem
+    lambda: |-
+      return !isnan(id(t_nucleo).state) && id(t_nucleo).state > 28.0;
+  - platform: template
+    id: alarma_dt_nucleo_aire
+    name: "ALARMA núcleo - aire > 5 °C"
+    device_class: problem
+    lambda: |-
+      return !isnan(id(dt_nucleo_aire).state) && id(dt_nucleo_aire).state > 5.0;
+  - platform: template
+    id: alarma_sensor_invalido
+    name: "ALARMA sensor inválido"
+    device_class: problem
+    lambda: |-
+      return isnan(id(t_aire).state) || isnan(id(t_nucleo).state);
+  - platform: template
+    id: alarma_ventilador
+    name: "ALARMA ventilador detenido"
+    device_class: problem
+    lambda: |-
+      if (millis() < ${fan_arranque_gracia_s} * 1000UL) return false;
+      return isnan(id(rpm_ventilador).state) || id(rpm_ventilador).state < ${fan_min_rpm};
+
+# --- Termostato: calienta, no enfría ---
+climate:
+  - platform: thermostat
+    id: incubadora
+    name: "Incubadora"
+    sensor: t_aire
+    min_heating_off_time: 60s
+    min_heating_run_time: 30s
+    min_idle_time: 30s
+    heat_deadband: ${histeresis_c}
+    heat_overrun: ${histeresis_c}
+    heat_action:
+      - if:
+          condition:
+            not:
+              or:
+                - binary_sensor.is_on: alarma_sobretemp_nucleo
+                - binary_sensor.is_on: alarma_dt_nucleo_aire
+                - binary_sensor.is_on: alarma_sensor_invalido
+                - binary_sensor.is_on: alarma_ventilador
+          then:
+            - switch.turn_on: rele_calefactor
+    idle_action:
+      - switch.turn_off: rele_calefactor
+
+# --- Interbloqueo: cualquier alarma apaga el calefactor y el termostato ---
+# No se reenciende solo: requiere acción del operador.
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            or:
+              - binary_sensor.is_on: alarma_sobretemp_nucleo
+              - binary_sensor.is_on: alarma_dt_nucleo_aire
+              - binary_sensor.is_on: alarma_sensor_invalido
+              - binary_sensor.is_on: alarma_ventilador
+          then:
+            - switch.turn_off: rele_calefactor
+            - climate.control:
+                id: incubadora
+                mode: "OFF"

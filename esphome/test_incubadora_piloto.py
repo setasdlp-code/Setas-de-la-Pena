@@ -156,6 +156,61 @@ class IncubadoraYamlTest(unittest.TestCase):
             self.assertNotIn("hr_aire", texto, dominio)
             self.assertNotIn("co2", texto, dominio)
 
+    # --- Tarea 3: termostato, interbloqueo y alarmas ---
+    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire",
+               "alarma_sensor_invalido", "alarma_ventilador")
+
+    def _binario(self, id_):
+        return buscar(self.cfg["binary_sensor"], id=id_)
+
+    def test_termostato_usa_aire_y_arranca_apagado(self):
+        termostato = buscar(self.cfg["climate"], id="incubadora")
+        self.assertIsNotNone(termostato, "falta el climate incubadora")
+        self.assertEqual(termostato["sensor"], "t_aire")
+        pasos = self.cfg["esphome"]["on_boot"]["then"]
+        control = [p["climate.control"] for p in pasos if "climate.control" in p]
+        self.assertTrue(any(c["id"] == "incubadora" and c["mode"] == "OFF"
+                            for c in control), "on_boot no apaga el termostato")
+
+    def test_sin_setpoint_operativo_hardcodeado(self):
+        texto = str(self.cfg["climate"])
+        self.assertNotIn("default_target_temperature", texto)
+        self.assertNotIn("preset", texto)
+
+    def test_umbrales_nucleo(self):
+        self.assertIn("28", self._binario("alarma_sobretemp_nucleo")["lambda"])
+        self.assertIn("5.0", self._binario("alarma_dt_nucleo_aire")["lambda"])
+
+    def test_sensor_invalido_cubre_aire_y_nucleo(self):
+        codigo = self._binario("alarma_sensor_invalido")["lambda"]
+        self.assertIn("isnan(id(t_aire).state)", codigo)
+        self.assertIn("isnan(id(t_nucleo).state)", codigo)
+
+    def test_interbloqueo_apaga_calefactor(self):
+        seguridad = [i for i in self.cfg["interval"] if i["interval"] == "5s"]
+        self.assertEqual(len(seguridad), 1)
+        paso = seguridad[0]["then"][0]["if"]
+        condicion = str(paso["condition"])
+        for alarma in self.ALARMAS:
+            self.assertIn(alarma, condicion)
+        acciones = str(paso["then"])
+        self.assertIn("rele_calefactor", acciones)
+        self.assertIn("switch.turn_off", acciones)
+
+    def test_heat_action_condicionada_a_alarmas(self):
+        accion = buscar(self.cfg["climate"], id="incubadora")["heat_action"]
+        texto = str(accion)
+        for alarma in self.ALARMAS:
+            self.assertIn(alarma, texto)
+
+    def test_ventilador_con_gracia_de_arranque(self):
+        codigo = self._binario("alarma_ventilador")["lambda"]
+        self.assertIn("${fan_arranque_gracia_s}", codigo)
+        self.assertIn("${fan_min_rpm}", codigo)
+        self.assertEqual(self.cfg["substitutions"]["fan_min_rpm"], "500")
+        self.assertEqual(self.cfg["substitutions"]["fan_arranque_gracia_s"], "20")
+        self.assertIsNotNone(sensor_por_id(self.cfg, "rpm_ventilador"))
+
 
 if __name__ == "__main__":
     unittest.main()
