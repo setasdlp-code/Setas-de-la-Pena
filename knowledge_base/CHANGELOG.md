@@ -24,6 +24,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-10-17
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Añadidos `06_operations/lote1_shiitake_especificacion_ambiental.md` (`DOC-0122`, plantilla versionada del lote 1, sin valores aprobados) y `06_operations/piloto_shiitake_incubacion_protocolo.md` (`DOC-0123`, compuertas físicas, fases 0–4, ensayos de fallo y hoja de registro) para el piloto de 30 bloques de 2,0 kg de shiitake con control de temperatura en la incubadora nueva. Firmware y analizador en `esphome/`; la spec está en `docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md`. |
+
 ### 2026-10-13
 
 | Tipo | Descripción |
