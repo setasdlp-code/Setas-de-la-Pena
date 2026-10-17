@@ -30,6 +30,7 @@ Ninguna fase empieza sin cumplir todas. Son trabajo en sitio, no código.
 - [ ] Cuatro DS18B20 comparadas juntas 48–72 h con offsets registrados; escáner 1-Wire y reemplazo de los marcadores `addr_*` del YAML por las direcciones reales.
 - [ ] Pull-up de 4,7 kΩ en el bus 1-Wire.
 - [ ] Polaridad del módulo de relé confirmada con carga de baja tensión antes de conectar la línea de red; ajustar `relay_active_low`.
+- [ ] Indicador local de alarma (LED o zumbador externo) conectado a GPIO27 y probado.
 - [ ] Ventilador con tacómetro verificado: rpm reales medidas y `fan_min_rpm` (500, provisional) ajustada.
 - [ ] Firmware compilado en el banco con `esphome compile` antes de flashear (la compilación no se probó fuera del banco; solo la validación `esphome config`).
 - [ ] Cobertura Wi‑Fi en la terraza verificada para el ESP32 y Home Assistant.
@@ -54,20 +55,21 @@ La fase 4 no empieza sin cumplir los gates del KB: cepa y spawn trazables, formu
 | Sensor del aire desconectado | Desconectar el SHT45 con el calefactor encendido | El calefactor se apaga y suena la alarma de sensor inválido en ≤ 130 s |
 | Sonda de núcleo desconectada | Desconectar la DS18B20 de núcleo | Igual que el anterior |
 | Ventilador detenido | Detener el ventilador del plenum | Alarma de ventilador y calefactor apagado en ≤ 15 s tras pasar la gracia de arranque |
-| Sobretemperatura de núcleo | Calentar la sonda de núcleo por encima de 28 °C | Alarma y calefactor apagado en ≤ 5 s |
-| Corte y retorno de energía | Cortar la alimentación con el calefactor encendido y reenergizar | El relé queda en OFF, el termostato en OFF, sin calentar hasta que el operador lo reactive |
+| Sobretemperatura de núcleo | Mantener la sonda de núcleo por encima de 28 °C | Alarma y calefactor apagado en cuanto el valor filtrado (EMA α = 0,1, lectura cada 30 s) cruza 28 °C; un salto sostenido de unos 4 °C tarda unos 3–4 min en cruzarlo |
+| Aire sobre el límite | Calentar el SHT45 por encima de `aire_max_c` (28 °C, provisional) | Alarma, indicador local y calefactor apagado en ≤ 10 s |
+| Corte y retorno de energía | Cortar la alimentación con el calefactor encendido y reenergizar | El relé y el termostato arrancan en OFF. Tras 90 s de estabilización, sin alarmas y con "Calefacción habilitada" encendida, el control se reanuda solo (spec §7). Con alguna alarma activa tras la estabilización, queda apagado y la habilitación se apaga |
 | Relé pegado (simulado) | Con el ESP32 apagado, comprobar que el bimetálico a 35 °C corta la línea | El calefactor queda desenergizado por la protección física |
 
 Los tiempos esperados salen de la configuración del firmware (tiempo de espera del sensor de 120 s, revisión de seguridad cada 5 s, lectura del tacómetro cada 10 s) y se confirman en el banco.
 
-Tras una alarma el sistema no se reactiva solo: el operador revisa la causa y enciende el termostato.
+Tras una alarma el sistema no se reactiva solo: el operador revisa la causa y vuelve a encender "Calefacción habilitada". Esa habilitación, y no el modo del termostato, es el control del operador; el firmware gobierna el modo del termostato a partir de ella. El objetivo de temperatura se fija con la especificación del lote.
 
 # Registro y evaluación
 
-1. Exportar desde Home Assistant un CSV con las columnas `timestamp, t_aire, t_base, t_centro, t_tope, t_nucleo, heater_on` (intervalo máximo de 60 s; decimales con coma o punto).
+1. Exportar un CSV con las columnas `timestamp, t_aire, t_base, t_centro, t_tope, t_nucleo, heater_on`, remuestreado a intervalos de 60 s como máximo. El historial de Home Assistant guarda por cambio de estado y no sirve tal cual. Usar `;` como separador si los decimales llevan coma: con separador `,` esas filas se invalidan.
 2. Evaluar: `python3 esphome/analyze_incubation_log.py registro.csv`. Imprime un JSON con `intervalos_totales`, `cobertura` y `criterios`.
 3. Criterios de éxito (provisionales): ΔT entre base, centro y tope ≤ 2 °C en ≥ 95 % de los intervalos (`dt_mapa`); núcleo ≤ 28 °C (`nucleo_max`); diferencia núcleo–aire ≤ 5 °C (`dt_nucleo_aire`).
-4. Con menos de 90 % de intervalos válidos el veredicto es `insuficiente`, no `pasa`: repetir el ensayo o revisar los sensores.
+4. El veredicto es `insuficiente`, no `pasa`, con menos de 30 intervalos válidos o con una cobertura menor de 90 %. La cobertura es el menor de dos valores: filas válidas sobre filas presentes, e intervalos de 60 s con dato sobre los esperados entre la primera y la última fila. El JSON incluye `hueco_max_s`. Repetir el ensayo o revisar los sensores.
 
 Además se registra el consumo eléctrico y la ausencia de agua libre sobre bolsas, aislamiento, cableado y calefactor.
 

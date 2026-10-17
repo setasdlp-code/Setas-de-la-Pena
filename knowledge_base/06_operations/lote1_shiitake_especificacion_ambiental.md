@@ -19,7 +19,7 @@ related_documents:
 
 **PENDIENTE.** No hay valores aprobados. Este documento es la plantilla que debe completarse antes de inocular el lote 1. Ningún campo se llena con valores de literatura: la banda depende de la cepa y su clase térmica (`../01_species/lentinula_edodes.md`).
 
-El firmware (`esphome/incubadora_piloto.yaml`) arranca con el termostato apagado y sin objetivo de temperatura. Esta especificación define qué se carga en el equipo.
+El firmware (`esphome/incubadora_piloto.yaml`) no trae objetivo de temperatura: el termostato arranca apagado y, tras 90 s de estabilización con las alarmas limpias, se reanuda solo si el operador lo dejó habilitado ("Calefacción habilitada"). Esta especificación define qué se carga en el equipo.
 
 # Especificación (versión 0, sin aprobar)
 
@@ -48,6 +48,7 @@ El firmware (`esphome/incubadora_piloto.yaml`) arranca con el termostato apagado
 | Banda de temperatura | Objetivo del termostato `incubadora`, fijado por el operador desde Home Assistant o la API tras cargar la versión aprobada. El firmware no trae objetivo. |
 | Histéresis | Sustitución `histeresis_c` de `esphome/incubadora_piloto.yaml` (arranca en 0,5 °C, valor técnico y no biológico) |
 | Alerta de núcleo | Fija en el firmware: 28 °C y 5 °C sobre el aire (valores del KB para el piloto) |
+| Límite de aire | Sustitución `aire_max_c` (28,0 °C, provisional; se ajusta con la banda aprobada) |
 
 # Control de cambios
 

@@ -158,7 +158,8 @@ class IncubadoraYamlTest(unittest.TestCase):
 
     # --- Tarea 3: termostato, interbloqueo y alarmas ---
     ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire",
-               "alarma_sensor_invalido", "alarma_ventilador")
+               "alarma_sensor_invalido", "alarma_ventilador",
+               "alarma_sobretemp_aire")
 
     def _binario(self, id_):
         return buscar(self.cfg["binary_sensor"], id=id_)
@@ -203,13 +204,51 @@ class IncubadoraYamlTest(unittest.TestCase):
         for alarma in self.ALARMAS:
             self.assertIn(alarma, texto)
 
-    def test_ventilador_con_gracia_de_arranque(self):
+    def test_ventilador_con_estabilizacion_de_arranque(self):
         codigo = self._binario("alarma_ventilador")["lambda"]
-        self.assertIn("${fan_arranque_gracia_s}", codigo)
+        self.assertIn("id(arranque_ok)", codigo)
+        self.assertNotIn("millis", codigo)  # millis() se desborda cada ~49,7 días
         self.assertIn("${fan_min_rpm}", codigo)
         self.assertEqual(self.cfg["substitutions"]["fan_min_rpm"], "500")
-        self.assertEqual(self.cfg["substitutions"]["fan_arranque_gracia_s"], "20")
+        self.assertEqual(self.cfg["substitutions"]["arranque_estabilizacion_s"], "90")
         self.assertIsNotNone(sensor_por_id(self.cfg, "rpm_ventilador"))
+
+    # --- Corrección tras la revisión final ---
+    def test_sin_reinicio_por_perdida_de_red(self):
+        # C1: ESPHome reinicia el ESP32 tras 15 min sin Home Assistant por defecto.
+        self.assertEqual(self.cfg["api"]["reboot_timeout"], "0s")
+        self.assertEqual(self.cfg["wifi"]["reboot_timeout"], "0s")
+
+    def test_reanudacion_tras_corte_sin_intervencion(self):
+        # I2: spec §7 — tras un corte el sistema retoma el control solo.
+        glob = buscar(self.cfg["globals"], id="arranque_ok")
+        self.assertIsNotNone(glob)
+        self.assertEqual(glob["initial_value"], "false")
+        self.assertNotEqual(glob.get("restore_value"), True)
+        habilitar = buscar(self.cfg["switch"], id="habilitar_calefaccion")
+        self.assertEqual(habilitar["restore_mode"], "RESTORE_DEFAULT_OFF")
+        boot = str(self.cfg["esphome"]["on_boot"]["then"])
+        self.assertIn("${arranque_estabilizacion_s}", boot)
+        self.assertIn("arranque_ok", boot)
+        seguridad = [i for i in self.cfg["interval"] if i["interval"] == "5s"][0]
+        texto = str(seguridad)
+        for clave in ("arranque_ok", "habilitar_calefaccion", "CLIMATE_MODE_HEAT"):
+            self.assertIn(clave, texto)
+
+    def test_alarma_sobretemp_aire(self):
+        # I3: spec §5.3 y §7 — el aire sobre el límite apaga el calefactor.
+        codigo = self._binario("alarma_sobretemp_aire")["lambda"]
+        self.assertIn("id(t_aire).state", codigo)
+        self.assertIn("${aire_max_c}", codigo)
+        self.assertEqual(self.cfg["substitutions"]["aire_max_c"], "28.0")
+
+    def test_indicador_local_de_alarma(self):
+        # I4: spec §5.3 — indicador local en la incubadora.
+        led = buscar(self.cfg["switch"], id="indicador_alarma")
+        self.assertIsNotNone(led)
+        self.assertEqual(led["restore_mode"], "ALWAYS_OFF")
+        seguridad = [i for i in self.cfg["interval"] if i["interval"] == "5s"][0]
+        self.assertIn("indicador_alarma", str(seguridad))
 
 
 if __name__ == "__main__":

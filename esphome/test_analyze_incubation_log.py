@@ -92,6 +92,81 @@ class AnalizadorTest(unittest.TestCase):
             self.assertIn(clave, salida)
         self.assertEqual(salida["intervalos_totales"], 20)
 
+    # --- Corrección tras la revisión final ---
+    def _csv(self, texto):
+        carpeta = tempfile.TemporaryDirectory()
+        self.addCleanup(carpeta.cleanup)
+        ruta = os.path.join(carpeta.name, "registro.csv")
+        with open(ruta, "w", encoding="utf-8") as f:
+            f.write(texto)
+        return subprocess.run([sys.executable, SCRIPT, ruta],
+                              capture_output=True, text=True)
+
+    def test_huecos_en_un_ensayo_de_72h_son_insuficientes(self):
+        # C2: dos filas válidas separadas por 72 h no demuestran un ensayo de 72 h.
+        a = fila(0)
+        a["timestamp"] = "2026-11-01T00:00:00"
+        b = fila(1)
+        b["timestamp"] = "2026-11-03T23:59:00"
+        r = evaluate([a, b])
+        self.assertLess(r["cobertura"], 0.01)
+        self.assertEqual(set(veredictos(r).values()), {"insuficiente"})
+
+    def test_una_sola_fila_es_insuficiente(self):
+        self.assertEqual(set(veredictos(evaluate([fila(0)])).values()),
+                         {"insuficiente"})
+
+    def test_minimo_de_30_intervalos_validos(self):
+        def serie(n):
+            filas = []
+            for i in range(n):
+                f = fila(i)
+                f["timestamp"] = f"2026-11-01T{i // 60:02d}:{i % 60:02d}:00"
+                filas.append(f)
+            return filas
+        self.assertEqual(set(veredictos(evaluate(serie(29))).values()),
+                         {"insuficiente"})
+        self.assertEqual(set(veredictos(evaluate(serie(30))).values()), {"pasa"})
+
+    def test_timestamp_invalido_invalida_la_fila(self):
+        buenas = [fila(i) for i in range(40)]
+        malas = [dict(fila(i), timestamp="no-es-fecha") for i in range(40)]
+        r = evaluate(buenas + malas)
+        self.assertEqual(r["cobertura"], 0.5)
+        self.assertEqual(set(veredictos(r).values()), {"insuficiente"})
+
+    def test_hueco_maximo_reportado(self):
+        filas = []
+        for i, minuto in enumerate([0, 1, 2, 10, 11]):
+            f = fila(i)
+            f["timestamp"] = f"2026-11-01T00:{minuto:02d}:00"
+            filas.append(f)
+        self.assertEqual(evaluate(filas)["hueco_max_s"], 480.0)
+
+    def test_fila_con_campos_de_mas_no_pasa(self):
+        # I1: decimales con coma sin comillas en un CSV separado por comas
+        # desplazan las columnas; la fila debe invalidarse, no leerse mal.
+        cabecera = ",".join(COLUMNAS)
+        filas = [f"2026-11-01T00:{i // 60:02d}:{i % 60:02d},23,5,22,0,22,5,23,0,29,6,1"
+                 for i in range(40)]
+        r = self._csv(cabecera + "\n" + "\n".join(filas) + "\n")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        salida = json.loads(r.stdout)
+        self.assertEqual(salida["intervalos_validos"], 0)
+        self.assertEqual(
+            {v["veredicto"] for v in salida["criterios"].values()}, {"insuficiente"})
+
+    def test_evaluate_rechaza_filas_con_campos_extra(self):
+        f = fila(0)
+        f[None] = ["29", "6"]
+        r = evaluate([f] * 40)
+        self.assertEqual(r["intervalos_validos"], 0)
+
+    def test_cabecera_incompleta_falla(self):
+        r = self._csv("timestamp,t_aire,t_base\n2026-11-01T00:00:00,23,22\n")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("t_nucleo", r.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
