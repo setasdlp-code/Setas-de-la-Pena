@@ -20,8 +20,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Una cuenta sin documento en usuarios/ no tiene rol: null, no un error de
+    // evaluación (que además abortaría cualquier regla que la consulte).
     function role() {
-      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol;
+      return exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol
+        : null;
     }
 
     function isAdmin() {
@@ -36,11 +40,15 @@ service cloud.firestore {
     function getPct(ingredientes, i) {
       return i < ingredientes.size() && ingredientes[i].pct is number ? ingredientes[i].pct : 0.0;
     }
+    // Las reglas no tienen bucles: se suman los índices 0 a 11. Más de 12
+    // ingredientes se rechazan de forma explícita; si no, los sobrantes quedarían
+    // fuera de la suma y una mezcla desbalanceada pasaría.
     function masaBalanceada(ingredientes) {
       let tot = getPct(ingredientes, 0) + getPct(ingredientes, 1) + getPct(ingredientes, 2)
               + getPct(ingredientes, 3) + getPct(ingredientes, 4) + getPct(ingredientes, 5)
-              + getPct(ingredientes, 6) + getPct(ingredientes, 7);
-      return tot >= 99.5 && tot <= 100.5;
+              + getPct(ingredientes, 6) + getPct(ingredientes, 7) + getPct(ingredientes, 8)
+              + getPct(ingredientes, 9) + getPct(ingredientes, 10) + getPct(ingredientes, 11);
+      return ingredientes.size() <= 12 && tot >= 99.5 && tot <= 100.5;
     }
 
     match /usuarios/{uid} {
@@ -198,19 +206,52 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    // Revisiones de requisitos antes de producir (production-readiness.js).
+    // Cada revisión es un registro inmutable firmado por su responsable: una
+    // revisión nueva reemplaza a la anterior por fecha, nunca la edita. Por eso
+    // solo se crean; corregir o borrar una dejaría sin rastro qué se declaró.
+    match /production_readiness/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.schema == 'setas.production-readiness.v1'
+        && request.resource.data.id == id
+        && request.resource.data.requirementId in ['spawn', 'equipment', 'room', 'sensors', 'review']
+        && request.resource.data.status in ['verified', 'blocked', 'unknown']
+        && request.resource.data.reviewer is string
+        && request.resource.data.reviewer.size() > 0;
+      allow update, delete: if false;
+    }
+
+    // El flujo del lote (lifecycleState, revision) lo escribe solo la función de
+    // aceptación (functions/accept-field-event.js), igual que en
+    // lotes_produccion. Una vez que el lote tiene etapa aceptada, `estado` es su
+    // espejo en español y tampoco lo cambia el cliente: si pudiera, el teléfono
+    // diría "fructificación" mientras el servidor sigue en incubación. Un lote
+    // sin etapa aceptada (planificado, o creado sin sesión) conserva `estado`
+    // editable, que es de donde el servidor toma la primera etapa.
     match /bitacora_lotes/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow create: if signedIn()
+        && !('lifecycleState' in request.resource.data)
+        && !('revision' in request.resource.data);
+      allow update: if signedIn()
+        && transicionIntacta()
+        && (!('lifecycleState' in resource.data)
+            || request.resource.data.get('estado', null) == resource.data.get('estado', null));
+      // Un lote borrado en la app es una lápida (ADR-0009), nunca un delete.
+      allow delete: if false;
     }
     match /bitacora_bolsas/{id} {
       allow read: if signedIn();
       // foto (data URL base64) debe eliminarse antes de guardar (ver bitacora-sync.js)
       // para no inflar la base de datos de Firestore.
-      allow write: if signedIn() && !('foto' in request.resource.data);
+      allow create, update: if signedIn() && !('foto' in request.resource.data);
+      allow delete: if false;
     }
     match /bitacora_cosechas/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
     }
 
     // Eventos de cultivo reportados por QR desde dentro de la app (ver

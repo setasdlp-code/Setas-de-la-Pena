@@ -78,15 +78,17 @@ test('cada mutador de Bitácora encola su operación en vez de dispararla y olvi
   });
 });
 
-test('los 7 tipos encolados existen como funciones reales de bitacora-sync.js', () => {
+test('los tipos encolados existen como funciones reales de bitacora-sync.js o remote-sync.js', () => {
   // El mismo acoplamiento que ya rompimos una vez entre módulos escritos en
   // paralelo: si alguien renombra una función de respaldo, esto debe fallar.
+  // Desde ADR-0009 el drenador une SetasBitacoraDB y SetasRemoteSyncDB, así que
+  // un tipo vale si existe en cualquiera de los dos módulos.
   const jsx = read('simulador-app.jsx');
-  const src = read('firebase/bitacora-sync.js');
+  const src = read('firebase/bitacora-sync.js') + read('firebase/remote-sync.js');
   const tipos = [...jsx.matchAll(/encolarSync\(\{\s*type:\s*'([a-zA-Z]+)'/g)].map(m => m[1]);
   assert.ok(tipos.length >= 7, `se esperaban al menos 7 encolados, hubo ${tipos.length}`);
   [...new Set(tipos)].forEach(tipo => {
-    assert.match(src, new RegExp(`export async function ${tipo}\\(`), `${tipo} no existe en bitacora-sync.js`);
+    assert.match(src, new RegExp(`export async function ${tipo}\\(`), `${tipo} no existe en bitacora-sync.js ni en remote-sync.js`);
   });
 });
 

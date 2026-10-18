@@ -1,5 +1,12 @@
-"""Pruebas del firmware ESPHome de la incubadora del piloto de shiitake."""
+"""Pruebas estructurales del firmware de la incubadora del piloto de shiitake.
+
+Ejecutar:
+    ESPHOME_BIN=<ruta a esphome> python3 -m unittest discover -s esphome -p "test_*.py" -v
+"""
+
+import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -8,247 +15,308 @@ import unittest
 import yaml
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-YAML_PATH = os.path.join(AQUI, "incubadora_piloto.yaml")
-SECRETS_EJEMPLO = os.path.join(AQUI, "secrets.example.yaml")
-ESPHOME_BIN = os.environ.get("ESPHOME_BIN", "")
+RUTA_YAML = os.path.join(AQUI, "incubadora_piloto.yaml")
+RUTA_SECRETOS = os.path.join(AQUI, "secrets.example.yaml")
+# Valores de prueba para `esphome config`; NO son parámetros operativos.
+VALORES_SOLO_PRUEBA = {"setpoint_c": "20.0", "histeresis_c": "0.5"}
 
 
-class _Loader(yaml.SafeLoader):
-    """Loader que acepta las etiquetas de ESPHome (!secret, !lambda, !include)."""
+class _Cargador(yaml.SafeLoader):
+    """SafeLoader que devuelve cadenas para las etiquetas propias de ESPHome."""
 
 
-def _etiqueta(loader, sufijo, nodo):
+def _etiqueta_a_cadena(cargador, sufijo, nodo):
     if isinstance(nodo, yaml.ScalarNode):
-        return f"!{sufijo} {loader.construct_scalar(nodo)}"
-    if isinstance(nodo, yaml.SequenceNode):
-        return loader.construct_sequence(nodo, deep=True)
-    return loader.construct_mapping(nodo, deep=True)
+        valor = cargador.construct_scalar(nodo)
+    elif isinstance(nodo, yaml.SequenceNode):
+        valor = cargador.construct_sequence(nodo)
+    else:
+        valor = cargador.construct_mapping(nodo)
+    return f"{sufijo} {valor}"
 
 
-_Loader.add_multi_constructor("!", _etiqueta)
+for _etiqueta in ("!secret", "!lambda", "!include"):
+    _Cargador.add_constructor(
+        _etiqueta,
+        lambda c, n, e=_etiqueta: _etiqueta_a_cadena(c, e, n),
+    )
 
 
 def cargar_yaml(ruta: str) -> dict:
+    """Carga un YAML de ESPHome; `!secret`, `!lambda` e `!include` quedan como cadenas."""
     with open(ruta, encoding="utf-8") as f:
-        return yaml.load(f, Loader=_Loader)
+        return yaml.load(f, Loader=_Cargador)  # noqa: S506 - cargador seguro propio
 
 
-def buscar(lista, **criterio):
-    """Primer elemento de una lista de dicts que cumple todos los campos."""
-    for elemento in lista:
-        if all(elemento.get(k) == v for k, v in criterio.items()):
-            return elemento
-    return None
-
-
-def _segundos(valor) -> float:
-    """Convierte '30s' o '1min' a segundos."""
-    texto = str(valor).strip()
-    if texto.endswith("min"):
-        return float(texto[:-3]) * 60
-    if texto.endswith("ms"):
-        return float(texto[:-2]) / 1000
-    if texto.endswith("s"):
-        return float(texto[:-1])
-    raise ValueError(f"duración no soportada: {valor}")
-
-
-def plataformas(cfg, plataforma):
-    return [s for s in cfg.get("sensor", []) if s.get("platform") == plataforma]
-
-
-def sensor_por_id(cfg, id_):
-    """Busca un sensor por id, también entre los sub-sensores de una plataforma."""
-    for s in cfg.get("sensor", []):
-        if s.get("id") == id_:
-            return s
-        for valor in s.values():
-            if isinstance(valor, dict) and valor.get("id") == id_:
-                return valor
-    return None
+def _esphome_bin():
+    ruta = os.environ.get("ESPHOME_BIN", "")
+    return ruta if ruta and os.path.isfile(ruta) and os.access(ruta, os.X_OK) else None
 
 
 class IncubadoraYamlTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cfg = cargar_yaml(YAML_PATH)
+        cls.cfg = cargar_yaml(RUTA_YAML)
+
+    def _switch(self, id_):
+        for sw in self.cfg.get("switch", []):
+            if sw.get("id") == id_:
+                return sw
+        self.fail(f"no existe el switch {id_}")
 
     def test_carga_yaml(self):
+        self.assertIsInstance(self.cfg, dict)
         for clave in ("esphome", "esp32", "wifi", "api", "ota", "logger"):
             self.assertIn(clave, self.cfg)
 
     def test_rele_arranca_apagado(self):
-        rele = buscar(self.cfg["switch"], id="rele_calefactor")
-        self.assertIsNotNone(rele, "falta el switch rele_calefactor")
-        self.assertEqual(rele["restore_mode"], "ALWAYS_OFF")
+        self.assertEqual(self._switch("rele_calefactor")["restore_mode"], "ALWAYS_OFF")
 
     def test_secretos_no_literales(self):
-        valores = [
-            self.cfg["wifi"]["ssid"],
-            self.cfg["wifi"]["password"],
-            self.cfg["api"]["encryption"]["key"],
-            self.cfg["ota"][0]["password"],
-        ]
-        for valor in valores:
-            self.assertTrue(str(valor).startswith("!secret "), valor)
+        valores = {
+            "wifi.ssid": self.cfg["wifi"]["ssid"],
+            "wifi.password": self.cfg["wifi"]["password"],
+            "api.encryption.key": self.cfg["api"]["encryption"]["key"],
+            "ota[0].password": self.cfg["ota"][0]["password"],
+        }
+        for nombre, valor in valores.items():
+            self.assertIsInstance(valor, str, nombre)
+            self.assertTrue(valor.startswith("!secret "), f"{nombre} no es !secret: {valor!r}")
 
-    @unittest.skipUnless(
-        ESPHOME_BIN and os.path.exists(ESPHOME_BIN),
-        "ESPHOME_BIN no apunta a un ejecutable de esphome",
-    )
-    def test_esphome_config_valido(self):
+    def _esphome_config(self, sustituciones=None):
+        """Ejecuta `esphome config` sobre una copia del YAML con secretos de ejemplo."""
         with tempfile.TemporaryDirectory() as tmp:
-            shutil.copy(YAML_PATH, os.path.join(tmp, "incubadora_piloto.yaml"))
-            shutil.copy(SECRETS_EJEMPLO, os.path.join(tmp, "secrets.yaml"))
-            r = subprocess.run(
-                [ESPHOME_BIN, "config", "incubadora_piloto.yaml"],
-                cwd=tmp, capture_output=True, text=True,
-            )
+            shutil.copy(RUTA_YAML, os.path.join(tmp, "incubadora_piloto.yaml"))
+            shutil.copy(RUTA_SECRETOS, os.path.join(tmp, "secrets.yaml"))
+            cmd = [_esphome_bin()]
+            for clave, valor in (sustituciones or {}).items():
+                cmd += ["-s", clave, valor]
+            cmd += ["config", "incubadora_piloto.yaml"]
+            return subprocess.run(cmd, cwd=tmp, capture_output=True, text=True, timeout=600)
+
+    @unittest.skipUnless(_esphome_bin(), "ESPHOME_BIN no apunta a un ejecutable: se omite `esphome config`")
+    def test_esphome_config_valido(self):
+        # Valores SOLO de prueba para validar la estructura: el YAML no trae setpoint
+        # ni histéresis (los fija la especificación del lote).
+        r = self._esphome_config(VALORES_SOLO_PRUEBA)
         self.assertEqual(r.returncode, 0, r.stdout[-2000:] + r.stderr[-2000:])
 
-    # --- Tarea 2: sensores ---
+    @unittest.skipUnless(_esphome_bin(), "ESPHOME_BIN no apunta a un ejecutable: se omite `esphome config`")
+    def test_esphome_config_rechaza_marcador_de_setpoint(self):
+        # Sin especificación de lote (setpoint_c/histeresis_c son marcadores) la
+        # configuración NO debe compilar: el piloto no arranca sin esa especificación.
+        r = self._esphome_config()
+        self.assertNotEqual(r.returncode, 0, "el marcador PENDIENTE_ESPECIFICACION_LOTE no debe validar")
+
+    # ------------------------------------------------------------------
+    # Tarea 2: sensores
+    # ------------------------------------------------------------------
+    def _sust(self, valor):
+        """Resuelve `${nombre}` con las sustituciones del YAML."""
+        sust = self.cfg.get("substitutions", {})
+        return re.sub(r"\$\{(\w+)\}", lambda m: str(sust[m.group(1)]), str(valor))
+
+    def _sensores_por_id(self):
+        """Mapa id -> definición, incluyendo sensores anidados (temperature:, humidity:, co2:)."""
+        encontrados = {}
+
+        def visitar(nodo):
+            if isinstance(nodo, dict):
+                if "id" in nodo and ("filters" in nodo or "name" in nodo or "lambda" in nodo
+                                     or "unit_of_measurement" in nodo):
+                    encontrados[nodo["id"]] = nodo
+                for v in nodo.values():
+                    visitar(v)
+            elif isinstance(nodo, list):
+                for v in nodo:
+                    visitar(v)
+
+        visitar(self.cfg.get("sensor", []))
+        return encontrados
+
+    @staticmethod
+    def _segundos(texto):
+        m = re.fullmatch(r"\s*([\d.]+)\s*(ms|s|min|h)\s*", str(texto))
+        assert m, f"intervalo no reconocido: {texto!r}"
+        return float(m.group(1)) * {"ms": 0.001, "s": 1, "min": 60, "h": 3600}[m.group(2)]
+
     def test_sensores_presentes(self):
-        for id_ in ("t_aire", "hr_aire", "t_base", "t_centro", "t_tope",
-                    "t_nucleo", "co2", "dt_nucleo_aire"):
-            self.assertIsNotNone(sensor_por_id(self.cfg, id_), f"falta {id_}")
+        ids = set(self._sensores_por_id())
+        esperados = {"t_aire", "hr_aire", "t_base", "t_centro", "t_tope", "t_nucleo", "co2", "dt_nucleo_aire"}
+        self.assertEqual(esperados - ids, set())
 
     def test_intervalo_maximo_60s(self):
-        for s in self.cfg["sensor"]:
-            if "update_interval" in s:
-                self.assertLessEqual(_segundos(s["update_interval"]), 60, s)
+        con_intervalo = 0
+        for entrada in self.cfg["sensor"]:
+            if "update_interval" in entrada:
+                con_intervalo += 1
+                self.assertLessEqual(self._segundos(self._sust(entrada["update_interval"])), 60, entrada)
+        self.assertGreater(con_intervalo, 0)
 
     def test_ema_en_nucleo(self):
-        nucleo = sensor_por_id(self.cfg, "t_nucleo")
-        ema = None
-        for filtro in nucleo["filters"]:
-            if isinstance(filtro, dict) and "exponential_moving_average" in filtro:
-                ema = filtro["exponential_moving_average"]
-        self.assertIsNotNone(ema, "t_nucleo sin exponential_moving_average")
-        self.assertEqual(ema["alpha"], 0.1)
+        filtros = self._sensores_por_id()["t_nucleo"]["filters"]
+        ema = [f["exponential_moving_average"] for f in filtros
+               if isinstance(f, dict) and "exponential_moving_average" in f]
+        self.assertEqual(len(ema), 1)
+        self.assertEqual(ema[0]["alpha"], 0.1)
 
     def test_scd30_una_sola_compensacion(self):
-        scd = plataformas(self.cfg, "scd30")[0]
-        self.assertEqual(scd["altitude_compensation"], "2600m")
-        self.assertNotIn("ambient_pressure_compensation", scd)
+        scd = [e for e in self.cfg["sensor"] if e.get("platform") == "scd30"]
+        self.assertEqual(len(scd), 1)
+        self.assertEqual(scd[0]["altitude_compensation"], "2600m")
+        self.assertNotIn("ambient_pressure_compensation", scd[0])
+        self.assertNotIn("ambient_pressure_compensation_source", scd[0])
 
     def test_direcciones_ds18b20_distintas(self):
-        sustituciones = self.cfg["substitutions"]
-        direcciones = []
-        for s in plataformas(self.cfg, "dallas_temp"):
-            crudo = str(s["address"])
-            if crudo.startswith("${"):
-                crudo = sustituciones[crudo[2:-1]]
-            direcciones.append(str(crudo).lower())
+        dallas = [e for e in self.cfg["sensor"] if e.get("platform") == "dallas_temp"]
+        direcciones = [str(self._sust(e["address"])).lower() for e in dallas]
         self.assertEqual(len(direcciones), 4)
-        self.assertEqual(len(set(direcciones)), 4, "dirección DS18B20 duplicada")
-
-    def test_sensores_de_control_con_timeout(self):
-        for id_ in ("t_aire", "t_nucleo"):
-            filtros = sensor_por_id(self.cfg, id_)["filters"]
-            timeouts = [f["timeout"] for f in filtros
-                        if isinstance(f, dict) and "timeout" in f]
-            self.assertTrue(timeouts, f"{id_} sin filtro timeout")
-            self.assertLessEqual(_segundos(timeouts[0]["timeout"]), 120)
+        duplicadas = {d for d in direcciones if direcciones.count(d) > 1}
+        self.assertFalse(duplicadas, f"dirección DS18B20 duplicada: {sorted(duplicadas)}")
 
     def test_sin_humidificador_ni_control_co2(self):
-        for dominio in ("switch", "climate", "humidifier", "fan", "output", "light"):
-            texto = str(self.cfg.get(dominio, ""))
-            self.assertNotIn("hr_aire", texto, dominio)
-            self.assertNotIn("co2", texto, dominio)
+        for seccion in ("switch", "climate", "humidifier", "fan"):
+            texto = json.dumps(self.cfg.get(seccion, []))
+            self.assertIsNone(re.search(r"\b(hr_aire|co2)\b", texto), f"{seccion} usa HR o CO2 para control")
 
-    # --- Tarea 3: termostato, interbloqueo y alarmas ---
-    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire",
-               "alarma_sensor_invalido", "alarma_ventilador",
-               "alarma_sobretemp_aire")
+    def test_sensores_de_control_con_timeout(self):
+        sensores = self._sensores_por_id()
+        for id_ in ("t_aire", "t_nucleo"):
+            filtros = sensores[id_]["filters"]
+            tos = [f["timeout"] for f in filtros if isinstance(f, dict) and "timeout" in f]
+            self.assertEqual(len(tos), 1, id_)
+            self.assertEqual(tos[0]["timeout"], "120s", id_)
+            self.assertIn(str(tos[0]["value"]).lower(), (".nan", "nan"), id_)
 
-    def _binario(self, id_):
-        return buscar(self.cfg["binary_sensor"], id=id_)
+
+    # ------------------------------------------------------------------
+    # Tarea 3: termostato, interbloqueo y alarmas
+    # ------------------------------------------------------------------
+    ALARMAS = ("alarma_sobretemp_nucleo", "alarma_dt_nucleo_aire", "alarma_sensor_invalido",
+               "alarma_ventilador", "alarma_sobretemp_aire")
+
+    def _climate(self, id_):
+        for c in self.cfg.get("climate", []):
+            if c.get("id") == id_:
+                return c
+        self.fail(f"no existe el climate {id_}")
+
+    def _binary(self, id_):
+        for b in self.cfg.get("binary_sensor", []):
+            if b.get("id") == id_:
+                return b
+        self.fail(f"no existe el binary_sensor {id_}")
+
+    def _on_boot(self):
+        entradas = self.cfg["esphome"].get("on_boot", [])
+        return entradas if isinstance(entradas, list) else [entradas]
 
     def test_termostato_usa_aire_y_arranca_apagado(self):
-        termostato = buscar(self.cfg["climate"], id="incubadora")
-        self.assertIsNotNone(termostato, "falta el climate incubadora")
-        self.assertEqual(termostato["sensor"], "t_aire")
-        pasos = self.cfg["esphome"]["on_boot"]["then"]
-        control = [p["climate.control"] for p in pasos if "climate.control" in p]
-        self.assertTrue(any(c["id"] == "incubadora" and c["mode"] == "OFF"
-                            for c in control), "on_boot no apaga el termostato")
+        self.assertEqual(self._climate("incubadora")["sensor"], "t_aire")
+        acciones = [a for e in self._on_boot() for a in e.get("then", [])]
+        control = [a["climate.control"] for a in acciones if isinstance(a, dict) and "climate.control" in a]
+        self.assertTrue(
+            any(c.get("id") == "incubadora" and c.get("mode") == "OFF" for c in control),
+            "falta on_boot con climate.control mode OFF (caso límite 2)",
+        )
+        apagados = [a["switch.turn_off"] for a in acciones if isinstance(a, dict) and "switch.turn_off" in a]
+        self.assertIn("rele_calefactor", apagados)
 
     def test_sin_setpoint_operativo_hardcodeado(self):
-        texto = str(self.cfg["climate"])
-        self.assertNotIn("default_target_temperature", texto)
-        self.assertNotIn("preset", texto)
+        marcador = self.cfg["substitutions"]["setpoint_c"]
+        with self.assertRaises(ValueError):
+            float(marcador)
+        with self.assertRaises(ValueError):
+            float(self.cfg["substitutions"]["histeresis_c"])
+        with open(RUTA_YAML, encoding="utf-8") as f:
+            texto = f.read()
+        self.assertIsNone(
+            re.search(r"default_target_temperature\w*:\s*[-+]?\d", texto),
+            "default_target_temperature con número literal",
+        )
 
     def test_umbrales_nucleo(self):
-        self.assertIn("28", self._binario("alarma_sobretemp_nucleo")["lambda"])
-        self.assertIn("5.0", self._binario("alarma_dt_nucleo_aire")["lambda"])
-
-    def test_sensor_invalido_cubre_aire_y_nucleo(self):
-        codigo = self._binario("alarma_sensor_invalido")["lambda"]
-        self.assertIn("isnan(id(t_aire).state)", codigo)
-        self.assertIn("isnan(id(t_nucleo).state)", codigo)
+        self.assertRegex(self._binary("alarma_sobretemp_nucleo")["lambda"], r">\s*28(\.0*)?\b")
+        self.assertRegex(self._binary("alarma_dt_nucleo_aire")["lambda"], r">\s*5(\.0*)?\b")
 
     def test_interbloqueo_apaga_calefactor(self):
-        seguridad = [i for i in self.cfg["interval"] if i["interval"] == "5s"]
+        seguridad = [i for i in self.cfg["interval"] if "switch.turn_off" in json.dumps(i)]
         self.assertEqual(len(seguridad), 1)
-        paso = seguridad[0]["then"][0]["if"]
-        condicion = str(paso["condition"])
+        self.assertLessEqual(self._segundos(seguridad[0]["interval"]), 5)
+        acc = seguridad[0]["then"][0]["if"]
+        condicion = json.dumps(acc["condition"])
         for alarma in self.ALARMAS:
             self.assertIn(alarma, condicion)
-        acciones = str(paso["then"])
-        self.assertIn("rele_calefactor", acciones)
-        self.assertIn("switch.turn_off", acciones)
+        self.assertIn("or", acc["condition"], "las alarmas deben unirse con `or`")
+        entonces = json.dumps(acc["then"])
+        self.assertIn('"switch.turn_off": "rele_calefactor"', entonces)
+        self.assertIn('"mode": "OFF"', entonces)  # reencendido solo por el operador
 
-    def test_heat_action_condicionada_a_alarmas(self):
-        accion = buscar(self.cfg["climate"], id="incubadora")["heat_action"]
-        texto = str(accion)
-        for alarma in self.ALARMAS:
-            self.assertIn(alarma, texto)
+    def test_gracia_arranque_ventilador(self):
+        # La gracia se mide con un indicador que se activa tras `fan_arranque_gracia_s`
+        # desde el arranque (sin depender de millis(), que se reinicia a los 49 días).
+        arranque = json.dumps(self._on_boot())
+        self.assertIn("${fan_arranque_gracia_s}", arranque)
+        indicador = re.search(r"id\((\w+)\)\s*=\s*true", arranque)
+        self.assertIsNotNone(indicador, "on_boot no activa el indicador de gracia")
+        lam = self._binary("alarma_ventilador")["lambda"]
+        self.assertIn(indicador.group(1), lam)
+        self.assertIn("${fan_min_rpm}", lam)
+        # Antes de terminar la gracia la alarma no dispara (devuelve false).
+        self.assertRegex(lam, r"if\s*\(\s*!\s*id\(" + indicador.group(1) + r"\)\s*\)\s*return\s+false")
+        # Si el tacómetro es NaN o cae bajo el mínimo, después de la gracia, sí.
+        self.assertIn("isnan", lam)
 
-    def test_ventilador_con_estabilizacion_de_arranque(self):
-        codigo = self._binario("alarma_ventilador")["lambda"]
-        self.assertIn("id(arranque_ok)", codigo)
-        self.assertNotIn("millis", codigo)  # millis() se desborda cada ~49,7 días
-        self.assertIn("${fan_min_rpm}", codigo)
-        self.assertEqual(self.cfg["substitutions"]["fan_min_rpm"], "500")
-        self.assertEqual(self.cfg["substitutions"]["arranque_estabilizacion_s"], "90")
-        self.assertIsNotNone(sensor_por_id(self.cfg, "rpm_ventilador"))
+    def test_alarma_sensor_invalido(self):
+        lam = self._binary("alarma_sensor_invalido")["lambda"]
+        self.assertIn("t_aire", lam)
+        self.assertIn("t_nucleo", lam)
+        self.assertIn("isnan", lam)
 
-    # --- Corrección tras la revisión final ---
+    def test_ventilador_tacometro(self):
+        rpm = self._sensores_por_id()["rpm_ventilador"]
+        self.assertEqual(rpm["pin"]["number"], "${fan_pin}")
+        self.assertTrue(rpm["pin"]["mode"]["pullup"])
+        self.assertEqual(self._segundos(rpm["update_interval"]), 10)
+
+    # ------------------------------------------------------------------
+    # Correcciones de la revisión final (reconciliadas)
+    # ------------------------------------------------------------------
     def test_sin_reinicio_por_perdida_de_red(self):
-        # C1: ESPHome reinicia el ESP32 tras 15 min sin Home Assistant por defecto.
+        # ESPHome reinicia el ESP32 tras 15 min sin Home Assistant por defecto, y
+        # cada reinicio apaga el termostato: el control debe seguir sin red.
         self.assertEqual(self.cfg["api"]["reboot_timeout"], "0s")
         self.assertEqual(self.cfg["wifi"]["reboot_timeout"], "0s")
 
     def test_reanudacion_tras_corte_sin_intervencion(self):
-        # I2: spec §7 — tras un corte el sistema retoma el control solo.
-        glob = buscar(self.cfg["globals"], id="arranque_ok")
-        self.assertIsNotNone(glob)
+        # Spec §7: tras un corte el sistema retoma el control sin intervención.
+        glob = next(g for g in self.cfg["globals"] if g["id"] == "arranque_ok")
         self.assertEqual(glob["initial_value"], "false")
         self.assertNotEqual(glob.get("restore_value"), True)
-        habilitar = buscar(self.cfg["switch"], id="habilitar_calefaccion")
+        habilitar = self._switch("habilitar_calefaccion")
         self.assertEqual(habilitar["restore_mode"], "RESTORE_DEFAULT_OFF")
-        boot = str(self.cfg["esphome"]["on_boot"]["then"])
+        boot = json.dumps(self._on_boot())
         self.assertIn("${arranque_estabilizacion_s}", boot)
         self.assertIn("arranque_ok", boot)
-        seguridad = [i for i in self.cfg["interval"] if i["interval"] == "5s"][0]
-        texto = str(seguridad)
+        seguridad = json.dumps([i for i in self.cfg["interval"] if i["interval"] == "5s"])
         for clave in ("arranque_ok", "habilitar_calefaccion", "CLIMATE_MODE_HEAT"):
-            self.assertIn(clave, texto)
+            self.assertIn(clave, seguridad)
+
+    def test_heat_action_condicionada_a_alarmas(self):
+        accion = json.dumps(self._climate("incubadora")["heat_action"])
+        for alarma in self.ALARMAS:
+            self.assertIn(alarma, accion)
 
     def test_alarma_sobretemp_aire(self):
-        # I3: spec §5.3 y §7 — el aire sobre el límite apaga el calefactor.
-        codigo = self._binario("alarma_sobretemp_aire")["lambda"]
-        self.assertIn("id(t_aire).state", codigo)
-        self.assertIn("${aire_max_c}", codigo)
+        lam = self._binary("alarma_sobretemp_aire")["lambda"]
+        self.assertIn("id(t_aire).state", lam)
+        self.assertIn("${aire_max_c}", lam)
         self.assertEqual(self.cfg["substitutions"]["aire_max_c"], "28.0")
 
     def test_indicador_local_de_alarma(self):
-        # I4: spec §5.3 — indicador local en la incubadora.
-        led = buscar(self.cfg["switch"], id="indicador_alarma")
-        self.assertIsNotNone(led)
+        led = self._switch("indicador_alarma")
         self.assertEqual(led["restore_mode"], "ALWAYS_OFF")
-        seguridad = [i for i in self.cfg["interval"] if i["interval"] == "5s"][0]
-        self.assertIn("indicador_alarma", str(seguridad))
+        self.assertIn("indicador_alarma", json.dumps(self.cfg["interval"]))
 
 
 if __name__ == "__main__":

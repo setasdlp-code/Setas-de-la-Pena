@@ -95,17 +95,19 @@ test('Formular exposes one guided species-to-save flow and one shared ingredient
 test('Formular keeps species, active recipe and live evaluation in the primary workspace', () => {
   assert.match(jsx, /className=\{`form-species-context \$\{recipe\.length>0\?'has-recipe':'is-empty'\}`\} aria-labelledby="form-species-context-title"/);
   assert.match(jsx, /id="form-species-context-select" name="formSpeciesContext"/);
-  assert.match(jsx, /Puntaje, gauges y lote/);
+  assert.match(jsx, /Ingredientes y revisión/);
   assert.match(jsx, /className="bg-wrap recipe-live-evaluation/);
-  assert.match(jsx, /Perito \+ Automejora/);
-  assert.match(css, /\.form-recipe-workspace\{[\s\S]*"recipe evaluation"/);
+  assert.match(jsx, /Revisión y preparación/);
+  assert.match(css, /\.builder-wrap \.form-recipe-workspace\{[\s\S]*grid-template-areas:"active-head" "review" "ingredients"/);
   assert.match(css, /\.builder-wrap > \.sim-live-dashboard\{[\s\S]*position:sticky/);
   assert.match(jsx, /const \[showLiveChips,setShowLiveChips\]=useState\(true\)/);
   assert.match(jsx, /className="live-dash-btn live-dash-recipe-toggle"/);
 });
 
 test('long UI collections use progressive disclosure and mobile-safe layouts', () => {
-  assert.match(jsx, /collapsedRoles.*base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false/);
+  // Escritorio abre los grupos; el teléfono arranca con el catálogo plegado.
+  assert.match(jsx, /const \[phoneCompact\]=useState\(\(\)=>typeof window!=='undefined'&&window\.innerWidth<=700\)/);
+  assert.match(jsx, /collapsedRoles.*base_carbono:phoneCompact,suplemento_n:phoneCompact,aditivo:phoneCompact,aireador:phoneCompact,otro:phoneCompact/);
   assert.match(jsx, /toggleRoleCollapse=.*\[roleKey\]:!prev\[roleKey\]/);
   assert.match(jsx, /setAllRoleGroups/);
   assert.match(jsx, /className="role-group-hdr"/);

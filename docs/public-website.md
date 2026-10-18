@@ -53,3 +53,22 @@ El chequeo cubre 320, 390, 768 y 1440 píxeles, imágenes, enlaces y fragmentos,
 ## Publicación
 
 El workflow de GitHub Pages actual publica `field-os-simulador/setas-os`. Esta web de la raíz requiere una configuración de publicación propia; esta implementación no cambia el despliegue de Setas OS.
+
+
+## Iteración comercial: recorrido para chefs
+
+La portada usa «Conoce la seta. Imagina el plato.» y el descriptor «Hongos para cocinar con criterio.». La sección `#para-chefs` conecta especie, uso culinario, cantidad y consulta. Los enlaces con `purpose=restaurante` preseleccionan el contexto de restaurante en shiitake; desde recetas, ese contexto se conserva al ajustar ×1/×2/×3 y transferir los gramos. Valores desconocidos no modifican la selección doméstica predeterminada. No hay persistencia de datos.
+
+Plex Sans sirve prosa e interfaz; Plex Mono se limita a datos y metadatos. El identificador histórico `data-pairing="mono"` se conserva por compatibilidad de enlaces. En móvil las fichas culinarias se leen en una columna.
+
+`design-system.html` y `manual.html` son nuevas fuentes estáticas de referencia. El índice del DS y el manual citados en el traspaso no estaban en el entorno; estas páginas reconstruyen un acceso al DS disponible y un resumen de decisiones aprobadas, sin afirmar equivalencia con el paquete publicado.
+
+### Exportación local reproducible
+
+```sh
+python3 scripts/export_public_website.py --output /workspace/reports/cloudflare-setas/public
+```
+
+El destino debe estar vacío y fuera del repositorio. El exportador conserva los archivos anteriores y rechaza sobreescribir una carpeta existente. Copia únicamente dependencias locales enlazadas desde las páginas semilla; no lee configuración ni autenticación de hosting. Genera `export-audit.json` con rutas, fuentes y SHA256.
+
+Convierte `index.html` en `home.html`, `design-system.html` en `index.html` y actualiza sus enlaces. Conserva `shiitake.html`, `recetas.html`, `typography.html` y `manual.html`. Cloudflare Pages sirve las rutas limpias `/home`, `/shiitake`, `/recetas` y `/manual`; un servidor Python básico requiere la extensión `.html`. Crear la exportación no la publica.

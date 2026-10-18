@@ -7,7 +7,7 @@
 import {
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
 } from "../vendor/firebase/firebase-firestore.js";
 import {
   app,
@@ -19,13 +19,24 @@ import {
 import { initSetasAI } from "./ai-logic.js";
 import { pushClimateReading, subscribeToLiveClimate } from "./telemetria-sync.js";
 
-// Caché local persistente (IndexedDB) con soporte multi-pestaña: las escrituras
-// hechas sin señal quedan encoladas y se sincronizan solas al reconectar — es
-// el punto que resuelve "cada dispositivo puede tener una versión distinta de
-// la verdad" (hallazgo P0 de la auditoría UX).
+// Caché local persistente (IndexedDB): las escrituras hechas sin señal quedan
+// encoladas y se sincronizan solas al reconectar — es el punto que resuelve
+// "cada dispositivo puede tener una versión distinta de la verdad" (hallazgo
+// P0 de la auditoría UX).
+//
+// Gestor de una sola pestaña, no multipestaña. Con persistentMultipleTabManager
+// el SDK 12.17 se cae con "INTERNAL ASSERTION FAILED: Unexpected state (ID:
+// b815)" cuando hay varias pestañas abiertas: al sincronizar las consultas de
+// otra pestaña lee del caché un target que ya no existe y lo pasa nulo a
+// allocateTarget, y el cliente de Firestore queda inutilizable. Con una sola
+// pestaña ese camino no existe. Una segunda pestaña no obtiene el caché de
+// IndexedDB y el SDK la pasa solo a caché en memoria: funciona igual con
+// señal, pero lo que escriba sin señal se pierde si se cierra antes de
+// reconectar. En los teléfonos de la finca la aplicación vive en una sola
+// pestaña.
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
+    tabManager: persistentSingleTabManager(),
   }),
 });
 

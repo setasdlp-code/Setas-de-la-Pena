@@ -21,17 +21,18 @@ import sys
 from datetime import datetime, timezone
 
 TEMPERATURAS = ("t_aire", "t_base", "t_centro", "t_tope", "t_nucleo")
-COLUMNAS_REQUERIDAS = ("timestamp",) + TEMPERATURAS
+COLUMNAS_REQUERIDAS = ("timestamp",) + TEMPERATURAS + ("heater_on",)
 INTERVALO_ESPERADO_S = 60
 MINIMO_INTERVALOS_VALIDOS = 30
 UMBRAL_DT_MAPA_C = 2.0
 FRACCION_MINIMA_MAPA = 0.95
 UMBRAL_NUCLEO_C = 28.0
 UMBRAL_DT_NUCLEO_AIRE_C = 5.0
+_EPS = 1e-9  # tolerancia de coma flotante: 22.3 - 20.3 no debe contar como > 2
 
 
 def _numero(texto):
-    """Devuelve un float o None si el valor está vacío, es 'nan' o no es numérico."""
+    """Devuelve un float finito o None (vacío, 'nan', 'inf' o no numérico)."""
     if texto is None:
         return None
     limpio = str(texto).strip().replace(",", ".")
@@ -41,7 +42,7 @@ def _numero(texto):
         valor = float(limpio)
     except ValueError:
         return None
-    return None if math.isnan(valor) else valor
+    return valor if math.isfinite(valor) else None
 
 
 def _fecha(texto):
@@ -88,14 +89,15 @@ def evaluate(rows, cobertura_minima=0.9,
     hueco_max_s = max(((b - a).total_seconds() for a, b in zip(unicas, unicas[1:])),
                       default=0.0)
     suficiente = (len(validos) >= minimo_intervalos_validos
-                  and cobertura >= cobertura_minima)
+                  and cobertura >= cobertura_minima - _EPS)
 
     mapas = [max(v["t_base"], v["t_centro"], v["t_tope"])
              - min(v["t_base"], v["t_centro"], v["t_tope"]) for v in validos]
-    fraccion_mapa = (sum(1 for m in mapas if m <= UMBRAL_DT_MAPA_C) / len(mapas)
-                     if mapas else None)
+    fraccion_mapa = (sum(1 for m in mapas if round(m, 9) <= UMBRAL_DT_MAPA_C + _EPS)
+                     / len(mapas) if mapas else None)
     nucleo_max = max((v["t_nucleo"] for v in validos), default=None)
-    dt_max = max((v["t_nucleo"] - v["t_aire"] for v in validos), default=None)
+    dt_max = max((round(v["t_nucleo"] - v["t_aire"], 9) for v in validos),
+                 default=None)
 
     def veredicto(cumple):
         if not suficiente:
@@ -113,22 +115,24 @@ def evaluate(rows, cobertura_minima=0.9,
             "dt_mapa": _criterio(
                 fraccion_mapa, FRACCION_MINIMA_MAPA,
                 veredicto(fraccion_mapa is not None
-                          and fraccion_mapa >= FRACCION_MINIMA_MAPA)),
+                          and fraccion_mapa >= FRACCION_MINIMA_MAPA - _EPS)),
             "nucleo_max": _criterio(
                 nucleo_max, UMBRAL_NUCLEO_C,
-                veredicto(nucleo_max is not None and nucleo_max <= UMBRAL_NUCLEO_C)),
+                veredicto(nucleo_max is not None
+                          and nucleo_max <= UMBRAL_NUCLEO_C + _EPS)),
             "dt_nucleo_aire": _criterio(
                 dt_max, UMBRAL_DT_NUCLEO_AIRE_C,
-                veredicto(dt_max is not None and dt_max <= UMBRAL_DT_NUCLEO_AIRE_C)),
+                veredicto(dt_max is not None
+                          and dt_max <= UMBRAL_DT_NUCLEO_AIRE_C + _EPS)),
         },
     }
 
 
 def _leer_csv(ruta):
-    with open(ruta, newline="", encoding="utf-8") as f:
+    with open(ruta, newline="", encoding="utf-8-sig") as f:  # utf-8-sig: BOM de Excel
         primera = f.readline()
         f.seek(0)
-        separador = ";" if ";" in primera else ","
+        separador = ";" if primera.count(";") > primera.count(",") else ","
         lector = csv.DictReader(f, delimiter=separador)
         faltan = [c for c in COLUMNAS_REQUERIDAS if c not in (lector.fieldnames or [])]
         if faltan:
@@ -142,10 +146,10 @@ def main(argv):
         return 2
     try:
         filas = _leer_csv(argv[1])
-    except ValueError as error:
+    except (OSError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
-    print(json.dumps(evaluate(filas), indent=2))
+    print(json.dumps(evaluate(filas), ensure_ascii=False, indent=2))
     return 0
 
 

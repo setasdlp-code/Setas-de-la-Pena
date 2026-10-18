@@ -91,6 +91,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../launch-plan.js",
   "../experiment-model.js",
   "../prototype-readiness.js",
+  "../production-readiness.js",
   "../inventory-consumption.js",
   "../inventory-ledger.js",
   "../purchases.js",

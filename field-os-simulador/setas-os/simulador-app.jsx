@@ -22,6 +22,69 @@ function BagObservationEditor({bolsa,onSave}) {
   </div>;
 }
 
+function ReadinessEvidenceForm({check,onSave}) {
+  const [form,setForm]=useState({requirementId:check.id,status:'unknown',reviewer:check.record?.reviewer||'',reference:check.record?.reference||'',notes:'',details:{}});
+  const [error,setError]=useState('');
+  const set=(key,value)=>setForm(p=>({...p,[key]:value}));
+  const detail=(key,value)=>setForm(p=>({...p,details:{...p.details,[key]:value}}));
+  const fields={spawn:[['strainId','ID de cepa'],['supplier','Proveedor de semilla'],['thermalClass','Clase térmica documentada de la cepa']],equipment:[['equipmentId','Equipo identificado'],['protocol','Protocolo y carga validados']],sensors:[['deviceIds','IDs de los sensores / nodos (separados por coma)'],['calibrationReference','Registro de calibración o verificación cruzada']]}[check.id]||[];
+  return <form className="readiness-evidence-form" aria-label={`Evidencia: ${check.label}`} onSubmit={event=>{event.preventDefault();try{onSave(form);setError('');}catch(e){setError(e.message);}}}>
+    <label>Resultado de la revisión<select value={form.status} onChange={e=>set('status',e.target.value)}><option value="unknown">Sin verificar</option><option value="verified">Verificado con evidencia</option><option value="blocked">Bloqueado</option></select></label>
+    <label>Responsable de la revisión<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)} required/></label>
+    <label>Referencia de evidencia<input placeholder="Registro, informe o URL" value={form.reference} onChange={e=>set('reference',e.target.value)} required={form.status==='verified'}/></label>
+    {fields.map(([key,label])=><label key={key}>{label}<input value={form.details[key]||''} onChange={e=>detail(key,e.target.value)} required={form.status==='verified'}/></label>)}
+    {check.id==='equipment'&&<>
+      <label>Corrida del autoclave (ID del ciclo) · obligatoria si se esteriliza<input value={form.details.cycleId||''} onChange={e=>detail('cycleId',e.target.value)}/></label>
+      <label>Bioindicador de la corrida<select value={form.details.bioindicatorResult||''} onChange={e=>detail('bioindicatorResult',e.target.value)}>
+        <option value="">No aplica (pasteurización o cal)</option>
+        <option value="sin_crecimiento">Sin crecimiento</option>
+        <option value="con_crecimiento">Con crecimiento</option>
+        <option value="pendiente">Pendiente de lectura</option>
+      </select></label>
+    </>}
+    {check.id==='room'&&<>
+      <label>Capacidad documentada de la sala (bolsas)<input type="number" min="1" step="1" value={form.details.capacityBags||''} onChange={e=>detail('capacityBags',e.target.value)} required={form.status==='verified'}/></label>
+      <label className="readiness-check"><input type="checkbox" checked={!!form.details.sanitized} onChange={e=>detail('sanitized',e.target.checked)}/> Verifiqué limpieza y condiciones físicas de la sala.</label>
+      <label className="readiness-check"><input type="checkbox" checked={!!form.details.targetsReviewed} onChange={e=>detail('targetsReviewed',e.target.checked)}/> Revisé las condiciones aprobadas para la especie, cepa y etapa.</label>
+    </>}
+    <label>Observaciones / motivo<textarea value={form.notes} onChange={e=>set('notes',e.target.value)} required={form.status!=='verified'}/></label>
+    {error&&<p role="alert">{error}</p>}
+    <button type="submit" className="inv-btn inv-btn-sec">Guardar revisión de {check.label}</button>
+  </form>;
+}
+
+function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAction,onSave,error}) {
+  const [message,setMessage]=useState('');
+  useEffect(()=>setMessage(''),[assessment.scope]);
+  const labels={verified:'Verificado',blocked:'Bloqueado',unknown:'Sin verificar'};
+  const manual=SetasProductionReadiness.MANUAL_IDS;
+  const exportReport=()=>{
+    const report={schema:'setas.readiness-report.v1',generatedAt:new Date().toISOString(),scope:'pre-production-documentation',species:input.speciesKey,roomId:input.roomId,lotCode:input.lotCode,assessment};
+    const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download='preparacion-produccion-'+(input.lotCode||'plan')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
+  return <section id="production-readiness" className="production-readiness no-print" aria-labelledby="production-readiness-title" data-testid="production-readiness-dashboard">
+    <header className="readiness-header"><div><span className="readiness-kicker">Antes de producir</span><h2 id="production-readiness-title">Preparación para producción</h2><p>{input.lotCode||'Plan sin código'} · {input.speciesName||'Especie pendiente'} · {assessment.preparationRevision||'Cantidades pendientes'}</p></div><button type="button" className="inv-btn inv-btn-sec" onClick={exportReport}>Exportar informe</button></header>
+    <div className={`readiness-summary is-${assessment.status}`} role="status" aria-live="polite" aria-atomic="true">
+      <strong>{assessment.status==='verified'?'Requisitos documentados · revisar autorización del ensayo':'Requisitos pendientes antes de producir'}</strong>
+      <span>{assessment.counts.verified} verificados · {assessment.counts.blocked} bloqueados · {assessment.counts.unknown} sin verificar</span>
+    </div>
+    <p className="readiness-boundary">Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico.</p>
+    <div className="readiness-context"><label>Sala prevista<select aria-label="Sala prevista para preparación" value={input.roomId} onChange={e=>onRoomChange(e.target.value)}>{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>{assessment.next&&<p><strong>Siguiente requisito:</strong> {assessment.next.label}. {assessment.next.detail}</p>}</div>
+    {error&&<p role="alert">{error} No se puede registrar una nueva revisión hasta recuperar estos datos.</p>}
+    <p className="readiness-local-note">Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación.</p>
+    {message&&<p role="status">{message}</p>}
+    <div className="readiness-grid">{assessment.checks.map(check=><article key={check.id} className={`readiness-card is-${check.status}`} data-testid={`readiness-${check.id}`}>
+      <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
+      {check.record&&<p className="readiness-record">Registro de {check.record.reviewer} · {new Date(check.record.at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p>}
+      {check.id==='spawn'&&assessment.spawnLots.length>0&&<p>Lotes de semilla asignados: {assessment.spawnLots.map(l=>l.lotId).join(', ')}</p>}
+      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm check={check} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
+        :<button type="button" className="inv-btn inv-btn-sec" onClick={()=>onAction(check.action)}>Revisar {check.action==='recipe'?'Formulador':check.action==='batch'?'cantidades':check.action==='inventory'?'Bodega':'Perito'}</button>}
+    </article>)}</div>
+    <p className="readiness-boundary">El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales.</p>
+  </section>;
+}
+
 function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
   const [open,setOpen]=useState(false),[step,setStep]=useState(1),[message,setMessage]=useState(''),[error,setError]=useState('');
   const [form,setForm]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('sdp_experiment_draft')||'{}');}catch{return {};}});
@@ -1891,7 +1954,7 @@ const describePeritoChanges=(recipe,apply,lockedIds,ingredients)=>{
 };
 const PeritoChangePreview=({changes})=>(
   <details style={{marginTop:6,fontSize:'var(--text-sm)'}}>
-    <summary style={{cursor:'pointer',fontWeight:700}}>Ver cambios de la receta ({changes.length})</summary>
+    <summary className="summary-tap" style={{cursor:'pointer',fontWeight:700}}>Ver cambios de la receta ({changes.length})</summary>
     <p style={{margin:'5px 0',color:'var(--ink-600)'}}>Porcentaje en base seca · actual → propuesto. Incluye el rebalanceo.</p>
     <ul style={{margin:0,paddingLeft:18}}>{changes.map(row=><li key={row.id} style={{overflowWrap:'anywhere'}}>{row.name}: {Number(row.before.toFixed(2))}% → {Number(row.after.toFixed(2))}%</li>)}</ul>
     {!changes.length&&<p>Esta propuesta no cambia la receta con los bloqueos actuales.</p>}
@@ -2004,21 +2067,8 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
     return from&&to?SetasSpeciesTargetsApi.describeClassChange(from,to):null;
   },[evaluate,recipe,item.comboApply,lockedIds,ingredients]);
 
-  return(
-  <div className={`perito-item pi-${item.priority}`}>
-    <div className="pi-icon-col">
-      <span className="pi-icon">{item.icon}</span>
-    </div>
-    <div className="pi-body">
-      <div className="pi-head">
-        <span className="pi-label">{item.label}</span>
-        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
-        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
-        {item.delta&&<span className="pi-delta">{item.delta}</span>}
-      </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
-      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
-      <div className="pi-effect">{item.effect}</div>
+  const [compact]=React.useState(()=>typeof window!=='undefined'&&window.innerWidth<=700);
+  const bDeltas=<>
       {deltaSim?.diff&&(
         <div className="pi-deltas" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:5,marginBottom:4}}>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaScore>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaScore>=0?'var(--moss-800)':'var(--coral-700)'}}>
@@ -2044,14 +2094,32 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           )}
         </div>
       )}
+  </>;
+  const bEvidence=<>
       {item.evidence&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3}}><span style={{fontWeight:700}}>Evidencia:</span> {item.evidence.type==='heuristic-model'?'heurística de composición':'sin fuente específica'} · confianza {item.evidence.confidence==='low'?'baja':item.evidence.confidence||'baja'} · {item.evidence.note}</div>}
+  </>;
+  const bWhy=<>
       {item.why&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:3,opacity:.85}}><span style={{fontWeight:700}}>Por qué:</span> {item.why}</div>}
+  </>;
+  const bRisk=<>
       {item.riskIfIgnored&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2}}><span style={{fontWeight:700}}>Riesgo:</span> {item.riskIfIgnored}</div>}
+  </>;
+  const bIndice=<>
       {hasPrediction&&<div style={{fontSize:"var(--text-sm)",color:scoreDelta>0?'var(--accent-olive)':'var(--ink-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}>Índice estimado: {Math.round(baseScore)}/100 → {Math.round(item.predictedScore)}/100 ({scoreDelta>=0?'+':''}{scoreDelta})</div>}
+  </>;
+  const bDisclaimer=<>
       {hasPrediction&&<div style={{fontSize:'var(--text-xs)',color:'var(--ink-600)'}}>Comparación del modelo; no garantiza rendimiento en producción.</div>}
+  </>;
+  const bClassNote=<>
       <ClassChangeNote change={classChange}/>
+  </>;
+  const bPreview=<>
       {item.apply&&<PeritoChangePreview changes={changes}/>}
+  </>;
+  const bSide=<>
       {item.sideEffect&&<div style={{fontSize:"var(--text-sm)",color:'var(--coral-600)',fontFamily:'var(--font-mono)',marginTop:2,fontWeight:700}}><span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--coral-600)" /> {item.sideEffect}</span></div>}
+  </>;
+  const bCombo=<>
       {item.comboApply&&<div style={{marginTop:4,padding:'6px 8px',background:'rgba(74,107,74,.08)',border:'1px solid rgba(74,107,74,.2)',borderRadius:4}}>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)',fontWeight:700}}>{item.comboLabel}</div>
         <div style={{fontSize:"var(--text-sm)",color:'var(--accent-olive)',fontFamily:'var(--font-mono)'}}>Índice estimado con ambos cambios: {Math.round(item.comboPredictedScore)}/100</div>
@@ -2059,6 +2127,23 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
         <PeritoChangePreview changes={comboChanges}/>
         <button disabled={!comboChanges.length} aria-label={`Aplicar corrección combinada: ${item.label}`} onClick={()=>onApply(item.comboApply,item.icon)} className="pi-apply" style={{marginTop:4}}>Aplicar corrección combinada</button>
       </div>}
+  </>;
+  return(
+  <div className={`perito-item pi-${item.priority}`}>
+    <div className="pi-icon-col">
+      <span className="pi-icon">{item.icon}</span>
+    </div>
+    <div className="pi-body">
+      <div className="pi-head">
+        <span className="pi-label">{item.label}</span>
+        {item.capped&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--brand-accent-text)',background:'rgba(200,112,64,.12)',border:'1px solid rgba(200,112,64,.3)',borderRadius:3,padding:'1px 6px'}}>tope alcanzado</span>}
+        {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
+        {item.delta&&<span className="pi-delta">{item.delta}</span>}
+      </div>
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
+      <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
+      <div className="pi-effect">{item.effect}</div>
+      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bEvidence}{bWhy}{bRisk}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bSide}{bCombo}</>}
     </div>
     <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
@@ -6841,6 +6926,17 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     }
   };
   const [selectedClimateRoom,setSelectedClimateRoom]=useState('martha_01');
+  const [productionEvidence,setProductionEvidence]=useState(()=>{
+    try{SetasPrototype.recover(localStorage);return {records:SetasProductionReadiness.readRecords(localStorage),error:''};}
+    catch(e){return {records:[],error:e.message};}
+  });
+  useEffect(()=>{
+    const refresh=event=>{if(event.key!==SetasProductionReadiness.KEY&&event.key!==SetasPrototype.PENDING&&event.key!==null)return;
+      try{SetasPrototype.recover(localStorage);setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}
+      catch(e){setProductionEvidence({records:[],error:e.message});}
+    };
+    window.addEventListener('storage',refresh);return()=>window.removeEventListener('storage',refresh);
+  },[]);
   // Estado del panel "Copiloto de cultivo" del Tablero de Control (Hoy). Vive
   // aquí (no dentro del IIFE condicional de la pestaña Home) porque los Hooks
   // de React no pueden llamarse condicionalmente — ese bloque solo se ejecuta
@@ -6943,7 +7039,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   }, []);
   const [showLiveChips,setShowLiveChips]=useState(true);
   const [groupByRole,setGroupByRole]=useState(true);
-  const [collapsedRoles,setCollapsedRoles]=useState({base_carbono:false,suplemento_n:false,aditivo:false,aireador:false,otro:false});
+  // Teléfono: el Formulador arranca compacto (catálogo y paneles técnicos del Perito
+  // plegados). Se evalúa una sola vez al montar, igual que isMobileViewport.
+  const [phoneCompact]=useState(()=>typeof window!=='undefined'&&window.innerWidth<=700);
+  const [collapsedRoles,setCollapsedRoles]=useState(()=>({base_carbono:phoneCompact,suplemento_n:phoneCompact,aditivo:phoneCompact,aireador:phoneCompact,otro:phoneCompact}));
   const toggleRoleCollapse=(roleKey)=>setCollapsedRoles(prev=>({...prev,[roleKey]:!prev[roleKey]}));
   const setAllRoleGroups=(collapsed)=>setCollapsedRoles({base_carbono:collapsed,suplemento_n:collapsed,aditivo:collapsed,aireador:collapsed,otro:collapsed});
   // ── Producción: lote propio de la hoja imprimible ──
@@ -7421,7 +7520,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         if(e&&e.name==='QuotaExceededError') bitQuotaWarn();
         return;
       }
-      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles};
+      const setters={sdp_bit_lotes:setBitLotes,sdp_bit_bolsas:setBitBolsas,sdp_bit_cosechas:setBitCosechas,sdp_movimientos:setInvMovimientos,sdp_compras:setInvCompras,sdp_proveedores:setInvProveedores,sdp_inv_reservas:setInvReservas,sdp_room_cycles:setRoomCycles,
+        // Las revisiones se releen con readRecords: un registro inválido llegado
+        // de otro equipo se muestra como error, igual que uno dañado en local.
+        [SetasProductionReadiness.KEY]:()=>{try{setProductionEvidence({records:SetasProductionReadiness.readRecords(localStorage),error:''});}catch(e){setProductionEvidence({records:[],error:e.message});}}};
       for(const [key,value] of plan.entries){
         if(key==='sdp_lotes'){invLotesRef.current=value;setInvLotes(value);}
         else if(setters[key]) setters[key](value);
@@ -7584,6 +7686,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Un ciclo puede empezar o terminar sin que nadie toque nada (startAt en el
   // futuro, endAt en el pasado): se reevalúa cada minuto.
   const [cycleClock,setCycleClock]=useState(()=>Date.now());
+  // Una edición o sincronización puede cruzar un minuto antes del próximo tick.
+  useEffect(()=>setCycleClock(Date.now()),[roomCycles]);
   useEffect(()=>{const t=setInterval(()=>setCycleClock(Date.now()),60000);return ()=>clearInterval(t);},[]);
   const cycleTargetsApi=typeof window!=='undefined'?window.SetasRoomCycleTargets:null;
   const effectiveRoomBands=cycleTargetsApi?cycleTargetsApi.effectiveBands(ROOM_TARGET_BANDS,roomCycles,cycleClock):ROOM_TARGET_BANDS;
@@ -8097,11 +8201,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     return ing;
   }),[priceOverrides,invLotes]);
   const optimizerINGS=useMemo(()=>effectiveINGS.filter(g=>!disabledIngIds.includes(g.id)),[effectiveINGS,disabledIngIds]);
-  const fings=useMemo(()=>effectiveINGS.filter(g=>{
-    const ms=search===''||g.name.toLowerCase().includes(search.toLowerCase())||g.tags.some(t=>t.toLowerCase().includes(search.toLowerCase()));
+  const fings=useMemo(()=>{
+    const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const terms=normalize(search).trim().split(/\s+/).filter(Boolean);
+    return effectiveINGS.filter(g=>{
+    const text=normalize([g.name,...(g.tags||[])].join(' '));
+    const ms=terms.every(term=>text.includes(term));
     const roleMatch=cat==='all'||(cat==='aditivo'?['aditivo_ph','aditivo_estructura','aditivo_micronutriente','aditivo_arrancador'].includes(g.role):g.role===cat);
     return ms&&roleMatch;
-  }).sort((a,b)=>a.name.localeCompare(b.name)),[search,cat,effectiveINGS]);
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+  },[search,cat,effectiveINGS]);
   const visibleIngredients=useMemo(()=>{
     let rows=usePantry?fings.filter(g=>pantryIds.includes(g.id)):fings;
     if(showCompatOnly){
@@ -8281,6 +8390,42 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const peritoEvaluate=useMemo(()=>createRecipeEvaluator({sKey,ings:effectiveINGS,resolveSpp:resolvePeritoSpp,stockIds,blendEB:a=>blendEBWithHistory(a,histStats),analyzeFn:analyze}),[sKey,effectiveINGS,resolvePeritoSpp,stockIds,histStats]);
   const substrateClassInfo=useMemo(()=>SetasSpeciesTargetsApi.describeSubstrateClass?SetasSpeciesTargetsApi.describeSubstrateClass({speciesId:sKey,recipe,ings:effectiveINGS,legacySpp:SPP}):null,[sKey,recipe,effectiveINGS]);
   const opt=useMemo(()=>generateOptimizer(an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate),[an,sKey,stockIds,recipe,optimizerINGS,lockedIds,blendedEB,optUseStock,appliedIcons,effectiveSPP,usageCounts,peritoEvaluate]);
+  const productionReadinessInput=useMemo(()=>{
+    const bag=BAG_TYPES.find(b=>b.id===prodBagType);
+    let plan=null,stockCheck=null;
+    try{if(preparation)plan=SetasLaunchPlanApi.buildLaunchPlan({preparation,ingredients:prodIngs,inventoryLots:invLotes,
+      bagUnit:bag?.stockId?{ingredientId:bag.stockId,units:preparation.target.bags}:null,unitIngredientIds:UNIT_INGREDIENT_IDS});
+      if(plan){stockCheck=window.SetasInventoryLedger.checkPlan(plan,{lots:invLotes,ledger:invReservas,nowMs:cycleClock});
+        stockCheck={...stockCheck,lines:stockCheck.lines.map(l=>({...l,name:prodIngs.find(g=>g.id===l.ingredienteId)?.name||(l.ingredienteId==='spawn_grano'?'Semilla (grano)':bag?.name||l.ingredienteId)}))};}}catch{}
+    const roomState=bitLotesLoaded&&!metricsLoadError&&window.SetasRoomState?window.SetasRoomState.buildRoomBoard({rooms:Object.values(ROOMS_CONFIG),lotes:bitLotes,bolsas:bitBolsas,events:roomEvents,telemetry:{},nowMs:cycleClock}).find(r=>r.roomId===selectedClimateRoom):null;
+    return {speciesKey:sKey,speciesName:hasPickedSpecies?sp?.name:'Especie pendiente',speciesConfirmed:hasPickedSpecies,preparation,preparationError:preparationResult.error,
+      model:an?{criticals:(opt?.items||[]).filter(i=>i.priority==='critical').length}:null,
+      treatment:tr?{col:tr.col,temp:tr.temp,time:tr.time}:null,
+      plan,stockCheck,reservations:invReservas,inventoryLoaded:peritoInventoryLoaded,inventoryLots:invLotes,containerId:prodBagType,containerStockId:bag?.stockId,
+      roomId:selectedClimateRoom,roomState,telemetry:liveTelemetry.roomLive(selectedClimateRoom),lotCode:prodLoteNum,plannedDate:prodDate,lotCodeAlreadyUsed:bitLotes.some(l=>String(l.codigo||'').trim()===String(prodLoteNum||'').trim()&&!!prodLoteNum)};
+  },[sKey,sp,hasPickedSpecies,preparation,preparationResult.error,prodIngs,invLotes,invReservas,prodBagType,an,opt,tr,peritoInventoryLoaded,bitLotesLoaded,metricsLoadError,bitLotes,bitBolsas,roomEvents,selectedClimateRoom,liveTelemetry.snapshot,cycleClock,prodLoteNum,prodDate]);
+  const productionReadiness=useMemo(()=>SetasProductionReadiness.assessProductionReadiness(productionReadinessInput,productionEvidence.records),[productionReadinessInput,productionEvidence.records]);
+  const saveProductionEvidence=form=>{
+    if(productionEvidence.error)throw Error(productionEvidence.error);
+    const current=SetasProductionReadiness.readRecords(localStorage);
+    const record=SetasProductionReadiness.createEvidence(form,productionReadinessInput,current,{id:crypto.randomUUID()});
+    const records=[...current,record];
+    SetasPrototype.persist(localStorage,[[SetasProductionReadiness.KEY,records]]);
+    setProductionEvidence({records,error:''});
+    // Cada revisión es un documento inmutable: sube una vez y llega a los demás
+    // equipos por la sincronización de colecciones (ADR-0009).
+    encolarSync({type:'crearDocumento',key:'production_readiness:'+record.id,args:['production_readiness/'+record.id,record]});
+  };
+  const openProductionReadiness=()=>{
+    goTab('produccion');
+    requestAnimationFrame(()=>{const panel=document.getElementById('production-readiness');panel?.scrollIntoView({block:'start'});const title=panel?.querySelector('h2');if(title){title.setAttribute('tabindex','-1');title.focus({preventScroll:true});}});
+  };
+  const readinessAction=action=>{
+    if(action==='inventory'){goTab('inventario');return;}
+    if(action==='batch'){const target=document.getElementById(!prodLoteNum?'prod-lote':'prod-bags');target?.scrollIntoView({block:'center'});target?.focus({preventScroll:true});return;}
+    openBuilderSubTab('formular');goTab('formular');
+    if(action==='recommendations')requestAnimationFrame(()=>document.getElementById('bl-perito')?.scrollIntoView({block:'start'}));
+  };
   // One committed React snapshot for the presentation bridge. Batch size,
   // locks, inventory and evidence changes invalidate it even without a recipe edit.
   const peritoRevisionRef=React.useRef(0);
@@ -8313,6 +8458,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const id={batch:'bl-batch',process:'bl-tratamiento',recommendations:'perito-recommendations'}[action];
       if(id) requestAnimationFrame(()=>{
         const target=document.getElementById(id);
+        if(target?.tagName==='DETAILS')target.open=true;
         target?.scrollIntoView({behavior:'smooth',block:'start'});
         if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
       });
@@ -8450,6 +8596,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
     const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
     const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
+    const wrapDeep=(summary,node)=>(phoneCompact&&!isWorkbench)
+      ?<details className="perito-deep-details" data-testid="perito-deep-details"><summary className="summary-tap">{summary}</summary>{node}</details>
+      :node;
     const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
     const renderItems=list=>{const keys=peritoItemKeys(list);return list.map((item,i)=><PeritoItem key={keys[i]} item={item} onApply={applyOptStep} baseScore={opt.score} recipe={recipe} lockedIds={lockedIds} ingredients={optimizerINGS} evaluate={peritoEvaluate} onMorph={onMorph}/>);};
     return(
@@ -8543,7 +8692,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
         </>}
 
-        {/* ── MÉTRICAS ── */}
+        {wrapDeep(`Métricas del modelo · C:N ${an.cn>0?an.cn.toFixed(1)+':1':'—'} · N ${an.avgN>0?an.avgN.toFixed(2)+'%':'—'} · EB ${an.ebLow&&an.ebHigh?an.ebLow+'–'+an.ebHigh:an.eb.toFixed(0)}%`,<>
         <div className="mgrid" style={{marginBottom:12}}>
           {[
                         {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
@@ -8584,6 +8733,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                   )}
         </div>
         <NitrogenChart recipe={recipe}/>
+        </>)}
 
         {/* ── EVIDENCIA + SUGERENCIAS ── */}
         {hasPer&&(
@@ -8609,12 +8759,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
             {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
-            {tips.length>0&&<details open style={{marginBottom:6}}><summary style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
+            {tips.length>0&&<details open={!phoneCompact} style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
             {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
           </>
         )}
 
-        {!isWorkbench&&<>
+        {!isWorkbench&&wrapDeep(`Evaluación técnica y gráficos · ${dg.sugs.length} nota${dg.sugs.length===1?'':'s'}`,<>
                   {/* ── CHARTS TOGGLE + CHARTS ── */}
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:10,marginBottom:8}}>
                     <button className={`tog${showFlush?' on':''}`} aria-pressed={showFlush} onClick={()=>setShowFlush(!showFlush)}>Cosechas</button>
@@ -8634,7 +8784,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                     <div className="sec" style={{marginTop:8}}>A considerar</div>
                     {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
                   </>)}
-        </>}
+        </>)}
       </section>
     );
   };
@@ -8769,7 +8919,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote=SetasPrototype.read(localStorage,'sdp_bit_lotes').find(l=>l.id===releaseBatchId);
     const result=SetasPrototype.prepareBatch(localStorage,{loteId:lote.id,trialRelease:record,sheet:buildSheetFor(lote),role:operatorRole,operatorId:lote.operador||'operador-local',at:new Date().toISOString()});
     applyPrototypeEntries(result.entries);
-    enqueueFieldTransition(result.lote,result.lote.pendingPreparationTransition?.from||'planned',result.transition);
+    requestLotTransition(result.lote,result.transition,{from:result.lote.pendingPreparationTransition?.from||'planned',logged:true});
     if(taskEngine)mergeIntoTasks(taskEngine.tasksFromTransition({batchId:lote.id,toState:result.transition,at:new Date().toISOString()}));
     runInventorySync();
     setReleaseBatchId(null);
@@ -10892,6 +11042,62 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
   };
 
+  /**
+   * Único punto por el que la app cambia la etapa de un lote.
+   *
+   * Con sesión, la etapa la decide el servidor: se encola la transición y el
+   * lote cambia cuando acceptFieldEvent la acepta y la sincronización la trae
+   * (las reglas no dejan que el cliente escriba lifecycleState ni, después de
+   * la primera etapa aceptada, `estado`). Sin sesión (equipo sin cuenta, banco
+   * de pruebas) no hay servidor que acepte nada, así que la etapa se registra
+   * en `estado`, que es de donde el servidor tomará la primera etapa cuando el
+   * lote suba.
+   *
+   * `logged` indica que quien llama ya agregó el evento de transición a la
+   * bitácora del lote (la ficha lo hace con applyConsequences).
+   */
+  const requestLotTransition=(lote,to,{from=null,reason=null,logged=false}={})=>{
+    if(!lote||!workflow) return false;
+    const origin=from||loteLifecycleState(lote);
+    const label=s=>(batchSheetApi&&batchSheetApi.stateLabel?batchSheetApi.stateLabel(s):s);
+    if(!workflow.canTransition(origin,to)){
+      setNoticeDlg({title:'Cambio de etapa no permitido',msg:`${lote.codigo||lote.id} está en ${label(origin)} y no puede pasar a ${label(to)}.`});
+      return false;
+    }
+    const uid=window.SetasFirebase?.auth?.currentUser?.uid||null;
+    if(!uid&&lote.lifecycleState){
+      setNoticeDlg({title:'Se necesita iniciar sesión',msg:`La etapa de ${lote.codigo||lote.id} ya la registra el servidor. Inicia sesión para cambiarla.`});
+      return false;
+    }
+    const event=logged?null:workflow.transitionEvent({batchId:lote.id,from:origin,to,operatorId:lote.operador||'operador-local',reason});
+    const log=event?{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]}:{};
+    if(uid){
+      if(event) updateBitLote(lote.id,log);
+      enqueueFieldTransition(lote,origin,to);
+    }else{
+      updateBitLote(lote.id,{estado:batchSheetApi?.legacyEstadoFor?.(to)||to,...log});
+    }
+    return true;
+  };
+
+  // Un descarte aceptado por el servidor llega por la sincronización, no por
+  // updateBitLote, así que las reservas held del lote se liberan aquí: si no,
+  // un lote descartado en otro equipo bloquearía sus kilos para siempre.
+  useEffect(()=>{
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(!ledgerApi) return;
+    const descartados=new Set(bitLotes.filter(l=>loteLifecycleState(l)==='discarded').map(l=>l.id));
+    if(!descartados.size) return;
+    setInvReservas(prev=>{
+      if(!prev.some(r=>r.status==='held'&&descartados.has(r.batchId))) return prev;
+      const at=new Date().toISOString();
+      let upd=prev;
+      descartados.forEach(id=>{upd=ledgerApi.releaseForBatch(upd,id,{reason:'Lote de producción descartado',at});});
+      try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+      return upd;
+    });
+  },[bitLotes]);
+
   const enqueueContainerFieldTransition=async(bolsa,lote,from,to,reasonCode=null,notes=null)=>{
     const SHEET=typeof window!=='undefined'?window.SetasFieldActionSheet:null;
     const uid=window.SetasFirebase&&window.SetasFirebase.auth&&window.SetasFirebase.auth.currentUser
@@ -10946,7 +11152,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
 
       if(consequences.transition){
-        enqueueFieldTransition(lote,sheet.state,consequences.transition);
+        requestLotTransition(lote,consequences.transition,{from:sheet.state,logged:true});
       }
 
       // Si hubo transición, generar las tareas SOP del nuevo estado.
@@ -10992,13 +11198,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
       // sólo ocurre si la transición es válida y no hay un bloqueo declarado.
       const activeSheet=sheet||buildSheetFor(lote);
       if(activeSheet&&commitSheetAction(activeSheet,lote,'advance_stage')) return;
-      const next=lote.estado==='incubacion'?'fructificacion':lote.estado;
-      const from=loteLifecycleState(lote);const to=loteLifecycleState({estado:next});
-      if(next!==lote.estado&&workflow&&workflow.canTransition(from,to)){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to,operatorId:lote.operador||'operador-local'});
-        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
-        enqueueFieldTransition(lote,from,to);
-      }
+      const from=loteLifecycleState(lote);
+      const to=(workflow?.DEFAULT_TRANSITIONS?.[from]||[])[0];
+      if(to) requestLotTransition(lote,to,{from});
       return;
     }
     if(action==='prepare_mix'){
@@ -11020,15 +11222,32 @@ body{margin:0;padding:20px 24px;background:#fff;}
       });
       return;
     }
-    if(action==='close'){updateBitLote(lote.id,{estado:'completado'});return;}
+    // Tratamiento térmico e inoculación caían en el aviso genérico del final y
+    // no registraban nada: el botón principal de la ficha no movía el lote.
+    if(action==='start_thermal_treatment'||action==='complete_thermal_treatment'){
+      commitSheetAction(sheet||buildSheetFor(lote),lote,action);
+      return;
+    }
+    if(action==='inoculate'){
+      // Inocular exige el lote de semilla (ACTION_CATALOG.inoculate.requires):
+      // es la trazabilidad que el lote necesita para todo lo que sigue.
+      setPromptDlg({
+        title:'Inocular',
+        label:'Lote de semilla usado',
+        defaultValue:lote.spawnLotId||'',
+        placeholder:'Ej. SPW-260101-01',
+        confirmLabel:'Registrar inoculación',
+        onSubmit:spawnLotId=>{
+          const conSemilla={...lote,spawnLotId};
+          if(spawnLotId!==lote.spawnLotId) updateBitLote(lote.id,{spawnLotId});
+          commitSheetAction(buildSheetFor(conSemilla),conSemilla,'inoculate',{spawnLotId});
+        },
+      });
+      return;
+    }
+    if(action==='close'){requestLotTransition(lote,'closed');return;}
     if(action==='discard'){
-      const from=loteLifecycleState(lote);
-      if(workflow&&workflow.canTransition(from,'discarded')){
-        const event=workflow.transitionEvent({batchId:lote.id,from,to:'discarded',operatorId:lote.operador||'operador-local',reason:'Descarte manual de lote'});
-        // El estado canónico lo escribe acceptFieldEvent; aquí sólo la bitácora.
-        updateBitLote(lote.id,{lifecycleEvents:[...(lote.lifecycleEvents||[]),event]});
-        enqueueFieldTransition(lote,from,'discarded');
-      }
+      requestLotTransition(lote,'discarded',{reason:'Descarte manual de lote'});
       return;
     }
     if(action==='move'){
@@ -13295,9 +13514,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <option value="">— veredicto —</option>
                         {['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}
                       </select>
-                      <select name={`loteStatus-${lote.id}`} aria-label={`Estado del lote ${lote.codigo}`} value={lote.estado} onChange={e=>updateBitLote(lote.id,{estado:e.target.value})} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px'}}>
-                        {['incubacion','fructificacion','completado','descartado'].map(st=><option key={st} value={st}>{st}</option>)}
-                      </select>
+                      {/* La etapa no se elige en un selector libre: cambia con las
+                          acciones del flujo (ficha del lote), que validan la
+                          transición y, con sesión, las acepta el servidor. */}
+                      <span data-testid={`lote-stage-${lote.id}`} className="inv-input" style={{width:'auto',fontSize:"var(--text-sm)",padding:'6px 10px',display:'inline-flex',alignItems:'center'}}>
+                        Etapa: {batchSheetApi?.stateLabel?batchSheetApi.stateLabel(loteLifecycleState(lote)):loteLifecycleState(lote)}
+                      </span>
+                      <button type="button" className="inv-btn inv-btn-sec" onClick={()=>openBatchSheetModal(lote)} style={{fontSize:"var(--text-sm)",padding:'6px 12px'}}>Cambiar etapa</button>
                     </div>
                   </div>
                   {stats&&(<div className="inv-stat-row" style={{marginBottom:14}}><div className="inv-stat"><div className="inv-stat-val">{stats.bolsasSanas}/{stats.numBolsas}</div><div className="inv-stat-lbl">Sanas</div></div><div className="inv-stat"><div className="inv-stat-val" style={{color:stats.contPct>20?'var(--coral-700)':'inherit'}}>{stats.contPct.toFixed(0)}%</div><div className="inv-stat-lbl">Contam.</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.be!=null?stats.be.toFixed(0)+'%':'—'}</div><div className="inv-stat-lbl">BE</div></div><div className="inv-stat"><div className="inv-stat-val">{stats.totalFresco.toFixed(3)} kg</div><div className="inv-stat-lbl">Cosechado</div></div></div>)}
@@ -13319,8 +13542,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           up.colonizationPct=pct;
                           return updateBitBolsa(b.id,up);
                         })) return;
-                        if(pct>=100&&lote.estado==='incubacion'){
-                          updateBitLote(lote.id,{estado:'fructificacion'});
+                        if(pct>=100&&workflow?.canTransition(loteLifecycleState(lote),'fruiting')){
+                          requestLotTransition(lote,'fruiting');
                         }
                         setNoticeDlg({
                           title:'Avance registrado',
@@ -13334,8 +13557,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           if(!bolsas.every(b=>{
                             return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
                           })) return;
-                          updateBitLote(lote.id,{estado:'fructificacion'});
-                          setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${lote.codigo} actualizado a fructificación.`});
+                          const aFruct=workflow?.canTransition(loteLifecycleState(lote),'fruiting')&&requestLotTransition(lote,'fruiting');
+                          setNoticeDlg({title:'Primordios confirmados',msg:aFruct?`Lote ${lote.codigo}: paso a fructificación registrado.`:`Primordios registrados en ${lote.codigo}. La etapa no cambió.`});
                         } else if(act==='riego'){
                           setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad registrada para ${lote.codigo}.`});
                         } else if(act==='ventilacion'){
@@ -13931,6 +14154,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
                       {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
                       {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                      {label:'Preparación para producción',sub:`${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`,icon:IconBox,onClick:openProductionReadiness},
                       {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
                       const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
@@ -15077,7 +15301,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
                     <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
-                    <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                    <div className="recipe-start-actions">
+                      <button type="button" className="rec-empty-action" onClick={focusIngredientCatalog}>Elegir ingredientes</button>
+                      <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -15148,17 +15375,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {/* Acciones compactas */}
                     <div className="live-dash-actions">
-                      {an&&!totOk&&(
-                        <button
-                          onClick={()=>autoBalance(balanceMode)}
-                          className="live-dash-btn"
-                          style={{background:'var(--coral-500)',color:'var(--paper-50)',borderColor:'var(--coral-600)'}}
-                          aria-label="Ajustar ingredientes libres al 100%"
-                          title="Ajustar ingredientes libres al 100%">
-                          <IconBolt size={10} color="var(--paper-50)" />
-                          <span>100%</span>
-                        </button>
-                      )}
                       <button
                         onClick={()=>setShowLiveChips(!showLiveChips)}
                         className="live-dash-btn live-dash-recipe-toggle"
@@ -15171,24 +15387,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <span>{recipe.length}</span>
                         {showLiveChips ? <IconChevronUp size={9} color="var(--ink-700)" /> : <IconChevronDown size={9} color="var(--ink-700)" />}
                       </button>
-                      <button
-                        onClick={()=>{
-                          if(saveName.trim()){
-                            saveR();
-                          } else {
-                            document.getElementById('bl-receta')?.scrollIntoView({behavior:'smooth',block:'start'});
-                            setTimeout(()=>{
-                              const inp=document.querySelector('.sbar input');
-                              if(inp){ inp.focus(); inp.style.outline='2px solid var(--coral-500)'; setTimeout(()=>inp.style.outline='',1200); }
-                            },300);
-                          }
-                        }}
-                        className="live-dash-btn"
-                        style={{background:flash?'var(--moss-600)':'var(--ink-900)',color:'var(--paper-50)',borderColor:'var(--ink-900)'}}
-                        aria-label={flash?'Receta guardada':'Guardar receta en Recetario'}
-                        title="Guardar receta en Recetario">
-                        {flash ? <IconCheck size={11} color="var(--paper-50)" /> : <IconDisk size={11} color="var(--paper-50)" />}
-                      </button>
+
                     </div>
                   </div>
 
@@ -15202,14 +15401,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {id:'bl-ingredientes',l:'Insumos',icon:IconSprout},
                             {id:'bl-receta',l:'Receta',icon:IconRecipe},
                             {id:'bl-perito',l:'Perito',icon:IconTarget},
-                            {id:'bl-batch',l:'Batch',icon:IconBox},
+                            {id:'bl-batch',l:'Lote',icon:IconBox},
                             ...(tr?[{id:'bl-tratamiento',l:'Tratamiento',icon:IconFlame}]:[]),
                           ].map(s=>{
                             const IconComp=s.icon;
                             return (
                               <button
                                 key={s.id}
-                                onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+                                onClick={()=>{const target=document.getElementById(s.id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth',block:'start'});}}
                                 style={{
                                   fontFamily:'var(--font-body)',fontSize:'11px',fontWeight:700,
                                   textTransform:'uppercase',padding:'3px 6px',background:'var(--paper-0)',
@@ -15239,21 +15438,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       )}
 
-                      {/* Acciones de balance y edición de la receta (antes en el header de #bl-receta) */}
-                      <div style={{display:'flex',gap:5,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                        {an&&Math.abs(an.tot-100)>MASS_BALANCE_TOL&&(
-                          <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                            <button type="button" className="tog mass-balance-action" onClick={()=>autoBalance(balanceMode)}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Auto-balancear 100%</button>
-                            <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)} title="Estrategia de balanceo">
+                      <details className="recipe-edit-options" data-testid="recipe-edit-options">
+                        <summary>Opciones de edición{normMode?' · Auto-ajustar activo':''}</summary>
+                        <div className="recipe-edit-options-body">
+                          <label className="recipe-balance-strategy">
+                            <span>Estrategia al balancear 100%</span>
+                            <select name="balanceStrategy" aria-label="Estrategia de balanceo" className="bal-mode" value={balanceMode} onChange={e=>setBalanceMode(e.target.value)}>
                               <option value="proportional">Proporcional</option>
                               <option value="equal">Igualando</option>
                               <option value="last">Al último</option>
                             </select>
-                          </div>
-                        )}
-                        <button className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)} title="Al cambiar un %, los demás se ajustan proporcionalmente (respeta ●)">Auto-ajustar</button>
-                        <button className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar</button>
-                      </div>
+                          </label>
+                          <p>El botón de siguiente paso aplica esta estrategia y respeta los porcentajes bloqueados.</p>
+                          <button type="button" className={`tog${normMode?' on':''}`} aria-pressed={normMode} onClick={()=>setNormMode(!normMode)}>Auto-ajustar al editar</button>
+                          <p>Al cambiar un porcentaje, redistribuye los demás proporcionalmente sin cambiar los bloqueados.</p>
+                          <button type="button" className="tog" onClick={()=>setConfirmDlg({title:'Limpiar receta',msg:'¿Limpiar la receta activa? Se perderán los ingredientes y porcentajes actuales.',danger:true,confirmLabel:'Limpiar',onConfirm:()=>{setRecipe([]);setLockedIds([]);}})}>Limpiar receta</button>
+                        </div>
+                      </details>
 
                       {/* Receta editable: ingredientes con % ajustable, lock y remove */}
                       <div style={{border:'1px solid var(--paper-300)'}}>
@@ -15305,85 +15506,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
               );
             })()}
           </div>
-          {recipe.length>0&&(
-          <details className="form-support-details" data-testid="formulator-provenance-details">
-            <summary>Resumen y procedencia de la receta</summary>
-          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
-              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
-              teórico o de uno mezclado con el historial real de la finca, y
-              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
-              procedencia. Una etiqueta fija que no sigue al dato es peor que
-              no tener etiqueta: afirma algo que puede ser falso. */}
-          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
-          {recipe.length>0&&(
-            <section className="form-summary-strip" aria-label="Resumen de receta activa">
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Especie</span>
-                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
-                <span className="os-provenance-line">Manual</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Objetivo</span>
-                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
-                <span className="os-provenance-line">Modo activo</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Peso total</span>
-                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
-                <span className="os-provenance-line">Calculado</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">C:N</span>
-                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
-                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Humedad objetivo</span>
-                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
-                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">BE estimada</span>
-                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
-                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
-                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
-                  if(!prov) return 'Estimado';
-                  // El número que se muestra pasa por blendEBWithHistory, así que
-                  // la etiqueta tiene que decir si de verdad entró historial de la
-                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
-                  // le sirve a nadie para decidir. No se pinta ningún nivel de
-                  // confianza aquí porque la banda de predicción la calcula
-                  // scoring.js y no está en alcance en esta franja — inventarle un
-                  // nivel sería exactamente el defecto que esto viene a corregir.
-                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
-                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
-                  if(!d) return 'Estimado';
-                  const muestra=conHistorial
-                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
-                    : '';
-                  return `${d.label} · ${d.detail}${muestra}`;
-                })()}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Costo/kg</span>
-                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
-                {/* El valor de esta celda es an.cost, SIEMPRE precio de catálogo; el
-                    costo real de bodega (realCostPerKg) se muestra aparte cuando
-                    se separan, en vez de dejar creer que el de arriba lo es. */}
-                <span className="os-provenance-line" data-testid="prov-costo">{procedenciaCosto(an?.cost,realCostPerKg).texto}</span>
-              </div>
-              <div className="form-summary-cell">
-                <span className="form-summary-k">Revisión</span>
-                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
-                  Perito {Math.round(opt?.score||0)}/100
-                </span>
-                <span className="os-provenance-line">Perito · Requiere revisión</span>
-              </div>
-            </section>
-          )}
-
-          </details>
-          )}
           <details className="form-support-details form-method-details" data-testid="formulator-method-details">
             <summary>Guía de formulación · cinco pasos</summary>
             <div className="form-species-targets" aria-label="Objetivos de la especie activa">
@@ -15485,8 +15607,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <header className="active-recipe-workspace-head">
               <div>
                 <span className="ingredient-section-eyebrow">Área de trabajo principal</span>
-                <h2 id="active-recipe-workspace-title">Puntaje, gauges y lote</h2>
-                <p>Edita la receta desde la barra superior — aquí queda su lectura técnica: puntaje, balance C:N/N% y preparación del lote.</p>
+                <h2 id="active-recipe-workspace-title">Ingredientes y revisión</h2>
+                <p>Edita los porcentajes en la receta activa y revisa aquí los requisitos para preparar el lote.</p>
               </div>
               <span className="active-recipe-count" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'}</span>
             </header>
@@ -15496,51 +15618,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
                   <h2>Ingredientes</h2>
-                  <p>Explora el catálogo completo con el scroll de la página. Agrega insumos sin perder de vista los grupos.</p>
+                  <p>Busca por nombre o etiqueta y agrega los insumos a tu receta.</p>
                 </div>
                 <span className="ingredient-section-count" aria-live="polite">
                   {visibleIngredients.length} de {effectiveINGS.length}
                 </span>
               </div>
-              <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" style={{marginBottom:0,flex:'1 1 auto',minWidth:'200px'}} placeholder="Buscar ingrediente o etiqueta…" value={search} onChange={e=>setSearch(e.target.value)}/>
-                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+              <div className="ingredient-search-controls">
+                <label className="ingredient-search-field">
+                  <span>Buscar ingrediente</span>
+                  <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" placeholder="Ej. aserrín, paja, calcio…" value={search} onChange={e=>setSearch(e.target.value)}/>
+                </label>
+                {search.length>0&&<button type="button" className="cat" onClick={()=>{setSearch('');document.querySelector('#bl-ingredientes input[name="ingredientSearch"]')?.focus();}}>Limpiar búsqueda</button>}
+                <button type="button" className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} disabled={!hasPickedSpecies} onClick={()=>setShowCompatOnly(v=>!v)} title={hasPickedSpecies?`Compatibles con ${sp.name}`:'Selecciona una especie para filtrar compatibilidad'}>Solo compatibles</button>
               </div>
-              {showPrices&&(
-                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
-                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
-                    {Object.keys(priceOverrides).length>0&&(
-                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
-                    )}
-                  </div>
-                  <div>
-                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
-                      const isEdited=priceOverrides[ing.id]!==undefined;
-                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
-                      return(
-                        <div key={ing.id} className="price-row">
-                          <div>
-                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
-                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
-                          </div>
-                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
-                            aria-label={`Precio ${ing.name} por kg`}
-                            className={`price-inp${isEdited?' edited':''}`}
-                            value={ing.cost}
-                            onChange={e=>{
-                              const v=Math.max(0,parseInt(e.target.value)||0);
-                              const n={...priceOverrides,[ing.id]:v};
-                              setPriceOverrides(n);
-                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
                 <div className="bodega-bar" title="Abrir bodega / inventario">
                 <button
                   type="button"
@@ -15576,24 +15667,64 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {pantryIds.length>12&&<span className="pantry-chip" style={{opacity:0.5}}>+{pantryIds.length-12} más</span>}
                 </div>
               )}
-              <div className="cats" role="group" aria-label="Filtrar por categoría">
-                {Object.entries(CATS).map(([k,l])=><button key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
-                <button className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} style={{borderColor:showCompatOnly?'var(--moss-600)':'',color:showCompatOnly?'var(--moss-600)':'',background:showCompatOnly?'color-mix(in oklab,var(--moss-600) 8%,var(--paper-50))':''}} onClick={()=>setShowCompatOnly(s=>!s)} title="Ver solo ingredientes compatibles con la especie seleccionada">{showCompatOnly ? <span style={{display:'inline-flex',alignItems:'center',gap:4}}>Solo compatibles <AppIcon name="close" size={10} /></span> : 'Compatibles'}</button>
-                <button className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)} title="Agrupar ingredientes por rol funcional botánico (Base, Suplemento N, Minerales/pH)">{groupByRole?'Agrupado por rol':'Lista simple'}</button>
-              </div>
-              <div className="ingredient-view-toolbar">
-                <span>{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} con el origen y filtros actuales</span>
-                <div>
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
-                  {showRoleGroups&&<button type="button" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
-                  {hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}
+              <details className="ingredient-options" data-testid="ingredient-options">
+                <summary>Más opciones{cat!=='all'?` · ${CATS[cat]}`:''}{showPrices?' · Precios abiertos':''}</summary>
+                <div className="ingredient-options-body">
+                  <div className="cats" role="group" aria-label="Filtrar por categoría">
+                    {Object.entries(CATS).map(([k,l])=><button type="button" key={k} data-cat={k} className={`cat${cat===k?' on':''}`} aria-pressed={cat===k} onClick={()=>setCat(k)}>{l}</button>)}
+                  </div>
+                  <div className="ingredient-option-actions">
+                    <button type="button" className={`cat${groupByRole?' on':''}`} aria-pressed={groupByRole} onClick={()=>setGroupByRole(g=>!g)}>Agrupar por función</button>
+                    {showRoleGroups&&<button type="button" className="cat" onClick={()=>setAllRoleGroups(false)}>Expandir grupos</button>}
+                    {showRoleGroups&&<button type="button" className="cat" onClick={()=>setAllRoleGroups(true)}>Colapsar grupos</button>}
+                <button className={`tog${showPrices?' on':''}`} aria-pressed={showPrices} onClick={()=>setShowPrices(!showPrices)} title="Editar precios por kg" style={{flexShrink:0,whiteSpace:'nowrap'}}>Precios</button>
+                  </div>
+              {showPrices&&(
+                <div style={{border:'1px solid var(--border-soft)',marginBottom:10,background:'var(--paper-50)'}}>
+                  <div style={{padding:'7px 12px',background:'var(--paper-200)',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',fontWeight:700}}>Precios por kg (COP) — se guardan localmente</span>
+                    {Object.keys(priceOverrides).length>0&&(
+                      <button onClick={()=>{setPriceOverrides({});try{localStorage.removeItem('setas_prices_v1');}catch(e){}}} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'3px 8px',border:'1px solid var(--coral-500)',background:'none',color:'var(--coral-500)',cursor:'pointer'}}>Restaurar todo</button>
+                    )}
+                  </div>
+                  <div>
+                    {fings.filter(g=>g.cn>0||g.cost>0).map(ing=>{
+                      const isEdited=priceOverrides[ing.id]!==undefined;
+                      const orig=INGS.find(i=>i.id===ing.id)?.cost||0;
+                      return(
+                        <div key={ing.id} className="price-row">
+                          <div>
+                            <div style={{fontSize:"var(--text-base)",fontWeight:500,color:'var(--ink-900)'}}>{ing.name}</div>
+                            {isEdited&&<div style={{fontSize:"var(--text-sm)",color:'var(--ink-700)',fontFamily:"var(--font-mono)",fontWeight:500}}>Orig: ${orig}/kg</div>}
+                          </div>
+                          <input name={`ingredientPrice-${ing.id}`} type="number" min="0" step="100" inputMode="numeric" required
+                            aria-label={`Precio ${ing.name} por kg`}
+                            className={`price-inp${isEdited?' edited':''}`}
+                            value={ing.cost}
+                            onChange={e=>{
+                              const v=Math.max(0,parseInt(e.target.value)||0);
+                              const n={...priceOverrides,[ing.id]:v};
+                              setPriceOverrides(n);
+                              try{localStorage.setItem('setas_prices_v1',JSON.stringify(n));}catch(err){}
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
+                </div>
+              </details>
+              <div className="ingredient-view-toolbar">
+                <span role="status" aria-live="polite" aria-atomic="true">{visibleIngredients.length} ingrediente{visibleIngredients.length===1?'':'s'} · {usePantry?'Bodega':'Catálogo'}{cat!=='all'?` · ${CATS[cat]}`:''}{showCompatOnly?` · Compatibles con ${sp.name}`:''}</span>
+                <div>{hasIngredientViewFilters&&<button type="button" onClick={resetIngredientView}>Restablecer vista</button>}</div>
               </div>
               <div className={`ing-list${showRoleGroups?' is-grouped':' is-simple'}`}>
                 {(()=>{
                   const base=visibleIngredients;
                   if(usePantry&&pantryIds.length===0){
-                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Paleta completa”.</span></button>;
+                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Catálogo”.</span></button>;
                   }
                   if(base.length===0){
                     return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
@@ -15736,85 +15867,143 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
             </div>
             <div className="builder-right">
-            <header className="form-advanced-tools-head" id="form-advanced-tools-title">
-              <div>
-                <span className="ingredient-section-eyebrow">Herramientas avanzadas</span>
-                <h2>Perito + Automejora</h2>
-                <p>Diagnóstico profundo, correcciones sugeridas y mejora automática de la fórmula.</p>
+            <section className="form-unified-review" id="formulator-review" aria-labelledby="formulator-review-title">
+              <header className="form-review-header">
+                <div>
+                  <span className="ingredient-section-eyebrow">Revisión de la receta activa</span>
+                  <h2 id="formulator-review-title" tabIndex={-1}>Revisión y preparación</h2>
+                  <p>Balance, compatibilidad, bodega y tratamiento en una sola revisión.</p>
+                </div>
+                <button type="button" className="inv-btn inv-btn-sec" onClick={openProductionReadiness}>Ver preparación para producción</button>
+              </header>
+              {recipe.length>0?(
+                <div className="form-review-checks" aria-label="Comprobaciones de receta" aria-live="polite">
+                  {(()=>{
+                    const undocumented=hasPickedSpecies?recipe.filter(r=>!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
+                    const checks=[
+                      {id:'balance',label:'Balance de masa',status:balanced?'verified':'blocked',detail:`${an?.tot?.toFixed(1)||'0'}% / 100%${balanced?' · Composición cerrada':` · ${balMsg}`}`,action:'recipe'},
+                      {id:'compatibility',label:'Compatibilidad documentada',status:!hasPickedSpecies||undocumented.length?'unknown':'verified',detail:!hasPickedSpecies?'Selecciona una especie.':undocumented.length?`Sin compatibilidad documentada con ${sp.name}: ${undocumented.map(r=>effectiveINGS.find(g=>g.id===r.id)?.name||r.id).join(', ')}.`:`Todos los ingredientes tienen compatibilidad documentada con ${sp.name}.`,action:'recipe'},
+                      ...productionReadiness.checks.filter(c=>['model','stock','moisture','equipment'].includes(c.id)),
+                    ];
+                    const labels={verified:'Comprobado',blocked:'Requiere atención',unknown:'Por verificar'};
+                    return checks.map(check=><article key={check.id} className={`form-review-check is-${check.status}`} data-testid={`form-review-${check.id}`}>
+                      <h3>{check.label}</h3><span className="form-review-status">{labels[check.status]}</span><p>{check.detail}</p>
+                      {check.id==='equipment'&&tr&&<p>Recomendación del modelo: {tr.name} · {tr.temp} · {tr.time}.</p>}
+                      {check.status!=='verified'&&<button type="button" onClick={()=>{
+                        if(check.action==='recipe'){focusActiveRecipe();return;}
+                        if(check.action==='recommendations'){const panel=document.getElementById('bl-perito');panel?.scrollIntoView({block:'start'});if(panel){panel.setAttribute('tabindex','-1');panel.focus({preventScroll:true});}return;}
+                        if(check.action==='inventory'){goTab('inventario');return;}
+                        openProductionReadiness();
+                      }}>{check.action==='recipe'?'Editar receta':check.action==='recommendations'?'Revisar ajustes':check.action==='inventory'?'Revisar bodega':'Revisar preparación'}</button>}
+                    </article>);
+                  })()}
+                </div>
+              ):<p className="form-review-empty">Agrega ingredientes para revisar la receta. La revisión se actualiza con cada cambio.</p>}
+              {renderPeritoPanel('formulador')}
+              <details className="review-details" data-testid="form-review-gauges">
+                <summary>Medidores y comparación del modelo</summary>
+                <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+              </details>
+          {recipe.length>0&&(
+          <details className="form-support-details" data-testid="formulator-provenance-details">
+            <summary>Resumen y procedencia de la receta</summary>
+          {/* La línea de procedencia sale del DATO, no de una cadena escrita a
+              mano: antes "BE estimada" decía "Hipótesis" viniera de un modelo
+              teórico o de uno mezclado con el historial real de la finca, y
+              "Costo/kg" declaraba "COP / kg seco", que es una unidad y no una
+              procedencia. Una etiqueta fija que no sigue al dato es peor que
+              no tener etiqueta: afirma algo que puede ser falso. */}
+          {/* 5.3 Franja de resumen de receta con líneas de procedencia (5.4) */}
+          {recipe.length>0&&(
+            <section className="form-summary-strip" aria-label="Resumen de receta activa">
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Especie</span>
+                <span className="form-summary-v">{hasPickedSpecies?(sp?.name||'—'):'—'}</span>
+                <span className="os-provenance-line">Manual</span>
               </div>
-              <button type="button" onClick={()=>openBuilderSubTab('generador')}>Abrir generador</button>
-            </header>
-            {renderPeritoPanel('formulador')}            <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Objetivo</span>
+                <span className="form-summary-v">{globalMode==='produccion'?'Producción':'Investigación'}</span>
+                <span className="os-provenance-line">Modo activo</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Peso total</span>
+                <span className="form-summary-v">{an?.tot!=null?`${an.tot.toFixed(1)}%`:'0%'}</span>
+                <span className="os-provenance-line">Calculado</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">C:N</span>
+                <span className="form-summary-v">{an?.cn>0?`${an.cn.toFixed(1)}:1`:'—'}</span>
+                {(()=>{const p=an?.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva();return <span className="os-provenance-line" data-testid="prov-cn" title={p.title||undefined}>{p.texto}</span>;})()}
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Humedad objetivo</span>
+                <span className="form-summary-v">{an?.moistureTarget!=null?`${an.moistureTarget}%`:'—'}</span>
+                <span className="os-provenance-line" title="Es la humedad a la que se apunta, no una medición del sustrato">{['Objetivo',SetasSpeciesTargetsApi.targetSourceLabel(an?.targets,'moisture'),bd?`agua a añadir ${bd.agua.toFixed(1)} kg`:null].filter(Boolean).join(' · ')}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">BE estimada</span>
+                <span className="form-summary-v">{an?.eb!=null?`${Math.round(blendEBWithHistory(an,histStats))}%`:'—'}</span>
+                <span className="os-provenance-line" data-testid="prov-eb">{(()=>{
+                  const prov=typeof window!=='undefined'?window.SetasProvenance:null;
+                  if(!prov) return 'Estimado';
+                  // El número que se muestra pasa por blendEBWithHistory, así que
+                  // la etiqueta tiene que decir si de verdad entró historial de la
+                  // finca. Y con cuántos lotes: un origen sin tamaño de muestra no
+                  // le sirve a nadie para decidir. No se pinta ningún nivel de
+                  // confianza aquí porque la banda de predicción la calcula
+                  // scoring.js y no está en alcance en esta franja — inventarle un
+                  // nivel sería exactamente el defecto que esto viene a corregir.
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
+                  if(!d) return 'Estimado';
+                  const muestra=conHistorial
+                    ? ` (n=${histStats.n}${Number.isFinite(histStats.similarity)?` · similitud ${histStats.similarity.toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''})`
+                    : '';
+                  return `${d.label} · ${d.detail}${muestra}`;
+                })()}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Costo/kg</span>
+                <span className="form-summary-v" title="COP por kg seco">{an?.cost!=null?`$${Math.round(an.cost).toLocaleString('es-CO')}`:'—'}</span>
+                {/* El valor de esta celda es an.cost, SIEMPRE precio de catálogo; el
+                    costo real de bodega (realCostPerKg) se muestra aparte cuando
+                    se separan, en vez de dejar creer que el de arriba lo es. */}
+                <span className="os-provenance-line" data-testid="prov-costo">{procedenciaCosto(an?.cost,realCostPerKg).texto}</span>
+              </div>
+              <div className="form-summary-cell">
+                <span className="form-summary-k">Revisión</span>
+                <span className="form-summary-v" style={{fontSize:'var(--text-xs)'}}>
+                  Perito {Math.round(opt?.score||0)}/100
+                </span>
+                <span className="os-provenance-line">Perito · Requiere revisión</span>
+              </div>
+            </section>
+          )}
+
+          </details>
+          )}
             {recipe.length>0&&<div className="panel panel-accent" id="bl-receta-summary">
               {/* ── HEADER EDITORIAL ── */}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:14,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.12)'}}>
                 <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-                  <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:20,color:'var(--ink-900)',lineHeight:1}}>Puntaje y lote</span>
+                  <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:20,color:'var(--ink-900)',lineHeight:1}}>Lote y guardado</span>
                   <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)',fontWeight:400}}>({recipe.length})</span>
                 </div>
               </div>
-              {an&&an.sp&&opt?.score>0&&(()=>{const sc=opt.score;const col=sc>=80?'var(--moss-500)':sc>=60?'var(--ochre-500)':'var(--coral-500)';const bg=sc>=80?'var(--status-ok-bg)':sc>=60?'var(--status-warn-bg)':'var(--status-error-bg)';const lbl=sc>=85?'Óptima':sc>=70?'Muy buena':sc>=55?'Aceptable':sc>=40?'Mejorable':'Deficiente';return(
-                <div style={{background:bg,border:`1px solid ${col}`,borderLeft:`4px solid ${col}`,padding:'12px 14px 10px',marginTop:3,transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                    <div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:800,marginBottom:2}}>Score de receta</div>
-                      <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontStyle:'italic',color:col,lineHeight:1,transition:'color .4s'}}>{lbl}</div>
-                    </div>
-                    <div style={{display:'flex',alignItems:'baseline',gap:2}}>
-                      <span style={{fontFamily:'var(--font-display)',fontSize:42,fontWeight:400,lineHeight:1,color:col,letterSpacing:'var(--tracking-tight)',transition:'background-color .4s ease,border-color .4s ease,color .4s ease'}}>{sc}</span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-400)',fontWeight:600,marginBottom:4}}>/100</span>
-                    </div>
-                  </div>
-                  <div style={{height:3,background:'rgba(26,20,16,0.08)',borderRadius:2,overflow:'hidden'}}>
-                    <div style={{height:'100%',width:`${sc}%`,background:col,borderRadius:2,transition:'width .6s cubic-bezier(.32,.72,.36,1)'}}></div>
-                  </div>
-                </div>
-              );})()}
-              {an&&an.sp&&(
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,margin:'10px 0 4px'}}>
-                  {[
-                    {label:'C:N',val:an.cn,min:an.sp.cn_optimal.min,max:an.sp.cn_optimal.max,ideal:an.sp.cn_optimal.ideal,fmt:v=>`${v.toFixed(1)}:1`,scale:Math.max(an.sp.cn_optimal.max*1.5,an.cn*1.1||1)},
-                    {label:'N%',val:an.avgN,min:an.sp.n_optimal.min,max:an.sp.n_optimal.max,ideal:an.sp.n_optimal.ideal,fmt:v=>`${v.toFixed(2)}%`,scale:Math.max(an.sp.n_optimal.max*1.5,an.avgN*1.1||1)}
-                  ].map(m=>{
-                    const inRange=m.val>=m.min&&m.val<=m.max;
-                    const pct=Math.min(100,(m.val/m.scale)*100);
-                    const idealPct=(m.ideal/m.scale)*100;
-                    const minPct=(m.min/m.scale)*100;
-                    const maxPct=(m.max/m.scale)*100;
-                    const barColor=inRange?'var(--moss-500)':m.val<m.min?'var(--coral-500)':'var(--status-warn)';
-                    return(
-                      <div key={m.label} style={{background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'8px 10px'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
-                          <span style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-700)',fontWeight:700}}>{m.label}</span>
-                          <span style={{fontFamily:"var(--font-num)",fontSize:"var(--text-md)",color:barColor,fontWeight:600}}>{m.fmt(m.val)}</span>
-                        </div>
-                        <div style={{position:'relative',height:6,background:'var(--border-soft)',borderRadius:3}}>
-                          <div style={{position:'absolute',left:`${minPct}%`,width:`${maxPct-minPct}%`,height:'100%',background:'rgba(77,98,53,.2)',borderRadius:3}}/>
-                          <div style={{position:'absolute',left:`${idealPct}%`,width:2,height:'160%',top:'-30%',background:'rgba(77,98,53,.5)',borderRadius:1}}/>
-                          <div style={{position:'absolute',left:0,width:`${pct}%`,height:'100%',background:barColor,borderRadius:3,transition:'width .3s'}}/>
-                        </div>
-                        <div style={{display:'flex',justifyContent:'space-between',marginTop:3,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',fontWeight:500}}>
-                          <span>{m.fmt(m.min)}</span><span style={{opacity:.7}}>↑{m.fmt(m.ideal)}</span><span>{m.fmt(m.max)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
               {recipe.length>0&&(
                 <div className="bwrap" id="bl-batch">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:13}}>
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Batch</div>
                     <button className={`tog${showBatch?' on':''}`} aria-pressed={showBatch} onClick={()=>setShowBatch(!showBatch)}>{showBatch?'Ocultar':'Calcular'}</button>
                   </div>
-                  <div className="bgrid" style={{gridTemplateColumns:'1fr 1fr 1fr 1fr'}}>
+                  <div className="bgrid bgrid-batch">
                     <div className="bf"><label htmlFor="bf-numbags">Nº bolsas</label><input id="bf-numbags" type="number" min="1" max="500" inputMode="numeric" required value={numBags} onChange={e=>setNumBags(parseInt(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-kgbag">kg / bolsa</label><input id="bf-kgbag" type="number" min=".5" max="5" step=".1" inputMode="decimal" required value={kgBag} onChange={e=>setKgBag(parseFloat(e.target.value)||1)}/></div>
                     <div className="bf"><label htmlFor="bf-hobj">Humedad obj. % △</label><input id="bf-hobj" type="number" min="55" max="80" inputMode="numeric" required value={hObj} onChange={e=>{moistureTouched.current.hObj=true;setHObj(parseInt(e.target.value)||67);}} style={{borderColor:moistureInTargetRange(hObj,an?.targets?.moisture)?'var(--moss-500)':'var(--coral-500)'}}/></div>
                     <div className="bf"><label htmlFor="bf-spawncost">Costo spawn ($/kg)</label><input id="bf-spawncost" type="number" min="0" step="1000" inputMode="numeric" required value={spawnCost} onChange={e=>setSpawnCost(parseInt(e.target.value)||0)}/></div>
                     <div className="bf"><label htmlFor="bf-vegprice">Precio venta ($/kg )</label><input id="bf-vegprice" type="number" min="0" step="1000" inputMode="numeric" required value={vegPrice??''} placeholder={String(DEFAULT_FRESH_PRICES[sKey]||22000)} onChange={e=>setVegPrice(e.target.value===''?null:Number(e.target.value))}/></div>
-                    <div className="bf"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
+                    <div className="bf bf-total"><label htmlFor="bf-total">Total</label><input id="bf-total" readOnly value={`${(numBags*kgBag).toFixed(1)} kg`} style={{fontWeight:700,color:'var(--coral-500)'}}/></div>
                   </div>
                   {showBatch&&bd&&(
                     <div>
@@ -15838,7 +16027,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <span className="bq" style={{background:'var(--status-ok-bg)',border:'1px solid var(--status-ok-marker)',color:'var(--status-ok)'}}>{bd.spawn.toFixed(2)} kg</span>
                         </div>
                       </div>
-                      <div className="btots" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
+                      <div className="btots btots-4">
                         <div className="btot"><div className="bv">{bd.wet.toFixed(1)} kg</div><div className="bl">Sustrato</div></div>
                         <div className="btot"><div className="bv">${Math.round(bd.cost).toLocaleString()}</div><div className="bl">Insumos</div></div>
                         <div className="btot"><div className="bv">${Math.round(bd.spawnCostTotal).toLocaleString()}</div><div className="bl">Spawn</div></div>
@@ -15945,21 +16134,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {!readyForProduction&&(
                   <div role="status" aria-live="polite" style={{marginTop:6,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)'}}>
                     <span style={{display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> {productionBlockMsg}</span>
-                    {!balanced&&<button type="button" onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> Auto-mejorar</button>}
+                    {!balanced&&<button type="button" onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",padding:'5px 10px',background:'var(--coral-500)',color:'var(--paper-50)',border:'none',cursor:'pointer',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-50)" /> {formNextLabel}</button>}
                   </div>
                 )}
                 </div>
               )}
             </div>}
-
-
-
-
-
-            </div>
-          </section>
           {tab==='formular'&&tr&&recipe.length>0&&(
-            <div className="panel treatment-section" id="bl-tratamiento">
+            <details className="panel treatment-section review-details" id="bl-tratamiento"><summary>Tratamiento recomendado · {tr.name}</summary><div>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:13,borderBottom:'1px solid var(--paper-300)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Tratamiento recomendado</div>
                 <button className={`tog${showGuide?' on':''}`} aria-pressed={showGuide} onClick={()=>setShowGuide(!showGuide)}>{showGuide?'Ocultar guía':'Ver guía paso a paso'}</button>
@@ -15991,9 +16173,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
               {showGuide&&<PasteGuide tr={tr} recipe={recipe} numBags={numBags} kgBag={kgBag}/>}
-            </div>
+            </div></details>
           )}
 
+            </section>
+
+
+
+
+
+            </div>
+          </section>
                         <div className="panel rec-panel" style={{display:'none'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,paddingBottom:10,borderBottom:'1px solid rgba(26,20,16,.1)'}}>
                 <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>
@@ -17024,6 +17214,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {tab==='produccion'&&(
           <div>
+            <ProductionReadinessDashboard assessment={productionReadiness} input={productionReadinessInput} rooms={Object.values(ROOMS_CONFIG)} onRoomChange={setSelectedClimateRoom} onAction={readinessAction} onSave={saveProductionEvidence} error={productionEvidence.error}/>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
               <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
@@ -17184,7 +17375,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="no-print" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderBottom:'none',position:'sticky',top:0,zIndex:'var(--z-sticky-sub)'}}>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',flex:1}}>
                     {psSections.map(s=>(
-                      <button key={s.id} onClick={()=>document.getElementById(s.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
+                      <button key={s.id} onClick={()=>{const target=document.getElementById(s.id);if(target?.tagName==='DETAILS')target.open=true;target?.scrollIntoView({behavior:'smooth',block:'start'});}} style={{fontFamily:'var(--font-body)',fontSize:10,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',padding:'6px 10px',background:'var(--paper-50)',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-xs)',cursor:'pointer',whiteSpace:'nowrap'}}>{s.l}</button>
                     ))}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
@@ -17726,9 +17917,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
               operatorRole={operatorRole}
               operatorId={operatorId}
               accountId={accountId}
-              onTransitionConfirmed={(batchId, nextState) => {
-                updateBitLote(batchId, { estado: nextState, workflowState: nextState });
-              }}
+              // La etapa la escribe acceptFieldEvent (con su `estado` en español) y
+              // llega por la sincronización; escribirla aquí la duplicaría con
+              // otro vocabulario y las reglas la rechazarían.
+              onTransitionConfirmed={() => {}}
             />
           );
         })()}
@@ -17756,31 +17948,23 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* SELECTOR DE MODO DE ESCANEO */}
-                <div style={{ display: 'flex', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'round' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'round' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('round'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="scan" size={13} style={{marginRight:4}} /> Ronda Lote
-                  </button>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'harvest' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'harvest' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('harvest'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="scale" size={13} style={{marginRight:4}} /> Báscula Cosecha
-                  </button>
-                  <button
-                    type="button"
-                    className={`inv-btn inv-btn-sm ${qrScanMode === 'sweep' ? 'inv-btn-pri' : 'inv-btn-sec'}`}
-                    style={{ flex: 1, minHeight: 32, fontSize: 10.5, fontWeight: qrScanMode === 'sweep' ? 700 : 500 }}
-                    onClick={() => { setQrScanMode('sweep'); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
-                  >
-                    <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Barrido Sala
-                  </button>
+                <div role="group" aria-label="Modo de captura" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
+                  {[
+                    { mode: 'round', icon: 'scan', label: 'Ronda Lote' },
+                    { mode: 'harvest', icon: 'scale', label: 'Báscula Cosecha' },
+                    { mode: 'sweep', icon: 'bolt', label: 'Barrido Sala' },
+                  ].map(opt => (
+                    <button
+                      key={opt.mode}
+                      type="button"
+                      aria-pressed={qrScanMode === opt.mode}
+                      className={`inv-btn inv-btn-sm ${qrScanMode === opt.mode ? 'inv-btn-pri' : 'inv-btn-sec'}`}
+                      style={{ flex: '1 1 150px', minWidth: 0, minHeight: 44, fontSize: 12, fontWeight: qrScanMode === opt.mode ? 700 : 500, whiteSpace: 'normal', textAlign: 'center', justifyContent: 'center', alignItems: 'center', lineHeight: 1.2 }}
+                      onClick={() => { setQrScanMode(opt.mode); isDecodingPausedRef.current = false; setHarvestActiveCrate(null); }}
+                    >
+                      <AppIcon name={opt.icon} size={13} style={{marginRight:4, flexShrink:0}} /> {opt.label}
+                    </button>
+                  ))}
                 </div>
 
                 {/* PANTALLA DE PESAJE RÁPIDO (MODO BÁSCULA ACTIVA) */}
@@ -18300,8 +18484,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             up.colonizationPct=pct;
                             return updateBitBolsa(b.id,up);
                           })) return;
-                          if(pct>=100&&currentLote.estado==='incubacion'){
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
+                          if(pct>=100&&workflow?.canTransition(loteLifecycleState(currentLote),'fruiting')){
+                            requestLotTransition(currentLote,'fruiting');
                           }
                           setNoticeDlg({
                             title:'Avance registrado',
@@ -18316,8 +18500,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             if(!loteBolsas.every(b=>{
                               return updateBitBolsa(b.id,{col100:b.col100||today,colonizationPct:100});
                             })) return;
-                            updateBitLote(currentLote.id,{estado:'fructificacion'});
-                            setNoticeDlg({title:'Primordios confirmados',msg:`Lote ${currentLote.codigo} pasado a etapa de fructificación.`});
+                            const aFruct=workflow?.canTransition(loteLifecycleState(currentLote),'fruiting')&&requestLotTransition(currentLote,'fruiting');
+                            setNoticeDlg({title:'Primordios confirmados',msg:aFruct?`Lote ${currentLote.codigo}: paso a fructificación registrado.`:`Primordios registrados en ${currentLote.codigo}. La etapa no cambió.`});
                           } else if(act==='riego'){
                             setNoticeDlg({title:'Riego y Humedad OK',msg:`Verificación de humedad y niebla registrada para ${currentLote.codigo}.`});
                           } else if(act==='ventilacion'){
@@ -19957,23 +20141,22 @@ interval:
               });
             });
 
-            const nextEstado = targetState === 'quarantine' ? 'cuarentena' : targetState === 'discarded' ? 'descartado' : currentLote.estado;
             const updatedEvents = [
               ...(currentLote.lifecycleEvents || []),
               contamEvent,
               ...(transitionEvt ? [transitionEvt] : [])
             ];
 
-            // `lifecycleState` es del servidor: las reglas lo deniegan al cliente
-            // y updateBitLote sincroniza después de pintar, así que un rechazo
-            // dejaba el lote en cuarentena en el teléfono y activo en el servidor.
+            // La etapa (cuarentena o descarte) pasa por requestLotTransition: con
+            // sesión la acepta el servidor; escribir `estado` aquí dejaba el lote
+            // en cuarentena en el teléfono y activo en el servidor.
+            const loteConEventos = { ...currentLote, lifecycleEvents: updatedEvents };
             updateBitLote(currentLote.id, {
-              estado: nextEstado,
               numBolsas: lossCalc.healthyBags,
               lifecycleEvents: updatedEvents
             });
             if (changesState) {
-              enqueueFieldTransition(currentLote, currentLifecycle, targetState);
+              requestLotTransition(loteConEventos, targetState, { from: currentLifecycle, logged: true });
             }
 
             setShowTriageModal(false);
@@ -20350,10 +20533,9 @@ interval:
                 // fallo aterrizaba en un aviso lateral: el lote se veía
                 // descartado en el teléfono y seguía activo en el servidor, donde
                 // otro operario lo encontraba disponible.
-                updateBitLote(currentLote.id, {
-                  lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt]
-                });
-                enqueueFieldTransition(currentLote, fromState, massTarget);
+                const conEvento = { ...currentLote, lifecycleEvents: [...(currentLote.lifecycleEvents || []), evt] };
+                updateBitLote(currentLote.id, { lifecycleEvents: conEvento.lifecycleEvents });
+                requestLotTransition(conEvento, massTarget, { from: fromState, logged: true });
               }
             }
 

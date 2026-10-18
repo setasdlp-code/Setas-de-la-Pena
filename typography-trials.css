@@ -29,7 +29,7 @@
 [data-pairing="mono"] .hero-intro,
 [data-pairing="mono"] .card-profile,
 [data-pairing="mono"] .species-overview dd,
-[data-pairing="mono"] .trial-prose { font-family: var(--font-mono); font-size: 16px; line-height: 1.65; }
+[data-pairing="mono"] .trial-prose { font-family: var(--font-sans); font-size: 18px; line-height: 1.6; }
 [data-pairing="mono"] .hero h1,
 [data-pairing="mono"] .trial-title { font-weight: 700; letter-spacing: -.02em; }
 .trial-intro { padding-block: 48px 32px; max-width: 800px; }

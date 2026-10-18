@@ -3,53 +3,57 @@ title: Especificación Ambiental del Lote 1 de Shiitake — Plantilla Versionada
 document_id: DOC-0122
 category: operations
 load_priority: selective
-last_reviewed: 2026-10-17
+last_reviewed: 2026-10-13
 confidence: low
 primary_sources:
   - docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
-  - ../01_species/lentinula_edodes.md
+  - knowledge_base/06_operations/quality_control.md
 related_documents:
   - piloto_shiitake_incubacion_protocolo.md
   - quality_control.md
+  - ../01_species/lentinula_edodes.md
   - ../CURRENT_OPERATIONS.md
-  - ../04_facility/incubation.md
 ---
 
-# Estado
+# Alcance y estado
 
-**PENDIENTE.** No hay valores aprobados. Este documento es la plantilla que debe completarse antes de inocular el lote 1. Ningún campo se llena con valores de literatura: la banda depende de la cepa y su clase térmica (`../01_species/lentinula_edodes.md`).
+**Estado: `PENDIENTE`. Ningún campo tiene valor.** Esta es la plantilla de la especificación versionada que el piloto de incubación exige antes de arrancar (ver `piloto_shiitake_incubacion_protocolo.md`). No contiene setpoints: los rangos de literatura de `01_species/lentinula_edodes.md` sirven para diseñar el piloto, no para controlar.
 
-El firmware (`esphome/incubadora_piloto.yaml`) no trae objetivo de temperatura: el termostato arranca apagado y, tras 90 s de estabilización con las alarmas limpias, se reanuda solo si el operador lo dejó habilitado ("Calefacción habilitada"). Esta especificación define qué se carga en el equipo.
+Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPECIFICACION_LOTE` en `esphome/incubadora_piloto.yaml`, ese firmware no compila. Eso es intencional. El objetivo de temperatura se aplica en cada arranque desde el preset `Lote`, de modo que tras un corte de energía manda siempre la especificación vigente y no un valor guardado en la memoria del equipo.
 
-# Especificación (versión 0, sin aprobar)
+# Reglas
 
-| Campo | Valor | Fuente exigida |
+- Todo campo obligatorio vacío bloquea el arranque del piloto; no se completa con una estimación silenciosa.
+- Un cambio de cualquier valor crea una versión nueva (no se edita la anterior); la versión vigente es la última aprobada por Sebastián.
+- La banda de temperatura no se copia de otra cepa ni de la literatura sin identificar la cepa.
+
+# Especificación (versión 0 — sin aprobar)
+
+| Campo | Valor | Alimenta |
 |---|---|---|
-| Versión y fecha | v0 — pendiente | — |
-| Aprobada por | pendiente | Sebastián |
-| Cepa (nombre y código) | pendiente | Ficha de Fungiilab |
-| Proveedor | Fungiilab (micelio nacional de *L. edodes*, bolsa de 2 kg) | Decisión del piloto |
-| Lote de spawn y fecha de elaboración | pendiente | Etiqueta o factura |
-| Matriz del inóculo (grano o aserrín) | pendiente | Ficha de Fungiilab |
-| Clase térmica (fría, media o alta) | pendiente | Ficha de Fungiilab |
-| Requiere choque frío | pendiente | Ficha de Fungiilab |
-| Banda de temperatura de incubación | pendiente | Ficha y prueba de cámara |
-| Histéresis (`histeresis_c`) | pendiente | Ensayo de las fases 1 y 2 |
-| Dosis de inoculación | pendiente | Fungiilab (referencia de diseño: 5–7 % del peso del bloque, sin validar) |
-| Formulación del sustrato | pendiente | Aprobación formal |
-| Masa del bloque | 2,0 kg | Decisión del piloto |
-| Número de bloques | 30 (60 kg de sustrato húmedo) | Decisión del piloto |
-| Ciclo de autoclave validado | pendiente | Ciclo con carga representativa (All American 1941X, 39 L) |
+| Cepa (nombre) | — | — |
+| Cepa (código del proveedor) | — | — |
+| Proveedor | Fungiilab (micelio nacional de *L. edodes*) | — |
+| Lote de spawn | — | Trazabilidad (`YYYY-MM-LE-###`) |
+| Fecha de elaboración del spawn | — | Trazabilidad |
+| Clase térmica (fría, media o alta) | — | Elección de la banda |
+| ¿Requiere choque frío? (sí o no) | — | Fase posterior de inducción |
+| Banda de temperatura de incubación (°C) | — | Define `setpoint_c` |
+| Histéresis (°C) | — | `histeresis_c` (`heat_deadband` y `heat_overrun`) |
+| Dosis de inoculación (% del peso del bloque) | — | Registro del lote |
+| Formulación (versión de receta) | — | `quality_control.md` |
+| Masa del bloque | 2,0 kg (decisión del piloto) | Registro del lote |
+| Número de bloques | 30 (decisión del piloto) | Registro del lote |
+| Versión | 0 | — |
+| Fecha de la versión | — | — |
+| Aprobada por | — | — |
 
-# Cómo se aplica al firmware
+# Cómo se traduce al firmware
 
-| Campo de la especificación | Dónde se carga |
-|---|---|
-| Banda de temperatura | Objetivo del termostato `incubadora`, fijado por el operador desde Home Assistant o la API tras cargar la versión aprobada. El firmware no trae objetivo. |
-| Histéresis | Sustitución `histeresis_c` de `esphome/incubadora_piloto.yaml` (arranca en 0,5 °C, valor técnico y no biológico) |
-| Alerta de núcleo | Fija en el firmware: 28 °C y 5 °C sobre el aire (valores del KB para el piloto) |
-| Límite de aire | Sustitución `aire_max_c` (28,0 °C, provisional; se ajusta con la banda aprobada) |
+| Campo de la especificación | Sustitución en `esphome/incubadora_piloto.yaml` | Cómo se aplica |
+|---|---|---|
+| Banda de temperatura de incubación | `setpoint_c` | `esphome -s setpoint_c <°C> -s histeresis_c <°C> compile incubadora_piloto.yaml`, o editar la sustitución |
+| Histéresis | `histeresis_c` | Igual que arriba |
+| Límite de aire | `aire_max_c` | 28,0 °C, provisional (mismo tope que el KB da al núcleo); se ajusta con la banda aprobada |
 
-# Control de cambios
-
-Cada cambio de la especificación crea una versión nueva con fecha y aprobador. No se edita una versión aprobada.
+Los límites de seguridad del núcleo (28 °C, de `01_species/lentinula_edodes.md`; y 5 °C sobre el aire, de la spec del piloto §5.3) no dependen de la cepa en este piloto; si la especificación exige otros, es un cambio de diseño y se registra como tal.
