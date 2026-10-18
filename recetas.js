@@ -28,9 +28,9 @@ function applyScale(article, scale, updateUrl) {
   target.searchParams.set('scale', String(scale));
   if (startParams.get('purpose') === 'restaurante') target.searchParams.set('purpose', 'restaurante');
   cta.href = target.href;
-  article.querySelector('.recipe-cta p').textContent = `Prepararás una consulta con ${grams} g de shiitake fresco limpio${scale > 1 ? ` (${scaleInfo.labels[scale].toLowerCase()}, ×${scale})` : ', la cantidad de esta receta'}. Podrás cambiarla.`;
+  article.querySelector('.recipe-cta p').textContent = `${grams} g de shiitake fresco limpio para ${scale > 1 ? `la receta ×${scale}` : 'la receta base'}. Cantidad editable en la consulta; peso de compra sujeto a presentación y merma.`;
   const status = article.querySelector('.recipe-scale-status');
-  status.textContent = scale === 1 ? 'Cantidades de la receta base. Son estimaciones pendientes de prueba.' : `Cantidades para ${scaleInfo.labels[scale].toLowerCase()} (×${scale}). Son estimaciones pendientes de prueba; el tiempo y los consejos de cocción son los de la receta base y pueden cambiar con más cantidad.`;
+  status.textContent = scale === 1 ? 'Receta base (×1). Cantidades estimadas, pendientes de prueba.' : `Cantidades para ${scaleInfo.labels[scale].toLowerCase()} (×${scale}): estimaciones pendientes de prueba. Los tiempos no escalan con los ingredientes: dependen de la carga y del equipo. Las cantidades mayores pueden requerir tandas o recipientes de mayor capacidad.`;
   status.hidden = false;
   article.querySelector(`input[name="scale-${article.id}"][value="${scale}"]`).checked = true;
   if (updateUrl) {

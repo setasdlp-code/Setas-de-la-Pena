@@ -1,0 +1,46 @@
+{
+  "purpose": "Firmas para revisión interna. Confirmar licencia comercial de Gaya antes de distribución externa.",
+  "name": "Setas de la Peña",
+  "fonts": {
+    "GayaPatched-Bold.otf": "6d65e41c7690070335bf2e8ea9f20becfcf7bb1e5dc068cc765ffffa017f1f04",
+    "GayaPatched-Medium.otf": "62cf06eadae3682f46de9aef14c76298c6df918913a6bd69740502cd52f347ec"
+  },
+  "files": [
+    {
+      "file": "wordmark-horizontal-moss.svg",
+      "token": "moss-700",
+      "color": "#2E3B2F",
+      "sha256": "ada0d57c2bccbb60550efd37720cd36266996f9a41e2912069593ce4ef9d7c04"
+    },
+    {
+      "file": "wordmark-horizontal-ink.svg",
+      "token": "ink-900",
+      "color": "#1A1410",
+      "sha256": "2b2c9807d9187a7a2e77162574533f1221c4b8e5d920a802cf43f8f8a99efa4f"
+    },
+    {
+      "file": "wordmark-horizontal-paper.svg",
+      "token": "paper-50",
+      "color": "#FEFDFB",
+      "sha256": "2de70b7daa6f1a4cbe2746af28caa783604b106d858ede225bbc67cb4ad4f7d5"
+    },
+    {
+      "file": "wordmark-stacked-moss.svg",
+      "token": "moss-700",
+      "color": "#2E3B2F",
+      "sha256": "73b8ad7cbfeadd7db53645520ea7885d06af757770cd6eb627365acea472f808"
+    },
+    {
+      "file": "wordmark-stacked-ink.svg",
+      "token": "ink-900",
+      "color": "#1A1410",
+      "sha256": "5f9ce5d0c60a05f0d518936d6f659da329d1389d570496746419d0cd94b1fd72"
+    },
+    {
+      "file": "wordmark-stacked-paper.svg",
+      "token": "paper-50",
+      "color": "#FEFDFB",
+      "sha256": "4a06b904a9a585db6175e57c658210e91a810fd4049b5ce6a8baec603086dd25"
+    }
+  ]
+}

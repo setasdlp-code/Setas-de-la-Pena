@@ -4,8 +4,9 @@ A design system for a mushroom farm at 2.600 m in Tenjo, Cundinamarca — one
 system covering the field (lot records, substrate recipes, room signage, SOPs)
 and the shelf (packaging, fichas, market cards).
 
-**Governing idea:** every mark on the page is either evidence or navigation.
-Colour is classification or state. Imagery is documentation. Type carries the
+**Governing idea:** every mark helps someone identify, prepare, understand or act.
+Colour expresses identity, classification or state. Imagery may document a real
+product/process or illustrate a species/preparation; captions distinguish them. Type carries the
 difference between what a person reads, what a person acts on, and what a
 machine emitted. Nothing is decoration.
 
@@ -72,8 +73,9 @@ Three families, three jobs. A face used outside its job is a bug.
 All faces are **vendored** in `assets/fonts/` — no CDN. A field tablet at 2.600 m
 with no signal must render the system identically to a desktop.
 
-Gaya Patched ships the full family: Thin (100), Light (300), Regular (400),
-Medium (500), Bold (700), Black (900), each with a matching italic.
+Gaya Patched uses five real weights: Thin (100), Light (300), Medium (500),
+Bold (700), Black (900), each with a matching italic. The Latin role uses Medium
+Italic 500; do not rely on a Regular 400 face. See the font note in README.md.
 
 **Mono metadata and labels are uppercase and tracked ≥ 0.15em. Numeric measurements and tabular data remain untracked.** Tracking expresses metadata grammar; it is never applied blindly to figures.
 
@@ -89,7 +91,7 @@ Medium (500), Bold (700), Black (900), each with a matching italic.
 | `heading-02` | 24px | Gaya Patched | 500 Medium | 1.10 | −0.01em | — | Card and panel titles. |
 | `heading-03` | 19px | IBM Plex Sans | 600 SemiBold | 1.30 | 0 | — | Sub-headings in prose and SOP steps. |
 | `species` | 28px | Gaya Patched | 700 Bold | 1.10 | −0.01em | — | Common name — *Shiitake*, *Melena de león*. |
-| `latin` | 18px | Gaya Patched | 400 *Italic* | 1.30 | 0 | — | Binomial — *Lentinula edodes*. Always italic, always sentence case. |
+| `latin` | 18px | Gaya Patched | 500 *Medium Italic* | 1.30 | 0 | — | Binomial — *Lentinula edodes*. Always italic, always sentence case. |
 | `body` | 16px | IBM Plex Sans | 400 Regular | 1.55 | 0 | — | Prose floor. Never lower, screen or print. |
 | `small` | 14px | IBM Plex Sans | 400 Regular | 1.55 | 0 | — | Captions, secondary UI, dense card copy. |
 | `data` | 13px | IBM Plex Mono | 400 Regular | 1.40 | 0 | — | Table numbers, telemetry, measurements. Tabular figures. |
@@ -219,6 +221,7 @@ Twelve columns everywhere. **Density is a mode, not a new grid.** Set
 | `archive` | **32px** | 64px | Editorial and print — fichas, packaging, posters, the folio system. Air is the point. |
 | `field` | **24px** | 32px | Reports, labels, lot records, SOPs. **The default.** |
 | `control` | **12px** | 16px | Dense telemetry — dashboards, metric tables, room monitors. |
+| `culinary` | **24px** | 32px | Public ingredient, recipe and chef consultation surfaces; also packaging previews. |
 
 ```html
 <div data-mode="control">

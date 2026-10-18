@@ -1,4 +1,9 @@
 # Setas de la Peña — Manual Canónico del Design System & Identidad de Marca
+> **Ámbito:** referencia FOS/operaciones. Para la identidad comercial vigente,
+> usar [Identidad comercial](../brand-guidelines.md) y `08_brand/ds-2026/`.
+> Las paletas históricas de este documento no sustituyen el DS comercial;
+> lote, certificación y disponibilidad necesitan evidencia propia.
+
 **Versión:** 3.0 (Canónica — 2026)
 **Dominio:** `08_brand` · Field Operating System (FOS)
 **Estado:** Activo y Vinculante

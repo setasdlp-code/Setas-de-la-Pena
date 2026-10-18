@@ -1,0 +1,25 @@
+# Applied to the public export only. Preserve deliberate review visibility.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Robots-Tag: noindex, nofollow
+
+# Pages already revalidates unversioned files by default. Keep HTML explicit.
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/home
+  Cache-Control: public, max-age=0, must-revalidate
+
+/shiitake
+  Cache-Control: public, max-age=0, must-revalidate
+
+/recetas
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Only exporter-generated, content-hashed files live here.
+/_assets/*
+  Cache-Control: public, max-age=31536000, immutable

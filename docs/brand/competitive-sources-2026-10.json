@@ -1,0 +1,276 @@
+{
+  "edition": "2026-10-12",
+  "scope": "10 brands, 5 user-selected typography cases, Gaya index and Goldi typography case",
+  "attempted": 32,
+  "http200": 31,
+  "rawEvidenceRoot": "/workspace/reports/brand-deep-research/sources/",
+  "sources": [
+    {
+      "id": "burlap-home",
+      "url": "https://www.burlapandbarrel.com/",
+      "finalUrl": "https://www.burlapandbarrel.com/",
+      "retrievedAt": "2026-10-12T21:31:04.058467+00:00",
+      "status": 200,
+      "sha256": "729737b24e71e8747dbe935c627efa40610fe7d1ce2284b9edcd3614deb24ab9"
+    },
+    {
+      "id": "burlap-product",
+      "url": "https://www.burlapandbarrel.com/products/wild-mountain-cumin",
+      "finalUrl": "https://www.burlapandbarrel.com/products/wild-mountain-cumin",
+      "retrievedAt": "2026-10-12T21:31:04.090560+00:00",
+      "status": 200,
+      "sha256": "b8b3f4c3e5657c0a148be139b1df3dfd58ac6907b0ee1c9b6ceff50824ef322b"
+    },
+    {
+      "id": "burlap-wholesale",
+      "url": "https://www.burlapandbarrel.com/pages/wholesale",
+      "finalUrl": "https://www.burlapandbarrel.com/pages/wholesale",
+      "retrievedAt": "2026-10-12T21:32:03.287936+00:00",
+      "status": 200,
+      "sha256": "1b9dbd6c0e342595dfa80537acf99bd415ddc8597a7e1a8574f8e6f73fcc37bc"
+    },
+    {
+      "id": "cuiva-business",
+      "url": "https://www.champinonessetasdecuiva.com/para-tu-negocio/",
+      "finalUrl": "https://www.champinonessetasdecuiva.com/para-tu-negocio/",
+      "retrievedAt": "2026-10-12T21:32:03.647340+00:00",
+      "status": 200,
+      "sha256": "6dea002b129e485d4fc784676cb51ed674f4b209b835a2d1e495839bb34224b9"
+    },
+    {
+      "id": "diaspora-home",
+      "url": "https://www.diasporaco.com/",
+      "finalUrl": "https://www.diasporaco.com/",
+      "retrievedAt": "2026-10-12T21:31:04.265969+00:00",
+      "status": 200,
+      "sha256": "a7e23474e718c1823a7a00c90fb67154f89728ded128c69c392b99f371fa17c0"
+    },
+    {
+      "id": "diaspora-product",
+      "url": "https://www.diasporaco.com/products/pragati-turmeric",
+      "finalUrl": "https://www.diasporaco.com/products/pragati-turmeric",
+      "retrievedAt": "2026-10-12T21:32:03.585148+00:00",
+      "status": 200,
+      "sha256": "e83239ef297000eec5c1a1055a831b57ad3475e509ec6ae0d92d0eb0534cd040"
+    },
+    {
+      "id": "diaspora-wholesale",
+      "url": "https://www.diasporaco.com/pages/wholesale",
+      "finalUrl": "https://www.diasporaco.com/pages/wholesale",
+      "retrievedAt": "2026-10-12T21:32:03.550351+00:00",
+      "status": 200,
+      "sha256": "8cce41de07fab6c20a7e4c4201f66f6dd96e8a83bf73fac8db740dc944c2013a"
+    },
+    {
+      "id": "dona-julia-home",
+      "url": "https://www.champinonesdonajulia.com/",
+      "retrievedAt": "2026-10-12T21:31:05.058114+00:00",
+      "status": "failed",
+      "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "id": "elali",
+      "url": "https://fontsinuse.com/uses/61172/mohamed-elali-website",
+      "finalUrl": "https://fontsinuse.com/uses/61172/mohamed-elali-website",
+      "retrievedAt": "2026-10-12T21:33:00.768052+00:00",
+      "status": 200,
+      "sha256": "17a4d99f2537e2d6f91cad697fae6a79515a5ae8b2d1c362be34e94e0f53aa77"
+    },
+    {
+      "id": "ensor",
+      "url": "https://fontsinuse.com/uses/60895/james-ensor-inspired-by-brussels",
+      "finalUrl": "https://fontsinuse.com/uses/60895/james-ensor-inspired-by-brussels",
+      "retrievedAt": "2026-10-12T21:33:01.668422+00:00",
+      "status": 200,
+      "sha256": "92aefc8572d07c6d9794d2e57add2ccfa85beb9061474fd819b82cd8b3c4d403"
+    },
+    {
+      "id": "farwest-home",
+      "url": "https://farwestfungi.com/",
+      "finalUrl": "https://farwestfungi.com/",
+      "retrievedAt": "2026-10-12T21:31:03.736459+00:00",
+      "status": 200,
+      "sha256": "fb14365bf831092822ed5734e42ce3bd3a25eb8fd4dd01e136d2084c2f200976"
+    },
+    {
+      "id": "farwest-story",
+      "url": "https://farwestfungi.com/pages/our-story",
+      "finalUrl": "https://farwestfungi.com/pages/our-story",
+      "retrievedAt": "2026-10-12T21:32:03.261247+00:00",
+      "status": 200,
+      "sha256": "6eced6ab0567ed91a2bdf28499222790e8ba1834ad6f0c89614d9c16807c3144"
+    },
+    {
+      "id": "farwest-wholesale",
+      "url": "https://farwestfungi.com/pages/wholesale-and-distributors",
+      "finalUrl": "https://farwestfungi.com/pages/wholesale-and-distributors",
+      "retrievedAt": "2026-10-12T21:32:02.662120+00:00",
+      "status": 200,
+      "sha256": "8dca1aca19bbf7fbb850a6b4c2a7b71da283f773f58b3b927ef0e827349606f9"
+    },
+    {
+      "id": "flor",
+      "url": "https://fontsinuse.com/uses/57468/flor",
+      "finalUrl": "https://fontsinuse.com/uses/57468/flor",
+      "retrievedAt": "2026-10-12T21:33:00.767459+00:00",
+      "status": 200,
+      "sha256": "76032ba138acb42f6bc51dc9ea4ddf4a5415b6c9c3252a9fa6c6825eb3019058"
+    },
+    {
+      "id": "foraged-home",
+      "url": "https://www.foraged.com/",
+      "finalUrl": "https://www.foraged.com/",
+      "retrievedAt": "2026-10-12T21:31:03.735184+00:00",
+      "status": 200,
+      "sha256": "0253d0e2ea27f4098fa85a0b5d8685de46d58c64db218db2e230870751e51d01"
+    },
+    {
+      "id": "foraged-recipes",
+      "url": "https://www.foraged.com/recipes",
+      "finalUrl": "https://www.foraged.com/recipes",
+      "retrievedAt": "2026-10-12T21:32:02.659625+00:00",
+      "status": 200,
+      "sha256": "5f40a605fcb75766bffa303f11ce5da2edf7065626bce8ced8fb6c1778285c8e"
+    },
+    {
+      "id": "foraged-wholesale",
+      "url": "https://wholesale.foraged.com/",
+      "finalUrl": "https://wholesale.foraged.com/",
+      "retrievedAt": "2026-10-12T21:32:02.659130+00:00",
+      "status": 200,
+      "sha256": "ce238c1533533d70b824b03f7210d1ed306033fee247e8d579451d2acbda8e5b"
+    },
+    {
+      "id": "gaya-fonts",
+      "url": "https://fontsinuse.com/typefaces/167778/gaya?filters=all",
+      "finalUrl": "https://fontsinuse.com/typefaces/167778/gaya?filters=all",
+      "retrievedAt": "2026-10-12T21:32:04.152339+00:00",
+      "status": 200,
+      "sha256": "d947074f80798d22a6040790de3a0dac125cbecbfab0d475ab098c5958e69dcf"
+    },
+    {
+      "id": "goldi-fonts",
+      "url": "https://fontsinuse.com/uses/69728/goldi",
+      "finalUrl": "https://fontsinuse.com/uses/69728/goldi",
+      "retrievedAt": "2026-10-12T21:32:03.693148+00:00",
+      "status": 200,
+      "sha256": "52de08e9ab6232ebcceab29c9069b5bf04fd57bfe826d099d2b5d557f51a3f7c"
+    },
+    {
+      "id": "goldi-home",
+      "url": "https://tastegoldi.com/",
+      "finalUrl": "https://tastegoldi.com/",
+      "retrievedAt": "2026-10-12T21:31:04.803930+00:00",
+      "status": 200,
+      "sha256": "10e876a9d9a3363c8ace39e8ede94e84d404122129bf916bf0cca9c744ef849b"
+    },
+    {
+      "id": "goldi-product",
+      "url": "https://tastegoldi.com/shop/punchy",
+      "finalUrl": "https://tastegoldi.com/shop/punchy",
+      "retrievedAt": "2026-10-12T21:31:04.838225+00:00",
+      "status": 200,
+      "sha256": "4dee1047e0c8b4754010bd2fda80aa5e2deee6ae5f055da051641c393d587952"
+    },
+    {
+      "id": "hi-fi-home",
+      "url": "https://hifimyco.com/",
+      "finalUrl": "https://www.hifimyco.com/",
+      "retrievedAt": "2026-10-12T21:31:03.737063+00:00",
+      "status": 200,
+      "sha256": "ff20d43639279886e25143a976fba410038bd60c2bd99de457ef105652352fed"
+    },
+    {
+      "id": "northspore-home",
+      "url": "https://northspore.com/",
+      "finalUrl": "https://northspore.com/",
+      "retrievedAt": "2026-10-12T21:31:03.734288+00:00",
+      "status": 200,
+      "sha256": "57ccabf94036ddf6ef233fc09396ad1cdade969f85d12c846ca90b98f15c44e2"
+    },
+    {
+      "id": "northspore-recipes",
+      "url": "https://northspore.com/blogs/the-black-trumpet/tagged/recipes",
+      "finalUrl": "https://northspore.com/blogs/the-black-trumpet/tagged/recipes",
+      "retrievedAt": "2026-10-12T21:32:02.658186+00:00",
+      "status": 200,
+      "sha256": "6e05dd23a0e6405bb242d1d7888fa6068e760dbad3e0566ca63ac1995c0ed71d"
+    },
+    {
+      "id": "northspore-story",
+      "url": "https://northspore.com/pages/about-north-spore",
+      "finalUrl": "https://northspore.com/pages/about-north-spore",
+      "retrievedAt": "2026-10-12T21:32:02.655953+00:00",
+      "status": 200,
+      "sha256": "6f64223ea4ce127cfec1af3e50f7d88811dd627109dfe4c8da9e6b0ba9726cf6"
+    },
+    {
+      "id": "premier-cri",
+      "url": "https://fontsinuse.com/uses/64311/nous-etions-la-pour-votre-premier-cri-entende",
+      "finalUrl": "https://fontsinuse.com/uses/64311/nous-etions-la-pour-votre-premier-cri-entende",
+      "retrievedAt": "2026-10-12T21:33:01.574304+00:00",
+      "status": 200,
+      "sha256": "8ac52f4dfbaae57ae01b0819a3886a3dfae3e89d94f2bf7a0b5a6fa4b5619bca"
+    },
+    {
+      "id": "rancho-home",
+      "url": "https://www.ranchogordo.com/",
+      "finalUrl": "https://www.ranchogordo.com/",
+      "retrievedAt": "2026-10-12T21:31:04.289889+00:00",
+      "status": 200,
+      "sha256": "33ab9c4e393f4ae6d58a33c9562ef865f3896a7db8609cb820dfe40980cbc8d6"
+    },
+    {
+      "id": "rancho-product",
+      "url": "https://www.ranchogordo.com/products/christmas-lima-beans",
+      "finalUrl": "https://www.ranchogordo.com/products/christmas-lima-beans",
+      "retrievedAt": "2026-10-12T21:31:04.755986+00:00",
+      "status": 200,
+      "sha256": "759c6734b9ff5376a9bd226796b71160dc09baea6dc9eac3633b0aadb1e94418"
+    },
+    {
+      "id": "setas-cuiva-home",
+      "url": "https://setasdecuiva.com/",
+      "finalUrl": "https://www.champinonessetasdecuiva.com/",
+      "retrievedAt": "2026-10-12T21:31:05.159424+00:00",
+      "status": 200,
+      "sha256": "4fdeafaafd7a2453186318d309fae6a8c627de89d4049023054d8c077f443ae3"
+    },
+    {
+      "id": "smallhold-home",
+      "url": "https://smallhold.com/",
+      "finalUrl": "https://smallhold.com/",
+      "retrievedAt": "2026-10-12T21:31:03.735619+00:00",
+      "status": 200,
+      "sha256": "48f1753c8e2494697213275479dce6d03417be6989c09d4935d21f09d870908b"
+    },
+    {
+      "id": "smallhold-species",
+      "url": "https://smallhold.com/pages/our-mushrooms",
+      "finalUrl": "https://smallhold.com/pages/our-mushrooms",
+      "retrievedAt": "2026-10-12T21:31:03.736082+00:00",
+      "status": 200,
+      "sha256": "4ea699c90553b3181e969074fc9396505102b020b33eb8d9edd1684e06dd336a"
+    },
+    {
+      "id": "soppjakt",
+      "url": "https://fontsinuse.com/uses/61619/god-soppjakt-by-mette-alstad",
+      "finalUrl": "https://fontsinuse.com/uses/61619/god-soppjakt-by-mette-alstad",
+      "retrievedAt": "2026-10-12T21:33:00.763136+00:00",
+      "status": 200,
+      "sha256": "07024b0133b4369ec3d9b1c9ad9183ccdc5c86391e3fbbfcfd887a7850a80920"
+    }
+  ],
+  "visualReview": {
+    "brands": 8,
+    "captures": 16,
+    "viewport": "1440 × 1000",
+    "all16Inspected": true,
+    "limitations": [
+      "GET-only TLS-verified transport; no checkout tests",
+      "Goldi second capture shows GraphQL error under this transport",
+      "Foraged and Cuiva contain partially loaded content",
+      "Promotional overlays remain visible in some captures"
+    ]
+  }
+}

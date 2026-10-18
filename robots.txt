@@ -1,0 +1,6 @@
+# Review visibility is deliberate: responses retain X-Robots-Tag: noindex, nofollow.
+# Crawling is allowed so clients can read that HTTP directive. This does not enable indexing.
+User-agent: *
+Allow: /
+
+Sitemap: https://setas-de-la-pena.pages.dev/sitemap.xml
