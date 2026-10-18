@@ -1,0 +1,13 @@
+[mcp_servers.setas]
+command = "sh"
+args = [
+    "mcp/run_server.sh",
+    "setas_mcp.py",
+]
+
+[mcp_servers.setas-bridge]
+command = "sh"
+args = [
+    "mcp/run_server.sh",
+    "setas_bridge_mcp.py",
+]
