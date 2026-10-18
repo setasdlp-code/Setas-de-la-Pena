@@ -191,7 +191,7 @@ La fuente vigente es `docs/brand/DESIGN_SYSTEM_CANONICAL.md` (v3.0, «Activo y V
 ### Alta prioridad
 1. ~~Nombre común al público~~ **Resuelto 2026-10-17 (fundador): «orellana».** FOS-06.5 mandaba «seta ostra», pero «orellana» es el nombre regional colombiano y es lo que dice un comprador en Bogotá. Se conserva la jerarquía de FOS-06.5: nombre común grande, latín pequeño y en cursiva, una sola vez. «Seta ostra» queda solo como sinónimo ocasional en textos largos. `market-voice-rules.html` (FOS-06.5) ya está actualizado.
 
-2. **Tuteo con chefs: resuelto 2026-10-17.** Se tutea a los chefs y compradores («tú», nunca «usted»). Sigue abierto si también se tutea a socios e inversionistas; mientras no se decida, en pitch a socios se usa registro técnico-financiero sin tratamiento directo (impersonal o «ustedes»).
+2. ~~Tuteo~~ **Resuelto 2026-10-17:** se tutea a todos (chefs, compradores, socios, equipo), nunca «usted». En el pitch a socios el tuteo se mantiene y el registro sigue siendo técnico-financiero: cifras, unidades y supuestos, sin floritura.
 
 ### Prioridad media
 3. ~~Tagline~~ **Resuelto 2026-10-17:** «Cultivo en sombra». Ver §7.
@@ -226,6 +226,7 @@ Sin transcripciones de llamadas ni PII en las fuentes procesadas. No se consulta
 | 2026-10-17 | Decisión: tagline oficial «Cultivo en sombra», con reglas para mantenerlo sobrio. |
 | 2026-10-17 | v2.1: tagline con tabla de candidatos y recomendación única; §8 puntero a identidad visual. |
 | 2026-10-17 | Precios en euros de las plantillas de mercado reemplazados por marcadores COP; la investigación web no encontró precios de referencia. |
+| 2026-10-17 | Decisión: tuteo a todos; registro técnico-financiero en pitch a socios. |
 | 2026-10-17 | Decisión: tuteo con chefs. `market-voice-rules.html` (FOS-06.5) actualizado a «Orellana». |
 | 2026-10-17 | Decisión: «orellana» como nombre común al público. |
 | 2026-10-17 | v2.0: incorpora reglas FOS-06.5 de cliente, tuteo, primera persona del plural, límites de titulares; elimina duplicidad de tipografía/paleta (se delega al Design System); recalibra confianza; registra conflictos entre fuentes |
