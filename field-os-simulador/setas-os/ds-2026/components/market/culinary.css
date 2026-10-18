@@ -1,0 +1,193 @@
+/* DS-2026 · Market: ingredient → preparation → professional inquiry.
+   Owns these components; colors, families and spacing use existing DS tokens.
+   Engravings identify species. Culinary illustrations suggest preparations.
+   Neither demonstrates stock, harvest, presentation or a tested recipe. */
+
+.sdp-market-wordmark {
+  font: var(--t-heading-01);
+  font-weight: var(--weight-bold);
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+.sdp-market-wordmark > span { font-weight: var(--weight-medium); }
+
+.sdp-market-intro { max-width: var(--measure-prose); }
+.sdp-market-intro__title {
+  font: var(--t-display-01);
+  font-size: clamp(var(--size-heading-01), 6vw, var(--size-display-01));
+  letter-spacing: var(--tracking-display);
+  color: var(--brand-primary);
+  margin: var(--space-2) 0;
+  text-wrap: balance;
+}
+.sdp-market-intro__copy { font: var(--t-body); }
+.sdp-market-intro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.sdp-ingredient-sheet {
+  padding: var(--space-4);
+  background: var(--surface-panel);
+  border: var(--rule-hairline);
+}
+.sdp-ingredient-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-bottom: var(--rule-heavy);
+  padding-bottom: var(--space-3);
+}
+.sdp-ingredient-sheet__header > p { margin: 0; }
+.sdp-ingredient-sheet__header > img { width: min(100%, calc(var(--space-8) * 3)); height: auto; }
+.sdp-ingredient-sheet__body {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+}
+.sdp-ingredient-sheet__plate {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-3);
+  background: var(--surface-page);
+}
+.sdp-ingredient-sheet__plate > img {
+  width: 100%;
+  height: calc(var(--space-8) * 4);
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.sdp-ingredient-sheet__plate > figcaption { margin-top: var(--space-2); }
+.sdp-ingredient-sheet__copy { min-width: 0; font: var(--t-body); }
+.sdp-ingredient-sheet__title {
+  font: var(--t-display-02);
+  color: var(--brand-primary);
+  margin-bottom: var(--space-1);
+  overflow-wrap: anywhere;
+}
+.sdp-ingredient-sheet__facts { margin-block: var(--space-3); }
+.sdp-ingredient-sheet__facts > div {
+  border-top: var(--rule-hairline);
+  padding-block: var(--space-2);
+}
+.sdp-ingredient-sheet__facts dt {
+  font: var(--t-small);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-half);
+}
+.sdp-ingredient-sheet__facts dd { font: var(--t-body); margin: 0; }
+.sdp-ingredient-sheet__note { font: var(--t-small); color: var(--text-secondary); margin-top: var(--space-2); }
+.sdp-ingredient-sheet__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-top: var(--rule-hairline);
+  padding-top: var(--space-2);
+}
+.sdp-ingredient-sheet__footer > p { margin: 0; font: var(--t-small); }
+.sdp-ingredient-sheet__footer > a { display: inline-flex; align-items: center; min-height: var(--tap-target-min); }
+
+.sdp-editorial-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.sdp-editorial-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--surface-recessed);
+  border: var(--rule-hairline);
+}
+.sdp-editorial-card--dish { border-top: var(--rule-heavy); border-top-color: var(--brand-accent); }
+.sdp-editorial-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--rule-hairline);
+}
+.sdp-editorial-card__header .sdp-market-wordmark { font-size: var(--size-heading-02); }
+.sdp-editorial-card__header > img { width: min(100%, calc(var(--space-9) * 2)); height: auto; }
+.sdp-editorial-card__title {
+  font: var(--t-display-02);
+  color: var(--brand-primary);
+  margin: var(--space-4) 0 var(--space-1);
+  overflow-wrap: anywhere;
+}
+.sdp-editorial-card__image {
+  width: 100%;
+  height: calc(var(--space-8) * 4);
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  margin-block: var(--space-2);
+}
+.sdp-editorial-card__note {
+  margin-top: auto;
+  border-top: var(--rule-hairline);
+  padding-top: var(--space-2);
+}
+.sdp-editorial-card__line { font: var(--t-heading-02); margin-bottom: 0; }
+.sdp-editorial-card__note > a { display: inline-flex; align-items: center; min-height: var(--tap-target-min); }
+.sdp-editorial-card__footer {
+  font: var(--t-small);
+  color: var(--text-secondary);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: var(--rule-hairline);
+}
+
+.sdp-chef-brief {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  padding: var(--space-5);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+.sdp-chef-brief .t-label, .sdp-chef-brief .t-small { color: var(--text-inverse); }
+.sdp-chef-brief__title {
+  font: var(--t-display-02);
+  color: var(--text-inverse);
+  margin-block: var(--space-3);
+  text-wrap: balance;
+}
+.sdp-chef-brief__list { padding-left: var(--space-3); margin-block: var(--space-2) var(--space-3); }
+.sdp-chef-brief__list > li { padding-block: var(--space-1); }
+.sdp-chef-brief__note { font: var(--t-small); color: var(--text-inverse); margin-top: var(--space-2); }
+.sdp-chef-brief a:not(.sdp-btn) { color: var(--text-inverse); }
+.sdp-chef-brief :focus-visible { outline-color: var(--text-inverse); }
+
+@media (max-width: 900px) {
+  .sdp-editorial-card { padding: var(--space-3); }
+  .sdp-editorial-card__image { height: calc(var(--space-8) * 3); }
+}
+@media (max-width: 700px) {
+  .sdp-ingredient-sheet__body, .sdp-editorial-pair, .sdp-chef-brief { grid-template-columns: minmax(0, 1fr); }
+  .sdp-ingredient-sheet, .sdp-editorial-card, .sdp-chef-brief { padding: var(--space-3); }
+  .sdp-ingredient-sheet__body, .sdp-chef-brief { gap: var(--space-3); }
+  .sdp-ingredient-sheet__title, .sdp-editorial-card__title, .sdp-chef-brief__title { font-size: var(--size-heading-01); }
+  .sdp-ingredient-sheet .sdp-btn, .sdp-chef-brief .sdp-btn { width: 100%; white-space: normal; }
+}
+@media print {
+  .sdp-ingredient-sheet, .sdp-editorial-card, .sdp-chef-brief { break-inside: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .sdp-ingredient-sheet__title, .sdp-editorial-card__title, .sdp-chef-brief__title { font-size: var(--size-heading-01); }
+  .sdp-ingredient-sheet { padding: var(--space-2); }
+  .sdp-ingredient-sheet__header { padding-bottom: var(--space-2); }
+  .sdp-ingredient-sheet__body { gap: var(--space-2); padding-block: var(--space-2); }
+  .sdp-ingredient-sheet__facts { margin-block: var(--space-2); }
+  .sdp-ingredient-sheet__facts > div { padding-block: var(--space-1); }
+  .sdp-ingredient-sheet__footer { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+}

@@ -1,11 +1,26 @@
 # Setas de la Peña · DS-2026 (Criterio edition)
 
-El **Design System canónico** unificado de Setas de la Peña: un solo núcleo de tokens y componentes modulares que gobierna tanto las operaciones agronómicas de campo en Tenjo (`FOS Operations`) como la identidad botánica, editorial y de mercado (`Swiss Botanical Market`).
+El **Design System canónico** unificado de Setas de la Peña: un solo núcleo de tokens y componentes modulares que gobierna tanto las operaciones agronómicas de campo en Tenjo (`FOS Operations`) como la identidad micológica, editorial y culinaria de mercado.
 
 - **Autoridad canónica:** `08_brand/ds-2026/` es la única fuente de verdad del sistema de diseño.
 - **Distribución:** `field-os-simulador/setas-os/ds-2026/` es un artefacto de consumo empaquetado y sincronizado automáticamente mediante `scripts/sync-consumers.mjs`.
 - **Gobernanza:** `distribution-manifest.json` rige exactamente qué se sincroniza y qué se comprueba en los tests.
 - **Migración y compatibilidad:** Consulte [`MIGRATION.md`](MIGRATION.md) para el mapeo v1 → Criterio y la política de fachadas de compatibilidad sin roturas.
+
+## Mercado y cocina · 2026.1.5
+
+«Conoce la seta. Imagina el plato.» se traduce en componentes CSS reutilizables:
+
+- `.sdp-market-intro`: propuesta, explicación y acciones legibles.
+- `.sdp-ingredient-sheet`: especie, perfil con fuente, preparación y consulta.
+- `.sdp-editorial-pair` + `.sdp-editorial-card`: lámina y plato, con variante `--dish`.
+- `.sdp-chef-brief`: presentación profesional y pauta de consulta sobre plato, cantidad, presentación, ciudad y fecha.
+
+Importar solo `market.css`; usar `data-mode="culinary"` en superficies de cocina y `archive` en láminas. Gaya + IBM y los pigmentos existentes permanecen como fuente única. El módulo está disponible también desde `index.css` y la fachada de componentes; `operations.css` conserva su ámbito operativo.
+
+[Contrato y anatomía](components/COMPONENTS.md#20--mercado-y-cocina). Ejemplo fuente: `08_brand/ds-2026/mockups/market/17-culinary-market.html`. Manual consumidor: `08_brand/ds-2026/brand-kit/index.html`. Las maquetas y el manual permanecen en el checkout canónico; no se empaquetan como aplicación.
+
+El estudio `docs/brand/competitive-research-2026-10.md` aporta intención culinaria de Smallhold, consulta profesional de Foraged/Far West Fungi y jerarquía de ingrediente de Burlap & Barrel. Son hipótesis de diseño, no evidencia de conversión. El DS no incorpora imágenes de competidores ni declara un stack compartido con ellos.
 
 ## Arquitectura de 4 capas
 

@@ -19,7 +19,7 @@ const speciesTargets = () => (typeof SetasSpeciesTargets !== 'undefined' && Seta
 
 const diagnose=(a,sKey)=>{
   if(!a) return{main:'Selecciona ingredientes para comenzar.',sugs:[]};
-  const{tot,cn,avgN,suppP,baseP,addP,cafeP,airP,densaP,incompat,eb,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct}=a;const s=[];
+  const{tot,cn,avgN,suppP,baseP,addP,cafeP,airP,densaP,incompat,eb,sp,requiresSterilization,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct}=a;const s=[];
   if(tot<95) s.push({t:'error',i:'!',tx:`Total ${tot.toFixed(1)}% — necesitas ${(100-tot).toFixed(1)}% más.`});
   else if(tot>105) s.push({t:'error',i:'!',tx:`Total ${tot.toFixed(1)}% — reduce ${(tot-100).toFixed(1)}%.`});
   if(sp){
@@ -31,6 +31,7 @@ const diagnose=(a,sKey)=>{
     else if(avgN>sp.n_optimal.max) s.push({t:'warning',i:'↑',tx:`Nitrógeno elevado (${avgN.toFixed(2)}%). Riesgo moderado. Spawn ajustado: ${dynSpawn}%.`});
     else s.push({t:'success',i:'',tx:`Nitrógeno óptimo (${avgN.toFixed(2)}%). Spawn dinámico: ${dynSpawn}%.`});
     if(suppP>sp.supplementation_max) s.push({t:'error',i:'!',tx:`Suplementación ${suppP.toFixed(0)}% excede ${sp.supplementation_max}%. REQUIERE AUTOCLAVE 121°C×90min. Spawn: ${dynSpawn}%.`});
+    if(requiresSterilization) s.push({t:'warning',i:'!',tx:'Especie con esterilización obligatoria: solo autoclave. Pasteurización y cal no son aceptables para este lote.'});
     // pH
     if(sp.ph_optimal){
       if(avgPh<sp.ph_optimal.min) s.push({t:'error',i:'',tx:`pH estimado ${avgPh.toFixed(1)} — demasiado ácido para ${sp.name} (óptimo ${sp.ph_optimal.min}–${sp.ph_optimal.max}). Agrega carbonato de calcio o ceniza vegetal.`});
