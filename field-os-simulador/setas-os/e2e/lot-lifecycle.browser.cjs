@@ -180,8 +180,6 @@ const loteLocal=(page,id)=>page.evaluate(i=>(JSON.parse(localStorage.getItem('sd
   assert.ok(db.cols.bitacora_lotes.has(loteId),'el lote planificado no subió a Bitácora');
   assert.equal(db.cols.bitacora_lotes.get(loteId).estado,'planificado');
 
-  // ── 2. Preparar la mezcla en móvil: la primera etapa la acepta el servidor ──
-  await page.setViewportSize({width:390,height:844});
   const cerrarAvisos=async()=>{
    for(let i=0;i<3;i++){
     const ok=page.locator('.inv-modal-bg').getByRole('button',{name:/^(Aceptar|Entendido|Cerrar)$/i});
@@ -189,6 +187,20 @@ const loteLocal=(page,id)=>page.evaluate(i=>(JSON.parse(localStorage.getItem('sd
     await ok.first().click();
    }
   };
+
+  // ── 1b. En escritorio (1280×800), clicar la tarjeta del lote abre bit_ficha (BatchDetailV2) ──
+  await page.setViewportSize({width:1280,height:800});
+  await cerrarAvisos();
+  await navegar('bitacora');
+  await cerrarAvisos();
+  const desktopCard=page.locator(`.panel.sdp-lote[data-lote-id="${loteId}"]`).first();
+  await desktopCard.waitFor({state:'visible'});
+  await desktopCard.click();
+  await expect(page.locator('[data-testid="ux-v2-batch-detail"]')).toBeVisible({timeout:3000});
+  await expect(page.locator('[data-testid="ux-v2-batch-detail"]').getByRole('button',{name:'Ver tabla de bolsas'})).toBeVisible();
+
+  // ── 2. Preparar la mezcla en móvil: la primera etapa la acepta el servidor ──
+  await page.setViewportSize({width:390,height:844});
   const abrirFicha=async()=>{
    await cerrarAvisos();
    await page.locator('.app-rail-mobile [data-dest="lotes"]').click();
