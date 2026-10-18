@@ -1,260 +1,169 @@
-# Brand Guidelines v1.0 — Setas de la Peña
+# Setas de la Peña — Identidad comercial v1.1
 
-**Status:** Consolidated 2026-08-19 from scattered sources into one canonical doc. See **Provenance & Discrepancies** at the bottom before treating any single field as final — one section (Voice & Tone, Illustration) is carried over from an older concept doc and hasn't been re-confirmed against the current visual system.
+Edición: **12 de octubre de 2026**. Público: **chefs primero; también hogares**.
 
-## Quick Reference
+[Manual visual](../08_brand/ds-2026/brand-kit/index.html) · [Investigación y decisiones](brand/competitive-research-2026-10.md) · [Recursos](../08_brand/ds-2026/brand-kit/README.md) · [DS vigente](../08_brand/ds-2026/DESIGN_SYSTEM.md)
 
-- **Primary Color:** `#2E3B2F` (Moss 700 — wordmark green)
-- **Secondary Color:** `#B8614D` (Coral 500 — terracotta accent)
-- **Tertiary / Cool Neutral:** `#4E6A7A` (Slate 500)
-- **Display Font:** Gaya Patched (headings, wordmark)
-- **Body Font:** PP Object Sans
-- **Mono Font:** JetBrains Mono
-- **Voice:** sobrio (sober), honesto (honest), técnico sin ser frío (technical without being cold)
+## 1. Posicionamiento
 
----
+**Hongos para cocinar con criterio.**
 
-## 1. Color Palette
+Setas de la Peña acerca el mundo de los hongos a la cocina desde Tenjo, Cundinamarca. Ayuda a reconocer una especie, imaginar una preparación con ingredientes cercanos y reunir información para una consulta comercial. El origen y el proceso se cuentan con información comprobable.
 
-Source of truth: `_ds/.../design/colors_and_type.css`, "2026 board." Warm paper + ink + earth pigments — moss is primary, coral is secondary, sand/bark are warm neutrals, slate is the cool neutral.
+**Territorio propio: conocer la seta para imaginar el plato.** La combinación de lámina micológica, recetas con maíz, coco o plátano y conversación precisa para chefs convierte el conocimiento en una decisión de cocina. Es una elección de marca; no implica exclusividad en el mercado.
 
-### Paper (backgrounds)
-| Name | Hex | Usage |
-|------|-----|-------|
-| Paper 50 | `#FCFBF6` | Lightest — highlights, inset cards |
-| Paper 100 | `#F6F4EC` | Primary canvas / default page background |
-| Paper 200 | `#EDE8DB` | Slightly darker cream, hover-on-paper |
-| Paper 300 | `#DBD4C3` | Subtle dividers, deboss |
+Esta definición editorial no demuestra disponibilidad, abastecimiento regular o procedencia de una cosecha: cada afirmación comercial requiere sus propios datos.
 
-### Ink (text)
-| Name | Hex | Usage |
-|------|-----|-------|
-| Ink 900 | `#1A1410` | Primary text & line work (warm near-black, never pure #000) |
-| Ink 800 | `#2A2218` | Strong secondary text |
-| Ink 700 | `#3A2F26` | Secondary text, oak shadow |
-| Ink 600 | `#4A3F36` | Tertiary text, muted |
-| Ink 500 | `#6B5B4A` | Tertiary text, captions |
-| Ink 400 | `#8B7B6A` | Light text, disabled hints |
-| Ink 300 | `#A89682` | Placeholder text, disabled |
+| Decisión | Uso |
+| --- | --- |
+| Nombre | **Setas de la Peña**, con ñ y tilde. Sin abreviar a SdP en piezas comerciales. |
+| Frase principal | **Del micelio a la mesa.** Portadas, presentación y cierre de piezas. |
+| Descriptor | **Hongos para cocinar con criterio.** Presentación comercial y materiales para cocina. |
+| Titular de entrada | **Conoce la seta. Imagina el plato.** Campañas y presentación del recorrido; subordinado a la firma principal. |
+| Firma territorial | **Tenjo · Cundinamarca · Colombia.** Origen del proyecto, no garantía de origen de cada lote. |
+| Expresión de oficio | **Cultivar. Observar. Aprender.** Sección de proceso, no segunda frase principal. |
 
-### Moss — primary brand color (wordmark)
-| Name | Hex | Usage |
-|------|-----|-------|
-| Moss 900 | `#1E2A16` | Deepest — display headings on cream |
-| Moss 700 | `#2E3B2F` | Primary brand green — wordmark |
-| Moss 500 | `#6D7C5A` | Secondary text, ground tone |
-| Moss 300 | `#A0AE80` | Soft moss — borders, dividers |
-| Moss 200 | `#CDD5B4` | Moss tint — "in season" freshness cue |
+«Cultivadas en la Sabana. Cosechadas con criterio» queda como texto histórico de un mockup, no como promesa permanente sin cosecha y procedencia verificadas. «Un archivo vivo» describe el cuaderno de especies, no toda la marca.
 
-### Coral — secondary accent (mushroom cap / polypore)
-| Name | Hex | Usage |
-|------|-----|-------|
-| Coral 700 | `#8B5243` | Hover, deeper terracotta |
-| Coral 500 | `#B8614D` | Secondary accent — warm terracotta siena |
-| Coral 300 | `#D4845A` | Soft coral |
-| Coral 200 | `#E5C3B0` | Warm tint |
+La investigación encontró «Del cultivo a tu mesa» en Setas de Cuivá. Nuestra frase principal sigue siendo útil para explicar el recorrido, pero la diferenciación debe aparecer en las piezas y el servicio, no depender solo de ella.
 
-### Sand — warm neutral (oyster / lion's mane body)
-| Name | Hex |
-|------|-----|
-| Sand 500 | `#BFA98B` |
-| Sand 300 | `#D4C4AC` |
-| Sand 200 | `#E7DCC9` |
+Una sola marca. «Las setas», «En la cocina», «Origen» y «El cuaderno» son secciones, no submarcas. Setas OS conserva su ámbito operativo.
 
-### Bark — deep warm brown (stems, oak substrate)
-| Name | Hex |
-|------|-----|
-| Bark 700 | `#594631` |
-| Bark 500 | `#7A6248` |
-| Bark 300 | `#A89178` |
+## 2. Audiencia y recorrido
 
-### Slate — cool neutral (shadow, mountain stone)
-| Name | Hex |
-|------|-----|
-| Slate 500 | `#4E6A7A` |
-| Slate 300 | `#8AA0AC` |
-| Slate 200 | `#C4D0D7` |
+**Chefs y equipos de cocina:** decidir cómo usar el ingrediente y consultar cantidad, presentación, consistencia, fecha y entrega. La ficha empieza con especie, textura y usos; termina con una consulta concreta. La marca no se presenta como un proveedor con abastecimiento regular confirmado.
 
-### Ochre — warning semantics + paper wash only (not a headline brand color)
-| Name | Hex |
-|------|-----|
-| Ochre 700 | `#8A6312` |
-| Ochre 500 | `#C68F2C` |
-| Ochre 200 | `#ECD8A8` |
+Pauta para la conversación profesional: **especie/plato, cantidad solicitada, presentación deseada, ciudad y fecha requerida**. La respuesta comercial confirma por separado formato/peso, precio, disponibilidad y condiciones de entrega. No proponer mínimos, calendario recurrente, muestras gratuitas o tiempos de respuesta sin confirmarlos.
 
-### Semantic feedback
-- `--success` → Moss 500 `#6D7C5A`
-- `--warning` → Ochre 500 `#C68F2C`
-- `--danger` → Coral 700 `#8B5243`
+**Hogares:** especie → receta → cantidad → consulta. Mantener pasos accesibles e ingredientes disponibles en Colombia. Explicar conservación con fuentes.
 
-### Semantic surfaces
-| Token | Maps to |
-|-------|---------|
-| `--bg-page` | Paper 100 |
-| `--bg-elevated` / `--bg-card` | Paper 50 |
-| `--bg-sunken` | Paper 200 |
-| `--bg-inverse` | Ink 900 |
-| `--fg-primary` | Ink 900 |
-| `--fg-secondary` | Ink 700 |
-| `--fg-muted` | Ink 500 |
-| `--fg-faint` | Ink 300 |
-| `--accent` / `--accent-hover` / `--accent-tint` | Moss 700 / Moss 900 / Moss 200 |
-| `--accent-2` / `--accent-2-hover` / `--accent-2-tint` | Coral 500 / Coral 700 / Coral 200 |
+| Para chefs | Para hogares |
+| --- | --- |
+| «Hablemos de tu cocina.» | «¿Qué quieres cocinar?» |
+| «Consulta cantidades y presentaciones de shiitake.» | «Elige una receta y calcula cuánto shiitake necesitas.» |
+| Ficha culinaria y consulta de volumen | Receta, factor ×1/×2/×3 y consulta para casa |
 
-### Accessibility
-- Body text (Ink 900 on Paper 100) is a warm near-black on warm near-white — high contrast, meets WCAG AA for body copy.
-- Do not use Ochre as a headline brand color — it's reserved for warning semantics and the paper-texture wash only.
-- Verify Moss 500 / Coral 500 text-on-tint combinations at small sizes before shipping (not yet audited numerically).
+Ambos recorridos confirman precio, disponibilidad y entrega antes del pedido. No existe una aceptación automática de compra.
 
----
+## 3. Voz y mensajes
 
-## 2. Typography
+Tres ideas: **conocer el ingrediente, cocinarlo con intención y comprender su origen**. Voz cercana, cuidadosa y precisa. «Tú», acciones directas y titulares breves. Explicar vocabulario técnico cuando ayuda; no encabezar una pieza comercial con C:N, telemetría o eficiencia biológica.
 
-### Font Stack
-```css
---font-display: "Gaya Patched", "Cooper Std", "DM Serif Display", Georgia, serif;
---font-body:    "PP Object Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
---font-mono:    "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+| Contexto | Texto de referencia |
+| --- | --- |
+| Presentación | «Setas de la Peña. Hongos para cocinar con criterio, desde Tenjo, Colombia.» |
+| Introducción web | «Elige la seta por su sabor y textura. Después, busca una preparación para tu carta o tu casa y consulta la cantidad que necesitas.» |
+| Para chefs | «Cuéntanos qué necesitas para tu cocina. Consulta cantidades, presentaciones y condiciones de entrega.» |
+| CTA general | «Consultar disponibilidad» |
+| CTA restaurante | «Consultar para mi cocina» |
+| CTA mientras solo se prepara un mensaje | «Preparar mi consulta»; aclarar que preparar o copiar no envía el mensaje |
+| CTA receta | «Quiero cocinar esto» |
+| Precio pendiente | «Precio por confirmar. Prepara tu consulta y revisa las condiciones antes de pedir.» |
+| Sin stock confirmado | «Disponibilidad por confirmar. Consulta antes de planear tu pedido.» |
+| Imagen | «Ilustración de especie» / «Ilustración culinaria» |
+| Adaptación | «Adaptación de fuentes publicadas, pendiente de prueba en cocina.» |
+
+Evitar «premium», «superalimento», «el mejor», promesas medicinales, misticismo, certificaciones sin respaldo y sostenibilidad declarada sin evidencia. «Orgánico», «cosechado hoy», «entrega diaria», «cultivado por nosotros» y «trazabilidad completa» requieren evidencia específica. Una ilustración no demuestra producto cosechado.
+
+**Presentación breve:** «Somos Setas de la Peña, un proyecto de hongos desde Tenjo. Acercamos cada especie a la cocina con láminas para reconocerla e ideas para prepararla con ingredientes cercanos. Para una cocina profesional, la conversación empieza en el plato y continúa con cantidad, presentación y entrega.»
+
+La voz despierta apetito con ingredientes y acciones: «Shiitake, maíz dorado y aguacate» comunica más que «Una experiencia gastronómica premium». Los avisos van cerca del dato al que afectan; no abrir cada pieza con una lista de pendientes. Una ficha de referencia sigue distinguiéndose de una oferta disponible.
+
+## 4. Firma
+
+**Setas** en Gaya Bold + **de la Peña** en Gaya Medium: conserva la construcción de la firma usada en la web.
+
+- **Horizontal:** cabecera, ficha ancha y firma de contacto.
+- **Apilada:** portada, pieza cuadrada y frente de empaque. Dos líneas completas: «Setas» / «de la Peña».
+- **Colores:** musgo sobre papel; tinta para una tinta; papel sobre musgo o tinta.
+- El grabado acompaña al producto; no se incorpora una especie al wordmark.
+- No introducir un isotipo o monograma para sustituir el nombre. El icono de hongo existente sigue siendo un recurso de interfaz, no un símbolo exclusivo declarado.
+
+Zona de protección: **media altura de la S** alrededor, además del margen del SVG. No recortar al contorno, deformar, rotar, añadir sombras o recolorear fuera del sistema.
+
+Mínimos de referencia para esta composición: horizontal **180 px / 45 mm**, apilada **120 px / 30 mm**. Comprobar en el soporte real. En etiquetas pequeñas, omitir la frase principal antes de reducir el nombre. La revisión PDF no equivale a una prueba física.
+
+Los seis SVG tienen contornos, fondo transparente y hashes registrados. Son recursos internos de revisión. [SOURCES.md](../08_brand/ds-2026/SOURCES.md) describe archivos Gaya de prueba y no documenta licencia comercial. **Confirmar la licencia de Gaya para logotipo y web antes de distribución o producción.** Convertir a contornos no resuelve la licencia. No se añaden binarios tipográficos al kit.
+
+## 5. Tipografía y color
+
+Único entrypoint comercial: `08_brand/ds-2026/market.css`. Los valores reflejan `tokens/primitives.json`; no constituyen otra fuente de tokens.
+
+| Familia | Función |
+| --- | --- |
+| Gaya Patched | Firma, titulares y especie; itálica para nombre científico |
+| IBM Plex Sans | Lectura, navegación, instrucciones y acciones |
+| IBM Plex Mono | Cantidades, códigos y rótulos breves; no párrafos |
+
+Gaya + IBM es la combinación de marca. Bricolage y Libre siguen como exploraciones del estudio tipográfico. PP Object Sans y JetBrains Mono de la guía anterior no dirigen esta edición comercial.
+
+| Token | Hex | Función |
+| --- | --- | --- |
+| `paper-100` | `#FAF8F3` | Fondo principal |
+| `paper-50` | `#FEFDFB` | Superficie clara y firma inversa |
+| `ink-900` | `#1A1410` | Texto y firma a una tinta |
+| `moss-700` | `#2E3B2F` | Firma y acción principal |
+| `coral-500` | `#B8614D` | Acento gráfico; no texto pequeño |
+| `coral-700` | `#8A3E2D` | Texto de acento sobre papel |
+| `slate-500` | `#4E6A7A` | Acento secundario y datos |
+
+Papel y tinta dominan; musgo identifica; terracota aparece puntualmente. Los colores del plato ilustrado no son nuevos tokens de interfaz. No usar paletas diferentes por especie.
+
+Cuerpo mínimo 16 px, acciones de al menos 44 px y foco visible. Comprobar contrastes nuevos. No derivar CMYK de hex con porcentajes aproximados: usar perfil de impresión y prueba física.
+
+## 6. Imágenes y composición
+
+**Especie:** grabado micológico, silueta completa, nombre cotidiano y científico en itálica. `object-fit: contain`. «Archivo de hongos» o «Láminas de especies», sin hojas ni flores genéricas.
+
+**Cocina:** gouache con lápiz sobre papel, plato completo e ingredientes reconocibles. Reutilizar las tres piezas aprobadas: arepa, sopa y patacones. Rotularlas y conservar su procedencia en `assets/illustrations/culinary/sources.json`.
+
+**Fotografía:** excepcional y propia; útil para demostrar producto, presentación o proceso. Acompañar evidencia con fecha y contexto. No simular la finca o cosecha con stock.
+
+Un protagonista por pieza, jerarquía generosa, márgenes amplios, superficies planas y filetes finos. Bordes rectos, sin sombras flotantes, degradados decorativos, sellos inventados o envejecimiento artificial. Grabado para reconocer; gouache para imaginar una preparación.
+
+### Gramática recurrente: lámina, nota y plato
+
+| Elemento | Contenido | Función visual |
+| --- | --- | --- |
+| Lámina | Nombre cotidiano → grabado → nombre científico secundario | Identificar; contorno completo y un protagonista |
+| Nota | Un uso y una cantidad de receta documentada; fuente/estado de prueba al pie | Relacionar información e intención de cocina; filete y rótulo IBM |
+| Plato | Gouache → nombre de preparación → ingredientes/pasos | Invitar a cocinar; enlazar la receta y su consulta |
+
+Una pareja editorial puede mostrar la seta en una pieza y el plato en otra. La firma, márgenes, papel y filetes las unen. El código de archivo nunca sustituye el nombre. No introducir patrones tropicales, hojas, talismanes o un falso sello de cosecha. La fotografía de producto, cuando exista, se identifica como evidencia y no se reemplaza por un empaque generado.
+
+## 7. Aplicaciones
+
+| Pieza | Orden de lectura | Antes de uso comercial |
+| --- | --- | --- |
+| Ficha para chefs | Firma → especie → textura y usos con fuente → consulta → origen del lote | Presentaciones, precio, stock, canal y entrega reales |
+| Empaque | Firma → especie → grabado → peso y campos de lote | Responsable, peso, fechas, conservación y requisitos aplicables |
+| Tarjeta de receta | Plato → gouache → cantidades → pasos → consulta | Prueba en cocina y URL pública si se añade QR |
+| Pieza social | Especie → un uso → enlace a ficha | URL pública y estado comercial actual |
+| Pareja editorial | La seta → el plato; una receta documentada une ambas piezas | Ilustraciones aprobadas, aviso de adaptación y enlaces reales |
+| Presentación para chefs | Ingrediente → intención de plato → cinco datos de consulta | Canal confirmado antes de afirmar envío o respuesta |
+| Firma de contacto | Nombre → descriptor → Tenjo → canal | Persona y contacto confirmados |
+
+El manual contiene composiciones para adaptar. No se crean pesos de venta, lotes, teléfonos ni QR ficticios. El empaque es una maqueta, no una etiqueta de cumplimiento lista para imprimir.
+
+## 8. Autoridad y continuidad
+
+Esta guía gobierna lenguaje y aplicaciones **comerciales**; DS-2026 gobierna tokens y componentes. El manual FOS conserva su ámbito operativo. Sus antiguas paletas y afirmaciones comerciales no se trasladan a estas piezas.
+
+La [guía de agosto](brand/legacy-guidelines-2026-08.md) queda como antecedente. La [investigación de octubre](brand/competitive-research-2026-10.md) documenta diez marcas y cinco casos tipográficos. Smallhold aporta claridad de especie/uso; Foraged y Far West Fungi, consulta profesional; Burlap & Barrel, estructura del ingrediente; Goldi y Fonts In Use, jerarquía editorial. Son referencias, no un DS compartido ni prueba de conversión.
+
+La identidad queda definida en esta edición. Para producirla: verificar licencia de Gaya, completar datos reales, probar impresión y enlaces públicos. La comprobación local no demuestra publicación del sitio ni registro de marca.
+
+La siguiente validación propuesta es con cuatro chefs y dos personas que cocinen en casa: reconocer qué ofrece la marca, elegir una preparación y reunir una consulta sin confundir ilustración con producto disponible. Ese estudio aún no se ha ejecutado; el protocolo está en la investigación.
+
+```text
+Marca: Setas de la Peña
+Prioridad: chefs; también hogares
+Frase: Del micelio a la mesa.
+Descriptor: Hongos para cocinar con criterio.
+DS: 08_brand/ds-2026/market.css
+Tipos: Gaya / IBM Plex Sans / IBM Plex Mono
+Firma: Setas Bold + de la Peña Medium
+Especie: grabado micológico; cocina: gouache con lápiz
+Datos comerciales: solo confirmados
+Kit: 08_brand/ds-2026/brand-kit/
 ```
-Font files live in `_ds/setas-de-la-pe-a-design-system-.../design/fonts/`: PP Object Sans (Regular/Slanted/Heavy/HeavySlanted), JetBrains Mono (variable, incl. italic), Gaya Patched (Regular/Italic).
-
-### Type Scale
-| Token | Weight/Size/Line-height | Family | Usage |
-|-------|--------------------------|--------|-------|
-| `--t-display-1` | 800 / 88px / 0.95 | display | Largest hero display |
-| `--t-display-2` | 400 / 68px / 1.0 | display | Secondary hero display |
-| `--t-h1` | 400 / 52px / 1.05 | display | Page H1 |
-| `--t-h2` | 400 / 40px / 1.1 | display | Section H2 |
-| `--t-h3` | 800 / 26px / 1.2 | body | H3 |
-| `--t-h4` | 800 / 20px / 1.25 | body | H4 |
-| `--t-lede` | 400 / 22px / 1.45 | body | Intro/lede paragraph |
-| `--t-body` | 400 / 17px / 1.55 | body | Body copy |
-| `--t-body-sm` | 400 / 15px / 1.5 | body | Small body |
-| `--t-caption` | 400 / 13px / 1.45 | body | Captions |
-| `--t-eyebrow` | 800 / 12px / 1.0 | body | Uppercase, tracking +0.18em |
-| `--t-label` | 800 / 14px / 1.2 | body | Form/UI labels |
-| `--t-button` | 800 / 15px / 1.0 | body | Buttons, tracking +0.02em |
-| `--t-quote` | 400 italic / 28px / 1.35 | display | Pull quotes |
-
----
-
-## 3. Spacing, Radii & Shadow
-
-### Spacing scale
-`4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 · 128px` (`--space-1` … `--space-10`)
-
-### Radii
-`--r-xs 4px · --r-sm 8px · --r-md 14px · --r-lg 22px · --r-pill 999px`
-
-### Shadows — soft, like printed ink-bleed
-- `--shadow-soft`, `--shadow-card`, `--shadow-lift`, `--shadow-inset` — all built from `color-mix(in oklab, var(--ink-900) N%, transparent)`, never flat black. See `colors_and_type.css` for exact values.
-
-### Paper texture (opt-in via `.paper` class)
-Warm radial gradients (ochre + coral tints) plus a fine SVG fractal-noise overlay, applied only where the "printed paper" feel is wanted — not the default surface treatment.
-
----
-
-## 4. Logo Usage
-
-**Not yet re-confirmed against the current (moss/coral) palette.** The last documented logo normativa (April 2026, see discrepancies below) specified:
-- `Setas de la Peña - Logo Burnt Dark Red.png` for technical/operational materials (recipes, protocols, prototypes, workflows, automation).
-- `Setas de la Peña - Logo Color.png` for everything else.
-- A later revision instead specified a single `Setas de la Peña - Monochrome Cobre.png`, aligned left or centered-top, generous safe margins, no color/proportion changes.
-
-Given the palette has since moved to moss/coral/sand/bark/slate, **confirm which logo file(s) are current** before using either rule as-is. Known asset locations on this machine:
-- `~/Documents/SETAS de la PEÑA/Logo Setas de la Peña/`
-- `~/Downloads/setasdelapena_icon_v2_peña-hongo.svg`
-
-### General rules (carried forward, still applicable)
-- Don't rotate, skew, recolor outside the approved palette, add drop shadows/gradients, or crop/distort proportions.
-- Maintain clear space ≥ the height of the logo mark.
-
----
-
-## 5. Voice & Tone
-
-*(Carried over from the April 2026 concept doc — content/voice guidance, not visual — likely still valid but not re-confirmed in this pass.)*
-
-**Brand personality:** sobriedad y honestidad (sobriety and honesty). Elegance comes from precision of craft and absence of noise, not decoration.
-
-| Trait | We Are | We Are Not |
-|-------|--------|------------|
-| Sobrio (sober) | Precise, restrained, quiet confidence | Loud, ornamental, hyped |
-| Técnico (technical) | Exact like a lab label or botanical manual | Cold, jargon-heavy, inaccessible |
-| Honesto (honest) | Direct about process and product | Vague, marketing-speak |
-
-### Prohibited
-- Decorative borders, stamps/seals, distressed/worn textures, or purely-filler illustration — if an element doesn't serve an informational or identity function, cut it.
-
----
-
-## 6. Imagery Guidelines
-
-*(Also carried over from the April concept doc — confirm against current work before treating as final.)*
-
-### Illustration style: technical line drawing
-- Pure, consistent line weight; volume comes from contour precision, not dense shading. If shading is needed, use fine stippling or widely-spaced parallel lines — never dense hatching.
-- Should read like a scientific/botanical study: exact, elegant, undramatic.
-- Illustrations do not fill the frame — negative space around them is the focal device, not empty leftover space.
-
-### Negative space as a design material
-- At least 30% of any surface should remain visually clean/unornamented.
-- Text follows a strict central axis or block alignment suggesting order and technical care.
-
----
-
-## Provenance & Discrepancies
-
-This doc was consolidated from three sources that don't fully agree, found on this machine on 2026-08-19:
-
-1. **`colors_and_type.css`** (`_ds/setas-de-la-pe-a-design-system-2b03b4d8-.../design/`, last modified 2026-06-28) — "2026 board." Full moss/coral/sand/bark/slate/ink/paper palette, PP Object Sans + Gaya Patched + JetBrains Mono, full type/spacing/radius/shadow scale. **Treated as canonical here** — it's the newest, most complete, and is the actual design system referenced by the live app (`Setas OS v5.dc.html` / `sim.css`).
-2. **`Guía de Diseño y Estilo Visual_ Setas de la Peña.md`** (`~/Downloads/`, dated 2026-04-09) — "Minimalismo de Montaña" / "Mística Rural de Precisión" concept: different fonts (Della Respira + Montserrat), a 4-color palette (`#872e0f #565028 #6F8A8D #5A2E1C`), and specific logo-file rules. **Superseded on color/type** by the CSS system above — a full month older and doesn't match what's shipped. Its voice/tone and illustration-style guidance (Sections 5–6 above) don't conflict with the newer palette, so they're carried forward provisionally.
-3. **`Guía de Diseño y Estilo Visual_ Setas de la Peña 2.txt`** (same folder, 2026-04-09, a few minutes newer than #2) — a revision of #2: single primary color `#993f23` instead of 4, single monochrome-copper logo file instead of two, 40% negative-space minimum instead of 30%, "at least two illustrations per infographic" removed. Still pre-dates and conflicts with the CSS system on color.
-
-**Not consulted in this pass** (blocked by a macOS file-permission error on `~/Documents/Claude/Projects/Setas de la Peña/` mid-session — reading pre-existing files in that directory started failing with `Operation not permitted` partway through, even though creating *new* files there, like this one, still worked): `AGENTS.md` in this repo, and the Brand Book PDFs under `~/Documents/SETAS de la PEÑA/` (also permission-blocked). Worth re-reading once that access is restored — they may resolve the logo-file and voice/tone questions above definitively. If you hit the same "Operation not permitted" error again, it's likely a stale per-folder access grant (System Settings → Privacy & Security → Files and Folders) that needs re-approving for this terminal/app.
-
-**Recommended next step:** confirm Sections 4–6 (logo file, voice/tone, imagery) against the Brand Book PDF once that folder is readable again, then bump this to v1.1.
-
----
-
-## Appendix: Machine-Readable Summary
-
-*(Duplicates data already in Sections 1–5 above, in the exact heading/table shape `scripts/inject-brand-context.cjs` and `scripts/sync-brand-to-tokens.cjs` scan for. Keep this in sync if the sections above change — it's a compatibility shim for this skill's generic tooling, not a second source of truth.)*
-
-### Primary Colors
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
-| Moss 700 | #2E3B2F | rgb(46,59,47) | Primary brand color — wordmark, headings, buttons |
-
-### Secondary Colors
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
-| Coral 500 | #B8614D | rgb(184,97,77) | Secondary accent — mushroom cap / polypore |
-
-### Neutral Colors
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
-| Paper 100 | #F6F4EC | rgb(246,244,236) | Page background |
-| Ink 900 | #1A1410 | rgb(26,20,16) | Primary text |
-| Slate 500 | #4E6A7A | rgb(78,106,122) | Cool-neutral accent |
-
-### Font Stack
-```css
---font-heading: 'Gaya Patched', serif;
---font-body: 'PP Object Sans', sans-serif;
---font-mono: 'JetBrains Mono', monospace;
-```
-
-### Brand Personality
-| Trait | Description |
-|-------|-------------|
-| **Sobrio** | Precise, restrained, quiet confidence — not loud or ornamental |
-| **Técnico** | Exact like a lab label or botanical manual — not cold or jargon-heavy |
-| **Honesto** | Direct about process and product — not vague or marketing-speak |
-
-### Prohibited
-| Term/Element | Reason |
-|------|--------|
-| Decorative borders, stamps/seals | Ornament without informational function — cut it |
-| Distressed/worn textures | Not part of the current (2026-06) visual system |
-| Purely-filler illustration | Every element must serve identity or information |

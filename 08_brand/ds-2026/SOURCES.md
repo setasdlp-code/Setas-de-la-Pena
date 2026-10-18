@@ -158,3 +158,20 @@ para los signos que les faltan. No se distribuyen fuera del equipo.
 | `IBMPlexSans-Medium.ttf` | `0ebb5ad4c9c57f2a2860f43ae9fa69024c045b380b2a73b332d6f40c39f4a294` |
 | `IBMPlexSans-Regular.ttf` | `8685116dfbcfa639621631c4af0ad62e52ddeb9979acbec0007ccef2e4801a27` |
 | `IBMPlexSans-SemiBold.ttf` | `659f916ce1922bd4fecac7cd5f26018817a2946327a5dd00169c8bab14ae2c58` |
+
+## Culinary market addition · 12 October 2026
+
+`components/market/culinary.css` implements ingredient/preparation/inquiry patterns
+from the [competitive study](../../docs/brand/competitive-research-2026-10.md).
+These are design hypotheses, not measured conversion improvements. Gaya + IBM
+and existing primitives remain unchanged; no competitor artwork is imported.
+
+`assets/img/culinary/arepa-shiitake-gouache.webp` is a portable DS copy of the
+approved website illustration, byte-identical SHA-256
+`907610268554282683ff8a3ecc6b98fe8115b8183302e675eb8912708d3bb686`.
+Its `sources.json` points to the original illustration manifest and records the
+AI gouache/pencil method and pending kitchen trial. A recipe amount is not a
+sales presentation, and an illustration is not evidence of a harvest.
+
+This addition does not establish a commercial license for Gaya. Confirm the
+required web/logo rights before external distribution or production.

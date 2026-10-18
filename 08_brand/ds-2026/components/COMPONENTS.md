@@ -382,3 +382,71 @@ both only under `data-mode="archive"`; manual with `.ed-drop`. Never on `.ed-led
 
 Mode `archive`, except the structural `.ed-*` devices, which do not depend on the mode. Mockup:
 `mockups/editorial.html`.
+
+## 20 · Mercado y cocina
+
+Owner: `market/culinary.css`. Load `market.css`, `index.css` or the compatibility
+component facade with its normal token/core layers. The module adds no global
+token overrides, runtime, purchase logic or operational states.
+
+**Mode:** `culinary` for customer decisions; `archive` for species documentation.
+**Responsive:** ingredient sheet, editorial pair and chef brief become one column
+at 700px. Components fit a normal 12-column parent without requiring a grid wrapper.
+**Print:** body stays 16px; images stay contained; cards avoid internal page breaks.
+Page size and pagination belong to the consuming document.
+
+```text
+.sdp-market-intro
+├── .sdp-market-intro__title       Gaya, responsive display
+├── .sdp-market-intro__copy        IBM Sans body
+└── .sdp-market-intro__actions     real links; existing .sdp-btn
+
+.sdp-ingredient-sheet
+├── .sdp-ingredient-sheet__header  brand ‖ document label
+├── .sdp-ingredient-sheet__body
+│   ├── figure.__plate            contained engraving + caption
+│   └── .__copy
+│       ├── .__title + .t-latin    common name first; latin secondary
+│       ├── dl.__facts            dt label + dd body, sourced culinary facts
+│       ├── .sdp-btn              available next step
+│       └── .__note               commercial state / limits
+└── .sdp-ingredient-sheet__footer  contextual origin + reference
+
+.sdp-editorial-pair
+├── article.sdp-editorial-card               species
+└── article.sdp-editorial-card--dish         preparation
+    parts: __header / __title / __image / __note / __footer
+    note: __line for an editorial phrase; .t-data for quantity; actual recipe link
+
+.sdp-chef-brief
+├── introduction                 label / __title / body
+└── consultation                 __list / existing button / __note
+```
+
+Use full BEM names (for example `.sdp-ingredient-sheet__plate`); `.__plate` above
+describes anatomy only. `.sdp-market-wordmark` uses the existing Gaya Bold + Medium
+name construction. It does not replace outlined SVGs or remove licensing needs.
+
+**States are content, not guessed business data.** Before commercial information
+is confirmed, say so next to the relevant detail. Once confirmed, the consumer
+supplies real values. Never derive availability, lot, price, cooking trial or
+certification from an illustration. A reference flavor profile is distinct from
+a tasting of Setas product. A prepared message is distinct from a sent inquiry or
+an accepted order.
+
+**Chef inquiry:** the proposed conversation gathers species/dish, requested
+quantity, desired presentation, city and required date. This content pattern does
+not claim an existing form gathers all five fields. A production CTA leads to the
+available channel; no fabricated backend or contact.
+
+**Image rules:** species use the complete engraving; dishes use approved gouache.
+Caption the image type. The portable arepa in `assets/img/culinary/` is a
+byte-identical copy of the approved website asset, with SHA-256/provenance in
+`sources.json`, not another illustration revision.
+
+**Sources:** Smallhold (species/use), Foraged and Far West Fungi (professional
+inquiry), Burlap & Barrel (ingredient facts), North Spore (intent-based learning)
+and selected Gaya cases (editorial hierarchy). These inform design hypotheses,
+not conversion claims. Full markup: `mockups/market/17-culinary-market.html`.
+The brand manual consumes the same components. Claude Design cards:
+`market-culinary.html` and `market-chefs.html`.

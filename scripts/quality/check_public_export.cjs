@@ -8,7 +8,9 @@ const { chromium } = require(path.join(root, 'field-os-simulador/setas-os/node_m
 const output = process.env.SETAS_EXPORT_AUDIT_DIR || '/workspace/reports/cloudflare-setas';
 const publicDir = process.env.SETAS_EXPORT_DIR || path.join(output, 'public');
 const base = process.env.SETAS_EXPORT_BASE_URL || 'http://127.0.0.1:4188/';
-const files = ['index.html', 'home.html', 'shiitake.html', 'recetas.html', 'manual.html', 'typography.html'];
+const files = ['index.html', 'home.html', 'shiitake.html', 'recetas.html', 'manual.html', 'typography.html',
+  '08_brand/ds-2026/mockups/market/17-culinary-market.html',
+  '08_brand/ds-2026/brand-kit/index.html'];
 const report = { base, checks: [], errors: [], screenshots: [] };
 const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 (async () => {
@@ -35,17 +37,33 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         for (const link of links) {
           const url = new URL(link);
           if (!url.href.startsWith(base)) continue;
-          const target = path.join(publicDir, decodeURIComponent(url.pathname));
+          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/manual': 'manual.html', '/typography': 'typography.html' };
+          const target = path.join(publicDir, cleanFiles[url.pathname] || decodeURIComponent(url.pathname));
           assert.ok(fs.existsSync(target), link);
           if (url.hash && target.endsWith('.html')) assert.ok(fs.readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), link);
         }
         report.checks.push({ type: 'responsive-assets-links', file, width, result: 'passed' });
       }
     }
+    await page.goto(base + 'index.html', { waitUntil: 'networkidle' });
+    await page.locator('[data-canonical-resource="ds"]').click();
+    assert.ok(new URL(page.url()).pathname.endsWith('/mockups/market/17-culinary-market.html'));
+    assert.equal(await page.locator('.sdp-ingredient-sheet').count(), 1);
+    assert.equal(await page.locator('.sdp-editorial-card').count(), 2);
+    report.checks.push({ type: 'canonical-culinary-ds', result: 'passed' });
+    await page.goto(base + 'manual.html', { waitUntil: 'networkidle' });
+    await page.locator('[data-canonical-resource="manual"]').click();
+    assert.ok(new URL(page.url()).pathname.endsWith('/brand-kit/index.html'));
+    await page.locator('[data-signature="paper"]').click();
+    assert.equal(await page.locator('[data-signature="paper"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('#preview-wordmark').evaluate(img => img.decode());
+    assert.match(await page.locator('#preview-wordmark').getAttribute('src'), /wordmark-horizontal-paper\.svg$/);
+    report.checks.push({ type: 'canonical-brand-manual', result: 'passed', signature: 'paper' });
     await page.goto(base + 'home.html?pairing=bricolage#para-chefs');
-    await page.locator('#para-chefs a[href*="recetas.html"]').click();
+    await page.locator('#para-chefs a[href*="/recetas"]').click();
     await page.locator('#receta-arepa input[value="3"]').check();
     await page.locator('#receta-arepa .recipe-cta a').click();
+    await page.waitForLoadState('networkidle');
     assert.equal(await page.locator('#order-quantity').inputValue(), '900');
     assert.equal(await page.locator('input[value="restaurante"]').isChecked(), true);
     await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
@@ -54,7 +72,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.match(await page.locator('#order-message').inputValue(), /mi restaurante/);
     assert.equal(await page.locator('#order-whatsapp').isVisible(), false);
     await page.locator('.masthead .wordmark').click();
-    assert.equal(new URL(page.url()).pathname, '/home.html');
+    assert.equal(new URL(page.url()).pathname, '/home');
     assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
     report.checks.push({ type: 'export-chef-journey', result: 'passed', grams: 900, purpose: 'restaurante', messageSent: false, homeMapping: true });
     for (const width of [390, 1440]) {

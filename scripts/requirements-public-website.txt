@@ -1,0 +1,4 @@
+# Public export only; no changes to Setas OS dependencies.
+Pillow==12.3.0
+fonttools==4.61.1
+Brotli==1.2.0

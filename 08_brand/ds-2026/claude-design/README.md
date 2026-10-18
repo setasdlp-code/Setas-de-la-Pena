@@ -4,6 +4,9 @@ Design system for a mushroom farm at 2.600 m in Tenjo, Colombia. One system
 covers field operations (lot records, substrate recipes, room signage, SOPs)
 and customer-facing surfaces (packaging, fichas, market cards).
 
+Review bundle: the repository does not establish commercial Gaya licensing.
+Confirm the required rights before external distribution or production.
+
 Everything is plain CSS custom properties and BEM-ish classes. **No React, no
 build step, no runtime.** You style with the classes below and the `var(--*)`
 tokens — do not invent class names, and do not introduce a raw hex.
@@ -22,13 +25,14 @@ and every component, in that order. Nothing else needs importing.
 **Density is a mode, set with an attribute on any container:**
 
 ```html
-<body data-mode="field">   <!-- archive | field | control -->
+<body data-mode="field">   <!-- archive | culinary | field | control -->
 ```
 
 `archive` (gutter 32px) for editorial and print · `field` (24px) is the default
 for reports and labels · `control` (12px) for dense dashboards. The mode drives
 `--gutter` and `--page-margin`; it does not change the column count, which is
-always 12.
+always 12. `culinary` (gutter 24px, margin 32px) supports public ingredients,
+recipes and chef consultation; it is not restricted to printed labels.
 
 ## The styling idiom
 
@@ -76,6 +80,25 @@ metadata; always uppercase, always `letter-spacing: var(--tracking-label)`).
 `.sdp-nav` · `.sdp-tele` · `.sdp-sign` · `.sdp-pack` · `.sdp-sop`
 Atoms: `.sdp-species` · `.sdp-plateline` · `.sdp-statusline` · `.sdp-fig` · `.sdp-sep`
 
+### Market / culinary
+
+Use `.sdp-market-intro` for a clear promise and next actions;
+`.sdp-ingredient-sheet` for common name, referenced flavor/use and consultation;
+`.sdp-editorial-pair` with `.sdp-editorial-card` / `--dish` to connect a specimen
+to a preparation; `.sdp-chef-brief` for professional inquiry details. Source:
+`components/market/culinary.css`. Cards `market-culinary.html` and
+`market-chefs.html` use only the bundle import closure.
+
+Keep Gaya for titles, Sans for body/actions and Mono for amounts/labels. Approved
+engravings and gouache stay fully contained and captioned as illustrations, not
+proof of stock, harvest or a cooking trial. The arepa in `assets/img/culinary/`
+preserves the approved asset hash/provenance; 300 g is a recipe amount, not a pack.
+
+Professional content may ask for species/dish, quantity, presentation, city and
+date. A CTA uses the available channel; preparing a message does not send it.
+Prices, lots, stock, delivery and contacts require real data. Do not assume the
+existing form collects every proposed detail.
+
 State modifiers are `--ok`, `--warn`, `--error` on `.sdp-lote`, `.sdp-alert`
 and `.sdp-tele`. Figure variants are `.sdp-fig--plate` (4:5, `contain`),
 `--specimen` (1:1), `--cultivation` (3:2), `--ingredient` (64px), `--diagram` (16:9).
@@ -102,10 +125,13 @@ draws U+2082 at full size, so an unwrapped `CO₂` in editorial prose reads as
 - **One identity accent per composition.** Semantic status colours may coexist.
 - **Status is colour AND word** — never a colour alone; it must survive a
   photocopy and a colour-blind reader.
-- **Biological imagery is evidence**: frame + image + caption, or it does not ship.
+- **Name the image type**: an engraving identifies a species; gouache imagines a
+  preparation; a real photograph may document a product/process. Caption and
+  context distinguish them. Illustrations do not prove harvest or availability.
 - **Latin binomials are always italic**, sentence case: *Ganoderma lucidum*.
 - **Prose never below 16px.** Operative content never below 13px.
-- Customer-facing surfaces never expose lot codes, room names or operator names.
+- Customer-facing surfaces omit internal room/operator data. A confirmed product
+  lot can appear where needed for packaging or provenance; never invent one.
 
 ## An idiomatic example
 

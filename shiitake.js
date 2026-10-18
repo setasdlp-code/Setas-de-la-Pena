@@ -70,7 +70,7 @@ window.addEventListener('afterprint', () => {
   if (presentations.length) {
     document.querySelector('#presentation-field').hidden = false;
     setText('#quantity-label', 'Número de presentaciones');
-    setText('#quantity-hint', 'El peso total se calcula según la presentación elegida.');
+    setText('#quantity-hint', 'El total usa el peso declarado de la presentación; el peso limpio aprovechable se confirma por separado.');
     quantity.value = '1';
     presentations.forEach((item, index) => {
       const label = document.createElement('label');
@@ -93,7 +93,7 @@ window.addEventListener('afterprint', () => {
 
   if (recipe) {
     recipeBox.hidden = false;
-    setText('#recipe-context-text', `Para ${recipe.name}${recipe.scale > 1 ? ` (×${recipe.scale})` : ''} necesitas ${formatWeight(recipe.grams)} de shiitake fresco limpio. Puedes cambiar la cantidad.`);
+    setText('#recipe-context-text', `Cantidad de referencia para ${recipe.name}${recipe.scale > 1 ? ` (×${recipe.scale})` : ''}: ${formatWeight(recipe.grams)} de shiitake fresco limpio. Cantidad editable; peso de compra sujeto a presentación y merma.`);
     if (presentations.length) {
       document.querySelector('#recipe-grams-field').hidden = false;
       recipeGrams.value = String(recipe.grams);
@@ -129,7 +129,7 @@ window.addEventListener('afterprint', () => {
 
   function describeDifference(selected) {
     const gap = selected.weight - selected.needed;
-    return gap === 0 ? `${formatWeight(selected.weight)} · coincide con la receta` : `${formatWeight(selected.weight)} · ${formatWeight(Math.abs(gap))} ${gap > 0 ? 'más' : 'menos'} que la receta`;
+    return gap === 0 ? `${formatWeight(selected.weight)} declarados · peso limpio aprovechable por confirmar` : `${formatWeight(selected.weight)} declarados · ${formatWeight(Math.abs(gap))} ${gap > 0 ? 'más' : 'menos'} que el peso solicitado, sin descontar merma; peso limpio aprovechable por confirmar`;
   }
 
   function updateSummary() {
@@ -186,9 +186,10 @@ window.addEventListener('afterprint', () => {
       `Me interesa el shiitake para ${purpose}.`,
       ...(recipe ? [`Quiero cocinar ${recipe.name} (${recipe.scale > 1 ? `versión ×${recipe.scale}; ` : ''}la receta base usa ${formatWeight(recipe.baseGrams)} de shiitake fresco limpio).`] : []),
       ...(recipe && selected.needed !== null ? [`Necesito unos ${formatWeight(selected.needed)} para la receta.`] : []),
+      ...(recipe ? ['La receta indica peso limpio aprovechable; quisiera confirmar el peso de compra según la presentación y su merma.'] : []),
       selected.item ? `Presentación solicitada: ${selected.item.name} (${formatWeight(selected.item.weightGrams)}).` : 'Presentación: por confirmar.',
       selected.item ? `Cantidad: ${count.format(selected.units)} ${selected.units === 1 ? 'presentación' : 'presentaciones'} (${formatWeight(selected.weight)} en total).` : `Cantidad solicitada: ${formatWeight(selected.weight)}.`,
-      ...(recipe && selected.needed !== null ? [`Peso que recibiría: ${describeDifference(selected)}.`] : []),
+      ...(recipe && selected.needed !== null ? [`Peso declarado de las presentaciones: ${describeDifference(selected)}.`] : []),
       selected.subtotal === null ? 'Precio: por confirmar.' : `Subtotal del producto: ${formatPrice(selected.subtotal)} (sin envío).`,
       `Municipio de entrega: ${location}.`,
       ...(purpose === 'mi restaurante' && text(form.elements.namedItem('frequency').value) ? [`Frecuencia de compra: ${text(form.elements.namedItem('frequency').value)}.`] : []),
@@ -204,7 +205,7 @@ window.addEventListener('afterprint', () => {
       whatsappLink.href = target.href;
       whatsappLink.textContent = available && selected.subtotal !== null ? 'Solicitar pedido por WhatsApp ↗' : 'Consultar por WhatsApp ↗';
       whatsappLink.hidden = false;
-      setText('#contact-note', 'WhatsApp abrirá este mensaje para que lo revises y decidas enviarlo. El pedido se confirma con la respuesta de Setas de la Peña.');
+      setText('#contact-note', 'El enlace abre el mensaje en WhatsApp; el envío es manual. El pedido requiere confirmación de Setas de la Peña.');
     }
     review.hidden = false;
     review.focus({ preventScroll: true });
@@ -214,7 +215,7 @@ window.addEventListener('afterprint', () => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(message.value);
-      copyStatus.textContent = 'Mensaje copiado. Puedes pegarlo en tu conversación.';
+      copyStatus.textContent = 'Mensaje copiado.';
     } catch {
       message.focus();
       message.select();

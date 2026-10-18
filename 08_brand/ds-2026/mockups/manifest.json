@@ -182,5 +182,13 @@
     "height": 900,
     "scale": 2,
     "fullPage": true
+  },
+  {
+    "name": "17-culinary-market",
+    "file": "mockups/market/17-culinary-market.html",
+    "width": 1200,
+    "height": 1000,
+    "scale": 2,
+    "fullPage": true
   }
 ]

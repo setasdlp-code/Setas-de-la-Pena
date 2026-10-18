@@ -66,6 +66,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     }
     await visit(page, 'shiitake.html#producto');
     assert.equal(await page.locator('#order-form').isVisible(), true);
+    assert.equal(await page.locator('#channel-notice').isVisible(), true);
+    assert.equal(await page.locator('#restaurant-fields').isVisible(), false);
     assert.equal(await page.locator('#presentation-field').isVisible(), false);
     assert.match(await page.locator('#order-subtotal').innerText(), /por confirmar/);
     await page.locator('.purchase-submit').click();
@@ -82,12 +84,18 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('.purchase-submit').click();
     assert.equal(await page.locator('#order-review').isVisible(), false);
     await page.getByLabel('Para restaurante', { exact: true }).check();
+    assert.equal(await page.locator('#restaurant-fields').isVisible(), true);
+    await page.locator('#order-frequency').fill('Semanal');
+    await page.locator('#order-date').fill('Fecha por acordar');
     await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
     await page.getByLabel('Municipio de entrega', { exact: true }).press('Enter');
     assert.equal(await page.locator('#order-review').isVisible(), true);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'order-review');
     const message = await page.locator('#order-message').inputValue();
     assert.match(message, /mi restaurante/);
+    assert.match(message, /Frecuencia de compra: Semanal/);
+    assert.match(message, /Fecha deseada: Fecha por acordar/);
+    assert.match(await page.locator('#review-title').innerText(), /Borrador listo/);
     assert.match(message, /Cantidad solicitada: 500 g/);
     assert.match(message, /Precio: por confirmar/);
     assert.match(message, /Municipio de entrega: Tenjo/);
@@ -100,6 +108,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#order-review').isVisible(), false);
     assert.equal(await page.locator('#order-message').inputValue(), '');
     await page.getByLabel('Para casa', { exact: true }).check();
+    assert.equal(await page.locator('#restaurant-fields').isVisible(), false);
     await page.locator('.purchase-submit').click();
     await capture(page, 'mensaje-1440.png', '#producto');
     await page.setViewportSize({ width: 390, height: 1000 });
@@ -109,23 +118,32 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#order-municipality').inputValue(), '');
     report.checks.push({ type: 'unconfigured-request', result: 'passed', covers: ['validation', 'keyboard submit and focus', 'restaurant/home', 'clipboard copy', 'no WhatsApp without phone', 'invalidated stale message', 'no saved customer data'] });
 
-    for (const entry of ['.hero-copy a.sdp-btn', '.card-actions a[href="shiitake.html#producto"]']) {
+    for (const entry of ['.hero-copy a.sdp-btn', '.card-actions a[href="/shiitake#producto"]']) {
       await visit(page, 'index.html');
       await page.locator(entry).click();
-      await page.waitForURL('**/shiitake.html#producto');
+      await page.waitForURL('**/shiitake#producto');
       assert.equal(await page.locator('#order-form').isVisible(), true);
     }
     await visit(page, 'index.html');
     await page.locator('.specimen-button[data-species="shiitake"]').click();
     assert.equal(await page.locator('#dialog-order').isVisible(), true);
     await page.locator('#dialog-order').click();
-    await page.waitForURL('**/shiitake.html#producto');
+    await page.waitForURL('**/shiitake#producto');
     await visit(page, 'index.html');
     await page.locator('.specimen-button[data-species="melena"]').click();
     assert.equal(await page.locator('#dialog-order').isVisible(), false);
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'melena');
     report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['hero', 'collection card', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
+    await visit(page, 'index.html');
+    assert.equal(await page.locator('#hero-note').isVisible(), false);
+    await page.locator('[data-hero=melena]').click();
+    assert.equal(await page.locator('#hero-note').isVisible(), true);
+    assert.equal(await page.locator('.chef-steps > li').count(), 2);
+    await visit(page, 'recetas.html');
+    assert.equal(await page.locator('.recipe-shortcut-meta').count(), 9);
+    assert.equal(await page.locator('.recipe-chip').count(), 3);
+    report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'informational hero species note', 'two chef steps', 'nine recipe shortcut summaries', 'pending-trial labels'] });
     // Fase 4: guía de preparación sobre la colección.
     const visibleSpecies = () => page.locator('.species-card:not([hidden]) h3').allTextContents();
     await visit(page, 'index.html#coleccion');
@@ -140,11 +158,12 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.equal(await page.locator('#filter-reset').isVisible(), true);
     }
     await page.locator('[data-prep="asar"]').click();
-    assert.match(await page.locator('.species-card:not([hidden]) .card-reason').innerText(), /otra variedad/);
+    assert.equal(await page.locator('.species-card:not([hidden]) .card-reason sup a').getAttribute('href'), '#source-culinary');
+    assert.match(await page.locator('#source-culinary').innerText(), /otra variedad/);
     await page.locator('[data-prep="sopa"]').click();
     assert.match(await page.locator('#filter-status').textContent(), /2 especies visibles para sopa o caldo/);
-    await page.locator('.species-card:not([hidden]) .card-reason a').first().click();
-    await page.waitForURL('**/recetas.html#receta-sopa');
+    await page.locator('.species-card:not([hidden]) .card-reason a.text-link').first().click();
+    await page.waitForURL('**/recetas#receta-sopa');
     await visit(page, 'index.html#coleccion');
     await page.locator('[data-prep="saltear"]').click();
     await page.locator('[data-filter="archive"]').click();
@@ -163,8 +182,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('.species-card:not([hidden]) [data-species="melena"]').first().click();
     assert.equal(await page.locator('#dialog-order').isVisible(), false);
     await page.keyboard.press('Escape');
-    await page.locator('.species-card:not([hidden]) a[href="shiitake.html"]').click();
-    await page.waitForURL('**/shiitake.html');
+    await page.locator('.species-card:not([hidden]) a[href="/shiitake"]').click();
+    await page.waitForURL('**/shiitake');
     for (const width of [320, 390]) {
       await page.setViewportSize({ width, height: 1000 });
       await visit(page, 'index.html#coleccion');
@@ -181,7 +200,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('.hero-copy a.sdp-btn').click();
     assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
     assert.equal(new URL(page.url()).hash, '#producto');
-    report.checks.push({ type: 'typography-query-navigation', result: 'passed' });
+    report.checks.push({ type: 'legacy-query-navigation', result: 'passed' });
 
     await page.setViewportSize({ width: 1440, height: 1000 });
     await visit(page, 'shiitake.html');
@@ -203,8 +222,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
 
     for (const fragment of ['receta-arepa', 'receta-sopa', 'receta-patacones']) {
       await visit(page, 'index.html#en-la-cocina');
-      await page.locator(`.kitchen-routes a[href="recetas.html#${fragment}"]`).click();
-      await page.waitForURL(`**/recetas.html#${fragment}`);
+      await page.locator(`.kitchen-routes a[href="/recetas#${fragment}"]`).click();
+      await page.waitForURL(`**/recetas#${fragment}`);
       assert.equal(await page.locator(`#${fragment} details`).evaluate(el => el.open), true);
     }
     await visit(page, 'recetas.html#receta-arepa');
@@ -232,9 +251,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       const links = await page.locator('a[href]').evaluateAll(links => [...new Set(links.map(el => el.href))]);
       for (const link of links.filter(link => link.startsWith(base))) {
         const url = new URL(link);
-        const filePath = path.join(root, decodeURIComponent(url.pathname));
+        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/manual': 'manual.html', '/typography': 'typography.html' };
+        const filePath = path.join(root, cleanSources[url.pathname] || decodeURIComponent(url.pathname));
         if (!fs.existsSync(filePath)) { brokenLinks.push(link); continue; }
-        if (url.hash && url.pathname.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
+        if (url.hash && filePath.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
       }
     }
     assert.deepEqual(brokenLinks, []);
@@ -271,7 +291,9 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'synthetic-priced-presentations', result: 'passed', covers: ['quantity and price calculation', 'shipping separated', 'E.164 normalization', 'encoded WhatsApp message', 'changed selection invalidates old message', 'lot metadata'] });
 
     // Fase 1: receta -> cantidad -> consulta (sin enviar nada).
-    const recipeCases = [['receta-arepa', 300, /arepa/], ['receta-sopa', 300, /sopa/], ['receta-patacones', 250, /patacones/]];
+    const recipeCases = [['receta-arepa', 300, /arepa/], ['receta-sopa', 300, /sopa/], ['receta-patacones', 250, /patacones/],
+      ['receta-atollado', 500, /atollado/], ['receta-ajiaco', 400, /ajiaco/], ['receta-mote', 300, /mote/],
+      ['receta-encocado', 350, /encocado/], ['receta-sudado', 500, /sudado/], ['receta-maduro', 250, /maduro/]];
     const recipeCtx = await contextWith();
     const rp = await recipeCtx.newPage();
     for (const [id, grams, name] of recipeCases) {
@@ -279,7 +301,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       const cta = rp.locator(`#${id} .recipe-cta a`);
       assert.match(await rp.locator(`#${id} .recipe-cta`).innerText(), new RegExp(`${grams} g`));
       await cta.click();
-      await rp.waitForURL(`**/shiitake.html?recipe=${id}&scale=1#producto`);
+      await rp.waitForURL(`**/shiitake?recipe=${id}&scale=1#producto`);
       assert.equal(await rp.locator('#recipe-context').isVisible(), true);
       assert.equal(await rp.locator('#order-quantity').inputValue(), String(grams));
       assert.equal(await rp.locator('#recipe-grams-field').isVisible(), false);
@@ -288,6 +310,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       const msg = await rp.locator('#order-message').inputValue();
       assert.match(msg, name);
       assert.match(msg, new RegExp(`Cantidad solicitada: ${grams} g`));
+      assert.match(msg, /peso limpio aprovechable.*peso de compra/, "La consulta conserva la distinción entre necesidad neta y compra");
       assert.match(msg, new RegExp(`receta base usa ${grams} g`));
       await rp.getByLabel('Cantidad que necesitas').fill('400');
       assert.equal(await rp.locator('#order-review').isVisible(), false);
@@ -354,7 +377,27 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await ing('receta-sopa', 'limon'), '3–6 cucharadas de jugo de limón');
     assert.equal(await sp.locator('#receta-sopa [data-yield]').textContent(), '12 entradas o 6 porciones grandes');
     assert.equal(await ing('receta-sopa', 'coco'), '1200 ml de leche de coco culinaria sin azúcar añadida');
-    for (const id of ['receta-arepa', 'receta-sopa', 'receta-patacones']) await sp.locator(`#${id} input[value="1"]`).check();
+    assert.equal(await sp.locator('#receta-sopa [data-ing="yuca"]').count(), 0, "El ingrediente retirado no reaparece al escalar");
+    assert.equal(await sp.evaluate(() => window.SetasRecipes["receta-sopa"].ingredients.some(item => item.id === "yuca")), false);
+    // Six new formulations: independent scale, decimal units, fixed cooking references and URL grams.
+    for (const [id, grams] of recipeCases.slice(3)) {
+      const beforeSteps = await sp.locator(`#${id} .recipe-steps`).textContent();
+      for (const scale of [3, 2, 1]) {
+        await sp.locator(`#${id} input[value="${scale}"]`).check();
+        assert.match(await ing(id, 'shiitake'), new RegExp(`^${grams * scale} g de shiitake fresco limpio`));
+        const link = new URL(await sp.locator(`#${id} .recipe-cta a`).getAttribute('href'));
+        assert.equal(link.searchParams.get('recipe'), id);
+        assert.equal(link.searchParams.get('scale'), String(scale));
+        assert.equal(await sp.locator(`#${id} .recipe-steps`).textContent(), beforeSteps, 'times in steps do not scale');
+      }
+    }
+    await sp.locator('#receta-encocado input[value="3"]').check();
+    assert.equal(await ing('receta-encocado', 'curcuma'), '0,75 cucharaditas de cúrcuma molida');
+    assert.equal(await ing('receta-encocado', 'caldo'), '450 ml de caldo vegetal');
+    await sp.locator('#receta-atollado input[value="3"]').check();
+    assert.equal(await ing('receta-atollado', 'caldo'), '4500 ml de caldo vegetal caliente, y más si hace falta');
+    assert.equal(await sp.locator('#receta-atollado [data-yield]').textContent(), '12–18 personas');
+    for (const [id] of recipeCases) await sp.locator(`#${id} input[value="1"]`).check();
     assert.deepEqual(await snapshot(), baseSnap, '×1→×3→×1 restaura exactamente');
     assert.equal(new URL(sp.url()).searchParams.get('scale'), null);
     // Teclado: foco en el grupo y flechas.
@@ -364,7 +407,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await sp.locator('#receta-arepa input[value="2"]').evaluate(el => el === document.activeElement), true);
     // Consulta con el factor elegido.
     await sp.locator('#receta-arepa .recipe-cta a').click();
-    await sp.waitForURL('**/shiitake.html?recipe=receta-arepa&scale=2#producto');
+    await sp.waitForURL('**/shiitake?recipe=receta-arepa&scale=2#producto');
     assert.equal(await sp.locator('#order-quantity').inputValue(), '600');
     assert.match(await sp.locator('#recipe-context-text').innerText(), /×2.*600 g/);
     await sp.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
@@ -417,14 +460,15 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await pk.locator('#recipe-grams').inputValue(), '300');
     assert.equal(await pk.locator('#order-quantity').inputValue(), '2');
     assert.equal(await pk.locator('#order-weight').innerText(), '500 g');
-    assert.match(await pk.locator('#order-difference').innerText(), /200 g más que la receta/);
+    assert.match(await pk.locator('#order-difference').innerText(), /200 g más.*sin descontar merma/);
     await pk.locator('input[name="presentation"][value="1"]').check();
     assert.equal(await pk.locator('#order-quantity').inputValue(), '1');
     assert.match(await pk.locator('#order-difference').innerText(), /200 g más/);
     await pk.locator('input[name="presentation"][value="0"]').check();
-    await pk.getByLabel('Gramos de shiitake que necesita la receta').fill('1000');
+    await pk.getByLabel('Shiitake fresco limpio para la receta (g)').fill('1000');
     assert.equal(await pk.locator('#order-quantity').inputValue(), '4');
-    assert.match(await pk.locator('#order-difference').innerText(), /coincide/);
+    assert.match(await pk.locator('#order-difference').innerText(), /1 kg declarados.*peso limpio aprovechable por confirmar/);
+    assert.doesNotMatch(await pk.locator('#order-difference').innerText(), /coincide|alcanza|suficiente/);
     await pk.getByLabel('Número de presentaciones', { exact: true }).fill('3');
     assert.match(await pk.locator('#order-difference').innerText(), /250 g menos/);
     await pk.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
@@ -432,10 +476,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const packMsg = await pk.locator('#order-message').inputValue();
     assert.match(packMsg, /Necesito unos 1 kg para la receta/);
     assert.match(packMsg, /3 presentaciones \(750 g en total\)/);
-    assert.match(packMsg, /Peso que recibiría: 750 g · 250 g menos/);
+    assert.match(packMsg, /Peso declarado de las presentaciones: 750 g declarados · 250 g menos/);
     assert.match(packMsg, /sin envío/);
     assert.equal(new URL(await pk.locator('#order-whatsapp').getAttribute('href')).searchParams.get('text'), packMsg);
-    await pk.getByLabel('Gramos de shiitake que necesita la receta').fill('0');
+    await pk.getByLabel('Shiitake fresco limpio para la receta (g)').fill('0');
     assert.equal(await pk.locator('#order-review').isVisible(), false);
     assert.equal(await pk.locator('#order-whatsapp').getAttribute('href'), null);
     await pk.locator('.purchase-submit').click();
@@ -452,7 +496,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await big.locator('#order-quantity').inputValue(), '1');
     assert.match(await big.locator('#order-difference').innerText(), /750 g más/);
     await bigCtx.close();
-    report.checks.push({ type: 'recipe-to-inquiry', result: 'passed', covers: ['three recipes 300/300/250 g', 'editable quantity invalidates message and keeps municipality', 'remove context keeps pairing', 'pairing link propagation', 'unknown/malformed params', 'pack proposal ceil(g/pack)', 'grams never become packs', 'difference shown', 'unpriced pack', 'quantity larger than pack', 'invalid recipe grams'] });
+    report.checks.push({ type: 'recipe-to-inquiry', result: 'passed', covers: ['nine recipes including six new formulations', 'editable quantity invalidates message and keeps municipality', 'remove context keeps pairing', 'pairing link propagation', 'unknown/malformed params', 'pack proposal ceil(g/pack)', 'grams never become packs', 'difference shown', 'unpriced pack', 'quantity larger than pack', 'invalid recipe grams'] });
 
     const partial = await contextWith({ availability: 'unavailable', whatsapp: 'javascript:alert(1)', presentations: [{ id: 'single', name: 'Prueba sin precio', weightGrams: 250, priceCOP: '18000' }], deliveryFeeCOP: 0 });
     const partialPage = await partial.newPage();
@@ -492,9 +536,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const chefContext = await contextWith();
     const chefPage = await chefContext.newPage();
     await visit(chefPage, 'index.html#para-chefs');
-    await chefPage.locator('#para-chefs a[href*="recetas.html"]').click();
+    await chefPage.locator('#para-chefs a[href*="/recetas"]').click();
     await chefPage.locator('#receta-arepa input[value="3"]').check();
     await chefPage.locator('#receta-arepa .recipe-cta a').click();
+    await chefPage.waitForLoadState('networkidle');
     assert.equal(await chefPage.locator('input[name="purpose"][value="restaurante"]').isChecked(), true);
     assert.equal(await chefPage.locator('#order-quantity').inputValue(), '900');
     await chefPage.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');

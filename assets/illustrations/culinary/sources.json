@@ -22,15 +22,32 @@
     {
       "name": "sopa",
       "file": "sopa-shiitake-gouache.webp",
-      "source": "/workspace/generated_images/exec-a646fe94-e85a-4041-92a1-1308e28cc44e.png",
+      "source": "/workspace/generated_images/exec-37eb59eb-349a-4e35-9d97-07763ffe72ab.png",
       "width": 1254,
       "height": 1254,
-      "bytes": 196450,
-      "sha256": "e7b452e4d565e6812875fb94d1519ae69ef5a656b833c923b383b86943b3c4f4",
-      "prompt": "Use the attached AREPA illustration only as the style reference for a NEW standalone food illustration in the same family. Replace the arepa with a bowl of Colombian-accessible SHIITAKE, COCONUT AND GINGER SOUP. Keep the same welcoming editorial GOUACHE + colored-pencil character: opaque pigment shapes, visible restrained brush strokes, soft handmade edges, sparse pencil contours, warm browns and greens on off-white paper. This must clearly be an illustration, not a photo or realistic oil painting.\n\nOne simple shallow cream ceramic bowl, viewed from an elevated three-quarter angle. Inside: pale creamy coconut broth, several nicely separated cooked sliced shiitake caps with dark oak-brown edges and pale gills, a little chopped cilantro and scallion, and a few pale cooked yuca cubes partially visible beneath the broth. The shiitake is prominent and recognizable, the bowl looks like a soup, not mushroom rice or salad. No arepa, corn, avocado, cheese, egg, noodles, meat, decorative flowers or loose raw ingredient drawings. Subtle painted suggestion of ginger in the broth, no whole ginger roots. No text, logos, certification badges, cutlery or props.\n\nSquare composition with the COMPLETE bowl centered, 12–15% clear margin around the bowl, same visual scale as the reference recipe plate. Flat warm paper background close to #FAF8F3, no photographic cast shadow, no background texture. Coherent brand palette: paper/off-white, oak brown #594631, moss #2E3B2F/#6D7C5A, sand #BFA98B and minimal dark ink. Original culinary artwork matching the reference's brushwork and simplicity, suitable for use alongside the arepa in a mushroom brand website.",
-      "originalFile": "sopa-shiitake-gouache.png",
-      "originalSHA256": "6043c337b495d4a88aed94d92e94c86452289f430150fb65cddcb1ff2c33f929",
-      "encoding": "WebP quality 86; mismos límites y dimensiones, sin recorte ni cambio de composición."
+      "bytes": 181460,
+      "sha256": "3a185dbe92fa30edb72eeb4f4682b6e054ef1b993302d7a7720d12bd7e63e02c",
+      "prompt": "Edit this existing approved Setas de la Peña soup illustration to CORRECT RECIPE FIDELITY while preserving its EXACT existing gouache + pencil art style, hand-painted opaque brushwork, ceramic bowl, ochre rim, off-white flat background, composition, perspective, colors and scale. Do not change art direction. This is the SAME soup bowl, with the following specific food correction: REMOVE ALL LARGE PALE CUBES. The published recipe has NO yuca/cassava, potatoes, yam, tofu, cheese, rice, noodles or other solid chunks. It contains ONLY sliced shiitake, coconut milk, vegetable stock, sautéed chopped scallion and garlic, grated ginger, lime, a little cilantro and optionally chili. Make it unmistakably a SOUP: a smooth pale ivory fluid coconut broth with clearly visible open areas of liquid surface surrounding a moderate number of irregular, natural cooked shiitake slices. Smaller consistent thick slices of mushroom cap with brown edges and pale beige gills, no gigantic broad cross-sections, no whole roots or decorative raw ingredients. A restrained cilantro garnish and a few small cooked scallion pieces. No solid chunks replacing the removed yuca. No rice-like granules or dense pottage texture. Match the original image's painterly treatment exactly, no photograph, 3D, new style, text, props, extra vessels or change of bowl. Square, whole bowl visible. This is an illustrative proposal, not an image of a tested dish.",
+      "originalFile": "exec-37eb59eb-349a-4e35-9d97-07763ffe72ab.png",
+      "originalSHA256": "64f5362760415b945b701071b276e08e1dee4d7fe8f37ed49460294973268917",
+      "encoding": "WebP calidad 86; mismas dimensiones y encuadre.",
+      "previousVersions": [
+        {
+          "name": "sopa",
+          "file": "sopa-shiitake-gouache.webp",
+          "source": "/workspace/generated_images/exec-a646fe94-e85a-4041-92a1-1308e28cc44e.png",
+          "width": 1254,
+          "height": 1254,
+          "bytes": 196450,
+          "sha256": "e7b452e4d565e6812875fb94d1519ae69ef5a656b833c923b383b86943b3c4f4",
+          "prompt": "Use the attached AREPA illustration only as the style reference for a NEW standalone food illustration in the same family. Replace the arepa with a bowl of Colombian-accessible SHIITAKE, COCONUT AND GINGER SOUP. Keep the same welcoming editorial GOUACHE + colored-pencil character: opaque pigment shapes, visible restrained brush strokes, soft handmade edges, sparse pencil contours, warm browns and greens on off-white paper. This must clearly be an illustration, not a photo or realistic oil painting.\n\nOne simple shallow cream ceramic bowl, viewed from an elevated three-quarter angle. Inside: pale creamy coconut broth, several nicely separated cooked sliced shiitake caps with dark oak-brown edges and pale gills, a little chopped cilantro and scallion, and a few pale cooked yuca cubes partially visible beneath the broth. The shiitake is prominent and recognizable, the bowl looks like a soup, not mushroom rice or salad. No arepa, corn, avocado, cheese, egg, noodles, meat, decorative flowers or loose raw ingredient drawings. Subtle painted suggestion of ginger in the broth, no whole ginger roots. No text, logos, certification badges, cutlery or props.\n\nSquare composition with the COMPLETE bowl centered, 12–15% clear margin around the bowl, same visual scale as the reference recipe plate. Flat warm paper background close to #FAF8F3, no photographic cast shadow, no background texture. Coherent brand palette: paper/off-white, oak brown #594631, moss #2E3B2F/#6D7C5A, sand #BFA98B and minimal dark ink. Original culinary artwork matching the reference's brushwork and simplicity, suitable for use alongside the arepa in a mushroom brand website.",
+          "originalFile": "sopa-shiitake-gouache.png",
+          "originalSHA256": "6043c337b495d4a88aed94d92e94c86452289f430150fb65cddcb1ff2c33f929",
+          "encoding": "WebP quality 86; mismos límites y dimensiones, sin recorte ni cambio de composición."
+        }
+      ],
+      "revisionReason": "Retirar cubos de yuca ausentes de la formulación actual. Ingredientes y método sin modificar.",
+      "review": "Se retiraron los cubos de tubérculo. Imagen orientativa; no documenta pruebas de cocina."
     },
     {
       "name": "patacones",
@@ -44,6 +61,142 @@
       "originalFile": "patacones-shiitake-gouache.png",
       "originalSHA256": "078b09ca5a4e768147a3cdc392e6a5a9d5cb31f81469af18fe5c50dcf2036d23",
       "encoding": "WebP quality 86; mismos límites y dimensiones, sin recorte ni cambio de composición."
+    },
+    {
+      "name": "atollado",
+      "file": "atollado-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-238f9f65-1fc9-4f80-b7d3-d84a55a3808a.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 221240,
+      "sha256": "d8ca6a8ee981721237625faa48b6095beea8c240a00ab7b98469f4bbef95850e",
+      "prompt": "EDIT THE PROVIDED EXISTING RECIPE ILLUSTRATIONS into one new dish. The user requires the EXACT SAME STYLE as these three existing images; treat them as a strict visual specification, not loose inspiration. Preserve the existing opaque gouache paint and colored-pencil look, small broken dry-brush marks, hand-painted irregular contours, ingredient detail, color saturation, illustrated brown mushroom caps and creamy pale gills. Same cream speckled handmade ceramic with a thin ochre-brown rim, same elevated three-quarter viewpoint, same large centered dish occupying almost all the square with the full vessel visible and a modest clear margin. Match the flat warm off-white background of the references (near #FAF8F3), keeping it plain, with only the reference's tiny drawn grounding brush marks at the vessel base. Browns, muted greens, golden ochre, cream; no dramatic lighting. It should look like the same illustrator painted another plate in the SAME series, at the same scale and level of detail. Not a photo, not 3D, not a new art direction, not watercolor washes, not a vector icon or engraving. ONE finished dish only, SQUARE image, no panels, labels, text, logos, cutlery, hands, table, cloth, ingredients outside the dish, botanical decorations, or background props. Shiitake must be clearly recognizable and prominent, cooked in the dish, with brown caps, pale gills and varied realistic cuts. Do not copy ingredients from the reference dishes unless specified below. Preserve style only, REPLACE THE ENTIRE FOOD CONTENT with this exact dish: ARROZ ATOLLADO CON SHIITAKE Y PAPA CRIOLLA. A shallow cream bowl of moist, creamy Colombian rice, warm soft orange-gold from tomato hogao and achiote, visible tender rice grains bound by a little creamy liquid, small golden papa criolla halves nestled among the rice. Abundant cooked shiitake in TWO cuts: thick slices with pale gills and browned cap quarters. A small spoonful of cooked tomato/onion/red-pepper hogao on top and a few cilantro leaves. A rustic wet rice preparation, not a dry pilaf or risotto with parmesan. No meat, sausage, peas, carrots, corn, avocado, eggs, cheese, bread or soup broth. Match the painted textures of the supplied references.",
+      "originalFile": "atollado-shiitake-gouache.png",
+      "originalSHA256": "b86cb9f50ff04ec2f161e5b2a8bfe596abe34ce9a78a301a987ac373e893f22e",
+      "encoding": "WebP calidad 86; mismo encuadre, dimensiones y composición.",
+      "references": [
+        "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+      ],
+      "review": "Revisión visual de coherencia con la serie existente y formulación publicada local. Ilustración orientativa; no fotografía ni prueba de cocina."
+    },
+    {
+      "name": "ajiaco",
+      "file": "ajiaco-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-2d1bc784-af04-4320-97d6-e633d8855f93.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 192462,
+      "sha256": "387aa56a5c0e3a30b791be75a237240c37ec6ba017e933a3b38a539ae7c68bd8",
+      "prompt": "EDIT THE PROVIDED EXISTING RECIPE ILLUSTRATIONS into one new dish. The user requires the EXACT SAME STYLE as these three existing images; treat them as a strict visual specification, not loose inspiration. Preserve the existing opaque gouache paint and colored-pencil look, small broken dry-brush marks, hand-painted irregular contours, ingredient detail, color saturation, illustrated brown mushroom caps and creamy pale gills. Same cream speckled handmade ceramic with a thin ochre-brown rim, same elevated three-quarter viewpoint, same large centered dish occupying almost all the square with the full vessel visible and a modest clear margin. Match the flat warm off-white background of the references (near #FAF8F3), keeping it plain, with only the reference's tiny drawn grounding brush marks at the vessel base. Browns, muted greens, golden ochre, cream; no dramatic lighting. It should look like the same illustrator painted another plate in the SAME series, at the same scale and level of detail. Not a photo, not 3D, not a new art direction, not watercolor washes, not a vector icon or engraving. ONE finished dish only, SQUARE image, no panels, labels, text, logos, cutlery, hands, table, cloth, ingredients outside the dish, botanical decorations, or background props. Shiitake must be clearly recognizable and prominent, cooked in the dish, with brown caps, pale gills and varied realistic cuts. Do not copy ingredients from the reference dishes unless specified below. Preserve style only, REPLACE THE ENTIRE FOOD CONTENT with this exact dish: AJIACO CON SHIITAKE, TRES PAPAS Y GUASCAS. A cream ceramic soup bowl filled with thick pale golden potato broth, naturally thickened by partly dissolved papa criolla, tender potato slices still partly visible, TWO short pieces of Colombian corn-on-the-cob partially submerged, and several prominent thick cooked shiitake slices floating on top. Tiny subtle green flecks of cooked guascas in the broth, a restrained spoon swirl of cream and a few capers and cilantro leaves. This must read as potato and corn ajiaco, not coconut soup. No chicken, meat, cheese cubes, yam/yuca cubes, noodles, rice, avocado outside the vessel, or exaggerated leafy garnish. All toppings belong to one finished soup bowl.",
+      "originalFile": "ajiaco-shiitake-gouache.png",
+      "originalSHA256": "57dc3c98d506bc9daa792fca5249b1b4df5c7ed3d91dad38c21cad073064957c",
+      "encoding": "WebP calidad 86; mismo encuadre, dimensiones y composición.",
+      "references": [
+        "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+      ],
+      "review": "Revisión visual de coherencia con la serie existente y formulación publicada local. Ilustración orientativa; no fotografía ni prueba de cocina."
+    },
+    {
+      "name": "mote",
+      "file": "mote-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-b631234d-666b-4366-8b6e-0e3eccd82cc2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 190636,
+      "sha256": "db03b8f06925e78435acae77483ddd560688aecec54a3526e7f423cbe0419811",
+      "prompt": "EDIT THE PROVIDED EXISTING RECIPE ILLUSTRATIONS into one new dish. The user requires the EXACT SAME STYLE as these three existing images; treat them as a strict visual specification, not loose inspiration. Preserve the existing opaque gouache paint and colored-pencil look, small broken dry-brush marks, hand-painted irregular contours, ingredient detail, color saturation, illustrated brown mushroom caps and creamy pale gills. Same cream speckled handmade ceramic with a thin ochre-brown rim, same elevated three-quarter viewpoint, same large centered dish occupying almost all the square with the full vessel visible and a modest clear margin. Match the flat warm off-white background of the references (near #FAF8F3), keeping it plain, with only the reference's tiny drawn grounding brush marks at the vessel base. Browns, muted greens, golden ochre, cream; no dramatic lighting. It should look like the same illustrator painted another plate in the SAME series, at the same scale and level of detail. Not a photo, not 3D, not a new art direction, not watercolor washes, not a vector icon or engraving. ONE finished dish only, SQUARE image, no panels, labels, text, logos, cutlery, hands, table, cloth, ingredients outside the dish, botanical decorations, or background props. Shiitake must be clearly recognizable and prominent, cooked in the dish, with brown caps, pale gills and varied realistic cuts. Do not copy ingredients from the reference dishes unless specified below. Preserve style only, REPLACE THE ENTIRE FOOD CONTENT with this exact dish: MOTE DE ÑAME CON QUESO COSTEÑO Y SHIITAKE. A cream ceramic bowl filled with a very thick, creamy ivory yam soup/pottage; a few soft irregular yam chunks blend into the creamy base, with small DISTINCT firm white costeño cheese cubes, visible on the surface. On top, a generous cluster of fully cooked golden-brown shiitake halves and thick slices mixed with a little cooked tomato/onion sofrito; restrained cilantro leaves and a subtle suero cream swirl. Very creamy, rustic and substantial, NOT rice, coconut soup or a pile of raw vegetables. No corn, carrots, avocado, meat, yuca, noodles or red oil slicks. Cheese cubes look smooth white, yam chunks softer cream, recognizable cooked mushrooms remain the main visual feature.",
+      "originalFile": "mote-shiitake-gouache.png",
+      "originalSHA256": "3cbf2cd3fadf355c2aaedb6a29ad2a9ab49abc5b03676f3be9109b596c01bcd0",
+      "encoding": "WebP calidad 86; mismo encuadre, dimensiones y composición.",
+      "references": [
+        "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+      ],
+      "review": "Revisión visual de coherencia con la serie existente y formulación publicada local. Ilustración orientativa; no fotografía ni prueba de cocina."
+    },
+    {
+      "name": "encocado",
+      "file": "encocado-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-30d5e51b-2e54-4885-ae5b-1430c775b667.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 200194,
+      "sha256": "21f968ac801ce2561aaf98d7bad9ef3e4643a9564a7ca010af3cd5bb858a3f81",
+      "prompt": "Correct the FOOD GEOMETRY and SAUCE in the first reference image, the existing encocado, while keeping exactly the same gouache + pencil illustration style as both supplied references. The dish is SHIITAKE CAPS CUT INTO HALVES, STEWED IN COCONUT SAUCE. The user specifically requires HALVES, not thin slices, not stuffed mushrooms. Remove the existing mushroom shapes and replace them with 8–10 recognizable thick HALF-CAPS of shiitake, cooked and tender, with the stems removed before cutting. Each mushroom cap has been cut once straight down its center, leaving a substantial semicircular piece: rounded brown convex cap skin on the outside, one clearly visible STRAIGHT cut face of soft pale-beige flesh. Some halves lie cap-side UP so we see the broad brown half-dome and their straight cut edge; a few are tipped naturally showing the pale gilled underside. The cut cap halves are three-dimensional and substantial, not narrow C-shaped slices, not the repeated iconic whole-mushroom cross-section with a long stalk, not whole circular caps, not hollow cups or stuffed caps. Natural varied orientations, more brown cooked cap surfaces than exposed bright gills. Partly submerged in the sauce. Draw with convincing cooked shiitake anatomy. Keep mushrooms prominent, appetizing, and in proportion to the bowl.\n\nReplace the granular surface with a SMOOTH, SILKY, COHESIVE coconut-and-tomato sauce, light warm ivory with just a soft pale-gold tint from 0.25 teaspoon turmeric in 400ml coconut milk. Broad smooth areas of sauce MUST be visible between the mushrooms. A few very small softened cooked tomato and onion pieces, restrained tiny cilantro garnish. The sauce is thick enough to coat the mushrooms but still flows around them: NO rice, rice-like granules, grains, lentils, cheese, potatoes, yellow cubes, dumplings, loose solid toppings, raw purple onion rings, or mounded filling. This is a coconut mushroom stew, NOT risotto, curry rice, soup with chunks, or stuffed mushrooms. No rice in this bowl; it is optional on the side and is omitted from this illustration.\n\nPreserve the EXACT same original opaque hand-painted gouache and sparse pencil contours, visible restrained dry-brush strokes on the FOOD AND CERAMIC but not rice-like texture in the sauce, same cream speckled ceramic bowl with thin ochre rim, same square composition, elevated three-quarter view, complete centered bowl at the same scale. Match the original flat warm paper background near #FAF8F3, no new background props, no text, no collage, no photography, no 3D, no new art direction. Second reference is style only: DO NOT copy its arepa, corn, avocado or plate content.",
+      "originalFile": "exec-30d5e51b-2e54-4885-ae5b-1430c775b667.png",
+      "originalSHA256": "eea2dc5e1d3b63a60e794eea8fd6e33f7d6699419a7f1ba41a6be1517f19827f",
+      "encoding": "WebP calidad 86; mismas dimensiones y encuadre.",
+      "references": [
+        "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+      ],
+      "review": "Mitades gruesas de sombrero, sin tallos largos ni relleno, en salsa de coco; ilustración orientativa, no prueba de cocina.",
+      "previousVersions": [
+        {
+          "name": "encocado",
+          "file": "encocado-shiitake-gouache.webp",
+          "source": "/workspace/generated_images/exec-fadd26f6-835b-4df4-829c-38adf27741dd.png",
+          "width": 1254,
+          "height": 1254,
+          "bytes": 208298,
+          "sha256": "950de16b35df7a6d34a24db8642e9cf1e9c73d2ea368198ebeedcc5f7f3e6ca7",
+          "prompt": "EDIT THE PROVIDED EXISTING RECIPE ILLUSTRATIONS into one new dish. The user requires the EXACT SAME STYLE as these three existing images; treat them as a strict visual specification, not loose inspiration. Preserve the existing opaque gouache paint and colored-pencil look, small broken dry-brush marks, hand-painted irregular contours, ingredient detail, color saturation, illustrated brown mushroom caps and creamy pale gills. Same cream speckled handmade ceramic with a thin ochre-brown rim, same elevated three-quarter viewpoint, same large centered dish occupying almost all the square with the full vessel visible and a modest clear margin. Match the flat warm off-white background of the references (near #FAF8F3), keeping it plain, with only the reference's tiny drawn grounding brush marks at the vessel base. Browns, muted greens, golden ochre, cream; no dramatic lighting. It should look like the same illustrator painted another plate in the SAME series, at the same scale and level of detail. Not a photo, not 3D, not a new art direction, not watercolor washes, not a vector icon or engraving. ONE finished dish only, SQUARE image, no panels, labels, text, logos, cutlery, hands, table, cloth, ingredients outside the dish, botanical decorations, or background props. Shiitake must be clearly recognizable and prominent, cooked in the dish, with brown caps, pale gills and varied realistic cuts. Do not copy ingredients from the reference dishes unless specified below. Preserve style only, REPLACE THE ENTIRE FOOD CONTENT with this exact dish: ENCOCADO DE SHIITAKE, COCO Y CÚRCUMA. A shallow cream ceramic bowl of thick coconut sauce, a warm pale gold tinted lightly with turmeric and cooked tomato, not bright yellow curry. Many generous cooked shiitake cap halves and thick slices, dark oak-brown edges and pale gills, arranged naturally in the sauce, with small softened tomato and red-onion pieces integrated into it, a small amount of fresh cilantro on top. A saucy mushroom stew rather than a thin soup or rice. No fish, shrimp, seafood, meat, potato, corn, yam/yuca cubes, coconut shells, whole ginger roots, rice, bread or extra side dishes. Match the reference gouache and bowl exactly.",
+          "originalFile": "encocado-shiitake-gouache.png",
+          "originalSHA256": "dd4f8fa71c0c3a4f11c6b6fe5b095695e59bfffbb2d23d4f53575c4deb92b700",
+          "encoding": "WebP calidad 86; mismo encuadre, dimensiones y composición.",
+          "references": [
+            "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+            "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+            "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+          ],
+          "review": "Revisión visual de coherencia con la serie existente y formulación publicada local. Ilustración orientativa; no fotografía ni prueba de cocina."
+        }
+      ],
+      "revisionReason": "Decisión del usuario: sombreros cortados en mitades. Se sustituyen las láminas por mitades de sombrero y se simplifica la textura de la salsa."
+    },
+    {
+      "name": "sudado",
+      "file": "sudado-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-4b5968c8-537e-4c37-8933-e46b491ec9ad.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 218492,
+      "sha256": "7a6b63c7e1d4a60331fe03f01747b3f27838d31a5b55dd41b7ff74c3e9a08bb5",
+      "prompt": "EDIT THE PROVIDED EXISTING RECIPE ILLUSTRATIONS into one new dish. The user requires the EXACT SAME STYLE as these three existing images; treat them as a strict visual specification, not loose inspiration. Preserve the existing opaque gouache paint and colored-pencil look, small broken dry-brush marks, hand-painted irregular contours, ingredient detail, color saturation, illustrated brown mushroom caps and creamy pale gills. Same cream speckled handmade ceramic with a thin ochre-brown rim, same elevated three-quarter viewpoint, same large centered dish occupying almost all the square with the full vessel visible and a modest clear margin. Match the flat warm off-white background of the references (near #FAF8F3), keeping it plain, with only the reference's tiny drawn grounding brush marks at the vessel base. Browns, muted greens, golden ochre, cream; no dramatic lighting. It should look like the same illustrator painted another plate in the SAME series, at the same scale and level of detail. Not a photo, not 3D, not a new art direction, not watercolor washes, not a vector icon or engraving. ONE finished dish only, SQUARE image, no panels, labels, text, logos, cutlery, hands, table, cloth, ingredients outside the dish, botanical decorations, or background props. Shiitake must be clearly recognizable and prominent, cooked in the dish, with brown caps, pale gills and varied realistic cuts. Do not copy ingredients from the reference dishes unless specified below. Preserve style only, REPLACE THE ENTIRE FOOD CONTENT with this exact dish: SUDADO DE SHIITAKE CON PAPA Y HOGAO. A shallow cream ceramic bowl containing a Colombian rustic stew: prominent cooked brown shiitake halves and quarters with occasional pale gills, several generous tender pastusa potato chunks, and a thick red-brown tomato/onion/red-pepper hogao sauce, not watery soup. Small softened pepper and onion pieces in the sauce and a restrained fresh cilantro garnish; no visible bay leaves because they were removed before serving. Potatoes are pale golden-white and clearly distinct from brown mushrooms. No beef, chicken, yuca, corn, peas, carrots, rice, avocado, cheese or extra sides. Keep the gouache ceramic, perspective, scale and paint handling identical to the reference set.",
+      "originalFile": "sudado-shiitake-gouache.png",
+      "originalSHA256": "04c07b775a5edae4319ab422debef6e6932f16f86cc683c983bf1bbca4192605",
+      "encoding": "WebP calidad 86; mismo encuadre, dimensiones y composición.",
+      "references": [
+        "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+      ],
+      "review": "Revisión visual de coherencia con la serie existente y formulación publicada local. Ilustración orientativa; no fotografía ni prueba de cocina."
+    },
+    {
+      "name": "maduro",
+      "file": "maduro-shiitake-gouache.webp",
+      "source": "/workspace/generated_images/exec-54335d5b-520f-4650-8917-67edd9ab09d9.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 226688,
+      "sha256": "2df28f6f39ffb1b75aee8c8671088e2b94902fd4ad2561f437132e42147037fb",
+      "prompt": "EDIT THE PROVIDED EXISTING RECIPE ILLUSTRATIONS into one new dish. The user requires the EXACT SAME STYLE as these three existing images; treat them as a strict visual specification, not loose inspiration. Preserve the existing opaque gouache paint and colored-pencil look, small broken dry-brush marks, hand-painted irregular contours, ingredient detail, color saturation, illustrated brown mushroom caps and creamy pale gills. Same cream speckled handmade ceramic with a thin ochre-brown rim, same elevated three-quarter viewpoint, same large centered dish occupying almost all the square with the full vessel visible and a modest clear margin. Match the flat warm off-white background of the references (near #FAF8F3), keeping it plain, with only the reference's tiny drawn grounding brush marks at the vessel base. Browns, muted greens, golden ochre, cream; no dramatic lighting. It should look like the same illustrator painted another plate in the SAME series, at the same scale and level of detail. Not a photo, not 3D, not a new art direction, not watercolor washes, not a vector icon or engraving. ONE finished dish only, SQUARE image, no panels, labels, text, logos, cutlery, hands, table, cloth, ingredients outside the dish, botanical decorations, or background props. Shiitake must be clearly recognizable and prominent, cooked in the dish, with brown caps, pale gills and varied realistic cuts. Do not copy ingredients from the reference dishes unless specified below. Preserve style only, REPLACE THE ENTIRE FOOD CONTENT with this exact dish: SHIITAKE AL HOGAO SOBRE MADURO HORNEADO CON QUESO. On the same shallow cream ceramic PLATE as the arepa/patacones reference, TWO golden ripe plantains baked whole and opened lengthwise without separating completely, their curved elongated shapes clearly recognizable, tender caramelized dark-golden edges. A modest layer of melted pale campesino cheese tucked in each opening, topped generously with fully cooked thick shiitake slices in a reduced tomato/onion hogao glaze with panela and soy sauce, small thyme flecks. Mushrooms prominent, warm brown and creamy gills; golden plantain clearly visible beneath. NOT patacones, not round arepas, not bread, not breaded fritters or a dessert. No guava paste, red jam, corn, avocado, eggs, green plantain, rice, cilantro garnish or loose ingredients. Dish is savory-sweet and fully cooked. Preserve the existing exact brushwork and ceramic rim.",
+      "originalFile": "maduro-shiitake-gouache.png",
+      "originalSHA256": "aa436c67ca658f0f0ef3f072b77c691972e8c181867f9a95743be8ba7ded0edf",
+      "encoding": "WebP calidad 86; mismo encuadre, dimensiones y composición.",
+      "references": [
+        "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/sopa-shiitake-gouache.webp",
+        "assets/illustrations/culinary/patacones-shiitake-gouache.webp"
+      ],
+      "review": "Revisión visual de coherencia con la serie existente y formulación publicada local. Ilustración orientativa; no fotografía ni prueba de cocina."
     }
   ]
 }
