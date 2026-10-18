@@ -474,3 +474,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .hero-species-note { margin: 8px 0 0; max-width: 40ch; color: var(--text-secondary); }
 .chef-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 640px) { .chef-steps { grid-template-columns: 1fr; } }
+
+.recipe-shortcuts a { flex-wrap: wrap; align-content: center; }
+.recipe-shortcut-meta { flex-basis: 100%; order: 5; color: var(--text-secondary); }
+.recipe-chip { display: inline-block; margin: 8px 0 0; padding: 2px 8px; background: var(--surface-recessed); color: var(--text-secondary); }
