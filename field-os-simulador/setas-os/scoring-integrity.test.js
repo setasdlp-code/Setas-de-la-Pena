@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 
 const SCORING_PATH = path.join(__dirname, 'scoring.js');
 // Referencia actualizada por la corrección explícita de suplementación efectiva.
-// Compuerta de esterilización obligatoria (sterilizationUnsafe en buildDimensions) — aprobado D-3 por Sebastián (PENDIENTE).
+// Compuerta de esterilización obligatoria (sterilizationUnsafe en buildDimensions) — aprobado D-3 por Sebastián (2026-10-17).
 // No cambia pesos/umbrales ni introduce historial productivo en el ranking (ADR-0004).
 const EXPECTED_SHA256 = 'f7d18f408225ffb036809442a0a57d9b099e569f5bdecbd233517ac6e67dc948';
 

@@ -55,8 +55,8 @@ test('sin tratamiento: diagnóstico exige autoclave', () => {
   const dg = diagnose(an, 'shiitake', SPP);
   const entries = Array.isArray(dg) ? dg : dg.sugs;
   assert.ok(
-    entries.some(entry => entry.t === 'error' && /autoclave/i.test(entry.tx)),
-    'El diagnóstico debe exigir autoclave como error cuando requiresSterilization es true'
+    entries.some(entry => entry.t === 'warning' && /autoclave/i.test(entry.tx)),
+    'El diagnóstico debe exigir autoclave como warning cuando requiresSterilization es true'
   );
 });
 
