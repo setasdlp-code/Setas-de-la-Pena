@@ -78,6 +78,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../contamination-risk.js",
   "../vision-diagnosis.js",
   "../harvest-calendar.js",
+  "../copilot-series.js",
   "../cultivation-copilot.js",
   "../sterilization-kinetics.js",
   "../co-cultivation-matrix.js",
