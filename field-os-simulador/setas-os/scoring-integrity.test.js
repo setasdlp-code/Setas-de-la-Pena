@@ -7,8 +7,9 @@ const crypto = require('node:crypto');
 
 const SCORING_PATH = path.join(__dirname, 'scoring.js');
 // Referencia actualizada por la corrección explícita de suplementación efectiva.
+// Compuerta de esterilización obligatoria (sterilizationUnsafe en buildDimensions) — aprobado D-3 por Sebastián (PENDIENTE).
 // No cambia pesos/umbrales ni introduce historial productivo en el ranking (ADR-0004).
-const EXPECTED_SHA256 = '284154845f323ae3e814220c8fecdba8d34e3ef5dfbcfc2eee5a7c3d2007f47b';
+const EXPECTED_SHA256 = 'f7d18f408225ffb036809442a0a57d9b099e569f5bdecbd233517ac6e67dc948';
 
 test('ADR-0004: scoring.js es estrictamente inmutable y coincide con el hash SHA-256 de referencia', () => {
   assert.ok(fs.existsSync(SCORING_PATH), 'scoring.js debe existir en field-os-simulador/setas-os/');

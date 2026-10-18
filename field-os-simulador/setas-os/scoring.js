@@ -292,9 +292,10 @@ const buildDimensions = (breakdown, ctx, an) => {
   const suppP = Number.isFinite(an?.suppEffectiveP) ? an.suppEffectiveP : (Number.isFinite(an?.suppP) ? an.suppP : 0);
   const suppMax = Number.isFinite(an?.sp?.supplementation_max) ? an.sp.supplementation_max : 20;
   const suppUnsafe = !!(an?.sp && suppP > suppMax && ctx.treatment?.col !== 'autoclave');
+  const sterilizationUnsafe = !!(an?.requiresSterilization && ctx.treatment?.col !== 'autoclave');
   const nMin = an?.sp?.n_optimal?.min;
   const nLiebigStarvation = Number.isFinite(an?.avgN) && Number.isFinite(nMin) && an.avgN < nMin * 0.4;
-  const blocked = !!an?.trichoderma || suppUnsafe || breakdown.massBalance < 70 || nLiebigStarvation;
+  const blocked = !!an?.trichoderma || suppUnsafe || sterilizationUnsafe || breakdown.massBalance < 70 || nLiebigStarvation;
   const viability = blocked ? 'hold' : safetyScore >= 80 ? 'approved' : safetyScore >= 60 ? 'review' : 'hold';
   return {
     safety: { score: safetyScore, status: viability },
