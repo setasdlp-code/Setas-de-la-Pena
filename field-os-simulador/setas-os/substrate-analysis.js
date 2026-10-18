@@ -105,7 +105,7 @@ const analyze=(recipe,sKey,ings=INGS,spp=SPP)=>{
     var ebIndex=Math.round(Math.max(0,Math.min(100,(eb-sp.eb_baseline)/Math.max(1,sp.eb_optimal-sp.eb_baseline)*100)));
     dynSpawn=Math.min(15,(sp.spawn_rate||8)+Math.floor(suppEffectiveP/5));
   }
-    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
+    const eucPct=recipe.reduce((s,r)=>r.id==='aserrin_eucalipto'?s+(parseFloat(r.p)||0):s,0);const pescPct=recipe.reduce((s,r)=>r.id==='harina_pescado'?s+(parseFloat(r.p)||0):s,0);return{tot,avgN,cn,cost,eb,moistureTarget:sp?.moisture?.ideal??null,targets:sp?.targets??null,suppP,suppMedP,suppTotalP,suppEffectiveP,baseP,addP,cafeP,manP,airP,densaP,incompat,sp,requiresSterilization:Boolean(sp?.requires_sterilization),trichoderma,dynSpawn,avgPh,avgDig,avgCra,eucPct,pescPct,ebLow:typeof ebLow!=='undefined'?ebLow:Math.round(eb),ebHigh:typeof ebHigh!=='undefined'?ebHigh:Math.round(eb),ebIndex:typeof ebIndex!=='undefined'?ebIndex:0,ebMods:typeof ebMods!=='undefined'?ebMods:null};
 };
 
 const api = { analyze, EB_PENALTY_BALANCE_BAND };
