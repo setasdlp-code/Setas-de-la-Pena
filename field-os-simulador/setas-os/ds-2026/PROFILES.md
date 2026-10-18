@@ -1,6 +1,6 @@
 # DS-2026 · Perfiles y modos de superficie
 
-DS-2026 unifica dos realidades operacionales bajo un único núcleo de tokens: **FOS Operations** (operación agronómica rigurosa en Tenjo a 2.600 msnm) y **Swiss Botanical Market** (archivo botánico, trazabilidad premium y empaque de setas gourmet).
+DS-2026 reúne operaciones de cultivo y superficies comerciales bajo un núcleo de tokens. El mercado se dirige primero a chefs y también a hogares: reconocer una especie, imaginar un plato y preparar una consulta.
 
 La densidad y la semántica visual se determinan mediante el atributo `data-mode` en el contenedor semántico de la superficie; `<body>` se usa solo si toda la página comparte el mismo modo:
 
@@ -12,18 +12,18 @@ La densidad y la semántica visual se determinan mediante el atributo `data-mode
 
 ## Matriz comparativa de perfiles
 
-| Dimensión | `field` (Campo) | `control` (Consola) | `archive` (Botánica) | `culinary` (Mercado) |
+| Dimensión | `field` (Campo) | `control` (Consola) | `archive` (Micología) | `culinary` (Cocina y mercado) |
 |---|---|---|---|---|
-| **Público / Rol** | Operarios de cultivo en Tenjo | Gerencia técnica / Formulador | Clientes, chefs, investigadores | Consumidor gourmet, horeca |
-| **Soporte físico** | Tablets industriales, smartphones | Monitores de escritorio, SCADA | Papel verjurado, PDF certificado | Cajas kraft, fajillas, etiquetas |
-| **Gutter / Margen** | 24px gutter / 32px margen | 12px gutter / 16px margen | 32px gutter / 64px margen | 16px–24px según troquel |
-| **Touch target mín.** | **≥ 44px** (48px en botones) | 32px–36px compacto | Estándar web | N/A (impreso) |
-| **Micro floor** | **11px** en pantalla | **11px** en pantalla | **11px** (web) / **9px** fine print | **9px** fine print; lote/fecha usa `lot-code-print` y x-height ≥ 3mm |
-| **Tipografía Hero** | IBM Plex Sans SemiBold | IBM Plex Sans / Mono | Gaya Patched Italic | Gaya Patched Regular/Black |
+| **Público / Rol** | Operarios de cultivo en Tenjo | Gerencia técnica / Formulador | Clientes, chefs, investigadores | Chefs y equipos de cocina; también hogares |
+| **Soporte físico** | Tablets industriales, smartphones | Monitores de escritorio, SCADA | Web, láminas, PDF de referencia | Web, fichas para chefs, recetas y empaque |
+| **Gutter / Margen** | 24px gutter / 32px margen | 12px gutter / 16px margen | 32px gutter / 64px margen | 24px gutter / 32px margen; troquel físico se verifica aparte |
+| **Touch target mín.** | **≥ 44px** (48px en botones) | 32px–36px compacto | **≥ 44px** en web | **≥ 44px** en web; sin controles en etiqueta física |
+| **Micro floor** | **11px** en pantalla | **11px** en pantalla | **11px** (web) / **9px** fine print | **11px** web / **9px** fine print; cuerpo 16px; lote/fecha usa `lot-code-print` y x-height ≥ 3mm |
+| **Tipografía Hero** | IBM Plex Sans SemiBold | IBM Plex Sans / Mono | Gaya Patched; latino Medium Italic | Gaya Patched Bold/Black; cuerpo IBM Plex Sans |
 | **Tipografía Datos** | IBM Plex Mono (tabular) | IBM Plex Mono (denso) | IBM Plex Mono (cartouche) | IBM Plex Mono (lote / QR) |
 | **Color Acento** | Coral 500 solo gráfico; acciones usan roles `action.*` | Coral 500 solo gráfico; estados usan roles `status.*` | `--brand-accent-text` (Coral 700) cuando hay texto | `--brand-accent` como sello/regla; nunca texto pequeño |
 | **Profundidad** | 0 sombras · bordes sólidos | 0 sombras · rejilla tabular | 0 sombras · cartela botánica | 0 sombras · troquel y doblez |
-| **Conectividad** | Estado offline / cola local | Conexión permanente a base | Web pública / solo lectura | Offline absoluto (etiqueta) |
+| **Conectividad** | Estado offline / cola local | Conexión permanente a base | Web pública / solo lectura | Web según canal real; etiqueta física offline |
 
 ---
 
@@ -46,25 +46,31 @@ Diseñado para la consola de control ambiental, monitoreo de sensores SCD30 (CO�
   - Tablas con cabeceras fijas, cifras tabulares en IBM Plex Mono y etiquetas de procedencia (`sdp-provenance`).
   - Semántica estricta de estado: `Moss 700` (en rango), `--status-warn-marker` / `--status-warn-text` (precaución o cuarentena) y Coral 700 (alarma crítica). El Ochre 500 no funciona como texto ni regla fina aislada.
 
-## 3. Perfil `archive` (archivo y fichas botánicas)
+## 3. Perfil `archive` (archivo y láminas micológicas)
 
-Diseñado para fichas técnicas de cepas, certificados de lote público con trazabilidad y litografías botánicas.
+Diseñado para láminas de especies y documentación editorial. Una ilustración identifica una especie; no demuestra una cosecha, disponibilidad o certificación.
 
 - **Contratos obligatorios:**
-  - Gaya Patched como protagonista: nombre común en Gaya Bold, binomio latino en Gaya Italic.
-  - Placas botánicas con marco perimetral (`.sdp-fig--plate`) y cartela de registro histórico.
-  - Especies nunca recortadas (`object-fit: contain`): silueta completa como evidencia morfológica.
+  - Nombre común en Gaya Bold, binomio latino secundario en Medium Italic 500.
+  - Láminas con marco perimetral (`.sdp-fig--plate`) y pie que identifica su naturaleza y procedencia.
+  - Especies nunca recortadas (`object-fit: contain`): silueta completa para reconocer el organismo.
   - Espacio negativo abundante: el aire y el silencio visual transmiten rigor científico y valor patrimonial.
 
-## 4. Perfil `culinary` (mercado y packaging)
+## 4. Perfil `culinary` (cocina, mercado y packaging)
 
-Diseñado para cajas de cartón kraft plegadizo, bolsas ventiladas y etiquetas de despacho para alta gastronomía.
+Diseñado para fichas de ingrediente, recetas, consulta para chefs, presentaciones y empaque. «Conoce la seta. Imagina el plato.» es el principio de lectura: especie → preparación → siguiente paso.
 
 - **Contratos obligatorios:**
-  - Sustrato base que evoca pulpa kraft natural (`Paper 100` #F6F4EC / `Sand 500` #BFA98B).
-  - Impresión monocromática en negro carbón (`Ink 900`) con toques selectivos en coral mineral (`Coral 500` / `Coral 700`).
+  - Papel `--surface-page`, tinta `--text-primary`, firma/acción `--brand-primary`. Terracota gráfica `--brand-accent`; texto de acento `--brand-accent-text`. Los valores vienen de los tokens vigentes, no de hex históricos.
+  - Gaya para título/especie; IBM Sans para decisiones e instrucciones; IBM Mono para cantidad y rótulo. Sin bloques de lectura en mayúsculas.
+  - Grabado micológico para especie y gouache con lápiz para preparación. Imagen completa, nombre y pie. Fotografía propia solo cuando aporta evidencia de producto o proceso real.
+  - Componentes: `.sdp-market-intro`, `.sdp-ingredient-sheet`, `.sdp-editorial-pair`, `.sdp-editorial-card` y `.sdp-chef-brief`, disponibles desde `market.css`.
+  - Precio, formato, stock, condiciones, contacto y origen del lote solo se publican con datos confirmados. «Preparar consulta» no implica envío. No inventar mínimos o periodicidad para chefs.
+  - Una adaptación culinaria conserva fuente y estado de prueba; cantidad de receta no equivale al peso de un pack.
   - Código de lote y fecha de cosecha con rol `lot-code-print` y x-height física verificada ≥ 3mm. `micro-print` queda reservado para fine print no operativo.
-  - Código QR de trazabilidad vinculado al certificado público de lote.
+  - QR solo con destino real verificado. El DS no presupone un certificado público ni añade códigos ficticios.
+
+El alias `culinary-market` conserva los mismos márgenes para compatibilidad. Los componentes no cambian datos, estado de producto o lógica de compra. Ejemplo fuente en el checkout canónico: `08_brand/ds-2026/mockups/market/17-culinary-market.html`; [anatomía](components/COMPONENTS.md#20--mercado-y-cocina).
 
 ---
 © 2026 Setas de la Peña · Tenjo, Cundinamarca, Colombia.

@@ -1,0 +1,17 @@
+{
+  "purpose": "Portable DS example asset; byte-identical copy of the approved website illustration. No new image generation or recipe validation.",
+  "originalManifest": "assets/illustrations/culinary/sources.json",
+  "method": "Ilustración conceptual generada con IA, estilo gouache y lápiz.",
+  "approvedDirection": "Grabado para especies; gouache para cocina y recetas; fotografía mínima.",
+  "recipeStatus": "Adaptaciones pendientes de prueba en cocina; las ilustraciones no documentan su validación.",
+  "images": [
+    {
+      "name": "arepa",
+      "file": "arepa-shiitake-gouache.webp",
+      "sourcePath": "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+      "sha256": "907610268554282683ff8a3ecc6b98fe8115b8183302e675eb8912708d3bb686",
+      "width": 1254,
+      "height": 1254
+    }
+  ]
+}
