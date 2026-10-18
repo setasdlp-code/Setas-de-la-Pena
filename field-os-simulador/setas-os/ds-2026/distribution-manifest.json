@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "name": "ds-2026-distribution-manifest",
-  "version": "2026.1.4-criterio",
+  "version": "2026.1.5-criterio",
   "description": "Manifiesto canónico de distribución de DS-2026 hacia Setas OS y otros consumidores",
   "files": [
     "README.md",
     "MIGRATION.md",
     "PROFILES.md",
     "PACKAGING_SPECS.md",
+    "components/COMPONENTS.md",
     "index.css",
     "operations.css",
     "market.css"
@@ -56,7 +57,8 @@
     "components/operations/sync.css",
     "components/market/packaging.css",
     "components/market/traceability.css",
-    "components/market/archive.css"
+    "components/market/archive.css",
+    "components/market/culinary.css"
   ],
   "assetTrees": [
     "assets/fonts",
