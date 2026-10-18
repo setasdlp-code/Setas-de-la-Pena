@@ -46,6 +46,8 @@ Code references use symbols, not line numbers, because line numbers have drifted
 
 ## 3. Decisions required from Sebastián before Stage 1 closes
 
+**Recorded 2026-10-17 in `knowledge_base/DECISIONS.md`:** D-3 → DEC-016 (hard block), D-1 → DEC-017 (detect and surface), D-5 → DEC-018 (retire `field_events`). D-2 and D-4 remain open.
+
 | ID | Decision | Options | Blocks |
 |---|---|---|---|
 | D-1 | Concurrent stock reservation | (a) Keep ADR-0009 detect-and-surface; the acceptance test becomes "overdraw surfaced, no silent loss". (b) Server-acknowledged pending reservations: a reservation stays `pending` until accepted online, and offline planning is not a commitment. | Stage 2 test matrix |

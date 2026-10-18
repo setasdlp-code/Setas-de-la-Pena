@@ -49,7 +49,7 @@ Today the canonical shiitake block (79 % `aserrin_roble`, 20 % `salvado_trigo`, 
 **Files:**
 - Modify: `substrate-catalog.js` (the `SPP` object, around line 21): add `requires_sterilization:true` to `shiitake`, `lions_mane`, `reishi`, `nameko`. This is the list `simulador-app.jsx` already treats as autoclave by default (search `['shiitake','lions_mane','reishi','nameko']`). Do not add other species.
 - Modify: `substrate-analysis.js`, `analyze()` return object: add `requiresSterilization: Boolean(sp?.requires_sterilization)`.
-- Modify: `substrate-diagnosis.js` (around line 33, next to the `suppP>sp.supplementation_max` check): push `{t:'error', i:'!', tx:'Especie con esterilización obligatoria: solo autoclave. Pasteurización y cal no son aceptables para este lote.'}` when `requiresSterilization` is true.
+- Modify: `substrate-diagnosis.js` (around line 33, next to the `suppP>sp.supplementation_max` check): push `{t:'warning', i:'!', tx:'Especie con esterilización obligatoria: solo autoclave. Pasteurización y cal no son aceptables para este lote.'}` when `requiresSterilization` is true.
 - Modify: `scoring.js`, `buildDimensions`: add `sterilizationUnsafe = !!(an?.requiresSterilization && ctx.treatment?.col !== 'autoclave')` and OR it into `blocked`. **Change nothing else in `scoring.js`.** Do not touch `assessSeverity`, weights, caps or the `eb *= .85` line in `analyze()`.
 - Modify: `scoring-integrity.test.js`: update `EXPECTED_SHA256`, and add a comment line naming this change and "aprobado D-3 por Sebastián (fecha)". Leave the date as `PENDIENTE` until approval.
 - Modify: `simulador-app.jsx`, the `readyForProduction` definition (search `const readyForProduction`, around line 8282: `balanced&&hasPickedSpecies&&prepValid`): also false when the current recipe's `scoreAn(...).dimensions.safety.status === 'hold'`. The `ejecutarLote` button (search `onClick={()=>ejecutarLote(`) is already disabled on `!readyForProduction`. Update its `title` to explain the block.
@@ -63,7 +63,7 @@ Today the canonical shiitake block (79 % `aserrin_roble`, 20 % `salvado_trigo`, 
   - `shiitake 79/20/1 con cwlp queda en hold`: same with `'cwlp'`.
   - `shiitake con autoclave no cambia`: `score` and `status` with `{col:'autoclave'}` equal the pre-change values (record them in Step 2 from `main`: score 67, status `good`).
   - `orellana gris con thermal no se bloquea`: `p_ostreatus_gris` with a straw recipe and `thermal` → safety status ≠ `'hold'` caused by this rule (assert `an.requiresSterilization === false`).
-  - `sin tratamiento: diagnóstico exige autoclave`: the diagnosis for the shiitake recipe contains an entry with `t==='error'` whose `tx` includes `'autoclave'`.
+  - `sin tratamiento: diagnóstico exige autoclave`: the diagnosis for the shiitake recipe contains an entry with `t==='warning'` (not `'error'`: an error makes every shiitake recipe headline "Problemas críticos", even when autoclaved) whose `tx` includes `'autoclave'`.
   - `alias de especie no evade el bloqueo`: `analyze(r,'melena_leon',…)`. If `sp` resolves to undefined, assert that and add `// GAP: alias resolver — Stage 5` (this documents the gap; it is not a fix).
 - [ ] **Step 2:** Run `node --test sterilization-gate.test.js`. Expect FAIL on the hold assertions. Record the autoclave baseline numbers.
 - [ ] **Step 3:** Make the catalog, analysis, diagnosis and `buildDimensions` changes listed above.
