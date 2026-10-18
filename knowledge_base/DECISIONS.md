@@ -516,6 +516,82 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 **Criterio de revisión:** Revisar al completar tres muestras, todos los gates y el primer ciclo biológico piloto. La escala requiere una **decisión posterior independiente** basada en resultados, costo total, operación y comparación con estantería/recinto. Si la arquitectura acumula calor o CO₂, presenta fluencia, retiene humedad, falla limpieza/seguridad o no justifica su costo, se corrige o descarta.
 
 **Documentos afectados:** `04_facility/incubation.md`, `04_facility/master_blueprint.md`, `05_equipment/environmental_control.md`, `07_business/suppliers.md`, `09_research/incubation_module_engineering_review_2026-08-05.md`, `10_ai_workflows/OAP-0001-modular-incubation-validation.md` y `FARM_BRAIN.md`.
+
+---
+
+## DEC-016 — Esterilización obligatoria como bloqueo en Setas OS (D-3)
+
+**Fecha:** 2026-10-17
+**Estado:** Activa
+**Área:** Producción / Setas OS
+
+**Problema:** El catálogo de especies anota "REQUIERE ESTERILIZACIÓN" para shiitake, pero Setas OS no lo hacía cumplir. El bloque canónico de shiitake (79 % aserrín de roble, 20 % salvado de trigo y 1 % CaCO₃) con pasteurización recibía el estado `needs_work`, no un bloqueo. Para el Lote 1 era un riesgo de contaminación.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Solo advertencia en el diagnóstico | No toca `scoring.js` (ADR-0004) | El operario puede planificar el lote igual |
+| Bloqueo de viabilidad (`safety.status = 'hold'`) y de "Planificar lote" | Impide la acción insegura y no cambia pesos, umbrales ni el puntaje en autoclave | Exige actualizar el hash de integridad de `scoring.js` |
+
+**Decisión:** Bloqueo. Las especies con `requires_sterilization: true` (shiitake, melena de león, reishi y nameko) quedan en `hold` con cualquier tratamiento que no sea autoclave, y "Planificar lote" queda deshabilitado. Sebastián aprobó la actualización del hash de `scoring.js`.
+
+**Justificación:** El costo de un lote contaminado es mucho mayor que el de una compuerta que a veces sea más estricta de lo necesario. No es una calibración: no usa evidencia de producción ni cambia el ranking entre recetas en autoclave, así que respeta ADR-0004.
+
+**Criterio de revisión:** Una política validada por especie y sustrato (Etapa 1.5 del plan) que demuestre que un tratamiento distinto es aceptable para una combinación concreta.
+
+**Documentos afectados:** `field-os-simulador/setas-os/substrate-catalog.js`, `scoring.js`, `scoring-integrity.test.js`, `docs/superpowers/plans/2026-10-17-setas-os-lot1-viability-final-plan.md`.
+
+---
+
+## DEC-017 — Reservas concurrentes de Bodega: detectar y mostrar (D-1)
+
+**Fecha:** 2026-10-17
+**Estado:** Activa
+**Área:** Setas OS / Sincronización
+
+**Problema:** Dos equipos sin conexión pueden reservar o consumir el mismo stock. Había que decidir si Setas OS debe impedirlo o detectarlo.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Detectar y mostrar (ADR-0009 D3: `sobregiroKg`, "Recuento necesario") | Ya está implementado y funciona sin conexión | Permite un sobregiro temporal |
+| Reservas pendientes hasta que el servidor las acepte | Impide el sobregiro | Planificar sin conexión deja de comprometer stock; mucha complejidad nueva |
+
+**Decisión:** Mantener detectar y mostrar. El criterio de aceptación es "sobregiro visible, sin pérdida silenciosa", no "sin sobreasignación".
+
+**Justificación:** Con un cuidador en sitio y dirección remota, el consumo simultáneo del mismo lote de insumo es raro a la escala actual.
+
+**Criterio de revisión:** Más de un operario en sitio, o un sobregiro que cause una pérdida real de producción.
+
+**Documentos afectados:** `docs/adr/0009-multi-device-sync.md`, `docs/superpowers/plans/2026-10-17-setas-os-lot1-viability-final-plan.md`.
+
+---
+
+## DEC-018 — Retirar la cola `field_events` (D-5)
+
+**Fecha:** 2026-10-17
+**Estado:** Activa
+**Área:** Setas OS / Sincronización
+
+**Problema:** `field-event-sync.js` envía a la Cloud Function `acceptFieldEvent`, que no puede desplegarse en el plan Spark. Las reglas niegan toda escritura directa a `field_events`, así que cada evento encolado falla.
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Retirar la cola y usar la cola única de ADR-0009 | Una sola ruta y un solo estado visible para el operario | Hay que migrar o descartar los eventos pendientes en IndexedDB |
+| Enrutar `field_events` a través de `remote-sync` | Conserva el modelo de eventos de campo | Exige nuevas reglas y una colección más en `COLECCIONES` |
+
+**Decisión:** Retirar la cola `field_events`. Los eventos de campo salen por la cola única de ADR-0009.
+
+**Justificación:** La ruta actual nunca llega a Firestore. Mantenerla da una falsa sensación de que los datos están guardados.
+
+**Criterio de revisión:** Pasar al plan Blaze con Cloud Functions desplegadas.
+
+**Documentos afectados:** `field-os-simulador/setas-os/field-event-sync.js`, `firebase/firestore.rules`, `docs/superpowers/plans/2026-10-17-setas-os-lot1-viability-final-plan.md`.
+
 ---
 
 ## Plantilla para nuevas decisiones
