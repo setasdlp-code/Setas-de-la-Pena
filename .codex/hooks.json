@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/sebastianpinzon/Projects/Setas-de-la-Pena/.claude/worktrees/setas-os-mobile-audit-72d0d3/.codex/hooks/rebuild-simulador.sh'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/sebastianpinzon/Projects/Setas-de-la-Pena/.claude/worktrees/setas-os-mobile-audit-72d0d3/.codex/hooks/session-start.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
