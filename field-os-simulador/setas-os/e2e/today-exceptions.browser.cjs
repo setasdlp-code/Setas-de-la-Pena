@@ -108,7 +108,48 @@ const root=path.resolve(__dirname,'..');
    assert.deepEqual(errores,[],`errores de página (notificaciones): ${errores.join(' | ')}`);
    await page.close();
   }
-  console.log('PASS today-exceptions: sincronización atascada + Reintentar, sobregiro de Bodega, incubación sobre la referencia rotulada como heurística, lecturas imposibles por WebSocket; orden por severidad a 1280 y 390 px; notificación solo de alarmas nuevas, sin repetir.');
+  // ── Cuenta limpia (sin sdp_bit_tasks): Hoy no muestra tareas demo del shell
+  // (C-0414, L-2608) y presenta el estado vacío "Sin tareas registradas para hoy."
+  // con acción "Registrar observación".
+  {
+   const page=await browser.newPage({viewport:{width:1280,height:900}});
+   const errores=[];page.on('pageerror',e=>errores.push(e.message));
+   await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+   await page.addInitScript(()=>{
+    localStorage.setItem('sdp_seeded','1');
+    localStorage.removeItem('sdp_bit_tasks');
+    localStorage.removeItem('sdp_bit_lotes');
+    // Simular la prop tasksHoyJson que pasa el shell DCLogic cuando no hay tareas del motor
+    let _orig=null;
+    Object.defineProperty(window,'SimuladorApp',{
+     configurable:true,
+     get(){return _orig;},
+     set(fn){
+      _orig=function WrappedSimuladorApp(props){
+       const demoTasks=JSON.stringify([
+        {key:'t1',id:'C-0414',title:'Inspeccionar contenedor',why:'Rutina demo',prio:'alta',done:false},
+        {key:'t2',id:'L-2608',title:'Cosechar lote',why:'Rutina demo',prio:'media',done:false},
+       ]);
+       return fn(Object.assign({},props,{tasksHoyJson:demoTasks}));
+      };
+     },
+    });
+   });
+   await page.goto(`http://127.0.0.1:${port}/__harness.html?view=home`);
+   const cockpit=page.locator('.home-cockpit');
+   await expect(cockpit).toBeVisible();
+   const text=await cockpit.innerText();
+   assert.ok(!text.includes('C-0414'),'Hoy no debe mostrar C-0414 en cuenta limpia');
+   assert.ok(!text.includes('L-2608'),'Hoy no debe mostrar L-2608 en cuenta limpia');
+   assert.ok(text.includes('Sin tareas registradas para hoy.'),'Hoy debe mostrar "Sin tareas registradas para hoy."');
+   const btn=cockpit.getByRole('button',{name:'Registrar observación'});
+   await expect(btn).toBeVisible();
+   await btn.click();
+   await expect(page.getByRole('dialog')).toBeVisible();
+   assert.deepEqual(errores,[],`errores de página (cuenta limpia): ${errores.join(' | ')}`);
+   await page.close();
+  }
+  console.log('PASS today-exceptions: sincronización atascada + Reintentar, sobregiro de Bodega, incubación sobre la referencia rotulada como heurística, lecturas imposibles por WebSocket; orden por severidad a 1280 y 390 px; notificación solo de alarmas nuevas, sin repetir; cuenta limpia sin tareas demo.');
  }finally{
   if(browser)await browser.close();
   server.close();
