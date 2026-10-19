@@ -51,8 +51,10 @@ test('la cola de trabajo vive en el cockpit que el operario ve, no en un compone
   assert.match(cockpit, /data-testid="cockpit-task-row"/);
   assert.match(cockpit, /\{t\.action\} →/);
 
-  // Fallback: si el motor no está cargado, la pantalla no se queda vacía.
-  assert.match(source, /else \{ try\{ tasksHoy=JSON\.parse\(props\.tasksHoyJson\|\|'\[\]'\)/);
+  // Sin fallback a tareas demo del shell: cuando el motor no tiene tareas, queda vacío.
+  assert.doesNotMatch(source, /tasksHoyJson/);
+  assert.match(cockpit, /Sin tareas registradas para hoy\./);
+  assert.match(cockpit, /Registrar observación/);
 
   // Siembra única para quien ya tiene lotes pero todavía no tiene tareas.
   assert.match(source, /taskEngine\.tasksFromTransition\(\{batchId:lote\.id,toState,at:lote\.createdAt/);
