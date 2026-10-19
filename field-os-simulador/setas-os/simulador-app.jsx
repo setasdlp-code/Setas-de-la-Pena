@@ -12008,6 +12008,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       events: roomEvents, telemetry: roomBoardTelemetry, nowMs: roomBoardNowMs,
     }) : [];
     let cameras=[];
+    // TODO Stage 4: cámaras demo
     try{ cameras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ cameras=[]; }
     const room = ROOMS_CONFIG[selectedClimateRoom] || ROOMS_CONFIG.martha_01;
     const selectedCamera=cameras.find(c=>c.id===room.cameraId)||cameras[0]||null;
@@ -13864,31 +13865,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
             sala: l.sala || l.ubicacion || null,
           }));
 
-          const copilotSeriesByRoom = {};
+          let copilotSeriesByRoom = {};
+          let copilotStateByRoom = {};
           try {
-            const camIdToRoomId = {};
-            Object.keys(ROOMS_CONFIG).forEach(rid => { camIdToRoomId[ROOMS_CONFIG[rid].cameraId] = rid; });
-            camaras.forEach(cam => {
-              if (!cam || !cam.id) return;
-              const roomId = camIdToRoomId[cam.id] || cam.id;
-              const temps = Array.isArray(cam.tempSeries) ? cam.tempSeries : [];
-              const hums = Array.isArray(cam.humSeries) ? cam.humSeries : [];
-              const co2s = Array.isArray(cam.co2Series) ? cam.co2Series : [];
-              const n = Math.max(temps.length, hums.length, co2s.length);
-              if (!n) return;
-              // La demo de cámaras no trae timestamp por lectura: se asume 1
-              // lectura/hora terminando en "ahora" solo para poder alimentar
-              // los motores, que sí requieren series con `t`. Telemetría real
-              // (roomLive.series) trae su propio `t` y no pasa por aquí.
-              const stepMs = 3600000;
-              const series = [];
-              for (let i = 0; i < n; i++) {
-                const idxFromEnd = n - 1 - i;
-                series.push({ t: operationalNow - idxFromEnd * stepMs, temperature_c: temps[i], rh_pct: hums[i], co2_ppm: co2s[i] });
-              }
-              copilotSeriesByRoom[roomId] = series;
-            });
-          } catch (e) { /* copilotSeriesByRoom queda parcial/vacío; el copiloto sigue sin telemetría de cámara */ }
+            const CopilotSeriesApi = typeof window !== 'undefined' ? window.SetasCopilotSeries : null;
+            const snapshotRooms = liveTelemetry && liveTelemetry.snapshot && liveTelemetry.snapshot.rooms
+              ? liveTelemetry.snapshot.rooms
+              : {};
+            if (CopilotSeriesApi && typeof CopilotSeriesApi.buildCopilotSeriesByRoom === 'function') {
+              const built = CopilotSeriesApi.buildCopilotSeriesByRoom(snapshotRooms, { nowMs: operationalNow });
+              copilotSeriesByRoom = (built && built.seriesByRoom) || {};
+              copilotStateByRoom = (built && built.stateByRoom) || {};
+            }
+          } catch (e) {
+            copilotSeriesByRoom = {};
+            copilotStateByRoom = {};
+          }
+          const copilotRoomTelemetryRows = Object.keys(ROOMS_CONFIG).map(rid => ({
+            roomId: rid,
+            name: ROOMS_CONFIG[rid].name,
+            state: copilotStateByRoom[rid] || 'missing',
+          }));
 
           let copilotBriefing = null;
           try {
@@ -14384,6 +14381,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     )}
                   </div>
+
+                  {copilotRoomTelemetryRows.some(r => r.state !== 'measured') && (
+                    <div data-testid="copilot-telemetry-status" style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14,padding:'8px 10px',border:'1px dashed var(--line-0)',background:'var(--paper-1)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
+                      {copilotRoomTelemetryRows.filter(r => r.state !== 'measured').map(r => (
+                        <span key={r.roomId} data-room-id={r.roomId} data-telemetry-state={r.state}>
+                          {r.name}: {r.state === 'stale' ? 'Telemetría desactualizada' : 'Sin telemetría medida'}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {copilotBriefing && (
                     <React.Fragment>
