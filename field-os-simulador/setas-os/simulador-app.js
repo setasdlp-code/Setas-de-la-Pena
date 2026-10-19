@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: deeef9950d1dcf6e64a274ce22d33f7ef056340c578257f9b032cb6e92396608
+// source-hash: a28a1404215a8f3ae8694a72a5a7daacebc11ea673ea64c609ae10c1056a1ec2
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -10183,7 +10183,7 @@ BATCH (${numBags}×${kgBag} kg):
     } catch (e) {
       camaras = [];
     }
-    let tasksHoy = [], recentActivity = [];
+    let recentActivity = [];
     const motorRows = operationalQueue.map((row) => ({
       key: row.taskId,
       title: row.what,
@@ -10196,15 +10196,7 @@ BATCH (${numBags}×${kgBag} kg):
       objectType: row.objectType,
       fromEngine: true
     }));
-    if (motorRows.length) {
-      tasksHoy = motorRows;
-    } else {
-      try {
-        tasksHoy = JSON.parse(props.tasksHoyJson || "[]");
-      } catch (e) {
-        tasksHoy = [];
-      }
-    }
+    const tasksHoy = motorRows;
     try {
       recentActivity = JSON.parse(props.recentActivityJson || "[]");
     } catch (e) {
@@ -10369,7 +10361,7 @@ BATCH (${numBags}×${kgBag} kg):
     })), nowLots.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 } }, nowLots.map((item) => /* @__PURE__ */ React.createElement("div", { key: item.taskId, className: "sdp-task sdp-task--now", style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", padding: "10px 14px", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-task__body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { className: "sdp-badge sdp-badge--ok", style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--status-ok)", border: "1px solid var(--status-ok)", padding: "1px 5px" } }, item.bucket === "overdue" ? "Vencido" : "Ahora"), /* @__PURE__ */ React.createElement("span", { className: "sdp-task__title" }, item.what)), /* @__PURE__ */ React.createElement("div", { className: "sdp-task__meta" }, item.where, " · ", item.why)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field sdp-btn--primary", type: "button", onClick: () => item.objectType === "batch" && openBatchDetail(item.objectId) }, "Ejecutar transición →"), /* @__PURE__ */ React.createElement("button", { className: "sdp-btn sdp-btn--field", type: "button", title: "Imprimir etiquetas térmicas del lote", onClick: () => item.objectType === "batch" && openThermalForLote(item.objectId) }, /* @__PURE__ */ React.createElement(AppIcon, { name: "print", size: 15 })))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: 8 } }, "Checklist del Turno · ", /* @__PURE__ */ React.createElement("span", { "data-testid": "cockpit-task-count" }, (() => {
       const n = tasksHoy.filter((t) => !t.done).length;
       return `${n} pendiente${n === 1 ? "" : "s"}`;
-    })())), tasksHoy.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px", color: "var(--ink-2)", fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", border: "1px dashed var(--line-0)", borderRadius: 0 } }, "Sin tareas pendientes por ahora.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, className: "sdp-task", style: { display: "flex", alignItems: "center", gap: 4, padding: "4px 12px 4px 4px", border: "1px solid var(--line-0)", borderRadius: 0, opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
+    })())), tasksHoy.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "16px", color: "var(--ink-2)", fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", border: "1px dashed var(--line-0)", borderRadius: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", null, "Sin tareas registradas para hoy."), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowQrSheet(true), style: { minHeight: 48, padding: "8px 14px", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, letterSpacing: "var(--tracking-button)", textTransform: "uppercase", color: "var(--ink-0)", background: "var(--paper-1)", border: "1px solid var(--line-0)", borderRadius: 0, cursor: "pointer" } }, "Registrar observación")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, tasksHoy.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.key, className: "sdp-task", style: { display: "flex", alignItems: "center", gap: 4, padding: "4px 12px 4px 4px", border: "1px solid var(--line-0)", borderRadius: 0, opacity: t.done ? 0.5 : 1 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => t.fromEngine ? closeTaskFromCheckbox(t) : props.onTaskToggle && props.onTaskToggle(t.key),

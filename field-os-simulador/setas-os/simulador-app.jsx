@@ -13832,10 +13832,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           // Tareas de hoy y Actividad reciente.
           // La lista visible se mapea desde la cola del motor a la forma que este
-          // markup ya espera, sin rediseñarlo. Si el motor no está cargado o aún
-          // no hay tareas, se conserva la fuente del shell para no dejar la
-          // pantalla vacía por un fallo de carga.
-          let tasksHoy=[], recentActivity=[];
+          // markup ya espera, sin rediseñarlo. Cuando el motor no tiene tareas,
+          // tasksHoy permanece vacío [].
+          let recentActivity=[];
           const motorRows=operationalQueue.map(row=>({
             key:row.taskId,
             title:row.what,
@@ -13848,8 +13847,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             objectType:row.objectType,
             fromEngine:true,
           }));
-          if(motorRows.length){ tasksHoy=motorRows; }
-          else { try{ tasksHoy=JSON.parse(props.tasksHoyJson||'[]'); }catch(e){ tasksHoy=[]; } }
+          const tasksHoy=motorRows;
           try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
           const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
@@ -14226,8 +14224,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Checklist del Turno · <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
                     </div>
                     {tasksHoy.length === 0 ? (
-                      <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0}}>
-                        Sin tareas pendientes por ahora.
+                      <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0,display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+                        <span>Sin tareas registradas para hoy.</span>
+                        <button type="button" onClick={()=>setShowQrSheet(true)} style={{minHeight:48,padding:'8px 14px',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-0)',background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,cursor:'pointer'}}>
+                          Registrar observación
+                        </button>
                       </div>
                     ) : (
                       <div style={{display:'flex',flexDirection:'column',gap:6}}>
