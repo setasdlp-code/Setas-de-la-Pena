@@ -2,8 +2,7 @@
 const species = {
   shiitake: { code: 'SP. 001', name: 'Shiitake', latin: 'Lentinula edodes', image: 'shiitake', category: 'Una especie para la cocina', description: 'Conoce el shiitake por su sabor y textura, y explora ideas para cocinarlo.', profile: 'Umami intenso, con notas ligeramente ahumadas.', use: 'Para sopas y otras preparaciones cocinadas. Explora su sabor y su textura.', culinary: true },
   melena: { code: 'SP. 002', name: 'Melena de león', latin: 'Hericium erinaceus', image: 'lions-mane', category: 'Una especie para explorar', description: 'Su silueta singular le da nombre. Una de las protagonistas de nuestro archivo de hongos, con una textura que invita a probar otras preparaciones.', profile: 'Textura suave y esponjosa, con notas dulces y sabrosas.', use: 'Desmenúzala, prepárala en piezas o incorpórala a una sopa.', culinary: true },
-  orellana: { code: 'SP. 003', name: 'Orellana gris', latin: 'Pleurotus ostreatus', image: 'grey-mushroom', category: 'Una especie versátil', description: 'También conocida como hongo ostra. Su forma y sus láminas le dan una identidad reconocible dentro del archivo.', profile: 'Su forma y sus láminas son protagonistas de esta ficha.', use: 'Salteadas o asadas: dos maneras de explorar las orellanas en la cocina.', culinary: true },
-  reishi: { code: 'SP. 004', name: 'Reishi', latin: 'Ganoderma lucidum', image: 'reishi', category: 'Archivo de hongos', description: 'Una especie de referencia en el universo visual de Setas de la Peña. Esta ficha invita a observar su forma y reconocer su nombre científico.', profile: 'Identidad de la especie: Ganoderma lucidum.', use: 'Esta ficha documenta la especie. No incluye recomendaciones de consumo ni atribuye propiedades medicinales.', culinary: false }
+  eryngii: { code: 'SP. 003', name: 'Eryngii', latin: 'Pleurotus eryngii', image: 'cardo', category: 'Una especie para explorar', description: 'También conocido como seta de cardo o king trumpet. Su pie grueso y sus láminas son protagonistas de esta ficha.', profile: 'Pie carnoso y textura firme.', use: 'Córtalo a lo largo para saltear o en rodajas para asar.', culinary: true }
 };
 const dialog = document.querySelector('#species-dialog');
 let opener;
@@ -31,10 +30,15 @@ function openSpecies(key, button) {
   document.querySelector('#dialog-source').hidden = !item.culinary;
   const sourceNote = document.querySelector('#dialog-source-note');
   sourceNote.hidden = !item.culinary;
-  sourceNote.textContent = key === 'orellana'
-    ? 'La referencia culinaria corresponde a otra variedad de orellana; no es una cata de la orellana gris ni de nuestra cosecha.'
-    : 'Perfil de referencia de la especie; no corresponde a una cata de nuestra cosecha.';
-  document.querySelector('#dialog-full-page').hidden = key !== 'shiitake';
+  sourceNote.textContent = 'Perfil de referencia de la especie; no corresponde a una cata de nuestra cosecha.';
+  const editorial = document.querySelector('#dialog-full-page');
+  const routes = { shiitake: 'shiitake', melena: 'melena-de-leon', eryngii: 'eryngii' };
+  const editorialURL = new URL(`/especies/${routes[key]}`, location.origin);
+  const pairing = new URLSearchParams(location.search).get('pairing');
+  if (['mono', 'bricolage', 'libre'].includes(pairing)) editorialURL.searchParams.set('pairing', pairing);
+  editorial.href = editorialURL.href;
+  editorial.textContent = `Leer la ficha de ${item.name.toLowerCase()} ↗`;
+  editorial.hidden = false;
   document.querySelector('#dialog-order').hidden = key !== 'shiitake';
   document.querySelector('#species-dialog .availability-note').textContent = key === 'shiitake'
     ? 'Disponibilidad, presentaciones y entrega por confirmar. Prepara tu consulta en la ficha de shiitake.'
@@ -43,39 +47,27 @@ function openSpecies(key, button) {
   dialog.showModal();
 }
 document.querySelectorAll('[data-species]').forEach(button => button.addEventListener('click', () => openSpecies(button.dataset.species, button)));
-document.querySelectorAll('[data-hero]').forEach(button => button.addEventListener('click', () => {
-  const item = species[button.dataset.hero];
-  document.querySelectorAll('[data-hero]').forEach(option => option.setAttribute('aria-pressed', String(option === button)));
-  setSpeciesImage(document.querySelector('#hero-image'), button.dataset.hero);
-  document.querySelector('#hero-image').alt = `Ilustración de ${item.name.toLowerCase()}`;
-  document.querySelector('#hero-name').textContent = item.name;
-  document.querySelector('#hero-latin').textContent = item.latin;
-  document.querySelector('#hero-code').textContent = item.code;
-  document.querySelector('#hero-status').textContent = `Especie de portada: ${item.name}.`;
-  document.querySelector('#hero-note').hidden = button.dataset.hero === 'shiitake';
-}));
-// Filtros de la colección: categoría + preparación. La guía solo ordena ideas de referencia; no crea disponibilidad.
+// Preparation filters suggest sourced uses; they never imply stock.
 const preparations = {
   sopa: { label: 'sopa o caldo', reasons: {
     shiitake: { text: 'Para sopas y otras preparaciones cocinadas.', link: ['/recetas#receta-sopa', 'Ver la sopa de coco y jengibre'] },
     melena: { text: 'Incorpórala a una sopa para explorar su textura.' } } },
   saltear: { label: 'saltear', reasons: {
     shiitake: { text: 'Nuestras recetas de arepa y patacones lo saltean.', link: ['/recetas#receta-arepa', 'Ver la arepa con shiitake'] },
-    orellana: { text: 'Saltea las orellanas para tu próximo plato.' } } },
+    eryngii: { text: 'Corta el eryngii a lo largo para saltearlo.' } } },
   asar: { label: 'asar', reasons: {
-    orellana: { text: 'Prueba las orellanas asadas.' } } },
+    eryngii: { text: 'Prueba el eryngii en rodajas a la parrilla.' } } },
   desmenuzar: { label: 'desmenuzar o en piezas', reasons: {
     melena: { text: 'Desmenúzala o prepárala en piezas.' } } }
 };
-const filterState = { category: 'culinary', prep: 'any' };
+const filterState = { prep: 'any' };
 function applyFilters() {
   const prep = preparations[filterState.prep];
   let count = 0;
   document.querySelectorAll('.species-card').forEach(card => {
     const speciesKey = card.querySelector('[data-species]').dataset.species;
-    const inCategory = filterState.category === 'all' || card.dataset.category === filterState.category;
     const inPrep = !prep || (card.dataset.uses || '').split(' ').includes(filterState.prep);
-    card.hidden = !(inCategory && inPrep);
+    card.hidden = !inPrep;
     if (!card.hidden) count++;
     const reason = card.querySelector('.card-reason');
     if (!reason) return;
@@ -100,27 +92,20 @@ function applyFilters() {
       }
     }
   });
-  document.querySelectorAll('[data-filter]').forEach(button => {
-    const active = button.dataset.filter === filterState.category;
-    button.classList.toggle('active', active);
-    button.setAttribute('aria-pressed', String(active));
-  });
   document.querySelectorAll('[data-prep]').forEach(button => {
     const active = button.dataset.prep === filterState.prep;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
   });
   document.querySelector('#filter-empty').hidden = count !== 0;
-  document.querySelector('#filter-reset').hidden = filterState.category === 'all' && filterState.prep === 'any';
+  document.querySelector('#filter-reset').hidden = filterState.prep === 'any';
   document.querySelector('#filter-status').textContent = count === 0 ? 'Ninguna especie coincide con los filtros.' : `${count} ${count === 1 ? 'especie visible' : 'especies visibles'}${prep ? ` para ${prep.label}` : ''}.`;
 }
-document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { filterState.category = button.dataset.filter; applyFilters(); }));
 document.querySelectorAll('[data-prep]').forEach(button => button.addEventListener('click', () => { filterState.prep = button.dataset.prep; applyFilters(); }));
 document.querySelector('#filter-reset').addEventListener('click', () => {
-  filterState.category = 'all';
   filterState.prep = 'any';
   applyFilters();
-  document.querySelector('[data-filter="all"]').focus();
+  document.querySelector('[data-prep="any"]').focus();
 });
 document.querySelector('#prep-guide').hidden = false;
 document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
@@ -140,12 +125,4 @@ dialog.addEventListener('click', event => {
   if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
 });
 dialog.addEventListener('close', () => opener?.focus());
-document.querySelector('#dialog-journal').addEventListener('click', () => {
-  const target = document.querySelector('#journal-title');
-  target.tabIndex = -1;
-  opener = target;
-  dialog.close();
-  location.hash = 'cuaderno';
-  target.focus({preventScroll: true});
-});
 document.querySelector('#year').textContent = new Date().getFullYear();

@@ -32,7 +32,7 @@ const report = { checks: [], errors: [] };
     page.on('pageerror',e=>report.errors.push(e.message));
     for (const width of [320,390,768,1440]) {
       await page.setViewportSize({width,height:900});
-      for (const route of ['home','shiitake','recetas']) {
+      for (const route of ['home','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
         const requests=[];
         const listener=request=>requests.push(request.url());
         page.on('request',listener);
@@ -46,7 +46,7 @@ const report = { checks: [], errors: [] };
         const ogImage=await page.locator('meta[property="og:image"]').getAttribute('content');
         assert.equal(ogImage,origin+'/assets/social/setas-de-la-pena.png');
         const organization=JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
-        assert.equal(organization['@type'],'Organization');
+        assert.equal(organization['@type'],route.startsWith('especies/')?'Article':'Organization');
         assert.ok(!['telephone','email','offers','openingHours','address'].some(k=>k in organization));
         assert.equal(await page.locator('link[rel=stylesheet]').count(),1);
         assert.ok(!requests.some(url=>/typography-trials|Bricolage|LibreBaskerville/.test(url)));
@@ -67,13 +67,14 @@ const report = { checks: [], errors: [] };
     for(let i=0;i<12;i++) { await page.keyboard.press('Tab'); assert.equal(await page.evaluate(()=>document.activeElement.closest('dialog')?.id),'species-dialog'); }
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(()=>document.activeElement.dataset.species),'shiitake');
-    await page.locator('[data-hero="melena"]').click();
-    assert.match(await page.locator('#hero-image').getAttribute('src'),/lions-mane.*\.webp$/);
-    assert.ok((await page.locator('#hero-image').getAttribute('srcset')).includes('320w'));
-    await page.locator('.specimen-button[data-species="melena"]').click();
-    await page.locator('#dialog-image').evaluate(i=>i.decode());
-    assert.match(await page.locator('#dialog-image').getAttribute('src'),/lions-mane.*\.webp$/);
-    await page.keyboard.press('Escape');
+    for (const [key, image] of [['melena', 'lions-mane'], ['eryngii', 'cardo']]) {
+      await page.locator(`.specimen-button[data-species="${key}"]`).click();
+      await page.locator('#dialog-image').evaluate(i=>i.decode());
+      assert.match(await page.locator('#dialog-image').getAttribute('src'),new RegExp(image+'.*\\.webp$'));
+      assert.ok((await page.locator('#dialog-image').getAttribute('srcset')).includes('320w'));
+      assert.equal(await page.locator('#dialog-order').isVisible(),false);
+      await page.keyboard.press('Escape');
+    }
     report.checks.push({type:'keyboard-dialog-focus-responsive-dynamic-images',result:'passed'});
     for (const [route,status,type] of [['nonexistent-audit-page',404,'text/html'],['nested/missing/page',404,'text/html'],['robots.txt',200,'text/plain'],['sitemap.xml',200,'application/xml']]) {
       const response=await context.request.get(base+route);

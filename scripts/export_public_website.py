@@ -12,10 +12,12 @@ from urllib.parse import urlsplit, unquote
 ROOT = Path(__file__).resolve().parents[1]
 ORIGIN = 'https://setas-de-la-pena.pages.dev'
 ROUTES = {'index.html': 'home.html', 'design-system.html': 'index.html'}
-CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/manual': 'manual.html', '/typography': 'typography.html'}
-COMMERCIAL = {'index.html', 'shiitake.html', 'recetas.html', '404.html'}
-SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'typography.html', 'design-system.html', 'manual.html',
-         '404.html', 'robots.txt', 'sitemap.xml', 'assets/social/setas-de-la-pena.png',
+CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html'}
+SPECIES_PAGES = {f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}
+CLEAN.update(SPECIES_PAGES)
+COMMERCIAL = {'index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', '404.html', *SPECIES_PAGES.values()}
+SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'design-system.html', 'manual.html',
+         *SPECIES_PAGES.values(), '404.html', 'robots.txt', 'sitemap.xml', 'assets/social/setas-de-la-pena.png',
          '08_brand/ds-2026/brand-kit/assets/wordmark-horizontal-moss.svg']
 ATTR = re.compile(r'\b(?:href|src)\s*=\s*([\'"])(.*?)\1', re.I)
 CSS = re.compile(r'url\(\s*[\'"]?([^\)\'"]+)[\'"]?\s*\)|@import\s+[\'"]([^\'"]+)[\'"]')
@@ -203,7 +205,7 @@ class Exporter:
         self.write('_headers', (ROOT / 'public-headers.txt').read_bytes(), 'public-headers.txt')
         self.write('_redirects', (ROOT / 'public-redirects.txt').read_bytes(), 'public-redirects.txt')
         records = sorted(self.records.values(), key=lambda r: r['file'])
-        audit = {'result': 'exported locally; not deployed', 'routes': {'/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/manual': 'manual.html'},
+        audit = {'result': 'exported locally; not deployed', 'routes': {'/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', **SPECIES_PAGES},
                  'commercialCss': css_bundle, 'cssInputs': sorted(self.css_inputs), 'files': records}
         (self.output.parent / 'export-audit.json').write_text(json.dumps(audit, indent=2, ensure_ascii=False)+'\n')
         print(json.dumps({'output': str(self.output), 'files': len(records), 'bytes': sum(r['bytes'] for r in records)}))

@@ -1,0 +1,84 @@
+{
+  "createdAtUTC": "2026-10-18T16:59:11.544403+00:00",
+  "method": "Built-in image_gen; referencias directas a la serie gouache de shiitake.",
+  "references": [
+    "arepa-shiitake-gouache.webp",
+    "mote-shiitake-gouache.webp",
+    "encocado-shiitake-gouache.webp"
+  ],
+  "recipeStatus": "Ilustraciones conceptuales de formulaciones pendientes de prueba; no fotografías ni resultados de cocina.",
+  "images": [
+    {
+      "slug": "posta",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-afefbec6-8677-451d-b70f-9486eb92a9e5.png",
+      "prompt": "Create a standalone square culinary illustration as the next image in this EXACT existing Setas de la Peña shiitake gouache series. The three input images are STYLE REFERENCES ONLY, not food ingredients to repeat. Match their opaque gouache pigment shapes, restrained small brush strokes, sparse pencil contours, appetizing hand-painted detail, warm ivory speckled ceramic with a thin ochre rim, slightly elevated three-quarter view, warm oak brown/moss green/ochre/cream palette and flat off-white #FAF8F3 background. Same illustrator, same series, same detail and scale. One finished serving only, entire plate visible, dish occupies 88–92% of canvas width with compact margins. No photo, 3D, watercolor wash, engraving, text, logos, layout panels, hands, cutlery, tablecloth, loose ingredients or decorative foliage. IMPORTANT: use only the food described below. Lion's mane is Hericium erinaceus: ivory fibrous flesh and fine dangling teeth which brown when cooked; NO shiitake brown caps, no gills, no eryngii stems. These are conceptual illustrations of proposed recipes, not photographs. On one shallow off-white ceramic plate: ONE broad thick compressed lion's mane steak with recognizable compact layered fibrous ivory cut edge and dark golden seared surface glazed with glossy dark panela sauce. Rest it on rustic golden baked ripe-plantain mash with tiny pale costeño cheese flecks; a modest pool of dark brown onion/pepper/panela sauce surrounds it. A little chopped cilantro on top. No whole raw mushrooms, no beef, no rice, no avocado, no corn kernels, no plantain slices. Steak must be lion's mane, not round king-oyster scallop cylinders.",
+      "file": "posta-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 207420,
+      "sha256": "f8d578b906af50c3d3c3ca0a607f19f8c169d4543f005697190de20aa4d4602b",
+      "originalSHA256": "8934a68d47d2487ed745e0523fbc0c0dd67c57ba54e24665a87f34a1e77ae1c4",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    },
+    {
+      "slug": "encocado",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-8ec5dc05-0ec4-4e2d-9253-be521ed3710a.png",
+      "prompt": "Create a standalone square culinary illustration as the next image in this EXACT existing Setas de la Peña shiitake gouache series. The three input images are STYLE REFERENCES ONLY, not food ingredients to repeat. Match their opaque gouache pigment shapes, restrained small brush strokes, sparse pencil contours, appetizing hand-painted detail, warm ivory speckled ceramic with a thin ochre rim, slightly elevated three-quarter view, warm oak brown/moss green/ochre/cream palette and flat off-white #FAF8F3 background. Same illustrator, same series, same detail and scale. One finished serving only, entire plate visible, dish occupies 88–92% of canvas width with compact margins. No photo, 3D, watercolor wash, engraving, text, logos, layout panels, hands, cutlery, tablecloth, loose ingredients or decorative foliage. IMPORTANT: use only the food described below. Lion's mane is Hericium erinaceus: ivory fibrous flesh and fine dangling teeth which brown when cooked; NO shiitake brown caps, no gills, no eryngii stems. These are conceptual illustrations of proposed recipes, not photographs. One shallow ivory ceramic BOWL with thin ochre rim filled with creamy orange-coral coconut milk hogao sauce. Prominent large irregular cooked lion's mane WEDGES with pale fibrous bodies and fine golden toasted teeth at their edges, partly immersed in the sauce. Small cooked tomato/pepper/onion pieces, a few fine chillangua/cilantro herb flecks. TWO flat golden GREEN PLANTAIN PATACONES rest together on one side of the bowl rim, fully visible. No brown mushroom caps or gills, no rice, no corn, no avocado, no shrimp.",
+      "file": "encocado-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 225512,
+      "sha256": "5fc651645fd71940be200bd9f153ca288951e7d6fcbccd3f3a50c465a6114a38",
+      "originalSHA256": "d492eeccb58526fd3bc3282c1dd396eb5f63666326fa5e15f8ca197f9009241d",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    },
+    {
+      "slug": "mote",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-654ca56b-03aa-4317-a39e-7787d59654b0.png",
+      "prompt": "Create a standalone square culinary illustration as the next image in this EXACT existing Setas de la Peña shiitake gouache series. The three input images are STYLE REFERENCES ONLY, not food ingredients to repeat. Match their opaque gouache pigment shapes, restrained small brush strokes, sparse pencil contours, appetizing hand-painted detail, warm ivory speckled ceramic with a thin ochre rim, slightly elevated three-quarter view, warm oak brown/moss green/ochre/cream palette and flat off-white #FAF8F3 background. Same illustrator, same series, same detail and scale. One finished serving only, entire plate visible, dish occupies 88–92% of canvas width with compact margins. No photo, 3D, watercolor wash, engraving, text, logos, layout panels, hands, cutlery, tablecloth, loose ingredients or decorative foliage. IMPORTANT: use only the food described below. Lion's mane is Hericium erinaceus: ivory fibrous flesh and fine dangling teeth which brown when cooked; NO shiitake brown caps, no gills, no eryngii stems. These are conceptual illustrations of proposed recipes, not photographs. One shallow ivory ceramic bowl: a creamy pale golden yam-and-pumpkin mote soup base, visible tender irregular yam pieces and a few small white costeño cheese cubes. A clear central mound of cooked LION'S MANE thick fibrous shreds, ivory interiors and golden-brown crisp tips, with a few thin toasted garlic slices; a few golden-seared cheese cubes around this mound, a thin white swirl of suero and small chopped cilantro flecks. Recognizable torn lion's mane ribbons, NOT noodles, not shiitake caps or gills. No corn, no rice, no plantain, no avocado.",
+      "file": "mote-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 208692,
+      "sha256": "916a556bd1f37ec4fe9d5c19837fce580fad18492ef90da035193bac0a1985bc",
+      "originalSHA256": "73513f5d2aabad18be2293324f3692eafbeb54ffcdb7a0b937dce6630d5dc6c5",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    },
+    {
+      "slug": "atollado",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-ed2f198d-ade5-4a7c-8b60-1821e89ffd23.png",
+      "prompt": "Create a standalone square culinary illustration as the next image in this EXACT existing Setas de la Peña shiitake gouache series. The three input images are STYLE REFERENCES ONLY, not food ingredients to repeat. Match their opaque gouache pigment shapes, restrained small brush strokes, sparse pencil contours, appetizing hand-painted detail, warm ivory speckled ceramic with a thin ochre rim, slightly elevated three-quarter view, warm oak brown/moss green/ochre/cream palette and flat off-white #FAF8F3 background. Same illustrator, same series, same detail and scale. One finished serving only, entire plate visible, dish occupies 88–92% of canvas width with compact margins. No photo, 3D, watercolor wash, engraving, text, logos, layout panels, hands, cutlery, tablecloth, loose ingredients or decorative foliage. IMPORTANT: use only the food described below. Lion's mane is Hericium erinaceus: ivory fibrous flesh and fine dangling teeth which brown when cooked; NO shiitake brown caps, no gills, no eryngii stems. These are conceptual illustrations of proposed recipes, not photographs. One shallow ivory ceramic bowl holding moist creamy orange-golden Colombian arroz atollado, visibly soft rice grains in thick hogao, small yellow skin-on potato halves, green peas, fine pale cooked lion's mane shreds among the rice. Crown center with a prominent mound of golden-browned LION'S MANE irregular cubes about2cm with fine fibrous ivory torn faces and tiny toasted teeth, NO brown caps and NO gills. Three golden seared cooked CASSAVA BATONS at one side of bowl, not green plantain. Small chopped cilantro garnish. No meat, no sausage, no corn, no egg, no avocado. Rice must look moist, not a dry mound.",
+      "file": "atollado-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 227630,
+      "sha256": "ad1ed97e5a847ffadc72beb48066d2a155e7b6cf4e8a37658763dc27d55a75bc",
+      "originalSHA256": "f2657a9d1e81ef13d132fb6ada79cdd3c187171e5be582a3ddf9f12240bc285f",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    },
+    {
+      "slug": "laminas",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-7ef8d06a-a3e0-4af5-a0fc-005a65f0b57e.png",
+      "prompt": "Create a standalone square culinary illustration as the next image in this EXACT existing Setas de la Peña shiitake gouache series. The three input images are STYLE REFERENCES ONLY, not food ingredients to repeat. Match their opaque gouache pigment shapes, restrained small brush strokes, sparse pencil contours, appetizing hand-painted detail, warm ivory speckled ceramic with a thin ochre rim, slightly elevated three-quarter view, warm oak brown/moss green/ochre/cream palette and flat off-white #FAF8F3 background. Same illustrator, same series, same detail and scale. One finished serving only, entire plate visible, dish occupies 88–92% of canvas width with compact margins. No photo, 3D, watercolor wash, engraving, text, logos, layout panels, hands, cutlery, tablecloth, loose ingredients or decorative foliage. IMPORTANT: use only the food described below. Lion's mane is Hericium erinaceus: ivory fibrous flesh and fine dangling teeth which brown when cooked; NO shiitake brown caps, no gills, no eryngii stems. These are conceptual illustrations of proposed recipes, not photographs. One shallow off-white ceramic plate: four overlapping thin ROASTED LION'S MANE SLICES, broad irregular ivory fibrous slices with fine golden curly teeth and toasted brown edges, no brown caps or gills. Several small skin-on smashed potatoes, some reddish sabanera and some yellow criolla, golden crisp edges. A modest creamy pale moss-green avocado/ají sauce dollop beside them, tiny fried capers scattered over, small restrained green guascas-oil drops around. All food on plate. No meat, no corn, no rice, no sliced avocado, no whole raw lion's mane, no egg.",
+      "file": "laminas-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 206612,
+      "sha256": "d2d07be3d730b71dc4544473ca33b0e69e7b9917732087f065e82d765ca7094c",
+      "originalSHA256": "9018b82da47268f9fc240f907a93d016746a4fca695eea86d9accc750aabcbaf",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    },
+    {
+      "slug": "envuelto",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-17a8c827-b8c5-4d0c-9eab-d85887643b25.png",
+      "prompt": "Create a standalone square culinary illustration as the next image in this EXACT existing Setas de la Peña shiitake gouache series. The three input images are STYLE REFERENCES ONLY, not food ingredients to repeat. Match their opaque gouache pigment shapes, restrained small brush strokes, sparse pencil contours, appetizing hand-painted detail, warm ivory speckled ceramic with a thin ochre rim, slightly elevated three-quarter view, warm oak brown/moss green/ochre/cream palette and flat off-white #FAF8F3 background. Same illustrator, same series, same detail and scale. One finished serving only, entire plate visible, dish occupies 88–92% of canvas width with compact margins. No photo, 3D, watercolor wash, engraving, text, logos, layout panels, hands, cutlery, tablecloth, loose ingredients or decorative foliage. IMPORTANT: use only the food described below. Lion's mane is Hericium erinaceus: ivory fibrous flesh and fine dangling teeth which brown when cooked; NO shiitake brown caps, no gills, no eryngii stems. These are conceptual illustrations of proposed recipes, not photographs. One shallow off-white ceramic plate carrying ONE opened olive-green cooked banana-leaf parcel. Folded leaf opens to reveal a moist golden yellow corn-masa base, TWO seared lion's mane medallions on top with compressed fibrous ivory cut edges and golden-brown toothy surfaces clearly exposed. Warm orange-ochre pipián of mashed potato and finely ground toasted peanuts partly coats only the side of the medallions, leaving most seared faces visible; small chopped cilantro. Leaf sits entirely on the plate. No twine, no closed empanadas, no whole raw mushrooms, no brown mushroom caps or gills, no peanut garnish outside recipe, no corn kernels, no rice, no avocado.",
+      "file": "envuelto-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 201792,
+      "sha256": "148f63885b54fdad56e4d12523ee5441b36db4d9372e1d4c216409187be15a40",
+      "originalSHA256": "86698ed5a6a066f88affdf2c00c2bc4c687e2d01d4e0031cee3326e33efe3d98",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    }
+  ]
+}

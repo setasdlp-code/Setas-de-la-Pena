@@ -1,0 +1,25 @@
+/* Extends the established public recetario for melena and eryngii. */
+.species-recipes .recipe-method { grid-template-columns: 1fr; }
+.species-recipes .recipe-method h4 { font: 600 16px/1.5 var(--font-sans); margin: 24px 0 12px; }
+.species-recipes .recipe-ingredients { columns: 2; column-gap: 32px; }
+.species-recipes .recipe-ingredients li { break-inside: avoid; }
+.species-recipes .ingredient-amount { font-family: var(--font-mono); font-size: .9em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.species-recipes .recipe-main-plate img { object-fit: contain; }
+.species-recipes .recipes-end { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-block: 48px; }
+.species-recipes #conservacion h2 { font: 500 clamp(32px, 4vw, 48px)/1.1 var(--font-editorial); }
+.species-recipes #conservacion .storage-fresh + .storage-fresh { margin-top: 40px; }
+@media (max-width: 650px) {
+  .species-recipes .recipe-ingredients { columns: 1; }
+}
+@media print {
+  .species-recipes .recipe-scale, .species-recipes .recipe-details > summary { display: none; }
+  .species-recipes .recipe-ingredients { columns: 2; }
+}
+
+/* Let the melena specimen fill its frame, without clipping the plate details. */
+.species-recipes[data-species-label="melena de león"] .recipe-main-plate { padding: 12px; }
+.species-recipes[data-species-label="melena de león"] .recipe-main-plate img { width: 100%; height: auto; aspect-ratio: 1; }
+.species-recipes[data-species-label="melena de león"] .recipe-main-plate figcaption { padding-top: 12px; margin-top: 8px; }
+@media print {
+  .species-recipes[data-species-label="melena de león"] .recipe-main-plate img { height: 180px; width: 100%; aspect-ratio: auto; }
+}

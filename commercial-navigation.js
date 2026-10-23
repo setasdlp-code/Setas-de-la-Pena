@@ -6,7 +6,7 @@
   document.querySelectorAll('a[href]').forEach(link => {
     if (link.getAttribute('href').startsWith('#')) return;
     const target = new URL(link.href);
-    if (target.origin === location.origin && /^\/(home|shiitake|recetas)$/.test(target.pathname)) {
+    if (target.origin === location.origin && /^\/(home|shiitake|recetas|recetas-eryngii|recetas-melena|especies\/(shiitake|melena-de-leon|eryngii))$/.test(target.pathname)) {
       target.searchParams.set('pairing', pairing);
       link.href = target.href;
     }
