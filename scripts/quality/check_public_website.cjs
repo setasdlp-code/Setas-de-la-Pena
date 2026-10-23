@@ -73,13 +73,13 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('.purchase-submit').click();
     assert.equal(await page.locator('#order-review').isVisible(), false);
     for (const value of ['0', '-1', '2.5', '', '99999999999999999']) {
-      await page.getByLabel('Cantidad que necesitas').fill(value);
+      await page.getByLabel('Cantidad solicitada').fill(value);
       await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
       await page.locator('.purchase-submit').click();
       assert.equal(await page.locator('#order-review').isVisible(), false, `invalid quantity ${value}`);
       assert.equal(await page.locator('#order-form').evaluate(form => form.checkValidity()), false);
     }
-    await page.getByLabel('Cantidad que necesitas').fill('500');
+    await page.getByLabel('Cantidad solicitada').fill('500');
     await page.getByLabel('Municipio de entrega', { exact: true }).fill('   ');
     await page.locator('.purchase-submit').click();
     assert.equal(await page.locator('#order-review').isVisible(), false);
@@ -104,7 +104,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('#copy-order').click();
     await page.waitForFunction(() => document.querySelector('#copy-status').textContent.includes('Mensaje copiado'));
     assert.equal(await page.evaluate(() => navigator.clipboard.readText()), message);
-    await page.getByLabel('Cantidad que necesitas').fill('250');
+    await page.getByLabel('Cantidad solicitada').fill('250');
     assert.equal(await page.locator('#order-review').isVisible(), false);
     assert.equal(await page.locator('#order-message').inputValue(), '');
     await page.getByLabel('Para casa', { exact: true }).check();
@@ -312,7 +312,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.match(msg, new RegExp(`Cantidad solicitada: ${grams} g`));
       assert.match(msg, /peso limpio aprovechable.*peso de compra/, "La consulta conserva la distinción entre necesidad neta y compra");
       assert.match(msg, new RegExp(`receta base usa ${grams} g`));
-      await rp.getByLabel('Cantidad que necesitas').fill('400');
+      await rp.getByLabel('Cantidad solicitada').fill('400');
       assert.equal(await rp.locator('#order-review').isVisible(), false);
       assert.equal(await rp.locator('#order-municipality').inputValue(), 'Tenjo');
       assert.equal(await rp.locator('#order-weight').innerText(), '400 g');
@@ -517,7 +517,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await fallbackPage.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
     await fallbackPage.locator('.purchase-submit').click();
     await fallbackPage.locator('#copy-order').click();
-    await fallbackPage.waitForFunction(() => document.querySelector('#copy-status').textContent.includes('Seleccionamos'));
+    await fallbackPage.waitForFunction(() => document.querySelector('#copy-status').textContent.includes('Mensaje seleccionado'));
     const selectedRange = await fallbackPage.locator('#order-message').evaluate(el => ({ start: el.selectionStart, end: el.selectionEnd, length: el.value.length, active: document.activeElement.id }));
     assert.equal(selectedRange.start, 0);
     assert.equal(selectedRange.end, selectedRange.length);
