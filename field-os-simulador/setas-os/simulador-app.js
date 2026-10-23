@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 3c69dd1676fde8bc4519ee164cf2487e44c60b1f62f2fc56255852ce3851fce3
+// source-hash: 8f56a0425b697c5b4f697cab00939712be4dfa562bce9ddf6e1caa45249752ee
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3436,23 +3436,23 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2
   },
-  // Vertical "Lomo": franja negra de 4mm en el borde izquierdo con la marca
-  // en vertical; especie, QR de 40mm, código, bolsa (texto, sin bloque
-  // negro) y fecha · receta. Mismos valores que .thermal-card-50x70 en sim.css.
+  // Vertical "Lomo": franja negra de 10mm con la marca como banner vertical;
+  // código de lote (héroe), QR de 34mm, especie, bolsa y fecha · receta.
+  // Mismos valores que .thermal-card-50x70 en sim.css.
   "50x70": {
     layout: "vertical",
     wMm: 50,
     hMm: 70,
-    padXMm: 2.5,
+    padXMm: 1.5,
     padYMm: 2.5,
     gapPx: 6,
-    qrMm: 40,
-    spineMm: 4,
+    qrMm: 34,
+    spineMm: 10,
     spineText: "SETAS DE LA PEÑA",
-    eyebrowPx: 7,
-    speciesPx: 17,
+    eyebrowPx: 17,
+    speciesPx: 11,
     badgePx: 10.5,
-    codePx: 8,
+    codePx: 12,
     metaPx: 7
   }
 };
@@ -3546,11 +3546,17 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.textBaseline = "top";
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, spine, h);
-  const ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  let ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
   ctx.save();
   ctx.translate(spine / 2, h / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.font = `700 ${ebPx}px ${FONT_MONO}`;
+  ctx.font = `800 ${ebPx}px ${FONT_MONO}`;
+  const brandMax = h - padY * 2;
+  const brandW = ctx.measureText(spec.spineText).width;
+  if (brandW > brandMax) {
+    ebPx = Math.floor(ebPx * brandMax / brandW);
+    ctx.font = `800 ${ebPx}px ${FONT_MONO}`;
+  }
   ctx.fillStyle = "#fff";
   ctx.textBaseline = "middle";
   ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
@@ -3558,28 +3564,27 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.fillStyle = "#000";
   ctx.textBaseline = "top";
   let curY = padY + cssPxToCanvas(2);
-  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
-  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-  let lines = wrapCanvasText(ctx, species, colW);
-  while (lines.length > 1 && spPx > 18) {
-    spPx -= 2;
-    ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-    lines = wrapCanvasText(ctx, species, colW);
+  let cPx = Math.round(cssPxToCanvas(spec.codePx));
+  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  let lines = wrapCanvasText(ctx, code, colW);
+  while (lines.length > 2 && cPx > 10) {
+    cPx -= 2;
+    ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+    lines = wrapCanvasText(ctx, code, colW);
   }
-  const spLH = Math.round(spPx * 1.05);
   lines.slice(0, 2).forEach((line) => {
     center(line, curY);
-    curY += spLH;
+    curY += Math.round(cPx * 1.1);
   });
-  curY += cssPxToCanvas(3);
+  curY += cssPxToCanvas(4);
   const qrSize = spec.qrMm * mm;
   drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
   curY += qrSize + cssPxToCanvas(3);
-  const cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `700 ${cPx}px ${FONT_MONO}`;
-  wrapCanvasText(ctx, code, colW).forEach((line) => {
+  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
+  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+  wrapCanvasText(ctx, species, colW).slice(0, 2).forEach((line) => {
     center(line, curY);
-    curY += Math.round(cPx * 1.15);
+    curY += Math.round(spPx * 1.1);
   });
   curY += cssPxToCanvas(2);
   if (badge) {

@@ -4314,15 +4314,16 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin-top: 2px;
 }
 
-/* 50×70 vertical "Lomo" — franja negra de 4mm en el borde izquierdo con la
-   marca en vertical; especie serif, QR de 40mm, código, bolsa en texto (sin
-   bloque negro) y fecha · receta al pie. Reordena el markup común con
-   display:contents. Mantener alineado con THERMAL_LABEL_SPECS['50x70']. */
+/* 50×70 vertical "Lomo" — franja negra de 10mm en el borde izquierdo con
+   «SETAS DE LA PEÑA» a modo banner/logo en vertical; el código de lote es el
+   héroe (arriba, grande), luego QR de 34mm, especie en texto pequeño, bolsa y
+   fecha · receta al pie. Reordena el markup común con display:contents.
+   Mantener alineado con THERMAL_LABEL_SPECS['50x70']. */
 .sim-root .thermal-card-50x70 {
   position: relative;
   width: 50mm;
   min-height: 70mm;
-  padding: 2.5mm 2.5mm 2.5mm 6.5mm;
+  padding: 2.5mm 1.5mm 2.5mm 11.5mm;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
@@ -4336,10 +4337,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4mm;
+  width: 10mm;
   margin: 0;
   background: #000000 !important;
-  color: var(--paper-50) !important;
+  color: var(--paper-50, #fff) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4349,30 +4350,35 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   content: 'SETAS DE LA PEÑA';
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 7px;
-  letter-spacing: 0.14em;
-  color: var(--paper-50);
-}
-.sim-root .thermal-card-50x70 .thermal-species {
-  order: 2;
   font-size: 17px;
-  line-height: 1.05;
-  margin: 0.6mm 0 1mm;
-}
-.sim-root .thermal-card-50x70 .thermal-aside { order: 3; }
-.sim-root .thermal-card-50x70 .thermal-qr-img {
-  width: 40mm;
-  height: 40mm;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--paper-50, #fff);
 }
 .sim-root .thermal-card-50x70 .thermal-code {
-  order: 4;
+  order: 1;
   text-align: center;
-  font-size: 8px;
-  font-weight: 700;
-  margin-top: 1mm;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 1.5mm;
+  white-space: nowrap;
+}
+.sim-root .thermal-card-50x70 .thermal-aside { order: 2; }
+.sim-root .thermal-card-50x70 .thermal-qr-img {
+  width: 34mm;
+  height: 34mm;
+}
+.sim-root .thermal-card-50x70 .thermal-species {
+  order: 3;
+  font-size: 11px;
+  line-height: 1.1;
+  margin: 1mm 0 0;
 }
 .sim-root .thermal-card-50x70 .thermal-badge {
-  order: 5;
+  order: 4;
   align-self: center;
   background: transparent !important;
   color: #000000 !important;
@@ -4381,7 +4387,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin: 0.6mm 0 0;
 }
 .sim-root .thermal-card-50x70 .thermal-meta {
-  order: 6;
+  order: 5;
   margin-top: auto;
   display: flex;
   justify-content: center;
@@ -4524,7 +4530,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     page-break-inside: avoid !important;
   }
   .thermal-card-print.thermal-card-50x70 {
-    padding-left: 6.5mm !important;
+    padding-left: 11.5mm !important;
+    padding-right: 1.5mm !important;
   }
   .thermal-card-print.thermal-card-50x70 .thermal-eyebrow {
     background: #000000 !important;
@@ -4537,8 +4544,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
     color: #000000 !important;
   }
   .thermal-card-print.thermal-card-50x70 .thermal-qr-img {
-    width: 40mm !important;
-    height: 40mm !important;
+    width: 34mm !important;
+    height: 34mm !important;
   }
   .thermal-card-print .thermal-divider {
     background: #000000 !important;
