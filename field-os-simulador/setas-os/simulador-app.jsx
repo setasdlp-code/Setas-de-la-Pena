@@ -5113,10 +5113,10 @@ const THERMAL_LABEL_SPECS = {
     qrMm: 34.0,
     spineMm: 10.0,
     spineText: 'SETAS DE LA PEÑA',
-    eyebrowPx: 17.0,
+    eyebrowPx: 19.0,
     speciesPx: 11.0,
     badgePx: 10.5,
-    codePx: 12.0,
+    codePx: 13.0,
     metaPx: 7.0
   },
 };
@@ -5233,10 +5233,10 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.save();
   ctx.translate(spine / 2, h / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.font = `800 ${ebPx}px ${FONT_MONO}`;
+  ctx.font = `700 ${ebPx}px ${FONT_EDITORIAL}`;
   const brandMax = h - padY * 2;
   const brandW = ctx.measureText(spec.spineText).width;
-  if (brandW > brandMax) { ebPx = Math.floor(ebPx * brandMax / brandW); ctx.font = `800 ${ebPx}px ${FONT_MONO}`; }
+  if (brandW > brandMax) { ebPx = Math.floor(ebPx * brandMax / brandW); ctx.font = `700 ${ebPx}px ${FONT_EDITORIAL}`; }
   ctx.fillStyle = '#fff';
   ctx.textBaseline = 'middle';
   ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
@@ -5247,11 +5247,11 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   // Código de lote: héroe arriba (hasta 2 líneas, se reduce si no cabe)
   let curY = padY + cssPxToCanvas(2);
   let cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  ctx.font = `700 ${cPx}px ${FONT_EDITORIAL}`;
   let lines = wrapCanvasText(ctx, code, colW);
-  while (lines.length > 2 && cPx > 10) {
-    cPx -= 2;
-    ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  while (lines.length > 1 && cPx > 10) {
+    cPx -= 1;
+    ctx.font = `700 ${cPx}px ${FONT_EDITORIAL}`;
     lines = wrapCanvasText(ctx, code, colW);
   }
   lines.slice(0, 2).forEach(line => { center(line, curY); curY += Math.round(cPx * 1.1); });

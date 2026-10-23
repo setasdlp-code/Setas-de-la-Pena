@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 8f56a0425b697c5b4f697cab00939712be4dfa562bce9ddf6e1caa45249752ee
+// source-hash: 7706529f296bfdc005cfe15ac5ba3050c8ed833c6405f865023f5e925a794048
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3449,10 +3449,10 @@ const THERMAL_LABEL_SPECS = {
     qrMm: 34,
     spineMm: 10,
     spineText: "SETAS DE LA PEÑA",
-    eyebrowPx: 17,
+    eyebrowPx: 19,
     speciesPx: 11,
     badgePx: 10.5,
-    codePx: 12,
+    codePx: 13,
     metaPx: 7
   }
 };
@@ -3550,12 +3550,12 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.save();
   ctx.translate(spine / 2, h / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.font = `800 ${ebPx}px ${FONT_MONO}`;
+  ctx.font = `700 ${ebPx}px ${FONT_EDITORIAL}`;
   const brandMax = h - padY * 2;
   const brandW = ctx.measureText(spec.spineText).width;
   if (brandW > brandMax) {
     ebPx = Math.floor(ebPx * brandMax / brandW);
-    ctx.font = `800 ${ebPx}px ${FONT_MONO}`;
+    ctx.font = `700 ${ebPx}px ${FONT_EDITORIAL}`;
   }
   ctx.fillStyle = "#fff";
   ctx.textBaseline = "middle";
@@ -3565,11 +3565,11 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.textBaseline = "top";
   let curY = padY + cssPxToCanvas(2);
   let cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  ctx.font = `700 ${cPx}px ${FONT_EDITORIAL}`;
   let lines = wrapCanvasText(ctx, code, colW);
-  while (lines.length > 2 && cPx > 10) {
-    cPx -= 2;
-    ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  while (lines.length > 1 && cPx > 10) {
+    cPx -= 1;
+    ctx.font = `700 ${cPx}px ${FONT_EDITORIAL}`;
     lines = wrapCanvasText(ctx, code, colW);
   }
   lines.slice(0, 2).forEach((line) => {
