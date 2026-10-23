@@ -1,0 +1,22 @@
+/* Franjas de color: a highlighter band behind a few headings.
+   Colors come from DS-2026 tokens; the band sits behind dark text,
+   so it stays light enough to keep AA contrast. */
+.franja {
+  --franja-color: var(--coral-500);
+  padding-inline: .12em;
+  margin-inline: -.12em;
+  background-image: linear-gradient(transparent 46%, color-mix(in srgb, var(--franja-color) 58%, transparent) 46%, color-mix(in srgb, var(--franja-color) 58%, transparent) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.franja--coral { --franja-color: var(--coral-500); }
+.franja--musgo { --franja-color: var(--moss-500); }
+.franja--ocre { --franja-color: var(--warning); }
+.franja--pizarra { --franja-color: var(--slate-500); }
+
+@media (forced-colors: active) {
+  .franja { background-image: none; }
+}
+@media print {
+  .franja { background-image: none; }
+}
