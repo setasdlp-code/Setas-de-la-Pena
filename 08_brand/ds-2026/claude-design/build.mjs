@@ -50,6 +50,8 @@ await writeFile(path.join(OUT, 'styles.css'), `/* ──────────
 @import url('./tokens/fonts.css');
 @import url('./tokens/tokens.css');
 @import url('./components/base.css');
+@import url('./components/core/color.css');
+@import url('./components/core/interaction.css');
 @import url('./components/components.css');
 @import url('./components/editorial.css');
 `);
