@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 7706529f296bfdc005cfe15ac5ba3050c8ed833c6405f865023f5e925a794048
+// source-hash: e21fb93dd3722b633546f1ded9911ef303a7052fab2e6639b3459d215bd5ba31
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3453,6 +3453,7 @@ const THERMAL_LABEL_SPECS = {
     speciesPx: 11,
     badgePx: 10.5,
     codePx: 13,
+    datePx: 12,
     metaPx: 7
   }
 };
@@ -3532,7 +3533,6 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   const species = (item.species || "Seta Cultivada").trim();
   const badge = (item.badge || item.bagCode || "").toUpperCase().trim();
   const code = (item.id || "").trim();
-  const meta = [(item.date || "").trim(), (item.recipe || "").trim()].filter(Boolean).join("  ·  ");
   const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
   ctx.save();
   ctx.translate(x0, y0);
@@ -3597,10 +3597,20 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
     }
     center(badge, curY);
   }
-  if (meta) {
-    const mPx = Math.round(cssPxToCanvas(spec.metaPx));
-    ctx.font = `500 ${mPx}px ${FONT_MONO}`;
-    center(meta, h - padY - mPx);
+  const recipeTxt = (item.recipe || "").trim();
+  const dateTxt = (item.date || "").trim();
+  let yBot = h - padY;
+  if (recipeTxt) {
+    const rPx = Math.round(cssPxToCanvas(spec.metaPx));
+    ctx.font = `500 ${rPx}px ${FONT_MONO}`;
+    yBot -= rPx;
+    center(recipeTxt, yBot);
+    yBot -= cssPxToCanvas(2);
+  }
+  if (dateTxt) {
+    const dPx = Math.round(cssPxToCanvas(spec.datePx));
+    ctx.font = `700 ${dPx}px ${FONT_EDITORIAL}`;
+    center(dateTxt, yBot - dPx);
   }
   ctx.restore();
 }

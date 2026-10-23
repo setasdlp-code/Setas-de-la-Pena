@@ -5117,6 +5117,7 @@ const THERMAL_LABEL_SPECS = {
     speciesPx: 11.0,
     badgePx: 10.5,
     codePx: 13.0,
+    datePx: 12.0,
     metaPx: 7.0
   },
 };
@@ -5211,7 +5212,6 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   const species = (item.species || 'Seta Cultivada').trim();
   const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
   const code = (item.id || '').trim();
-  const meta = [(item.date || '').trim(), (item.recipe || '').trim()].filter(Boolean).join('  ·  ');
   const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
 
   ctx.save();
@@ -5277,11 +5277,21 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
     center(badge, curY);
   }
 
-  // Fecha · receta anclada abajo
-  if (meta) {
-    const mPx = Math.round(cssPxToCanvas(spec.metaPx));
-    ctx.font = `500 ${mPx}px ${FONT_MONO}`;
-    center(meta, h - padY - mPx);
+  // Fecha (Gaya, destacada) y receta (pequeña) ancladas abajo
+  const recipeTxt = (item.recipe || '').trim();
+  const dateTxt = (item.date || '').trim();
+  let yBot = h - padY;
+  if (recipeTxt) {
+    const rPx = Math.round(cssPxToCanvas(spec.metaPx));
+    ctx.font = `500 ${rPx}px ${FONT_MONO}`;
+    yBot -= rPx;
+    center(recipeTxt, yBot);
+    yBot -= cssPxToCanvas(2);
+  }
+  if (dateTxt) {
+    const dPx = Math.round(cssPxToCanvas(spec.datePx));
+    ctx.font = `700 ${dPx}px ${FONT_EDITORIAL}`;
+    center(dateTxt, yBot - dPx);
   }
   ctx.restore();
 }

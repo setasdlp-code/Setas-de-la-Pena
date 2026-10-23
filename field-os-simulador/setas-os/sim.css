@@ -4392,14 +4392,19 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   order: 5;
   margin-top: auto;
   display: flex;
-  justify-content: center;
-  gap: 2mm;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3mm;
+}
+.sim-root .thermal-card-50x70 .thermal-meta > div:first-child {
+  font-family: var(--font-editorial, 'Gaya Patched', 'Iowan Old Style', Georgia, serif);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.sim-root .thermal-card-50x70 .thermal-meta > div + div {
   font-size: 7px;
   font-weight: 500;
-}
-.sim-root .thermal-card-50x70 .thermal-meta > div + div::before {
-  content: '·';
-  margin-right: 2mm;
 }
 
 .sim-root .thermal-print-roll,
