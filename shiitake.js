@@ -58,14 +58,14 @@ window.addEventListener('afterprint', () => {
   const deliveryText = deliveryFee === null ? 'Por confirmar' : deliveryFee === 0 ? 'Sin costo · confirmar cobertura' : `${formatPrice(deliveryFee)} · confirmar cobertura`;
 
   document.querySelectorAll('[data-availability]').forEach(element => { element.textContent = availability; });
-  setText('#availability-detail', text(data.availabilityNote) || (available ? 'Confirma la cantidad y la entrega al preparar tu solicitud.' : data.availability === 'unavailable' ? 'Puedes consultar cuándo volverá a estar disponible.' : 'La disponibilidad y las presentaciones se confirman al consultar.'));
-  setText('#delivery-areas', text(data.deliveryAreas) || 'Por confirmar para tu municipio');
+  setText('#availability-detail', text(data.availabilityNote) || (available ? 'La cantidad y la entrega requieren confirmación al preparar la solicitud.' : data.availability === 'unavailable' ? 'Es posible consultar la próxima disponibilidad.' : 'La disponibilidad y las presentaciones se confirman al consultar.'));
+  setText('#delivery-areas', text(data.deliveryAreas) || 'Por confirmar para el municipio indicado');
   setText('#delivery-days', text(data.deliveryDays) || 'Se acuerdan al consultar');
   setText('#delivery-fee', deliveryText);
   setText('#payment-methods', text(data.paymentMethods) || 'Se confirman con el pedido');
   setText('#product-batch', text(data.batch) || 'Sin registro publicado');
   setText('#product-harvest', text(data.harvestDate) || 'Sin registro publicado');
-  if (text(data.deliveryAreas)) setText('#municipality-hint', `Cobertura publicada: ${text(data.deliveryAreas)}. Confirmaremos la entrega para tu municipio.`);
+  if (text(data.deliveryAreas)) setText('#municipality-hint', `Cobertura publicada: ${text(data.deliveryAreas)}. Confirmaremos la entrega para el municipio indicado.`);
 
   if (presentations.length) {
     document.querySelector('#presentation-field').hidden = false;
@@ -219,7 +219,7 @@ window.addEventListener('afterprint', () => {
     } catch {
       message.focus();
       message.select();
-      copyStatus.textContent = 'Seleccionamos el mensaje. Cópialo con el menú de tu dispositivo o con Ctrl/Cmd + C.';
+      copyStatus.textContent = 'Mensaje seleccionado. Para copiar, usar el menú del dispositivo o Ctrl/Cmd + C.';
     }
   });
   const noChannel = !whatsapp;
@@ -231,7 +231,7 @@ window.addEventListener('afterprint', () => {
   syncPurpose();
   if (noChannel) {
     document.querySelector('#review-title').textContent = 'Borrador listo (aún no enviado).';
-    document.querySelector('.purchase-confirmation').textContent = 'Todavía no hay un canal de consultas habilitado: este mensaje es un borrador que se prepara en tu navegador y no se envía a nadie.';
+    document.querySelector('.purchase-confirmation').textContent = 'Todavía no hay un canal de consultas habilitado: este mensaje es un borrador que se prepara en el navegador y no se envía a nadie.';
   }
   updateSummary();
   form.hidden = false;

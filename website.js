@@ -1,7 +1,7 @@
 'use strict';
 const species = {
-  shiitake: { code: 'SP. 001', name: 'Shiitake', latin: 'Lentinula edodes', image: 'shiitake', category: 'Una especie para la cocina', description: 'Conoce el shiitake por su sabor y textura, y explora ideas para cocinarlo.', profile: 'Umami intenso, con notas ligeramente ahumadas.', use: 'Para sopas y otras preparaciones cocinadas. Explora su sabor y su textura.', culinary: true },
-  melena: { code: 'SP. 002', name: 'Melena de león', latin: 'Hericium erinaceus', image: 'lions-mane', category: 'Una especie para explorar', description: 'Su silueta singular le da nombre. Una de las protagonistas de nuestro archivo de hongos, con una textura que invita a probar otras preparaciones.', profile: 'Textura suave y esponjosa, con notas dulces y sabrosas.', use: 'Desmenúzala, prepárala en piezas o incorpórala a una sopa.', culinary: true },
+  shiitake: { code: 'SP. 001', name: 'Shiitake', latin: 'Lentinula edodes', image: 'shiitake', category: 'Una especie para la cocina', description: 'Perfil de sabor y textura del shiitake, con ideas para cocinarlo.', profile: 'Umami intenso, con notas ligeramente ahumadas.', use: 'Para sopas y otras preparaciones cocinadas. Ideas para explorar su sabor y textura.', culinary: true },
+  melena: { code: 'SP. 002', name: 'Melena de león', latin: 'Hericium erinaceus', image: 'lions-mane', category: 'Una especie para explorar', description: 'Su silueta singular le da nombre. Una de las protagonistas de nuestro archivo de hongos, con una textura que invita a probar otras preparaciones.', profile: 'Textura suave y esponjosa, con notas dulces y sabrosas.', use: 'Desmenuzada, en piezas o incorporada a una sopa.', culinary: true },
   orellana: { code: 'SP. 003', name: 'Orellana gris', latin: 'Pleurotus ostreatus', image: 'grey-mushroom', category: 'Una especie versátil', description: 'También conocida como hongo ostra. Su forma y sus láminas le dan una identidad reconocible dentro del archivo.', profile: 'Su forma y sus láminas son protagonistas de esta ficha.', use: 'Salteadas o asadas: dos maneras de explorar las orellanas en la cocina.', culinary: true },
   reishi: { code: 'SP. 004', name: 'Reishi', latin: 'Ganoderma lucidum', image: 'reishi', category: 'Archivo de hongos', description: 'Una especie de referencia en el universo visual de Setas de la Peña. Esta ficha invita a observar su forma y reconocer su nombre científico.', profile: 'Identidad de la especie: Ganoderma lucidum.', use: 'Esta ficha documenta la especie. No incluye recomendaciones de consumo ni atribuye propiedades medicinales.', culinary: false }
 };
@@ -37,7 +37,7 @@ function openSpecies(key, button) {
   document.querySelector('#dialog-full-page').hidden = key !== 'shiitake';
   document.querySelector('#dialog-order').hidden = key !== 'shiitake';
   document.querySelector('#species-dialog .availability-note').textContent = key === 'shiitake'
-    ? 'Disponibilidad, presentaciones y entrega por confirmar. Prepara tu consulta en la ficha de shiitake.'
+    ? 'Disponibilidad, presentaciones y entrega por confirmar. La consulta se prepara en la ficha de shiitake.'
     : 'Disponibilidad, formatos y precios por confirmar.';
   dialog.scrollTop = 0;
   dialog.showModal();
@@ -58,14 +58,14 @@ document.querySelectorAll('[data-hero]').forEach(button => button.addEventListen
 const preparations = {
   sopa: { label: 'sopa o caldo', reasons: {
     shiitake: { text: 'Para sopas y otras preparaciones cocinadas.', link: ['/recetas#receta-sopa', 'Ver la sopa de coco y jengibre'] },
-    melena: { text: 'Incorpórala a una sopa para explorar su textura.' } } },
+    melena: { text: 'En sopa, como propuesta para explorar su textura.' } } },
   saltear: { label: 'saltear', reasons: {
     shiitake: { text: 'Nuestras recetas de arepa y patacones lo saltean.', link: ['/recetas#receta-arepa', 'Ver la arepa con shiitake'] },
-    orellana: { text: 'Saltea las orellanas para tu próximo plato.' } } },
+    orellana: { text: 'Orellanas salteadas como punto de partida para un plato.' } } },
   asar: { label: 'asar', reasons: {
-    orellana: { text: 'Prueba las orellanas asadas.' } } },
+    orellana: { text: 'Orellanas asadas como propuesta de preparación.' } } },
   desmenuzar: { label: 'desmenuzar o en piezas', reasons: {
-    melena: { text: 'Desmenúzala o prepárala en piezas.' } } }
+    melena: { text: 'Desmenuzada o preparada en piezas.' } } }
 };
 const filterState = { category: 'culinary', prep: 'any' };
 function applyFilters() {
