@@ -33,18 +33,18 @@
 <div style="margin-top:auto;padding-top:36px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px">
 <p style="margin:0;font-size:16px;line-height:1.55;color:var(--text-secondary);max-width:480px">{{ notaPie }}</p>
 <div style="text-align:center;flex-shrink:0"><div style="width:84px;height:84px;border:1px solid var(--border-strong);background:repeating-linear-gradient(45deg,var(--paper-2),var(--paper-2) 4px,var(--surface-page) 4px,var(--surface-page) 8px);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--text-metadata)">QR</div>
-<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-metadata);margin-top:6px;letter-spacing:.06em">De qué lote viene<br>tu compra</div></div>
+<div style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-metadata);margin-top:6px;letter-spacing:.06em">Origen y registro<br>del producto</div></div>
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:840,&quot;height&quot;:1100},&quot;fecha&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sábado · 25 jul 2026&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;titulo&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Precios de hoy&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mostrarDescripciones&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;notaPie&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Todo lo que ves se cortó esta mañana en nuestros túneles de cultivo, aquí en la Peña. Pregúntanos cómo cocinar cada una — nos encanta contarlo.&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:840,&quot;height&quot;:1100},&quot;fecha&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sábado · 25 jul 2026&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;titulo&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Precios de hoy&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mostrarDescripciones&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;notaPie&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Compartimos información de origen y propuestas de cocina. La disponibilidad y las condiciones de cada pedido se confirman antes de la compra.&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
 class Component extends DCLogic {
   renderVals() {
     return {
       fecha: this.props.fecha ?? 'Sábado · 25 jul 2026',
       titulo: this.props.titulo ?? 'Precios de hoy',
       mostrarDescripciones: this.props.mostrarDescripciones ?? true,
-      notaPie: this.props.notaPie ?? 'Todo lo que ves se cortó esta mañana en nuestros túneles de cultivo, aquí en la Peña. Pregúntanos cómo cocinar cada una — nos encanta contarlo.',
+      notaPie: this.props.notaPie ?? 'Compartimos información de origen y propuestas de cocina. La disponibilidad y las condiciones de cada pedido se confirman antes de la compra.',
       productos: [
         { nombre: 'Orellana', descripcion: 'Suave y carnosa. La de todos los días: plancha, revuelto, arroz.', precio: '$ — COP / kg', estado: 'Disponible', disponible: true, aviso: false },
         { nombre: 'Orellana amarilla', descripcion: 'Más delicada y aromática. Salteado corto, fuego fuerte.', precio: '$ — COP / kg', estado: 'Disponible', disponible: true, aviso: false },

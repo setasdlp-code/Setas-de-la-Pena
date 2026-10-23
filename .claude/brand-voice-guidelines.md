@@ -1,6 +1,6 @@
 # Guía de Voz de Marca — Setas de la Peña
 
-**Versión:** 2.1 · **Fecha:** 2026-10-17
+**Versión:** 2.2 · **Fecha:** 2026-10-23
 **Reemplaza a:** v1.0 (2026-05-11), archivada en `brand-voice-guidelines-2026-10-17.md`.
 **Alcance:** voz y tono (cómo se escribe). Identidad visual (paleta, tipografía, logos) vive en `docs/brand/DESIGN_SYSTEM_CANONICAL.md` y `08_brand/field-os-identity/`; aquí solo se referencia.
 **Uso:** `/brand-voice:enforce-voice` carga este archivo automáticamente.
@@ -70,7 +70,7 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 **Generales** (Manual Canónico §2, vinculante)
 1. Sin signos de exclamación. Sin superlativos vacíos («el mejor», «increíble», «único»). La calidad se demuestra con un dato medido.
 2. Sin lenguaje místico o esotérico (ver lista en §5). Aplica a todo contenido nuevo desde 2026-05-11.
-3. Primera persona del plural («cosechamos», «cultivamos»). Al lector: **tú**, nunca «usted».
+3. **Tratamiento sin tuteo ni ustedeo.** Primera persona del plural para la marca («cultivamos», «revisamos», «proponemos»). Evitar «tú», «usted», posesivos de segunda persona e imperativos dirigidos al lector. Preferir frases centradas en el producto, preguntas sobre el pedido y llamadas a la acción en infinitivo («Consultar disponibilidad»). La cercanía se expresa con información útil y atención concreta; evitar fórmulas burocráticas como «se procederá». Con chefs se mantiene el registro técnico-culinario; con socios, el técnico-financiero.
 4. Titulares de 3 a 6 palabras. Párrafos de 2 a 4 frases.
 5. Nombres científicos en cursiva y una sola vez (*Pleurotus ostreatus*, *Lentinula edodes*, *Hericium erinaceus*).
 6. Sin emojis en copy oficial (excepción: redes informales, con criterio).
@@ -80,7 +80,7 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 1. **Nombre común primero.** «Orellana» como titular (decisión 2026-10-17); el latín, pequeño y en cursiva, una sola vez.
 2. **Frescura con hecho, no con adjetivo.** «Cortada esta mañana» ✓ · «Ultra fresca» ✗.
 3. **Cocina, no ficha técnica.** Cada producto lleva un uso concreto («plancha con mantequilla», «guisos y wok»). Nunca temperatura, humedad ni sustrato.
-4. **Códigos solo en el QR.** El lote (p. ej. `LP·0417·26`) no se imprime como texto visible; el puente es «de qué lote viene tu compra».
+4. **Códigos solo en el QR.** El lote (p. ej. `LP·0417·26`) no se imprime como texto visible; el puente es «Origen y registro del producto».
 5. **Precio sin disculpas.** Cifra grande, sin «solo», «oferta» ni tachados. En pesos (COP). Los precios de las plantillas son marcadores («$ — COP / kg») hasta tener cotizaciones propias; no se publica precio antes de conocer el costo por kg (`knowledge_base/07_business/pricing.md`).
 
 **Cara interna y técnica (Setas OS, SOPs, socios)**
@@ -136,6 +136,20 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 
 ## 6. Ejemplos modelo (confianza baja: escritos como referencia, no extraídos de piezas publicadas)
 
+Los ejemplos son modelos de redacción, no confirmaciones de capacidad, stock, parámetros o condiciones comerciales. Esos datos deben verificarse antes de publicar.
+
+**Presentación de marca**
+> Setas de la Peña. Cultivo en sombra. Tenjo, Cundinamarca.
+
+**Consulta de un chef**
+> Hola, [nombre]. Somos Setas de la Peña, en Tenjo. ¿Qué cantidad de orellana requiere el servicio y para qué fecha? Con esa información revisamos disponibilidad y condiciones de entrega.
+
+**Disponibilidad pendiente**
+> La cantidad solicitada para [fecha] está pendiente de confirmación. Confirmaremos disponibilidad y entrega antes de cerrar el pedido.
+
+**Comunicación a socios**
+> Presentamos los resultados medidos y los supuestos por separado, con fecha de corte y su efecto sobre el margen.
+
 **Etiqueta**
 > **Orellana**
 > *Pleurotus ostreatus* · Cultivada en sombra, Tenjo
@@ -143,12 +157,12 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 > 250 g
 
 **Descripción web (~45 palabras)**
-> Orellana cultivada a la sombra de la Peña de Juaica, en Tenjo, a 2.592 msnm. Madura lento y por eso la textura es firme y el sabor aguanta cocciones largas. Cosechamos bajo pedido y te contamos de qué lote viene tu compra.
+> Orellana cultivada a la sombra de la Peña de Juaica, en Tenjo, a 2.592 msnm. Madura lento y por eso la textura es firme y el sabor aguanta cocciones largas. La información de origen y cosecha acompaña al producto cuando está documentada.
 
 **Correo B2B**
 > Hola [nombre],
 > Disponibilidad esta semana: orellana fresca, 40 kg (cosecha martes y jueves); deshidratada 50 g, 12 unidades. Pedido mínimo 5 kg. Entrega en Bogotá miércoles y viernes.
-> Escríbenos para reservar.
+> Para consultar disponibilidad, recibimos solicitudes con cantidad, fecha y lugar de entrega.
 
 **Protocolo interno**
 > **Cámara 2 — Incubación**
@@ -191,11 +205,11 @@ La fuente vigente es `docs/brand/DESIGN_SYSTEM_CANONICAL.md` (v3.0, «Activo y V
 ### Alta prioridad
 1. ~~Nombre común al público~~ **Resuelto 2026-10-17 (fundador): «orellana».** FOS-06.5 mandaba «seta ostra», pero «orellana» es el nombre regional colombiano y es lo que dice un comprador en Bogotá. Se conserva la jerarquía de FOS-06.5: nombre común grande, latín pequeño y en cursiva, una sola vez. «Seta ostra» queda solo como sinónimo ocasional en textos largos. `market-voice-rules.html` (FOS-06.5) ya está actualizado.
 
-2. ~~Tuteo~~ **Resuelto 2026-10-17:** se tutea a todos (chefs, compradores, socios, equipo), nunca «usted». En el pitch a socios el tuteo se mantiene y el registro sigue siendo técnico-financiero: cifras, unidades y supuestos, sin floritura.
+2. ~~Tratamiento~~ **Actualizado 2026-10-23:** sin tuteo ni ustedeo. Sustituye la decisión de tutear a todos del 2026-10-17. La marca conserva la primera persona del plural; con chefs, registro técnico-culinario; con socios, técnico-financiero. Ver §3.
 
 ### Prioridad media
 3. ~~Tagline~~ **Resuelto 2026-10-17:** «Cultivo en sombra». Ver §7.
-4. **Microcopy de interfaz en Setas OS.** Las fuentes no cubren microcopy de interfaz más allá de la auditoría (8/10, «algunos rótulos pueden ser más accionables»). Recomendación: rótulos con verbo en infinitivo o imperativo tú («Registrar cosecha»).
+4. **Microcopy de interfaz en Setas OS.** Las fuentes no cubren microcopy de interfaz más allá de la auditoría (8/10, «algunos rótulos pueden ser más accionables»). Recomendación: rótulos con verbo en infinitivo («Registrar cosecha», «Consultar disponibilidad»).
 5. **Fotografía:** sin guía propia. Recomendación: sesión piloto de un día (etiqueta + web + 3 meses de redes).
 6. **Línea funcional/medicinal (Reishi, Cordyceps, Melena de león).** Exigiría registro INVIMA y copy sin promesas terapéuticas. Pendiente decisión de producto.
 7. **Handles de redes oficiales** (`@reallygreatsite` es de plantilla). Reservar variantes de `@setasdelapena`.
@@ -222,6 +236,7 @@ Sin transcripciones de llamadas ni PII en las fuentes procesadas. No se consulta
 
 | Fecha | Cambio |
 |---|---|
+| 2026-10-23 | v2.2: tratamiento sin tuteo ni ustedeo; primera persona del plural y registros técnico-culinario y técnico-financiero. Sustituye la decisión de tratamiento del 2026-10-17 y alinea manual y reglas de mercado. |
 | 2026-05-11 | v1.0 inicial; decisiones del fundador (Sombra y Silencio, evitar lenguaje místico) |
 | 2026-10-17 | Decisión: tagline oficial «Cultivo en sombra», con reglas para mantenerlo sobrio. |
 | 2026-10-17 | v2.1: tagline con tabla de candidatos y recomendación única; §8 puntero a identidad visual. |
