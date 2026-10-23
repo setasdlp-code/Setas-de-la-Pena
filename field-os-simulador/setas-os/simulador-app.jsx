@@ -5100,23 +5100,23 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2.0
   },
-  // Vertical "Lomo": franja negra de 4mm en el borde izquierdo con la marca
-  // en vertical; especie, QR de 40mm, código, bolsa (texto, sin bloque
-  // negro) y fecha · receta. Mismos valores que .thermal-card-50x70 en sim.css.
+  // Vertical "Lomo": franja negra de 10mm con la marca como banner vertical;
+  // código de lote (héroe), QR de 34mm, especie, bolsa y fecha · receta.
+  // Mismos valores que .thermal-card-50x70 en sim.css.
   '50x70': {
     layout: 'vertical',
     wMm: 50,
     hMm: 70,
-    padXMm: 2.5,
+    padXMm: 1.5,
     padYMm: 2.5,
     gapPx: 6,
-    qrMm: 40.0,
-    spineMm: 4.0,
+    qrMm: 34.0,
+    spineMm: 10.0,
     spineText: 'SETAS DE LA PEÑA',
-    eyebrowPx: 7.0,
-    speciesPx: 17.0,
+    eyebrowPx: 17.0,
+    speciesPx: 11.0,
     badgePx: 10.5,
-    codePx: 8.0,
+    codePx: 12.0,
     metaPx: 7.0
   },
 };
@@ -5225,14 +5225,18 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.setLineDash([]);
   ctx.textBaseline = 'top';
 
-  // Lomo negro con la marca en vertical (se lee de abajo hacia arriba)
+  // Lomo negro con la marca como banner vertical (se lee de abajo hacia arriba),
+  // escalada para ocupar casi todo el largo de la franja
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, spine, h);
-  const ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
+  let ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
   ctx.save();
   ctx.translate(spine / 2, h / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.font = `700 ${ebPx}px ${FONT_MONO}`;
+  ctx.font = `800 ${ebPx}px ${FONT_MONO}`;
+  const brandMax = h - padY * 2;
+  const brandW = ctx.measureText(spec.spineText).width;
+  if (brandW > brandMax) { ebPx = Math.floor(ebPx * brandMax / brandW); ctx.font = `800 ${ebPx}px ${FONT_MONO}`; }
   ctx.fillStyle = '#fff';
   ctx.textBaseline = 'middle';
   ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
@@ -5240,29 +5244,28 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   ctx.fillStyle = '#000';
   ctx.textBaseline = 'top';
 
-  // Especie (serif, hasta 2 líneas, se reduce si no cabe)
+  // Código de lote: héroe arriba (hasta 2 líneas, se reduce si no cabe)
   let curY = padY + cssPxToCanvas(2);
-  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
-  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-  let lines = wrapCanvasText(ctx, species, colW);
-  while (lines.length > 1 && spPx > 18) {
-    spPx -= 2;
-    ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-    lines = wrapCanvasText(ctx, species, colW);
+  let cPx = Math.round(cssPxToCanvas(spec.codePx));
+  ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+  let lines = wrapCanvasText(ctx, code, colW);
+  while (lines.length > 2 && cPx > 10) {
+    cPx -= 2;
+    ctx.font = `800 ${cPx}px ${FONT_MONO}`;
+    lines = wrapCanvasText(ctx, code, colW);
   }
-  const spLH = Math.round(spPx * 1.05);
-  lines.slice(0, 2).forEach(line => { center(line, curY); curY += spLH; });
-  curY += cssPxToCanvas(3);
+  lines.slice(0, 2).forEach(line => { center(line, curY); curY += Math.round(cPx * 1.1); });
+  curY += cssPxToCanvas(4);
 
-  // QR de 40mm centrado en la columna
+  // QR de 34mm centrado en la columna
   const qrSize = spec.qrMm * mm;
   drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
   curY += qrSize + cssPxToCanvas(3);
 
-  // Código
-  const cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `700 ${cPx}px ${FONT_MONO}`;
-  wrapCanvasText(ctx, code, colW).forEach(line => { center(line, curY); curY += Math.round(cPx * 1.15); });
+  // Especie: texto pequeño bajo el QR
+  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
+  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
+  wrapCanvasText(ctx, species, colW).slice(0, 2).forEach(line => { center(line, curY); curY += Math.round(spPx * 1.1); });
   curY += cssPxToCanvas(2);
 
   // Bolsa: texto grande, sin bloque negro
