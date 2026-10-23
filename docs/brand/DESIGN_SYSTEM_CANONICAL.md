@@ -33,7 +33,7 @@ La identidad visual resuelve la tensión entre dos mundos que no se contradicen:
 - **Prohibido lenguaje new-age o esotérico:** Prohibidas expresiones como *"alimento sagrado"*, *"energía del bosque"*, *"guardián de la niebla"*, *"escuchar a la tierra"*.
 - **Sin signos de exclamación ni superlativos vacíos:** Cero *"¡el mejor hongo!"*, *"¡increíble!"*. La calidad se demuestra con parámetros medidos (eficiencia biológica, porcentaje de humedad, grados de madurez, horas de esterilización).
 - **Taxonomía:** Nombres científicos obligatoriamente en itálica (*Pleurotus ostreatus*, *Lentinula edodes*, *Hericium erinaceus*).
-- **Tratamiento:** Primera persona del plural (*"cosechamos"*, *"cultivamos"*); interlocutor en segunda persona (*"tú"*, nunca *"usted"*). Titulares de 3 a 6 palabras; párrafos de 2 a 4 frases.
+- **Tratamiento:** Primera persona del plural (*"cosechamos"*, *"cultivamos"*); sin tratamiento directo de segunda persona (sin «tú» ni «usted»), con frases centradas en producto y pedido y llamadas a la acción en infinitivo. Mantener cercanía sin fórmulas burocráticas, registro técnico-culinario con chefs y técnico-financiero con socios. Decisión de tratamiento actualizada el 23 de octubre de 2026; ver `.claude/brand-voice-guidelines.md` §3. Titulares de 3 a 6 palabras; párrafos de 2 a 4 frases.
 
 ---
 
