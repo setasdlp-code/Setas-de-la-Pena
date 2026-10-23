@@ -8,7 +8,8 @@ const { chromium } = require(path.join(root, 'field-os-simulador/setas-os/node_m
 const output = process.env.SETAS_EXPORT_AUDIT_DIR || '/workspace/reports/cloudflare-setas';
 const publicDir = process.env.SETAS_EXPORT_DIR || path.join(output, 'public');
 const base = process.env.SETAS_EXPORT_BASE_URL || 'http://127.0.0.1:4188/';
-const files = ['index.html', 'home.html', 'shiitake.html', 'recetas.html', 'manual.html', 'typography.html',
+const files = ['index.html', 'home.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'manual.html', 'typography.html',
+  'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html',
   '08_brand/ds-2026/mockups/market/17-culinary-market.html',
   '08_brand/ds-2026/brand-kit/index.html'];
 const report = { base, checks: [], errors: [], screenshots: [] };
@@ -37,7 +38,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         for (const link of links) {
           const url = new URL(link);
           if (!url.href.startsWith(base)) continue;
-          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/manual': 'manual.html', '/typography': 'typography.html' };
+          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
           const target = path.join(publicDir, cleanFiles[url.pathname] || decodeURIComponent(url.pathname));
           assert.ok(fs.existsSync(target), link);
           if (url.hash && target.endsWith('.html')) assert.ok(fs.readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), link);

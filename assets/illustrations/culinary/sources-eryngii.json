@@ -1,0 +1,91 @@
+{
+  "method": "Built-in image_gen, referencias directas serie gouache shiitake.",
+  "recipeStatus": "Ilustraciones conceptuales de formulaciones pendientes de prueba.",
+  "images": [
+    {
+      "slug": "medallones",
+      "name": "medallones-limon",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-a313206e-f8ac-46f9-96fd-5248a6962e12.png",
+      "prompt": "Create one standalone square illustration in EXACTLY the same Setas de la Peña culinary gouache series as the attached STYLE REFERENCES. Match opaque hand-painted gouache brush marks, sparse pencil contours, warm cream speckled ceramic with thin ochre rim, elevated three-quarter view, oak brown/moss green/ochre palette, flat #FAF8F3 paper background. Whole dish visible, plate fills88–92%of canvas width. One serving only, compact margins. No photographs,3D,watercolor wash,engraving,text,logos,cutlery,hands,tablecloth,loose ingredient drawings or decorative foliage. Change FOOD ONLY as described. Eryngii is king oyster/Pleurotus eryngii: dense ivory cylindrical stem, small tan cap; never lion's mane shaggy teeth or large shiitake caps. Ingredients strictly match description. Conceptual proposed-recipe illustration. Shallow cream ceramic plate. Four golden seared KING OYSTER STEM MEDALLIONS, round short cylinders with creamy white sides and shallow diamond scoring on golden tops. On smooth pale cream ARRACACHA root puree, lightly glossed lemon butter, tiny chopped parsley and fine lemon zest. No dark brown panela sauce, no plantain, no corn, no rice, no cheese, no lion's mane fibers. Small sauteed king oyster cap pieces beside medallions to use whole mushroom.",
+      "file": "medallones-limon-eryngii-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 203276,
+      "sha256": "cd4b391f793a430346c6244196d4d69705c85d7d4b98238430af5996df3dabd4",
+      "originalSHA256": "e303d554aae049e23a0b4bc72cb23e6a7ea6695be732d37288bfae1ba35d161b",
+      "encoding": "WebP calidad86, sin recorte ni cambio de tamaño."
+    },
+    {
+      "slug": "laminas",
+      "name": "laminas-chorreadas",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-0ed607e0-caf3-4b3d-8706-4b77e4044562.png",
+      "prompt": "Create one standalone square illustration in EXACTLY the same Setas de la Peña culinary gouache series as the attached STYLE REFERENCES. Match opaque hand-painted gouache brush marks, sparse pencil contours, warm cream speckled ceramic with thin ochre rim, elevated three-quarter view, oak brown/moss green/ochre palette, flat #FAF8F3 paper background. Whole dish visible, plate fills88–92%of canvas width. One serving only, compact margins. No photographs,3D,watercolor wash,engraving,text,logos,cutlery,hands,tablecloth,loose ingredient drawings or decorative foliage. Change FOOD ONLY as described. Eryngii is king oyster/Pleurotus eryngii: dense ivory cylindrical stem, small tan cap; never lion's mane shaggy teeth or large shiitake caps. Ingredients strictly match description. Conceptual proposed-recipe illustration. Shallow cream ceramic plate. Three long lengthwise KING OYSTER SLICES showing the whole mushroom silhouette: broad thick pale stem with seared surface, small tan cap attached at tip. Two red-skinned sabanera potatoes covered in creamy pale orange hogao-cheese sauce; a modest stripe of red tomato/onion/pepper salsa criolla over the center of the mushroom slices, leaving seared stems visible. A little chopped cilantro. No round medallions,no meat,no rice,no avocado.",
+      "file": "laminas-chorreadas-eryngii-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 203484,
+      "sha256": "2d2dd06a13cd50ec6eaddcf5e2b818f54e36f085d1b08fc61da0b2871c89d03f",
+      "originalSHA256": "dafb5521b28970e941d36efe997ff8b9933d8ae07b4ebd386b1a704ae48dd516",
+      "encoding": "WebP calidad86, sin recorte ni cambio de tamaño."
+    },
+    {
+      "slug": "sudado",
+      "name": "cuartos-garbanzos",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-e7c5f622-b9b3-436f-8ce3-31c929403b41.png",
+      "prompt": "Create one standalone square illustration in EXACTLY the same Setas de la Peña culinary gouache series as the attached STYLE REFERENCES. Match opaque hand-painted gouache brush marks, sparse pencil contours, warm cream speckled ceramic with thin ochre rim, elevated three-quarter view, oak brown/moss green/ochre palette, flat #FAF8F3 paper background. Whole dish visible, plate fills88–92%of canvas width. One serving only, compact margins. No photographs,3D,watercolor wash,engraving,text,logos,cutlery,hands,tablecloth,loose ingredient drawings or decorative foliage. Change FOOD ONLY as described. Eryngii is king oyster/Pleurotus eryngii: dense ivory cylindrical stem, small tan cap; never lion's mane shaggy teeth or large shiitake caps. Ingredients strictly match description. Conceptual proposed-recipe illustration. Shallow cream ceramic plate. Three substantial lengthwise KING OYSTER QUARTERS, thick ivory stems and small tan caps, golden roasted faces. Surrounded by cooked beige CHICKPEAS, strips of ROASTED RED BELL PEPPER and roasted red onion wedges with tiny rosemary flecks, glistening olive oil and a little lemon. Warm roasted tray-bake result served on plate, dry golden surfaces, NOT soup or stew, no broth pool. No potatoes,cassava,rice,plantain,meat or lion's mane.",
+      "file": "cuartos-garbanzos-eryngii-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 250598,
+      "sha256": "52271791ce847ae604be3a9f99fe54ad72f611b4d4a221e35ac1a1337b9d41b0",
+      "originalSHA256": "a8947c5616f459287cf2b6e2667472a9d19471a937e0e05b0b36787d5ed30cf9",
+      "encoding": "WebP calidad86, sin recorte ni cambio de tamaño."
+    },
+    {
+      "slug": "atollado",
+      "name": "desmechado-lechuga",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-eec16fc1-26e2-4608-91a4-ba9c6b2f23be.png",
+      "prompt": "Create one standalone square illustration in EXACTLY the same Setas de la Peña culinary gouache series as the attached STYLE REFERENCES. Match opaque hand-painted gouache brush marks, sparse pencil contours, warm cream speckled ceramic with thin ochre rim, elevated three-quarter view, oak brown/moss green/ochre palette, flat #FAF8F3 paper background. Whole dish visible, plate fills88–92%of canvas width. One serving only, compact margins. No photographs,3D,watercolor wash,engraving,text,logos,cutlery,hands,tablecloth,loose ingredient drawings or decorative foliage. Change FOOD ONLY as described. Eryngii is king oyster/Pleurotus eryngii: dense ivory cylindrical stem, small tan cap; never lion's mane shaggy teeth or large shiitake caps. Ingredients strictly match description. Conceptual proposed-recipe illustration. Shallow cream ceramic plate carrying THREE open green BUTTER LETTUCE CUPS. Each leaf holds a generous mound of golden cooked KING OYSTER STEM SHREDS with small sauteed tan cap pieces, fine tomato/scallion hogao flecks, small avocado cubes and red mild chili with cilantro. King oyster shreds look long smooth ivory strands with browned edges, never toothy/shaggy lion's mane. No tortillas,arepas,rice,beans,cheese,plantain,meat or sauce bowl. All ingredients inside lettuce leaves.",
+      "file": "desmechado-lechuga-eryngii-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 203844,
+      "sha256": "fe4b919edf74712f87975e905620820141d951c5e49c60d5697219849a44f852",
+      "originalSHA256": "885170a2fdfed2cebb5d5e822dc0fb3c463a9037e1ecdce5f33dde3727f9ecb6",
+      "encoding": "WebP calidad86, sin recorte ni cambio de tamaño."
+    },
+    {
+      "slug": "chuzos",
+      "name": "chuzos",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-1a63995a-d98a-40db-acc5-9746b3a15680.png",
+      "prompt": "Create one standalone square illustration in EXACTLY the same Setas de la Peña culinary gouache series as the attached STYLE REFERENCES. Match opaque hand-painted gouache brush marks, sparse pencil contours, warm cream speckled ceramic with thin ochre rim, elevated three-quarter view, oak brown/moss green/ochre palette, flat #FAF8F3 paper background. Whole dish visible, plate fills88–92%of canvas width. One serving only, compact margins. No photographs,3D,watercolor wash,engraving,text,logos,cutlery,hands,tablecloth,loose ingredient drawings or decorative foliage. Change FOOD ONLY as described. Eryngii is king oyster/Pleurotus eryngii: dense ivory cylindrical stem, small tan cap; never lion's mane shaggy teeth or large shiitake caps. Ingredients strictly match description. Conceptual proposed-recipe illustration. Shallow cream ceramic plate. ONE round WHITE CORN AREPA topped with TWO crossed bamboo skewers. On each skewer, king oyster long thin stem ribbons folded clearly into accordion/S-shaped waves, ivory edges with dark golden grill marks. Glossy amber panela/chili/lime glaze, tiny cooked mushroom trimmings and a little fresh chopped mild red chili, scallion and cilantro over it. No mushroom cubes on skewers, no vegetables between folds,no meat,no cheese,no avocado,no corn kernels,no whole lime wedges.",
+      "correction": "Change only arepa to warm ivory white-corn masa, keep all other elements unchanged.",
+      "file": "chuzos-eryngii-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 181538,
+      "sha256": "0fb10ebf80b36081ca536a4f14d38bc40ef83b6c517fabbb72bcee523c24f21a",
+      "originalSHA256": "23fbb085072da60a639bd5bf8760d41dd2a71edb402fe44e4dd02bd60c08a92f",
+      "encoding": "WebP calidad86, sin recorte ni cambio de tamaño."
+    },
+    {
+      "slug": "pipian",
+      "name": "tartaletas-pipian",
+      "source": "/Users/sebastianpinzon/.codex/generated_images/01a14fa1-188b-7fa3-a419-f571ac45b960/exec-4a3a754e-8fb5-45aa-ac32-b8ad146f56ae.png",
+      "prompt": "Create one standalone square illustration in EXACTLY the same Setas de la Peña culinary gouache series as the attached STYLE REFERENCES. Match opaque hand-painted gouache brush marks, sparse pencil contours, warm cream speckled ceramic with thin ochre rim, elevated three-quarter view, oak brown/moss green/ochre palette, flat #FAF8F3 paper background. Whole dish visible, plate fills88–92%of canvas width. One serving only, compact margins. No photographs,3D,watercolor wash,engraving,text,logos,cutlery,hands,tablecloth,loose ingredient drawings or decorative foliage. Change FOOD ONLY as described. Eryngii is king oyster/Pleurotus eryngii: dense ivory cylindrical stem, small tan cap; never lion's mane shaggy teeth or large shiitake caps. Ingredients strictly match description. Conceptual proposed-recipe illustration. Shallow cream ceramic plate. THREE open small golden yellow CORN TARTLET CUPS, crisp thin sides. Fill with warm orange-ochre mashed potato and ground peanut pipian, generous golden KING OYSTER MUSHROOM DICE(5mm) visibly mixed in and crowning each tartlet, smooth ivory cubes with golden brown faces. One small cream ceramic ramekin of pale creamy peanut aji flecked with green scallion/cilantro and tiny red chili on the SAME plate. No closed half-moon empanadas,no banana leaf,no whole mushrooms,no meat,no avocado,no egg.",
+      "file": "tartaletas-pipian-eryngii-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 191634,
+      "sha256": "6a6d69855042ccbc64c9be7060256b308c6cf81ed76cd71aa9243389b53e8125",
+      "originalSHA256": "3097d3a0df765328d49f5585faa2b115c2f25de3be0a813822768b56b6b0bfbd",
+      "encoding": "WebP calidad86, sin recorte ni cambio de tamaño."
+    }
+  ],
+  "createdDate": "2026-10-18",
+  "references": [
+    "assets/illustrations/culinary/arepa-shiitake-gouache.webp",
+    "assets/illustrations/culinary/mote-shiitake-gouache.webp",
+    "assets/illustrations/culinary/encocado-shiitake-gouache.webp"
+  ]
+}

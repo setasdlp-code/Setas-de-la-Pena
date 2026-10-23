@@ -1,6 +1,6 @@
 # Web pública de Setas de la Peña
 
-Sitio estático independiente de Setas OS. La portada enlaza la colección, el origen y nueve recetas; la ficha de shiitake conecta la información culinaria con una consulta de disponibilidad y pedido.
+Sitio estático independiente de Setas OS. La portada presenta un catálogo micológico de shiitake, melena de león y eryngii, y enlaza el origen y nueve recetas; la ficha de shiitake conecta la información culinaria con una consulta de disponibilidad y pedido.
 
 ## Páginas y diseño
 
@@ -8,7 +8,8 @@ Sitio estático independiente de Setas OS. La portada enlaza la colección, el o
 - `shiitake.html`: ficha completa, solicitud de cantidad y municipio, entrega y conservación.
 - `recetas.html`: nueve propuestas con shiitake: arepa, sopa de coco, patacones, atollado, ajiaco, mote de ñame, encocado, sudado y maduro con queso. Incluye ingredientes, pasos, fuentes, cantidades ajustables e impresión.
 - `recipe-data.js`: IDs estables y gramos base de shiitake por receta (`receta-arepa` 300 g, `receta-sopa` 300 g, `receta-patacones` 250 g). Cada receta enlaza a `/shiitake?recipe=<id>&scale=<1-3>#producto`; solo se aceptan IDs conocidos y factores `1`, `2` o `3`, cualquier otro valor deja la consulta normal. Sin presentaciones, la cantidad precargada son los gramos; con presentaciones, los gramos de la receta se mantienen aparte y se propone `ceil(gramos / peso por presentación)` con la diferencia de peso visible. Los datos de 300/300/250 g deben coincidir con `recetas.html` (el chequeo lo comprueba).
-- Guía de preparación (`index.html`, `website.js`): junto a los filtros de la colección, «¿Qué preparación está prevista?» (sopa/caldo, saltear, asar, desmenuzar o en piezas) filtra las tarjetas existentes con `data-uses`. Cada coincidencia cita su base (Smallhold o nuestras recetas); la orellana lleva el aviso de que la fuente describe otra variedad. El reishi y el archivo nunca coinciden con una preparación. «Quitar filtros» y un estado vacío devuelven a las cuatro especies. Sin JavaScript la guía no se muestra.
+- Home botánico (`index.html`, `home-catalog.css`, `website.js`): entrada breve con la montaña ilustrada, tres láminas con género, nombre común, nombre científico y perfil culinario. Cada lámina abre la ficha de especie con teclado, cierre con Escape y restitución del foco. Shiitake conserva su ficha completa y consulta; melena y eryngii son informativos. No se publican ofertas ni datos agronómicos de Setas OS.
+- Guía de preparación: «Elegir por preparación» despliega los filtros sopa/caldo, saltear, asar y desmenuzar/en piezas, con usos de referencia citados. «Quitar filtro» restaura las tres especies. Sin JavaScript se leen las tres láminas y hay un enlace a la ficha completa de shiitake. Las referencias de eryngii se apoyan en la sección Trumpet Mushrooms de Smallhold; no son una cata de nuestra cosecha.
 - Cantidades ajustables (`recetas.html`): `recipe-data.js` guarda cada ingrediente con cantidad como dato base inmutable (`data-ing` en el HTML enlaza ambos) y `recetas.js` recalcula siempre desde él para ×1/×2/×3 (Receta base/Doble/Triple), por receta. «Al gusto», ingredientes sin cantidad, tiempos y consejos de cocción no se escalan; los rangos (`1–2`, `2–4 personas`) escalan como rangos. Sin JavaScript se ven las cantidades base. Un enlace `/recetas?recipe=<id>&scale=<1-3>` aplica el factor solo a esa receta; `/shiitake?recipe=<id>&scale=<1-3>` pide `base × factor` gramos. Hay un chequeo de concordancia modelo/HTML en `scripts/quality/check_public_website.cjs`. No hay selector de comensales (2/4/6) hasta definir una base de porciones.
 - `typography.html`: estudio tipográfico, excluido de indexación.
 
@@ -78,11 +79,53 @@ Convierte `index.html` en `home.html`, `design-system.html` en `index.html` y ac
 
 Ver `docs/website-audit-2026-10-15.md` para alcance, evidencia y pendientes. La exportación añade canonical, Open Graph, Twitter Card, Organization sin ofertas ni contacto inventado, imagen social 1200×630, robots, sitemap y404 real. Genera WOFF2, imágenes responsivas WebP y JS con hashes; `_headers` conserva noindex de revisión y caché inmutable solo para nombres versionados. El HTML revalida.
 
-La fuente `404.html` impide el fallback SPA de Pages. `public-headers.txt` y `public-redirects.txt` se copian como controles al artefacto, sin leer credenciales. El sitio comercial mantiene tres especies culinarias y una de archivo.
+La fuente `404.html` impide el fallback SPA de Pages. `public-headers.txt` y `public-redirects.txt` se copian como controles al artefacto, sin leer credenciales. En esa publicación el sitio comercial mantenía tres especies culinarias y una de archivo. La iteración local del Home del 18 de octubre sustituye esa colección por las tres especies solicitadas: shiitake, melena de león y eryngii.
 
 Después de exportar y servir el paquete, ejecutar `check_public_export.cjs` y `check_public_delivery.cjs` con `SETAS_EXPORT_AUDIT_DIR`, `SETAS_EXPORT_DIR` y `SETAS_EXPORT_BASE_URL` apropiados. Tras un despliegue autorizado, `python3 scripts/quality/check_public_live.py --artifact <public> --report <informe.json>` verifica el paquete exacto por HTTPS, rutas, cabeceras y consultas de URL sin enviar mensajes ni introducir fixtures en producción. Las pruebas locales y las verificaciones remotas son evidencias distintas.
 
 Despliegue verificado: `43b20e8c-746d-4dc3-9f7f-ee442777880c`, proyecto existente `setas-de-la-pena`, producción `main`, https://setas-de-la-pena.pages.dev/home. No implica commit, push ni merge a main.
+
+
+## Iteración del Home · 18 de octubre de 2026
+
+```text
+Goal: Home como catálogo micológico de shiitake, melena de león y eryngii.
+Scope: index.html, website.js, home-catalog.css, commercial.css y sus verificaciones/documentación. Excluye Setas OS y datos comerciales.
+Baseline: origin/main c7537eb1; rama codex/home-catalogo-botanico; .codex/ ajeno preservado.
+Mode: implement
+Owner: Codex; sin colaboradores.
+Evidence: docs/brand-guidelines.md, index.html, website.js, simulador-app.jsx:14712, scripts/quality/check_public_website.cjs.
+Acceptance: navegador a 320/390/768/1440 px, tres especies, fichas y filtros con teclado, consultas y recetas sin regresión, exportación y git diff --check.
+Authority: cambios locales y validación no destructiva; publicación y GitHub requieren aprobación humana.
+GitHub: none
+Stop when: implementación local revisable y comprobaciones completadas.
+```
+
+Se conservan Gaya + IBM Plex, los colores de marca, rutas, anclas y navegación principal. La imagen de montaña ya existía en `assets/botanical-mushrooms-mountain.png`; no se genera ni duplica. Los grabados proceden del mismo DS que Setas OS. `home-catalog.css` se importa después de `website.css` y limita sus cambios a `.home-page` o a los nuevos componentes del catálogo. La sección Origen sigue la superficie papel del Home.
+
+La portada anterior priorizaba una consulta de shiitake, repetía la especie en el hero y en la colección, y mostraba orellana/reishi. La nueva entrada prioriza explorar las tres especies solicitadas y deja la elección por preparación en un desplegable. Se mantienen los recorridos de chefs, recetas, cuaderno y consultas. Esta iteración no modifica ni publica producción.
+
+Validación local completada para esta iteración:
+
+- `node scripts/quality/check_public_website.cjs`: 32 comprobaciones, 21 renders, sin errores de navegador. Incluye lectura a 320/390/768/1440 px, nombres visibles a 1280×800, menú móvil, fichas, filtros, consulta, recetas y fallback sin JavaScript.
+- `scripts/export_public_website.py`: paquete de 176 archivos generado fuera del repositorio con las dependencias ya declaradas en `scripts/requirements-public-website.txt`.
+- `node scripts/quality/check_public_export.cjs`: 36 comprobaciones, sin errores.
+- `node scripts/quality/check_public_delivery.cjs`: 15 comprobaciones, sin errores; fuentes WOFF2, imágenes responsivas en las fichas, metadatos, rutas y foco del diálogo.
+- `node --check` para los tres JS modificados y `git diff --check`: correctos.
+
+Evidencia de esta sesión: `/tmp/setas-home-catalogo-20261018-v2/` (exportación, manifiesto, informes y capturas); suite funcional en `/var/folders/6n/j3_4zbls4vl3dcr8bwwhwylr0000gn/T/setas-public-website-mFe5te/`. Son artefactos locales temporales. Ninguna de estas verificaciones confirma un despliegue remoto.
+
+Ajuste solicitado del Home: se elimina la sección «05 · Antes de consultar» (`#consultas`) y el enlace «Preguntas sobre tu consulta» del pie. Se conservan el pie de marca, las referencias culinarias y los accesos a la ficha de shiitake.
+
+## Cuaderno editorial de especies
+
+Las tres páginas `/especies/shiitake`, `/especies/melena-de-leon` y `/especies/eryngii` desarrollan la identidad, ecología, cocina, conservación y curiosidades de cada especie. Se accede desde «Leer la ficha» del catálogo o desde la vista rápida. La consulta comercial de `/shiitake` conserva su ruta y funcionamiento. Arquitectura, límites y evidencia: [public-species-editorial.md](public-species-editorial.md). Las páginas se incluyen como rutas comerciales en el servidor, exportador y sitemap, con imágenes responsivas y metadatos de artículo.
+
+«Del nombre al origen» se integra en las fichas editoriales: nombres en shiitake, textura en melena y trazabilidad del origen en eryngii. El Home ya no repite esas notas en una sección propia; `#cuaderno` sigue funcionando como entrada al catálogo.
+
+El recetario de eryngii vive en `/recetas-eryngii`, con seis propuestas y cantidades para 4/8/12 porciones. [Alcance y fuentes](public-eryngii-recipes.md). Se enlaza desde su ficha y desde el recetario de shiitake.
+
+El recetario de melena de león vive en `/recetas-melena`, con seis propuestas, cantidades4/8/12 y regreso a la ficha editorial. Comparte estilos y comportamiento con eryngii en `species-recipes.css/js`. [Alcance y fuentes](public-melena-recipes.md).
 
 ## Voz sin tratamiento directo · 23 de octubre de 2026
 

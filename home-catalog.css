@@ -1,0 +1,99 @@
+/* Home: a micological catalogue within the existing Gaya + Plex brand system.
+   DESIGN_VARIANCE 6 / MOTION_INTENSITY 3 / VISUAL_DENSITY 4. */
+.home-page .masthead { min-height: 80px; padding-block: 18px; border-bottom: var(--rule-hairline); }
+.home-page .masthead nav { flex-wrap: nowrap; }
+.home-page .catalog-intro { display: grid; justify-items: center; gap: 12px; padding-block: 28px 32px; }
+.catalog-intro h1 { color: var(--brand-primary); font: 500 clamp(26px, 2.8vw, 36px)/1.2 var(--font-editorial); letter-spacing: -.015em; margin: 0; text-align: center; }
+.catalog-landscape { margin: 0; width: min(100%, 540px); }
+.catalog-landscape img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+.home-page .collection { padding-block: 0 64px; }
+.catalog-toolbar { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; border-block: var(--rule-heavy); margin-bottom: 28px; }
+.catalog-index { display: flex; align-items: baseline; gap: 20px; }
+.catalog-index h2 { font: 500 26px/1.2 var(--font-editorial); margin: 0; }
+.catalog-index > span { color: var(--text-secondary); }
+.catalog-preparations { margin-left: auto; }
+.catalog-preparations summary { display: flex; align-items: center; justify-content: space-between; gap: 28px; min-height: 48px; cursor: pointer; list-style: none; font: 400 16px/1.5 var(--font-sans); color: var(--brand-primary); }
+.catalog-preparations summary::-webkit-details-marker { display: none; }
+.catalog-preparations summary > span { font-size: 24px; }
+.catalog-preparations[open] summary > span { transform: rotate(45deg); }
+.catalog-preparations[open] { display: contents; }
+.catalog-preparations[open] summary { margin-left: auto; }
+.catalog-toolbar:has(.catalog-preparations[open]) { flex-wrap: wrap; padding-block: 12px 20px; }
+.prep-guide-body { flex-basis: 100%; }
+.catalog-preparations .filters { margin: 0; padding: 0; border: 0; }
+.catalog-preparations .filter { font: 400 16px/1.5 var(--font-sans); padding: 8px 16px; }
+.catalog-preparations .prep-note { margin-top: 12px; }
+.home-page .species-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.home-page .species-card { padding: 0 28px; border: 0; border-right: var(--rule-hairline); display: flex; flex-direction: column; }
+.home-page .species-card:first-child { padding-left: 0; }
+.home-page .species-card:last-child { padding-right: 0; border-right: 0; }
+.home-page .species-card[hidden] { display: none; }
+.home-page .card-meta { background: transparent; padding: 0; color: var(--text-secondary); }
+.home-page .specimen-button { background: transparent; padding: 8px 0 0; display: block; }
+.home-page .specimen-button img { display: block; width: 100%; height: clamp(200px, 18vw, 250px); object-fit: contain; transition: transform 220ms ease; }
+.home-page .specimen-button:hover img { transform: translateY(-4px); }
+.catalog-card-copy { padding-top: 16px; display: flex; flex-direction: column; flex: 1; }
+.home-page .species-card h3 { font: 500 clamp(28px, 2.5vw, 36px)/1.15 var(--font-editorial); letter-spacing: -.015em; margin: 0 0 5px; color: var(--brand-primary); }
+.home-page .species-card .t-latin { font-size: 20px; line-height: 1.4; margin: 0; padding-bottom: 4px; }
+.home-page .card-profile { font: 400 16px/1.6 var(--font-sans); margin: 16px 0 20px; min-height: 0; color: var(--text-primary); }
+.home-page .card-actions { display: flex; flex-direction: column; gap: 0; margin-top: auto; border-top: var(--rule-hairline); }
+.home-page .card-discover { padding-block: 12px; text-decoration: none; font: 400 16px/1.5 var(--font-sans); }
+.home-page .card-discover:hover { text-decoration: underline; text-underline-offset: 5px; }
+.home-page .card-consult { font-size: 14px; color: var(--text-secondary); justify-content: flex-start; gap: 12px; }
+.card-information { display: flex; align-items: center; min-height: 44px; color: var(--text-secondary); margin: 0; }
+.home-page .card-reason { margin: 0 0 16px; }
+.catalog-colophon { display: flex; justify-content: space-between; gap: 24px; padding-top: 24px; margin-top: 28px; border-top: var(--rule-hairline); color: var(--text-secondary); }
+.catalog-colophon p { margin: 0; }
+.home-page #filter-reset { margin: 0 0 24px; }
+/* Existing destinations stay in place; the catalogue sets the visual rhythm. */
+.home-page .section-heading { display: block; }
+.home-page .section-heading > p { margin-top: 16px; max-width: 54ch; }
+.home-page .section-heading > p br { display: none; }
+.home-page .origin { background: var(--surface-page); color: var(--text-primary); border-block: var(--rule-heavy); }
+.home-page .origin .t-label, .home-page .origin h2, .home-page .origin-link { color: var(--brand-primary); }
+.home-page .origin a:focus-visible { outline-color: var(--focus-ring); }
+.home-page .origin-notes > div { border-color: var(--border-hairline); }
+.home-page .origin-mushrooms img { filter: none; opacity: 1; }
+.home-page #species-dialog { border: var(--rule-hairline); }
+.home-page #species-dialog .dialog-plate { background: transparent; }
+.home-page #species-dialog .dialog-plate img { height: 340px; }
+.home-page #species-dialog .t-latin { line-height: 1.4; padding-bottom: 4px; }
+@media (max-width: 1000px) {
+  .home-page .masthead { flex-wrap: wrap; }
+  .home-page .masthead nav { gap: 16px; }
+  .home-page .species-card { padding-inline: 18px; }
+  .home-page .species-card h3 { font-size: 28px; }
+  .home-page .species-card .t-latin { font-size: 18px; }
+  .home-page .card-profile { min-height: 52px; }
+  .catalog-colophon { flex-direction: column; gap: 8px; }
+}
+@media (max-width: 650px) {
+  .home-page .masthead { min-height: 76px; }
+  .home-page .masthead nav { display: grid; }
+  .home-page .catalog-intro { padding-block: 24px 28px; gap: 12px; }
+  .catalog-landscape { width: min(100%, 420px); }
+  .catalog-toolbar { align-items: flex-start; flex-direction: column; padding-block: 16px 8px; gap: 8px; margin-bottom: 24px; }
+  .catalog-index { width: 100%; justify-content: space-between; gap: 12px; }
+  .catalog-index h2 { font-size: 26px; }
+  .catalog-preparations { margin: 0; width: 100%; }
+  .catalog-preparations summary { justify-content: space-between; width: 100%; gap: 16px; }
+  .catalog-preparations[open] summary { margin: 0; }
+  .catalog-preparations .filters { gap: 4px; }
+  .catalog-preparations .filter { padding-inline: 12px; }
+  .prep-guide-body { width: 100%; }
+  .home-page .species-grid { grid-template-columns: 1fr; gap: 32px; }
+  .home-page .species-card { padding: 0 0 24px; border-right: 0; border-bottom: var(--rule-hairline); }
+  .home-page .species-card:last-child { padding-bottom: 0; border-bottom: 0; }
+  .home-page .specimen-button img { height: 270px; }
+  .home-page .species-card h3 { font-size: 34px; }
+  .home-page .species-card .t-latin { font-size: 21px; }
+  .home-page .catalog-card-copy { padding-top: 8px; }
+  .home-page .card-profile { min-height: 0; margin-block: 12px 20px; }
+  .home-page .collection { padding-bottom: 40px; }
+  .catalog-colophon { padding-top: 20px; margin-top: 24px; }
+  .home-page #species-dialog .dialog-plate img { height: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-page .specimen-button img { transition: none; }
+  .home-page .specimen-button:hover img { transform: none; }
+}

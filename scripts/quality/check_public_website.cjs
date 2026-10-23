@@ -53,17 +53,118 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const page = await context.newPage();
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
-      for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'typography.html']) {
+      for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
         await visit(page, file);
         const metrics = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth, brokenImages: [...document.images].filter(img => !img.complete || img.naturalWidth === 0).map(img => img.getAttribute('src')), pairing: document.documentElement.dataset.pairing }));
         assert.ok(metrics.content <= width, `${file} overflow at ${width}`);
         assert.deepEqual(metrics.brokenImages, []);
         if (file !== 'typography.html') assert.equal(metrics.pairing, 'mono');
         report.checks.push({ type: 'responsive', page: file, width, ...metrics });
-        if (width === 390 || width === 1440) await capture(page, `${file.replace('.html', '')}-${width}.png`);
+        if (width === 390 || width === 1440) await capture(page, `${file.replace('.html', '').replaceAll('/', '-')}-${width}.png`);
         if (file === 'shiitake.html' && [390, 1440].includes(width)) await capture(page, `consulta-${width}.png`, '#producto');
       }
     }
+    await visit(page, 'especies/eryngii#cocina');
+    await page.locator('#cocina a[href="/recetas-eryngii"]').click();
+    assert.equal(new URL(page.url()).pathname, '/recetas-eryngii');
+    assert.equal(await page.locator('.recipe').count(), 6);
+    for (const [slug, grams] of [['medallones',600],['laminas',600],['sudado',600],['atollado',560],['chuzos',560],['pipian',480]]) {
+      const recipe = page.locator(`#eryngii-${slug}`);
+      for (const factor of [2,3,1]) {
+        await recipe.locator(`input[value="${factor}"]`).check();
+        const label = await recipe.locator('[data-yield]').innerText();
+        assert.ok(label.startsWith(`${4 * factor} porciones`));
+        assert.ok(label.includes(new Intl.NumberFormat('es-CO').format(grams * factor) + ' g de eryngii'));
+      }
+    }
+    await page.locator('#eryngii-medallones input[value="3"]').check();
+    assert.equal(await page.locator('#eryngii-medallones [data-amounts="1000|1800|2500"]').innerText(), '2.500 ml');
+    await page.locator('#eryngii-sudado input[value="2"]').check();
+    assert.equal(await page.locator('#eryngii-sudado [data-amounts="400|800|1200"]').innerText(), '800 g');
+    assert.equal(await page.locator('.recipe-illustration img').count(),6);
+    assert.equal(await page.locator('#eryngii-atollado h2').innerText(),'Desmechado en hojas de lechuga');
+    await page.locator('#eryngii-chuzos details summary').click();
+    await page.locator('.recipe-shortcuts a[href="#eryngii-chuzos"]').click();
+    await page.locator('#eryngii-chuzos .recipe-method').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#eryngii-chuzos details').getAttribute('open'), '');
+    await page.locator('#eryngii-chuzos details summary').click();
+    await page.locator('.recipe-shortcuts a[href="#eryngii-chuzos"]').click();
+    await page.locator('#eryngii-chuzos .recipe-method').waitFor({ state: 'visible' });
+    await page.locator('#eryngii-chuzos details summary').click();
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    assert.equal(await page.locator('.recipe-details[open]').count(), 6);
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    assert.equal(await page.locator('#eryngii-chuzos details').getAttribute('open'), null);
+    await page.locator('.recipes-end a[href="/especies/eryngii"]').click();
+    assert.equal(new URL(page.url()).pathname, '/especies/eryngii');
+    const eryngiiNoJs = await contextWith(undefined, { javaScriptEnabled: false, viewport: {width:390,height:900} });
+    const eryngiiStatic = await eryngiiNoJs.newPage();
+    await visit(eryngiiStatic, 'recetas-eryngii');
+    assert.equal(await eryngiiStatic.locator('.recipe-details[open]').count(), 6);
+    assert.equal(await eryngiiStatic.locator('.recipe-scale:visible').count(), 0);
+    assert.ok(await eryngiiStatic.locator('#eryngii-medallones .recipe-ingredients').first().innerText().then(t=>t.includes('480 g')));
+    await eryngiiNoJs.close();
+    report.checks.push({type:'eryngii-recipes',result:'passed',covers:['editorial roundtrip','six recipes','4/8/12 portions','nonlinear liquids','deep link opens recipe','print restores closed state','ingredients without JS']});
+    await visit(page, 'especies/melena-de-leon#cocina');
+    await page.locator('#cocina a[href="/recetas-melena"]').click();
+    assert.equal(new URL(page.url()).pathname, '/recetas-melena');
+    assert.equal(await page.locator('.recipe').count(), 6);
+    for (const [slug, grams] of [['posta',600],['encocado',560],['mote',480],['atollado',520],['laminas',500],['envuelto',480]]) {
+      const recipe = page.locator(`#melena-${slug}`);
+      for (const factor of [2,3,1]) {
+        await recipe.locator(`input[value="${factor}"]`).check();
+        const label = await recipe.locator('[data-yield]').innerText();
+        assert.ok(label.startsWith(`${4 * factor} porciones`));
+        assert.ok(label.includes(new Intl.NumberFormat('es-CO').format(grams * factor) + ' g de melena de león fresca limpia'));
+      }
+    }
+    await page.locator('#melena-atollado input[value="3"]').check();
+    assert.equal(await page.locator('#melena-atollado [data-amounts="200|400|600"]').first().innerText(), '600 g');
+    assert.equal(await page.locator('#melena-atollado [data-amounts="320|640|960"]').innerText(), '960 g');
+    await page.locator('#melena-encocado input[value="2"]').check();
+    assert.equal(await page.locator('#melena-encocado [data-amounts="600|1000|1500"]').innerText(), '1.000 ml');
+    await page.locator('#melena-envuelto details summary').click();
+    await page.locator('.recipe-shortcuts a[href="#melena-envuelto"]').click();
+    await page.locator('#melena-envuelto .recipe-method').waitFor({ state: 'visible' });
+    await page.locator('#melena-envuelto details summary').click();
+    await page.locator('.recipe-shortcuts a[href="#melena-envuelto"]').click();
+    await page.locator('#melena-envuelto .recipe-method').waitFor({ state: 'visible' });
+    await page.locator('#melena-envuelto details summary').click();
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    assert.equal(await page.locator('.recipe-details[open]').count(), 6);
+    await page.emulateMedia({media:'print'});
+    await page.pdf({path:path.join(out,'recetas-melena.pdf'),format:'A4',printBackground:true});
+    await page.emulateMedia({media:'screen'});
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await page.locator('.recipes-end a[href="/especies/melena-de-leon"]').click();
+    assert.equal(new URL(page.url()).pathname, '/especies/melena-de-leon');
+    const melenaNoJs = await contextWith(undefined,{javaScriptEnabled:false,viewport:{width:390,height:900}});
+    const melenaStatic = await melenaNoJs.newPage();
+    await visit(melenaStatic,'recetas-melena');
+    assert.equal(await melenaStatic.locator('.recipe-details[open]').count(),6);
+    assert.equal(await melenaStatic.locator('.recipe-scale:visible').count(),0);
+    assert.ok(await melenaStatic.locator('#melena-posta .recipe-ingredients').first().innerText().then(t=>t.includes('600 g')));
+    await melenaNoJs.close();
+    report.checks.push({type:'melena-recipes',result:'passed',covers:['local editorial roundtrip','six recipes','4/8/12 portions','two mushroom cuts','frying bath quantities','repeated anchor','print PDF','no JavaScript']});
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await visit(page, 'home');
+    await page.screenshot({ path: path.join(out, 'catalogo-1280.png') });
+    assert.equal(await page.locator('#hero-title').innerText(), 'Cultivo en sombra.');
+    assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
+    assert.ok(await page.locator('.catalog-landscape img').evaluate(el => el.getBoundingClientRect().width >= 500), 'brand illustration leads the desktop hero');
+    assert.ok(await page.locator('#hero-title, #collection-title').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'tagline and catalogue entry visible on a small laptop');
+    await page.setViewportSize({ width: 390, height: 900 });
+    await visit(page, 'home');
+    await page.locator('.menu-toggle').click();
+    assert.equal(await page.locator('#primary-nav').isVisible(), true);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#primary-nav').isVisible(), false);
+    assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
+    await page.locator('.menu-toggle').click();
+    await page.locator('#primary-nav a[href="#coleccion"]').click();
+    assert.equal(await page.locator('#primary-nav').isVisible(), false);
+    assert.equal(new URL(page.url()).hash, '#coleccion');
+    report.checks.push({ type: 'catalogue-first-viewport-and-mobile-menu', result: 'passed', covers: ['prominent brand illustration, sole tagline and catalogue entry at 1280×800', 'mobile menu closes with Escape and restores focus', 'menu link reaches catalogue'] });
     await visit(page, 'shiitake.html#producto');
     assert.equal(await page.locator('#order-form').isVisible(), true);
     assert.equal(await page.locator('#channel-notice').isVisible(), true);
@@ -118,7 +219,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#order-municipality').inputValue(), '');
     report.checks.push({ type: 'unconfigured-request', result: 'passed', covers: ['validation', 'keyboard submit and focus', 'restaurant/home', 'clipboard copy', 'no WhatsApp without phone', 'invalidated stale message', 'no saved customer data'] });
 
-    for (const entry of ['.hero-copy a.sdp-btn', '.card-actions a[href="/shiitake#producto"]']) {
+    for (const entry of ['.card-actions a[href="/shiitake#producto"]']) {
       await visit(page, 'index.html');
       await page.locator(entry).click();
       await page.waitForURL('**/shiitake#producto');
@@ -134,70 +235,98 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#dialog-order').isVisible(), false);
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'melena');
-    report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['hero', 'collection card', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
+    report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['collection card', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
     await visit(page, 'index.html');
-    assert.equal(await page.locator('#hero-note').isVisible(), false);
-    await page.locator('[data-hero=melena]').click();
-    assert.equal(await page.locator('#hero-note').isVisible(), true);
+    assert.equal(await page.locator('.species-card').count(), 3);
+    await page.locator('.specimen-button[data-species="eryngii"]').click();
+    assert.equal(await page.locator('#dialog-title').innerText(), 'Eryngii');
+    assert.equal(await page.locator('#dialog-latin').innerText(), 'Pleurotus eryngii');
+    assert.equal(await page.locator('#dialog-order').isVisible(), false);
+    assert.equal(await page.locator('#dialog-full-page').isVisible(), true);
+    assert.match(await page.locator('#dialog-full-page').getAttribute('href'), /\/especies\/eryngii$/);
+    assert.match(await page.locator('#dialog-image').getAttribute('src'), /cardo/);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'eryngii');
+    for (const [key, slug, name] of [['shiitake', 'shiitake', 'Shiitake'], ['melena', 'melena-de-leon', 'Melena de león'], ['eryngii', 'eryngii', 'Eryngii']]) {
+      await visit(page, 'home?pairing=bricolage');
+      await page.locator(`.card-discover[data-editorial="${key}"]`).click();
+      assert.equal(new URL(page.url()).pathname, `/especies/${slug}`);
+      assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
+      assert.equal(await page.locator('h1').innerText(), name);
+      assert.equal(await page.locator('.editorial-sources li').count(), 5);
+      assert.equal(await page.locator('.editorial-other').count(), 2);
+      await page.locator('.editorial-toc a[href="#cocina"]').click();
+      assert.equal(new URL(page.url()).hash, '#cocina');
+      await page.emulateMedia({ media: 'print' });
+      assert.equal(await page.locator('.editorial-utility').isVisible(), false);
+      assert.equal(await page.locator('#curiosidades').isVisible(), true);
+      await page.emulateMedia({ media: 'screen' });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await visit(page, `especies/${slug}.html`);
+      await page.screenshot({ path: path.join(out, `editorial-${slug}-1440.png`) });
+      await page.setViewportSize({ width: 390, height: 900 });
+      await visit(page, `especies/${slug}.html`);
+      await page.screenshot({ path: path.join(out, `editorial-${slug}-390.png`) });
+    }
+    report.checks.push({ type: 'editorial-species-journeys', result: 'passed', covers: ['all three catalogue links', 'legacy query preserved', 'five sources per page', 'links to other species', 'section navigation', 'print controls hidden', 'desktop and mobile covers'] });
+    await visit(page, 'home');
     assert.equal(await page.locator('.chef-steps > li').count(), 2);
     await visit(page, 'recetas.html');
     assert.equal(await page.locator('.recipe-shortcut-meta').count(), 9);
     assert.equal(await page.locator('.recipe-chip').count(), 3);
-    report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'informational hero species note', 'two chef steps', 'nine recipe shortcut summaries', 'pending-trial labels'] });
+    report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'catalogue entry and three species dialogs', 'two chef steps', 'nine recipe shortcut summaries', 'pending-trial labels'] });
     // Fase 4: guía de preparación sobre la colección.
     const visibleSpecies = () => page.locator('.species-card:not([hidden]) h3').allTextContents();
     await visit(page, 'index.html#coleccion');
     assert.equal(await page.locator('#prep-guide').isVisible(), true);
-    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Orellana gris']);
-    const prepCases = [['sopa', ['Shiitake', 'Melena de león']], ['saltear', ['Shiitake', 'Orellana gris']], ['asar', ['Orellana gris']], ['desmenuzar', ['Melena de león']]];
+    if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
+    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Eryngii']);
+    const prepCases = [['sopa', ['Shiitake', 'Melena de león']], ['saltear', ['Shiitake', 'Eryngii']], ['asar', ['Eryngii']], ['desmenuzar', ['Melena de león']]];
     for (const [prep, expected] of prepCases) {
       await page.locator(`[data-prep="${prep}"]`).click();
       assert.deepEqual(await visibleSpecies(), expected, prep);
       assert.equal(await page.locator(`[data-prep="${prep}"]`).getAttribute('aria-pressed'), 'true');
-      assert.equal(await page.locator('.species-card[data-category="archive"]').isVisible(), false, 'archive never matches a preparation');
       assert.equal(await page.locator('#filter-reset').isVisible(), true);
     }
     await page.locator('[data-prep="asar"]').click();
     assert.equal(await page.locator('.species-card:not([hidden]) .card-reason sup a').getAttribute('href'), '#source-culinary');
-    assert.match(await page.locator('#source-culinary').innerText(), /otra variedad/);
     await page.locator('[data-prep="sopa"]').click();
     assert.match(await page.locator('#filter-status').textContent(), /2 especies visibles para sopa o caldo/);
     await page.locator('.species-card:not([hidden]) .card-reason a.text-link').first().click();
     await page.waitForURL('**/recetas#receta-sopa');
     await visit(page, 'index.html#coleccion');
+    if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
     await page.locator('[data-prep="saltear"]').click();
-    await page.locator('[data-filter="archive"]').click();
-    assert.deepEqual(await visibleSpecies(), []);
-    assert.equal(await page.locator('#filter-empty').isVisible(), true);
     await page.locator('#filter-reset').click();
-    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Orellana gris', 'Reishi']);
+    assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Eryngii']);
     assert.equal(await page.locator('#filter-reset').isVisible(), false);
     assert.equal(await page.locator('#filter-empty').isVisible(), false);
     assert.equal(await page.locator('[data-prep="any"]').getAttribute('aria-pressed'), 'true');
     assert.equal(await page.locator('.card-reason:visible').count(), 0);
-    assert.equal(await page.locator('.species-card[data-category="archive"] a[href*="shiitake"]').count(), 0);
     await page.locator('[data-prep="sopa"]').focus();
     await page.keyboard.press('Enter');
     assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león']);
     await page.locator('.species-card:not([hidden]) [data-species="melena"]').first().click();
     assert.equal(await page.locator('#dialog-order').isVisible(), false);
     await page.keyboard.press('Escape');
-    await page.locator('.species-card:not([hidden]) a[href="/shiitake"]').click();
-    await page.waitForURL('**/shiitake');
+    await page.locator('.card-consult').click();
+    await page.waitForURL('**/shiitake#producto');
     for (const width of [320, 390]) {
       await page.setViewportSize({ width, height: 1000 });
       await visit(page, 'index.html#coleccion');
+      if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
       await page.locator('[data-prep="asar"]').click();
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= width, `guide overflow ${width}`);
       if (width === 390) await capture(page, 'guia-asar-390.png', '#coleccion');
     }
     await page.setViewportSize({ width: 1440, height: 1000 });
     await visit(page, 'index.html#coleccion');
+    if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
     await page.locator('[data-prep="sopa"]').click();
     await capture(page, 'guia-sopa-1440.png', '#coleccion');
-    report.checks.push({ type: 'preparation-guide', result: 'passed', covers: ['four preparations map to sourced uses', 'archive never matches', 'orellana variety caveat', 'reset and empty state', 'recipe link from guide', 'keyboard', 'melena dialog has no purchase', 'overflow 320/390'] });
+    report.checks.push({ type: 'preparation-guide', result: 'passed', covers: ['four preparations map to sourced uses', 'exactly three requested species', 'reset restores collection', 'recipe link from guide', 'keyboard', 'melena dialog has no purchase', 'overflow 320/390'] });
     await visit(page, 'index.html?pairing=bricolage');
-    await page.locator('.hero-copy a.sdp-btn').click();
+    await page.locator('.card-consult').click();
     assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
     assert.equal(new URL(page.url()).hash, '#producto');
     report.checks.push({ type: 'legacy-query-navigation', result: 'passed' });
@@ -244,14 +373,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'recipe-navigation-keyboard-print', result: 'passed', covers: ['three home recipe links', 'hash opens recipe', 'keyboard toggles instructions', 'shortcut reopens same hash', 'print expands and restores instructions'] });
 
     const brokenLinks = [];
-    for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'typography.html']) {
+    for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
       await visit(page, file);
       const ids = await page.locator('[id]').evaluateAll(elements => elements.map(el => el.id));
       assert.equal(ids.length, new Set(ids).size, `${file} duplicate IDs`);
       const links = await page.locator('a[href]').evaluateAll(links => [...new Set(links.map(el => el.href))]);
       for (const link of links.filter(link => link.startsWith(base))) {
         const url = new URL(link);
-        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/manual': 'manual.html', '/typography': 'typography.html' };
+        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
         const filePath = path.join(root, cleanSources[url.pathname] || decodeURIComponent(url.pathname));
         if (!fs.existsSync(filePath)) { brokenLinks.push(link); continue; }
         if (url.hash && filePath.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
@@ -527,6 +656,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
 
     const noJs = await contextWith(undefined, { javaScriptEnabled: false });
     const staticPage = await noJs.newPage();
+    await staticPage.goto(base + 'home');
+    assert.deepEqual(await staticPage.locator('.species-card:not([hidden]) h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
+    assert.equal(await staticPage.locator('#prep-guide').isVisible(), false);
+    assert.equal(await staticPage.locator('noscript a[href="/shiitake"]').isVisible(), true);
+    await staticPage.locator('.card-discover[data-editorial="melena"]').click();
+    assert.equal(await staticPage.locator('h1').innerText(), 'Melena de león');
+    assert.equal(await staticPage.locator('#print-editorial').isVisible(), false);
+    assert.equal(await staticPage.locator('#curiosidades').isVisible(), true);
     await staticPage.goto(base + 'shiitake.html');
     assert.equal(await staticPage.locator('#order-form').isVisible(), false);
     assert.equal(await staticPage.locator('noscript').isVisible(), true);
@@ -560,7 +697,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await chefContext.close();
     report.checks.push({ type: 'chef-journey', result: 'passed', covers: ['chef entry to recipe', '×3 transfers 900 g', 'restaurant purpose retained', 'reviewed message', 'no WhatsApp without phone', 'invalid purpose uses home default'] });
     assert.deepEqual(report.browserErrors, []);
-    report.sources = ['index.html', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'recipe-data.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
+    report.sources = ['index.html', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'species-editorial.css', 'editorial.js', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html', 'home-catalog.css', 'commercial.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'recipe-data.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
     fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
     console.log(JSON.stringify({ result: 'passed', checks: report.checks.length, renders: report.renders.length, browserErrors: report.browserErrors.length, auditDirectory: out }));
   } finally { await browser.close(); }

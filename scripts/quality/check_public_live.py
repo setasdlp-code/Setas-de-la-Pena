@@ -51,7 +51,10 @@ def main():
     public_files = [entry for entry in manifest['files'] if entry['file'] not in {'_headers', '_redirects'}]
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         report['files'] = list(pool.map(check_file, public_files))
-    for route, file in [('', 'index.html'), ('home', 'home.html'), ('shiitake', 'shiitake.html'), ('recetas', 'recetas.html')]:
+    product_routes = [(route.lstrip('/'), file) for route, file in manifest['routes'].items()
+                      if route in {'/', '/home', '/shiitake', '/recetas', '/recetas-melena', '/recetas-eryngii'}
+                      or route.startswith('/especies/')]
+    for route, file in product_routes:
         status, headers, body, url = fetch(route)
         assert status == 200, route
         assert body == (args.artifact / file).read_bytes(), route
@@ -76,7 +79,8 @@ def main():
     status, headers, body, _ = fetch('sitemap.xml')
     assert status == 200 and 'xml' in headers.get('content-type', '')
     locations = [node.text for node in ET.fromstring(body).iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
-    assert locations == [f'https://setas-de-la-pena.pages.dev/{route}' for route in ['home','shiitake','recetas']]
+    expected_locations = [node.text for node in ET.fromstring((args.artifact / 'sitemap.xml').read_bytes()).iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
+    assert locations == expected_locations
     _, _, png, _ = fetch('assets/social/setas-de-la-pena.png')
     assert struct.unpack('>II', png[16:24]) == (1200,630)
     query = 'recipe=receta-arepa&scale=3&purpose=restaurante&pairing=bricolage'

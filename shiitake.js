@@ -141,7 +141,7 @@ window.addEventListener('afterprint', () => {
     setText('#order-weight', selected.valid ? formatWeight(selected.weight) : '—');
     setText('#order-subtotal', !selected.valid ? '—' : selected.subtotal === null ? 'Precio por confirmar' : formatPrice(selected.subtotal));
     setText('#order-delivery', deliveryFee === null ? 'Cobertura y costo por confirmar' : deliveryText);
-    setText('#offer-format', selected.item ? `${selected.item.name} · ${formatWeight(selected.item.weightGrams)}` : 'Acordamos el formato contigo');
+    setText('#offer-format', selected.item ? `${selected.item.name} · ${formatWeight(selected.item.weightGrams)}` : 'El formato se acuerda al consultar');
     setText('#offer-price', selected.item && selected.item.priceCOP !== null ? `${formatPrice(selected.item.priceCOP)} / presentación` : 'Por confirmar');
     document.querySelector('.purchase-submit').firstChild.textContent = available && selected.item && selected.item.priceCOP !== null ? 'Preparar solicitud ' : noChannel ? 'Preparar borrador ' : 'Preparar consulta ';
   }
