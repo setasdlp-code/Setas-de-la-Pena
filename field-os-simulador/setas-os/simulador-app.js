@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: e21fb93dd3722b633546f1ded9911ef303a7052fab2e6639b3459d215bd5ba31
+// source-hash: 874337dea068d3d43e507bfb13a91e10d29a78ae95ca0700fa208ec34cc415a6
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3610,7 +3610,14 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   if (dateTxt) {
     const dPx = Math.round(cssPxToCanvas(spec.datePx));
     ctx.font = `700 ${dPx}px ${FONT_EDITORIAL}`;
-    center(dateTxt, yBot - dPx);
+    yBot -= dPx;
+    center(dateTxt, yBot);
+    const dlTxt = (item.dateLabel || "").trim();
+    if (dlTxt) {
+      const lPx = Math.round(cssPxToCanvas(6.5));
+      ctx.font = `500 ${lPx}px ${FONT_MONO}`;
+      center(dlTxt, yBot - lPx - cssPxToCanvas(1));
+    }
   }
   ctx.restore();
 }
@@ -12381,6 +12388,7 @@ Click para ver análisis completo`
         bagCode: "LOTE MAESTRO",
         species: lote.especie || "Sustrato colonizado",
         date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+        dateLabel: lote.fechaInoculacion ? "INOCULACIÓN" : "",
         recipe: SPP_CODE2[lote.recipeRef?.sKey] || lote.recipeRef?.name || "Receta Estándar",
         bagsText: `${totalBags} bolsas`,
         qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
@@ -12398,6 +12406,7 @@ Click para ver análisis completo`
           bagCode: `BOLSA #${bagNum} de ${totalBags}`,
           species: lote.especie || "Sustrato colonizado",
           date: lote.fechaInoculacion || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+          dateLabel: lote.fechaInoculacion ? "INOCULACIÓN" : "",
           recipe: SPP_CODE2[lote.recipeRef?.sKey] || lote.recipeRef?.name || "Receta Estándar",
           bagsText: `Bolsa ${i}/${totalBags}`,
           qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
@@ -12485,7 +12494,7 @@ Click para ver análisis completo`
       thermalScope === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, background: "var(--paper-0)", padding: "8px 10px", borderRadius: 2, border: "1px solid var(--border-hairline)" } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-start", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Desde bolsa:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-start", name: "thermal-bag-start", type: "number", min: 1, max: totalBags, value: thermalBagStart, onChange: (e) => setThermalBagStart(parseInt(e.target.value) || 1), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } }), /* @__PURE__ */ React.createElement("label", { htmlFor: "thermal-bag-end", style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Hasta:"), /* @__PURE__ */ React.createElement("input", { id: "thermal-bag-end", name: "thermal-bag-end", type: "number", min: thermalBagStart, max: totalBags, value: thermalBagEnd, onChange: (e) => setThermalBagEnd(parseInt(e.target.value) || totalBags), style: { width: 68, minHeight: 44, fontSize: 11, textAlign: "center" } })),
       /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "var(--ink-2)", textTransform: "uppercase" } }, "Vista Previa (", items.length, " etiqueta", items.length === 1 ? "" : "s", ")"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "Formato: ", thermalSize === "40x30" ? "40×30 mm" : thermalSize === "50x70" ? "50×70 mm" : "50×30 mm")), /* @__PURE__ */ React.createElement("div", { className: "thermal-preview-container" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date), thermalSize === "50x70" && item.recipe && /* @__PURE__ */ React.createElement("div", null, item.recipe))));
+        return /* @__PURE__ */ React.createElement("div", { key: item.id, className: `thermal-card-preview thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, thermalSize === "50x70" && item.dateLabel && /* @__PURE__ */ React.createElement("span", { className: "thermal-date-label" }, item.dateLabel), item.date), thermalSize === "50x70" && item.recipe && /* @__PURE__ */ React.createElement("div", null, item.recipe))));
       }))),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, borderTop: "1px solid var(--border-hairline)", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowThermalModal(false), className: "inv-btn inv-btn-sec", style: { minHeight: 44, padding: "8px 14px" } }, "Cancelar"), /* @__PURE__ */ React.createElement(
         "button",
@@ -12545,7 +12554,7 @@ Click para ver análisis completo`
       )),
       /* @__PURE__ */ React.createElement("div", { className: "thermal-print-roll" }, items.map((item) => {
         const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, item.date), thermalSize === "50x70" && item.recipe && /* @__PURE__ */ React.createElement("div", null, item.recipe))));
+        return /* @__PURE__ */ React.createElement("div", { key: "print-" + item.id, className: `thermal-card-print thermal-card-${thermalSize}` }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: qrSrc, alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species" }, item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge" }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code" }, item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, thermalSize === "50x70" && item.dateLabel && /* @__PURE__ */ React.createElement("span", { className: "thermal-date-label" }, item.dateLabel), item.date), thermalSize === "50x70" && item.recipe && /* @__PURE__ */ React.createElement("div", null, item.recipe))));
       }))
     );
   })(), selectedTrial && /* @__PURE__ */ React.createElement("aside", { className: "prototype-panel", "aria-label": "Ensayo seleccionado" }, /* @__PURE__ */ React.createElement("p", null, "Próximo lote: ", selectedTrial.title, " · ", selectedTrial.label, ". La receta debe coincidir con la copia del plan."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: () => setSelectedTrial(null) }, "Desvincular próximo lote")), releaseBatchId && bitLotes.find((l) => l.id === releaseBatchId) && /* @__PURE__ */ React.createElement(PrototypeReleaseDialog, { lote: bitLotes.find((l) => l.id === releaseBatchId), onClose: () => setReleaseBatchId(null), onAuthorize: authorizePrototypePreparation }), showProdLaunchModal && prodLaunchForm && (() => {

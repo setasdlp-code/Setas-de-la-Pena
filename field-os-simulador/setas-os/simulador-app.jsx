@@ -5291,7 +5291,14 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   if (dateTxt) {
     const dPx = Math.round(cssPxToCanvas(spec.datePx));
     ctx.font = `700 ${dPx}px ${FONT_EDITORIAL}`;
-    center(dateTxt, yBot - dPx);
+    yBot -= dPx;
+    center(dateTxt, yBot);
+    const dlTxt = (item.dateLabel || '').trim();
+    if (dlTxt) {
+      const lPx = Math.round(cssPxToCanvas(6.5));
+      ctx.font = `500 ${lPx}px ${FONT_MONO}`;
+      center(dlTxt, yBot - lPx - cssPxToCanvas(1));
+    }
   }
   ctx.restore();
 }
@@ -18666,6 +18673,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               bagCode: 'LOTE MAESTRO',
               species: lote.especie || 'Sustrato colonizado',
               date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
+              dateLabel: lote.fechaInoculacion ? 'INOCULACIÓN' : '',
               recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
               bagsText: `${totalBags} bolsas`,
               qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
@@ -18683,6 +18691,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 bagCode: `BOLSA #${bagNum} de ${totalBags}`,
                 species: lote.especie || 'Sustrato colonizado',
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
+              dateLabel: lote.fechaInoculacion ? 'INOCULACIÓN' : '',
                 recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
                 qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
@@ -18830,7 +18839,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {item.badge && <div className="thermal-badge">{item.badge}</div>}
                             <div className="thermal-code">{item.id}</div>
                             <div className="thermal-meta">
-                              <div>{item.date}</div>
+                              <div>{thermalSize === '50x70' && item.dateLabel && <span className="thermal-date-label">{item.dateLabel}</span>}{item.date}</div>
                               {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
                             </div>
                           </div>
@@ -18910,7 +18919,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {item.badge && <div className="thermal-badge">{item.badge}</div>}
                           <div className="thermal-code">{item.id}</div>
                           <div className="thermal-meta">
-                            <div>{item.date}</div>
+                            <div>{thermalSize === '50x70' && item.dateLabel && <span className="thermal-date-label">{item.dateLabel}</span>}{item.date}</div>
                             {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
                           </div>
                         </div>

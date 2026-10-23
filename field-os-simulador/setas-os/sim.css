@@ -4402,6 +4402,14 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   font-weight: 700;
   line-height: 1.1;
 }
+.sim-root .thermal-card-50x70 .thermal-date-label {
+  display: block;
+  font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size: 6.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
 .sim-root .thermal-card-50x70 .thermal-meta > div + div {
   font-size: 7px;
   font-weight: 500;
