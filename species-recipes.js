@@ -19,7 +19,7 @@
       yieldLabel.textContent = `${4 * factor} porciones · ${number.format(baseWeight * factor)} g de ${species} ${freshLabel}`;
       status.textContent = factor === 1
         ? 'Cantidades de la receta base. Los rendimientos están pendientes de medición.'
-        : `Cantidades para ${4 * factor} porciones previstas. Cocina por tandas y ajusta el líquido; los tiempos no se multiplican.`;
+        : `Cantidades para ${4 * factor} porciones previstas. Cocinar por tandas y ajustar el líquido; los tiempos no se multiplican.`;
     }
     scale.addEventListener('change', event => {
       const factor = Number(event.target.value);
