@@ -58,7 +58,7 @@ El workflow de GitHub Pages actual publica `field-os-simulador/setas-os`. Esta w
 
 ## Iteración comercial: recorrido para chefs
 
-La portada usa «Conoce la seta. Imagina el plato.» y el descriptor «Hongos para cocinar con criterio.». La sección `#para-chefs` conecta especie, uso culinario, cantidad y consulta. Los enlaces con `purpose=restaurante` preseleccionan el contexto de restaurante en shiitake; desde recetas, ese contexto se conserva al ajustar ×1/×2/×3 y transferir los gramos. Valores desconocidos no modifican la selección doméstica predeterminada. No hay persistencia de datos.
+La portada usa «Conocer la seta. Imaginar el plato.» y el descriptor «Hongos para cocinar con criterio.». La sección `#para-chefs` conecta especie, uso culinario, cantidad y consulta. Los enlaces con `purpose=restaurante` preseleccionan el contexto de restaurante en shiitake; desde recetas, ese contexto se conserva al ajustar ×1/×2/×3 y transferir los gramos. Valores desconocidos no modifican la selección doméstica predeterminada. No hay persistencia de datos.
 
 Plex Sans sirve prosa e interfaz; Plex Mono se limita a datos y metadatos. El identificador histórico `data-pairing="mono"` se conserva por compatibilidad de enlaces. En móvil las fichas culinarias se leen en una columna.
 
@@ -126,3 +126,7 @@ Las tres páginas `/especies/shiitake`, `/especies/melena-de-leon` y `/especies/
 El recetario de eryngii vive en `/recetas-eryngii`, con seis propuestas y cantidades para 4/8/12 porciones. [Alcance y fuentes](public-eryngii-recipes.md). Se enlaza desde su ficha y desde el recetario de shiitake.
 
 El recetario de melena de león vive en `/recetas-melena`, con seis propuestas, cantidades4/8/12 y regreso a la ficha editorial. Comparte estilos y comportamiento con eryngii en `species-recipes.css/js`. [Alcance y fuentes](public-melena-recipes.md).
+
+## Voz sin tratamiento directo · 23 de octubre de 2026
+
+Portada, ficha de shiitake, recetas y mensajes dinámicos siguen la guía de voz v2.2: sin tuteo ni ustedeo, acciones en infinitivo y frases centradas en ingrediente, preparación y pedido. La primera persona del cliente en el borrador de consulta se conserva porque identifica a quien solicita el producto. Se mantienen cantidades, temperaturas, tiempos, fuentes y avisos de seguridad; el cambio de redacción no valida recetas ni datos comerciales.

@@ -1,8 +1,8 @@
 'use strict';
 const species = {
-  shiitake: { code: 'SP. 001', name: 'Shiitake', latin: 'Lentinula edodes', image: 'shiitake', category: 'Una especie para la cocina', description: 'Conoce el shiitake por su sabor y textura, y explora ideas para cocinarlo.', profile: 'Umami intenso, con notas ligeramente ahumadas.', use: 'Para sopas y otras preparaciones cocinadas. Explora su sabor y su textura.', culinary: true },
-  melena: { code: 'SP. 002', name: 'Melena de león', latin: 'Hericium erinaceus', image: 'lions-mane', category: 'Una especie para explorar', description: 'Su silueta singular le da nombre. Una de las protagonistas de nuestro archivo de hongos, con una textura que invita a probar otras preparaciones.', profile: 'Textura suave y esponjosa, con notas dulces y sabrosas.', use: 'Desmenúzala, prepárala en piezas o incorpórala a una sopa.', culinary: true },
-  eryngii: { code: 'SP. 003', name: 'Eryngii', latin: 'Pleurotus eryngii', image: 'cardo', category: 'Una especie para explorar', description: 'También conocido como seta de cardo o king trumpet. Su pie grueso y sus láminas son protagonistas de esta ficha.', profile: 'Pie carnoso y textura firme.', use: 'Córtalo a lo largo para saltear o en rodajas para asar.', culinary: true }
+  shiitake: { code: 'SP. 001', name: 'Shiitake', latin: 'Lentinula edodes', image: 'shiitake', category: 'Una especie para la cocina', description: 'Perfil de sabor y textura del shiitake, con ideas para cocinarlo.', profile: 'Umami intenso, con notas ligeramente ahumadas.', use: 'Para sopas y otras preparaciones cocinadas. Ideas para explorar su sabor y textura.', culinary: true },
+  melena: { code: 'SP. 002', name: 'Melena de león', latin: 'Hericium erinaceus', image: 'lions-mane', category: 'Una especie para explorar', description: 'Su silueta singular le da nombre. Una de las protagonistas de nuestro archivo de hongos, con una textura que invita a probar otras preparaciones.', profile: 'Textura suave y esponjosa, con notas dulces y sabrosas.', use: 'Desmenuzada, en piezas o incorporada a una sopa.', culinary: true },
+  eryngii: { code: 'SP. 003', name: 'Eryngii', latin: 'Pleurotus eryngii', image: 'cardo', category: 'Una especie para explorar', description: 'También conocido como seta de cardo o king trumpet. Su pie grueso y sus láminas son protagonistas de esta ficha.', profile: 'Pie carnoso y textura firme.', use: 'Cortado a lo largo para saltear o en rodajas para asar.', culinary: true }
 };
 const dialog = document.querySelector('#species-dialog');
 let opener;
@@ -41,7 +41,7 @@ function openSpecies(key, button) {
   editorial.hidden = false;
   document.querySelector('#dialog-order').hidden = key !== 'shiitake';
   document.querySelector('#species-dialog .availability-note').textContent = key === 'shiitake'
-    ? 'Disponibilidad, presentaciones y entrega por confirmar. Prepara tu consulta en la ficha de shiitake.'
+    ? 'Disponibilidad, presentaciones y entrega por confirmar. La consulta se prepara en la ficha de shiitake.'
     : 'Disponibilidad, formatos y precios por confirmar.';
   dialog.scrollTop = 0;
   dialog.showModal();
@@ -51,14 +51,14 @@ document.querySelectorAll('[data-species]').forEach(button => button.addEventLis
 const preparations = {
   sopa: { label: 'sopa o caldo', reasons: {
     shiitake: { text: 'Para sopas y otras preparaciones cocinadas.', link: ['/recetas#receta-sopa', 'Ver la sopa de coco y jengibre'] },
-    melena: { text: 'Incorpórala a una sopa para explorar su textura.' } } },
+    melena: { text: 'En sopa, como propuesta para explorar su textura.' } } },
   saltear: { label: 'saltear', reasons: {
     shiitake: { text: 'Nuestras recetas de arepa y patacones lo saltean.', link: ['/recetas#receta-arepa', 'Ver la arepa con shiitake'] },
-    eryngii: { text: 'Corta el eryngii a lo largo para saltearlo.' } } },
+    eryngii: { text: 'Eryngii cortado a lo largo para saltear.' } } },
   asar: { label: 'asar', reasons: {
-    eryngii: { text: 'Prueba el eryngii en rodajas a la parrilla.' } } },
+    eryngii: { text: 'Eryngii en rodajas a la parrilla, como propuesta de preparación.' } } },
   desmenuzar: { label: 'desmenuzar o en piezas', reasons: {
-    melena: { text: 'Desmenúzala o prepárala en piezas.' } } }
+    melena: { text: 'Desmenuzada o preparada en piezas.' } } }
 };
 const filterState = { prep: 'any' };
 function applyFilters() {
