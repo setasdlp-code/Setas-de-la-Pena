@@ -4350,8 +4350,9 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   content: 'SETAS DE LA PEÑA';
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 17px;
-  font-weight: 800;
+  font-family: var(--font-editorial, 'Gaya Patched', 'Iowan Old Style', Georgia, serif);
+  font-size: 19px;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: 0.12em;
   white-space: nowrap;
@@ -4360,9 +4361,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .thermal-card-50x70 .thermal-code {
   order: 1;
   text-align: center;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.1;
+  font-family: var(--font-editorial, 'Gaya Patched', 'Iowan Old Style', Georgia, serif) !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.05;
   margin: 0 0 1.5mm;
   white-space: nowrap;
 }
@@ -4390,14 +4392,27 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   order: 5;
   margin-top: auto;
   display: flex;
-  justify-content: center;
-  gap: 2mm;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3mm;
+}
+.sim-root .thermal-card-50x70 .thermal-meta > div:first-child {
+  font-family: var(--font-editorial, 'Gaya Patched', 'Iowan Old Style', Georgia, serif);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.sim-root .thermal-card-50x70 .thermal-date-label {
+  display: block;
+  font-family: var(--font-mono, 'IBM Plex Mono', ui-monospace, monospace);
+  font-size: 6.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+.sim-root .thermal-card-50x70 .thermal-meta > div + div {
   font-size: 7px;
   font-weight: 500;
-}
-.sim-root .thermal-card-50x70 .thermal-meta > div + div::before {
-  content: '·';
-  margin-right: 2mm;
 }
 
 .sim-root .thermal-print-roll,
