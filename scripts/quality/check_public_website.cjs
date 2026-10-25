@@ -149,9 +149,9 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.setViewportSize({ width: 1280, height: 800 });
     await visit(page, 'home');
     await page.screenshot({ path: path.join(out, 'catalogo-1280.png') });
-    assert.equal(await page.locator('#hero-title').innerText(), 'Cultivo en sombra.');
+    assert.equal(await page.locator('#hero-title').innerText(), 'Del micelio a la mesa.');
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
-    assert.equal(await page.locator('.catalog-descriptor').innerText(), 'Del micelio a la mesa.');
+    assert.equal(await page.locator('.catalog-descriptor').innerText(), 'Valle de Tenjo, Cundinamarca');
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');
     assert.ok(await page.locator('.catalog-landscape img').evaluate(el => el.getBoundingClientRect().width >= 500), 'brand illustration leads the desktop hero');
     assert.ok(await page.locator('#hero-title, #collection-title').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'tagline and catalogue entry visible on a small laptop');
