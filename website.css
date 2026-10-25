@@ -554,6 +554,8 @@ sup a { font: 400 12px/1 var(--font-mono); padding-inline: 3px; text-underline-o
 @media (prefers-reduced-motion: reduce) {
   :is(.home-page, .species-page, .recipes-page) :is(a, .text-link, .sdp-btn, .filter, summary) { transition: none; }
   .specimen-button:focus-visible img, .home-page .specimen-button:focus-visible img { transform: none; }
+}
+
 /* Public-site footer: solid moss with a reversed white wordmark and type. */
 :is(.home-page, .species-page, .recipes-page) > footer {
   position: relative;
