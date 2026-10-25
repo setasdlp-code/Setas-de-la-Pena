@@ -115,6 +115,8 @@ Validación local completada para esta iteración:
 
 Evidencia de esta sesión: `/tmp/setas-home-catalogo-20261018-v2/` (exportación, manifiesto, informes y capturas); suite funcional en `/var/folders/6n/j3_4zbls4vl3dcr8bwwhwylr0000gn/T/setas-public-website-mFe5te/`. Son artefactos locales temporales. Ninguna de estas verificaciones confirma un despliegue remoto.
 
+Titular del Home (25 de octubre de 2026): «Cultivo en sombra.» pasa a titular de página (44–68 px) bajo el dibujo de la peña, seguido del descriptor «Hongos para cocinar con criterio.» en Plex. No vuelve el bloque de introducción ni el CTA del hero anterior; el titular y «Las setas» siguen visibles a 1280×800.
+
 Ajuste solicitado del Home: se elimina la sección «05 · Antes de consultar» (`#consultas`) y el enlace «Preguntas sobre tu consulta» del pie. Se conservan el pie de marca, las referencias culinarias y los accesos a la ficha de shiitake.
 
 ## Cuaderno editorial de especies
