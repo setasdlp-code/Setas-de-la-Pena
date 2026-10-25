@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 95d46dd827325ec065f0e8ddda89fa9366c35d1a5827aaac3eeb50c56660ed2a
+// source-hash: ba850cb3a3b4d7ad8d4f7233109d384f471d3e10cf35a63abfde9f12aeb25125
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3519,7 +3519,7 @@ function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
     }
   }
 }
-const THERMAL_WORDMARK_URL = "assets/thermal-wordmark-white.svg";
+const THERMAL_WORDMARK_URL = "assets/thermal-wordmark-white.png";
 let thermalWordmarkImage;
 async function loadThermalWordmark() {
   if (!thermalWordmarkImage) {
