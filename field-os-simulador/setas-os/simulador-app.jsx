@@ -5100,8 +5100,7 @@ const THERMAL_LABEL_SPECS = {
     metaPx: 6.5,
     metaMarginTopPx: 2.0
   },
-  // Vertical "Lomo": franja negra de 10mm con la marca como banner vertical;
-  // código de lote (héroe), QR de 34mm, especie, bolsa y fecha · receta.
+  // Vertical: logo blanco original, código Gaya, especie Plex Mono, QR, fecha y bolsa.
   // Mismos valores que .thermal-card-50x70 en sim.css.
   '50x70': {
     layout: 'vertical',
@@ -5112,12 +5111,11 @@ const THERMAL_LABEL_SPECS = {
     gapPx: 6,
     qrMm: 34.0,
     spineMm: 10.0,
-    spineText: 'SETAS DE LA PEÑA',
-    eyebrowPx: 19.0,
-    speciesPx: 11.0,
-    badgePx: 10.5,
-    codePx: 13.0,
-    datePx: 12.0,
+    logoMm: 16.0,
+    speciesPx: 12.0,
+    badgePx: 8.5,
+    codePx: 18.0,
+    datePx: 11.0,
     metaPx: 7.0
   },
 };
@@ -5199,107 +5197,103 @@ function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
   }
 }
 
-// Etiqueta vertical 50×70 "Lomo": mismo orden de lectura que .thermal-card-50x70.
+// Shared geometry for preview, print and PNG. Dates use calendar fields directly
+// so the inoculation day cannot shift with the device timezone.
+const THERMAL_WORDMARK_URL = 'assets/thermal-wordmark-white.svg';
+let thermalWordmarkImage;
+async function loadThermalWordmark() {
+  if (!thermalWordmarkImage) {
+    const img = new Image();
+    img.src = THERMAL_WORDMARK_URL;
+    thermalWordmarkImage = img;
+  }
+  try { await thermalWordmarkImage.decode(); }
+  catch (error) { thermalWordmarkImage = null; throw error; }
+}
+function formatThermalDate(value) {
+  const raw = String(value || '').trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(raw);
+  if (!match) return raw;
+  const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const month = months[Number(match[2]) - 1];
+  return month ? `${Number(match[3])} ${month} ${match[1]}` : raw;
+}
+function thermalVerticalText(item) {
+  const spec = THERMAL_LABEL_SPECS['50x70'];
+  const ctx = document.createElement('canvas').getContext('2d');
+  const width = (spec.wMm - spec.spineMm - spec.padXMm * 2) * CSS_PX_PER_MM;
+  const fit = (value, size, font, maxLines) => {
+    let lines;
+    do {
+      ctx.font = `700 ${size}px ${font}`;
+      lines = wrapCanvasText(ctx, String(value || '').trim(), width);
+      if (lines.length <= maxLines) break;
+      size -= 0.25;
+    } while (size > 3);
+    return { lines, size };
+  };
+  return {
+    code: fit(item.lotCode || item.id, spec.codePx, FONT_EDITORIAL, 2),
+    species: fit(item.species || 'Seta Cultivada', spec.speciesPx, FONT_MONO, 1),
+    badge: fit(item.badge || item.bagCode, spec.badgePx, FONT_MONO, 1),
+    date: fit(formatThermalDate(item.date), spec.datePx, FONT_EDITORIAL, 1)
+  };
+}
+function ThermalLabelCard({ item, size, print = false }) {
+  const [fontsReady, setFontsReady] = React.useState(false);
+  React.useEffect(() => {
+    let active = true;
+    if (document.fonts) Promise.all([
+      document.fonts.load('700 18px "Gaya Patched"'),
+      document.fonts.load('700 12px "IBM Plex Mono"')
+    ]).then(() => { if (active) setFontsReady(true); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const vertical = size === '50x70';
+  const text = vertical ? thermalVerticalText(item) : null;
+  return <div className={`${print ? 'thermal-card-print' : 'thermal-card-preview'} thermal-card-${size}`} data-fonts-ready={fontsReady}>
+    <div className="thermal-aside"><img className="thermal-qr-img" src={generateQrSvgDataUrl(item.qrUrl)} alt={`QR ${item.id}`} width="96" height="96" /></div>
+    <div className="thermal-divider" />
+    <div className="thermal-body">
+      <div className="thermal-eyebrow">{vertical ? <img className="thermal-wordmark" src={THERMAL_WORDMARK_URL} alt="Setas de la Peña" /> : item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
+      <div className="thermal-species" style={vertical ? {fontSize: text.species.size} : undefined}>{vertical ? text.species.lines.join('\n') : item.species}</div>
+      {item.badge && <div className="thermal-badge" style={vertical ? {fontSize: text.badge.size} : undefined}>{item.badge}</div>}
+      <div className="thermal-code" style={vertical ? {fontSize: text.code.size} : undefined}>{vertical ? text.code.lines.join('\n') : item.id}</div>
+      <div className="thermal-meta"><div>
+        {vertical && item.dateLabel && <span className="thermal-date-label">{item.dateLabel}</span>}
+        <span className="thermal-date-value" style={vertical ? {fontSize: text.date.size} : undefined}>{vertical ? formatThermalDate(item.date) : item.date}</span>
+      </div></div>
+    </div>
+  </div>;
+}
 function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   const mm = THERMAL_PX_PER_MM;
-  const w = spec.wMm * mm;
-  const h = spec.hMm * mm;
-  const padY = spec.padYMm * mm;
+  const w = spec.wMm * mm, h = spec.hMm * mm;
   const spine = spec.spineMm * mm;
-  const colX = spine + spec.padXMm * mm;
-  const colW = w - colX - spec.padXMm * mm;
-  const cx = colX + colW / 2;
-  const species = (item.species || 'Seta Cultivada').trim();
-  const badge = (item.badge || item.bagCode || '').toUpperCase().trim();
-  const code = (item.id || '').trim();
-  const center = (txt, y) => ctx.fillText(txt, cx - ctx.measureText(txt).width / 2, y);
-
+  const cx = (w + spine) / 2;
+  const text = thermalVerticalText(item);
   ctx.save();
   ctx.translate(x0, y0);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = '#777';
-  ctx.setLineDash([2, 2]);
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
-  ctx.setLineDash([]);
-  ctx.textBaseline = 'top';
-
-  // Lomo negro con la marca como banner vertical (se lee de abajo hacia arriba),
-  // escalada para ocupar casi todo el largo de la franja
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, spine, h);
-  let ebPx = Math.round(cssPxToCanvas(spec.eyebrowPx));
-  ctx.save();
-  ctx.translate(spine / 2, h / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.font = `700 ${ebPx}px ${FONT_EDITORIAL}`;
-  const brandMax = h - padY * 2;
-  const brandW = ctx.measureText(spec.spineText).width;
-  if (brandW > brandMax) { ebPx = Math.floor(ebPx * brandMax / brandW); ctx.font = `700 ${ebPx}px ${FONT_EDITORIAL}`; }
-  ctx.fillStyle = '#fff';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(spec.spineText, -ctx.measureText(spec.spineText).width / 2, 0);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, spine, h);
+  if (!thermalWordmarkImage?.complete || !thermalWordmarkImage.naturalWidth) throw new Error('No se pudo cargar el logo de la etiqueta');
+  ctx.save(); ctx.translate(spine / 2, h / 2); ctx.rotate(-Math.PI / 2);
+  const logoW = spec.logoMm * mm, logoH = logoW * 743 / 1563;
+  ctx.drawImage(thermalWordmarkImage, -logoW / 2, -logoH / 2, logoW, logoH);
   ctx.restore();
-  ctx.fillStyle = '#000';
-  ctx.textBaseline = 'top';
-
-  // Código de lote: héroe arriba (hasta 2 líneas, se reduce si no cabe)
-  let curY = padY + cssPxToCanvas(2);
-  let cPx = Math.round(cssPxToCanvas(spec.codePx));
-  ctx.font = `700 ${cPx}px ${FONT_EDITORIAL}`;
-  let lines = wrapCanvasText(ctx, code, colW);
-  while (lines.length > 1 && cPx > 10) {
-    cPx -= 1;
-    ctx.font = `700 ${cPx}px ${FONT_EDITORIAL}`;
-    lines = wrapCanvasText(ctx, code, colW);
-  }
-  lines.slice(0, 2).forEach(line => { center(line, curY); curY += Math.round(cPx * 1.1); });
-  curY += cssPxToCanvas(4);
-
-  // QR de 34mm centrado en la columna
+  ctx.fillStyle = '#000'; ctx.textBaseline = 'top';
+  const block = (data, y, font, lineHeight = 1.05) => {
+    const px = cssPxToCanvas(data.size);
+    ctx.font = `700 ${px}px ${font}`;
+    data.lines.forEach((line, i) => ctx.fillText(line, cx - ctx.measureText(line).width / 2, y * mm + i * px * lineHeight));
+  };
+  block(text.code, 4.5, FONT_EDITORIAL);
+  block(text.species, 18, FONT_MONO, 1.1);
   const qrSize = spec.qrMm * mm;
-  drawQrToCanvas(ctx, item, cx - qrSize / 2, curY, qrSize);
-  curY += qrSize + cssPxToCanvas(3);
-
-  // Especie: texto pequeño bajo el QR
-  let spPx = Math.round(cssPxToCanvas(spec.speciesPx));
-  ctx.font = `700 ${spPx}px ${FONT_EDITORIAL}`;
-  wrapCanvasText(ctx, species, colW).slice(0, 2).forEach(line => { center(line, curY); curY += Math.round(spPx * 1.1); });
-  curY += cssPxToCanvas(2);
-
-  // Bolsa: texto grande, sin bloque negro
-  if (badge) {
-    let bPx = Math.round(cssPxToCanvas(spec.badgePx));
-    ctx.font = `800 ${bPx}px ${FONT_MONO}`;
-    const tW = ctx.measureText(badge).width;
-    if (tW > colW) { bPx = Math.max(10, Math.floor(bPx * colW / tW)); ctx.font = `800 ${bPx}px ${FONT_MONO}`; }
-    center(badge, curY);
-  }
-
-  // Fecha (Gaya, destacada) y receta (pequeña) ancladas abajo
-  const recipeTxt = (item.recipe || '').trim();
-  const dateTxt = (item.date || '').trim();
-  let yBot = h - padY;
-  if (recipeTxt) {
-    const rPx = Math.round(cssPxToCanvas(spec.metaPx));
-    ctx.font = `500 ${rPx}px ${FONT_MONO}`;
-    yBot -= rPx;
-    center(recipeTxt, yBot);
-    yBot -= cssPxToCanvas(2);
-  }
-  if (dateTxt) {
-    const dPx = Math.round(cssPxToCanvas(spec.datePx));
-    ctx.font = `700 ${dPx}px ${FONT_EDITORIAL}`;
-    yBot -= dPx;
-    center(dateTxt, yBot);
-    const dlTxt = (item.dateLabel || '').trim();
-    if (dlTxt) {
-      const lPx = Math.round(cssPxToCanvas(6.5));
-      ctx.font = `500 ${lPx}px ${FONT_MONO}`;
-      center(dlTxt, yBot - lPx - cssPxToCanvas(1));
-    }
-  }
+  drawQrToCanvas(ctx, item, cx - qrSize / 2, 21 * mm, qrSize);
+  if (item.dateLabel) block({lines: [item.dateLabel], size: 6.5}, 55.5, FONT_MONO);
+  block(text.date, 59, FONT_EDITORIAL);
+  block(text.badge, 65, FONT_MONO);
   ctx.restore();
 }
 
@@ -18674,6 +18668,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               species: lote.especie || 'Sustrato colonizado',
               date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
               dateLabel: lote.fechaInoculacion ? 'INOCULACIÓN' : '',
+              lotCode: lote.codigo,
               recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
               bagsText: `${totalBags} bolsas`,
               qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(lote.codigo)}`
@@ -18692,6 +18687,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 species: lote.especie || 'Sustrato colonizado',
                 date: lote.fechaInoculacion || new Date().toISOString().split('T')[0],
               dateLabel: lote.fechaInoculacion ? 'INOCULACIÓN' : '',
+              lotCode: lote.codigo,
                 recipe: SPP_CODE[lote.recipeRef?.sKey] || lote.recipeRef?.name || 'Receta Estándar',
                 bagsText: `Bolsa ${i}/${totalBags}`,
                 qrUrl: `${PUBLIC_TRACE_BASE_URL}?codigo=${encodeURIComponent(bagId)}`
@@ -18825,27 +18821,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   <div className="thermal-preview-container">
-                    {items.map(item => {
-                      const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-                      return (
-                        <div key={item.id} className={`thermal-card-preview thermal-card-${thermalSize}`}>
-                          <div className="thermal-aside">
-                            <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                          </div>
-                          <div className="thermal-divider" />
-                          <div className="thermal-body">
-                            <div className="thermal-eyebrow">{item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
-                            <div className="thermal-species">{item.species}</div>
-                            {item.badge && <div className="thermal-badge">{item.badge}</div>}
-                            <div className="thermal-code">{item.id}</div>
-                            <div className="thermal-meta">
-                              <div>{thermalSize === '50x70' && item.dateLabel && <span className="thermal-date-label">{item.dateLabel}</span>}{item.date}</div>
-                              {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {items.map(item => <ThermalLabelCard key={item.id} item={item} size={thermalSize} />)}
                   </div>
                 </div>
 
@@ -18869,6 +18845,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         if (document.fonts && document.fonts.ready) {
                           try { await document.fonts.ready; } catch (e) {}
                         }
+                        if (thermalSize === '50x70') await loadThermalWordmark();
                         const canvas = buildThermalShareCanvas(items, thermalSize);
                         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                         if (!blob) throw new Error('No se pudo generar la imagen de la etiqueta');
@@ -18905,27 +18882,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* CONTENEDOR PARA IMPRESIÓN DIRECTA (oculto en pantalla por CSS, visible en @media print) */}
                 <div className="thermal-print-roll">
-                  {items.map(item => {
-                    const qrSrc = generateQrSvgDataUrl(item.qrUrl);
-                    return (
-                      <div key={'print-' + item.id} className={`thermal-card-print thermal-card-${thermalSize}`}>
-                        <div className="thermal-aside">
-                          <img className="thermal-qr-img" src={qrSrc} alt={`QR ${item.id}`} width="96" height="96" />
-                        </div>
-                        <div className="thermal-divider" />
-                        <div className="thermal-body">
-                          <div className="thermal-eyebrow">{item.eyebrow || 'SETAS DE LA PEÑA · TENJO'}</div>
-                          <div className="thermal-species">{item.species}</div>
-                          {item.badge && <div className="thermal-badge">{item.badge}</div>}
-                          <div className="thermal-code">{item.id}</div>
-                          <div className="thermal-meta">
-                            <div>{thermalSize === '50x70' && item.dateLabel && <span className="thermal-date-label">{item.dateLabel}</span>}{item.date}</div>
-                            {thermalSize === '50x70' && item.recipe && <div>{item.recipe}</div>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {items.map(item => <ThermalLabelCard key={item.id} item={item} size={thermalSize} print />)}
                 </div>
             </AccessibleModal>
           );
