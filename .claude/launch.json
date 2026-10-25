@@ -4,30 +4,75 @@
     {
       "name": "setas-os-v5",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8743", "--bind", "127.0.0.1", "--directory", "/Users/sebastianpinzon/Documents/SETAS de la PEÑA/Simulador de Rectas/export-setas-os-v5"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8743",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "/Users/sebastianpinzon/Documents/SETAS de la PE\u00d1A/Simulador de Rectas/export-setas-os-v5"
+      ],
       "port": 8743,
       "autoPort": true
     },
     {
       "name": "setas-os-v5-local",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8744", "--bind", "127.0.0.1", "--directory", "field-os-simulador/setas-os"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8744",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "field-os-simulador/setas-os"
+      ],
       "port": 8744,
       "autoPort": true
     },
     {
       "name": "ds-2026",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8746", "--bind", "127.0.0.1", "--directory", "08_brand/ds-2026"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8746",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "08_brand/ds-2026"
+      ],
       "port": 8746,
       "autoPort": true
     },
     {
       "name": "setas-os-v5-verify",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8745", "--bind", "127.0.0.1", "--directory", "field-os-simulador/setas-os"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8745",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "field-os-simulador/setas-os"
+      ],
       "port": 8745,
       "autoPort": true
+    },
+    {
+      "name": "public-web",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "scripts/serve_public_website.py",
+        "--source",
+        "--port",
+        "4187",
+        "--directory",
+        "."
+      ],
+      "port": 4187
     }
   ]
 }

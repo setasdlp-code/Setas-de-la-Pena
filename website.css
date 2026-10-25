@@ -544,3 +544,14 @@ sup a { font: 400 12px/1 var(--font-mono); padding-inline: 3px; text-underline-o
 .recipe-shortcuts a { flex-wrap: wrap; align-content: center; }
 .recipe-shortcut-meta { flex-basis: 100%; order: 5; color: var(--text-secondary); }
 .recipe-chip { display: inline-block; margin: 8px 0 0; padding: 2px 8px; background: var(--surface-recessed); color: var(--text-secondary); }
+
+/* Interaction polish (taste audit, 2026-10-25): eased state changes, keyboard parity, balanced headings. */
+:is(.home-page, .species-page, .recipes-page) :is(h1, h2, h3) { text-wrap: balance; }
+:is(.home-page, .species-page, .recipes-page) :is(a, .text-link, .sdp-btn, .filter, summary) { transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, text-decoration-color 180ms ease, transform 120ms ease; }
+.specimen-button:focus-visible img { transform: scale(1.035); }
+.home-page .specimen-button:focus-visible img { transform: translateY(-4px); }
+:is(.home-page, .species-page, .recipes-page) .masthead nav .nav-inquiry:active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) {
+  :is(.home-page, .species-page, .recipes-page) :is(a, .text-link, .sdp-btn, .filter, summary) { transition: none; }
+  .specimen-button:focus-visible img, .home-page .specimen-button:focus-visible img { transform: none; }
+}
