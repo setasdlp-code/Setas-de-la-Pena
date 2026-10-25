@@ -5199,7 +5199,9 @@ function drawQrToCanvas(ctx, item, qrX, qrY, qrSize) {
 
 // Shared geometry for preview, print and PNG. Dates use calendar fields directly
 // so the inoculation day cannot shift with the device timezone.
-const THERMAL_WORDMARK_URL = 'assets/thermal-wordmark-white.svg';
+// PNG ya blanco (sin filtros SVG): WebKit/iOS no aplica el feColorMatrix
+// del SVG y el logo quedaba negro sobre el lomo negro.
+const THERMAL_WORDMARK_URL = 'assets/thermal-wordmark-white.png';
 let thermalWordmarkImage;
 async function loadThermalWordmark() {
   if (!thermalWordmarkImage) {
