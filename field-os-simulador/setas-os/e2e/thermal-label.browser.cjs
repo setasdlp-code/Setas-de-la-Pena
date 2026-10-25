@@ -1,8 +1,10 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+const os=require('node:os');
 const {chromium,expect}=require('@playwright/test');
 const root=path.resolve(__dirname,'..');
 (async()=>{
+ const artifacts=fs.mkdtempSync(path.join(os.tmpdir(),'setas-thermal-label-'));
  const server=http.createServer((req,res)=>{
   const file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
@@ -27,20 +29,20 @@ const root=path.resolve(__dirname,'..');
    const bounds=await card.evaluate(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height,overflow:[...el.querySelectorAll('.thermal-code,.thermal-species,.thermal-badge,.thermal-date-value')].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.className)}));
    assert.ok(Math.abs(bounds.w-50*96/25.4)<1);assert.ok(Math.abs(bounds.h-70*96/25.4)<1);assert.deepEqual(bounds.overflow,[]);
    assert.ok(await card.locator('.thermal-wordmark').evaluate(img=>img.complete&&img.naturalWidth>0));
-   await card.screenshot({path:`/private/tmp/thermal-label-${width}.png`});
+   await card.screenshot({path:path.join(artifacts,`preview-${width}.png`)});
    const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Compartir',exact:true}).click();
-   const download=await downloadPromise;await download.saveAs(`/private/tmp/thermal-label-share-${width}.png`);
+   const download=await downloadPromise;await download.saveAs(path.join(artifacts,`share-${width}.png`));
    await page.addScriptTag({url:url+'/vendor/jsQR.js'});
    const decoded=await page.evaluate(async data=>{
     const img=new Image();img.src='data:image/png;base64,'+data;await img.decode();
     const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
     const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const p=ctx.getImageData(0,0,c.width,c.height);
     return{w:c.width,h:c.height,qr:window.jsQR(p.data,c.width,c.height)?.data};
-   },fs.readFileSync(`/private/tmp/thermal-label-share-${width}.png`).toString('base64'));
+   },fs.readFileSync(path.join(artifacts,`share-${width}.png`)).toString('base64'));
    assert.equal(decoded.w,600);assert.equal(decoded.h,840);assert.ok(decoded.qr?.includes('SDP-261024-SHI-R01-B01'),JSON.stringify(decoded));
    await page.emulateMedia({media:'print'});const printed=page.locator('.thermal-card-print.thermal-card-50x70').first();await expect(printed).toBeVisible();
-   await printed.screenshot({path:`/private/tmp/thermal-label-print-${width}.png`});await page.close();
+   await printed.screenshot({path:path.join(artifacts,`print-${width}.png`)});await page.close();
    console.log(`PASS preview, print, PNG and QR decoding at ${width}px`);
   }
- }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
+ }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));fs.rmSync(artifacts,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});
