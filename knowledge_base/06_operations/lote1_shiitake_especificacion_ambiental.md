@@ -40,7 +40,7 @@ Mientras `setpoint_c` y `histeresis_c` sigan siendo el marcador `PENDIENTE_ESPEC
 | ¿Requiere choque frío? (sí o no) | Desconocido: se prueba por grupos en la inducción | Fase posterior de inducción |
 | Banda de temperatura de incubación (°C) | Propuesta provisional, sin aprobar: objetivo del aire de 22 °C dentro del rango de diseño de 20–24 °C | Define `setpoint_c` |
 | Histéresis (°C) | Propuesta: 0,5 °C (valor técnico, se valida en las fases 1 y 2) | `histeresis_c` (`heat_deadband` y `heat_overrun`) |
-| Dosis de inoculación (% del peso del bloque) | Por decidir. Referencia de literatura: 3,6 % con spawn comercial y 5–7,5 % con spawn propio (paper_006); sin validar | Registro del lote |
+| Dosis de inoculación (% del peso húmedo del sustrato) | Propuesta, sin aprobar: 5 % si el spawn es de grano; 7–9 % si es de aserrín. Una sola dosis para todo el lote. Ver `../09_research/shiitake_verificacion_web_2026-10-25.md`. Compra propuesta: 3 bolsas de 2 kg | Registro del lote |
 | Formulación (versión de receta) | Pendiente de aprobación | `quality_control.md` |
 | Masa del bloque | 2,0 kg (decisión del piloto) | Registro del lote |
 | Número de bloques | 30 (decisión del piloto) | Registro del lote |

@@ -29,7 +29,7 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 | Tipo | Descripción |
 |---|---|
 | `[DECISION]` | `DEC-019`: el lote 1 de shiitake usa spawn de Fungiilab con cepa **no identificada** (riesgo aceptado por el propietario). La trazabilidad del spawn (lote, fecha de elaboración, condición de recepción) sigue bloqueando la inoculación; la clase térmica se caracteriza en el piloto. Excepción registrada en `06_operations/quality_control.md`. |
-| `[KB]` | Añadida `09_research/shiitake_verificacion_web_2026-10-25.md` (`DOC-0124`): contraste web de hechos de shiitake (clases térmicas, crecimiento del micelio, calor, inducción, spawn). Sin texto completo leído; deja un conflicto abierto sobre los límites numéricos de las clases térmicas. La especificación del lote 1 pasa a borrador v1 sin aprobar y el protocolo añade la caracterización de la cepa y la recepción del spawn. |
+| `[KB]` | Añadida `09_research/shiitake_verificacion_web_2026-10-25.md` (`DOC-0124`): contraste web de hechos de shiitake (clases térmicas, crecimiento del micelio, calor, inducción, spawn). Sin texto completo leído; deja un conflicto abierto sobre los límites numéricos de las clases térmicas. La especificación del lote 1 pasa a borrador v1 sin aprobar y el protocolo añade la caracterización de la cepa y la recepción del spawn. Incluye una sección de dosis de inoculación: las fuentes dan 2–5 % para spawn de grano y 5–10 % para aserrín, sin estudio que mida el efecto en la eficiencia biológica; el lote 1 propone una sola dosis según la matriz de la bolsa. |
 
 ### 2026-10-17
 

@@ -130,7 +130,8 @@ El lote 1 usa una cepa no identificada (DEC-019). Además de la incubación, el 
 | Spawn: proveedor, lote y fecha de elaboración | |
 | Fecha de recepción y condición del spawn | |
 | Masa del bloque (kg) y número de bloques | |
-| Dosis de inoculación real (%) | |
+| Matriz del spawn (grano o aserrín) | |
+| Dosis de inoculación real (% del peso húmedo del sustrato) y base usada | |
 | Fecha de inoculación y operador | |
 | Posición de los bloques (nivel y lugar) | |
 | Bloque testigo y sonda de núcleo (dirección DS18B20) | |
