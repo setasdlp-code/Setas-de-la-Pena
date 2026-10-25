@@ -41,7 +41,7 @@ El proyecto está en preproducción, con 0 lotes activos. No existen todavía se
 
 | Compuerta | Evidencia requerida | Disposición si falta |
 |---|---|---|
-| Spawn trazable | Especie, cepa o código del proveedor, proveedor, lote, fecha, condición de recepción | Bloquear inoculación |
+| Spawn trazable | Especie, cepa o código del proveedor, proveedor, lote, fecha, condición de recepción. Excepción del lote 1 del piloto (DEC-019): la cepa puede registrarse como "no identificada"; lote, fecha de elaboración y condición de recepción siguen siendo obligatorios | Bloquear inoculación |
 | Formulación aprobada | Versión de receta, materias primas, bases de porcentaje, humedad objetivo y tamaño de lote | Bloquear preparación |
 | Proceso térmico validado | Referencia al ciclo aprobado en `02_substrates/sterilization.md`, carga representativa y registro completo | Bloquear inoculación |
 | Instrumentación disponible | Sensor principal identificado, verificación cruzada y registro continuo listo | Bloquear validación ambiental |
@@ -173,7 +173,7 @@ Una observación aislada se registra como hipótesis. Los umbrales operacionales
 
 # Preguntas abiertas
 
-- ¿Qué cepa y clase térmica tendrá el primer spawn?
+- ¿Qué cepa y clase térmica tendrá el primer spawn? (Lote 1: no identificada, DEC-019; se caracteriza en el piloto.)
 - ¿Qué formulación se aprobará para el lote 1?
 - ¿Cuál será el ciclo validado del autoclave con la carga representativa?
 - ¿Qué criterio de madurez e inducción exige la cepa adquirida?
