@@ -1,22 +1,44 @@
-/* Franjas de color: a highlighter band behind a few headings.
-   Colors come from DS-2026 tokens; the band sits behind dark text,
-   so it stays light enough to keep AA contrast. */
-.franja {
-  --franja-color: var(--coral-500);
-  padding-inline: .12em;
-  margin-inline: -.12em;
-  background-image: linear-gradient(transparent 46%, color-mix(in srgb, var(--franja-color) 58%, transparent) 46%, color-mix(in srgb, var(--franja-color) 58%, transparent) 92%, transparent 92%);
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
+/* Solid DS-2026 title bands bleed to both viewport edges. */
+.title-banner {
+  --banner-color: var(--coral-700);
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 100%;
+  padding: clamp(18px, 2.4vw, 32px);
+  color: #fff;
+  background-color: var(--banner-color);
 }
-.franja--coral { --franja-color: var(--coral-500); }
-.franja--musgo { --franja-color: var(--moss-500); }
-.franja--ocre { --franja-color: var(--warning); }
-.franja--pizarra { --franja-color: var(--slate-500); }
+/* Only the paint extends beyond the container: no horizontal scroll,
+   and the preparation dropdown remains free to extend below the band. */
+.title-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--banner-color);
+  box-shadow: 0 0 0 100vmax var(--banner-color);
+  clip-path: inset(0 -100vmax);
+}
+.title-banner--coral { --banner-color: var(--coral-700); }
+.title-banner--musgo { --banner-color: var(--moss-700); }
+.title-banner--ocre { --banner-color: var(--warning-text); }
+.title-banner--pizarra { --banner-color: var(--slate-500); }
+.title-banner :is(h1, h2, p, .t-label, .t-label > span) { color: inherit; }
+.title-banner .franja { background: none; padding: 0; margin: 0; }
+.origin-heading { margin-bottom: 40px; }
+.home-page .origin .title-banner :is(h2, .t-label) { color: inherit; }
+.origin .title-banner h2 { margin-block: 12px 0; font-size: clamp(32px, 5vw, 72px); }
+.title-banner #kitchen-title { margin-top: 12px; margin-bottom: 0; }
+.kitchen > .title-banner { grid-column: 1 / -1; }
+.title-banner .catalog-preparations summary { color: inherit; }
+.title-banner .catalog-preparations summary:focus-visible { outline-color: #fff; }
 
 @media (forced-colors: active) {
-  .franja { background-image: none; }
+  .title-banner::before { display: none; }
+  .title-banner { background-color: Canvas; color: CanvasText; border: 1px solid CanvasText; }
 }
 @media print {
-  .franja { background-image: none; }
+  .title-banner::before { display: none; }
+  .title-banner { color: var(--ink-900); background-color: transparent; padding: 0; }
 }
