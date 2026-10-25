@@ -20,3 +20,7 @@
 @media print {
   .franja { background-image: none; }
 }
+
+/* Origin keeps the accent moved from the hero. */
+.origin-heading { margin-bottom: 40px; }
+.origin .origin-heading h2 { margin-block: 12px 0; font-size: clamp(32px, 5vw, 72px); }

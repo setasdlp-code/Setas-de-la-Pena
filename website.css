@@ -554,4 +554,44 @@ sup a { font: 400 12px/1 var(--font-mono); padding-inline: 3px; text-underline-o
 @media (prefers-reduced-motion: reduce) {
   :is(.home-page, .species-page, .recipes-page) :is(a, .text-link, .sdp-btn, .filter, summary) { transition: none; }
   .specimen-button:focus-visible img, .home-page .specimen-button:focus-visible img { transform: none; }
+/* Public-site footer: solid moss with a reversed white wordmark and type. */
+:is(.home-page, .species-page, .recipes-page) > footer {
+  position: relative;
+  isolation: isolate;
+  color: #fff;
+  background: var(--moss-700);
+  border-top-color: rgb(255 255 255 / 35%);
+  --text-primary: #fff;
+  --text-secondary: #fff;
+  --text-metadata: #fff;
+  --brand-primary: #fff;
+  --focus-ring: #fff;
+}
+:is(.home-page, .species-page, .recipes-page) > footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--moss-700);
+  box-shadow: 0 0 0 100vmax var(--moss-700);
+  clip-path: inset(0 -100vmax);
+}
+:is(.home-page, .species-page, .recipes-page) > footer :is(a, p, span, aside, li, .wordmark, .t-label) {
+  color: inherit;
+}
+:is(.home-page, .species-page, .recipes-page) > footer .footer-bottom {
+  border-top-color: rgb(255 255 255 / 35%);
+}
+:is(.home-page, .species-page, .recipes-page) > footer a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+@media (forced-colors: active) {
+  :is(.home-page, .species-page, .recipes-page) > footer { background: Canvas; color: CanvasText; }
+  :is(.home-page, .species-page, .recipes-page) > footer::before { display: none; }
+  :is(.home-page, .species-page, .recipes-page) > footer a:focus-visible { outline-color: Highlight; }
+}
+@media print {
+  :is(.home-page, .species-page, .recipes-page) > footer { background: transparent; color: var(--ink-900); }
+  :is(.home-page, .species-page, .recipes-page) > footer::before { display: none; }
 }
