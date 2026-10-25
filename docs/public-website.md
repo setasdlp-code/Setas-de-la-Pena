@@ -132,3 +132,16 @@ El recetario de melena de león vive en `/recetas-melena`, con seis propuestas, 
 ## Voz sin tratamiento directo · 23 de octubre de 2026
 
 Portada, ficha de shiitake, recetas y mensajes dinámicos siguen la guía de voz v2.2: sin tuteo ni ustedeo, acciones en infinitivo y frases centradas en ingrediente, preparación y pedido. La primera persona del cliente en el borrador de consulta se conserva porque identifica a quien solicita el producto. Se mantienen cantidades, temperaturas, tiempos, fuentes y avisos de seguridad; el cambio de redacción no valida recetas ni datos comerciales.
+
+## Publicación autorizada · 25 de octubre de 2026
+
+El usuario pidió actualizar la web pública en la conversación del PR 404. Producción servía entonces `807d1c9c` (rama local `codex/web-underline-footer`, despliegue `01215fe8-7298-4ff3-b9a0-fe548365db06`), que no estaba en `main`. Por decisión del usuario se integró en la rama del PR 404 antes de publicar, para no retirarla: titular sin franja coral, descriptor «Del micelio a la mesa.», pie verde, bandas de título y pulido de interacción.
+
+Antes de desplegar, la comparación página por página con producción solo mostró cambios en `/home` (descriptor y espacio en «Para chefs»), y la del CSS solo las reglas del titular y de interacción. No se retiró ninguna regla de `807d1c9c`.
+
+- `check_public_website.cjs`: 55 comprobaciones, 31 renders, 0 errores.
+- `check_public_export.cjs`: 56 comprobaciones, 0 errores. `check_public_delivery.cjs`: 35 comprobaciones, 0 errores (`CHROMIUM_EXECUTABLE_PATH` apuntando al Chromium de Playwright).
+- `wrangler@4.151.1 pages deploy`, proyecto `setas-de-la-pena`, Production/`main`, commit `bdb8fe75`: despliegue `ec9e0d30-8d3d-42a2-bc8b-4d046627f403`, https://ec9e0d30.setas-de-la-pena.pages.dev . Paquete de 234 archivos.
+- `check_public_live.py`: passed, 232 archivos públicos con SHA256 exacto, 13 rutas.
+
+`main` designa el destino de Cloudflare, no una integración Git: el PR 404 sigue pendiente de merge.
