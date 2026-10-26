@@ -2,3 +2,6 @@ functions/shared/
 functions/node_modules/
 firestore-debug.log
 firebase-debug.log
+
+# Dependencias CocoaPods: se regeneran con `pod install` desde Podfile.lock
+FirebaseUIApp/Pods/

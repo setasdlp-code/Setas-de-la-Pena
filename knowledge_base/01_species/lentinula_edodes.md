@@ -25,7 +25,7 @@ related_documents:
 
 # Executive Summary
 
-*Lentinula edodes* es la especie prioritaria de arranque de Setas de la Peña. El proyecto está en preproducción, con 0 lotes activos. El lote 1 depende de spawn trazable con cepa identificada, una formulación aprobada y un ciclo representativo de autoclave comisionado y validado.
+*Lentinula edodes* es la especie prioritaria de arranque de Setas de la Peña. El proyecto está en preproducción, con 0 lotes activos. El lote 1 depende de spawn trazable, una formulación aprobada y un ciclo representativo de autoclave comisionado y validado. El spawn de Fungiilab no informa la cepa: para el lote 1 se acepta como no identificada (DEC-019) y se caracteriza en el piloto.
 
 La temperatura de fructificación y la necesidad de choque frío dependen de la cepa. Chang y Miles distinguen cepas de baja, media y alta temperatura; por ello, 10–16°C no es un rango universal para shiitake.
 
@@ -41,7 +41,9 @@ Chang y Miles (2004, cap. 13) describen tres clases según temperatura de fructi
 | Temperatura media | 10–20°C | Puede responder a descenso térmico o remojo frío |
 | Alta temperatura | >20°C | Puede fructificar por fluctuación natural y, en general, sin choque frío |
 
-**Conclusión para el proyecto:** no se debe fijar la estrategia térmica de Tenjo hasta conocer la cepa y su clase. La afirmación anterior de que shiitake “no fructifica en condiciones tropicales” queda retirada.
+**Conflicto de fuentes (2026-10-25):** una búsqueda web encontró definiciones distintas de las clases: según el resumen de un artículo de *J. Fungi* 2023, alta 15–25 °C, media 10–20 °C, baja 5–15 °C y amplia 5–25 °C; proveedores dan frío 4–15 °C. Los límites numéricos no son un estándar y se solapan, por lo que se usan como referencia cualitativa. Ver `../09_research/shiitake_verificacion_web_2026-10-25.md` (`DOC-0124`, sin texto completo leído).
+
+**Conclusión para el proyecto:** no se debe fijar la estrategia térmica de Tenjo hasta conocer la cepa y su clase. Con cepa no identificada (DEC-019) esa estrategia se determina de forma experimental en el piloto. La afirmación anterior de que shiitake “no fructifica en condiciones tropicales” queda retirada.
 
 ## Madurez de bloques sintéticos
 
@@ -168,7 +170,7 @@ Sin cambio en la app por baja confianza: CO₂ (1.500), BE. Citas heredadas no a
 Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la decisión no debe basarse solo en temperatura exterior. Antes del lote 1 se necesita:
 
 1. registrar temperatura y HR reales de incubación y fructificación;
-2. obtener identidad, proveedor, lote y clase térmica del spawn;
+2. obtener proveedor, lote y fecha del spawn, y su cepa y clase térmica si el proveedor las informa (lote 1: cepa no identificada, DEC-019);
 3. escoger una formulación inicial y criterio de madurez;
 4. validar un ciclo de autoclave con carga representativa;
 5. definir inducción y cosecha con base en la cepa.
@@ -187,7 +189,7 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 
 # Open Questions
 
-- ¿Cuál proveedor ofrece spawn de shiitake con cepa y clase térmica verificables?
+- ¿Cuál proveedor ofrece spawn de shiitake con cepa y clase térmica verificables? (Fungiilab, proveedor del lote 1, no las informa.)
 - ¿La cepa elegida requiere choque frío, fluctuación natural o una combinación?
 - ¿Qué formulación única se aprobará para el lote 1?
 - ¿Cuál es el ciclo validado del autoclave con esa carga?

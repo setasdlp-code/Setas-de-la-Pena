@@ -594,6 +594,38 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 
 ---
 
+## DEC-019 — Lote 1 de shiitake con cepa no identificada (riesgo aceptado)
+
+**Fecha:** 2026-10-25
+**Estado:** Activa
+**Área:** Producción / Investigación
+
+**Problema:** La compuerta "Spawn trazable" de `06_operations/quality_control.md` pide cepa o código del proveedor, y el lote 1 pide clase térmica identificada. Fungiilab, el proveedor del piloto, vende micelio nacional de *L. edodes* sin nombre de cepa ni clase térmica en su catálogo, y no se espera obtenerlos. Una búsqueda web tampoco encontró información pública del proveedor (`09_research/shiitake_verificacion_web_2026-10-25.md`).
+
+**Alternativas evaluadas:**
+
+| Opción | Ventajas | Desventajas |
+|---|---|---|
+| Cambiar de proveedor a uno que informe la cepa | Cumple la compuerta tal como está escrita | Retrasa el piloto; sin proveedor identificado en Colombia |
+| Aceptar la cepa como no identificada y caracterizarla en el piloto | El piloto de incubación y de automatización avanza; la respuesta de la cepa pasa a ser un resultado medido | La estrategia térmica de fructificación y de choque frío no se conoce de antemano; los resultados no se extrapolan a otras cepas |
+| Pedir a Fungiilab solo la clase de fructificación | Reduce la incertidumbre con poco esfuerzo | Depende de que respondan |
+
+**Decisión:** Se elige aceptar la cepa como **no identificada** para el lote 1 del piloto. Decisión del propietario del proyecto, 2026-10-25. Condiciones:
+
+- La trazabilidad del spawn sigue bloqueando la inoculación: lote, fecha de elaboración, fecha y condición de recepción, almacenamiento.
+- El campo cepa se registra como "no identificada" y la clase térmica como "desconocida". No se copia la banda de otra cepa como si fuera de esta.
+- La banda de incubación es una propuesta provisional dentro del rango de diseño del KB, sin aprobar hasta que Sebastián apruebe la especificación del lote.
+- El piloto caracteriza la cepa: días hasta la colonización, inicio del pardeamiento, calor de núcleo observado y respuesta a la inducción con y sin frío.
+- Ningún resultado se usa para escalar a producción comercial sin identificar la cepa o sin repetir el ciclo.
+
+**Justificación:** El riesgo de no conocer la clase térmica recae sobre todo en la fructificación y la inducción, no en la incubación que prueba el piloto (lectura a partir de `01_species/lentinula_edodes.md`, que no fija un setpoint universal, y de la nota de verificación web). La trazabilidad del spawn, que es lo que permite atribuir resultados, se conserva.
+
+**Criterio de revisión:** Fungiilab informa la cepa o su clase térmica; los bloques maduran y no responden a ninguna inducción; o antes de planificar una segunda tanda o escalar.
+
+**Documentos afectados:** `06_operations/quality_control.md`, `06_operations/lote1_shiitake_especificacion_ambiental.md`, `06_operations/piloto_shiitake_incubacion_protocolo.md`, `01_species/lentinula_edodes.md`, `09_research/shiitake_verificacion_web_2026-10-25.md`, `CURRENT_OPERATIONS.md`, `CHANGELOG.md`.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown

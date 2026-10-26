@@ -128,7 +128,7 @@ Qué se aprende: estabilidad y sobreimpulso, consumo, diferencia entre núcleo y
 ## 8. Pendientes
 
 **De Sebastián (cambian lo que se construye):**
-1. **Cepa de shiitake:** el catálogo de Fungiilab no da nombre ni clase térmica. Pedirlos (y si necesita choque frío, dosis de inoculación, matriz del inóculo, fecha de elaboración).
+1. **Cepa de shiitake:** Fungiilab no la informa. Resuelto por DEC-019: cepa "no identificada" aceptada para el lote 1 y caracterizada en el piloto. Pendiente: aprobar la banda de temperatura provisional (ver `knowledge_base/06_operations/lote1_shiitake_especificacion_ambiental.md`).
 2. **Banda de temperatura de incubación** y su histéresis, definidas a partir de la cepa.
 3. **Ventilación de la incubadora:** ya definida como ventilador de 12 V con entrada y salida pasivas. Falta confirmar el modelo y la función del ventilador (circulación o extracción) y las dimensiones de las aberturas, que se ajustan con las pruebas de las fases 1 y 2.
 4. **Formulación del sustrato** de los bloques de 2,0 kg (aprobada o pendiente) y validación del ciclo de autoclave con esa carga (cuántas bolsas caben en 39 L).
