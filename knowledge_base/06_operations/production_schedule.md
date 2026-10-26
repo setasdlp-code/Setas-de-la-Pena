@@ -90,6 +90,18 @@ Production timing is reviewed after each completed batch cycle and documented in
 
 Adjustments to production cadence are made based on these measurements and documented in the relevant production log.
 
+## Propuesta de umbrales de BE por especie (2026-10, no implementada)
+
+Base seca, ciclo total. Etiquetar como «referencia de literatura, no medido en la finca». Los umbrales de 1.ª cosecha son juicio del investigador (aprox. 55–65 % del total en Pleurotus, 40–50 % en shiitake/Hericium). El escalar actual de la app (40/55/70) pinta como «alerta» una Ganoderma sana (~12 %) y como «óptimo» algo que Ganoderma nunca alcanza.
+
+| Especie | Alerta (<) | Meta | Óptimo (≥) | 1.ª cosecha alerta / meta | Confianza |
+|---|---|---|---|---|---|
+| P. ostreatus (paja) | 40 | 60 | 80 | 25 / 40 | media-baja |
+| P. djamor | 30 | 50 | 70 | 20 / 30 | baja |
+| Shiitake (aserrín suplementado) | 40 | 55 | 75 | 20 / 30 | media-baja |
+| Hericium (aserrín/Master's Mix) | 30 | 50 | 80 | 20 / 30 | baja (sin BE numérica verificada) |
+| Ganoderma | 5 | 10 | 15 | 4 / 8 | media |
+
 # Best Practices
 
 - Do not scale to more than 2 simultaneous batches until minimum three complete documented production cycles are completed.

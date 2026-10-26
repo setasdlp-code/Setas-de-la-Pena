@@ -55,14 +55,14 @@ La pasada P0 del 2026-08-13 releyó cinco fuentes completas (65 páginas procesa
 | paper_014 | Shen et al. | 2008 | Moisture, log weight and filter porosity | L. edodes; bolsa/masa/humedad | ★★★★★ |
 | paper_015 | Alberti et al. | 2022 | Incubation time and browning | L. edodes; madurez/inducción | ★★★★★ |
 | paper_016 | Ye et al. | 2012 | Active MAP during cold storage | L. edodes; poscosecha/empaque | ★★★★☆ |
-| paper_017 | Tabi et al. | 2021 | Fruiting temperature of Hericium isolates | H. erinaceus; variación por aislamiento | ★★★★★ |
+| paper_017 | Tabi et al. [PENDIENTE DE VERIFICAR CONTRA PDF: autores reales parecen Atila et al.] | 2021 | Fruiting temperature of Hericium isolates | H. erinaceus; variación por aislamiento | ★★★★★ |
 | paper_018 | El Sebaaly et al. | 2024 | Oak/eucalyptus mixtures for shiitake | L. edodes; madera/salvado | ★★★★★ |
 | paper_019 | Lu et al. | 2024 | Replacing wood with straw in Hericium | H. erinaceus; sustitución parcial | ★★★★★ |
 | paper_020 | Silva et al. | 2025 | Storage temperature/shelf-life of Hericium | H. erinaceus; poscosecha | ★★★★★ |
 | paper_021 | Ho & Suzuki | 2019 | Technology of Mushroom Cultivation | Revisión multiespecie; procesos de cultivo | ★★★☆☆ |
 | paper_022 | Rocha et al. | 2025 | Substrate amount × fruiting induction | L. edodes; masa/forma; inmersión vs inyección; hidratación | ★★★★★ |
 | paper_023 | Gaitán-Hernández, Cortés & Mata | 2014 | Supplemented spawn on pasteurized wheat straw | L. edodes; cepa × spawn; paja pasteurizada | ★★★★★ |
-| paper_024 | Atila | 2019 | Phenolic-rich wastes for Hericium and shiitake | H. erinaceus; L. edodes; suplementos; C:N | ★★★★★ |
+| paper_024 | Atila [PENDIENTE DE VERIFICAR CONTRA PDF: revista/volumen Sci. Hortic. 254:185–194 no encontrados] | 2019 | Phenolic-rich wastes for Hericium and shiitake | H. erinaceus; L. edodes; suplementos; C:N | ★★★★★ |
 | paper_025 | Holgado-Rojas et al. | 2019 | Andean artisanal cultivation in Cusco | Pleurotus; L. edodes; alta altitud; polizona | ★★★★★ |
 | paper_026 | Shi et al. | 2026 | Physics-guided mushroom-bag temperature | Temperatura interna; lag/EWMA; telemetría/ML | ★★★★★ |
 | paper_027 | Furlan et al. | 2026 | Calcium source and dose in eucalyptus substrate | L. edodes; CaCO₃/CaSO₄; cepa × mineral | ★★★★★ |

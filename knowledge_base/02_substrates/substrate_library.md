@@ -60,6 +60,13 @@ Los subproductos del café (borra, pulpa, aserrín de tallo) sirven como sustrat
 **Strength of evidence:** ★★★☆☆ (una sola fuente, medida con réplicas, pero en clima de zona cafetera 18–23°C — más cálido que Tenjo)
 **Conflicting evidence:** BE de café inferior a Master's Mix; revalidar bajo régimen térmico de Tenjo. Otros autores reportan BE mayores sobre cascarilla/borra (Leifa et al. 85–88%), lo que sugiere dependencia fuerte de cepa y proceso.
 
+## Corroboración 2026-10: Master's Mix y BE por especie (propuesta, no implementada)
+
+Fuente: `09_research/corroboracion_2026-10/djamor_ganoderma_kpi.md` (snippets, sin textos completos).
+
+- **Master's Mix 80–120 % de BE es dato de cultivadores (Tier C), no de revisión por pares.** El investigador no encontró BE revisada para esta fórmula (50:50 aserrín duro:cascarilla de soya, atribuida a T. R. Davis). Aptitud según cultivadores: bien para ostra y melena de león; **mal ajustado para shiitake** (prefiere aserrín con 10–20 % de salvado). Propuesta (confianza baja): P. ostreatus/djamor 50–100 % (sp 70) y Hericium 50–100 % (sp 70). El [80,120] de la app no se modificó.
+- Rendimiento fresco = BE × masa seca del bloque. `yieldPerBlock` = 800 g solo vale para ~3 kg húmedo (60–65 % humedad) a BE ~70 % (Pleurotus); no para Ganoderma ni shiitake. Propuesta: derivarlo como BE_objetivo(especie) × masa_seca_bloque.
+
 # Core Principles
 - Pasteurización suficiente para Pleurotus en paja; esterilización necesaria para sustratos suplementados.
 - La Field Capacity (FC) del sustrato al inocular es crítica: demasiado húmedo → bacteria; muy seco → micelio no crece.

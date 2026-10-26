@@ -132,6 +132,37 @@ No existe un setpoint universal aplicable a toda cepa.
 
 Cualquier claim nutricional o medicinal requiere verificación regulatoria y evidencia específica del producto.
 
+## Incubación — rango corroborado (2026-10)
+
+| Parámetro | Valor |
+|---|---|
+| Temperatura | 21–25 °C |
+
+## Fructificación — rango corroborado (2026-10)
+
+| Parámetro | Valor |
+|---|---|
+| Temperatura | 12–18 °C |
+| HR | 80–92 % |
+
+Fuente: `09_research/corroboracion_2026-10/`. El investigador leyó solo snippets de búsqueda, no textos completos; las referencias marcadas P/K no están auditadas. Las filas de la primera tabla de cada bloque son las que `check_kb_sync.py` compara con la app (solo confianza media o superior); lo de confianza baja vive únicamente en la tabla de evidencia detallada.
+
+## Evidencia detallada de corroboración (2026-10)
+
+Tier: A experimental, B extensión/revisión, C industria. Confianza: A alta, M media, B baja. Referencia: V verificada por metadatos, P parcial, K tomada de la KB.
+
+| Parámetro | Rango | Setpoint | Tier | Confianza | Referencia |
+|---|---|---|---|---|---|
+| Incubación T aire | 21–25 °C (núcleo ≤28 °C) | 23 °C | B/A | M-A | Ohio State F-0041 (P); micelio óptimo 25 °C en agar (P); Chang & Miles 2004 (K). Agar no se transfiere a bloque: el calor metabólico eleva el núcleo |
+| Maduración / browning | 22–25 °C, 50–60 d | señales, no calendario | B | B-M | Chang & Miles 2004 (K). Sin fuente verificada de HR/luz: registrar en piloto |
+| Fructificación T (cepa media) | 12–18 °C; 8–14 °C si cepa fría | 15 °C | B/A | M (B si cepa desconocida) | Ohio State F-0041 (P); Cornell Small Farms (P); estudio de 13 cepas core.ac.uk/works/25006519 (P). Condicionar a la clase térmica de la cepa |
+| Fructificación HR | 80–92 % | 85 % (88–90 % al inicio del pinning) | B/A | M | Ohio State F-0041; 13 cepas 80–95 % (P) |
+| Fructificación CO₂ | 800–2.000 ppm; techo operativo 1.500 | ≤1.200 ppm | — | **B** (decisión de ingeniería) | Sin umbral específico de L. edodes. Lee et al. 2012, Mycobiology 40(3):164–167 (V) es fase de colonización en bolsa, no aplica a la sala |
+| BE | 30–60 % hasta tener datos propios | — | B | B | Cenicafé 57,6 % (K); 13 cepas 7–35 % (P). El [50,58] de `coffee_shiitake` y el [40,70] de la app no están medidos aquí |
+| Ciclo | 90–150 d | — | B | M | Compatible con Chang & Miles + Cenicafé (K) |
+
+Sin cambio en la app por baja confianza: CO₂ (1.500), BE. Citas heredadas no auditadas: Rocha 2025, Shi 2026, Holgado-Rojas 2019, Gaitán-Hernández 2014, Lu 2024.
+
 # Aplicación en Tenjo
 
 Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la decisión no debe basarse solo en temperatura exterior. Antes del lote 1 se necesita:

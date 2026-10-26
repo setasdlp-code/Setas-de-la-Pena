@@ -112,6 +112,27 @@ Salmones 2017 y Stamets 2005 documentan líneas de degradación, mycofiltration 
 - No consumir ni vender cuerpos fructíferos cultivados sobre sustratos sospechosos de metales o contaminantes sin análisis de inocuidad.
 - No convertir resultados de laboratorio en claims de remediación sin piloto y medición analítica.
 
+## Incubación — rango corroborado (2026-10)
+
+| Parámetro | Valor |
+|---|---|
+| Temperatura | 24–30 °C |
+
+Fuente: `09_research/corroboracion_2026-10/`. El investigador leyó solo snippets de búsqueda, no textos completos; las referencias marcadas P/K no están auditadas. Las filas de la primera tabla de cada bloque son las que `check_kb_sync.py` compara con la app (solo confianza media o superior); lo de confianza baja vive únicamente en la tabla de evidencia detallada.
+
+## Evidencia detallada de corroboración (2026-10)
+
+| Parámetro | Rango | Setpoint | Tier | Confianza | Referencia |
+|---|---|---|---|---|---|
+| Incubación T | 24–30 °C | 26 °C | A/B/C | M | Salmones 2017 (K); ICAR-DMR 2020 (K); cepas comerciales 25–30 °C (C) |
+| Fructificación T | 22–30 °C; mínimo operativo 20 °C | 26 °C | A/C | M-B | Salmones 2017 (K); Root Lab 18–30 °C (C). Sin evidencia de cepa que fructifique a ~15 °C |
+| Fructificación HR | 85–90 % | 88 % | B | M-B | ICAR da 80–85, otras guías 85–90: resolver con piloto |
+| Fructificación CO₂ | objetivo <1.000; alerta 1.500 (juicio) | — | — | **B** | Sin estudio primario; el 2.000 de la app no se sostiene. Solo reportar morfología |
+| BE (ciclo total, base seca) | 35–75 % | 50 % | A/B | M-B | 24–31 % (Zurbano 2017, banano), 44–46 % paja de trigo (P), 75 % con urea (P); 80–100 % solo en el boletín ICAR (sin diseño experimental). El 130 % no tiene fuente |
+| Ciclo | 28–45 d | 35 d | — | B | Sin dato primario de ciclo total |
+
+**Tenjo (T media 13–14 °C):** ninguna fuente verificada muestra a djamor produciendo a 13 °C; requiere recinto calefaccionado. Estimación de ingeniería propia (no es cita, ±50 %): ~450 kWh/mes por cámara de 22 m³; medir con datalogger y submedidor.
+
 # Future Pilot Gate
 
 Antes de activar P. djamor:
