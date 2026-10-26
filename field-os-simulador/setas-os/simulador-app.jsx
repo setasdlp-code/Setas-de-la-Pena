@@ -1296,9 +1296,10 @@ const {
 const SetasSpeciesTargetsApi=(typeof SetasSpeciesTargets!=='undefined'?SetasSpeciesTargets:(typeof require!=='undefined'?require('./species-targets.js'):null));
 
 // ── Metas de BE por especie y semaforo de contaminacion (propuesta KB 2026-10).
-//    Se requiere aqui para que el bundle lo incluya y registre globalThis.SetasKpiThresholds,
-//    que el shell .dc.html lee en render.
-const SetasKpiThresholdsApi=(typeof SetasKpiThresholds!=='undefined'?SetasKpiThresholds:require('./kpi-thresholds.js'));
+//    El modulo registra globalThis.SetasKpiThresholds, que tambien lee el shell .dc.html.
+//    En el navegador lo cargan auth-gate.js y __harness.html como script clasico (igual que
+//    species-targets.js); require solo existe en Node (tests).
+const SetasKpiThresholdsApi=(typeof SetasKpiThresholds!=='undefined'?SetasKpiThresholds:(typeof require!=='undefined'?require('./kpi-thresholds.js'):null));
 
 // ── Plan de lanzamiento de lote y consumo de inventario — puente hacia
 //    launch-plan.js / inventory-consumption.js. BAG_TYPES ya está definido
@@ -14569,7 +14570,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                                 {items.length===0 && <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',fontStyle:'italic'}}>Sin lotes</div>}
                                 {items.map(({lote:lt,stats,age,colonizado})=>{
-                                  const contamLvl = stats ? SetasKpiThresholdsApi.contamLevel(stats.contPct) : null;
+                                  const contamLvl = stats ? (SetasKpiThresholdsApi ? SetasKpiThresholdsApi.contamLevel(stats.contPct) : (stats.contPct>=20?'stop':null)) : null;
                                   const critical = contamLvl==='red' || contamLvl==='stop'; // KB: >10 % rojo, >=15 % parada
                                   const contaminated = stats && stats.contPct>0;
                                   return (
