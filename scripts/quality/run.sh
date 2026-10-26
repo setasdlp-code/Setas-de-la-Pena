@@ -63,8 +63,10 @@ fi
 node --check recipe-recommender.js
 bash -n push_to_github.sh
 "$PY" scripts/quality/check_repository.py
-# Parsing regressions only. check_kb_sync.py itself stays out of the gate until
-# its known noise is triaged (see .claude/skills/kb-sync/SKILL.md); this guards
-# the extractor against fabricating KB values in the meantime.
+# Parsing regressions: guards the extractor against fabricating KB values.
 "$PY" scripts/quality/check_kb_sync_parsing.py
+# Gate only on "real" value mismatches (app vs knowledge_base). Representation-only
+# and absent-from-KB findings stay informational. The report is the same output as
+# running check_kb_sync.py by hand.
+"$PY" scripts/quality/check_kb_sync.py --fail-on-mismatch
 "$PY" scripts/quality/smoke_runtime.py

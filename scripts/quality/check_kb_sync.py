@@ -17,10 +17,9 @@ fact in a different shape (a single point drawn from a documented range, a
 range built from several documented sub-rows) rather than a genuine
 disagreement — still reported, but lower severity for triage.
 
-This checker is NOT wired into scripts/quality/run.sh or
-.github/workflows/quality.yml yet. A first run against real data surfaces
-expected noise (e.g. extraction-factors.json has no knowledge_base source at
-all) that needs human triage before this can gate anything.
+scripts/quality/run.sh runs it with --fail-on-mismatch, which exits 1 only on
+"real" value mismatches; representation-only, KB-only and app-only findings stay
+informational (extraction-factors.json still has no knowledge_base source).
 """
 
 from __future__ import annotations
