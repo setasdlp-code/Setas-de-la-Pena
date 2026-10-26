@@ -38,8 +38,9 @@ Ninguna fase se inicia mientras alguna compuerta siga abierta. Las protecciones 
 | 8 | Escaneo de direcciones DS18B20 y reemplazo de `addr_base`, `addr_centro`, `addr_tope` y `addr_nucleo` en el YAML | Las cuatro direcciones ya no son marcadores (`0x000000000000000N`) y son distintas entre sí | Abierta |
 | 9 | Cobertura Wi‑Fi en la terraza para el ESP32 y Home Assistant | Intensidad de señal medida en la incubadora | Abierta |
 | 10 | Especificación del lote 1 aprobada y `setpoint_c` / `histeresis_c` reemplazados con sus valores | Versión aprobada de DOC-0122; el firmware compila | Abierta |
-| 11 | Compuertas del KB antes del lote 1: spawn trazable, formulación aprobada, ciclo de autoclave validado con carga representativa, registro de temperatura y HR reales | `quality_control.md` | Abierta |
+| 11 | Compuertas del KB antes del lote 1: spawn trazable (lote, fecha de elaboración y condición de recepción; la cepa puede ser "no identificada" por DEC-019), formulación aprobada, ciclo de autoclave validado con carga representativa, registro de temperatura y HR reales | `quality_control.md` | Abierta |
 | 12 | Indicador local de alarma (LED o zumbador externo) conectado a GPIO27 | Se enciende con una alarma simulada | Abierta |
+| 13 | Recepción del spawn: fotos, olor, color, vigor del micelio y contaminación visible; bolsa sellada a 2–4 °C hasta inocular | Registro de recepción en la hoja del lote | Abierta |
 
 La verificación del cableado de los ensayos de la Fase 3 se hace con el calefactor desconectado de la red o con una carga sustituta, hasta que las compuertas 1 a 4 estén cerradas.
 
@@ -78,7 +79,7 @@ El resultado esperado en todos es: **calefactor apagado** y alarma visible en Ho
 | Pérdida de red / Home Assistant | Apagar el router con el calefactor encendido | El control local sigue regulando y el ESP32 no se reinicia aunque pasen más de 15 min sin red (`reboot_timeout: 0s`); al volver la red se retoma el histórico | Control sin red |
 | Dirección DS18B20 duplicada | Poner la misma dirección en dos sondas del YAML | La prueba `test_direcciones_ds18b20_distintas` falla | Caso límite 4 |
 
-Anotar cada ensayo en la hoja de la sección 6 con fecha, resultado y quién lo ejecutó. Un ensayo que no deje el calefactor apagado cierra el paso a la Fase 4 y se trata como defecto de diseño.
+Anotar cada ensayo en la hoja de la sección 7 con fecha, resultado y quién lo ejecutó. Un ensayo que no deje el calefactor apagado cierra el paso a la Fase 4 y se trata como defecto de diseño.
 
 # 4. Criterios de éxito (provisionales)
 
@@ -109,17 +110,28 @@ Las pruebas del analizador y del firmware se ejecutan con:
 ESPHOME_BIN=<ruta a esphome> python3 -m unittest discover -s esphome -p "test_*.py" -v
 ```
 
-# 6. Hoja de registro del lote
+# 6. Caracterización de la cepa no identificada
+
+El lote 1 usa una cepa no identificada (DEC-019). Además de la incubación, el piloto registra lo que identifica su comportamiento. Es una propuesta de trabajo; la estrategia de inducción se define en una especificación aparte.
+
+- Días hasta la colonización completa y aspecto del micelio.
+- Fecha de inicio del pardeamiento y de las protuberancias o "popcorning".
+- Temperatura de núcleo máxima observada y su diferencia con el aire.
+- Al llegar a la madurez, inducir por grupos con tratamientos distintos (por ejemplo, inmersión fría, descenso térmico en la CLOUDLAB y ambiente de la terraza) y anotar para cada grupo la temperatura, la duración del frío, la masa antes y después de la inmersión, la fecha de los primordios y el rendimiento.
+- Los rangos de la literatura para inducción varían mucho (`../09_research/shiitake_verificacion_web_2026-10-25.md`): no se toman como estándar.
+
+# 7. Hoja de registro del lote
 
 | Campo | Valor |
 |---|---|
 | ID del lote (`YYYY-MM-LE-###`) | |
-| Cepa (nombre y código) | |
+| Cepa (nombre y código; "no identificada" si no hay) | |
 | Versión de la especificación del lote | |
 | Spawn: proveedor, lote y fecha de elaboración | |
 | Fecha de recepción y condición del spawn | |
 | Masa del bloque (kg) y número de bloques | |
-| Dosis de inoculación real (%) | |
+| Matriz del spawn (grano o aserrín) | |
+| Dosis de inoculación real (% del peso húmedo del sustrato) y base usada | |
 | Fecha de inoculación y operador | |
 | Posición de los bloques (nivel y lugar) | |
 | Bloque testigo y sonda de núcleo (dirección DS18B20) | |
@@ -127,6 +139,9 @@ ESPHOME_BIN=<ruta a esphome> python3 -m unittest discover -s esphome -p "test_*.
 | Fecha de inicio de colonización y fecha de cierre | |
 | Contaminación (fecha, bloque, tipo) | |
 | Alarmas ocurridas (fecha, tipo, causa, acción) | |
+| Días hasta la colonización completa | |
+| Fecha de inicio del pardeamiento y de protuberancias | |
+| Inducción por grupo (método, temperatura, duración del frío, masa antes y después, fecha de primordios) | |
 | Resultado del análisis (`analyze_incubation_log.py`) | |
 | Observaciones | |
 
