@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: ba850cb3a3b4d7ad8d4f7233109d384f471d3e10cf35a63abfde9f12aeb25125
+// source-hash: 6b384a1880b89d933785cc391084de765221c6d2e8dcc8d2ddd4c012a4d524c8
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -7351,6 +7351,26 @@ ${errors.slice(0, 5).join("\n")}` : "");
       return next;
     });
   };
+  const exportarSyncPendientes = async () => {
+    const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    if (!q) return;
+    let appVersion = null;
+    try {
+      const ks = await caches.keys();
+      appVersion = (ks.find((k) => k.startsWith("setas-os-")) || "").replace("setas-os-", "") || null;
+    } catch (e) {
+    }
+    const fbUser = window.SetasFirebase?.auth?.currentUser;
+    const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
+    const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = out.filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+  };
   const crearBitLote = (form) => {
     const lote = { ...form, id: "BIT_" + Date.now(), createdAt: (/* @__PURE__ */ new Date()).toISOString() };
     const nb = Number(form.numBolsas);
@@ -9005,7 +9025,7 @@ BATCH (${numBags}×${kgBag} kg):
           localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
         } catch (e) {
         }
-      } }, "Reintentar"));
+      } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", "data-testid": "sync-export-stuck", style: { minHeight: 44 }, onClick: exportarSyncPendientes }, "Exportar"));
     })())));
   };
   const BatchDetailMobile = ({ lote, isModal = false }) => {
@@ -9064,7 +9084,7 @@ BATCH (${numBags}×${kgBag} kg):
           localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(next));
         } catch (e) {
         }
-      }, style: { marginLeft: 6 } }, "Reintentar"));
+      }, style: { marginLeft: 6 } }, "Reintentar"), st.stuck > 0 && /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "sync-export-stuck", onClick: exportarSyncPendientes, style: { marginLeft: 6, minHeight: 44, minWidth: 44 } }, "Exportar"));
     })()), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-editorial)", fontWeight: 700, fontSize: 20, color: "var(--text-primary)", marginTop: 4 } }, (sheet ? sheet.species : lote.especie) || "Especie sin registrar", (sheet ? sheet.speciesScientific : lote.especieCientifico) && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("br", null), /* @__PURE__ */ React.createElement("i", { style: { fontWeight: 400, fontSize: 14, color: "var(--text-secondary)" } }, sheet ? sheet.speciesScientific : lote.especieCientifico))), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__status", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge sdp-badge--${loteBadge}` }, stateLabel, sheet && sheet.daysInStage != null ? ` · Día ${sheet.daysInStage}` : "")), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__meta", style: { gridTemplateColumns: "1fr 1fr", marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Sala"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, roomName || "Sin asignar")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Bolsas activas"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet ? `${sheet.bagsActive} / ${sheet.bagsTotal}` : `${lote.numBolsas || "—"}`)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Receta"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.recipe ? `${sheet.recipe.name || sheet.recipe.id}${sheet.recipe.version ? ` · V${sheet.recipe.version}` : ""}` : "Sin vincular")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "sdp-lote__mk" }, "Spawn"), /* @__PURE__ */ React.createElement("div", { className: "sdp-lote__mv" }, sheet && sheet.spawnLot && sheet.spawnLot.id ? sheet.spawnLot.id : "Sin vincular"))))), hasExceptions && /* @__PURE__ */ React.createElement("section", { className: "os-detail-panel", "data-testid": "batch-blocks-mobile", style: { marginTop: 14, borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 14 } }, "Excepciones"), isException && /* @__PURE__ */ React.createElement("div", { className: "sdp-badge sdp-badge--quarantine", style: { marginBottom: 8 } }, stateLabel, " · ", state === "quarantine" ? "Sospecha de contaminación" : "Lifecycle detenido"), sheet && sheet.anomalies.map((a, i) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: `anom-${i}`, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, a.severity === "critical" ? "Crítico" : "Atención")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, a.detail))), sheet && sheet.blocks.map((b) => /* @__PURE__ */ React.createElement("div", { className: "sdp-event", key: b.code, style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "sdp-event__header" }, /* @__PURE__ */ React.createElement("span", { className: "sdp-event__type" }, "Bloqueo")), /* @__PURE__ */ React.createElement("div", { className: "sdp-event__desc" }, b.detail))), actions.some((a) => a.action === "inspection" || a.action === "contamination") && /* @__PURE__ */ React.createElement(
       "button",
       {

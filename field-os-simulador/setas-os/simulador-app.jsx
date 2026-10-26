@@ -9397,6 +9397,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
       return next;
     });
   };
+  // Exporta las operaciones de la cola en 'stuck' como JSON (lógica pura en
+  // SetasSyncQueue.exportStuck; aquí sólo se dispara la descarga).
+  const exportarSyncPendientes=async()=>{
+    const q=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    if(!q) return;
+    // Versión de app: la estampa de build.js vive en el nombre de la caché
+    // del service worker ('setas-os-<hash>'); no hay otra global de versión.
+    let appVersion=null;
+    try{const ks=await caches.keys();appVersion=(ks.find(k=>k.startsWith('setas-os-'))||'').replace('setas-os-','')||null;}catch(e){}
+    const fbUser=window.SetasFirebase?.auth?.currentUser;
+    const out=q.exportStuck(syncQueueRef.current,{appVersion,device:deviceSyncCtxRef.current?.deviceId||null,user:fbUser?.uid||null},Date.now());
+    const url=URL.createObjectURL(new Blob([out.json],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download=out.filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
   const crearBitLote=(form)=>{
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
     const nb=Number(form.numBolsas);const ts=Date.now();
@@ -11685,6 +11700,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 setSyncQueue(next);
                 try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
               }}>Reintentar</button>}
+              {st.stuck>0&&<button type="button" className="inv-btn inv-btn-sec inv-btn-sm" data-testid="sync-export-stuck" style={{minHeight:44}} onClick={exportarSyncPendientes}>Exportar</button>}
             </div>;
           })()}
         </aside>
@@ -11785,6 +11801,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     setSyncQueue(next);
                     try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
                   }} style={{marginLeft:6}}>Reintentar</button>}
+                  {st.stuck>0&&<button type="button" data-testid="sync-export-stuck" onClick={exportarSyncPendientes} style={{marginLeft:6,minHeight:44,minWidth:44}}>Exportar</button>}
                 </span>;
               })()}
             </div>

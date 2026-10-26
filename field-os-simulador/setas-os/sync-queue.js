@@ -224,6 +224,54 @@
       : op));
   };
 
+  const SENSITIVE_KEY = /token|password|passwd|secret|api[_-]?key|credential|authorization|bearer/i;
+
+  // Copia profunda de args sin claves sensibles: el archivo exportado sale del
+  // equipo (WhatsApp, correo), así que nunca debe llevar credenciales.
+  const redact = value => {
+    if (Array.isArray(value)) return value.map(redact);
+    if (value && typeof value === 'object') {
+      const out = {};
+      Object.keys(value).forEach(k => { if (!SENSITIVE_KEY.test(k)) out[k] = redact(value[k]); });
+      return out;
+    }
+    return value;
+  };
+
+  const pad2 = n => String(n).padStart(2, '0');
+
+  /**
+   * Arma el respaldo descargable de las operaciones 'stuck' (requieren
+   * revisión). Pura: no lee la cola de ningún sitio ni toca el DOM/red. No
+   * modifica la cola. Devuelve { filename, json, payload }.
+   * meta: { appVersion, device, user } (todo opcional).
+   */
+  const exportStuck = (queue, meta = {}, nowMs) => {
+    const now = new Date(nowMs != null ? nowMs : Date.now());
+    const stuckOps = (queue || []).filter(op => op.status === 'stuck');
+    const payload = {
+      kind: 'setas-sync-pendientes',
+      exportedAt: now.toISOString(),
+      appVersion: meta.appVersion || null,
+      device: meta.device || null,
+      user: meta.user || null,
+      count: stuckOps.length,
+      operations: stuckOps.map(op => ({
+        id: op.id,
+        type: op.type,
+        key: op.key,
+        args: redact(op.args),
+        attempts: op.attempts,
+        lastError: op.lastError,
+        createdAt: op.at,
+        createdAtIso: new Date(op.at).toISOString(),
+        nextAttemptAt: op.nextAttemptAt,
+      })),
+    };
+    const stamp = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}-${pad2(now.getHours())}${pad2(now.getMinutes())}`;
+    return { filename: `setas-sync-pendientes-${stamp}.json`, json: JSON.stringify(payload, null, 2), payload };
+  };
+
   const stats = (queue, nowMs) => {
     const now = nowMs != null ? nowMs : Date.now();
     const current = queue || [];
@@ -290,6 +338,7 @@
     purgeKeys,
     markFailed,
     retryStuck,
+    exportStuck,
     stats,
     describeForOperator,
     serialize,
