@@ -124,6 +124,8 @@ El Sebaaly, Z., Nabhan, S., Outayek, J., Nedelin, T., & Sassine, Y. N. (2024). *
 
 ## hericium_001 — Tabi et al.
 
+> **PENDIENTE DE VERIFICAR CONTRA PDF (2026-10):** en búsquedas el artículo con este título y DOI figura con autores Atila, Tüzel, Pekşen, Cano & Fernández, no Tabi. Se conserva la cita original hasta confirmar contra el PDF. Ver `09_research/corroboracion_2026-10/shiitake_hericium.md` §1.
+
 Tabi, A. N. M. et al. (2021). **The effect of different fruiting temperatures on the yield and nutritional parameters of some wild and hybrid *Hericium* isolates.** *Scientia Horticulturae*, 280, 109915.  
 **DOI:** https://doi.org/10.1016/j.scienta.2021.109915  
 **Tipo:** Estudio experimental.  

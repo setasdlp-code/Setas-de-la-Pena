@@ -1938,15 +1938,21 @@ const spCode = k => (SPECIES.find(s=>s.key===k)||{code:'--'}).code;
 // hr, co2, fae, cycle), hericium y lentinula (fruitT, incT, hr, co2), y fae/cycle/be de
 // todas. pleurotus_djamor.md declina fijar CO2/FAE/BE/ciclo; la BE de djamor se limita a
 // 100 (ICAR-DMR 2020, boletin de extension sin diseno experimental), no 130.
+// CORROBORACION 2026-10 (knowledge_base/09_research/corroboracion_2026-10/, solo snippets de
+// busqueda): se ajustaron solo valores con confianza media o superior -- djamor be [35,75] e incT [24,30];
+// ganoderma be [5,20] y cycle [90,150]; hericium fruitT [16,22] y hr [85,95]; shiitake
+// fruitT [12,18] (cepa media; 8-14 si es cepa fria) e incT [21,25] (margen sobre el nucleo 28).
+// Confianza baja, solo documentada en la KB y SIN cambio aqui: co2 de todas las especies,
+// be de hericium/shiitake/ostreatus, cycle de djamor, hr de djamor.
 // ganoderma: hr [30,90] es la UNION de las fases del KB (>90 primordios, 70-80 sombrero,
 // 30-40 estadio final), no una consigna unica; co2 1000 = techo para forma de sombrero
 // (KB: <1,000 ppm sombrero, >1,500 antler; ~350 es una caida puntual, no un techo).
 const KB_SPP = {
-  pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,100], cycle:[28,40] },
+  pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,30], hr:[85,90], co2:2000, fae:[5,8], be:[35,75], cycle:[28,40] },
   pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[13,24], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50], incCoreMaxT:28 },
-  hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[18,24], incT:[21,24], hr:[90,97], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
-  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150], incCoreMaxT:28 },
-  ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:1000, fae:[4,6], be:[13,40], cycle:[90,180] },
+  hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[16,22], incT:[21,24], hr:[85,95], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
+  lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[12,18], incT:[21,25], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150], incCoreMaxT:28 },
+  ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:1000, fae:[4,6], be:[5,20], cycle:[90,150] },
 };
 // Sustratos (substrates.yaml). be = rango de eficiencia biológica documentado.
 const KB_SUB = {

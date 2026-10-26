@@ -153,6 +153,37 @@ Una señal visual no identifica por sí sola la causa. Cambiar una variable prin
 
 No se mantienen rangos universales de BE. La eficiencia biológica debe calcularse con masa seca inicial documentada.
 
+## Incubación — rango corroborado (2026-10)
+
+| Parámetro | Valor |
+|---|---|
+| Temperatura | 21–25 °C |
+
+## Fructificación — rango corroborado (2026-10)
+
+| Parámetro | Valor |
+|---|---|
+| Temperatura | 16–22 °C |
+| HR | 85–95 % |
+
+Fuente: `09_research/corroboracion_2026-10/`. El investigador leyó solo snippets de búsqueda, no textos completos; las referencias marcadas P/K no están auditadas. Las filas de la primera tabla de cada bloque son las que `check_kb_sync.py` compara con la app (solo confianza media o superior); lo de confianza baja vive únicamente en la tabla de evidencia detallada.
+
+## Evidencia detallada de corroboración (2026-10)
+
+| Parámetro | Rango | Setpoint | Tier | Confianza | Referencia |
+|---|---|---|---|---|---|
+| Incubación T | 21–25 °C | 23 °C | A/C | M-A | Imtiaj et al. 2008, Mycobiology 36(2) (P): óptimo 25 °C en agar, 20–30 °C; tabla de proveedor atribuida a Stamets (C): 21–24 °C |
+| Fructificación T | inducción 14–18 °C; desarrollo 16–20 °C; techo 22 °C | 18 °C | A | M | Atila, Tüzel, Pekşen, Cano & Fernández 2021, Sci. Hortic. 280, 109915 (V; ver aviso de autoría abajo); estudios coreanos de cámara 16–20 °C (P). Depende del aislamiento; hay cepas que forman cuerpos a 25 °C |
+| Fructificación HR | 85–95 % (95 solo en inducción 5–7 d, luego 85–90) | 92 % → 88 % | A/C | M | Estudios coreanos 95 % → 85 % (P); proveedor/Stamets 85–95 % (C). La app tenía 90–97 %, el rango más húmedo de todas las fuentes |
+| Fructificación CO₂ | 500–1.200 ppm | 800–1.000 ppm; alarma 1.200 | A | B-M | Estudios coreanos 500–1.000 ppm sin réplica comparativa de CO₂ (P). No es umbral universal. Dientes largos (>1 cm) son rasgo normal, no señal de CO₂ alto |
+| BE | sin dato verificado | — | — | B | 110–260 g por bolsa (P, masa de bolsa no verificada). El [80,120] de la app es hipótesis, no medición |
+
+Sin cambio en la app por baja confianza: CO₂ (1.000), BE, ciclo.
+
+> **PENDIENTE DE VERIFICAR CONTRA PDF — dos citas sospechosas.**
+> 1. «Tabi et al. 2021» (*Sci. Hortic.* 280:109915, DOI 10.1016/j.scienta.2021.109915): en los resultados de búsqueda los autores del artículo parecen ser **Atila, Tüzel, Pekşen, Cano & Fernández**, no Tabi. Se conserva el texto original de esta ficha hasta confirmar contra el PDF.
+> 2. «Atila 2019 — paper_024, *Sci. Hortic.* 254:185–194»: el investigador **no encontró** un artículo con ese título en esa revista; lo más cercano es Atila (2019), «The use of phenolic-rich agricultural wastes for *H. erinaceus* and *L. edodes* cultivation» (revista turca, vol. 56), cuyo resumen no menciona CO₂ <1.200 ppm / 18 ± 2 °C / 85–90 % HR. Candidatos al origen real: Atila 2018, *Sci. Hortic.* 238:246–254; Atila 2019, *Sci. Hortic.* 258. Hasta comprobarlo, los valores de la sección «Región de Referencia Ambiental Experimental» no deben usarse como fuente.
+
 # Aplicación en Tenjo
 
 La altura modifica presión y densidad molar del aire. A aproximadamente 2.600 m, un mismo transporte molar puede requerir mayor caudal volumétrico que al nivel del mar. Esto no equivale a aumentar automáticamente un porcentaje fijo de ACH.

@@ -186,3 +186,24 @@ Para mantener la producción limpia y certificable sin agroquímicos sintéticos
    * Mantener el pH de pajas por encima de 6.5 mediante enmienda mineral con yeso ($2\%$) y carbonato de calcio ($1\%$).
    * Inoculación preventiva de cepas antagonistas de *Bacillus subtilis* / *Bacillus amyloliquefaciens* ($10^7\text{ UFC/g}$) en el sustrato post-pasteurización.
    * Desinfección de superficies y herramientas con **ácido peracético al 0.3%** o **amonio cuaternario de 5ª generación (200 ppm)**, alternando quincenalmente para evitar resistencia microbiana.
+
+## Corroboración 2026-10: rendimientos de extracción (`yield_factor`)
+
+Fuente: `09_research/corroboracion_2026-10/extraction.md` (solo snippets, ningún texto completo leído). Base asumida: extracto seco / masa seca de hongo. Con confianza media solo se ajustaron en la app shiitake acuosa (0,16 → 0,12) y shiitake ultrasonido (0,20 → 0,13). **El resto sigue siendo estimación sin calibrar** y no se cambió en la app.
+
+| Especie · método | Valor app | Rango propuesto | Confianza | Estado |
+|---|---|---|---|---|
+| Reishi hidroalcohólica | 0,09 | 0,04–0,08 | media-baja | estimación, sin cambio |
+| Reishi acuosa | 0,10 | 0,05–0,13 | media-baja | estimación, sin cambio |
+| Reishi ultrasonido | 0,13 | 0,04–0,07 | media-baja | estimación, sin cambio (el etanol rinde menos masa que el agua) |
+| Hericium hidroalcohólica | 0,11 | 0,05–0,15 | baja | estimación, sin cambio |
+| Hericium acuosa | 0,13 | 0,07–0,25 | baja | estimación, sin cambio |
+| Hericium ultrasonido | 0,16 | 0,03–0,10 | baja | estimación, sin cambio |
+| Shiitake hidroalcohólica | 0,14 | sin evidencia | muy baja | estimación, sin cambio |
+| Shiitake acuosa | 0,16 → 0,12 | 0,08–0,15 | media | ajustada en app |
+| Shiitake ultrasonido | 0,20 → 0,13 | 0,10–0,20 | media-baja | ajustada en app |
+| Orellana hidroalcohólica | 0,12 | sin evidencia | muy baja | estimación, sin cambio |
+| Orellana acuosa | 0,15 | 0,05–0,12 | media-baja | estimación, sin cambio |
+| Orellana ultrasonido | 0,18 | 0,07–0,18 | baja | estimación, sin cambio |
+
+Pendiente de diseño (propuesta, no implementada): modo `dual` etanol + agua para reishi y Hericium, `marker` y `feedstock` por método, costo de solvente derivado de % de etanol, y registro sanitario INVIMA antes de vender extractos.

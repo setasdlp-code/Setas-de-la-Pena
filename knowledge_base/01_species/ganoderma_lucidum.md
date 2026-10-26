@@ -100,6 +100,27 @@ Supported by:
 | Serrín suplementado | BE variable; requiere esterilización |
 | Subproductos de café (mezcla, C/N 40–60, pulpa ≤15%) | Colombia — BE ~13% (formulación T12); económico. Ver `substrate_library.md` |
 
+## Tabla por fase (corroboración 2026-10)
+
+Fuente: `09_research/corroboracion_2026-10/djamor_ganoderma_kpi.md` (solo snippets; patente US 4472907 es Tier C). Rodríguez Valencia & Jaramillo López 2005 (Cenicafé) es Tier B.
+
+| Fase | T (°C) | HR aire (%) | CO₂ (ppm) | Luz | Confianza |
+|---|---|---|---|---|---|
+| Incubación (bolsa cerrada, 30–60 d) | 25–30 (sp 28) | no se controla (humedad de sustrato 60–70 %) | no controlar; en bolsa sube a >3.000 sin daño | oscuridad/baja | media |
+| Primordio / antler (d ~40–60) | 28–30 | ≥90 | 1.500–5.000 si se busca antler; abrir bolsa si se busca sombrero | 100–300 lux | media |
+| Desarrollo de sombrero | 27–30 | 70–85 (sp 80) | <1.000 (sp ~600–800; 350 es ambiente exterior, inalcanzable en sala cerrada, juicio) | 500–800 lux | media-baja |
+| Maduración / esporulación | 26–30 | **NO RESUELTA** | <1.000 | 500–1.000 lux | **baja** |
+
+**HR de maduración: no resuelta.** Cenicafé (arriba, «estadio final») da 30–40 %; la patente US 4472907 da 60–80 % para sombrero y el investigador propone 50–70 % (juicio) sin respaldo independiente de los 30–40 %. No promover ninguna cifra a consigna hasta un piloto con registro de HR por fase.
+
+| Parámetro | Rango | Setpoint | Tier | Confianza | Referencia |
+|---|---|---|---|---|---|
+| BE total | 5–20 % | 12 % (1.ª cosecha 10 %) | A/B | M | Sri Lanka 5,1–5,7 % primer mes (P); Vietnam 16,13 % (P, no verificado); India 12–15 % (P); Cenicafé 13–15 % (K). El techo de 40 % de la app no tiene respaldo |
+| Ciclo | 90–150 d | 110 d | A/B | M | Vietnam 84 d a 1.ª cosecha (P); Cenicafé 90–120 d (K) |
+| Calefacción en Tenjo | 27–30 °C durante 3–5 meses | — | — | — | Costo energético por kg mayor que djamor; viabilidad económica pendiente |
+
+La app conserva `hr` [30,90] como **unión de las fases** (no es consigna) hasta separar `hr` y `co2` por fase.
+
 # Best Practices
 - No considerar para primeras fases de producción — cash flow no lo soporta.
 - Investigar regulación INVIMA para extractos/suplementos de Ganoderma en Colombia antes de invertir.

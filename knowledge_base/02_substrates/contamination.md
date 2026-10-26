@@ -127,6 +127,19 @@ Supported by:
 | Cámara fruiting | HR controlada; FAE correcto; no rociar directamente sobre bloques |
 | Limpieza rutinaria | Limpiar pisos y superficies 2×/semana con alcohol/cloro |
 
+## Semáforo de contaminación por lote (propuesta 2026-10, no implementada)
+
+No existe norma pública de contaminación aceptable (búsqueda 2026-10; guía SARE, encuestas de India y Bangladesh con 12–30 %). La propuesta es juicio operativo, confianza media-baja, a separar por etapa (incubación vs fructificación) y proceso (autoclave vs pasteurización):
+
+| Nivel | Umbral por lote | Acción |
+|---|---|---|
+| Verde | ≤5 % | normal |
+| Ámbar | 5–10 % | revisar protocolo (es el umbral documentado aquí) |
+| Rojo | >10 % | auditar esterilización/pasteurización |
+| Crítico | ≥15–20 % | detener lote y auditar proceso (fila «>20 %» ya en esta ficha) |
+
+Spawn/grano: alerta >3–5 %. La app tiene hoy `contamMax` y `contamAlert` ambos en 10; un 15 como nivel de parada es defendible pero no está implementado.
+
 # Best Practices
 - Inspeccionar visualmente todos los bloques cada 48h durante incubación.
 - Registrar % de contaminación por batch — si supera 10%, revisar protocolo.
