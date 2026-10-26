@@ -24,6 +24,7 @@ sdp_emails.json
 *.tmp
 .~lock.*#
 *.bak
+*.backup
 tmp/
 ECC/reports/
 ECC/data/alerts.jsonl
