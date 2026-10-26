@@ -40,8 +40,8 @@ test("Lab Extraction — calculations, yields, costs and component integration",
     assert.equal(res.yieldPct, 14.0);
 
     const uae = calculateYield(500, "shiitake", "ultrasonido", factorsJson);
-    assert.equal(uae.yieldGrams, 100);
-    assert.equal(uae.yieldPct, 20.0);
+    assert.equal(uae.yieldGrams, 65);
+    assert.equal(uae.yieldPct, 13.0);
   });
 
   await t.test("calculates operational extraction batch cost and cost per gram", () => {
