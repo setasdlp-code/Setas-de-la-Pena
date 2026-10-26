@@ -117,6 +117,8 @@ Evidencia de esta sesión: `/tmp/setas-home-catalogo-20261018-v2/` (exportación
 
 Titular del Home (25 de octubre de 2026): «Cultivo en sombra.» pasa a titular de página (44–68 px) bajo el dibujo de la peña, seguido del descriptor «Hongos para cocinar con criterio.» en Plex. No vuelve el bloque de introducción ni el CTA del hero anterior; el titular y «Las setas» siguen visibles a 1280×800.
 
+Ajuste del 26 de octubre de 2026: el descriptor bajo el titular pasa a «Shiitake, melena de león y eryngii, desde Tenjo, Cundinamarca.» para que la portada diga qué se ofrece y desde dónde (hallazgo de la auditoría de marca). «Cultivo en sombra.» sigue como titular. «Hongos para cocinar con criterio.» se conserva como descriptor de marca en metadatos y manual. Se escribe «desde Tenjo» y no «cultivados en Tenjo» porque la procedencia de una cosecha requiere registros de lote.
+
 Ajuste solicitado del Home: se elimina la sección «05 · Antes de consultar» (`#consultas`) y el enlace «Preguntas sobre tu consulta» del pie. Se conservan el pie de marca, las referencias culinarias y los accesos a la ficha de shiitake.
 
 ## Cuaderno editorial de especies
