@@ -325,6 +325,7 @@ test('los motores operativos UMD esperan Auth y conservan su orden de dependenci
     '../flush-forecast-engine.js',
     '../historical-calibration.js',
     '../species-targets.js',
+    '../kpi-thresholds.js',
     '../mass-balance.js',
     '../launch-plan.js',
     '../inventory-consumption.js',
