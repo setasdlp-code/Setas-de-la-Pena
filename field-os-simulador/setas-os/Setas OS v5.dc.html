@@ -1930,12 +1930,23 @@ const spCode = k => (SPECIES.find(s=>s.key===k)||{code:'--'}).code;
 // extrapolar un techo de nucleo a una especie que no lo tiene documentado seria
 // inventar un umbral de seguridad. Ver ADR-0008 y metadata/species.yaml
 // (incubation_core_temp_max_c).
+//
+// PROCEDENCIA (agronomic-claims): salvo donde se indica, estos valores son SETPOINTS
+// NO VALIDADOS -- ni medidos en esta finca ni con fila fuente en knowledge_base/
+// (check_kb_sync.py los lista como "present in app, absent from KB"). No presentarlos
+// como observaciones ni como literatura citada. Sin fuente en KB: djamor (fruitT, incT,
+// hr, co2, fae, cycle), hericium y lentinula (fruitT, incT, hr, co2), y fae/cycle/be de
+// todas. pleurotus_djamor.md declina fijar CO2/FAE/BE/ciclo; la BE de djamor se limita a
+// 100 (ICAR-DMR 2020, boletin de extension sin diseno experimental), no 130.
+// ganoderma: hr [30,90] es la UNION de las fases del KB (>90 primordios, 70-80 sombrero,
+// 30-40 estadio final), no una consigna unica; co2 1000 = techo para forma de sombrero
+// (KB: <1,000 ppm sombrero, >1,500 antler; ~350 es una caida puntual, no un techo).
 const KB_SPP = {
-  pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,130], cycle:[28,40] },
+  pleurotus_djamor:   { prio:1, phase:'Activa · Fase 1', fruitT:[22,30], incT:[24,28], hr:[85,90], co2:2000, fae:[5,8], be:[80,100], cycle:[28,40] },
   pleurotus_ostreatus:{ prio:4, phase:'Validación',      fruitT:[13,24], incT:[20,24], hr:[85,95], co2:1000, fae:[5,8], be:[70,100], cycle:[35,50], incCoreMaxT:28 },
   hericium_erinaceus: { prio:2, phase:'Objetivo Fase 2', fruitT:[18,24], incT:[21,24], hr:[90,97], co2:1000, fae:[8,12], be:[80,120], cycle:[60,90] },
   lentinula_edodes:   { prio:3, phase:'Objetivo Fase 2', fruitT:[10,16], incT:[21,27], hr:[80,90], co2:1500, fae:[4,6], be:[40,70], cycle:[90,150], incCoreMaxT:28 },
-  ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:2000, fae:[4,6], be:[13,40], cycle:[90,180] },
+  ganoderma_lucidum:  { prio:5, phase:'Objetivo Fase 3', fruitT:[27,32], incT:[25,32], hr:[30,90], co2:1000, fae:[4,6], be:[13,40], cycle:[90,180] },
 };
 // Sustratos (substrates.yaml). be = rango de eficiencia biológica documentado.
 const KB_SUB = {
@@ -1965,7 +1976,9 @@ const KB_SUB = {
 // esta finca todavía. Cuando el corpus de campo exista, estos tres se calibran
 // contra él y se separan por especie y número de cosecha — hoy son un solo
 // escalar para todas las especies, que es la simplificación que queda pendiente.
-const KPI = { beTarget:55, beOptimal:70, beAlert:40, contamMax:10, contamAlert:15, yieldPerBlock:800 };
+// contamAlert: contamination.md fija UN solo umbral (>10% revisar protocolo); el 15 previo
+// no tenia fuente y no lo lee ningun codigo. yieldPerBlock (800 g) es SETPOINT NO VALIDADO.
+const KPI = { beTarget:55, beOptimal:70, beAlert:40, contamMax:10, contamAlert:10, yieldPerBlock:800 };
 // Zonas de la instalación (master_blueprint.md)
 const ZONAS = [
   { n:1, name:'Preparación', tag:'Sucio' }, { n:2, name:'Inoculación', tag:'Limpio' },
