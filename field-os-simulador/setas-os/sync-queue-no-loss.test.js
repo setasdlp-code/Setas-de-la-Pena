@@ -109,3 +109,33 @@ test('QuotaExceededError: en la app, encolar y el volcado de device-sync avisan 
   assert.ok((src.match(persist) || []).length >= 2, 'encolarSync y la pasada de device-sync deben llamar bitQuotaWarn');
   assert.match(src, /No se pudo encolar el cambio/, 'la cola llena debe mostrar aviso al operario');
 });
+
+test('exportStuck: solo stuck, con metadatos, nombre con fecha y sin credenciales; no altera la cola', () => {
+  let q = queueApi.enqueue([], queueApi.createOperation({
+    type: 'actualizarDocumento', key: 'x:1', id: 'opS', at: NOW,
+    args: ['x/1', { nota: 'ok', apiKey: 'SECRETO', nested: { idToken: 'T', v: 1 } }],
+  }));
+  q = queueApi.enqueue(q, op(2));
+  for (let i = 0; i < queueApi.MAX_ATTEMPTS; i += 1) q = queueApi.markFailed(q, 'opS', new Error('denegado'), NOW);
+  const before = JSON.stringify(q);
+  const out = queueApi.exportStuck(q, { appVersion: 'abc123', device: 'dev1', user: 'u1' }, new Date(2026, 9, 26, 8, 5).getTime());
+  assert.equal(JSON.stringify(q), before);
+  assert.equal(out.filename, 'setas-sync-pendientes-20261026-0805.json');
+  const p = JSON.parse(out.json);
+  assert.equal(p.count, 1);
+  assert.equal(p.appVersion, 'abc123');
+  assert.equal(p.device, 'dev1');
+  assert.equal(p.user, 'u1');
+  assert.equal(p.operations[0].id, 'opS');
+  assert.equal(p.operations[0].lastError, 'denegado');
+  assert.equal(p.operations[0].attempts, queueApi.MAX_ATTEMPTS);
+  assert.deepEqual(p.operations[0].args, ['x/1', { nota: 'ok', nested: { v: 1 } }]);
+  assert.ok(!out.json.includes('SECRETO'));
+  assert.equal(queueApi.exportStuck([], {}, NOW).payload.count, 0);
+});
+
+test('UI: el botón Exportar junto a Reintentar existe en ambas vistas y usa exportStuck', () => {
+  const src = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  assert.equal((src.match(/data-testid="sync-export-stuck"/g) || []).length, 2);
+  assert.match(src, /q\.exportStuck\(/);
+});
