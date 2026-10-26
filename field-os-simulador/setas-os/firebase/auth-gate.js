@@ -87,6 +87,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../historical-calibration.js",
   "../operational-metrics.js",
   "../species-targets.js",
+  "../kpi-thresholds.js",
   "../mass-balance.js",
   "../recipe-lifecycle.js",
   "../launch-plan.js",

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 6b384a1880b89d933785cc391084de765221c6d2e8dcc8d2ddd4c012a4d524c8
+// source-hash: df56d068d1604f640bd40f84f1239ce04f1fb9afb484076d4fbfa62a51a1b954
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -1078,6 +1078,7 @@ const {
   OPT_PROFILES
 } = typeof SetasRecipeOptimizer !== "undefined" ? SetasRecipeOptimizer : typeof require !== "undefined" ? require("./recipe-optimizer.js") : {};
 const SetasSpeciesTargetsApi = typeof SetasSpeciesTargets !== "undefined" ? SetasSpeciesTargets : typeof require !== "undefined" ? require("./species-targets.js") : null;
+const SetasKpiThresholdsApi = typeof SetasKpiThresholds !== "undefined" ? SetasKpiThresholds : typeof require !== "undefined" ? require("./kpi-thresholds.js") : null;
 const SetasLaunchPlanApi = typeof SetasLaunchPlan !== "undefined" ? SetasLaunchPlan : typeof require !== "undefined" ? require("./launch-plan.js") : null;
 const SetasInventoryConsumptionApi = typeof SetasInventoryConsumption !== "undefined" ? SetasInventoryConsumption : typeof require !== "undefined" ? require("./inventory-consumption.js") : null;
 const UNIT_INGREDIENT_IDS = BAG_TYPES.map((b) => b.stockId).filter(Boolean);
@@ -10477,7 +10478,8 @@ BATCH (${numBags}×${kgBag} kg):
       return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 } }, columnas.map((col) => {
         const items = clasificados.filter((c) => c.columna === col.key);
         return /* @__PURE__ */ React.createElement("div", { key: col.key, style: { background: "var(--paper-1)", border: "1px solid var(--line-0)", borderTop: `3px solid ${col.accent}`, borderRadius: 0, padding: "14px", display: "flex", flexDirection: "column", gap: 10, minHeight: 120 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => goTab(col.linkTab), style: { background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, color: col.accent } }, /* @__PURE__ */ React.createElement(col.icon, { size: 13 }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: "var(--text-xs)", color: "var(--ink-0)" } }, col.title)), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--ink-1)" } }, items.length)), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", lineHeight: 1.3 } }, col.sub)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, items.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-2xs)", color: "var(--ink-2)", fontStyle: "italic" } }, "Sin lotes"), items.map(({ lote: lt, stats, age, colonizado }) => {
-          const critical = stats && stats.contPct >= 20;
+          const contamLvl = stats ? SetasKpiThresholdsApi ? SetasKpiThresholdsApi.contamLevel(stats.contPct) : stats.contPct >= 20 ? "stop" : null : null;
+          const critical = contamLvl === "red" || contamLvl === "stop";
           const contaminated = stats && stats.contPct > 0;
           return /* @__PURE__ */ React.createElement(
             "button",
