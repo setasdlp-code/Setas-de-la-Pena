@@ -32,7 +32,7 @@ const report = { checks: [], errors: [] };
     page.on('pageerror',e=>report.errors.push(e.message));
     for (const width of [320,390,768,1440]) {
       await page.setViewportSize({width,height:900});
-      for (const route of ['home','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
+      for (const route of ['home','setas','cocina','restaurantes','mundo-micelar','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
         const requests=[];
         const listener=request=>requests.push(request.url());
         page.on('request',listener);
@@ -58,7 +58,7 @@ const report = { checks: [], errors: [] };
         report.checks.push({type:'metadata-type-links-labels-responsive-images',route,width,result:'passed'});
       }
     }
-    await page.goto(base+'home#coleccion');
+    await page.goto(base+'setas#coleccion');
     const opener=page.locator('.specimen-button[data-species="shiitake"]');
     await opener.focus(); await page.keyboard.press('Enter');
     const dialog=page.locator('#species-dialog');
@@ -83,6 +83,14 @@ const report = { checks: [], errors: [] };
       if(status===404) assert.match(await response.text(),/No encontramos esta página/);
       assert.equal(response.headers()['x-robots-tag'],'noindex, nofollow');
     }
+    for (const retired of ['proyecto', 'proyecto.html']) {
+      const response = await context.request.get(base + retired + '?pairing=bricolage', {maxRedirects: 0});
+      assert.equal(response.status(), 301);
+      assert.equal(response.headers().location, '/home?pairing=bricolage');
+    }
+    assert.ok(!manifest.routes['/proyecto']);
+    assert.ok(!manifest.files.some(item => item.file === 'proyecto.html'));
+    report.checks.push({type:'retired-project-redirects',result:'passed'});
     const htmlResponse=await context.request.get(base+'home');
     assert.ok(!htmlResponse.headers()['cache-control'].includes('immutable'));
     const assetResponse=await context.request.get(base+manifest.commercialCss.replace(/^\//,''));

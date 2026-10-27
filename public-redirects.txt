@@ -1,3 +1,5 @@
 /ds / 302
 /marca /manual 302
 /web /home 302
+/proyecto /home 301
+/proyecto.html /home 301

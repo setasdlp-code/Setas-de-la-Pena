@@ -53,7 +53,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const page = await context.newPage();
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
-      for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
+      for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
         await visit(page, file);
         const metrics = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth, brokenImages: [...document.images].filter(img => !img.complete || img.naturalWidth === 0).map(img => img.getAttribute('src')), pairing: document.documentElement.dataset.pairing }));
         assert.ok(metrics.content <= width, `${file} overflow at ${width}`);
@@ -78,9 +78,9 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       }
     }
     await page.locator('#eryngii-medallones input[value="3"]').check();
-    assert.equal(await page.locator('#eryngii-medallones [data-amounts="1000|1800|2500"]').innerText(), '2.500 ml');
+    assert.equal(await page.locator('#eryngii-medallones [data-amounts="1000|1800|2500"]').textContent(), '2.500 ml');
     await page.locator('#eryngii-sudado input[value="2"]').check();
-    assert.equal(await page.locator('#eryngii-sudado [data-amounts="400|800|1200"]').innerText(), '800 g');
+    assert.equal(await page.locator('#eryngii-sudado [data-amounts="400|800|1200"]').textContent(), '800 g');
     assert.equal(await page.locator('.recipe-illustration img').count(),6);
     assert.equal(await page.locator('#eryngii-atollado h2').innerText(),'Desmechado en hojas de lechuga');
     await page.locator('#eryngii-chuzos details summary').click();
@@ -119,10 +119,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       }
     }
     await page.locator('#melena-atollado input[value="3"]').check();
-    assert.equal(await page.locator('#melena-atollado [data-amounts="200|400|600"]').first().innerText(), '600 g');
-    assert.equal(await page.locator('#melena-atollado [data-amounts="320|640|960"]').innerText(), '960 g');
+    assert.equal(await page.locator('#melena-atollado [data-amounts="200|400|600"]').first().textContent(), '600 g');
+    assert.equal(await page.locator('#melena-atollado [data-amounts="320|640|960"]').textContent(), '960 g');
     await page.locator('#melena-encocado input[value="2"]').check();
-    assert.equal(await page.locator('#melena-encocado [data-amounts="600|1000|1500"]').innerText(), '1.000 ml');
+    assert.equal(await page.locator('#melena-encocado [data-amounts="600|1000|1500"]').textContent(), '1.000 ml');
     await page.locator('#melena-envuelto details summary').click();
     await page.locator('.recipe-shortcuts a[href="#melena-envuelto"]').click();
     await page.locator('#melena-envuelto .recipe-method').waitFor({ state: 'visible' });
@@ -149,12 +149,16 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.setViewportSize({ width: 1280, height: 800 });
     await visit(page, 'home');
     await page.screenshot({ path: path.join(out, 'catalogo-1280.png') });
-    assert.equal(await page.locator('#hero-title').innerText(), 'Del micelio a la mesa.');
+    assert.equal(await page.locator('#hero-title').innerText().then(text => text.replace(/\s+/g, ' ')), 'Del micelio a la mesa.');
+    assert.equal(await page.locator('.origin-actions a[href="#coleccion"]').count(), 1);
+    assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
+    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Consultar shiitake/);
+    assert.equal(await page.locator('.origin-story a[href="https://www.fao.org/food-safety/food-control-systems/traceability---recalls/en"]').count(), 1);
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
-    assert.equal(await page.locator('.catalog-descriptor').innerText(), 'Shiitake, melena de león y eryngii, desde Tenjo, Cundinamarca.');
+    assert.equal(await page.locator('.catalog-descriptor').count(), 0);
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');
-    assert.ok(await page.locator('.catalog-landscape img').evaluate(el => el.getBoundingClientRect().width >= 500), 'brand illustration leads the desktop hero');
-    assert.ok(await page.locator('#hero-title, #collection-title').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'tagline and catalogue entry visible on a small laptop');
+    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio', 'coleccion'], 'home contains the introduction followed by the species catalogue');
+    assert.ok(await page.locator('#hero-title, .origin-actions').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'headline and project links visible on a small laptop');
     await page.setViewportSize({ width: 390, height: 900 });
     await visit(page, 'home');
     await page.locator('.menu-toggle').click();
@@ -164,9 +168,49 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
     await page.locator('.menu-toggle').click();
     await page.locator('#primary-nav a[href="#coleccion"]').click();
+    await page.waitForURL('**/home#coleccion');
+    await page.waitForLoadState('networkidle');
     assert.equal(await page.locator('#primary-nav').isVisible(), false);
-    assert.equal(new URL(page.url()).hash, '#coleccion');
-    report.checks.push({ type: 'catalogue-first-viewport-and-mobile-menu', result: 'passed', covers: ['prominent brand illustration, sole tagline and catalogue entry at 1280×800', 'mobile menu closes with Escape and restores focus', 'menu link reaches catalogue'] });
+    assert.equal(new URL(page.url()).pathname, '/home');
+    assert.equal(await page.locator('h1').count(), 1);
+    assert.equal(await page.locator('#collection-title').evaluate(el => el.tagName), 'H2');
+    assert.deepEqual(await page.locator('.species-card h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
+    await page.locator('#prep-guide summary').click();
+    await page.locator('[data-prep="asar"]').click();
+    assert.equal(await page.locator('.species-card:not([hidden]) h3').innerText(), 'Eryngii');
+    await page.locator('[data-species="eryngii"]').click();
+    assert.equal(await page.locator('#dialog-title').innerText(), 'Eryngii');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('[data-species="eryngii"]').evaluate(el => el === document.activeElement), true);
+    await page.locator('#filter-reset').click();
+    assert.equal(await page.locator('.species-card:not([hidden])').count(), 3);
+    assert.equal(new URL(page.url()).pathname, '/home');
+    report.checks.push({ type: 'catalogue-first-viewport-and-mobile-menu', result: 'passed', covers: ['brief introduction and project links at 1280×800', 'mobile menu closes with Escape and restores focus', 'menu link reaches catalogue'] });
+    await visit(page, 'mundo-micelar');
+    assert.equal(await page.locator('h1').innerText().then(t => t.replace(/\s+/g, ' ')), 'El mundo micelar.');
+    assert.equal(await page.locator('.micelar-stages > li').count(), 3);
+    assert.equal(await page.locator('.micelar-species > article').count(), 3);
+    assert.equal(await page.locator('.micelar-sources li').count(), 4);
+    assert.equal(await page.locator('#primary-nav a[href="/proyecto"]').count(), 0);
+    await page.locator('.micelar-index a[href="#investigacion"]').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForURL('**/mundo-micelar#investigacion');
+    await page.locator('#investigacion a[href="#fuente-4"]').click();
+    assert.equal(new URL(page.url()).hash, '#fuente-4');
+    const micelarStatic = await contextWith(undefined, {javaScriptEnabled: false});
+    const micelarStaticPage = await micelarStatic.newPage();
+    await visit(micelarStaticPage, 'mundo-micelar#cultivo');
+    assert.equal(await micelarStaticPage.locator('.micelar-stages').isVisible(), true);
+    assert.equal(await micelarStaticPage.locator('#investigacion').isVisible(), true);
+    await micelarStatic.close();
+    for (const route of ['proyecto', 'proyecto.html']) {
+      const response = await context.request.get(base + route + '?pairing=bricolage', {maxRedirects: 0});
+      assert.equal(response.status(), 301);
+      assert.equal(response.headers().location, '/home?pairing=bricolage');
+    }
+    await visit(page, 'home?pairing=bricolage#origen');
+    await page.waitForURL('**/home?pairing=bricolage#inicio');
+    report.checks.push({type:'micelar-reading-and-retired-project', result:'passed', covers:['editorial navigation with keyboard', 'four sourced readings', 'content without JavaScript', 'project route redirects preserve query', 'legacy origin reaches Home']});
     await visit(page, 'shiitake.html#producto');
     assert.equal(await page.locator('#order-form').isVisible(), true);
     assert.equal(await page.locator('#channel-notice').isVisible(), true);
@@ -176,13 +220,13 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('.purchase-submit').click();
     assert.equal(await page.locator('#order-review').isVisible(), false);
     for (const value of ['0', '-1', '2.5', '', '99999999999999999']) {
-      await page.getByLabel('Cantidad solicitada').fill(value);
+      await page.getByLabel(/Cantidad (solicitada|que necesitas)/).fill(value);
       await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
       await page.locator('.purchase-submit').click();
       assert.equal(await page.locator('#order-review').isVisible(), false, `invalid quantity ${value}`);
       assert.equal(await page.locator('#order-form').evaluate(form => form.checkValidity()), false);
     }
-    await page.getByLabel('Cantidad solicitada').fill('500');
+    await page.getByLabel(/Cantidad (solicitada|que necesitas)/).fill('500');
     await page.getByLabel('Municipio de entrega', { exact: true }).fill('   ');
     await page.locator('.purchase-submit').click();
     assert.equal(await page.locator('#order-review').isVisible(), false);
@@ -207,7 +251,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('#copy-order').click();
     await page.waitForFunction(() => document.querySelector('#copy-status').textContent.includes('Mensaje copiado'));
     assert.equal(await page.evaluate(() => navigator.clipboard.readText()), message);
-    await page.getByLabel('Cantidad solicitada').fill('250');
+    await page.getByLabel(/Cantidad (solicitada|que necesitas)/).fill('250');
     assert.equal(await page.locator('#order-review').isVisible(), false);
     assert.equal(await page.locator('#order-message').inputValue(), '');
     await page.getByLabel('Para casa', { exact: true }).check();
@@ -221,24 +265,24 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#order-municipality').inputValue(), '');
     report.checks.push({ type: 'unconfigured-request', result: 'passed', covers: ['validation', 'keyboard submit and focus', 'restaurant/home', 'clipboard copy', 'no WhatsApp without phone', 'invalidated stale message', 'no saved customer data'] });
 
-    for (const entry of ['.card-actions a[href="/shiitake#producto"]']) {
-      await visit(page, 'index.html');
+    for (const entry of ['.catalog-inquiry a[href="/shiitake#producto"]']) {
+      await visit(page, 'setas');
       await page.locator(entry).click();
       await page.waitForURL('**/shiitake#producto');
       assert.equal(await page.locator('#order-form').isVisible(), true);
     }
-    await visit(page, 'index.html');
+    await visit(page, 'setas');
     await page.locator('.specimen-button[data-species="shiitake"]').click();
     assert.equal(await page.locator('#dialog-order').isVisible(), true);
     await page.locator('#dialog-order').click();
     await page.waitForURL('**/shiitake#producto');
-    await visit(page, 'index.html');
+    await visit(page, 'setas');
     await page.locator('.specimen-button[data-species="melena"]').click();
     assert.equal(await page.locator('#dialog-order').isVisible(), false);
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'melena');
-    report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['collection card', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
-    await visit(page, 'index.html');
+    report.checks.push({ type: 'purchase-entry', result: 'passed', covers: ['collection inquiry', 'shiitake dialog', 'other species without purchase link', 'dialog keyboard close'] });
+    await visit(page, 'setas');
     assert.equal(await page.locator('.species-card').count(), 3);
     await page.locator('.specimen-button[data-species="eryngii"]').click();
     assert.equal(await page.locator('#dialog-title').innerText(), 'Eryngii');
@@ -250,12 +294,12 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.species), 'eryngii');
     for (const [key, slug, name] of [['shiitake', 'shiitake', 'Shiitake'], ['melena', 'melena-de-leon', 'Melena de león'], ['eryngii', 'eryngii', 'Eryngii']]) {
-      await visit(page, 'home?pairing=bricolage');
+      await visit(page, 'setas?pairing=bricolage');
       await page.locator(`.card-discover[data-editorial="${key}"]`).click();
       assert.equal(new URL(page.url()).pathname, `/especies/${slug}`);
       assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
       assert.equal(await page.locator('h1').innerText(), name);
-      assert.equal(await page.locator('.editorial-sources li').count(), 5);
+      assert.equal(await page.locator('.editorial-sources li').count(), 6);
       assert.equal(await page.locator('.editorial-other').count(), 2);
       await page.locator('.editorial-toc a[href="#cocina"]').click();
       assert.equal(new URL(page.url()).hash, '#cocina');
@@ -270,8 +314,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       await visit(page, `especies/${slug}.html`);
       await page.screenshot({ path: path.join(out, `editorial-${slug}-390.png`) });
     }
-    report.checks.push({ type: 'editorial-species-journeys', result: 'passed', covers: ['all three catalogue links', 'legacy query preserved', 'five sources per page', 'links to other species', 'section navigation', 'print controls hidden', 'desktop and mobile covers'] });
-    await visit(page, 'home');
+    report.checks.push({ type: 'editorial-species-journeys', result: 'passed', covers: ['all three catalogue links', 'legacy query preserved', 'six sources per page', 'links to other species', 'section navigation', 'print controls hidden', 'desktop and mobile covers'] });
+    await visit(page, 'restaurantes');
     assert.equal(await page.locator('.chef-steps > li').count(), 2);
     await visit(page, 'recetas.html');
     assert.equal(await page.locator('.recipe-shortcut-meta').count(), 9);
@@ -279,7 +323,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'catalogue entry and three species dialogs', 'two chef steps', 'nine recipe shortcut summaries', 'pending-trial labels'] });
     // Fase 4: guía de preparación sobre la colección.
     const visibleSpecies = () => page.locator('.species-card:not([hidden]) h3').allTextContents();
-    await visit(page, 'index.html#coleccion');
+    await visit(page, 'setas#coleccion');
     assert.equal(await page.locator('#prep-guide').isVisible(), true);
     if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
     assert.deepEqual(await visibleSpecies(), ['Shiitake', 'Melena de león', 'Eryngii']);
@@ -296,7 +340,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.match(await page.locator('#filter-status').textContent(), /2 especies visibles para sopa o caldo/);
     await page.locator('.species-card:not([hidden]) .card-reason a.text-link').first().click();
     await page.waitForURL('**/recetas#receta-sopa');
-    await visit(page, 'index.html#coleccion');
+    await visit(page, 'setas#coleccion');
     if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
     await page.locator('[data-prep="saltear"]').click();
     await page.locator('#filter-reset').click();
@@ -315,19 +359,19 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.waitForURL('**/shiitake#producto');
     for (const width of [320, 390]) {
       await page.setViewportSize({ width, height: 1000 });
-      await visit(page, 'index.html#coleccion');
+      await visit(page, 'setas#coleccion');
       if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
       await page.locator('[data-prep="asar"]').click();
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= width, `guide overflow ${width}`);
       if (width === 390) await capture(page, 'guia-asar-390.png', '#coleccion');
     }
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await visit(page, 'index.html#coleccion');
+    await visit(page, 'setas#coleccion');
     if (!await page.locator('#prep-guide').evaluate(el => el.open)) await page.locator('#prep-guide summary').click();
     await page.locator('[data-prep="sopa"]').click();
     await capture(page, 'guia-sopa-1440.png', '#coleccion');
     report.checks.push({ type: 'preparation-guide', result: 'passed', covers: ['four preparations map to sourced uses', 'exactly three requested species', 'reset restores collection', 'recipe link from guide', 'keyboard', 'melena dialog has no purchase', 'overflow 320/390'] });
-    await visit(page, 'index.html?pairing=bricolage');
+    await visit(page, 'setas?pairing=bricolage');
     await page.locator('.card-consult').click();
     assert.equal(new URL(page.url()).searchParams.get('pairing'), 'bricolage');
     assert.equal(new URL(page.url()).hash, '#producto');
@@ -351,10 +395,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('details[open]').count(), 0);
     report.checks.push({ type: 'print', result: 'passed', covers: ['details expanded', 'form excluded', 'PDF generated', 'details restored'] });
 
-    for (const fragment of ['receta-arepa', 'receta-sopa', 'receta-patacones']) {
-      await visit(page, 'index.html#en-la-cocina');
-      await page.locator(`.kitchen-routes a[href="/recetas#${fragment}"]`).click();
-      await page.waitForURL(`**/recetas#${fragment}`);
+    for (const [route, fragment] of [['recetas', 'receta-arepa'], ['recetas-melena', 'melena-envuelto'], ['recetas-eryngii', 'eryngii-medallones']]) {
+      await visit(page, 'cocina');
+      await page.locator(`.recipe-card-grid a[href="/${route}#${fragment}"]`).click();
+      await page.waitForURL(`**/${route}#${fragment}`);
       assert.equal(await page.locator(`#${fragment} details`).evaluate(el => el.open), true);
     }
     await visit(page, 'recetas.html#receta-arepa');
@@ -375,14 +419,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'recipe-navigation-keyboard-print', result: 'passed', covers: ['three home recipe links', 'hash opens recipe', 'keyboard toggles instructions', 'shortcut reopens same hash', 'print expands and restores instructions'] });
 
     const brokenLinks = [];
-    for (const file of ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
+    for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
       await visit(page, file);
       const ids = await page.locator('[id]').evaluateAll(elements => elements.map(el => el.id));
       assert.equal(ids.length, new Set(ids).size, `${file} duplicate IDs`);
       const links = await page.locator('a[href]').evaluateAll(links => [...new Set(links.map(el => el.href))]);
       for (const link of links.filter(link => link.startsWith(base))) {
         const url = new URL(link);
-        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
+        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
         const filePath = path.join(root, cleanSources[url.pathname] || decodeURIComponent(url.pathname));
         if (!fs.existsSync(filePath)) { brokenLinks.push(link); continue; }
         if (url.hash && filePath.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
@@ -443,7 +487,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
       assert.match(msg, new RegExp(`Cantidad solicitada: ${grams} g`));
       assert.match(msg, /peso limpio aprovechable.*peso de compra/, "La consulta conserva la distinción entre necesidad neta y compra");
       assert.match(msg, new RegExp(`receta base usa ${grams} g`));
-      await rp.getByLabel('Cantidad solicitada').fill('400');
+      await rp.getByLabel(/Cantidad (solicitada|que necesitas)/).fill('400');
       assert.equal(await rp.locator('#order-review').isVisible(), false);
       assert.equal(await rp.locator('#order-municipality').inputValue(), 'Tenjo');
       assert.equal(await rp.locator('#order-weight').innerText(), '400 g');
@@ -658,7 +702,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
 
     const noJs = await contextWith(undefined, { javaScriptEnabled: false });
     const staticPage = await noJs.newPage();
-    await staticPage.goto(base + 'home');
+    await staticPage.goto(base + 'home#coleccion');
+    assert.equal(await staticPage.locator('.species-card').count(), 3);
+    assert.equal(await staticPage.locator('.card-recipes').count(), 3);
+    assert.equal(await staticPage.locator('#source-culinary').count(), 1);
+    await staticPage.goto(base + 'setas');
     assert.deepEqual(await staticPage.locator('.species-card:not([hidden]) h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
     assert.equal(await staticPage.locator('#prep-guide').isVisible(), false);
     assert.equal(await staticPage.locator('noscript a[href="/shiitake"]').isVisible(), true);
@@ -674,7 +722,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'no-js-fallback', result: 'passed' });
     const chefContext = await contextWith();
     const chefPage = await chefContext.newPage();
-    await visit(chefPage, 'index.html#para-chefs');
+    await visit(chefPage, 'restaurantes#para-chefs');
     await chefPage.locator('#para-chefs a[href*="/recetas"]').click();
     await chefPage.locator('#receta-arepa input[value="3"]').check();
     await chefPage.locator('#receta-arepa .recipe-cta a').click();
@@ -689,17 +737,17 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await capture(chefPage, 'chef-consulta-1440.png', '#producto');
     await visit(chefPage, 'shiitake.html?purpose=invalid#producto');
     assert.equal(await chefPage.locator('input[name="purpose"][value="casa"]').isChecked(), true);
-    await visit(chefPage, 'index.html');
+    await visit(chefPage, 'restaurantes');
     await capture(chefPage, 'chef-recorrido-1440.png', '#para-chefs');
     await chefPage.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     await chefPage.screenshot({ path: path.join(out, 'portada-1440.png') });
     await chefPage.setViewportSize({ width: 390, height: 900 });
-    await visit(chefPage, 'index.html');
+    await visit(chefPage, 'setas');
     await chefPage.screenshot({ path: path.join(out, 'portada-390.png') });
     await chefContext.close();
     report.checks.push({ type: 'chef-journey', result: 'passed', covers: ['chef entry to recipe', '×3 transfers 900 g', 'restaurant purpose retained', 'reviewed message', 'no WhatsApp without phone', 'invalid purpose uses home default'] });
     assert.deepEqual(report.browserErrors, []);
-    report.sources = ['index.html', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'species-editorial.css', 'editorial.js', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html', 'home-catalog.css', 'commercial.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'recipe-data.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
+    report.sources = ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'public-pages.css', 'home-navigation.js', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'species-editorial.css', 'editorial.js', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html', 'home-catalog.css', 'commercial.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'recipe-data.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
     fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
     console.log(JSON.stringify({ result: 'passed', checks: report.checks.length, renders: report.renders.length, browserErrors: report.browserErrors.length, auditDirectory: out }));
   } finally { await browser.close(); }

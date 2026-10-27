@@ -1,4 +1,6 @@
 'use strict';
+// Expand a card on demand; fragment links and print handlers restore full recipes.
+document.querySelectorAll('.recipe-grid .recipe-details').forEach(details => { details.open = false; });
 // Ingredients are readable at the base quantity without JavaScript.
 (() => {
   const number = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 });

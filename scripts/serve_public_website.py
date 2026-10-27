@@ -12,11 +12,30 @@ class Handler(SimpleHTTPRequestHandler):
         self.source = source
         super().__init__(*args, **kwargs)
 
+    def redirect_retired_page(self):
+        parsed = urlsplit(self.path)
+        if parsed.path not in {'/proyecto', '/proyecto.html'}:
+            return False
+        self.send_response(301)
+        self.send_header('Location', '/home' + ('?' + parsed.query if parsed.query else ''))
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+        return True
+
+    def do_GET(self):
+        if not self.redirect_retired_page():
+            super().do_GET()
+
+    def do_HEAD(self):
+        if not self.redirect_retired_page():
+            super().do_HEAD()
+
     def translate_path(self, path):
         route = unquote(urlsplit(path).path)
         mapping = {'/': 'design-system.html' if self.source else 'index.html',
                    '/home': 'index.html' if self.source else 'home.html',
                    '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html',
+                   '/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html',
                    '/manual': 'manual.html', '/typography': 'typography.html',
                    **{f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}}
         return super().translate_path('/' + mapping[route] if route in mapping else path)
