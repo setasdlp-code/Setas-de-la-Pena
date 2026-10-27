@@ -58,7 +58,7 @@ Diseñado para láminas de especies y documentación editorial. Una ilustración
 
 ## 4. Perfil `culinary` (cocina, mercado y packaging)
 
-Diseñado para fichas de ingrediente, recetas, consulta para chefs, presentaciones y empaque. «Conoce la seta. Imagina el plato.» es el principio de lectura: especie → preparación → siguiente paso.
+Diseñado para fichas de ingrediente, recetas, consulta para chefs, presentaciones y empaque. «Conocer la seta. Imaginar el plato.» es el principio de lectura: especie → preparación → siguiente paso.
 
 - **Contratos obligatorios:**
   - Papel `--surface-page`, tinta `--text-primary`, firma/acción `--brand-primary`. Terracota gráfica `--brand-accent`; texto de acento `--brand-accent-text`. Los valores vienen de los tokens vigentes, no de hex históricos.

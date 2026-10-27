@@ -1,6 +1,6 @@
 # Setas de la Peña — Identidad comercial v1.1
 
-Edición: **12 de octubre de 2026**. Público: **chefs primero; también hogares**.
+Edición: **12 de octubre de 2026**; voz y frase principal revisadas el **27 de octubre de 2026**. Público: **chefs primero; también hogares**.
 
 [Manual visual](../08_brand/ds-2026/brand-kit/index.html) · [Investigación y decisiones](brand/competitive-research-2026-10.md) · [Recursos](../08_brand/ds-2026/brand-kit/README.md) · [DS vigente](../08_brand/ds-2026/DESIGN_SYSTEM.md)
 
@@ -19,7 +19,7 @@ Esta definición editorial no demuestra disponibilidad, abastecimiento regular o
 | Nombre | **Setas de la Peña**, con ñ y tilde. Sin abreviar a SdP en piezas comerciales. |
 | Frase principal | **Del micelio a la mesa.** Portadas, presentación y cierre de piezas. |
 | Descriptor | **Hongos para cocinar con criterio.** Presentación comercial y materiales para cocina. |
-| Titular de entrada | **Conoce la seta. Imagina el plato.** Campañas y presentación del recorrido; subordinado a la firma principal. |
+| Titular de entrada | **Conocer la seta. Imaginar el plato.** Campañas y presentación del recorrido; subordinado a la firma principal. |
 | Firma territorial | **Tenjo · Cundinamarca · Colombia.** Origen del proyecto, no garantía de origen de cada lote. |
 | Expresión de oficio | **Cultivar. Observar. Aprender.** Sección de proceso, no segunda frase principal. |
 
@@ -39,27 +39,27 @@ Pauta para la conversación profesional: **especie/plato, cantidad solicitada, p
 
 | Para chefs | Para hogares |
 | --- | --- |
-| «Hablemos de tu cocina.» | «¿Qué quieres cocinar?» |
-| «Consulta cantidades y presentaciones de shiitake.» | «Elige una receta y calcula cuánto shiitake necesitas.» |
+| «Hablemos del plato.» | «¿Qué cocinar en casa?» |
+| «Consultar cantidades y presentaciones de shiitake.» | «Elegir una receta y calcular cuánto shiitake hace falta.» |
 | Ficha culinaria y consulta de volumen | Receta, factor ×1/×2/×3 y consulta para casa |
 
 Ambos recorridos confirman precio, disponibilidad y entrega antes del pedido. No existe una aceptación automática de compra.
 
 ## 3. Voz y mensajes
 
-Tres ideas: **conocer el ingrediente, cocinarlo con intención y comprender su origen**. Voz cercana, cuidadosa y precisa. «Tú», acciones directas y titulares breves. Explicar vocabulario técnico cuando ayuda; no encabezar una pieza comercial con C:N, telemetría o eficiencia biológica.
+Tres ideas: **conocer el ingrediente, cocinarlo con intención y comprender su origen**. Voz cercana, cuidadosa y precisa. Sin tuteo ni ustedeo: primera persona del plural para la marca, frases centradas en el producto y acciones en infinitivo (`.claude/brand-voice-guidelines.md` §3). Titulares breves. Explicar vocabulario técnico cuando ayuda; no encabezar una pieza comercial con C:N, telemetría o eficiencia biológica.
 
 | Contexto | Texto de referencia |
 | --- | --- |
 | Presentación | «Setas de la Peña. Hongos para cocinar con criterio, desde Tenjo, Colombia.» |
-| Introducción web | «Elige la seta por su sabor y textura. Después, busca una preparación para tu carta o tu casa y consulta la cantidad que necesitas.» |
-| Para chefs | «Cuéntanos qué necesitas para tu cocina. Consulta cantidades, presentaciones y condiciones de entrega.» |
+| Introducción web | «La seta se elige por su sabor y textura. Después vienen la preparación, para la carta o para casa, y la cantidad de la consulta.» |
+| Para chefs | «¿Para qué plato y qué servicio? Consultar cantidades, presentaciones y condiciones de entrega.» |
 | CTA general | «Consultar disponibilidad» |
 | CTA restaurante | «Consultar para mi cocina» |
 | CTA mientras solo se prepara un mensaje | «Preparar mi consulta»; aclarar que preparar o copiar no envía el mensaje |
 | CTA receta | «Quiero cocinar esto» |
-| Precio pendiente | «Precio por confirmar. Prepara tu consulta y revisa las condiciones antes de pedir.» |
-| Sin stock confirmado | «Disponibilidad por confirmar. Consulta antes de planear tu pedido.» |
+| Precio pendiente | «Precio por confirmar. Preparar la consulta y revisar las condiciones antes de pedir.» |
+| Sin stock confirmado | «Disponibilidad por confirmar. Consultar antes de planear el pedido.» |
 | Imagen | «Ilustración de especie» / «Ilustración culinaria» |
 | Adaptación | «Adaptación de fuentes publicadas, pendiente de prueba en cocina.» |
 

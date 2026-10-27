@@ -510,7 +510,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 @media (max-width: 650px) {
   :is(.home-page, .species-page, .recipes-page) .masthead { flex-direction: row; align-items: center; gap: 12px; padding-block: 16px; }
-  :is(.home-page, .species-page, .recipes-page) .masthead .wordmark { font-size: clamp(24px, 6.7vw, 30px); gap: 5px; }
+  :is(.home-page, .species-page, .recipes-page) .masthead .wordmark { font-size: clamp(28px, 7.6vw, 30px); gap: 5px; } /* keeps the horizontal signature at its 180 px minimum */
   :is(.home-page, .species-page, .recipes-page) .masthead nav { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; border-top: var(--rule-hairline); padding-top: 12px; }
   :is(.home-page, .species-page, .recipes-page) .masthead nav a { padding: 8px 12px; }
   :is(.home-page, .species-page, .recipes-page) .masthead nav .nav-inquiry { grid-column: 1 / -1; justify-content: space-between; margin-top: 4px; }

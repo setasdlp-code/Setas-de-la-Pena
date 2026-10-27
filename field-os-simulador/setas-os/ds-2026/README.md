@@ -9,7 +9,7 @@ El **Design System canónico** unificado de Setas de la Peña: un solo núcleo d
 
 ## Mercado y cocina · 2026.1.5
 
-«Conoce la seta. Imagina el plato.» se traduce en componentes CSS reutilizables:
+«Conocer la seta. Imaginar el plato.» se traduce en componentes CSS reutilizables:
 
 - `.sdp-market-intro`: propuesta, explicación y acciones legibles.
 - `.sdp-ingredient-sheet`: especie, perfil con fuente, preparación y consulta.

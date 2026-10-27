@@ -20,7 +20,7 @@ URL local: `http://127.0.0.1:4187/08_brand/ds-2026/brand-kit/`. El servidor perm
 - `build_wordmarks.py`: generador de contornos; requiere `fontTools` en las herramientas. No es dependencia de la web.
 - `brand-kit.css`: composición del manual; importa tokens y fuentes desde `../market.css`.
 
-La edición 1.1 concreta la propuesta «Conoce la seta. Imagina el plato», documenta decisiones de diez marcas y añade una pareja editorial y una presentación para chefs. No cambia las firmas, las ilustraciones aprobadas o los tokens. El manual diferencia la pauta comercial de cinco datos del formulario web actual; preparar un mensaje no lo envía.
+La edición 1.1 concreta la propuesta «Conocer la seta. Imaginar el plato», documenta decisiones de diez marcas y añade una pareja editorial y una presentación para chefs. No cambia las firmas, las ilustraciones aprobadas o los tokens. El manual diferencia la pauta comercial de cinco datos del formulario web actual; preparar un mensaje no lo envía.
 
 Regenerar firmas si cambian las fuentes o primitivas:
 

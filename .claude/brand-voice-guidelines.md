@@ -1,8 +1,8 @@
 # Guía de Voz de Marca — Setas de la Peña
 
-**Versión:** 2.2 · **Fecha:** 2026-10-23
+**Versión:** 2.3 · **Fecha:** 2026-10-27
 **Reemplaza a:** v1.0 (2026-05-11), archivada en `brand-voice-guidelines-2026-10-17.md`.
-**Alcance:** voz y tono (cómo se escribe). Identidad visual (paleta, tipografía, logos) vive en `docs/brand/DESIGN_SYSTEM_CANONICAL.md` y `08_brand/field-os-identity/`; aquí solo se referencia.
+**Alcance:** voz y tono (cómo se escribe). La identidad visual comercial (paleta, tipografía, firma) vive en `docs/brand-guidelines.md` y `08_brand/ds-2026/`; la de Setas OS, en `docs/brand/DESIGN_SYSTEM_CANONICAL.md` y `08_brand/field-os-identity/`. Aquí solo se referencia.
 **Uso:** `/brand-voice:enforce-voice` carga este archivo automáticamente.
 
 ## Resumen de confianza
@@ -15,7 +15,7 @@
 | 4. Tono por contexto | Media | Síntesis; solo empaque y UI tienen regla explícita |
 | 5. Vocabulario | Alta (evitar) / Media (preferido) | Regla del fundador 2026-05-11; resuelto: «orellana» |
 | 6. Ejemplos | Baja | Modelos escritos por el sistema, no extraídos de material publicado |
-| 7. Tagline | Alta | Decisión directa del fundador |
+| 7. Frase principal y descriptor | Alta | Decisión directa del fundador (2026-10-27) |
 
 ---
 
@@ -139,7 +139,7 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 Los ejemplos son modelos de redacción, no confirmaciones de capacidad, stock, parámetros o condiciones comerciales. Esos datos deben verificarse antes de publicar.
 
 **Presentación de marca**
-> Setas de la Peña. Cultivo en sombra. Tenjo, Cundinamarca.
+> Setas de la Peña. Del micelio a la mesa. Hongos para cocinar con criterio, desde Tenjo, Cundinamarca.
 
 **Consulta de un chef**
 > Hola, [nombre]. Somos Setas de la Peña, en Tenjo. ¿Qué cantidad de orellana requiere el servicio y para qué fecha? Con esa información revisamos disponibilidad y condiciones de entrega.
@@ -179,24 +179,25 @@ Los ejemplos son modelos de redacción, no confirmaciones de capacidad, stock, p
 
 ---
 
-## 7. Tagline
+## 7. Frase principal y descriptor
 
-**Oficial (decisión del fundador, 2026-10-17): «Cultivo en sombra».**
+**Frase principal (decisión del fundador, 2026-10-27): «Del micelio a la mesa.»**
+**Descriptor: «Hongos para cocinar con criterio.»**
 
-Es literal: describe el método, no una atmósfera. Para que se lea sobrio y no esotérico:
+Coincide con `docs/brand-guidelines.md` §1. Sustituye la decisión del 2026-10-17 que hacía de «Cultivo en sombra» el tagline oficial.
 
-1. Va con un dato concreto al lado cuando el espacio lo permite: «Cultivo en sombra · Tenjo, 2.592 msnm».
+1. La frase principal va en portadas, titular de la web, presentación y cierre de piezas. El descriptor la acompaña en presentación comercial, metadatos y materiales para cocina; no compite con ella.
 2. Sin punto de exclamación, sin puntos suspensivos, sin mayúsculas decorativas.
-3. Nunca se explica con metáforas («la sombra que susurra», «el silencio del bosque»). Si hay que explicarlo, se explica con el método: cultivo controlado, sin luz directa, a la sombra de la Peña de Juaica.
-4. No va junto a imágenes de niebla, bosque encantado ni luz mística. Fotografía: producto y cámara de cultivo, luz natural difusa.
+3. «Con criterio» describe cómo se acerca cada especie a la cocina (lámina, usos, receta y consulta). No se usa como promesa sobre la cosecha («cosechadas con criterio») ni sustituye datos de lote.
+4. Si hay espacio para un dato, va la firma territorial: «Del micelio a la mesa · Tenjo, Cundinamarca».
 
-**Descriptor extendido** (etiqueta frontal, B2B): «Cultivadas a la sombra de la Peña de Juaica». Se usa como línea de apoyo, no compite con el tagline.
+**«Cultivo en sombra»** queda como descriptor técnico del método (§5), no como frase de marca. Se explica con el método: cultivo controlado, sin luz directa. Nunca con metáforas ni junto a imágenes de niebla o luz mística.
 
-Descartados por ahora: «Cultivadas en la Sabana. Cosechadas con criterio.» («con criterio» no se puede verificar) y «Cosecha bajo pedido» (es una condición comercial, no un tagline).
+Descartados: «Cultivadas en la Sabana. Cosechadas con criterio.» (promete una cosecha que no se puede verificar) y «Cosecha bajo pedido» (es una condición comercial, no una frase de marca).
 
 ## 8. Identidad visual (solo referencia)
 
-La fuente vigente es `docs/brand/DESIGN_SYSTEM_CANONICAL.md` (v3.0, «Activo y Vinculante»). Esta guía no duplica paleta, tipografía ni logos. Las tres fuentes disponibles discrepan, ver «Conflictos entre fuentes» al final. Fotografía: sin guía propia; mientras tanto, luz natural difusa, fondo neutro y producto en primer plano.
+Piezas comerciales (web, empaque, fichas, redes): `docs/brand-guidelines.md` y los tokens de `08_brand/ds-2026/` (Gaya + IBM Plex Sans/Mono; papel, tinta, musgo y terracota). Setas OS y material operativo: `docs/brand/DESIGN_SYSTEM_CANONICAL.md` (v3.0), cuyo encabezado remite lo comercial a las dos fuentes anteriores. Esta guía no duplica paleta, tipografía ni logos. Fotografía: sin guía propia; mientras tanto, luz natural difusa, fondo neutro y producto en primer plano.
 
 ---
 
@@ -208,15 +209,14 @@ La fuente vigente es `docs/brand/DESIGN_SYSTEM_CANONICAL.md` (v3.0, «Activo y V
 2. ~~Tratamiento~~ **Actualizado 2026-10-23:** sin tuteo ni ustedeo. Sustituye la decisión de tutear a todos del 2026-10-17. La marca conserva la primera persona del plural; con chefs, registro técnico-culinario; con socios, técnico-financiero. Ver §3.
 
 ### Prioridad media
-3. ~~Tagline~~ **Resuelto 2026-10-17:** «Cultivo en sombra». Ver §7.
+3. ~~Tagline~~ **Actualizado 2026-10-27:** frase principal «Del micelio a la mesa.», descriptor «Hongos para cocinar con criterio.». Sustituye «Cultivo en sombra» (2026-10-17). Ver §7.
 4. **Microcopy de interfaz en Setas OS.** Las fuentes no cubren microcopy de interfaz más allá de la auditoría (8/10, «algunos rótulos pueden ser más accionables»). Recomendación: rótulos con verbo en infinitivo («Registrar cosecha», «Consultar disponibilidad»).
 5. **Fotografía:** sin guía propia. Recomendación: sesión piloto de un día (etiqueta + web + 3 meses de redes).
 6. **Línea funcional/medicinal (Reishi, Cordyceps, Melena de león).** Exigiría registro INVIMA y copy sin promesas terapéuticas. Pendiente decisión de producto.
 7. **Handles de redes oficiales** (`@reallygreatsite` es de plantilla). Reservar variantes de `@setasdelapena`.
 
-### Conflictos entre fuentes (fuera de voz, para resolver en el sistema visual)
-- **Paleta:** tres versiones: v1.0 (Terracota `#8C4026`, Oliva `#4C5B3A`), Manual Canónico v3.0 (impreso `#8C4026`/`#4C5B3A`, digital `#A85C32`/`#5B6B44`) y `docs/brand-guidelines.md` (Moss `#2E3B2F`, Coral `#B8614D`). El Manual Canónico v3.0 se declara «Activo y Vinculante»; recomiendo tratarlo como fuente única.
-- **Tipografía de cuerpo:** Open Sans (v1.0), PP Object Sans (brand-guidelines), IBM Plex Sans/Mono (auditoría 2026-08). Gaya como display coincide en todas.
+### Conflictos entre fuentes (resueltos 2026-10-27)
+- **Paleta y tipografía:** las piezas comerciales usan los tokens de DS-2026 (`moss-700 #2E3B2F`, `coral-500 #B8614D`, Gaya + IBM Plex Sans/Mono). Las paletas de v1.0 y del Manual Canónico v3.0 quedan para Setas OS y como antecedente; no se trasladan a piezas comerciales.
 
 ---
 
@@ -224,7 +224,7 @@ La fuente vigente es `docs/brand/DESIGN_SYSTEM_CANONICAL.md` (v3.0, «Activo y V
 
 | Fuente | Peso |
 |---|---|
-| `docs/brand/DESIGN_SYSTEM_CANONICAL.md` §2 (voz y registro, v3.0) | Principal, vinculante |
+| `docs/brand/DESIGN_SYSTEM_CANONICAL.md` §2 (voz y registro, v3.0) | Principal para Setas OS; el tratamiento sigue §3 de esta guía |
 | `08_brand/field-os-identity/guidelines/market-voice*.html` (FOS-06.4/06.5) | Principal para cara al cliente |
 | `.claude/brand-voice-guidelines-2026-10-17.md` (v1.0, decisiones del fundador 2026-05-11) | Base de atributos, vocabulario y tono |
 | `knowledge_base/08_brand/identity.md` (confianza media, 2026-07) | Apoyo |
@@ -236,6 +236,8 @@ Sin transcripciones de llamadas ni PII en las fuentes procesadas. No se consulta
 
 | Fecha | Cambio |
 |---|---|
+| 2026-10-27 | v2.3: §8 y «Alcance» remiten lo comercial a `docs/brand-guidelines.md` + DS-2026; conflictos de paleta y tipografía cerrados. |
+| 2026-10-27 | v2.3: frase principal «Del micelio a la mesa.» y descriptor «Hongos para cocinar con criterio.», alineados con `docs/brand-guidelines.md` §1. «Cultivo en sombra» pasa a descriptor del método. |
 | 2026-10-23 | v2.2: tratamiento sin tuteo ni ustedeo; primera persona del plural y registros técnico-culinario y técnico-financiero. Sustituye la decisión de tratamiento del 2026-10-17 y alinea manual y reglas de mercado. |
 | 2026-05-11 | v1.0 inicial; decisiones del fundador (Sombra y Silencio, evitar lenguaje místico) |
 | 2026-10-17 | Decisión: tagline oficial «Cultivo en sombra», con reglas para mantenerlo sobrio. |

@@ -119,6 +119,10 @@ Titular del Home (25 de octubre de 2026): «Cultivo en sombra.» pasa a titular 
 
 Ajuste del 26 de octubre de 2026: el descriptor bajo el titular pasa a «Shiitake, melena de león y eryngii, desde Tenjo, Cundinamarca.» para que la portada diga qué se ofrece y desde dónde (hallazgo de la auditoría de marca). «Cultivo en sombra.» sigue como titular. «Hongos para cocinar con criterio.» se conserva como descriptor de marca en metadatos y manual. Se escribe «desde Tenjo» y no «cultivados en Tenjo» porque la procedencia de una cosecha requiere registros de lote.
 
+Titular del Home (27 de octubre de 2026): el titular pasa de «Cultivo en sombra.» a «Del micelio a la mesa.», la frase principal decidida por el fundador; «Hongos para cocinar con criterio.» sigue como descriptor en metadatos y manual. La portada, el título de la página y la guía de voz v2.3 usan ya la misma frase. «Cultivo en sombra» queda como descriptor del método.
+
+Ajustes de marca del 27 de octubre de 2026 (revisión de marca): la línea superior del Home pasa a «Hongos para cocinar con criterio.» para no repetir el titular; las fichas de especie la conservan. La firma de la cabecera móvil sube a `clamp(28px, 7.6vw, 30px)` y mide 186 px a 320 px de ancho, sobre el mínimo de 180 px. La franja `ocre` usa `--sand-500` en lugar de `--warning`, que queda para estados. La imagen social (`assets/social/card.html`) muestra dos láminas separadas de especies de la web (shiitake y melena de león), sin orellana, con pie «Las setas · Recetas · Para chefs» sin imperativos; se regenera con `node scripts/render_public_social.cjs`.
+
 Ajuste solicitado del Home: se elimina la sección «05 · Antes de consultar» (`#consultas`) y el enlace «Preguntas sobre tu consulta» del pie. Se conservan el pie de marca, las referencias culinarias y los accesos a la ficha de shiitake.
 
 ## Cuaderno editorial de especies
