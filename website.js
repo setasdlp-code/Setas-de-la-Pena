@@ -51,14 +51,14 @@ document.querySelectorAll('[data-species]').forEach(button => button.addEventLis
 const preparations = {
   sopa: { label: 'sopa o caldo', reasons: {
     shiitake: { text: 'Para sopas y otras preparaciones cocinadas.', link: ['/recetas#receta-sopa', 'Ver la sopa de coco y jengibre'] },
-    melena: { text: 'En sopa, como propuesta para explorar su textura.' } } },
+    melena: { text: 'Melena en un mote de ñame y ahuyama.', link: ['/recetas-melena#melena-mote', 'Cocinar el mote de melena'] } } },
   saltear: { label: 'saltear', reasons: {
     shiitake: { text: 'Nuestras recetas de arepa y patacones lo saltean.', link: ['/recetas#receta-arepa', 'Ver la arepa con shiitake'] },
-    eryngii: { text: 'Eryngii cortado a lo largo para saltear.' } } },
+    eryngii: { text: 'Láminas de eryngii doradas a la plancha, con papas chorreadas.', link: ['/recetas-eryngii#eryngii-laminas', 'Cocinar las láminas de eryngii'] } } },
   asar: { label: 'asar', reasons: {
-    eryngii: { text: 'Eryngii en rodajas a la parrilla, como propuesta de preparación.' } } },
+    eryngii: { text: 'Cintas de eryngii a la parrilla, con panela y limón mandarino.', link: ['/recetas-eryngii#eryngii-chuzos', 'Cocinar los chuzos de eryngii'] } } },
   desmenuzar: { label: 'desmenuzar o en piezas', reasons: {
-    melena: { text: 'Desmenuzada o preparada en piezas.' } } }
+    melena: { text: 'Melena en tajadas, dentro de un envuelto de maíz y pipián.', link: ['/recetas-melena#melena-envuelto', 'Cocinar el envuelto de melena'] } } }
 };
 const filterState = { prep: 'any' };
 function applyFilters() {
@@ -86,7 +86,10 @@ function applyFilters() {
       if (entry.link) {
         const link = document.createElement('a');
         link.className = 'text-link';
-        link.href = entry.link[0];
+        const target = new URL(entry.link[0], location.origin);
+        const pairing = new URLSearchParams(location.search).get('pairing');
+        if (['mono', 'bricolage', 'libre'].includes(pairing)) target.searchParams.set('pairing', pairing);
+        link.href = target.href;
         link.textContent = `${entry.link[1]} ↗`;
         reason.append(' ', link);
       }

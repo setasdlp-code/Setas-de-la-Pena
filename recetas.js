@@ -1,4 +1,6 @@
 'use strict';
+// Expand a card on demand; fragment links and print handlers restore full recipes.
+document.querySelectorAll('.recipe-grid .recipe-details').forEach(details => { details.open = false; });
 document.querySelector('#year').textContent = new Date().getFullYear();
 function revealRecipe() {
   const recipe = document.getElementById(location.hash.slice(1));

@@ -138,3 +138,9 @@ El recetario de melena de león vive en `/recetas-melena`, con seis propuestas, 
 ## Voz sin tratamiento directo · 23 de octubre de 2026
 
 Portada, ficha de shiitake, recetas y mensajes dinámicos siguen la guía de voz v2.2: sin tuteo ni ustedeo, acciones en infinitivo y frases centradas en ingrediente, preparación y pedido. La primera persona del cliente en el borrador de consulta se conserva porque identifica a quien solicita el producto. Se mantienen cantidades, temperaturas, tiempos, fuentes y avisos de seguridad; el cambio de redacción no valida recetas ni datos comerciales.
+
+## Recuperación de la web publicada · 27 de octubre de 2026
+
+Esta rama incorpora a la fuente la web publicada en Cloudflare Pages, incluida la portada editorial del despliegue `4874a80f`, el catálogo, las páginas independientes y los cuatro grabados de Mundo micelar. El despliegue anterior `ccc3bd34` añadió contenido de trazabilidad y ajustes de preparación y conservación; se preservan sus textos y fuentes. `/proyecto` redirige a `/home` y las recetas y fichas conservan sus rutas.
+
+La integración parte de `origin/main` `95c1dc8d` y conserva los cambios posteriores de Setas OS y las reglas compartidas de marca de esa base. El texto publicado se recupera tal como estaba, incluyendo formas de tratamiento directo que difieren de la guía v2.2; esa discrepancia requiere una revisión editorial posterior. La exportación de esta rama no es idéntica byte a byte a la publicación: mantiene recursos y ajustes de marca posteriores de `main`. Una exportación o despliegue futuro debe revisarse antes de reemplazar producción.

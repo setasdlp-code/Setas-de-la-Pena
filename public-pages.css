@@ -1,0 +1,136 @@
+/* Shared page navigation and recipe grids, including full recipe collections. */
+.public-content-page .page-intro { padding-block: 36px 28px; }
+.public-content-page h1 { font: 500 clamp(40px, 5vw, 68px)/1.08 var(--font-editorial); letter-spacing: -.025em; margin: 0 0 20px; text-wrap: balance; }
+.public-content-page .collection { padding-top: 36px; }
+.public-content-page .catalog-index h1 { font-size: clamp(36px, 4vw, 52px); margin: 0; }
+.public-content-page .project-summary, .public-content-page .field-notes, .public-content-page .chef-route { margin-block: 36px 64px; border-top: 0; }
+.public-content-page .project-summary { min-height: 42vh; }
+.page-directory { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; padding-bottom: 36px; }
+.page-directory > a { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: var(--rule-hairline); padding-block: 20px; text-decoration: none; }
+.page-directory h2 { font: 500 25px/1.2 var(--font-editorial); margin: 0; }
+.page-directory > a:hover h2 { text-decoration: underline; text-underline-offset: 5px; }
+.recipe-collections { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px 28px; margin-top: 24px; }
+.recipe-collections a { min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
+.recipe-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 32px; padding-bottom: 64px; }
+.recipe-tile { min-width: 0; border-bottom: var(--rule-hairline); }
+.recipe-tile > a { display: flex; flex-direction: column; height: 100%; text-decoration: none; color: inherit; }
+.recipe-tile img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; mix-blend-mode: multiply; }
+.recipe-tile-copy { padding-block: 20px 24px; }
+.recipe-tile h2 { font: 500 clamp(24px, 2.1vw, 30px)/1.2 var(--font-editorial); margin: 10px 0 20px; text-wrap: balance; }
+.recipe-tile a:hover h2 { text-decoration: underline; text-underline-offset: 5px; }
+.kitchen-discovery .kitchen-routes { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.kitchen-discovery .recipe-discovery--lead { grid-row: auto; border-right: 0; padding-right: 0; }
+.kitchen-discovery .recipe-feature { display: block; }
+.kitchen-discovery .recipe-artwork, .kitchen-discovery .recipe-discovery--lead .recipe-artwork { max-width: none; margin: 0 0 20px; }
+.kitchen-discovery .recipe-feature h3, .kitchen-discovery .recipe-discovery--lead h3 { font-size: clamp(25px, 2.2vw, 32px); }
+@media screen {
+  .recipes-page .recipe-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; align-items: start; }
+  .recipes-page .recipe-grid > .recipe { display: block; min-width: 0; padding-block: 24px; }
+  .recipes-page .recipe-grid .recipe-heading { max-width: none; }
+  .recipes-page .recipe-grid .recipe-heading h2 { font-size: clamp(25px, 2.1vw, 32px); }
+  .recipes-page .recipe-grid .recipe-method { grid-template-columns: 1fr; }
+  .recipes-page .recipe-grid .recipe-ingredients { columns: 1; }
+  .recipes-page .recipe-grid .recipe-illustration img { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
+  .recipes-page .recipe-grid .recipe-scale-options { flex-wrap: wrap; }
+  .recipes-page .recipe-grid .recipe-cta .sdp-btn { white-space: normal; }
+  .recipes-page .recipe-grid .recipe-illustration { margin-inline: 0; }
+}
+@media (max-width: 1000px) {
+  .page-directory, .recipe-card-grid, .kitchen-discovery .kitchen-routes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media screen and (max-width: 1000px) {
+  .recipes-page .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+  .page-directory, .recipe-card-grid, .kitchen-discovery .kitchen-routes { grid-template-columns: 1fr; }
+  .public-content-page .page-intro { padding-block: 28px 20px; }
+  .recipe-card-grid { gap: 28px; }
+  .public-content-page .field-notes h1 { font-size: 38px; }
+  .page-directory { padding-top: 12px; }
+}
+@media screen and (max-width: 650px) {
+  .recipes-page .recipe-grid { grid-template-columns: 1fr; }
+}
+@media print {
+  .recipe-card-grid { display: block; }
+  .recipe-tile { break-inside: avoid; }
+  .page-directory { display: none; }
+}
+/* Recipe suggestions in the product sheet use the same card grid. */
+.cooking-ideas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.cooking-ideas article, .cooking-ideas article:first-child { display: block; padding-block: 20px; border-top: var(--rule-hairline); min-width: 0; }
+.cooking-ideas .cooking-illustration { width: 100%; margin: 0 0 20px; }
+.cooking-ideas .cooking-illustration img { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
+@media (max-width: 1000px) { .cooking-ideas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .cooking-ideas { grid-template-columns: 1fr; } }
+
+/* El mundo micelar: a reading page within the botanical brand system. */
+.micelar-intro { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .8fr); align-items: center; gap: 64px; padding-block: 56px 40px; }
+.micelar-page .micelar-intro h1 { font: 500 clamp(54px, 6.5vw, 88px)/1.04 var(--font-editorial); letter-spacing: -.03em; margin-block: 24px; }
+.micelar-lede { max-width: 40ch; font: 400 23px/1.5 var(--font-editorial); margin: 0; text-wrap: pretty; }
+.micelar-intro figure { margin: 0; }
+.micelar-intro img { display: block; width: 100%; height: auto; max-height: 350px; object-fit: contain; mix-blend-mode: multiply; }
+.micelar-intro figcaption { padding-top: 16px; margin-top: 16px; border-top: var(--rule-hairline); color: var(--text-secondary); font-size: 12px; }
+.micelar-index { display: flex; flex-wrap: wrap; gap: 8px 32px; padding-block: 12px; border-block: var(--rule-heavy); }
+.micelar-index a { display: inline-flex; align-items: center; min-height: 44px; font: 400 16px/1.5 var(--font-sans); text-underline-offset: 5px; }
+.micelar-chapter { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.55fr); gap: 64px; padding-block: 56px; border-bottom: var(--rule-hairline); }
+.micelar-chapter h2 { font: 500 clamp(32px, 3.5vw, 46px)/1.12 var(--font-editorial); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.micelar-aside { min-width: 0; }
+.micelar-illustration { margin: 32px 0 0; }
+.micelar-illustration img { display: block; width: 100%; height: auto; max-height: 360px; object-fit: contain; mix-blend-mode: multiply; }
+.micelar-illustration figcaption { margin-top: 16px; font: 400 12px/1.6 var(--font-sans); color: var(--text-secondary); }
+.micelar-illustration--wide { margin-block: 28px; }
+.micelar-illustration--wide img { max-height: none; }
+.micelar-prose { min-width: 0; }
+.micelar-prose > p { max-width: 65ch; font: 400 17px/1.8 var(--font-sans); margin: 0 0 20px; text-wrap: pretty; }
+.micelar-prose > p:last-child { margin-bottom: 0; }
+.micelar-prose > p.t-small { font-size: 14px; color: var(--text-secondary); }
+.micelar-prose sup a { font-size: 12px; text-underline-offset: 3px; }
+.micelar-note { border-left: 2px solid var(--text-primary); padding: 4px 0 4px 24px; margin-top: 32px; }
+.micelar-note p { font: 400 24px/1.5 var(--font-editorial); margin: 0; max-width: 40ch; }
+.micelar-stages { list-style: none; padding: 0; margin: 32px 0; }
+.micelar-stages li { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 24px; padding-block: 20px; border-top: var(--rule-hairline); }
+.micelar-stages .t-label { grid-row: span 2; padding-top: 5px; font-size: 12px; }
+.micelar-stages h3, .micelar-species h3 { font: 500 26px/1.25 var(--font-editorial); margin: 0; }
+.micelar-stages p { grid-column: 2; font: 400 16px/1.7 var(--font-sans); margin: 0; }
+.micelar-species { margin-block: 28px; }
+.micelar-species article { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); gap: 12px 28px; border-top: var(--rule-hairline); padding-block: 24px; }
+.micelar-species article > div { grid-row: span 2; }
+.micelar-species i { display: block; font: italic 400 20px/1.5 var(--font-editorial); margin-top: 8px; }
+.micelar-species p { font: 400 16px/1.7 var(--font-sans); margin: 0; }
+.micelar-species .text-link { grid-column: 2; justify-content: flex-start; gap: 16px; font: 400 16px/1.5 var(--font-sans); }
+.micelar-questions { list-style: none; padding: 0; margin: 28px 0; }
+.micelar-questions li { padding-block: 16px; border-top: var(--rule-hairline); font: 400 16px/1.75 var(--font-sans); }
+.micelar-questions strong { display: block; font-weight: 500; margin-bottom: 4px; }
+.micelar-sources ol { margin: 0; padding-left: 24px; }
+.micelar-sources li { padding-left: 8px; margin-bottom: 24px; scroll-margin-top: 24px; }
+.micelar-sources li a { font: 400 16px/1.6 var(--font-sans); text-underline-offset: 4px; }
+.micelar-sources li p { font: 400 14px/1.7 var(--font-sans); color: var(--text-secondary); margin: 8px 0 0; }
+.micelar-next { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-block: 32px 48px; }
+@media (max-width: 1000px) {
+  .micelar-intro, .micelar-chapter { gap: 32px; }
+  .micelar-stages li { grid-template-columns: 120px minmax(0, 1fr); gap: 8px 16px; }
+  .micelar-species article { grid-template-columns: 1fr; }
+  .micelar-species article > div { grid-row: auto; }
+  .micelar-species .text-link { grid-column: 1; }
+}
+@media (max-width: 650px) {
+  .micelar-intro { grid-template-columns: 1fr; gap: 24px; padding-block: 28px; }
+  .micelar-page .micelar-intro h1 { font-size: clamp(44px, 12vw, 62px); margin-block: 16px; }
+  .micelar-lede { font-size: 22px; }
+  .micelar-intro figure { width: min(100%, 310px); justify-self: center; }
+  .micelar-intro img { max-height: 270px; }
+  .micelar-index { gap: 0 24px; }
+  .micelar-chapter { grid-template-columns: 1fr; gap: 24px; padding-block: 36px; }
+  .micelar-chapter h2 br { display: none; }
+  .micelar-prose > p { font-size: 16px; }
+  .micelar-stages li { grid-template-columns: 1fr; gap: 10px; }
+  .micelar-stages .t-label { grid-row: auto; }
+  .micelar-stages p { grid-column: 1; }
+  .micelar-note { padding-left: 20px; }
+  .micelar-note p { font-size: 22px; }
+}
+@media print {
+  .micelar-index, .micelar-next { display: none; }
+  .micelar-chapter { grid-template-columns: 1fr; gap: 20px; padding-block: 24px; }
+}

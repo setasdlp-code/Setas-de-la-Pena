@@ -52,7 +52,7 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         report['files'] = list(pool.map(check_file, public_files))
     product_routes = [(route.lstrip('/'), file) for route, file in manifest['routes'].items()
-                      if route in {'/', '/home', '/shiitake', '/recetas', '/recetas-melena', '/recetas-eryngii'}
+                      if route in {'/', '/home', '/shiitake', '/recetas', '/recetas-melena', '/recetas-eryngii', '/setas', '/cocina', '/restaurantes', '/mundo-micelar'}
                       or route.startswith('/especies/')]
     for route, file in product_routes:
         status, headers, body, url = fetch(route)
@@ -90,6 +90,10 @@ def main():
     for route, final in [('ds','/'),('marca','/manual'),('web','/home')]:
         status, _, _, url = fetch(route)
         assert status == 200 and urlsplit(url).path == final, (route,url)
+    for retired in ['proyecto', 'proyecto.html']:
+        status, _, _, url = fetch(retired + '?pairing=bricolage')
+        assert status == 200 and urlsplit(url).path == '/home', (retired, url)
+        assert parse_qs(urlsplit(url).query) == {'pairing': ['bricolage']}, url
     report['discovery'] = {'robots': 'passed', 'sitemap': locations, 'socialImage': [1200,630], 'legacyQueryRedirect': 'passed', 'aliases': 'passed'}
     report['result'] = 'passed'
     args.report.write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n')
