@@ -630,7 +630,7 @@
     const accionPlural = (n) => (n === 1 ? 'acción' : 'acciones');
     let headline;
     if (critCount > 0) {
-      headline = `${critCount} ${accionPlural(critCount)} crítica${critCount === 1 ? '' : 's'} requiere${critCount === 1 ? '' : 'n'} atención inmediata: revisa la lista de abajo antes de continuar la ronda.`;
+      headline = `${critCount} ${accionPlural(critCount)} crítica${critCount === 1 ? '' : 's'} requiere${critCount === 1 ? '' : 'n'} atención inmediata: revisar la lista de abajo antes de continuar la ronda.`;
     } else if (highCount > 0) {
       headline = `${highCount} ${accionPlural(highCount)} de prioridad alta pendiente${highCount === 1 ? '' : 's'} — sin incidencias críticas por ahora.`;
     } else if (actions.length > 0) {

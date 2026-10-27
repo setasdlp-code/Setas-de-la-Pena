@@ -214,7 +214,7 @@
       kind: 'sensor',
       severity: 'alarma',
       title: `Sensor ${g.deviceId || 'sin id'} (${g.roomId || 'sala sin id'}): ${g.count} ${plural(g.count, 'lectura imposible', 'lecturas imposibles')} de ${METRIC_LABEL[g.metric] || g.metric}`,
-      detail: `Valores fuera del rango físico del sensor en la última hora${g.last && g.last.value != null ? ` (último: ${g.last.value})` : ''}. No se usan para alertas de clima: revisa la conexión o la sonda.`,
+      detail: `Valores fuera del rango físico del sensor en la última hora${g.last && g.last.value != null ? ` (último: ${g.last.value})` : ''}. No se usan para alertas de clima: revisar la conexión o la sonda.`,
       action: { type: 'goIoT', label: 'Ver sensores' },
     }));
   };
@@ -237,7 +237,7 @@
         kind: 'lote',
         severity: 'vigilar',
         title: `${lote.codigo || lote.id}: día ${days} de incubación`,
-        detail: `Supera ${ref.days} días (${ref.label}). Revisa colonización y temperatura de sustrato.`,
+        detail: `Supera ${ref.days} días (${ref.label}). Revisar colonización y temperatura de sustrato.`,
         provenance: ref.source === 'farm'
           ? { class: 'farm-measured', n: ref.n, days: ref.days }
           : { class: 'literature-heuristic', days: ref.days },

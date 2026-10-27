@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const {captureNumber,captureError,normalizeTrialCapture,normalizeHarvestCapture,persistCapture,calcLoteStats}=require('./bitacora-model');
 test('capture distinguishes missing, zero, invalid and fractional counts',()=>{
  assert.equal(captureNumber(''),null);assert.equal(captureNumber('  '),null);assert.equal(captureNumber('0'),0);
- assert.equal(captureError('',{required:true}),'Completa este campo.');assert.equal(captureError('0',{min:0}),'');
+ assert.equal(captureError('',{required:true}),'Campo obligatorio.');assert.equal(captureError('0',{min:0}),'');
  assert.ok(captureError('2x'));assert.ok(captureError('Infinity'));assert.ok(captureError('1.5',{integer:true}));
 });
 test('JSON round trip preserves unknown measurements and observed zeros',()=>{

@@ -301,7 +301,7 @@ import './formulator-api.js';
         <button data-scenario-action="create-batch" style="cursor:pointer;min-height:40px;border:1px solid var(--border-hairline);background:var(--paper-1);padding:6px 12px;border-radius:var(--radius-md,3px);font-family:var(--font-sans);font-size:11px;font-weight:600;color:var(--ink-0)">📦 Crear Lote en Bitácora</button>
       </div>` : ''}
       <div id="perito-scenarios-status" style="min-height:14px;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--ink-500)"></div>
-      <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">El Perito consume SetasFormulatorAPI; no conoce controles internos del Formulador. Co-formulación ajusta reactivamente las sugerencias respetando tus ingredientes.</div>`;
+      <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(26,20,16,.1);font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">El Perito consume SetasFormulatorAPI; no conoce controles internos del Formulador. Co-formulación ajusta reactivamente las sugerencias respetando los ingredientes de la receta.</div>`;
     box.onclick = event => {
       const btn = event.target.closest('button[data-scenario-action]');
       if (!btn) return;
@@ -336,7 +336,7 @@ import './formulator-api.js';
     const liveRecipe = formState.recipe?.length ? formState.recipe : detail.recipe;
     const rawTotal = liveRecipe.reduce((sum, r) => sum + (Number(r.p) || 0), 0);
     if (rawTotal > 101) {
-      const blocked = { baseline: { recipe: liveRecipe, evaluation: { dimensions: {} } }, explored: 0, pareto: [], recommended: [], blockedReason: `La receta suma ${rawTotal.toFixed(1)}%. Reduce ingredientes para no superar 100%.` };
+      const blocked = { baseline: { recipe: liveRecipe, evaluation: { dimensions: {} } }, explored: 0, pareto: [], recommended: [], blockedReason: `La receta suma ${rawTotal.toFixed(1)}%. Reducir ingredientes para no superar 100%.` };
       lastResult = blocked;
       catalogCache = names;
       globalThis.__setasLastScenarios = blocked;

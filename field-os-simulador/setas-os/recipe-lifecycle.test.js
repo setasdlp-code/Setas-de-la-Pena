@@ -29,7 +29,7 @@ const approvedRecipe = () => Object.freeze({
 test('una receta aprobada no se puede editar', () => {
   assert.throws(
     () => lifecycle.assertEditable(approvedRecipe()),
-    /una receta aprobada no se edita: crea una versión nueva/,
+    /una receta aprobada no se edita: crear una versión nueva/,
   );
 });
 

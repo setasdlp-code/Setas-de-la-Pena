@@ -241,7 +241,7 @@
         colonizationPct: 0,
         flags: [],
         quality: { meanV: 0, overexposed: false, underexposed: false, usable: false },
-        recommendation: 'Imagen inválida o vacía. Vuelve a tomar la foto asegurando buena luz y foco sobre la bolsa/bloque.',
+        recommendation: 'Imagen inválida o vacía. Volver a tomar la foto asegurando buena luz y foco sobre la bolsa/bloque.',
         confidence: 'low',
         disclaimer: DISCLAIMER
       };
@@ -341,25 +341,25 @@
 
     if (!usable) {
       if (overexposed) {
-        recommendation = 'Foto sobreexpuesta (mucho brillo/reflejo). Repite la toma con menos luz directa o flash apagado.';
+        recommendation = 'Foto sobreexpuesta (mucho brillo/reflejo). Repetir la toma con menos luz directa o flash apagado.';
       } else if (underexposed) {
-        recommendation = 'Foto subexpuesta (muy oscura). Repite la toma con más luz o acércate a una fuente de luz difusa.';
+        recommendation = 'Foto subexpuesta (muy oscura). Repetir la toma con más luz o acercarse a una fuente de luz difusa.';
       } else {
-        recommendation = 'Foto no utilizable para el tamizaje. Vuelve a tomarla con buena luz, foco nítido y encuadre sobre la bolsa/bloque.';
+        recommendation = 'Foto no utilizable para el tamizaje. Volver a tomarla con buena luz, foco nítido y encuadre sobre la bolsa/bloque.';
       }
     } else if (flags.some((f) => f.severity === 'alerta')) {
       recommendation = 'Señal de color fuerte compatible con contaminación. Inspecciona la bolsa/bloque en persona antes de decidir cuarentena o descarte.';
       confidence = 'low';
     } else if (flags.length > 0) {
-      recommendation = 'Se detectaron señales de color a vigilar. Revisa visualmente la zona marcada en la próxima ronda.';
+      recommendation = 'Se detectaron señales de color a vigilar. Revisar visualmente la zona marcada en la próxima ronda.';
       confidence = 'low';
     } else if (colonizationPct >= 70) {
       // Hallazgo de revisión #19: los umbrales de este módulo se afinaron solo
       // sobre casos sintéticos, sin corpus fotográfico validado. No hay base
       // para declarar 'medium' aquí; confidence se queda en 'low' siempre.
-      recommendation = 'Colonización visual alta y sin señales de color relevantes. Continúa el monitoreo habitual.';
+      recommendation = 'Colonización visual alta y sin señales de color relevantes. Continuar el monitoreo habitual.';
     } else {
-      recommendation = 'Sin señales de color relevantes. Continúa el monitoreo habitual del lote.';
+      recommendation = 'Sin señales de color relevantes. Continuar el monitoreo habitual del lote.';
       confidence = 'low';
     }
 
