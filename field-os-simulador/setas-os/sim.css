@@ -417,7 +417,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   filter: saturate(0.60) contrast(1.06);
   mix-blend-mode: multiply;
   position: relative;
-  z-index: 1;
+  z-index: var(--z-local);
   transition: filter var(--duration-quick) var(--ease);
 }
 
@@ -510,7 +510,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
    touch ya era invisible por defecto). */
 .sim-root .cats{ display:flex; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:6px; margin-bottom:var(--space-2); padding-bottom:6px; position:relative; }
 .sim-root .cats::-webkit-scrollbar{ display:none; }
-.sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, var(--paper-1) 100%); pointer-events:none; z-index:10; }
+.sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, var(--paper-1) 100%); pointer-events:none; z-index:var(--z-sticky); }
 .sim-root .cat{ 
   font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:.08em; 
   text-transform:uppercase; padding:var(--space-1) 14px; min-height:44px; display:flex; align-items:center; flex-shrink:0; border:1px solid var(--slate-300); border-radius:0;
@@ -1166,7 +1166,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Species cards ── */
   .sim-root .spp-grid{ grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:14px; }
   
-  .sim-root .p-family{ font-size:11px; }
+  .sim-root .p-family{ font-size:var(--text-xs); }
   
   .sim-root .p-img{ padding:var(--space-half); aspect-ratio:1; }
   .sim-root .p-body{ padding:var(--space-1) 9px var(--space-1); }
@@ -1235,7 +1235,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Save bar ── */
   .sim-root .sbar{ gap:var(--space-half); flex-wrap:wrap; }
   .sim-root .sbar input{ font-size:var(--text-md); flex:1; min-width:60%; }
-  .sim-root .sbtn{ font-size:11px; padding:9px 12px; white-space:nowrap; }
+  .sim-root .sbtn{ font-size:var(--text-xs); padding:9px 12px; white-space:nowrap; }
   
   /* ── Presets ── */
   .sim-root .presets{ gap:3px; margin-bottom:10px; }
@@ -1244,7 +1244,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .tcard{ padding:12px 12px; margin-bottom:var(--sp-7); }
   .sim-root .tttl{ font-size:17px; margin-bottom:var(--space-1); }
   .sim-root .tparams{ gap:var(--space-half); margin-bottom:var(--space-1); }
-  .sim-root .tp{ font-size:11px; padding:3px var(--space-1); }
+  .sim-root .tp{ font-size:var(--text-xs); padding:3px var(--space-1); }
   .sim-root .twhy{ font-size:12px; }
   
   /* ── Diagnosis ── */
@@ -1252,7 +1252,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .dttl{ font-size:12px; margin-bottom:var(--space-1); }
   .sim-root .dtxt{ font-size:var(--text-base); }
   .sim-root .sug{ font-size:var(--text-xs); padding:var(--space-1) 0; gap:10px; }
-  .sim-root .sug-mark{ font-size:11px; padding:2px 5px; }
+  .sim-root .sug-mark{ font-size:var(--text-xs); padding:2px 5px; }
   
   /* ── Species info ── */
   .sim-root .spp-info{ padding:20px 12px; }
@@ -1280,7 +1280,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   
   
   /* ── Balance mode ── */
-  .sim-root .bal-mode{ font-size:11px; padding:3px 6px; }
+  .sim-root .bal-mode{ font-size:var(--text-xs); padding:3px 6px; }
 }
 
 /* ── EXTRA SMALL (< 420px) ───────────────────────────────────────── */
@@ -1298,7 +1298,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   /* ── Species cards ── */
   .sim-root .spp-grid{ grid-template-columns:1fr; gap:6px; margin-bottom:var(--sp-7); }
   
-  .sim-root .p-family{ font-size:11px; letter-spacing:.08em; }
+  .sim-root .p-family{ font-size:var(--text-xs); letter-spacing:.08em; }
   
   .sim-root .p-img{ padding:3px; aspect-ratio:1/1; }
   .sim-root .p-img img{ padding:0; }
@@ -1371,12 +1371,12 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   
   /* ── Sections ── */
   .sim-root .sec{ font-size:18px; margin-bottom:var(--space-1); padding-bottom:5px; }
-  .sim-root .sec::after{ font-size:11px; }
+  .sim-root .sec::after{ font-size:var(--text-xs); }
   
   /* ── Save bar ── */
   .sim-root .sbar{ gap:var(--space-half); flex-direction:column; }
   .sim-root .sbar input{ font-size:var(--text-md); width:100%; padding:var(--space-1) 10px; }
-  .sim-root .sbtn{ font-size:11px; padding:var(--space-1) 10px; width:100%; }
+  .sim-root .sbtn{ font-size:var(--text-xs); padding:var(--space-1) 10px; width:100%; }
   
   /* ── Presets ── */
   .sim-root .presets{ gap:2px; margin-bottom:var(--space-1); }
@@ -1385,7 +1385,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .tcard{ padding:10px 10px; margin-bottom:10px; }
   .sim-root .tttl{ font-size:15px; margin-bottom:6px; }
   .sim-root .tparams{ gap:3px; margin-bottom:6px; }
-  .sim-root .tp{ font-size:11px; padding:2px 6px; }
+  .sim-root .tp{ font-size:var(--text-xs); padding:2px 6px; }
   .sim-root .twhy{ font-size:var(--text-xs); line-height:1.4; }
   .sim-root .tproc{ margin-top:var(--space-1); padding-top:var(--space-1); font-size:var(--text-xs); }
   
@@ -1394,7 +1394,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .dttl{ font-size:12px; margin-bottom:6px; }
   .sim-root .dtxt{ font-size:var(--text-sm); line-height:1.5; }
   .sim-root .sug{ font-size:12px; padding:6px 0; gap:var(--space-1); }
-  .sim-root .sug-mark{ font-size:11px; padding:1px var(--space-half); margin-top:1px; }
+  .sim-root .sug-mark{ font-size:var(--text-xs); padding:1px var(--space-half); margin-top:1px; }
   
   /* ── Species info ── */
   .sim-root .spp-info{ padding:var(--space-2) 10px; }
@@ -1434,7 +1434,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .cval{ font-size:22px; }
   
   /* ── Balance ── */
-  .sim-root .bal-mode{ font-size:11px; padding:2px 5px; }
+  .sim-root .bal-mode{ font-size:var(--text-xs); padding:2px 5px; }
   .sim-root .norm-bar{ padding:7px 10px; font-size:12px; }
   
   /* ── Gauge ── */
@@ -1690,7 +1690,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .bg-track{position:relative;height:7px;background:var(--paper-300);border-radius:var(--radius-sm);overflow:visible;}
 .sim-root .bg-band{position:absolute;top:0;bottom:0;border-radius:3px;transition:left var(--duration-notice) var(--ease),width var(--duration-notice) var(--ease);}
 .sim-root .bg-ideal{position:absolute;top:-2px;bottom:-2px;width:1.5px;border-radius:1px;}
-.sim-root .bg-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid var(--paper-50);transition:left var(--duration-notice) var(--ease),background var(--duration-notice) var(--ease);z-index:2;}
+.sim-root .bg-cursor{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid var(--paper-50);transition:left var(--duration-notice) var(--ease),background var(--duration-notice) var(--ease);z-index:var(--z-raised);}
 .sim-root .bg-foot{display:flex;justify-content:space-between;margin-top:3px;}
 .sim-root .bg-foot span{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--ink-700);font-weight:700;}
 .sim-root .bg-val{font-family:var(--font-mono);font-size:var(--text-base);font-weight:700;transition:color var(--duration-notice) var(--ease);color:var(--ink-900);}
@@ -1847,13 +1847,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .inv-month-head{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 14px;background:var(--paper-200);color:inherit;border:0;font:inherit;text-align:left;cursor:pointer;user-select:none;}
 .sim-root .inv-month-label{font-family:var(--font-body);font-weight:800;font-size:var(--text-sm);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-900);}
 .sim-root .inv-month-total{font-family:var(--font-num);font-size:15px;color:var(--ink-900);font-variant-numeric:tabular-nums;}
-.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:var(--sp-20) var(--sp-6) var(--sp-12);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.sim-root .inv-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:var(--z-modal);display:flex;align-items:flex-start;justify-content:center;padding:var(--sp-20) var(--sp-6) var(--sp-12);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 /* ── CATALOG SPECIES MODAL ─────────────────────────────────────── */
-.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:var(--sp-16) var(--sp-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
+.sim-root .cat-modal-bg{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:var(--z-modal-top);display:flex;align-items:center;justify-content:center;padding:var(--sp-16) var(--sp-12);backdrop-filter:blur(3px);animation:catFadeIn var(--duration-exit) ease;}
 @keyframes catFadeIn{from{opacity:0}to{opacity:1}}
 .sim-root .cat-modal-box{position:relative;max-width:900px;width:100%;max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow:hidden;display:flex;flex-direction:column;animation:catSlideIn var(--duration-entrance) var(--ease);}
 @keyframes catSlideIn{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
-.sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);font-size:var(--text-md);line-height:1;}
+.sim-root .cat-modal-close{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;background:var(--paper-200);border:1px solid var(--border-soft);color:var(--ink-700);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:var(--z-sticky);transition:background-color var(--duration-quick) var(--ease),border-color var(--duration-quick) var(--ease),color var(--duration-quick) var(--ease);font-size:var(--text-md);line-height:1;}
 .sim-root .cat-modal-close:hover{background:var(--coral-500);color:var(--text-on-dark);border-color:var(--coral-500);}
 .sim-root .inv-modal{background:var(--paper-50);border:1px solid rgba(26,20,16,0.18);border-radius:0;padding:var(--sp-10);width:440px;max-width:calc(100vw - 32px);box-sizing:border-box;}
 .sim-root .inv-modal-title{font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-900);margin-bottom:var(--sp-10);padding-bottom:var(--sp-7);border-bottom:1px solid var(--border-soft);}
@@ -1878,7 +1878,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── v5.0 STYLE REFRESH ────────────────────────────────────────── */
 /* Active species bridge — slate background */
-.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:50!important;transition:transform var(--duration-entrance) var(--ease);}
+.sim-root .species-bridge{background:var(--ink-900)!important;border-top:1px solid rgba(0,0,0,0.2)!important;border-bottom:none!important;padding-top:0!important;margin-bottom:0!important;margin-top:auto!important;position:sticky!important;bottom:0!important;z-index:var(--z-bottom-bar)!important;transition:transform var(--duration-entrance) var(--ease);}
 @media(max-width:900px){ .sim-root .species-bridge.bridge-hidden{ transform:translateY(100%); } }
 .sim-root .species-bridge .bridge-inner{padding-top:6px!important;padding-bottom:6px!important;min-height:0!important;}
 .sim-root .species-bridge .bridge-name{font-size:var(--text-base)!important;}
@@ -1926,7 +1926,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .spp-card{transition:background var(--duration-standard) var(--ease),border-color var(--duration-standard) var(--ease),transform var(--duration-standard) var(--ease);border-radius:0!important;border:1px solid var(--border-soft)!important;box-shadow:none!important;contain:paint;isolation:isolate;}
 .sim-root .spp-card:hover{box-shadow:none!important;border-color:var(--border-strong)!important;transform:translateY(-1px);}
 .sim-root .spp-card.on{background:var(--surface-selected)!important;border:2px solid var(--accent-olive)!important;box-shadow:none!important;transform:translateY(-1px);position:relative;}
-.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:0;background:var(--accent-olive);color:var(--text-on-dark);font-size:var(--text-sm);font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:none;}
+.sim-root .spp-card.on::after{content:'✓';position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:0;background:var(--accent-olive);color:var(--text-on-dark);font-size:var(--text-sm);font-weight:700;display:flex;align-items:center;justify-content:center;z-index:var(--z-raised);box-shadow:none;}
 /* Scientific name — smaller italic, warm grey for editorial contrast */
 .sim-root .p-sci{font-family:var(--font-display)!important;font-style:italic!important;font-size:var(--text-base)!important;color:var(--ink-2)!important;letter-spacing:.01em;font-weight:400;}
 .sim-root .p-common{font-family:var(--font-serif, 'Gaya', serif);font-weight:700;font-size:var(--text-lg);color:var(--ink-0);line-height:1.1;letter-spacing:-0.01em;}
@@ -1937,7 +1937,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .p-arch-num{font-family:var(--font-mono);font-size:var(--text-md);font-weight:700;color:var(--ink-900);line-height:1;}
 .sim-root .p-arch-code{font-family:var(--font-mono);font-size:10px;color:var(--ink-400);letter-spacing:.08em;}
 /* Family vertical strip */
-.sim-root .p-family-strip{position:absolute;left:0;top:0;bottom:0;width:15px;display:flex;align-items:center;justify-content:center;background:rgba(26,20,16,0.025);border-right:1px solid rgba(26,20,16,0.05);z-index:1;}
+.sim-root .p-family-strip{position:absolute;left:0;top:0;bottom:0;width:15px;display:flex;align-items:center;justify-content:center;background:rgba(26,20,16,0.025);border-right:1px solid rgba(26,20,16,0.05);z-index:var(--z-local);}
 .sim-root .p-family-strip span{font-family:var(--font-body);font-weight:800;font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-400);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;}
 .sim-root .spp-card .p-arch-head, .sim-root .spp-card .p-img, .sim-root .spp-card .p-body, .sim-root .spp-card .p-chips{margin-left:15px;}
 /* Parameter chips — 2-row grid like reference */
@@ -2015,7 +2015,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .spp-grid{grid-template-columns:1fr!important;}
 
   /* Bridge sticky + compact en móvil */
-  .sim-root .species-bridge{position:sticky!important;bottom:0!important;top:auto!important;z-index:50!important;}
+  .sim-root .species-bridge{position:sticky!important;bottom:0!important;top:auto!important;z-index:var(--z-bottom-bar)!important;}
   .sim-root .bridge-inner{padding:var(--space-1) 14px!important;gap:var(--space-1) 10px!important;}
   .sim-root .bridge-activo{font-size:var(--text-xs)!important;letter-spacing:.08em!important;}
   /* Bridge stats: hide on very small screens, keep button always visible */
@@ -2045,7 +2045,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .builder-subtabs::after, .sim-root .sub-tabs::after, .sim-root .mode-switcher::after{
     content:''; position:absolute; right:0; top:0; bottom:0; width:32px;
     background:linear-gradient(to right, transparent 0%, rgba(246,244,236,0.95) 100%);
-    pointer-events:none; z-index:10;
+    pointer-events:none; z-index:var(--z-sticky);
   }
 
   /* 4. Inv subtab bar: idem */
@@ -2105,7 +2105,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .spp-cta-row{flex-direction:column!important;align-items:center!important;gap:10px!important;padding:14px 18px!important;text-align:center!important;}
   .sim-root .spp-cta{width:100%!important;text-align:center!important;}
   /* Keep "Formular" CTA always visible at bottom of scrolling modal */
-  .sim-root .spp-info-center .spp-cta-row{position:sticky!important;bottom:0!important;z-index:10!important;}
+  .sim-root .spp-info-center .spp-cta-row{position:sticky!important;bottom:0!important;z-index:var(--z-sticky)!important;}
   .sim-root .cat-modal-close{top:10px!important;right:10px!important;}
 
   /* 17. Presets: scroll horizontal */
@@ -2114,7 +2114,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
   /* 18. Cats filter: scroll horizontal */
   .sim-root .cats{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:var(--space-half); position:relative; }
-  .sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, rgba(246,244,236,0.95) 100%); pointer-events:none; z-index:10; }
+  .sim-root .cats::after{ content:''; position:absolute; right:0; top:0; bottom:0; width:40px; background:linear-gradient(to right, transparent 0%, rgba(246,244,236,0.95) 100%); pointer-events:none; z-index:var(--z-sticky); }
   .sim-root .cat{ flex-shrink:0; }
 
   /* 19. Ingredient list: altura razonable */
@@ -2162,7 +2162,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
      al fondo con z-index:50 (ver ~línea 1716) — 96px cubre su altura observada
      (~84px) incluso si el nombre de la especie se envuelve a dos líneas. */
   .sim-root .sbar{
-    position:sticky; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:20;
+    position:sticky; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:var(--z-sticky-panel);
     background:var(--paper-50);
     padding:10px 0;
     box-shadow:var(--shadow-sticky-edge);
@@ -2198,7 +2198,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
      propia hasta ahora (solo estilos inline por elemento) — se vuelve la navegación
      persistente entre Catálogo/Receta/Perito/Generador en móvil. */
   .sim-root .live-dash-bar{
-    position:sticky; top:0; z-index:25;
+    position:sticky; top:0; z-index:var(--z-sticky-nav);
     display:flex; flex-direction:column; gap:var(--space-1);
     padding:10px 12px; background:var(--paper-100); border-bottom:1px solid var(--border-soft);
   }
@@ -2477,7 +2477,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
   /* Sombra a la izquierda tras hacer scroll, para reforzar que es bidireccional */
   .sim-root .cats.scrolled::before, .sim-root .presets.scrolled::before, .sim-root .sub-tabs.scrolled::before, .sim-root .mode-switcher.scrolled::before, .sim-root .builder-subtabs.scrolled::before{
-    content:''; position:absolute; left:0; top:0; bottom:0; width:24px; z-index:10; pointer-events:none;
+    content:''; position:absolute; left:0; top:0; bottom:0; width:24px; z-index:var(--z-sticky); pointer-events:none;
     background:linear-gradient(to left, transparent 0%, rgba(246,244,236,0.95) 100%);
   }
 }
@@ -3055,7 +3055,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  transition: border-color .15s ease, background-color .15s ease;
+  transition: border-color var(--duration-standard) ease, background-color var(--duration-standard) ease;
 }
 .sim-root .ambient-chamber-card:hover {
   border-color: var(--border-strong);
@@ -3203,7 +3203,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background:rgba(255,255,255,.08);
   color:var(--paper-0);
   font:700 var(--text-xs)/1 var(--font-sans);
-  transition:border-color .15s ease;
+  transition:border-color var(--duration-standard) ease;
 }
 .sim-root .form-species-picker select:focus-visible{
   outline:2px solid var(--accent-olive);
@@ -3237,7 +3237,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .live-dash-pill{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:5px var(--space-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--paper-100);color:var(--ink-800);font:700 var(--text-xs)/1 var(--font-mono);font-variant-numeric:tabular-nums}
 .sim-root .live-dash-pill-label{color:var(--ink-500);font-size:var(--text-2xs)}
 .sim-root .live-dash-actions{display:flex;align-items:center;gap:5px}
-.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-3);min-width:34px;min-height:34px;padding:6px var(--space-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer;transition:background-color .15s ease,transform .1s ease}
+.sim-root .live-dash-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-3);min-width:34px;min-height:34px;padding:6px var(--space-1);border:1px solid var(--border-soft);border-radius:var(--radius-sm);font:700 var(--text-xs)/1 var(--font-mono);cursor:pointer;transition:background-color var(--duration-standard) ease,transform .1s ease}
 .sim-root .live-dash-btn:active{transform:translateY(1px) scale(0.99)}
 .sim-root .live-dash-secondary-nav,
 .sim-root .live-dash-limiter{display:none!important}
@@ -5284,7 +5284,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: center;
   gap: var(--space-1);
   box-shadow: var(--shadow-none);
-  transition: background .15s, transform .1s, box-shadow .15s;
+  transition: background var(--duration-standard), transform .1s, box-shadow var(--duration-standard);
 }
 
 .sim-root .btn-launch-prod:hover:not(:disabled) {
@@ -6474,7 +6474,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background: var(--paper-1);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color var(--duration-standard) ease, background var(--duration-standard) ease;
   display: flex;
   flex-direction: column;
   gap: var(--space-half);
@@ -6714,7 +6714,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .iot-hub-header > div { min-width:0; }
 .sim-root .iot-hub-navigation { padding:var(--space-2) var(--space-3) 0; }
 .sim-root .iot-hub-dialog .iot-hub-pills { flex-wrap:wrap; overflow:visible; }
-.sim-root .iot-hub-dialog .iot-hub-pill { min-height:44px; white-space:normal; text-align:left; transition:background-color .15s,color .15s,border-color .15s; }
+.sim-root .iot-hub-dialog .iot-hub-pill { min-height:44px; white-space:normal; text-align:left; transition:background-color var(--duration-standard),color var(--duration-standard),border-color var(--duration-standard); }
 .sim-root .iot-hub-body { padding:20px var(--space-3); min-height:0; overflow-y:auto; overscroll-behavior:contain; overflow-wrap:anywhere; }
 .sim-root .iot-hub-dialog button { min-height:44px; min-width:44px; flex-shrink:0; }
 .sim-root .iot-hub-dialog .modal-icon-close { width:44px!important; height:44px!important; }
@@ -6891,19 +6891,19 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   }
   .sim-root .ps-tbl-wrap .prod-tbl th:first-child,
   .sim-root .ps-tbl-wrap .prod-tbl td:first-child{
-    position:sticky;left:0;z-index:1;background:var(--paper-50);
+    position:sticky;left:0;z-index:var(--z-local);background:var(--paper-50);
     box-shadow:1px 0 0 var(--paper-300);
   }
 }
 
 /* Mobile audit 2026-10: collapsed technical blocks in the Perito panel (phones only). */
 .sim-root .perito-deep-details{margin:10px 0;border:1px solid var(--border-soft);background:var(--paper-50)}
-.sim-root .perito-deep-details > summary{padding:6px 12px;font-family:var(--font-body);font-size:13px;font-weight:700;color:var(--ink-800);line-height:1.3}
+.sim-root .perito-deep-details > summary{padding:6px 12px;font-family:var(--font-body);font-size:var(--text-sm);font-weight:700;color:var(--ink-800);line-height:1.3}
 .sim-root .perito-deep-details > summary:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px}
 .sim-root .perito-deep-details[open] > summary{border-bottom:1px solid var(--border-soft)}
 .sim-root .perito-deep-details > :not(summary){padding:0 12px}
 
 /* Mobile audit 2026-10: per-suggestion secondary detail (phones only, via .pi-more). */
 .sim-root .pi-more{margin-top:6px}
-.sim-root .pi-more > summary{font-family:var(--font-body);font-size:13px;font-weight:700;color:var(--ink-800);line-height:1.3}
+.sim-root .pi-more > summary{font-family:var(--font-body);font-size:var(--text-sm);font-weight:700;color:var(--ink-800);line-height:1.3}
 .sim-root .pi-more > summary:focus-visible{outline:2px solid var(--coral-500);outline-offset:2px}

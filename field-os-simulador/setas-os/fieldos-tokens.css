@@ -32,11 +32,9 @@
      sigue llamando, apuntando a su token real.
      ───────────────────────────────────────────────────────────────── */
 
-  /* Nombres sin equivalente en DS-2026. */
-  --soil:            var(--surface-inverse);
-  --soil-tint:       var(--bark-tint);
-  --rust:            var(--status-error);
-  --rust-tint:       var(--coral-tint);
+  /* Nombres sin equivalente en DS-2026. --soil, --soil-tint, --rust y
+     --rust-tint sí los define DS-2026, que carga después: se quitaron de aquí
+     porque nunca se aplicaban (design-tokens.test.js lo vigila). */
   --warning-pigment: var(--warning);
 
   /* Escala de papel de cuatro pasos del shell antiguo. */
@@ -60,7 +58,6 @@
   --line-0: var(--rule-500);
   --line-1: var(--rule-500);
   --line-2: var(--text-primary);
-  --border-strong:   var(--rule-500);
 
   --accent-terracotta:      var(--status-warn-text);
   --accent-terracotta-dark: color-mix(in oklab, var(--status-warn-text) 80%, black);
@@ -171,13 +168,10 @@
   --border-ink:    var(--ink-0);
 
   /* ── TYPE FAMILIES — DS-2026 ── */
-  --font-editorial: 'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif;
-  --font-serif:     var(--font-editorial, 'Gaya Patched', 'Gaya', Georgia, serif);
+  /* --font-editorial, --font-serif, --font-sans y --font-mono los define
+     ds-2026/tokens/fonts.css. Aquí solo los alias que el sistema no tiene. */
   --font-display:   var(--font-editorial, 'Gaya Patched', 'Gaya', Georgia, serif);
-  --font-sans:      'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono:      'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --font-body:      var(--font-sans);
-  /* --font-mono is defined by the DS's fonts.css (IBM Plex Mono) — not redeclared here */
 
   /* ── TYPE SCALE (semantic shorthands) — composed from DS primitives ── */
   --t-display-1:  var(--weight-black)  var(--text-3xl)/var(--leading-tight) var(--font-serif);
@@ -187,11 +181,9 @@
   --t-h3:         var(--weight-black)  var(--text-lg)/var(--leading-snug) var(--font-sans);
   --t-h4:         var(--weight-black)  var(--text-md)/var(--leading-snug) var(--font-sans);
   --t-lede:       var(--weight-regular) var(--text-lg)/var(--leading-relaxed) var(--font-sans);
-  --t-body:       var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-sans);
   --t-body-sm:    var(--weight-regular) var(--size-small, 14px)/var(--leading-normal) var(--font-sans);
   --t-caption:    var(--weight-regular) var(--size-data, 13px)/var(--leading-snug) var(--font-sans);
   --t-eyebrow:    var(--weight-bold) var(--size-label, 11px)/1.0 var(--font-mono);
-  --t-label:      var(--weight-bold) var(--text-base)/1.2 var(--font-sans);
   --t-button:     var(--weight-bold) var(--text-sm)/1.0 var(--font-sans);
   --t-quote:      italic var(--weight-light) var(--text-xl)/var(--leading-snug) var(--font-sans);
   --t-sci:        italic var(--weight-light) var(--text-xs)/var(--leading-normal) var(--font-sans);
@@ -216,7 +208,6 @@
   --space-10: var(--space-9);
 
   /* ── DS-2026: RADII & SERIF DISPLAY ── */
-  --font-serif: var(--font-editorial);
   --font-display: var(--font-editorial);
   --r-none: var(--radius-none, 0px);
   --r-xs: var(--radius-none, 0px);
@@ -304,6 +295,7 @@
   --z-sticky-sub: 6;   /* sub-nav / summary bars sticky within a tab's content */
   --z-sticky:     10;  /* sticky section headers, fade-edge gradients, inline badges */
   --z-sticky-panel: 20; /* sticky panel headers, higher-priority sticky bars */
+  --z-sticky-nav: 25;  /* persistent sticky nav bar inside a view (.live-dash-bar) */
   --z-nav:        40;  /* the app's persistent side/bottom rail */
   --z-bottom-bar: 50;  /* sticky bottom bar docked under the nav */
   --z-fab:        65;  /* floating action button, above the bottom bar */

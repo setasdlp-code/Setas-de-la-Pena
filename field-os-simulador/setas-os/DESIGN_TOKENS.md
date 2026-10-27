@@ -320,22 +320,33 @@ These are not bugs the browser reports; they are places where one token name res
 | `--tracking-tight` | -0.01em | -0.02em | |
 | `--radius-sm`, `--r-sm` | 2px | 0px | `.sim-root` is square-cornered by design |
 
-### Pending — dead definitions in `fieldos-tokens.css`
+### Fixed — harness rendered a different cascade than production
 
-DS-2026 loads after `fieldos-tokens.css`, so these `:root` definitions in `fieldos-tokens.css` never apply. They should be removed to stop readers from trusting them: `--border-strong` (DS: `--ink-900`), `--rust` (DS: `--coral-700`), `--soil` (DS: `--bark-700`), `--t-body`, `--t-label`, `--t-data`/`--t-small` (the `.sim-root [class*="sdp-"]` overrides do apply).
+The shell loads `ds-2026/operations.css` twice: once before and once (after `auth-gate.js` activates the `data-auth-href` links) after `fieldos-tokens.css`, so DS-2026 wins every `:root` tie. `__harness.html` loaded it only before, so in e2e runs `fieldos-tokens.css` won instead — e.g. `--border-strong` rendered `#888` grey in the harness and `#1A1410` ink in production (190 computed-style differences across 9 views × 2 widths). The harness and `ux-v2-preview.html` now repeat the second load. Guarded by `design-tokens.test.js`.
 
-### Pending — values still hardcoded in `sim.css`
+### Fixed — dead definitions in `fieldos-tokens.css`
 
-| Category | Tokenized | Literal |
-|----------|-----------|---------|
-| `font-size` | ~250 | ~190 px literals (12px ×65, 10px ×13, 11px ×11, plus off-scale 7.5px, 10.5px, 9px, 17px, 26px) |
-| `z-index` | 2 (`--z-rail`, `--z-sticky-panel`) | ~20 bare integers (1–400, two with `!important`) |
-| `box-shadow` | 35 | 23 |
-| `transition` durations | 60 | 8 |
-| `!important` | — | 768 |
-| Inline `style=""` in the shell | — | 833 |
+Removed 11 `:root` definitions that DS-2026 redefines and therefore never applied: `--soil`, `--soil-tint`, `--rust`, `--rust-tint`, `--border-strong`, `--font-editorial`, `--font-serif` (×2), `--font-sans`, `--font-mono`, `--t-body`, `--t-label`. Guarded by `design-tokens.test.js`.
 
-Priority order: (1) a `--z-*` scale (stacking bugs are hard to diagnose and the set is small), (2) map `font-size: 12px`/`11px`/`10px` to `--text-*` (covers ~90 of the 190), (3) off-scale sizes, one by one with screenshots.
+### Fixed — literals replaced with tokens of identical value
+
+| Category | Change | Count |
+|----------|--------|-------|
+| `z-index` | Literals in `sim.css` / `setas-os-legacy.css` → existing `--z-*` tier with the same number. Added `--z-sticky-nav: 25` (`.live-dash-bar`), the only value without a tier. `0` and `auto` stay literal. Guarded by test. | 18 |
+| `font-size` | `11/13/14/16px` → `--text-xs/sm/base/md` (same value in `:root` and `.sim-root`) | 13 |
+| `transition` | `.15s` → `--duration-standard` | 6 declarations |
+
+Verification for all three sections above: computed styles of every element (24 properties) in 9 harness views at 1280px and 390px, before vs after — 0 differences.
+
+### Pending — needs a visual decision
+
+These change what is rendered, so they were not applied.
+
+1. **Same token name, different value by scope** (table above): `--text-lg`, `--text-xl`, `--tracking-*`, `--radius-sm`.
+2. **Two z-index scales.** `fieldos-tokens.css` (`--z-local` 1 … `--z-overlay` 1000) and the shell's inline `<style>` (`--z-sticky-header` 3 … `--z-skip-link` 1000) interleave: `--z-loading` and `--z-bottom-bar` are both 50; `sim.css` modals (300/400) sit above the shell's toast (96) and command palette (95); `simulador-app.jsx` uses literal `9999` and `99999` for two diagnostic modals. One ordered list of layers is needed before merging them.
+3. **`font-size` without an exact token** in `sim.css`: `12px` ×65, `10px` ×15, `15px` ×12, `22px` ×11, `28px` ×10, plus ~25 fractional values (`10.35px`, `14.95px`, `53.9px`…). Sizes of 5–8px belong to printed labels and should map to `--size-micro-print` / mm units, not to screen tokens.
+4. **`transition` durations without a token**: `.1s` ×2, `.2s`, `.3s` (progress-bar width).
+5. **`!important`** (768) and **inline `style=""`** in the shell (833) — unchanged.
 
 ---
 

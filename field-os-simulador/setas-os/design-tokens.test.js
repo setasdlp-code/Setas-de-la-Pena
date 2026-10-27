@@ -78,3 +78,49 @@ test('ningún var() sin respaldo apunta a un token indefinido', () => {
   const report = [...missing].map(([v, where]) => `${v} (${[...where].join(', ')})`);
   assert.deepEqual(report, [], `tokens usados sin definir:\n  ${report.join('\n  ')}`);
 });
+
+/** Definiciones de custom properties en bloques cuyo selector incluye :root. */
+function rootDefs(css) {
+  const out = new Set();
+  for (const m of stripComments(css).matchAll(/([^{};]+)\{([^{}]*)\}/g)) {
+    if (!m[1].split(',').map((s) => s.trim()).includes(':root')) continue;
+    for (const d of m[2].matchAll(/(--[\w-]+)\s*:/g)) out.add(d[1]);
+  }
+  return out;
+}
+
+test('fieldos-tokens.css no redefine tokens :root de DS-2026', () => {
+  // DS-2026 vuelve a cargar después de fieldos-tokens.css (ver el orden del
+  // shell), así que cualquier redefinición en :root nunca se aplica y solo
+  // engaña a quien la lee: --border-strong decía gris y la app pintaba tinta.
+  const ds = new Set();
+  for (const [abs, css] of loadedStylesheets()) {
+    if (path.relative(ROOT, abs).startsWith('ds-2026/')) rootDefs(css).forEach((v) => ds.add(v));
+  }
+  const fos = rootDefs(fs.readFileSync(path.join(ROOT, 'fieldos-tokens.css'), 'utf8'));
+  const dead = [...fos].filter((v) => ds.has(v)).sort();
+  assert.deepEqual(dead, [], `redefinidos en fieldos-tokens.css y anulados por DS-2026: ${dead.join(', ')}`);
+});
+
+test('z-index en sim.css y setas-os-legacy.css usa la escala --z-*', () => {
+  const offenders = [];
+  for (const file of ['sim.css', 'setas-os-legacy.css']) {
+    const css = stripComments(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+    for (const m of css.matchAll(/z-index\s*:\s*([^;}]+)/g)) {
+      const v = m[1].replace(/!important/, '').trim();
+      if (v === '0' || v === 'auto' || /^var\(--z-[\w-]+(,\s*\d+)?\)$/.test(v)) continue;
+      offenders.push(`${file}: z-index:${v}`);
+    }
+  }
+  assert.deepEqual(offenders, [], 'añade un nivel en fieldos-tokens.css (Z-INDEX SCALE) en vez de un número');
+});
+
+test('__harness.html carga las hojas en el mismo orden efectivo que el shell', () => {
+  // El shell carga ds-2026/operations.css antes y después de fieldos-tokens.css.
+  // Si el harness no repite la segunda carga, los e2e prueban otra cascada.
+  const order = (html, attr) => [...html.matchAll(new RegExp(`<link\\b[^>]*?\\s${attr}="([^"]+\\.css)"`, 'g'))].map((m) => m[1]);
+  const shell = [...order(SHELL, 'href'), ...order(SHELL, 'data-auth-href')];
+  const harness = order(fs.readFileSync(path.join(ROOT, '__harness.html'), 'utf8'), 'href');
+  const last = (list) => list.filter((h, i) => list.lastIndexOf(h) === i);
+  assert.deepEqual(last(harness), last(shell));
+});
