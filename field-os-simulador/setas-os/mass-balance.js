@@ -26,18 +26,18 @@ const isMassBalancedTotal = tot => Number.isFinite(tot) && Math.abs(tot - 100) <
 // many small ingredients still sum to exactly 100 without moving a lock.
 const balanceRecipe = (rows = [], { lockedIds = [], mode = 'proportional' } = {}) => {
   const fail = message => ({ ok: false, recipe: rows, message });
-  if (!rows.length) return fail('Añade ingredientes antes de balancear.');
+  if (!rows.length) return fail('Añadir ingredientes antes de balancear.');
   if (!['proportional', 'equal', 'last'].includes(mode)) return fail('Método de balance desconocido.');
   const ids = new Set();
   if (rows.some(r => {
     const invalid = !r?.id || ids.has(r.id) || !Number.isFinite(Number(r.p)) || Number(r.p) < 0;
     ids.add(r?.id); return invalid;
-  })) return fail('Revisa ingredientes repetidos y porcentajes inválidos antes de balancear.');
+  })) return fail('Revisar ingredientes repetidos y porcentajes inválidos antes de balancear.');
   const locks = new Set(lockedIds);
   const fixed = rows.filter(r => locks.has(r.id));
   const free = rows.filter(r => !locks.has(r.id));
   const fixedTotal = totalPct(fixed);
-  if (fixedTotal > 100 + 1e-9) return fail(`Los porcentajes fijados suman ${fixedTotal.toFixed(2)}%. Desbloquea o reduce un porcentaje para balancear.`);
+  if (fixedTotal > 100 + 1e-9) return fail(`Los porcentajes fijados suman ${fixedTotal.toFixed(2)}%. Desbloquear o reducir un porcentaje para balancear.`);
   if (!free.length) return isMassBalancedTotal(totalPct(rows))
     ? { ok: true, recipe: rows, message: '' }
     : fail('Todos los porcentajes están fijados. Desbloquea al menos un ingrediente para balancear.');
@@ -46,7 +46,7 @@ const balanceRecipe = (rows = [], { lockedIds = [], mode = 'proportional' } = {}
   if (mode === 'last') {
     const last = free[free.length - 1];
     const others = totalPct(free.slice(0, -1));
-    if (others > target + 1e-9) return fail('El último ingrediente no puede absorber el exceso. Usa balance proporcional o reduce otro porcentaje.');
+    if (others > target + 1e-9) return fail('El último ingrediente no puede absorber el exceso. Usar balance proporcional o reducir otro porcentaje.');
     return { ok: true, recipe: rows.map(r => r.id === last.id ? { ...r, p: Number((target - others).toFixed(6)) } : r), message: '' };
   }
   const units = Math.floor(target * 100 + 1e-9);

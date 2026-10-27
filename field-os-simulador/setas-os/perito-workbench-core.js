@@ -46,7 +46,7 @@
         factor: 'none',
         severity: 'none',
         label: 'Sin receta activa',
-        rationale: 'Ingresa ingredientes en la mesa de mezcla.',
+        rationale: 'Ingresar ingredientes en la mesa de mezcla.',
         counterfactualOpportunity: null,
         actionRequired: null,
       };

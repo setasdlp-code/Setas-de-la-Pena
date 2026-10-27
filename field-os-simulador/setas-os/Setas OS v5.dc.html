@@ -521,7 +521,7 @@
           <div style="width:52px;height:52px;border-radius:50%;border:1px dashed var(--border-strong);display:flex;align-items:center;justify-content:center;color:var(--text-metadata);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:22px;height:22px;"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
           </div>
-          <div style="font:var(--t-body-sm);color:var(--text-metadata);max-width:240px;text-wrap:balance;">Aún no has registrado nada. El instrumento espera; tú trabajas.</div>
+          <div style="font:var(--t-body-sm);color:var(--text-metadata);max-width:240px;text-wrap:balance;">Sin registros todavía. El instrumento espera el primero.</div>
         </div>
         </sc-if>
 
@@ -561,7 +561,7 @@
             <div style="font:var(--t-label);color:var(--ink-0);">Referencia de receta <span style="font-weight:400;color:var(--text-metadata);">· validada por especie</span></div>
             <button onClick="{{ formularSelected }}" disabled="{{ formularDisabled }}" style="{{ formularStyle }}">Formular receta →</button>
           </div>
-          <sc-if value="{{ needsSpeciesFirst }}" hint-placeholder-val="{{ false }}"><p style="font:var(--t-caption);color:var(--text-metadata);margin:0 0 8px;">Elige una especie para ver las recetas compatibles.</p></sc-if>
+          <sc-if value="{{ needsSpeciesFirst }}" hint-placeholder-val="{{ false }}"><p style="font:var(--t-caption);color:var(--text-metadata);margin:0 0 8px;">Elegir una especie para ver las recetas compatibles.</p></sc-if>
           <sc-if value="{{ noRecipeForSpecies }}" hint-placeholder-val="{{ false }}"><p style="font:var(--t-caption);color:var(--accent-terracotta);margin:0 0 8px;">Sin receta específica documentada para esta especie — usa la experimental cuando aparezca.</p></sc-if>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <sc-for list="{{ recipeOptions }}" as="r" hint-placeholder-count="3">
@@ -664,7 +664,7 @@
       <sc-if value="{{ isHarvest }}" hint-placeholder-val="{{ false }}">
         <div class="col" style="padding:24px;">
           <h1>Registrar cosecha</h1>
-          <p>Selecciona un lote y una bolsa en Bitácora para registrar el peso medido en gramos. Los contenedores de demostración no son registros operativos.</p>
+          <p>Seleccionar un lote y una bolsa en Bitácora para registrar el peso medido en gramos. Los contenedores de demostración no son registros operativos.</p>
           <button onClick="{{ confirmHarvest }}" style="min-height:44px;padding:12px 20px;font-size:16px;">Abrir Bitácora de cosechas</button>
         </div>
       </sc-if>
@@ -840,7 +840,7 @@
           <button onClick="{{ goSesionHome }}" style="cursor:pointer;background:none;border:none;font:var(--t-label);color:var(--accent-blue-grey-dark);padding:6px 0;">← Volver</button>
           <div style="margin-top:8px;">
             <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Cierre de sesión</div>
-            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Resumen de tu sesión</h1>
+            <h1 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:34px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 0;">Resumen de la sesión</h1>
             <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:8px 0 0;">Vista derivada de lo que registraste. La sesión no se guarda — los eventos sí.</p>
           </div>
           <div style="margin-top:22px;background:var(--paper-0);border:1px solid var(--border-soft);border-radius:var(--radius-md);padding:20px;">
@@ -1478,7 +1478,7 @@
 
         <article style="border:1px solid var(--status-error);padding:22px;margin-top:24px;">
           <div style="font:var(--t-label);color:var(--status-error);margin-bottom:6px;">Aviso de retirada</div>
-          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 12px;max-width:520px;">Elige un lote para ver todos los despachos afectados y a quién avisar.</p>
+          <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 12px;max-width:520px;">Elegir un lote para ver todos los despachos afectados y a quién avisar.</p>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             <sc-for list="{{ recallOptions }}" as="r" hint-placeholder-count="3">
               <button onClick="{{ r.open }}" style="cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-0);border-radius:999px;padding:9px 15px;font-family:var(--font-mono);font-size:12px;">{{ r.lote }}</button>
@@ -1540,7 +1540,7 @@
         <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,0.9fr);gap:20px;margin-top:24px;align-items:start;">
           <article style="border:1px solid var(--border-soft);padding:22px;">
             <div style="font:var(--t-label);color:var(--ink-0);margin-bottom:6px;">Diagnóstico por síntoma</div>
-            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 14px;">Elige lo que ves; las causas se ordenan por la evidencia de esta granja.</p>
+            <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 14px;">Elegir lo observado; las causas se ordenan por la evidencia de esta granja.</p>
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
               <sc-for list="{{ symptomChips }}" as="c" hint-placeholder-count="5">
                 <button onClick="{{ c.pick }}" aria-pressed="{{ c.sel }}" style="{{ c.style }}">{{ c.label }}</button>
@@ -1786,7 +1786,7 @@
     <div onClick="{{ stop }}" style="background:var(--paper-1);border-radius:26px 26px 0 0;padding:22px 24px 34px;width:100%;max-width:560px;animation:fos-sheet-up .32s cubic-bezier(.32,.72,.36,1);">
       <div style="font:var(--t-eyebrow);letter-spacing:.16em;text-transform:uppercase;color:var(--text-metadata);">Corregir evento</div>
       <h3 style="font-family:var(--font-editorial);font-weight:var(--weight-bold);font-size:23px;letter-spacing:var(--tracking-tight);color:var(--ink-0);margin:4px 0 6px;">Registrar una enmienda</h3>
-      <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 16px;">El evento original no se borra. Tu corrección se añade a la cadena, fechada y atribuida.</p>
+      <p style="font:var(--t-body-sm);color:var(--text-secondary);margin:0 0 16px;">El evento original no se borra. La corrección se añade a la cadena, fechada y atribuida.</p>
       <textarea aria-label="Motivo de la enmienda" onInput="{{ setCorrNote }}" value="{{ corrNote }}" rows="3" placeholder="Qué cambia y por qué…" style="width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--paper-0);padding:13px 15px;font:var(--t-body-sm);color:var(--ink-0);font-family:var(--font-sans);"></textarea>
       <div style="display:flex;gap:10px;margin-top:16px;">
         <button onClick="{{ closeCorrection }}" style="flex:none;cursor:pointer;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-md);padding:14px 20px;font:var(--t-label);">Cancelar</button>
@@ -1825,7 +1825,7 @@
             </sc-if>
             <sc-if value="{{ l.isConflict }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:6px;background:color-mix(in oklab,var(--status-error) 8%, var(--paper-0));border:1px solid var(--status-error);border-radius:var(--radius-sm);padding:10px;">
-                <span style="font:var(--t-caption);color:var(--ink-1);">El servidor tiene una versión distinta de este evento. Elige cuál conservar.</span>
+                <span style="font:var(--t-caption);color:var(--ink-1);">El servidor tiene una versión distinta de este evento. Elegir cuál conservar.</span>
                 <div style="display:flex;gap:8px;">
                   <button onClick="{{ l.keepLocal }}" style="cursor:pointer;flex:1;border:1px solid var(--border-strong);background:var(--paper-0);color:var(--ink-1);border-radius:var(--radius-sm);padding:7px 10px;font:var(--t-caption);font-weight:700;">Mantener local</button>
                   <button onClick="{{ l.keepServer }}" style="cursor:pointer;flex:1;border:1px solid var(--ink-0);background:var(--ink-0);color:var(--paper-0);border-radius:var(--radius-sm);padding:7px 10px;font:var(--t-caption);font-weight:700;">Usar servidor</button>
@@ -2577,7 +2577,7 @@ class Component extends DCLogic {
         this.setState({ camActive:true });
         requestAnimationFrame(()=>{ if(this._scanVideoEl){ this._scanVideoEl.srcObject = stream; } });
         if('BarcodeDetector' in window){
-          this.setState({ scanStatusText:'Apunta la cámara al QR…' });
+          this.setState({ scanStatusText:'Apuntar la cámara al QR…' });
           const detector = new BarcodeDetector({ formats:['qr_code'] });
           this._detectLoop = setInterval(async ()=>{
             if(!this._scanVideoEl || this._scanVideoEl.readyState < 2) return;
@@ -2610,7 +2610,7 @@ class Component extends DCLogic {
     // Sin cámara o sin decodificador no se adivina: inventar un contenedor
     // convierte un escaneo fallido en un registro falso.
     this._scanT = setTimeout(()=>{
-      this.setState({ scanStatusText:'Este navegador no puede leer el QR. Elige el contenedor a mano.' });
+      this.setState({ scanStatusText:'Este navegador no puede leer el QR. Elegir el contenedor a mano.' });
     }, 1500);
   }
   // Escanear una etiqueta abre la captura rápida del shell React, no el
@@ -2882,14 +2882,14 @@ class Component extends DCLogic {
     oContainers.forEach(id=>this.push({ type:'observacion', container:id, note }));
     this.go('home'); this.toastWithUndo('Observación registrada en '+oContainers.length+' contenedor'+(oContainers.length>1?'es':'')+(obsPhoto?' con foto':'')+'.', _snap);
   }
-  confirmHarvest(){ this.goBitTab('bit_dash'); this.toast('Selecciona un lote y registra su cosecha en Bitácora.'); }
+  confirmHarvest(){ this.goBitTab('bit_dash'); this.toast('Seleccionar un lote y registrar su cosecha en Bitácora.'); }
   confirmQuick(){
     const { quickType, qContainers, qNote, qCause, qPhoto } = this.state;
     if(!qContainers.length) return;
     const meta = TYPES[quickType];
     const contam = quickType==='contaminacion';
     const descarte = quickType==='descarte';
-    if(contam && !qCause){ this.toast('Elige una causa sospechada antes de registrar.'); return; }
+    if(contam && !qCause){ this.toast('Elegir una causa sospechada antes de registrar.'); return; }
     const _snap = { ledger:[...this.state.ledger], containers:[...this.state.containers], salidas:[...this.state.salidas], seq:this.state.seq };
     const newStatus = contam?'contaminado':(descarte?'descartado':null);
     const note = (qNote||meta.label+' registrada.') + (contam ? ' · Causa sospechada: '+causeLabel(qCause) : '');
@@ -3402,7 +3402,7 @@ class Component extends DCLogic {
       formularSelected:()=>{ if(s.rSpecies) this.openSimForSpecies(s.rSpecies); },
       registerDisabled: !(s.rSpecies&&s.rRecipe),
       registerBtnStyle:this.primaryBtn(!!(s.rSpecies&&s.rRecipe)),
-      registerBtnLabel: (s.rSpecies&&s.rRecipe) ? ('Registrar '+(s.rCount||1)+' contenedor'+((s.rCount||1)>1?'es':'')) : (s.rSpecies?'Elige una receta compatible':'Elige especie y receta'),
+      registerBtnLabel: (s.rSpecies&&s.rRecipe) ? ('Registrar '+(s.rCount||1)+' contenedor'+((s.rCount||1)>1?'es':'')) : (s.rSpecies?'Elegir una receta compatible':'Elegir especie y receta'),
       confirmRegister:()=>this.confirmRegister(),
 
       // observe / harvest / quick
@@ -3413,7 +3413,7 @@ class Component extends DCLogic {
       obsTags: OBS_TAGS.map(t=>({ label:t, sel:s.oTags.includes(t), style:this.chipStyle(s.oTags.includes(t)), toggle:()=>this.setState(st=>({ oTags: st.oTags.includes(t)?st.oTags.filter(x=>x!==t):[...st.oTags,t] })) })),
       obsNote:s.oNote, setObsNote:(e)=>this.setState({oNote:e.target.value}),
       obsDisabled:!s.oContainers.length, obsBtnStyle:this.primaryBtn(!!s.oContainers.length),
-      obsBtnLabel: s.oContainers.length ? ('Guardar observación'+(s.oContainers.length>1?(' · '+s.oContainers.length+' contenedores'):'')) : 'Elige uno o varios',
+      obsBtnLabel: s.oContainers.length ? ('Guardar observación'+(s.oContainers.length>1?(' · '+s.oContainers.length+' contenedores'):'')) : 'Elegir uno o varios',
       confirmObs:()=>this.confirmObs(),
 
       weight:s.weight, weightUp:()=>this.setState(st=>({weight:st.weight+10})), weightDown:()=>this.setState(st=>({weight:Math.max(0,st.weight-10)})),
@@ -3423,7 +3423,7 @@ class Component extends DCLogic {
       ],
       harvestDisabled:!s.hContainer, harvestBtnStyle:this.primaryBtn(!!s.hContainer),
       destOptions: DESTINOS.map(d=>({ key:d.key, label:d.label, desc:d.desc, style:this.cardStyle(s.hDest===d.key), select:()=>this.setState({hDest:d.key}) })),
-      harvestBtnLabel: s.hContainer ? 'Registrar cosecha' : 'Elige un contenedor',
+      harvestBtnLabel: s.hContainer ? 'Registrar cosecha' : 'Elegir un contenedor',
       confirmHarvest:()=>this.confirmHarvest(),
 
       quickRef: s.quickType ? (s.quickType==='marca'?'WF-10 · Marca':'Evento operativo') : '',
@@ -3431,7 +3431,7 @@ class Component extends DCLogic {
       quickNote:s.qNote, setQuickNote:(e)=>this.setState({qNote:e.target.value}),
       quickDisabled:!s.qContainers.length || (s.quickType==='contaminacion' && !s.qCause),
       quickBtnStyle:this.primaryBtn(!!s.qContainers.length && !(s.quickType==='contaminacion' && !s.qCause)),
-      quickBtnLabel: s.qContainers.length ? ('Registrar '+quickMeta.label.toLowerCase()+(s.qContainers.length>1?(' · '+s.qContainers.length):'')) : 'Elige uno o varios',
+      quickBtnLabel: s.qContainers.length ? ('Registrar '+quickMeta.label.toLowerCase()+(s.qContainers.length>1?(' · '+s.qContainers.length):'')) : 'Elegir uno o varios',
       confirmQuick:()=>this.confirmQuick(),
 
       // history
@@ -3639,7 +3639,7 @@ class Component extends DCLogic {
     const r=list[0];
     const sp = r.sKey || 'pleurotus_ostreatus';
     this.setState({ module:'sesion', screen:'register', rSpecies:sp, rRecipe:'SIM · '+(r.name||('receta '+r.id)), rCount:4, capture:false });
-    this.toast('Orden preparada desde «'+(r.name||'receta del Laboratorio')+'» · revisa y registra.');
+    this.toast('Orden preparada desde «'+(r.name||'receta del Laboratorio')+'» · revisar y registrar.');
   }
   openRecall(lote){ this.setState({ recallLote:lote }); }
   runSearch(q){
@@ -3859,7 +3859,7 @@ class Component extends DCLogic {
         accent:c.p==='alta'?'var(--status-error)':(c.p==='media'?'var(--accent-mushroom)':'var(--ink-2)'),
         log:()=>this.setState({ module:'sesion', screen:'quick', quickType:'marca', capture:false, qNote:'Diagnóstico · '+sym.label+' → '+c.a }) })):[],
       // simulador → producción
-      simToOrder:()=>this.simToOrder(), simOrderLabel:(s.simRecipes||[]).length?'Convertir en lote →':'Guarda una receta para crear una orden',
+      simToOrder:()=>this.simToOrder(), simOrderLabel:(s.simRecipes||[]).length?'Convertir en lote →':'Guardar una receta para crear una orden',
       simReal,
       // deshacer con ventana de 30 s
       hasLedgerForUndo:undoOpen, undoLabel:'Deshacer último evento (30 s)',

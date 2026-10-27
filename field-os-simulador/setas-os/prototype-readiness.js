@@ -9,14 +9,14 @@
   const read=(storage,key)=>{
     const raw=storage.getItem(key);
     if(raw===null)return [];
-    let value;try{value=JSON.parse(raw);}catch{throw Error(`Datos dañados: ${key}. Exporta antes de corregir.`);}
+    let value;try{value=JSON.parse(raw);}catch{throw Error(`Datos dañados: ${key}. Exportar antes de corregir.`);}
     if(!Array.isArray(value))throw Error(`Colección inválida: ${key}`);
     return value;
   };
   function recover(storage){
     const raw=storage.getItem(PENDING);if(!raw)return;
     const transaction=JSON.parse(raw);
-    if(transaction.schema!=='setas.local-write.v1'||!Array.isArray(transaction.entries))throw Error('Recuperación local inválida. Conserva el respaldo.');
+    if(transaction.schema!=='setas.local-write.v1'||!Array.isArray(transaction.entries))throw Error('Recuperación local inválida. Conservar el respaldo.');
     for(const entry of transaction.entries){
       if(!KEYS.includes(entry.key)&&entry.key!==ARCHIVE)throw Error('Clave de recuperación no permitida.');
       const current=storage.getItem(entry.key);
@@ -49,7 +49,7 @@
       if(!recipe?.length||new Set(recipe.map(r=>r.id)).size!==recipe.length||recipe.some(r=>!r.id||!Number.isFinite(Number(r.p))||Number(r.p)<=0)||Math.abs(recipe.reduce((n,r)=>n+Number(r.p),0)-100)>0.01)throw Error('Cada receta debe tener ingredientes únicos y porcentajes positivos que sumen 100%.');
     }
     const plans=read(storage,PLANS),old=plans.find(p=>p.id===plan.id);
-    if(old&&(old.status!=='draft'||[old.control,...old.treatments].some(a=>a.batchIds.length)))throw Error('Plan en ejecución: crea una nueva versión.');
+    if(old&&(old.status!=='draft'||[old.control,...old.treatments].some(a=>a.batchIds.length)))throw Error('Plan en ejecución: crear una nueva versión.');
     persist(storage,[[PLANS,[...plans.filter(p=>p.id!==plan.id),clone(plan)]]]);return plan;
   }
   function linkBatch(plans,selection,lote){
@@ -57,15 +57,15 @@
     if(!plan||!['draft','running'].includes(plan.status))throw Error('Plan no disponible.');
     const arm=[plan.control,...plan.treatments].find(a=>a.id===selection.armId);
     if(!arm||arm.batchIds.length>=arm.plannedReplicates)throw Error('Grupo completo o inválido.');
-    if(arm.recipeSnapshot?.sKey!==lote.recipeRef?.sKey||recipeSignature(arm.recipeSnapshot.recipe)!==recipeSignature(lote.recipeRef.recipe))throw Error('La receta cambió: crea otro plan para esta variante.');
+    if(arm.recipeSnapshot?.sKey!==lote.recipeRef?.sKey||recipeSignature(arm.recipeSnapshot.recipe)!==recipeSignature(lote.recipeRef.recipe))throw Error('La receta cambió: crear otro plan para esta variante.');
     arm.batchIds.push(lote.id);plan.status='running';plan.startedAt ||= lote.createdAt;
     const batch={...lote,experimentId:plan.id,armId:arm.id,recipeVersionId:arm.recipeVersionId,recipeRef:{...lote.recipeRef,versionId:arm.recipeVersionId}};
     return {plans:result,batch};
   }
   const releaseBasis=batch=>JSON.stringify([batch?.id,batch?.preparation||null,batch?.recipeRef||null,batch?.tratamiento||null]);
   function release(batch,{equipment,protocol,reviewer,acknowledged,at,legacyReviewed=false}){
-    if(!batch?.id||!equipment?.trim()||!protocol?.trim()||!reviewer?.trim()||acknowledged!==true||!Number.isFinite(Date.parse(at)))throw Error('Completa equipo, protocolo, responsable y aceptación de incertidumbre.');
-    if(!batch.preparation&&!legacyReviewed)throw Error('Revisa explícitamente la especificación del lote antiguo.');
+    if(!batch?.id||!equipment?.trim()||!protocol?.trim()||!reviewer?.trim()||acknowledged!==true||!Number.isFinite(Date.parse(at)))throw Error('Completar equipo, protocolo, responsable y aceptación de incertidumbre.');
+    if(!batch.preparation&&!legacyReviewed)throw Error('Revisar explícitamente la especificación del lote antiguo.');
     return {schema:'setas.trial-release.v1',scope:'controlled-trial',basis:releaseBasis(batch),preparationRevision:batch.preparation?.revision||null,equipment:equipment.trim(),protocol:protocol.trim(),reviewer:reviewer.trim(),at,acknowledged:true,legacyReviewed};
   }
   const releaseCurrent=(batch,r=batch?.trialRelease)=>r?.schema==='setas.trial-release.v1'&&r.scope==='controlled-trial'&&r.acknowledged===true&&r.basis===releaseBasis(batch);
@@ -105,7 +105,7 @@
     if(db){fieldEvents=await new Promise((resolve,reject)=>{
       const tx=db.transaction(['field_events','queue_entries'],'readonly');let events=[],queue=[];
       tx.objectStore('field_events').getAll().onsuccess=e=>{events=e.target.result;};tx.objectStore('queue_entries').getAll().onsuccess=e=>{queue=e.target.result;};
-      tx.oncomplete=()=>{const records=queue.filter(q=>q.accountId===accountId).map(q=>({event:events.find(e=>e.id===q.eventId),delivery:q}));if(records.some(r=>!r.event)){reject(Error('Hay envíos de campo sin su evento original. Conserva este equipo para recuperar la evidencia.'));return;}resolve(records);};tx.onerror=()=>reject(tx.error);
+      tx.oncomplete=()=>{const records=queue.filter(q=>q.accountId===accountId).map(q=>({event:events.find(e=>e.id===q.eventId),delivery:q}));if(records.some(r=>!r.event)){reject(Error('Hay envíos de campo sin su evento original. Conservar este equipo para recuperar la evidencia.'));return;}resolve(records);};tx.onerror=()=>reject(tx.error);
     });}
     const data={schema:'setas.prototype-backup.v1',at,archive:validateArchive(JSON.parse(storage.getItem('sdp_recovery_archive_v1')||'null')||emptyArchive()),collections:Object.fromEntries(KEYS.map(k=>[k,read(storage,k)])),fieldEvents};validateBackup(data);return data;
   }
@@ -132,7 +132,7 @@
   function planBatch(storage,{lote,bolsas,plan,selection=null}){
     recover(storage);
     const lots=read(storage,'sdp_bit_lotes');
-    if(lots.some(l=>l.id===lote.id||l.codigo===lote.codigo))throw Error('Código de lote ya registrado. Abre el lote existente.');
+    if(lots.some(l=>l.id===lote.id||l.codigo===lote.codigo))throw Error('Código de lote ya registrado. Abrir el lote existente.');
     const ledger=dependency('SetasInventoryLedger','./inventory-ledger.js');
     const reservations=ledger.addReservations(read(storage,'sdp_inv_reservas'),ledger.reservationsForPlan(plan,{batchId:lote.id,at:lote.createdAt}));
     const extra=[];
@@ -146,7 +146,7 @@
     const lots=read(storage,'sdp_bit_lotes'),lote=lots.find(l=>l.id===loteId);
     if(!lote||!releaseCurrent(lote,trialRelease))throw Error('La autorización no corresponde a esta versión del lote.');
     if((lote.ingredientShortfalls||[]).some(s=>s.missing>0))throw Error('Este plan tiene insumos faltantes. Replanifica con existencias completas antes de preparar.');
-    if(lote.preparation?.totals?.waterExcessKg>0)throw Error('Los insumos exceden el agua objetivo. Revisa la preparación antes de consumir stock.');
+    if(lote.preparation?.totals?.waterExcessKg>0)throw Error('Los insumos exceden el agua objetivo. Revisar la preparación antes de consumir stock.');
     const batchApi=dependency('SetasBatchSheet','./batch-sheet.js');
     const inventory=dependency('SetasInventoryConsumption','./inventory-consumption.js');
     const ledger=dependency('SetasInventoryLedger','./inventory-ledger.js');

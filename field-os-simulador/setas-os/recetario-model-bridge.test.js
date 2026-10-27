@@ -26,7 +26,7 @@ test('new saved recipes persist a versioned immutable model snapshot',()=>{
 
 test('legacy recipes remain visible without inventing model confidence',()=>{
   assert.match(bridge,/receta legacy/);
-  assert.match(bridge,/vuelve a guardar para crear snapshot trazable/);
+  assert.match(bridge,/volver a guardar para crear snapshot trazable/);
 });
 
 test('Recetario renders viability EB confidence real error and comparable count',()=>{

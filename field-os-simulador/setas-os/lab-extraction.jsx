@@ -523,7 +523,7 @@ export default function LabExtraction() {
 
         {batches.length === 0 ? (
           <div style={{ textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" }}>
-            No hay lotes de extracción registrados en almacenamiento local. Configura los parámetros arriba para generar el primero.
+            No hay lotes de extracción registrados en almacenamiento local. Configurar los parámetros arriba para generar el primero.
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
