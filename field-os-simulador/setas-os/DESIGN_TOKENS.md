@@ -290,6 +290,66 @@ These colors are applied to specific features (perito analysis, form modes) and 
 
 ---
 
+## Audit — 2026-10-27
+
+Scope: the stylesheets the shell actually loads (`setas-os-legacy.css`, `fieldos-tokens.css`, `ds-2026/operations.css` and its `@import`s, `sim.css`), plus `Setas OS v5.dc.html` and `simulador-app.jsx`. `ds-2026/market.css` is not loaded by the app and was excluded.
+
+### Fixed — tokens used but never defined
+
+A `var(--x)` with no fallback that points to a missing token does not raise an error: the whole declaration becomes invalid at computed-value time. Four tokens were only defined in `guia-setas-os.html`, never in the app. Now defined in `fieldos-tokens.css`:
+
+| Token | Effect before | Value now |
+|-------|---------------|-----------|
+| `--focus-outline` | `.os-icon-action` / `.os-scan-target` had `outline: none` on keyboard focus (WCAG 2.4.7) | `2px solid var(--focus-ring)` |
+| `--text-disabled` | Timestamps and authors in the shell rendered in full ink instead of muted | `var(--text-metadata)` (#6B5B4A, 5.93:1 on #F7F4EC) |
+| `--text-3xl` | `--t-display-1`, `--t-display-2`, `--t-display-1i` fell back to 16px body text | `var(--size-display-02)` (44px) |
+| `--leading-relaxed` | `--t-lede` fell back to 16px body text | `1.7` |
+
+`design-tokens.test.js` now fails when any un-fallbacked `var()` in the loaded set references an undefined token.
+
+### Pending — same token name, different value by scope
+
+These are not bugs the browser reports; they are places where one token name resolves to two values depending on whether the element sits inside `.sim-root`. Changing them changes rendered sizes across many screens, so each needs a visual review before it is unified.
+
+| Token | `:root` | `.sim-root` (sim.css) | Note |
+|-------|---------|-----------------------|------|
+| `--text-lg` | 19px (`--size-heading-03`) | 24px (`--size-heading-02`) | One step apart |
+| `--text-xl` | 24px (`--size-heading-02`) | 32px (`--size-heading-01`) | One step apart |
+| `--tracking-wide` | 0.04em | 0.2em | 5× apart |
+| `--tracking-label` | 0.15em | 0.08em | |
+| `--tracking-tight` | -0.01em | -0.02em | |
+| `--radius-sm`, `--r-sm` | 2px | 0px | `.sim-root` is square-cornered by design |
+
+### Fixed — harness rendered a different cascade than production
+
+The shell loads `ds-2026/operations.css` twice: once before and once (after `auth-gate.js` activates the `data-auth-href` links) after `fieldos-tokens.css`, so DS-2026 wins every `:root` tie. `__harness.html` loaded it only before, so in e2e runs `fieldos-tokens.css` won instead — e.g. `--border-strong` rendered `#888` grey in the harness and `#1A1410` ink in production (190 computed-style differences across 9 views × 2 widths). The harness and `ux-v2-preview.html` now repeat the second load. Guarded by `design-tokens.test.js`.
+
+### Fixed — dead definitions in `fieldos-tokens.css`
+
+Removed 11 `:root` definitions that DS-2026 redefines and therefore never applied: `--soil`, `--soil-tint`, `--rust`, `--rust-tint`, `--border-strong`, `--font-editorial`, `--font-serif` (×2), `--font-sans`, `--font-mono`, `--t-body`, `--t-label`. Guarded by `design-tokens.test.js`.
+
+### Fixed — literals replaced with tokens of identical value
+
+| Category | Change | Count |
+|----------|--------|-------|
+| `z-index` | Literals in `sim.css` / `setas-os-legacy.css` → existing `--z-*` tier with the same number. Added `--z-sticky-nav: 25` (`.live-dash-bar`), the only value without a tier. `0` and `auto` stay literal. Guarded by test. | 18 |
+| `font-size` | `11/13/14/16px` → `--text-xs/sm/base/md` (same value in `:root` and `.sim-root`) | 13 |
+| `transition` | `.15s` → `--duration-standard` | 6 declarations |
+
+Verification for all three sections above: computed styles of every element (24 properties) in 9 harness views at 1280px and 390px, before vs after — 0 differences.
+
+### Pending — needs a visual decision
+
+These change what is rendered, so they were not applied.
+
+1. **Same token name, different value by scope** (table above): `--text-lg`, `--text-xl`, `--tracking-*`, `--radius-sm`.
+2. **Two z-index scales.** `fieldos-tokens.css` (`--z-local` 1 … `--z-overlay` 1000) and the shell's inline `<style>` (`--z-sticky-header` 3 … `--z-skip-link` 1000) interleave: `--z-loading` and `--z-bottom-bar` are both 50; `sim.css` modals (300/400) sit above the shell's toast (96) and command palette (95); `simulador-app.jsx` uses literal `9999` and `99999` for two diagnostic modals. One ordered list of layers is needed before merging them.
+3. **`font-size` without an exact token** in `sim.css`: `12px` ×65, `10px` ×15, `15px` ×12, `22px` ×11, `28px` ×10, plus ~25 fractional values (`10.35px`, `14.95px`, `53.9px`…). Sizes of 5–8px belong to printed labels and should map to `--size-micro-print` / mm units, not to screen tokens.
+4. **`transition` durations without a token**: `.1s` ×2, `.2s`, `.3s` (progress-bar width).
+5. **`!important`** (768) and **inline `style=""`** in the shell (833) — unchanged.
+
+---
+
 ## Future Work
 
 - **Small multiples**: If new ingredient categories appear, extend `--cat-*` following the same pattern (3 tokens per category: default, hover, text).
