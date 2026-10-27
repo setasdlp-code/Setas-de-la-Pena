@@ -54,7 +54,7 @@ const root=path.resolve(__dirname,'..');
   await input.fill('Cancelar con fallo');
   await page.evaluate(()=>{window.__removeItem=Storage.prototype.removeItem;Storage.prototype.removeItem=function(k){if(k.startsWith('setas_bag_observation_draft:'))throw Error('fixture storage');return window.__removeItem.call(this,k);};});
   await page.getByRole('button',{name:'Cancelar observaciones de RECOVERY-B01',exact:true}).click();
-  await expect(input).toHaveValue('Cancelar con fallo');await expect(page.getByRole('alert')).toContainText('Tu texto se conserva');
+  await expect(input).toHaveValue('Cancelar con fallo');await expect(page.getByRole('alert')).toContainText('El texto se conserva');
   await page.evaluate(()=>Storage.prototype.removeItem=window.__removeItem);
   await page.getByRole('button',{name:'Cancelar observaciones de RECOVERY-B01',exact:true}).click();
   await expect(input).toHaveValue('Borrador recuperable');
