@@ -11,7 +11,7 @@
 }
 .franja--coral { --franja-color: var(--coral-500); }
 .franja--musgo { --franja-color: var(--moss-500); }
-.franja--ocre { --franja-color: var(--warning); }
+.franja--ocre { --franja-color: var(--sand-500); }
 .franja--pizarra { --franja-color: var(--slate-500); }
 
 @media (forced-colors: active) {
