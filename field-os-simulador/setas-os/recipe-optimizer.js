@@ -697,7 +697,7 @@
       items.push({
         priority: 'critical', icon: '↓C:N',
         label: 'C:N demasiado alto',
-        action: best ? `Aumentar <b>${best.name}</b> (N=${best.n}%) — ${inRec ? 'ya en receta, sube %' : 'agregar a receta'}` : `Reducir base de carbono`,
+        action: best ? `Aumentar <b>${best.name}</b> (N=${best.n}%) — ${inRec ? 'ya en receta, subir %' : 'agregar a receta'}` : `Reducir base de carbono`,
         effect: `C:N ${an.cn.toFixed(1)}:1 > máximo ${sp.cn_optimal.max}:1 · ideal ${sp.cn_optimal.ideal}:1 · colonización tardía`,
         delta: `C:N actual ${an.cn.toFixed(0)} → objetivo ${sp.cn_optimal.ideal}`,
         apply: best ? { mode: inRec ? 'increase' : 'add', id: best.id, delta: scaledDelta(7, flags.cnOverDist) } : null

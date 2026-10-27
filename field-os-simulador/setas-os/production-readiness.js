@@ -49,33 +49,33 @@
       const record=latestFor(records,id);
       const stale=!!record&&(record.scope!==scope||Date.parse(record.at)>nowMs);
       const status=record&&!stale?record.status:'unknown';
-      add(id,label,status,stale?'La revisión pertenece a otra receta, cantidad, sala o fecha futura. Verifica de nuevo.'
+      add(id,label,status,stale?'La revisión pertenece a otra receta, cantidad, sala o fecha futura. Verificar de nuevo.'
         :record?record.status==='verified'?`Revisión documentada por ${record.reviewer}. Referencia: ${record.reference}.`:record.notes
         :'Falta una revisión con responsable y referencia de evidencia.',action,record);
       return checks[checks.length-1];
     };
-    add('species','Especie confirmada',input.speciesConfirmed===true?'verified':'unknown',input.speciesConfirmed?input.speciesName||input.speciesKey:'Selecciona explícitamente la especie para este lote.','recipe');
+    add('species','Especie confirmada',input.speciesConfirmed===true?'verified':'unknown',input.speciesConfirmed?input.speciesName||input.speciesKey:'Seleccionar explícitamente la especie para este lote.','recipe');
     const prepValid=prep?.schemaVersion===1&&text(prep.revision)&&prep.speciesKey===input.speciesKey
       &&Array.isArray(prep.items)&&prep.items.length>0&&prep.items.every(i=>finite(i.inventoryKg)&&Number(i.inventoryKg)>0)
       &&finite(prep.target?.bags)&&Number(prep.target.bags)>0&&finite(prep.totals?.waterExcessKg);
     const identified=text(input.lotCode)&&/^\d{4}-\d{2}-\d{2}$/.test(input.plannedDate||'')&&Number.isFinite(Date.parse(input.plannedDate));
     add('preparation','Receta y cantidades',!prepValid||Number(prep?.totals?.waterExcessKg)>0||input.lotCodeAlreadyUsed?'blocked':!identified?'unknown':'verified',
-      !prepValid?input.preparationError||'Completa una receta válida y las cantidades del lote.':Number(prep.totals.waterExcessKg)>0?'La mezcla aporta más agua que el objetivo. Revisa la preparación.':input.lotCodeAlreadyUsed?'El código ya pertenece a un lote registrado. Usa un identificador nuevo.':!identified?'Indica el código y la fecha previstos de este lote.':`${prep.target.bags} bolsas · ${prep.target.wetKg} kg húmedos · ${prep.revision}. Cantidades planificadas.`,'batch');
+      !prepValid?input.preparationError||'Completar una receta válida y las cantidades del lote.':Number(prep.totals.waterExcessKg)>0?'La mezcla aporta más agua que el objetivo. Revisar la preparación.':input.lotCodeAlreadyUsed?'El código ya pertenece a un lote registrado. Usar un identificador nuevo.':!identified?'Indicar el código y la fecha previstos de este lote.':`${prep.target.bags} bolsas · ${prep.target.wetKg} kg húmedos · ${prep.revision}. Cantidades planificadas.`,'batch');
     const modelKnown=prepValid&&finite(input.model?.criticals)&&Number.isInteger(Number(input.model.criticals))&&Number(input.model.criticals)>=0;
-    add('model','Restricciones del modelo',!modelKnown?'unknown':input.model.criticals>0?'blocked':'verified',!modelKnown?'Falta evaluar la receta activa.':input.model.criticals>0?`${input.model.criticals} restricción(es) crítica(s). Corrige la receta antes de continuar.`:'Sin críticos en la evaluación actual; esto no valida rendimiento ni proceso.','recommendations');
+    add('model','Restricciones del modelo',!modelKnown?'unknown':input.model.criticals>0?'blocked':'verified',!modelKnown?'Falta evaluar la receta activa.':input.model.criticals>0?`${input.model.criticals} restricción(es) crítica(s). Corregir la receta antes de continuar.`:'Sin críticos en la evaluación actual; esto no valida rendimiento ni proceso.','recommendations');
     const stockKnown=prepValid&&input.inventoryLoaded===true&&input.plan&&Array.isArray(input.plan.shortfalls)&&input.stockCheck&&Array.isArray(input.stockCheck.lines);
     const missing=stockKnown?input.stockCheck.lines.filter(l=>l.faltante>0):[];
     const neededIds=new Set([...(prep?.items||[]).map(i=>i.ingredientId),prep?.spawn?.ingredientId,input.containerStockId]);
     const overdraw=(input.inventoryLots||[]).some(l=>Number(l.sobregiroKg)>0&&neededIds.has(l.ingredienteId));
     const containerKnown=!!input.containerStockId;
     add('stock','Insumos, semilla y contenedores',!stockKnown?'unknown':missing.length||overdraw||!containerKnown?'blocked':'verified',
-      !stockKnown?'No se puede comprobar cobertura sin cantidades e inventario cargados.':!containerKnown?'Selecciona un contenedor identificado en Bodega.':overdraw?'Un lote asignado tiene sobregiro: realiza un recuento físico.':missing.length
-        ?missing.map(s=>`${s.name||s.ingredienteId}: faltan ${s.faltante} ${s.unidad}`).join(' · '):'Las existencias disponibles, descontando reservas, cubren preparación, semilla y contenedores. Confirma el recuento físico.','inventory');
+      !stockKnown?'No se puede comprobar cobertura sin cantidades e inventario cargados.':!containerKnown?'Seleccionar un contenedor identificado en Bodega.':overdraw?'Un lote asignado tiene sobregiro: realizar un recuento físico.':missing.length
+        ?missing.map(s=>`${s.name||s.ingredienteId}: faltan ${s.faltante} ${s.unidad}`).join(' · '):'Las existencias disponibles, descontando reservas, cubren preparación, semilla y contenedores. Confirmar el recuento físico.','inventory');
     const spawn=manual('spawn','Cepa y semilla identificadas','record');
     const spawnLots=(input.plan?.allocations||[]).filter(a=>a.ingredientId===prep?.spawn?.ingredientId);
     if(spawn.status==='verified'&&!spawnLots.length){spawn.status='unknown';spawn.detail='No hay un lote físico de semilla asignado para vincular esta revisión.';}
     const estimated=prepValid?prep.items.filter(i=>i.moisture?.source!=='operator-measured').length:null;
-    add('moisture','Humedad de los ingredientes',estimated===null?'unknown':estimated?'unknown':'verified',estimated===null?'Falta la preparación.':estimated?`${estimated} ingrediente(s) usan humedad de referencia. Registra las mediciones del lote.`:'Humedades ingresadas como mediciones por el operador.','batch');
+    add('moisture','Humedad de los ingredientes',estimated===null?'unknown':estimated?'unknown':'verified',estimated===null?'Falta la preparación.':estimated?`${estimated} ingrediente(s) usan humedad de referencia. Registrar las mediciones del lote.`:'Humedades ingresadas como mediciones por el operador.','batch');
     const equipment=manual('equipment','Equipo y ciclo de tratamiento','record');
     if(equipment.status==='verified'&&requiresBioindicator(input)){
       const d=equipment.record.details||{};
@@ -86,7 +86,7 @@
     if(room.status==='verified'){
       if(!input.roomState||!finite(input.roomState.bagsPresent)){room.status='unknown';room.detail='No se pudo comprobar la ocupación actual de la sala.';}
       else if(input.roomState.status==='needs_sanitation'||Number(input.roomState.bagsIsolated)>0||input.roomState.alerts?.some(a=>a.code==='bolsas_aisladas')){room.status='blocked';room.detail='La sala requiere limpieza o revisión de aislamiento.';}
-      else if(Date.parse(input.roomState.lastEmptiedAt)>Date.parse(room.record.at)){room.status='unknown';room.detail='La sala se vació después de la inspección. Verifica sus condiciones de nuevo.';}
+      else if(Date.parse(input.roomState.lastEmptiedAt)>Date.parse(room.record.at)){room.status='unknown';room.detail='La sala se vació después de la inspección. Verificar sus condiciones de nuevo.';}
       else if(Number(input.roomState.bagsPresent)+Number(prep?.target?.bags)>Number(room.record.details.capacityBags)){room.status='blocked';room.detail='Las bolsas presentes y planificadas superan la capacidad documentada.';}
     }
     const sensors=manual('sensors','Sensores y calibración','record');
@@ -101,7 +101,7 @@
     });
     if(sensors.status==='verified'&&!trustworthy){sensors.status='unknown';sensors.detail='Faltan lecturas actuales y válidas de temperatura, HR o CO₂; los datos manuales y de demostración no verifican sensores.';}
     const review=manual('review','Revisión humana de este plan','record');
-    if(review.status==='verified'&&(review.record.reviewBasis!==reviewBasis(input,checks)||checks.some(c=>c.id!=='review'&&c.status!=='verified'))){review.status='unknown';review.detail='Cambió un requisito o sigue pendiente. Completa y revisa de nuevo este plan.';}
+    if(review.status==='verified'&&(review.record.reviewBasis!==reviewBasis(input,checks)||checks.some(c=>c.id!=='review'&&c.status!=='verified'))){review.status='unknown';review.detail='Cambió un requisito o sigue pendiente. Completar y revisar de nuevo este plan.';}
     const counts={verified:0,blocked:0,unknown:0};checks.forEach(c=>counts[c.status]++);
     return {scope,preparationRevision:prep?.revision||null,checks,counts,status:counts.blocked?'blocked':counts.unknown?'unknown':'verified',
       next:checks.find(c=>c.status==='blocked')||checks.find(c=>c.status==='unknown')||null,
@@ -109,14 +109,14 @@
   }
   function createEvidence(form,input,records,{at=new Date().toISOString(),id}={}){
     const result={schema:SCHEMA,id,requirementId:form.requirementId,status:form.status,reviewer:text(form.reviewer),reference:text(form.reference),notes:text(form.notes),details:{...form.details},scope:scopeFor(input),at};
-    if(!validRecord(result))throw Error('Completa responsable, evidencia y los datos de la revisión. Para un bloqueo o pendiente, explica el motivo.');
-    if(!input.preparation?.revision||!input.speciesConfirmed)throw Error('Selecciona la especie y completa las cantidades antes de registrar una revisión.');
+    if(!validRecord(result))throw Error('Completar responsable, evidencia y los datos de la revisión. Para un bloqueo o pendiente, explicar el motivo.');
+    if(!input.preparation?.revision||!input.speciesConfirmed)throw Error('Seleccionar la especie y completar las cantidades antes de registrar una revisión.');
     if(result.requirementId==='equipment'&&result.status==='verified'&&requiresBioindicator(input)
       &&(result.details.bioindicatorResult!=='sin_crecimiento'||!text(result.details.cycleId)))
-      throw Error('Para esterilizar en autoclave registra la corrida (ID del ciclo) y un bioindicador sin crecimiento. Si hubo crecimiento, registra la revisión como bloqueada.');
+      throw Error('Para esterilizar en autoclave, registrar la corrida (ID del ciclo) y un bioindicador sin crecimiento. Si hubo crecimiento, registrar la revisión como bloqueada.');
     if(result.requirementId==='review'&&result.status==='verified'){
       const assessment=assessProductionReadiness(input,records,Date.parse(at));
-      if(assessment.checks.some(c=>c.id!=='review'&&c.status!=='verified'))throw Error('Completa los requisitos pendientes antes de documentar la revisión final.');
+      if(assessment.checks.some(c=>c.id!=='review'&&c.status!=='verified'))throw Error('Completar los requisitos pendientes antes de documentar la revisión final.');
       result.reviewBasis=assessment.reviewBasis;
     }
     return result;

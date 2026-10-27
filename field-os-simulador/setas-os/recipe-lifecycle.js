@@ -159,7 +159,7 @@
   const assertEditable = (recipe) => {
     if (!recipe) throw new Error('assertEditable requiere una receta');
     if (recipe.status === 'approved' || recipe.status === 'retired') {
-      throw new Error('una receta aprobada no se edita: crea una versión nueva');
+      throw new Error('una receta aprobada no se edita: crear una versión nueva');
     }
   };
 

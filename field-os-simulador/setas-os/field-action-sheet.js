@@ -74,7 +74,7 @@
   const STATUS_DETAILS = Object.freeze({
     saved_local: 'El evento se guardó en el almacenamiento local de este teléfono/equipo. Se sincronizará automáticamente con el servidor central cuando haya señal.',
     sending: 'Enviando la transición al servidor central.',
-    conflict: 'Otro dispositivo ya avanzó este lote. Refresca y vuelve a confirmar.',
+    conflict: 'Otro dispositivo ya avanzó este lote. Refrescar y volver a confirmar.',
     rejected: 'El servidor rechazó la transición. El evento no se aplicó.',
   });
 

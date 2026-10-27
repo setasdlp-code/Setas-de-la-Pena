@@ -24,8 +24,8 @@ test('traducirError maps all known error codes correctly', () => {
     ['auth/invalid-email', 'Correo inválido.'],
     ['auth/user-not-found', 'No existe una cuenta con ese correo.'],
     ['auth/wrong-password', 'Contraseña incorrecta.'],
-    ['auth/too-many-requests', 'Demasiados intentos. Espera un momento e inténtalo de nuevo.'],
-    ['auth/network-request-failed', 'Sin conexión — revisa tu internet.'],
+    ['auth/too-many-requests', 'Demasiados intentos. Esperar un momento e intentarlo de nuevo.'],
+    ['auth/network-request-failed', 'Sin conexión — revisar la conexión a internet.'],
   ];
 
   errorMappings.forEach(([code, message]) => {

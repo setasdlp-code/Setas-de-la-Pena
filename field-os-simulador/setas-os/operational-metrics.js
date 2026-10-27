@@ -77,7 +77,7 @@
     prototype.recover(storage);
     const lots=prototype.read(storage,'sdp_bit_lotes'),bags=prototype.read(storage,'sdp_bit_bolsas'),harvests=prototype.read(storage,'sdp_bit_cosechas');
     const issue=derive(lots,bags,harvests).issues.find(i=>i.id===anomalyId);
-    if(!issue?.reviewable||(expectedSnapshot!==undefined&&expectedSnapshot!==(issue.snapshot||null)))throw new Error('El hallazgo cambió o no tiene un lote inequívoco. Vuelve a cargarlo.');
+    if(!issue?.reviewable||(expectedSnapshot!==undefined&&expectedSnapshot!==(issue.snapshot||null)))throw new Error('El hallazgo cambió o no tiene un lote inequívoco. Volver a cargarlo.');
     const sheet=typeof module!=='undefined'&&module.exports?require('./batch-sheet.js'):globalThis.SetasBatchSheet;
     const lot=lots.find(l=>l.id===issue.batchId),log=lot.lifecycleEvents||[];
     if(!Array.isArray(log)||log.some(e=>!e||!e.id)||log.length&&(!Number.isInteger(log.at(-1).seq)||log.at(-1).seq<1))throw new Error('El historial del lote necesita revisión antes de añadir eventos.');

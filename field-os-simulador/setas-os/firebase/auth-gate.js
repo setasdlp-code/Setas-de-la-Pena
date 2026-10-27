@@ -17,8 +17,8 @@ const ERRORES = {
   "auth/invalid-email": "Correo inválido.",
   "auth/user-not-found": "No existe una cuenta con ese correo.",
   "auth/wrong-password": "Contraseña incorrecta.",
-  "auth/too-many-requests": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
-  "auth/network-request-failed": "Sin conexión — revisa tu internet.",
+  "auth/too-many-requests": "Demasiados intentos. Esperar un momento e intentarlo de nuevo.",
+  "auth/network-request-failed": "Sin conexión — revisar la conexión a internet.",
 };
 
 export const traducirError = (code) => ERRORES[code] || "No se pudo iniciar sesión. Inténtalo de nuevo.";
@@ -392,7 +392,7 @@ function init() {
         publishAuthState(false);
         el.gate.style.display = "flex";
         el.status.textContent = "No se pudieron preparar los datos.";
-        el.err.textContent = "Recarga la página antes de continuar.";
+        el.err.textContent = "Recargar la página antes de continuar.";
       }
     } else {
       publishAuthState(false);

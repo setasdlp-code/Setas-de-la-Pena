@@ -10,13 +10,13 @@ function BagObservationEditor({bolsa,onSave}) {
   const [text,setText]=useState(()=>{try{return sessionStorage.getItem(key)??(bolsa.observaciones||'');}catch{return bolsa.observaciones||'';}});
   const [error,setError]=useState('');
   const dirty=text!==(bolsa.observaciones||'');
-  const discard=()=>{try{sessionStorage.removeItem(key);}catch{setError('No se pudo eliminar el borrador. Tu texto se conserva; reintenta cancelar.');return;}setText(bolsa.observaciones||'');setError('');};
+  const discard=()=>{try{sessionStorage.removeItem(key);}catch{setError('No se pudo eliminar el borrador. El texto se conserva; reintentar la cancelación.');return;}setText(bolsa.observaciones||'');setError('');};
   const save=()=>{
-    if(!onSave(bolsa.id,{observaciones:text},{silent:true})){setError('No se pudo guardar. Tu texto sigue aquí; libera almacenamiento y reintenta.');return;}
+    if(!onSave(bolsa.id,{observaciones:text},{silent:true})){setError('No se pudo guardar. El texto sigue aquí; liberar almacenamiento y reintentar.');return;}
     setError('');try{sessionStorage.removeItem(key);}catch{}
   };
   return <div className="bag-observation-editor">
-    <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={text} autoComplete="off" aria-describedby={`bag-observation-status-${bolsa.id}`} onChange={e=>{const value=e.target.value;setText(value);setError('');try{sessionStorage.setItem(key,value);}catch{setError('El borrador no se pudo respaldar. Mantén esta pantalla abierta hasta guardarlo.');}}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){e.preventDefault();discard();}}}/>
+    <input name={`bagObservations-${bolsa.id}`} aria-label={`Observaciones de la bolsa ${bolsa.codigo}`} type="text" value={text} autoComplete="off" aria-describedby={`bag-observation-status-${bolsa.id}`} onChange={e=>{const value=e.target.value;setText(value);setError('');try{sessionStorage.setItem(key,value);}catch{setError('El borrador no se pudo respaldar. Mantener esta pantalla abierta hasta guardarlo.');}}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){e.preventDefault();discard();}}}/>
     <span id={`bag-observation-status-${bolsa.id}`} role={error?'alert':'status'}>{error||(dirty?'Borrador sin guardar':'Registro local · sincronización independiente')}</span>
     {dirty&&<div><button type="button" className="inv-btn inv-btn-pri" onClick={save} aria-label={`Guardar observaciones de ${bolsa.codigo}`}>{error?'Reintentar':'Guardar'}</button><button type="button" className="inv-btn inv-btn-sec" onClick={discard} aria-label={`Cancelar observaciones de ${bolsa.codigo}`}>Cancelar</button></div>}
   </div>;
@@ -96,7 +96,7 @@ function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
   const metrics={be_pct:'Eficiencia biológica (%)',contamination_pct:'Contaminación (%)',colonization_days:'Colonización (días)',total_fresh_kg:'Cosecha total (kg)'};
   const save=()=>{try{
     const a=selected(form.control),b=selected(form.treatment),comparison=form.design==='comparison';
-    if(!a||comparison&&(!b||a.sKey!==b.sKey))throw Error('Selecciona recetas de la misma especie.');
+    if(!a||comparison&&(!b||a.sKey!==b.sKey))throw Error('Seleccionar recetas de la misma especie.');
     const id='EXP_'+crypto.randomUUID();
     const arm=(r,key)=>({id:key,label:key==='control'?'Referencia':'Variante',plannedReplicates:Number(form.replicates??1),batchIds:[],recipeVersionId:id+':'+key,recipeSnapshot:{versionId:id+':'+key,sKey:r.sKey,recipe:r.recipe,name:r.name}});
     SetasPrototype.savePlan(localStorage,{id,title:form.title?.trim(),hypothesis:form.hypothesis?.trim(),speciesId:a.sKey,design:comparison?'comparison':'exploratory',primaryMetric:form.metric||'be_pct',status:'draft',control:arm(a,'control'),treatments:comparison?[arm(b,'treatment')]:[],fixedFactors:{notes:form.fixed||''},plannedAt:new Date().toISOString()});
@@ -127,7 +127,7 @@ function PrototypeReleaseDialog({lote,onClose,onAuthorize}) {
   const [form,setForm]=useState({equipment:'',protocol:lote.tratamiento||'',reviewer:'',acknowledged:false,legacyReviewed:false}),[error,setError]=useState('');
   const set=(key,value)=>setForm(p=>({...p,[key]:value}));
   const confirm=()=>{try{const record=SetasPrototype.release(lote,{...form,at:new Date().toISOString()});onAuthorize(record);}catch(e){setError(e.message);}};
-  return <AccessibleModal label="Autorizar ensayo controlado" onClose={onClose} dialogStyle={{width:'min(580px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}><section className="prototype-panel"><h3>Preparar {lote.codigo}</h3><p>Autoriza esta preparación experimental y confirma el consumo de sus insumos. No valida rendimiento ni habilita producción rutinaria. Sin historial, las estimaciones siguen siendo teóricas.</p><p>Especificación: {lote.preparation?.revision||'lote antiguo sin especificación versionada'}.</p><label>Equipo disponible<input value={form.equipment} onChange={e=>set('equipment',e.target.value)}/></label><label>Protocolo a ejecutar<input value={form.protocol} onChange={e=>set('protocol',e.target.value)}/></label><label>Responsable que autoriza<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)}/></label>{!lote.preparation&&<label className="prototype-check"><input type="checkbox" checked={form.legacyReviewed} onChange={e=>set('legacyReviewed',e.target.checked)}/> Revisé receta, cantidades y proceso de este lote antiguo.</label>}<label className="prototype-check"><input type="checkbox" checked={form.acknowledged} onChange={e=>set('acknowledged',e.target.checked)}/> Revisé equipo, insumos y advertencias; acepto las incertidumbres para este ensayo.</label>{error&&<p role="alert">{error}</p>}<div className="prototype-actions"><button type="button" className="inv-btn inv-btn-sec" onClick={onClose}>Cancelar</button><button type="button" className="inv-btn inv-btn-pri" onClick={confirm}>Autorizar, descontar y registrar</button></div></section></AccessibleModal>;
+  return <AccessibleModal label="Autorizar ensayo controlado" onClose={onClose} dialogStyle={{width:'min(580px, calc(100vw - 24px))',maxHeight:'calc(100dvh - 32px)',overflowY:'auto'}}><section className="prototype-panel"><h3>Preparar {lote.codigo}</h3><p>Autorización de esta preparación experimental y confirmación del consumo de sus insumos. No valida rendimiento ni habilita producción rutinaria. Sin historial, las estimaciones siguen siendo teóricas.</p><p>Especificación: {lote.preparation?.revision||'lote antiguo sin especificación versionada'}.</p><label>Equipo disponible<input value={form.equipment} onChange={e=>set('equipment',e.target.value)}/></label><label>Protocolo a ejecutar<input value={form.protocol} onChange={e=>set('protocol',e.target.value)}/></label><label>Responsable que autoriza<input value={form.reviewer} onChange={e=>set('reviewer',e.target.value)}/></label>{!lote.preparation&&<label className="prototype-check"><input type="checkbox" checked={form.legacyReviewed} onChange={e=>set('legacyReviewed',e.target.checked)}/> Revisé receta, cantidades y proceso de este lote antiguo.</label>}<label className="prototype-check"><input type="checkbox" checked={form.acknowledged} onChange={e=>set('acknowledged',e.target.checked)}/> Revisé equipo, insumos y advertencias; acepto las incertidumbres para este ensayo.</label>{error&&<p role="alert">{error}</p>}<div className="prototype-actions"><button type="button" className="inv-btn inv-btn-sec" onClick={onClose}>Cancelar</button><button type="button" className="inv-btn inv-btn-pri" onClick={confirm}>Autorizar, descontar y registrar</button></div></section></AccessibleModal>;
 }
 
 // --- Bio-Check & Lab Extraction storage helpers ---
@@ -786,7 +786,7 @@ function LabExtraction() {
 
         {batches.length === 0 ? (
           <div style={{ textAlign: "center", padding: "32px 16px", color: "var(--ink-500)", fontSize: "0.9rem" }}>
-            No hay lotes de extracción registrados en almacenamiento local. Configura los parámetros arriba para generar el primero.
+            No hay lotes de extracción registrados en almacenamiento local. Configurar los parámetros arriba para generar el primero.
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -953,7 +953,7 @@ const SPP_DETAILS={
     'A 24°C de fructificación produce el mayor rendimiento pero el menor sabor. A 18°C produce 20% menos masa pero concentra compuestos aromáticos: vale la pena si vendes a cocineros.'
   ]},
   p_djamor_rosa:{hechos:[
-    'Es la única orellana que fructifica bien a 28–30°C. Si en verano tu cuarto no baja de 26°C, djamor rosa es literalmente la única opción viable — las demás cederán ante el calor.',
+    'Es la única orellana que fructifica bien a 28–30°C. Si en verano la sala no baja de 26°C, djamor rosa es la única opción viable — las demás cederán ante el calor.',
     'Su tasa de spawn óptima es inusualmente alta (18–22%). Bajar a 10% alarga la colonización 8–12 días y el riesgo de contaminación se multiplica por tres en climas cálidos.',
     'Pierde el color rosa en menos de 6 horas tras la cosecha a temperatura ambiente. Para mantenerlo, cosecha en primordia pequeña y refrigera de inmediato. El simulador no puede optimizar esto — es post-cosecha pura.'
   ]},
@@ -973,14 +973,14 @@ const SPP_DETAILS={
     'La primera cosecha puede superar el 30% de la masa del bloque — la más concentrada del catálogo. Pero la segunda cosecha cae al 10–15%. No es una especie para ciclos largos; optimiza para primera flush.'
   ]},
   reishi:{hechos:[
-    'La única especie del catálogo que no debes formular con salvado de trigo. El exceso de nitrógeno suprime la síntesis de triterpenoides — los compuestos que hacen valioso al reishi. Más nitrógeno = más masa, menos principio activo.',
+    'La única especie del catálogo que no se formula con salvado de trigo. El exceso de nitrógeno suprime la síntesis de triterpenoides — los compuestos que hacen valioso al reishi. Más nitrógeno = más masa, menos principio activo.',
     'Produce el antílago (polvillo esporal) más denso de todas las especies cultivadas: hasta 20g de esporas por bloque. Ese polvo tiene más concentración de triterpenoides que el cuerpo fructifícola. Colectarlo es tan valioso como la cosecha.',
     'Con aserrín de roble sin enriquecer y temperatura constante de 26°C, el sombrero lacado tarda 45–60 días en completarse. Cada grado extra de temperatura acelera el crecimiento pero reduce la calidad del lacado superficial.'
   ]},
   enoki:{hechos:[
-    'El enoki "largo y blanco" del supermercado es un artefacto de cultivo en oscuridad con CO₂ elevado. Si ventiles bien tu cuarto, obtendrás sombreros marrones abiertos — igual de comestibles, radicalmente distintos visualmente.',
+    'El enoki "largo y blanco" del supermercado es un artefacto de cultivo en oscuridad con CO₂ elevado. Con buena ventilación en la sala se obtienen sombreros marrones abiertos — igual de comestibles, radicalmente distintos visualmente.',
     'Fructifica óptimamente a 8–12°C — la temperatura más baja del catálogo. Esto lo hace complementario estacional perfecto: mientras otras especies no fructifican en invierno, enoki llega a su máximo rendimiento.',
-    'La colonización es notablemente lenta (18–25 días a 20°C), pero el sustrato colonizado tolera refrigeración hasta 4 semanas sin perder capacidad. Puedes preparar bloques en lote y activarlos cuando necesites.'
+    'La colonización es notablemente lenta (18–25 días a 20°C), pero el sustrato colonizado tolera refrigeración hasta 4 semanas sin perder capacidad. Permite preparar bloques en lote y activarlos según la demanda.'
   ]},
   nameko:{hechos:[
     'El mucílago que recubre su sombrero es un polisacárido que el propio hongo sintetiza como protección ante pérdida de agua. Paradoja: a mayor humedad relativa (>92%), produce más mucílago, no menos. Es una señal de bienestar, no de estrés.',
@@ -1095,10 +1095,10 @@ const SPECIES_GASTRONOMY = {
 // ── GUÍA DE FORMULACIÓN — criterios de selección de ingredientes por especie ──
 const SPP_SUBSTRATE_GUIDE={
   p_ostreatus_gris:[
-    'Base Cóptima: paja de trigo o cebada (C:N 75–85) al 55–70%. Evita aserín sin compostar — su lignina es inaccesible para esta especie y solo encarece sin aportar.',
-    'Suplemento N: salvado de trigo 15–25% más borra de café 7–12%. Esta combinación baja costo y aporta N progresivo; no uses solo uno de los dos si puedes combinarlos.',
+    'Base Cóptima: paja de trigo o cebada (C:N 75–85) al 55–70%. Evitar aserín sin compostar — su lignina es inaccesible para esta especie y solo encarece sin aportar.',
+    'Suplemento N: salvado de trigo 15–25% más borra de café 7–12%. Esta combinación baja costo y aporta N progresivo; conviene combinarlos en lugar de usar solo uno de los dos.',
     'Ajuste de pH obligatorio: carbonato de calcio 2–5% + yeso 2–3%. Sin tamponamiento, la fermentación acidifica el bloque y colapsa la cosecha 2 y 3.',
-    'Evita superar 25% total de suplementos N (salvado + borra + café juntos). Por encima de ese umbral el riesgo de Trichoderma se dispara, especialmente sin autoclave.',
+    'Evitar superar 25% total de suplementos N (salvado + borra + café juntos). Por encima de ese umbral el riesgo de Trichoderma se dispara, especialmente sin autoclave.',
   ],
   p_ostreatus_blanco:[
     'Base C: paja de trigo 50–60%. El blanco tolera menos variación de C:N que el gris — apunta siempre a 28–32 como objetivo final calculado.',
@@ -1110,7 +1110,7 @@ const SPP_SUBSTRATE_GUIDE={
     'Base C tropical: bagazo de caña 40–55% + paja de arroz 20–30%. Estas bases tolera la humedad alta que requiere el djamor y son idóneas para clima cálido.',
     'Suplemento N moderado: salvado de trigo 10–15% o borra de café 10–15%. La especie no requiere N muy alto — C:N objetivo 35–45, no más bajo.',
     'Tasa de spawn alta (18–22%) es parte de la fórmula. No la intercambión por más suplemento — el spawn agresivo suprime contaminantes mejor que ningún ingrediente.',
-    'Evita aserín de madera y sustratos lígneos pesados: el djamor rosa es lignínolítico débil y no aprovechará esa fracción, generando sustrato sin colonizar.',
+    'Evitar aserín de madera y sustratos lígneos pesados: el djamor rosa es lignínolítico débil y no aprovechará esa fracción, generando sustrato sin colonizar.',
   ],
   p_eryngii:[
     'Base C: paja de trigo 35–45% + aserín de roble o álamo 10–18%. La combinación de paja y madera dura da la textura necesaria para el stípite carnoso del eryngii.',
@@ -1125,21 +1125,21 @@ const SPP_SUBSTRATE_GUIDE={
     'Periodo de colonización largo (60–90 d): no compenses acortando con más suplemento N. Más N = más contaminación, no más velocidad en shiitake.',
   ],
   lions_mane:[
-    'Master Mix de referencia: aserín de madera dura 50–60% + cascarilla de soya 35–45%. Esta combinación logra EB 150–180%. No reemplaces cascarilla de soya por salvado de trigo en proporciones iguales — son distintos en densidad nutricional.',
+    'Master Mix de referencia: aserín de madera dura 50–60% + cascarilla de soya 35–45%. Esta combinación logra EB 150–180%. No reemplazar cascarilla de soya por salvado de trigo en proporciones iguales — son distintos en densidad nutricional.',
     'Humedad del sustrato seco: apunta a 60–65%, más seco que otras especies. Ingredientes húmedos (borra fresca, pseudotallo de plátano) suben la actividad acuosa y favorecen contaminación.',
-    'Evita absolutamente aserín de eucalipto. Sus aceites esenciales inhiben el micelio de Hericium de forma directa e irreversible. Usa solo maderas duras neutras: roble, álamo, sauce.',
+    'Evitar absolutamente aserín de eucalipto. Sus aceites esenciales inhiben el micelio de Hericium de forma directa e irreversible. Usar solo maderas duras neutras: roble, álamo, sauce.',
     'Afrecho de cervecería 10–15% es un buen suplemento secundario. La cascarilla de soya ya aporta N suficiente — el afrecho suma perfil de aminoácidos sin saturar nitrógeno.',
   ],
   reishi:[
-    'No uses salvado de trigo como suplemento principal. El exceso de N libre suprime la síntesis de triterpenoides — los compuestos que hacen valioso al reishi. Máximo 8–10% de suplemento N total.',
+    'No usar salvado de trigo como suplemento principal. El exceso de N libre suprime la síntesis de triterpenoides — los compuestos que hacen valioso al reishi. Máximo 8–10% de suplemento N total.',
     'Base C: aserín de roble 55–65% + corteza de árbol molida 10–15%. La corteza aporta lignina compleja que ralentiza la colonización y estimula la producción de lacasa, necesaria para el lacado del sombrero.',
     'Cascarilla de soya 8–12% es el suplemento N preferido: nitrógeno de liberación lenta que no dispara contaminación ni suprime la ruta de triterpenoides.',
-    'Evita ingredientes cálidos o de rápida descomposición (borra de café fresca, pulpa de cacao). El reishi requiere sustrato estático y de baja actividad microbiana durante los 60–90 días de colonización.',
+    'Evitar ingredientes cálidos o de rápida descomposición (borra de café fresca, pulpa de cacao). El reishi requiere sustrato estático y de baja actividad microbiana durante los 60–90 días de colonización.',
   ],
   enoki:[
     'Base C: paja de arroz 30–40% + aserín de álamo o sauce 15–20%. La paja de arroz da la textura ligera que necesita el enoki para colonizar a baja temperatura (5–12°C).',
     'Suplemento N estrella: afrecho de cervecería 18–25%. Su perfil de aminoácidos estimula el desarrollo de los cuerpos fructíferos alargados que caracterizan al enoki comercial.',
-    'Evita cartones y papel como base principal: el enoki necesita sustrato estructuralmente firme para colonizar correctamente en frío. La celulosa pura colapsa y ahoga el micelio.',
+    'Evitar cartones y papel como base principal: el enoki necesita sustrato estructuralmente firme para colonizar correctamente en frío. La celulosa pura colapsa y ahoga el micelio.',
     'C:N objetivo muy preciso: 25–30. Cada punto por encima de 30 alarga la colonización (ya de por sí 18–25 días), elevando el riesgo de contaminación en cámara fría.',
   ],
   nameko:[
@@ -1534,28 +1534,28 @@ const PasteGuide=({tr,recipe,numBags,kgBag})=>{
   const wet=(numBags*kgBag).toFixed(1);
   const guides={
     autoclave:[
-      {n:1,t:'Empaque las bolsas',d:`Llena cada bolsa PP hasta ${kgBag} kg de sustrato húmedo. Cierra con filtro 0.2 µm o algodón + papel kraft + cinta autoclave. No comprimas.`},
-      {n:2,t:'Carga el autoclave',d:'Apila las bolsas sin sobrecargar. Deja espacio para circulación de vapor. Coloca indicador de esterilización (tira o pellet).' },
-      {n:3,t:'Purga de aire',d:'Al iniciar, abre la válvula de purga 2–3 min para expulsar el aire frío. El vapor debe salir continuo antes de cerrar.'},
-      {n:4,t:'Esteriliza',d:`Mantén 121°C / 18.5–19 PSI manométricos durante 90–120 min. A 2.580 msnm 15 PSI NO alcanzan 121°C reales — usa 18.5–19 PSI manométricos, o valida con sensor de núcleo que el sustrato llegue a 121°C real.`},
-      {n:5,t:'Enfría (crítico)',d:`Deja enfriar dentro del autoclave apagado. Saca las bolsas cuando estén a <35°C (mínimo 4–6 h). Nunca abras caliente — la condensación abre los poros y contamina.`},
-      {n:6,t:'Inocula en condiciones estériles',d:`Usa cámara de flujo laminar o caja SAB. Alcohol 70% en todas las superficies. Spawn rate: ${tr.spawn}%. Sella inmediatamente.`},
+      {n:1,t:'Empacar las bolsas',d:`Llenar cada bolsa PP hasta ${kgBag} kg de sustrato húmedo. Cerrar con filtro 0.2 µm o algodón + papel kraft + cinta autoclave. Sin comprimir.`},
+      {n:2,t:'Cargar el autoclave',d:'Apilar las bolsas sin sobrecargar. Dejar espacio para circulación de vapor. Colocar indicador de esterilización (tira o pellet).' },
+      {n:3,t:'Purga de aire',d:'Al iniciar, abrir la válvula de purga 2–3 min para expulsar el aire frío. El vapor debe salir continuo antes de cerrar.'},
+      {n:4,t:'Esterilizar',d:`Mantener 121°C / 18.5–19 PSI manométricos durante 90–120 min. A 2.580 msnm 15 PSI NO alcanzan 121°C reales — usar 18.5–19 PSI manométricos, o validar con sensor de núcleo que el sustrato llegue a 121°C real.`},
+      {n:5,t:'Enfriar (crítico)',d:`Dejar enfriar dentro del autoclave apagado. Sacar las bolsas cuando estén a <35°C (mínimo 4–6 h). Nunca abrir en caliente — la condensación abre los poros y contamina.`},
+      {n:6,t:'Inocular en condiciones estériles',d:`Usar cámara de flujo laminar o caja SAB. Alcohol 70% en todas las superficies. Spawn rate: ${tr.spawn}%. Sellar inmediatamente.`},
     ],
     thermal:[
-      {n:1,t:'Prepara el baño de pasteurización',d:`Calienta agua para sumergir ${wet} kg de sustrato. Usa termómetro calibrado de pincho. En Tenjo (2.580 msnm) el agua hierve a ~91°C: el calor llega más lento al núcleo, por eso se trabaja por tiempo extendido y se mide el centro de la masa, no solo el agua.`},
-      {n:2,t:'Sumerge el sustrato',d:'Introduce el sustrato en bolsas o costales permeables. Asegura que todo quede bajo el agua con un peso. Sin burbujas de aire atrapadas.'},
-      {n:3,t:'Pasteuriza por núcleo',d:`Sostén el NÚCLEO del sustrato entre 65–75°C durante 6–8 h (base 5–6 h +25% por altitud). Clava el termómetro en el centro de la masa y verifica cada 20 min — el agua puede estar más caliente que el núcleo. No superes 80°C: por encima se esteriliza de más y se pierde la microbiota protectora.`},
-      {n:4,t:'Enfría tapado',d:'Escurre y deja enfriar en lugar limpio tapado con plástico. No muevas hasta que esté <30°C (mínimo 3–4 h en ambiente Tenjo 14°C).'},
-      {n:5,t:'Prueba de campo',d:'Aprieta un puñado — debe caer máximo 1–2 gotas de agua. Si chorrea, escurre más. Si no sale nada, agrega agua.'},
-      {n:6,t:'Inocula',d:`Spawn rate: ${tr.spawn}%. Mezcla bien o distribuye en capas. Cierra con polyfil o filtro. Registra fecha y lote.`},
+      {n:1,t:'Preparar el baño de pasteurización',d:`Calentar agua para sumergir ${wet} kg de sustrato. Usar termómetro calibrado de pincho. En Tenjo (2.580 msnm) el agua hierve a ~91°C: el calor llega más lento al núcleo, por eso se trabaja por tiempo extendido y se mide el centro de la masa, no solo el agua.`},
+      {n:2,t:'Sumergir el sustrato',d:'Introducir el sustrato en bolsas o costales permeables. Asegurar que todo quede bajo el agua con un peso. Sin burbujas de aire atrapadas.'},
+      {n:3,t:'Pasteurizar por núcleo',d:`Sostener el NÚCLEO del sustrato entre 65–75°C durante 6–8 h (base 5–6 h +25% por altitud). Clavar el termómetro en el centro de la masa y verificar cada 20 min — el agua puede estar más caliente que el núcleo. No superar 80°C: por encima se esteriliza de más y se pierde la microbiota protectora.`},
+      {n:4,t:'Enfriar tapado',d:'Escurrir y dejar enfriar en lugar limpio tapado con plástico. No mover hasta que esté <30°C (mínimo 3–4 h en ambiente Tenjo 14°C).'},
+      {n:5,t:'Prueba de campo',d:'Apretar un puñado — debe caer máximo 1–2 gotas de agua. Si chorrea, escurrir más. Si no sale nada, agregar agua.'},
+      {n:6,t:'Inocular',d:`Spawn rate: ${tr.spawn}%. Mezclar bien o distribuir en capas. Cerrar con polyfil o filtro. Registrar fecha y lote.`},
     ],
     cwlp:[
-      {n:1,t:'Prepara la solución de cal',d:`Disuelve 150–200 g de cal hidratada por cada 100 L de agua. Mezcla bien y verifica pH ≥ 12 con tira indicadora (pH 12–13 es el rango activo contra patógenos). A 2.580 msnm CWLP funciona igual que a nivel del mar — independiente de temperatura.`},
-      {n:2,t:'Sumerge el sustrato',d:`Introduce ${wet} kg de sustrato. Usa pesos para mantenerlo sumergido. Todo debe estar en contacto con la solución — sin partes secas.`},
-      {n:3,t:'Tiempo de inmersión',d:'Mantén sumergido 18–24 horas. No es necesario calentar. La alcalinidad (no el calor) es el agente sanitizante.'},
-      {n:4,t:'Escurre y neutraliza',d:'Saca y escurre bien. Si el pH final del sustrato es >9, enjuaga brevemente con agua limpia. El pH objetivo del sustrato escurrido es 7–8.'},
+      {n:1,t:'Preparar la solución de cal',d:`Disolver 150–200 g de cal hidratada por cada 100 L de agua. Mezclar bien y verificar pH ≥ 12 con tira indicadora (pH 12–13 es el rango activo contra patógenos). A 2.580 msnm CWLP funciona igual que a nivel del mar — independiente de temperatura.`},
+      {n:2,t:'Sumergir el sustrato',d:`Introducir ${wet} kg de sustrato. Usar pesos para mantenerlo sumergido. Todo debe estar en contacto con la solución — sin partes secas.`},
+      {n:3,t:'Tiempo de inmersión',d:'Mantener sumergido 18–24 horas. No es necesario calentar. La alcalinidad (no el calor) es el agente sanitizante.'},
+      {n:4,t:'Escurrir y neutralizar',d:'Sacar y escurrir bien. Si el pH final del sustrato es >9, enjuagar brevemente con agua limpia. El pH objetivo del sustrato escurrido es 7–8.'},
       {n:5,t:'Punto de campo',d:'Misma prueba: 1–2 gotas al apretar. En Tenjo el aire seco acelera el secado — a veces hay que agregar agua después del escurrido.'},
-      {n:6,t:'Inocula',d:`Spawn rate: ${tr.spawn}%. Inocula máximo 2–3 h después de escurrir. Tiempo de exposición al aire aumenta riesgo de recontaminación.`},
+      {n:6,t:'Inocular',d:`Spawn rate: ${tr.spawn}%. Inocular máximo 2–3 h después de escurrir. Tiempo de exposición al aire aumenta riesgo de recontaminación.`},
     ],
   };
   const steps=guides[tr.col]||[];
@@ -1629,7 +1629,7 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.8)',zIndex:'var(--z-overlay)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:20}}>
       <button onClick={()=>setFullscreen(false)} aria-label="Cerrar vista de radar" style={{position:'absolute',top:20,right:20,fontSize:28,background:'none',border:'none',color:'var(--paper-0)',cursor:'pointer',minWidth:44,minHeight:44}}><AppIcon name="close" size={12} /></button>
       <RadarSVG size={600}/>
-      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Presiona Esc o haz clic en Cerrar</div>
+      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--paper-0)',textAlign:'center'}}>Esc o Cerrar para salir</div>
     </div>
   );
   
@@ -2146,7 +2146,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
         {item.notInStock&&<span style={{fontSize:"var(--text-2xs)",fontWeight:700,color:'var(--status-warn-text)',background:'rgba(160,120,40,.12)',border:'1px solid rgba(160,120,40,.3)',borderRadius:3,padding:'1px 6px'}}><span style={{display:'inline-flex',alignItems:'center',gap:3}}><AppIcon name="cart" size={10} /> no en bodega — a comprar</span></span>}
         {item.delta&&<span className="pi-delta">{item.delta}</span>}
       </div>
-      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Ya aplicaste esto {item.repeatedApply}x en esta sesión y el problema sigue — considera un ingrediente distinto o cambia a “Paleta completa”.</div>}
+      {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Aplicado {item.repeatedApply}x en esta sesión y el problema sigue — considerar un ingrediente distinto o cambiar a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
       {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bEvidence}{bWhy}{bRisk}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bSide}{bCombo}</>}
@@ -3521,7 +3521,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-2)' }}>
                 745 hPa es la nominal de Tenjo (2.600 msnm). De ella sale el factor ≈1,36× que corrige la subestimación
-                de los NDIR. Cámbiala solo si tienes barómetro propio: un valor equivocado desplaza todo el CO₂ histórico.
+                de los NDIR. Cambiarla solo con barómetro propio: un valor equivocado desplaza todo el CO₂ histórico.
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button type="button" className="btn btn--sm btn--primary" disabled={!liveTelemetry}
@@ -3550,7 +3550,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
         {tab === 'reglas' && (
           <div>
             <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--ink-1)', marginBottom: 14 }}>
-              Configura los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:
+              Configurar los umbrales de actuación local por histéresis y pulsos de recambio de aire (FAE) para las carpas de cultivo en Tenjo:
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
@@ -3748,7 +3748,7 @@ const NewRecipeVersionModal=({recipe,onClose,onConfirm})=>{
     <AccessibleModal onClose={onClose} label="Receta aprobada — crear versión nueva" dialogStyle={{width:'min(460px, calc(100vw - 24px))',boxSizing:'border-box'}}>
       <div className="inv-modal-title">Receta aprobada</div>
       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-700)',marginBottom:18,lineHeight:1.5}}>
-        «{recipe.name}» está <b>{label}</b> ({identity.recipeId} v{identity.version}) y no se puede editar directamente: cambiarla en sitio haría que los lotes ya producidos con ella dejen de poder compararse honestamente. Crea la versión siguiente a partir de ella — nace en borrador, y esta versión aprobada sigue intacta para los lotes que ya la usan.
+        «{recipe.name}» está <b>{label}</b> ({identity.recipeId} v{identity.version}) y no se puede editar directamente: cambiarla en sitio haría que los lotes ya producidos con ella dejen de poder compararse honestamente. Crear la versión siguiente a partir de ella — nace en borrador, y esta versión aprobada sigue intacta para los lotes que ya la usan.
       </div>
       <div className="inv-modal-actions">
         <button onClick={onClose} className="inv-btn inv-btn-sec" style={{minHeight:44}}>Cancelar</button>
@@ -4595,7 +4595,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
       <div className="recipe-live-empty">
         <span aria-hidden="true"><IconTarget size={22}/></span>
         <strong>Aún no hay una fórmula que evaluar</strong>
-        <span>Agrega el primer ingrediente y aquí aparecerán C:N, nitrógeno y EB estimada.</span>
+        <span>Al agregar el primer ingrediente aparecen aquí C:N, nitrógeno y EB estimada.</span>
       </div>
     </aside>
   );
@@ -4996,15 +4996,15 @@ const describeSearchRejection=(code,ingredients=INGS)=>{
   const [kind,id]=String(code).split(':');
   const name=ingredients.find(g=>g.id===id)?.name||id;
   return ({
-    maxCost:'Supera el costo máximo de insumos por kg seco. Aumenta el límite o busca insumos de menor costo.',
-    maxSupp:'Supera la suplementación permitida por especie y perfil. Revisa las bases o reduce el suplemento.',
-    maxCafe:'Supera el límite de café del perfil. Reduce su proporción.',
-    locked:'No conserva los porcentajes fijados. Revisa los bloqueos de la receta activa.',
-    stock:'Incluye ingredientes sin existencias. Revisa Bodega o cambia el origen a Catálogo.',
-    mass_balance:'No cierra el balance de masa. Revisa la composición.',
-    analysis:'No se pudo analizar la composición. Revisa los datos de los ingredientes.',
+    maxCost:'Supera el costo máximo de insumos por kg seco. Aumentar el límite o buscar insumos de menor costo.',
+    maxSupp:'Supera la suplementación permitida por especie y perfil. Revisar las bases o reducir el suplemento.',
+    maxCafe:'Supera el límite de café del perfil. Reducir su proporción.',
+    locked:'No conserva los porcentajes fijados. Revisar los bloqueos de la receta activa.',
+    stock:'Incluye ingredientes sin existencias. Revisar Bodega o cambiar el origen a Catálogo.',
+    mass_balance:'No cierra el balance de masa. Revisar la composición.',
+    analysis:'No se pudo analizar la composición. Revisar los datos de los ingredientes.',
     ingredient:`${name}: supera el máximo permitido para este ingrediente.`,
-    role:`Supera el máximo del rol ${id}. Revisa la distribución de ingredientes.`,
+    role:`Supera el máximo del rol ${id}. Revisar la distribución de ingredientes.`,
     ingredient_unknown:`${name}: no está disponible en el catálogo de búsqueda.`,
     species_incompatible:`${name}: no es compatible con la especie seleccionada.`,
   })[kind]||`Restricción de búsqueda: ${code}.`;
@@ -5964,9 +5964,9 @@ function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
     <p>Registros de Bitácora disponibles en este dispositivo · Todos los ciclos · {new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota'})}</p>
     <p>Las cifras corresponden a los registros locales y pueden cambiar al sincronizar otros dispositivos.</p>
     <nav aria-label="Secciones de Métricas" style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0'}}>{api.TABS.map(key=><button key={key} style={button} aria-pressed={section===key} onClick={()=>choose(key)}>{labels[key]}</button>)}</nav>
-    {error?<p role="alert">No se pudieron leer los registros de Bitácora. Revisa el almacenamiento antes de continuar; no se muestran métricas incompletas.</p>:!loaded?<p role="status">Cargando Bitácora.</p>:<>
+    {error?<p role="alert">No se pudieron leer los registros de Bitácora. Revisar el almacenamiento antes de continuar; no se muestran métricas incompletas.</p>:!loaded?<p role="status">Cargando Bitácora.</p>:<>
       <div style={{display:'flex',flexWrap:'wrap',gap:18,margin:'20px 0'}}><span>{data.lots.length} lotes</span><span>{data.harvests.length} cosechas válidas</span><span>{fmt(data.freshKg)} kg cosechados registrados</span><span>{data.eligibility.eligibleN} ciclos finales elegibles</span></div>
-      {data.lots.length===0&&<p>No hay lotes registrados. Añade registros en Bitácora para calcular resultados.</p>}
+      {data.lots.length===0&&<p>No hay lotes registrados. Los resultados se calculan con registros de Bitácora.</p>}
       {section==='rendimiento'&&<>
         <h2>Rendimiento observado</h2><p data-testid="metrics-mean">EB media por lote final: {fmt(data.meanEB)}{data.meanEB==null?'':' %'}</p>
         <p>EB = masa fresca cosechada ÷ masa seca del sustrato × 100. La media asigna el mismo peso a cada lote final elegible; los ciclos parciales se muestran aparte.</p>
@@ -5980,7 +5980,7 @@ function OperationalMetrics({data,loaded,error,role,onReview,onBitacora}){
         <h3>Historial de revisiones</h3><ul>{data.reviews.map(e=><li key={e.id} style={{overflowWrap:'anywhere'}}>{e.payload.anomalyId} · {e.payload.decision} · {e.operatorId} · {e.at} · {e.payload.reason}</li>)}</ul>
       </>}
       {section==='salidas'&&<><h2>Cosechas registradas</h2><p>Estas masas corresponden a cosechas. No representan ventas ni despachos.</p>{!data.harvests.length&&<p>No hay cosechas válidas registradas.</p>}<ul>{data.harvests.map(c=><li key={c.id}>{c.loteId} · {c.id} · {c.pesoFresco} {c.unit||'g'} · {c.fecha||'Fecha no registrada'}</li>)}</ul></>}
-      {section==='conocimiento'&&<><h2>Evidencia para conocimiento</h2><p>{data.eligibility.eligibleN} resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo.</p><p>Los registros parciales y los datos inválidos no se utilizan como resultados finales. Consulta la evidencia y el cierre de cada lote en Bitácora.</p></>}
+      {section==='conocimiento'&&<><h2>Evidencia para conocimiento</h2><p>{data.eligibility.eligibleN} resultados finales elegibles en Bitácora. No se promueven automáticamente a instrucciones de cultivo.</p><p>Los registros parciales y los datos inválidos no se utilizan como resultados finales. La evidencia y el cierre de cada lote están en Bitácora.</p></>}
       <button style={button} onClick={onBitacora}>Abrir Bitácora</button>
     </>}
     {message&&<p role="status">{message}</p>}
@@ -6229,10 +6229,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const activeGeneratorResults=optResults?.[optProfile]||[];
   const activeGeneratorError=optResults?.[`_diag_${optProfile}`]?.diag?.error;
   const generatorDisplayStatus=!optResults?generatorStatus:activeGeneratorError
-    ?'No se pudieron calcular escenarios. Revisa el diagnóstico del Generador.'
-    :optResults.noStock?'No hay ingredientes en stock registrados. Ve a Bodega para agregar ingredientes.'
+    ?'No se pudieron calcular escenarios. Revisar el diagnóstico del Generador.'
+    :optResults.noStock?'No hay ingredientes en stock registrados. Agregarlos en Bodega.'
     :activeGeneratorResults.length?`${activeGeneratorResults.length} escenario${activeGeneratorResults.length===1?'':'s'} disponible${activeGeneratorResults.length===1?'':'s'} para ${OPT_PROFILES[optProfile]?.label||optProfile}.`
-    :`No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label||optProfile}. Revisa el diagnóstico del Generador.`;
+    :`No hay combinaciones válidas para ${OPT_PROFILES[optProfile]?.label||optProfile}. Revisar el diagnóstico del Generador.`;
   const [showQrSheet,setShowQrSheet]=useState(false);
   const [qrSelectedLoteId,setQrSelectedLoteId]=useState('');
   const [showFieldActionModal,setShowFieldActionModal]=useState(false);
@@ -6469,7 +6469,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         try {
           jsQR = await loadJsQR();
         } catch (e) {
-          setCameraError('No se pudo cargar el decodificador de QR (revisa tu conexión la primera vez que uses el escáner) — escribe abajo el código impreso en la etiqueta.');
+          setCameraError('No se pudo cargar el decodificador de QR (el primer uso del escáner requiere conexión). Escribir abajo el código impreso en la etiqueta.');
           return;
         }
       }
@@ -6591,7 +6591,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         return;
       }
 
-      setScanMiss(`Código "${String(raw).slice(0, 30)}" no es una canastilla registrada. Escanea una canastilla (CAN-01) o ingresa el peso.`);
+      setScanMiss(`Código "${String(raw).slice(0, 30)}" no es una canastilla registrada. Escanear una canastilla (CAN-01) o ingresar el peso.`);
       return;
     }
 
@@ -6651,7 +6651,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if (resolved.kind === 'batch' && resolved.batchId) {
         setQrSelectedLoteId(resolved.batchId);
         playSweepBeep(700, 80);
-        setScanMiss(`Lote fijado a ${resolved.batchCode || resolved.batchId}. Continúa escaneando las bolsas de la hilera.`);
+        setScanMiss(`Lote fijado a ${resolved.batchCode || resolved.batchId}. Seguir escaneando las bolsas de la hilera.`);
         return;
       }
 
@@ -6712,7 +6712,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if (!harvestActiveCrate || !harvestGrossInput) return;
     const gross = parseFloat(harvestGrossInput);
     if (!gross || gross <= 0) {
-      setHarvestError('Ingresa un peso bruto válido.');
+      setHarvestError('Falta un peso bruto válido.');
       return;
     }
     const tare = harvestTareInput ? parseFloat(harvestTareInput) : null;
@@ -7152,7 +7152,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     'harvest-date':[bitCosechaForm.fecha,{required:true},'text'],
     'harvest-weight':[bitCosechaForm.pesoFresco,{required:true,min:0}]
   };
-  const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Completa este campo.':''):SetasBitacora.captureError(f[0],f[1]);};
+  const captureFieldError=id=>{const f=captureFields[id];return !f?'':f[2]==='text'?(!String(f[0]??'').trim()?'Campo obligatorio.':''):SetasBitacora.captureError(f[0],f[1]);};
   const validateCaptureField=id=>setCaptureErrors(p=>({...p,[id]:captureFieldError(id)}));
   const captureErrorNode=id=>captureErrors[id]?<span id={id+'-error'} role="alert" style={{display:'block',color:'var(--coral-700)',fontSize:14}}>{captureErrors[id]}</span>:null;
   const validateCapture=kind=>{
@@ -7406,7 +7406,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(sq&&syncQueueApi) setSyncQueue(syncQueueApi.deserialize(sq));
     }catch(e){
       setMetricsLoadError(true);
-      setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisa el almacenamiento del navegador antes de crear nuevos lotes.'});
+      setNoticeDlg({title:'No se pudo cargar la Bitácora',msg:'Los datos guardados de lotes experimentales no se pudieron leer (formato dañado). No se sobrescribieron: revisar el almacenamiento del navegador antes de crear nuevos lotes.'});
     }finally{
       setBitLotesLoaded(true);
     }
@@ -7783,7 +7783,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const msg={
         'missing speciesId':'elige la especie','at least one batchId is required':'selecciona al menos un lote','invalid startAt':'indica la fecha de inicio',
       };
-      setCycleFormError('Revisa el ciclo: '+errors.map(e=>msg[e]||(/min exceeds max/.test(e)?`${e.split(':')[0]}: el mínimo supera el máximo`:e)).join('; ')+'.');
+      setCycleFormError('Revisar el ciclo: '+errors.map(e=>msg[e]||(/min exceeds max/.test(e)?`${e.split(':')[0]}: el mínimo supera el máximo`:e)).join('; ')+'.');
       return;
     }
     let list=roomCycles;
@@ -7851,7 +7851,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         </div>
       ):(
         <div>
-          <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',margin:'0 0 10px'}}>Las alertas usan las bandas fijas de la sala. Inicia un ciclo para usar las de la especie y etapa que hay dentro.</p>
+          <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',margin:'0 0 10px'}}>Las alertas usan las bandas fijas de la sala. Iniciar un ciclo para usar las de la especie y etapa que hay dentro.</p>
           <button type="button" className="inv-btn inv-btn-pri" data-testid="room-cycle-start" onClick={()=>openCycleForm({roomId})}>Iniciar ciclo</button>
         </div>
       )}
@@ -7886,7 +7886,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           </select></label>
         <label><span style={lbl}>Especie</span>
           <select aria-label="Especie del ciclo" style={CYCLE_INP} value={f.speciesId} onChange={e=>set({speciesId:e.target.value,bands:suggestedCycleBands(e.target.value,f.stage,f.bands)})}>
-            {!f.speciesId&&<option value="">Elige especie</option>}
+            {!f.speciesId&&<option value="">Elegir especie</option>}
             {(speciesOptions.length?speciesOptions:Object.keys(SPP||{})).map(k=><option key={k} value={k}>{speciesLabel(k)}</option>)}
           </select></label>
         <label><span style={lbl}>Inicio</span>
@@ -8180,7 +8180,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // "Setas OS v5.dc.html"). props.isAdmin viene del operador elegido en el
   // picker del encabezado.
   const requireAdmin=fn=>(...args)=>{
-    if(!props.isAdmin){ setNoticeDlg({title:'Acción restringida',msg:'Solo un administrador puede hacer esto. Si te corresponde, cámbiate de operador en el encabezado (ícono de usuario).'}); return; }
+    if(!props.isAdmin){ setNoticeDlg({title:'Acción restringida',msg:'Acción reservada a administración. Para continuar, cambiar de operador en el encabezado (ícono de usuario).'}); return; }
     fn(...args);
   };
   const delR=id=>{
@@ -8306,7 +8306,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const safetyHold=Boolean(an&&scoreAn(an,{treatment:prodTreatment,recipe}).dimensions?.safety?.status==='hold');
   const safetyBlockMsg=safetyHold?(an?.requiresSterilization?'Especie con esterilización obligatoria: solo autoclave. Pasteurización y cal no son aceptables para este lote.':'Receta retenida por seguridad sanitaria (requiere autoclave o ajuste de formulación).'):'';
   const readyForProduction=balanced&&hasPickedSpecies&&prepValid&&!safetyHold;
-  const productionBlockMsg=!hasPickedSpecies?'Selecciona explícitamente la especie antes de guardar o producir.':balMsg||preparationResult.error||safetyBlockMsg;
+  const productionBlockMsg=!hasPickedSpecies?'Seleccionar explícitamente la especie antes de guardar o producir.':balMsg||preparationResult.error||safetyBlockMsg;
   const prodIngs=useMemo(()=>effectiveINGS.map(g=>{
     const item=preparation?.items.find(i=>i.ingredientId===g.id);
     return item?{...g,moisture:item.moisture.pct}:g;
@@ -8336,7 +8336,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     ++peritoRequestIdRef.current;
     setOptResults(null);
     setOptRunning(false);
-    setGeneratorStatus(previous=>previous?'Cambió el contexto. Calcula de nuevo para ver escenarios actualizados.':'');
+    setGeneratorStatus(previous=>previous?'Cambió el contexto. Calcular de nuevo para ver escenarios actualizados.':'');
   },[recipe,lockedIds,optTarget,optUseStock,optMaxCost,optimizerINGS,invLotes]);
   const stockAlerts=window.SetasInventoryLedger.lowStockAlerts({
     ingredients:INGS,lots:invLotes,ledger:invReservas,
@@ -8351,7 +8351,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     if(!availableStockIds.length){
       setNoticeDlg({
         title:'Bodega sin existencias',
-        msg:'No hay ingredientes con stock disponible en bodega. Registra compras o inventario en la pestaña Bodega antes de formular.'
+        msg:'No hay ingredientes con stock disponible en bodega. Registrar compras o inventario en la pestaña Bodega antes de formular.'
       });
       return;
     }
@@ -8371,7 +8371,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       if(!cand||!cand.recipe||!cand.recipe.length){
         setNoticeDlg({
           title:'Sin combinación viable con stock actual',
-          msg:`Los ingredientes disponibles en bodega no alcanzan para balancear la relación C:N y humedad de ${sp?.name||'la especie'}. Intenta agregar una base de carbono o suplemento nitrogenado en Bodega.`
+          msg:`Los ingredientes disponibles en bodega no alcanzan para balancear la relación C:N y humedad de ${sp?.name||'la especie'}. Probar con una base de carbono o suplemento nitrogenado en Bodega.`
         });
         return;
       }
@@ -8381,7 +8381,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       const maxKgWet=calcMaxBatchFromStock(cand.recipe,stockMap,10,targetMoisture,INGS);
       setNoticeDlg({
         title:'Receta formulada con stock de bodega',
-        msg:`Se cargó una alternativa para ${sp?.name||'la especie'} usando insumos en existencia. Capacidad estimada: ${maxKgWet.toFixed(1)} kg de sustrato húmedo al ${targetMoisture}% de humedad. Revisa el Perito y las cantidades del lote antes de preparar.`
+        msg:`Se cargó una alternativa para ${sp?.name||'la especie'} usando insumos en existencia. Capacidad estimada: ${maxKgWet.toFixed(1)} kg de sustrato húmedo al ${targetMoisture}% de humedad. Revisar el Perito y las cantidades del lote antes de preparar.`
       });
     }catch(err){
       setNoticeDlg({
@@ -8606,7 +8606,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const isWorkbench=variant==='workbench';
     if(!an) return isWorkbench?(
       <section className="panel perito-standalone-panel" data-perito-variant={variant} style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
-        <div className="os-provenance-notice">Agrega ingredientes en la Mesa de Mezcla para ver el diagnóstico del Perito.</div>
+        <div className="os-provenance-notice">Agregar ingredientes en la Mesa de Mezcla para ver el diagnóstico del Perito.</div>
       </section>
     ):null;
     const hasPer=recipe.length>0;
@@ -8770,7 +8770,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         </div>}
                       {modelAccuracy!=null&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Precisión del modelo para {sp?.name||'esta especie'} en tu bodega: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
+                          Precisión del modelo para {sp?.name||'esta especie'} con la bodega actual: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
                         </div>}
                       {similarTrial&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-warn-text)',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
@@ -8782,7 +8782,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         {criticals.length===0&&warnings.length===0&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'rgba(74,107,74,.1)',border:'1px solid rgba(74,107,74,.2)',borderRadius:3,color:'var(--status-ok)'}}>Todos los parámetros en rango</span>}
                         {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 25%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
-                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
+                      {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplicar una sugerencia a la vez</b> — cada cambio recalcula. <b>Auto-mejorar</b> lo automatiza.</div>}
             {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
             {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
             {tips.length>0&&<details open={!phoneCompact} style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
@@ -8808,7 +8808,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                   </div>
                   {dg.sugs.length>0&&(<>
                     <div className="sec" style={{marginTop:8}}>A considerar</div>
-                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>Podrías considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
+                    {dg.sugs.map((s2,i)=><div key={i} className={`sug ${s2.t}`}><span className="sug-mark">{s2.t==='success'?'Ok':s2.t==='error'?'Rev':'—'}</span><span style={{fontWeight:700,flexShrink:0,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{s2.i}</span><span>{s2.t==='warning'?<><span style={{color:'var(--ink-400)',fontStyle:'italic'}}>A considerar — </span>{s2.tx}</>:s2.tx}</span></div>)}
                   </>)}
         </>)}
       </section>
@@ -8820,7 +8820,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Recoge solo <style> inline (sin CORS) para evitar ventana en blanco.
   const openPrintWindow=(mode)=>{
     const el=document.querySelector('.prod-sheet[data-preparation-revision]');
-    if(!el){setNoticeDlg({msg:'Genera la hoja primero (debe haber una receta activa).'});return;}
+    if(!el){setNoticeDlg({msg:'Generar la hoja primero (debe haber una receta activa).'});return;}
     el.querySelectorAll('input').forEach(inp=>inp.setAttribute('value',inp.value));
     const nombre=(an?.sp?.name||'Sustrato').replace(/\s+/g,'_');
     const fecha=prodDate||new Date().toISOString().slice(0,10);
@@ -8861,7 +8861,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 <body>${el.outerHTML}</body></html>`;
     const pw=window.open('','_blank','width=900,height=1100');
     if(!pw){
-      setNoticeDlg({title:'Ventana bloqueada',msg:'El navegador bloqueó la ventana emergente. Permite pop-ups para este sitio e inténtalo de nuevo (ícono en la barra de direcciones → Permitir pop-ups).'});
+      setNoticeDlg({title:'Ventana bloqueada',msg:'El navegador bloqueó la ventana emergente. Permitir pop-ups para este sitio e intentar de nuevo (ícono en la barra de direcciones → Permitir pop-ups).'});
       return;
     }
     pw.document.open();
@@ -8949,7 +8949,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     if(taskEngine)mergeIntoTasks(taskEngine.tasksFromTransition({batchId:lote.id,toState:result.transition,at:new Date().toISOString()}));
     runInventorySync();
     setReleaseBatchId(null);
-    setNoticeDlg({title:'Preparación guardada en este equipo',msg:'Consumo registrado una sola vez. La transición de etapa queda pendiente hasta que el servidor la acepte. Puedes reintentar si se interrumpe la conexión.'});
+    setNoticeDlg({title:'Preparación guardada en este equipo',msg:'Consumo registrado una sola vez. La transición de etapa queda pendiente hasta que el servidor la acepte. Se puede reintentar si se interrumpe la conexión.'});
   };
   const runEjecucionLote=()=>{
     const{preview,plan,loteNum,fecha}=loteBatchConfirm;
@@ -8980,7 +8980,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setEjecutandoLote(false);
         setNoticeDlg({
           title:'Lote planificado con errores',
-          msg:`Los insumos de ${loteNum} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
+          msg:`Los insumos de ${loteNum} ya quedaron reservados (la bodega aún no se ha descontado); revisar la Bitácora antes de replanificar.`
         });
       }else{
         // Caso 1: nada se registró todavía — es seguro reintentar. Se libera
@@ -8989,7 +8989,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setEjecutandoLote(false);
         setNoticeDlg({
           title:'No se pudo ejecutar el lote',
-          msg:`Ocurrió un error antes de registrar el consumo de bodega: ${e?.message||'error desconocido'}. Intenta de nuevo.`
+          msg:`Ocurrió un error antes de registrar el consumo de bodega: ${e?.message||'error desconocido'}. Intentar de nuevo.`
         });
       }
     }
@@ -9008,7 +9008,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       ejecutarLoteInFlight.current=false;setEjecutandoLote(false);
       setConfirmDlg({
         title:'Insumo comprometido con otro lote',
-        msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        msg:comprometido+'. Confirmar de todas formas solo si la entrega llega a tiempo.',
         confirmLabel:'Confirmar y reservar',
         onConfirm:()=>{ejecutarLoteInFlight.current=true;setEjecutandoLote(true);runEjecucionLote();}
       });
@@ -9288,7 +9288,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setLaunching(false);
         setNoticeDlg({
           title: 'Lote planificado con errores',
-          msg: `Los insumos de ${f.codigo} ya quedaron reservados (la bodega aún no se ha descontado); revisa la Bitácora antes de replanificar.`
+          msg: `Los insumos de ${f.codigo} ya quedaron reservados (la bodega aún no se ha descontado); revisar la Bitácora antes de replanificar.`
         });
       } else {
         // Caso 1: nada se registró todavía — es seguro reintentar. Se
@@ -9297,7 +9297,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         setLaunching(false);
         setNoticeDlg({
           title: 'No se pudo lanzar el lote',
-          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || 'error desconocido'}. Intenta de nuevo.`
+          msg: `Ocurrió un error antes de registrar el consumo de bodega: ${e?.message || 'error desconocido'}. Intentar de nuevo.`
         });
       }
     }
@@ -9369,7 +9369,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
       launchInFlight.current=false;setLaunching(false);
       setConfirmDlg({
         title:'Insumo comprometido con otro lote',
-        msg:comprometido+'. Puedes confirmar de todas formas si sabes que llega a tiempo.',
+        msg:comprometido+'. Confirmar de todas formas solo si la entrega llega a tiempo.',
         confirmLabel:'Confirmar y reservar',
         onConfirm:()=>{launchInFlight.current=true;setLaunching(true);runLanzamientoProduccion();}
       });
@@ -9378,7 +9378,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     runLanzamientoProduccion();
   });
 
-  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Elimina fotos de bolsas antiguas (clic sobre la foto para quitarla) y vuelve a intentar.'});
+  const bitQuotaWarn=()=>setNoticeDlg({title:'No se pudo guardar',msg:'El almacenamiento local está lleno y el cambio no quedó guardado. Eliminar fotos de bolsas antiguas (clic sobre la foto para quitarla) y volver a intentar.'});
   // Encola una operación de bitácora en vez de dispararla y olvidarla: el
   // guardado local y la confirmación de la interfaz ya ocurrieron antes de
   // llamar a esto (siguen siendo lo primero), esto sólo asegura que la
@@ -9396,7 +9396,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         // La cola llena (o una operación inválida) nunca se descarta en
         // silencio: el operario tiene que enterarse de que este cambio no
         // quedó protegido.
-        setNoticeDlg({title:'No se pudo encolar el cambio',msg:'El cambio no se pudo poner en la cola de sincronización ('+(err.message||'error desconocido')+'). Revisa los cambios pendientes antes de seguir trabajando.'});
+        setNoticeDlg({title:'No se pudo encolar el cambio',msg:'El cambio no se pudo poner en la cola de sincronización ('+(err.message||'error desconocido')+'). Revisar los cambios pendientes antes de seguir trabajando.'});
         return prev;
       }
       try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){bitQuotaWarn();}
@@ -9422,7 +9422,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote={...form,id:'BIT_'+Date.now(),createdAt:new Date().toISOString()};
     const nb=Number(form.numBolsas);const ts=Date.now();
     const bolsas=Array.from({length:nb},(_,i)=>({id:'BOLSA_'+ts+'_'+i,loteId:lote.id,codigo:`${lote.codigo}-B${String(i+1).padStart(2,'0')}`,num:i+1,estado:null,col25:null,col50:null,col100:null,pesoInicial:form.pesoHumedo,fechaDescarte:null,motivoDescarte:'',observaciones:'',foto:null}));
-    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_lotes',[lote,...bitLotes]],['sdp_bit_bolsas',[...bitBolsas,...bolsas]]]);}catch(e){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return null;}
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_lotes',[lote,...bitLotes]],['sdp_bit_bolsas',[...bitBolsas,...bolsas]]]);}catch(e){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; liberar espacio y reintentar.');return null;}
     setBitLotes([lote,...bitLotes]);setBitBolsas([...bitBolsas,...bolsas]);
     // Se encolan por separado (no en un solo allSettled): son documentos
     // distintos y cada uno debe reintentarse de forma independiente si falla.
@@ -9559,7 +9559,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   },[bitLotes,bitBolsas,roomEvents]);
   const addBitCosecha=(cosecha)=>{
     const e={...cosecha,id:cosecha.id||('COS_'+Date.now()+'_'+Math.random().toString(36).slice(2,8))};
-    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; libera espacio y reintenta.');return false;}
+    try{SetasBitacora.persistCapture(localStorage,[['sdp_bit_cosechas',[...bitCosechas,e]]]);}catch(err){setCaptureSaveError('No se pudo guardar. El borrador sigue aquí; liberar espacio y reintentar.');return false;}
     setBitCosechas([...bitCosechas,e]);
     encolarSync({type:'guardarCosecha',key:'cosecha:'+e.id,args:[e]});
     const loteCosecha=bitLotes.find(l=>l.id===e.loteId);
@@ -9859,7 +9859,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const matchProvId=nombre=>matchByName(invProveedores,p=>p.nombre,nombre);
   const applyParsedItems=parsed=>{
     const items=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.items)?parsed.items:null);
-    if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Prueba con Manual.');setHuboParseIA(false);return;}
+    if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Probar con Manual.');setHuboParseIA(false);return;}
     const mapped=items.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''}));
     setCmpItems(mapped);
     setHuboParseIA(true);
@@ -9910,25 +9910,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
         try{
           applyParsedItems(extraerJSON(resp));
         }catch(parseErr){
-          setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisa que sea legible o usa Manual.`);
+          setCmpParseErr(`No se pudo interpretar la respuesta para ${esPDF?'el PDF':'la foto'}. Revisar que sea legible o usar Manual.`);
         }
         setCmpParsing(false);
         return;
       }
       throw new Error('Servicio de IA no disponible');
-    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
+    }catch(err){setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intentar de nuevo o usar Manual.`);}
     setCmpParsing(false);
   };
   const capturarFoto=async e=>{
     const file=e.target.files&&e.target.files[0]; if(!file) return;
     const esPDF=file.type==='application/pdf'||/\.pdf$/i.test(file.name||'');
     if(file.size>CMP_MAX_BYTES){
-      setCmpParseErr(`El archivo pesa ${(file.size/1024/1024).toFixed(1)} MB — el máximo es 10 MB. Comprime ${esPDF?'el PDF':'la foto'} o usa Manual.`);
+      setCmpParseErr(`El archivo pesa ${(file.size/1024/1024).toFixed(1)} MB — el máximo es 10 MB. Comprimir ${esPDF?'el PDF':'la foto'} o usar Manual.`);
       e.target.value=''; return;
     }
     const hasAI=(window.SetasAI&&typeof window.SetasAI.parseInvoiceImage==='function')||(window.claude&&typeof window.claude.complete==='function');
     if(!hasAI){
-      setCmpParseErr('La lectura automática no está disponible en este entorno. Usa Manual para cargar los ítems.');
+      setCmpParseErr('La lectura automática no está disponible en este entorno. Usar Manual para cargar los ítems.');
       e.target.value=''; return;
     }
     setCmpParseErr('');setHuboParseIA(false);setCmpParsing(true);setCmpFuente('ocr');
@@ -9939,7 +9939,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         :{type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:b64}};
       setCmpLastFoto({fileBlock,esPDF,name:file.name});
       await parseFotoPayload(fileBlock,esPDF);
-    }catch(err){setCmpParsing(false);setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intenta de nuevo o usa Manual.`);}
+    }catch(err){setCmpParsing(false);setCmpParseErr(`No se pudo leer ${esPDF?'el PDF':'la foto'}. Intentar de nuevo o usar Manual.`);}
     e.target.value='';
   };
   const reintentarFoto=()=>{
@@ -9968,7 +9968,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         return;
       }
       throw new Error('Servicio de IA no disponible');
-    }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intenta de nuevo o usa Manual.');}
+    }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intentar de nuevo o usar Manual.');}
     setCmpParsing(false);
   };
 
@@ -9980,7 +9980,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const registrarCompra=()=>{
     const valid=cmpItems.filter(it=>it.ingId&&parseFloat(it.kg)>0);
-    if(!cmpProvId||valid.length===0){setNoticeDlg({msg:'Selecciona proveedor y agrega al menos un ítem.'});return;}
+    if(!cmpProvId||valid.length===0){setNoticeDlg({msg:'Seleccionar proveedor y agregar al menos un ítem.'});return;}
     const cId='compra_'+Date.now();
     const prov=invProveedores.find(p=>p.id===cmpProvId);
     // Siempre se construye como pendiente primero: es la única forma que
@@ -10164,7 +10164,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:6}} /> Recuento necesario ({sobregirados.length})
                       </div>
                       <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginBottom:6}}>
-                        Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Cuenta el lote y corrige su stock.
+                        Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Contar el lote y corregir su stock.
                       </div>
                       <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                         {sobregirados.map(l=>{
@@ -10498,13 +10498,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {cmpLastFoto&&!cmpParsing&&(
                         <button className="inv-btn inv-btn-sec inv-btn-sm" style={{marginLeft:8,maxWidth:220,overflow:'hidden',textOverflow:'ellipsis'}} onClick={reintentarFoto} title={`Reintentar con ${cmpLastFoto.name}`}>↻ Reintentar{cmpLastFoto.name?` (${cmpLastFoto.name.length>18?cmpLastFoto.name.slice(0,15)+'…':cmpLastFoto.name})`:''}</button>
                       )}
-                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisa antes de registrar.</div>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--border-soft)',marginTop:8}}>La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisar antes de registrar.</div>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
                   )}
                   {cmpMode==='texto'&&(
                     <div style={{marginBottom:16}}>
-                      <textarea className="inv-input" rows="4" style={{width:'100%',resize:'vertical',fontFamily:"var(--font-body)"}} placeholder="Pega aquí el mensaje o correo del proveedor…" value={cmpPasteText} onChange={e=>setCmpPasteText(e.target.value)}/>
+                      <textarea className="inv-input" rows="4" style={{width:'100%',resize:'vertical',fontFamily:"var(--font-body)"}} placeholder="Pegar aquí el mensaje o correo del proveedor…" value={cmpPasteText} onChange={e=>setCmpPasteText(e.target.value)}/>
                       <button className="inv-btn inv-btn-pri inv-btn-sm" style={{marginTop:8}} disabled={cmpParsing||!cmpPasteText.trim()} onClick={parsearTexto}>{cmpParsing?'Interpretando…':cmpParseErr?'↻ Reintentar':'Interpretar texto'}</button>
                       {cmpParseErr&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-500)',marginTop:8}}>{cmpParseErr}</div>}
                     </div>
@@ -10675,7 +10675,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <button className="inv-btn inv-btn-pri" onClick={()=>setShowProvModal(true)}>＋ Agregar proveedor</button>
                   </div>
                   {invProveedores.length===0
-                    ?<div style={{textAlign:'center',padding:24,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>Sin proveedores. Agrega el primero.</div>
+                    ?<div style={{textAlign:'center',padding:24,fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>Sin proveedores. Agregar el primero.</div>
                     :<div className="inv-section">
                       {invProveedores.map(p=>(
                         <div key={p.id} className="prov-row">
@@ -10898,7 +10898,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const lote=qrLotesRef.current.find(l=>l.id===selectedLote?.id);
     const qrEvents=window.SetasFieldQrEvents;
     if(!batchSheetApi||!lote||!qrEvents?.isAllowed(buildSheetFor(lote),tipo)){
-      setNoticeDlg({title:'Acción no disponible',msg:'La acción no está permitida para este lote y tu rol en su estado actual.'});
+      setNoticeDlg({title:'Acción no disponible',msg:'La acción no está permitida para este lote con el rol actual en su estado actual.'});
       return;
     }
     if (tipo === 'riego' || tipo === 'observacion') {
@@ -11107,7 +11107,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     const uid=window.SetasFirebase?.auth?.currentUser?.uid||null;
     if(!uid&&lote.lifecycleState){
-      setNoticeDlg({title:'Se necesita iniciar sesión',msg:`La etapa de ${lote.codigo||lote.id} ya la registra el servidor. Inicia sesión para cambiarla.`});
+      setNoticeDlg({title:'Se necesita iniciar sesión',msg:`La etapa de ${lote.codigo||lote.id} ya la registra el servidor. Iniciar sesión para cambiarla.`});
       return false;
     }
     const event=logged?null:workflow.transitionEvent({batchId:lote.id,from:origin,to,operatorId:lote.operador||'operador-local',reason});
@@ -12109,7 +12109,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         rhRange: [80.0, 84.0],
         co2Ideal: 700,
         co2Max: 850,
-        directives: "Reduce la temperatura para ralentizar la división celular y mantén la HR a 82% para evitar la absorción pasiva de agua.",
+        directives: "Reducir la temperatura para ralentizar la división celular y mantener la HR a 82% para evitar la absorción pasiva de agua.",
         morphology: "Sombrero de carne gruesa y compacta, cutícula resistente al calor. Ideal para sellar o asar a la parrilla."
       },
       gigante: {
@@ -12121,7 +12121,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         rhRange: [88.0, 93.0],
         co2Ideal: 450,
         co2Max: 600,
-        directives: "Activa FAE continuo para bajar el CO₂ al mínimo (< 500 ppm), estimulando la expansión del diámetro de los sombreros.",
+        directives: "Activar FAE continuo para bajar el CO₂ al mínimo (< 500 ppm), estimulando la expansión del diámetro de los sombreros.",
         morphology: "Sombreros carnosos de gran diámetro (>12 cm), tallos cortos y delgados. Estructura celular delgada y expandida."
       },
       crujiente: {
@@ -12133,7 +12133,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         rhRange: [82.0, 88.0],
         co2Ideal: 1050,
         co2Max: 1200,
-        directives: "Reduce ligeramente la extracción para acumular CO₂ (alrededor de 1000 ppm), induciendo al pie a estirarse en busca de oxígeno.",
+        directives: "Reducir ligeramente la extracción para acumular CO₂ (alrededor de 1000 ppm), induciendo al pie a estirarse en busca de oxígeno.",
         morphology: "Pie elongado y cilíndrico muy grueso, sombreros moderados. Textura al dente (crujiente)."
       },
       umami: {
@@ -13188,10 +13188,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {/* Radar Canvas Plot */}
             <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',border:'1px solid var(--line-0)',background:'var(--paper-0)',padding:12,borderRadius:'var(--sim-radius-sm)'}}>
               <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',textTransform:'uppercase',marginBottom:8}}>
-                Interactivo (Arrastra los puntos)
+                Interactivo (arrastrar los puntos)
               </span>
               <canvas 
-                role="img" aria-label="Comparación visual de temperatura, humedad y CO₂. Ajusta la proyección con los controles anteriores."
+                role="img" aria-label="Comparación visual de temperatura, humedad y CO₂. La proyección se ajusta con los controles anteriores."
                 ref={canvasRef} 
                 width="220" 
                 height="220" 
@@ -13638,7 +13638,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <td data-label="Foto" style={{textAlign:'center'}}>
                               {bolsa.foto
                                 ?<button type="button" className="inv-photo-remove" onClick={()=>updateBitBolsa(bolsa.id,{foto:null})} aria-label={`Quitar foto de la bolsa ${bolsa.codigo}`} title="Quitar foto"><img src={bolsa.foto} alt="" aria-hidden="true" width="28" height="28"/></button>
-                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Intenta con otra imagen.'}));e.target.value='';}}/></label>}
+                                :<label className="inv-photo-upload">+foto<input name={`bagPhoto-${bolsa.id}`} aria-label={`Agregar foto a la bolsa ${bolsa.codigo}`} type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f) return;compressImageToDataURL(f).then(dataUrl=>updateBitBolsa(bolsa.id,{foto:dataUrl})).catch(()=>setNoticeDlg({title:'No se pudo procesar la foto',msg:'Probar con otra imagen.'}));e.target.value='';}}/></label>}
                             </td>
                             <td data-label="Cosechas">
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
@@ -13714,7 +13714,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               return(
                 <div className="panel">
                   <div className="sec">Comparador de recetas</div>
-                  {lotesConDatos.length<2&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>Necesitas al menos 2 lotes para comparar. Actualmente: {lotesConDatos.length}.</div>}
+                  {lotesConDatos.length<2&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>Se requieren al menos 2 lotes para comparar. Actualmente: {lotesConDatos.length}.</div>}
                   {lotesConDatos.length>=2&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Lote / Receta</th><th>Especie</th><th style={{textAlign:'right'}}>Contam.</th><th style={{textAlign:'right'}}>Días col.</th><th style={{textAlign:'right'}}>BE</th><th style={{textAlign:'right'}}>kg/bolsa</th><th style={{textAlign:'right'}}>Costo/kg</th><th style={{textAlign:'center'}}>Score</th><th>Veredicto</th></tr></thead><tbody>{lotesConDatos.map(lote=>{const stats=calcLoteStats(lote.id);const score=calcLoteScore(stats);const VC={'prometedora':'var(--moss-500)','descartar':'var(--coral-700)','buena para escalar':'var(--moss-700)','riesgo contaminación':'var(--ochre-500)','repetir':'var(--ink-600)','ajustar humedad':'var(--ochre-600)'};return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}><div style={{fontWeight:700,color:'var(--ink-900)'}}>{lote.codigo}</div>{lote.recipeRef&&<div style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{lote.recipeRef.name}</div>}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)"}}>{lote.especie}</td><td style={{textAlign:'right',color:stats?.contPct>20?'var(--coral-700)':'var(--moss-700)',fontWeight:700}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.diasCol!=null?stats.diasCol.toFixed(1)+'d':'—'}</td><td style={{textAlign:'right',fontWeight:700,color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)'}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.bolsasSanas>0&&stats.totalFresco?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'}</td><td style={{textAlign:'right'}}>{stats?.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—'}</td><td style={{textAlign:'center',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--coral-700)',fontWeight:700}}>{score!==null?score:'—'}</td><td><select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} style={{padding:'4px 7px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--border-soft)',borderRadius:4,background:'var(--paper-50)',color:VC[lote.veredicto]||'var(--ink-700)',width:'100%'}}><option value="">— sin veredicto —</option>{['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}</select></td></tr>);})}</tbody></table></div>)}
                 </div>
               );
@@ -13983,7 +13983,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   const result = VisionApi.analyzeImageElement(img);
                   setCopilotVisionResult(result);
                 } catch (err) {
-                  setCopilotVisionError('No se pudo analizar la foto. Intenta de nuevo con buena luz y foco.');
+                  setCopilotVisionError('No se pudo analizar la foto. Intentar de nuevo con buena luz y foco.');
                 } finally {
                   setCopilotVisionBusy(false);
                   URL.revokeObjectURL(objectUrl);
@@ -14648,7 +14648,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 })() : (
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
                     <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
-                      No hay lotes activos. Inicia un nuevo lote desde la Ficha de Producción o la Bitácora.
+                      No hay lotes activos. Iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
                     </span>
                     <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="sdp-btn sdp-btn--field sdp-btn--primary" style={{padding:'8px 16px',minHeight:44,minWidth:44,cursor:'pointer'}}>
                       + Iniciar Primer Lote
@@ -14945,9 +14945,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               )}
 
               {saved.length===0
-                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crea una fórmula, valida sus parámetros y guárdala aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
+                ?<div className="rec-empty"><div className="rec-empty-hed">No hay recetas guardadas.</div><div className="rec-empty-sub">Crear una fórmula, validar sus parámetros y guardarla aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Crear primera receta</button></div>
                 :shown.length===0
-                ?<div className="rec-empty"><div className="rec-empty-hed">Sin recetas para {focusSpp?focusSpp.name:'esta especie'}.</div><div className="rec-empty-sub">Formula una mezcla para esta especie y guárdala para verla aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>{if(focusKey)setSKey(focusKey);openBuilderSubTab('formular');goTab('formular');}}>Formular ahora</button></div>
+                ?<div className="rec-empty"><div className="rec-empty-hed">Sin recetas para {focusSpp?focusSpp.name:'esta especie'}.</div><div className="rec-empty-sub">Formular una mezcla para esta especie y guardarla para verla aquí.</div><button type="button" className="inv-btn inv-btn-pri" onClick={()=>{if(focusKey)setSKey(focusKey);openBuilderSubTab('formular');goTab('formular');}}>Formular ahora</button></div>
                 :(
                     <div className="dash-grid">
                       {shown.map(e=>{
@@ -15192,7 +15192,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span>Herramienta avanzada</span>
                     <h2>Co-Formulación multi-especie</h2>
                   </div>
-                  <p>Define la proporción de producción por especie antes de calcular la mezcla.</p>
+                  <p>Definir la proporción de producción por especie antes de calcular la mezcla.</p>
                 </header>
                 <div className="co-form-panel-grid">
                   {Object.entries(SPP).map(([k,d])=>{
@@ -15249,7 +15249,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           <section className="form-mobile-start" data-testid="form-mobile-start" aria-labelledby="form-mobile-start-title">
             <header>
               <span>Inicio rápido</span>
-              <strong id="form-mobile-start-title">Configura y empieza la receta</strong>
+              <strong id="form-mobile-start-title">Configurar y empezar la receta</strong>
             </header>
             <label className="form-mobile-start-field" htmlFor="form-mobile-species-select">
               <span>1 · Especie</span>
@@ -15304,7 +15304,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="form-species-identity">
               <span className="form-species-kicker">Especie activa</span>
               <div>
-                <strong id="form-species-context-title">{hasPickedSpecies?(sp?.name||'Especie activa'):'Selecciona una especie'}</strong>
+                <strong id="form-species-context-title">{hasPickedSpecies?(sp?.name||'Especie activa'):'Seleccionar una especie'}</strong>
                 <em>{hasPickedSpecies?(sp?.scientific||'Sin clasificar'):'La evaluación se adapta a sus objetivos biológicos.'}</em>
               </div>
             </div>
@@ -15353,7 +15353,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="live-dash-tray" id="bl-receta">
                   <div className="rec-empty">
                     <div className="rec-empty-hed">Sin ingredientes aún.</div>
-                    <div className="rec-empty-sub">Añade insumos manualmente o genera una primera mezcla.</div>
+                    <div className="rec-empty-sub">Añadir insumos manualmente o generar una primera mezcla.</div>
                     <div className="recipe-start-actions">
                       <button type="button" className="rec-empty-action" onClick={focusIngredientCatalog}>Elegir ingredientes</button>
                       <button type="button" className="rec-empty-action" onClick={()=>{setShowOptimizer(true);openBuilderSubTab('generador');}}>Abrir Generador</button>
@@ -15593,7 +15593,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className={`form-step-state-badge ${hasPickedSpecies?'is-completado':'is-activo'}`}>
                   {hasPickedSpecies?'Completado':'Activo'}
                 </span>
-                <span className="form-step-help">Define rangos C:N, pH y EB biológica.</span>
+                <span className="form-step-help">Definir rangos C:N, pH y EB biológica.</span>
               </li>
 
               {/* Paso 02: Objetivo */}
@@ -15619,7 +15619,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className={`form-step-state-badge ${recipe.length>0?'is-completado':hasPickedSpecies?'is-activo':'is-pendiente'}`}>
                   {recipe.length>0?`${recipe.length} insumos`:hasPickedSpecies?'Activo':'Pendiente'}
                 </span>
-                <span className="form-step-help">Agrega sustratos, suplementos y correctores.</span>
+                <span className="form-step-help">Agregar sustratos, suplementos y correctores.</span>
               </li>
 
               {/* Paso 04: Balance */}
@@ -15633,7 +15633,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span className={`form-step-state-badge ${recipe.length===0?'is-pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'is-completado':'is-atencion'}`}>
                   {recipe.length===0?'Pendiente':(an?.tot!=null&&Math.abs(an.tot-100)<=MASS_BALANCE_TOL)?'Completado':'Requiere atención'}
                 </span>
-                <span className="form-step-help">Cierra la materia seca exactamente al 100%.</span>
+                <span className="form-step-help">Cerrar la materia seca exactamente al 100%.</span>
               </li>
 
               {/* Paso 05: Revisión */}
@@ -15661,7 +15661,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div>
                 <span className="ingredient-section-eyebrow">Área de trabajo principal</span>
                 <h2 id="active-recipe-workspace-title">Ingredientes y revisión</h2>
-                <p>Edita los porcentajes en la receta activa y revisa aquí los requisitos para preparar el lote.</p>
+                <p>Editar los porcentajes en la receta activa y revisar aquí los requisitos para preparar el lote.</p>
               </div>
               <span className="active-recipe-count" aria-live="polite">{recipe.length} ingrediente{recipe.length===1?'':'s'}</span>
             </header>
@@ -15671,7 +15671,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div>
                   <span className="ingredient-section-eyebrow">Paso 03 · Selección manual</span>
                   <h2>Ingredientes</h2>
-                  <p>Busca por nombre o etiqueta y agrega los insumos a tu receta.</p>
+                  <p>Buscar por nombre o etiqueta y agregar los insumos a la receta.</p>
                 </div>
                 <span className="ingredient-section-count" aria-live="polite">
                   {visibleIngredients.length} de {effectiveINGS.length}
@@ -15683,7 +15683,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <input name="ingredientSearch" type="search" className="search" aria-label="Buscar ingrediente o etiqueta" autoComplete="off" placeholder="Ej. aserrín, paja, calcio…" value={search} onChange={e=>setSearch(e.target.value)}/>
                 </label>
                 {search.length>0&&<button type="button" className="cat" onClick={()=>{setSearch('');document.querySelector('#bl-ingredientes input[name="ingredientSearch"]')?.focus();}}>Limpiar búsqueda</button>}
-                <button type="button" className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} disabled={!hasPickedSpecies} onClick={()=>setShowCompatOnly(v=>!v)} title={hasPickedSpecies?`Compatibles con ${sp.name}`:'Selecciona una especie para filtrar compatibilidad'}>Solo compatibles</button>
+                <button type="button" className={`cat${showCompatOnly?' on':''}`} aria-pressed={showCompatOnly} disabled={!hasPickedSpecies} onClick={()=>setShowCompatOnly(v=>!v)} title={hasPickedSpecies?`Compatibles con ${sp.name}`:'Seleccionar una especie para filtrar compatibilidad'}>Solo compatibles</button>
               </div>
                 <div className="bodega-bar" title="Abrir bodega / inventario">
                 <button
@@ -15777,10 +15777,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {(()=>{
                   const base=visibleIngredients;
                   if(usePantry&&pantryIds.length===0){
-                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registra una compra o cambia el origen a “Catálogo”.</span></button>;
+                    return <button type="button" className="ingredient-empty-action" onClick={()=>{goTab('inventario');setInvTab('compra');}}><strong>Bodega sin ingredientes disponibles.</strong><span>Registrar una compra o cambiar el origen a “Catálogo”.</span></button>;
                   }
                   if(base.length===0){
-                    return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Prueba otra búsqueda o restablece los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
+                    return <div className="ingredient-no-results" role="status"><strong>No hay ingredientes para esta vista.</strong><span>Probar otra búsqueda o restablecer los filtros.</span><button type="button" onClick={resetIngredientView}>Restablecer vista</button></div>;
                   }
 
                   const renderIngRow=(ing)=>{
@@ -15935,7 +15935,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const undocumented=hasPickedSpecies?recipe.filter(r=>!effectiveINGS.find(g=>g.id===r.id)?.cs?.includes(sKey)):[];
                     const checks=[
                       {id:'balance',label:'Balance de masa',status:balanced?'verified':'blocked',detail:`${an?.tot?.toFixed(1)||'0'}% / 100%${balanced?' · Composición cerrada':` · ${balMsg}`}`,action:'recipe'},
-                      {id:'compatibility',label:'Compatibilidad documentada',status:!hasPickedSpecies||undocumented.length?'unknown':'verified',detail:!hasPickedSpecies?'Selecciona una especie.':undocumented.length?`Sin compatibilidad documentada con ${sp.name}: ${undocumented.map(r=>effectiveINGS.find(g=>g.id===r.id)?.name||r.id).join(', ')}.`:`Todos los ingredientes tienen compatibilidad documentada con ${sp.name}.`,action:'recipe'},
+                      {id:'compatibility',label:'Compatibilidad documentada',status:!hasPickedSpecies||undocumented.length?'unknown':'verified',detail:!hasPickedSpecies?'Seleccionar una especie.':undocumented.length?`Sin compatibilidad documentada con ${sp.name}: ${undocumented.map(r=>effectiveINGS.find(g=>g.id===r.id)?.name||r.id).join(', ')}.`:`Todos los ingredientes tienen compatibilidad documentada con ${sp.name}.`,action:'recipe'},
                       ...productionReadiness.checks.filter(c=>['model','stock','moisture','equipment'].includes(c.id)),
                     ];
                     const labels={verified:'Comprobado',blocked:'Requiere atención',unknown:'Por verificar'};
@@ -15951,7 +15951,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </article>);
                   })()}
                 </div>
-              ):<p className="form-review-empty">Agrega ingredientes para revisar la receta. La revisión se actualiza con cada cambio.</p>}
+              ):<p className="form-review-empty">Agregar ingredientes para revisar la receta. La revisión se actualiza con cada cambio.</p>}
               {renderPeritoPanel('formulador')}
               <details className="review-details" data-testid="form-review-gauges">
                 <summary>Medidores y comparación del modelo</summary>
@@ -16142,7 +16142,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <button className="btn" onClick={()=>{
                   if(typeof html2pdf==='undefined'){setNoticeDlg({msg:'html2pdf no disponible.'});return;}
                   const el=document.querySelector('.print-panel');
-                  if(!el){setNoticeDlg({msg:'Genera análisis primero.'});return;}
+                  if(!el){setNoticeDlg({msg:'Generar análisis primero.'});return;}
                   html2pdf().set({margin:10,filename:`receta_${sKey}_${new Date().toISOString().slice(0,10)}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4',orientation:'portrait'}}).from(el).save();
                 }}><span aria-hidden="true">↓</span> PDF</button>
                 <button className="btn" onClick={()=>{
@@ -16166,7 +16166,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           if(recipe.length>0){setConfirmDlg({title:'Reemplazar receta activa',msg:`¿Reemplazar la receta actual con "${p.especie.nombre||p.especie.key}"?`,onConfirm:apply});}
                           else apply();
                         } else {setNoticeDlg({msg:'JSON inválido — no contiene los campos receta/especie.'});}
-                      } catch(err){setNoticeDlg({msg:'Error al leer el archivo JSON. Verifica que sea un archivo exportado desde el simulador.'});}
+                      } catch(err){setNoticeDlg({msg:'Error al leer el archivo JSON. Verificar que sea un archivo exportado desde el simulador.'});}
                     };
                     reader.readAsText(file);
                   };
@@ -16405,8 +16405,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {(!hasBase || !hasCandidate)?(
                     <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
                       {!hasBase
-                        ? 'Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
-                        : 'Calcula Escenarios o usa «Comparar» en una sugerencia del Perito para mezclar recetas.'}
+                        ? 'Agregar ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
+                        : 'Calcular Escenarios o usar «Comparar» en una sugerencia del Perito para mezclar recetas.'}
                     </div>
                   ):(
                     <div>
@@ -16518,8 +16518,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-700)',marginBottom:12,paddingBottom:10,borderBottom:'1px solid var(--paper-300)'}}>
                     {formularMode==='auto'
-                      ?'Genera combinaciones base×suplemento óptimas para tu especie — desde tu bodega o toda la paleta.'
-                      :'Elige dos ingredientes y un C:N objetivo. El sistema calcula las proporciones exactas.'}
+                      ?'Combinaciones base×suplemento óptimas para la especie — desde la bodega o toda la paleta.'
+                      :'Elegir dos ingredientes y un C:N objetivo. El sistema calcula las proporciones exactas.'}
                   </div>
             {formularMode==='auto'&&(
               <div>
@@ -16532,7 +16532,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   <button type="button" className={globalMode==='investigacion'?'is-active':''} aria-pressed={globalMode==='investigacion'} onClick={()=>setGlobalWorkMode('investigacion')}>Catálogo</button>
                                 </div>
                               </div>
-                              <p>{lockedIds.length?`${lockedIds.length} porcentaje${lockedIds.length===1?'':'s'} fijado${lockedIds.length===1?'':'s'} de la receta activa: la búsqueda debe conservarlos.`:'Busca una nueva composición. Fija porcentajes en la Mesa de Mezcla para conservarlos.'}</p>
+                              <p>{lockedIds.length?`${lockedIds.length} porcentaje${lockedIds.length===1?'':'s'} fijado${lockedIds.length===1?'':'s'} de la receta activa: la búsqueda debe conservarlos.`:'Buscar una nueva composición. Fijar porcentajes en la Mesa de Mezcla para conservarlos.'}</p>
                             </div>
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
@@ -16614,14 +16614,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     const activeResults=byProfile[optProfile]||[];
                                     const activeDiag=byProfile[`_diag_${optProfile}`]?.diag||_diag?.diag;
                                     if(activeDiag?.error){
-                                      setGeneratorStatus('No se pudieron calcular escenarios. Revisa el diagnóstico del Generador.');
+                                      setGeneratorStatus('No se pudieron calcular escenarios. Revisar el diagnóstico del Generador.');
                                     }else if(noStock){
-                                      setGeneratorStatus('No hay ingredientes en stock registrados. Ve a Bodega para agregar ingredientes.');
+                                      setGeneratorStatus('No hay ingredientes en stock registrados. Agregarlos en Bodega.');
                                     }else if(activeResults.length){
                                       setGeneratorStatus(`${activeResults.length} escenario${activeResults.length===1?'':'s'} disponible${activeResults.length===1?'':'s'} para ${OPT_PROFILES[optProfile]?.label||optProfile}.`);
                                       setGeneratorFocusTarget('generator-results-heading');
                                     }else{
-                                      setGeneratorStatus('No hay combinaciones válidas. Revisa el diagnóstico del Generador.');
+                                      setGeneratorStatus('No hay combinaciones válidas. Revisar el diagnóstico del Generador.');
                                       setGeneratorFocusTarget('generator-results-heading');
                                     }
                                   },50);
@@ -16637,7 +16637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 </div>
                               ):(
                                 <div style={{padding:'10px 14px',background:'var(--status-warn-bg)',border:'1px solid var(--status-warn)',borderRadius:'var(--sim-r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-warn-text)',marginBottom:12}}>
-                                  Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
+                                  Inventario vacío. Cambiar a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registrar compras en Inventario.
                                 </div>
                               );
                             })():(
@@ -16797,15 +16797,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       <ul>{diag.rejectionReasons.slice(0,5).map(reason=><li key={reason.code}>{describeSearchRejection(reason.code,optimizerINGS)} <span>({reason.count} evaluaciones)</span></li>)}</ul>
                                       <p>Un escenario puede incumplir varias restricciones. Este diagnóstico describe la búsqueda explorada, no demuestra que no exista otra fórmula.</p>
                                     </div>}
-                                    {!diag.error&&!diag.rejectionReasons?.length&&<p>No se encontraron alternativas con este contexto. Revisa ingredientes habilitados, porcentajes fijados y perfil; vuelve a calcular después de cambiar una restricción.</p>}
+                                    {!diag.error&&!diag.rejectionReasons?.length&&<p>No se encontraron alternativas con este contexto. Revisar ingredientes habilitados, porcentajes fijados y perfil; volver a calcular después de cambiar una restricción.</p>}
                                     {diag.bases>0&&<div style={{marginTop:8,lineHeight:1.6}}><b>Bases:</b> {diag.baseNames.join(', ')}</div>}
                                     {diag.supps>0&&<div style={{marginTop:3,lineHeight:1.6}}><b>Suplementos:</b> {diag.suppNames.join(', ')}</div>}
                                   </div>
-                                ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
+                                ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Seleccionar especie y Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
                               <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--sim-r-sm)',background:'var(--status-warn-bg)'}}>
-                                Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
+                                Sin stock registrado. Agregar ingredientes en <strong>Bodega → Compra</strong>.
                               </button>
                             )}
                           </div>
@@ -16814,7 +16814,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="panel panel-accent">
                           <div className="sec">Formulación por Objetivo C:N</div>
                           <div style={{marginBottom:16,padding:'8px 12px',background:'var(--paper-200)',border:'1px solid var(--paper-300)',fontFamily:"var(--font-body)",fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',lineHeight:1.6}}>
-                            Selecciona dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas.
+                            Seleccionar dos ingredientes y un C:N objetivo — el sistema calcula las proporciones exactas.
                           </div>
                           {sp&&(
                             <div className="manual-species-summary" style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
@@ -16906,12 +16906,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               if(!bI||!sI) return;
                               const T=invTargetCN, pMin=invMin, pAer=invAer?invAerPct:0;
                               const pRem=100-pMin-pAer;
-                              if(pRem<=2){reportManualError('Los porcentajes fijos superan 98%. Reduce mineral o aireador.');return;}
+                              if(pRem<=2){reportManualError('Los porcentajes fijos superan 98%. Reducir mineral o aireador.');return;}
                               const bDry=1-Math.min(0.92,Math.max(0,(bI.moisture||0)/100));
                               const sDry=1-Math.min(0.92,Math.max(0,(sI.moisture||0)/100));
                               const cb=bI.c*bDry, nb=bI.n*bDry, cs=sI.c*sDry, ns=sI.n*sDry;
                               const denom=(cb-cs)-T*(nb-ns);
-                              if(Math.abs(denom)<0.001){reportManualError('Ingredientes demasiado similares en C:N. Elige una base de mayor C:N o un suplemento con más N.');return;}
+                              if(Math.abs(denom)<0.001){reportManualError('Ingredientes demasiado similares en C:N. Elegir una base de mayor C:N o un suplemento con más N.');return;}
                               const ps=pRem*(cb-T*nb)/denom;
                               const pb=pRem-ps;
                               if(ps<0||pb<0||ps>pRem){
@@ -16926,7 +16926,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               if(pMin>0) res.push({id:'carbonato_calcio',p:pMin});
                               const anRes=analyze(res,sKey,effectiveINGS);
                               setInvResult({recipe:res,an:anRes});
-                              setGeneratorStatus('Proporciones calculadas. Revisa el resultado antes de cargarlo en Mesa de Mezcla.');
+                              setGeneratorStatus('Proporciones calculadas. Revisar el resultado antes de cargarlo en Mesa de Mezcla.');
                               setGeneratorFocusTarget('manual-result-heading');
                             }}
                           >⇌ Calcular proporciones exactas</button>
@@ -17314,14 +17314,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'color-mix(in oklab, var(--status-attention) 80%, black)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--sim-r-sm)'}}>
-                  <span>No hay receta activa. Crea o carga una receta antes de preparar el lote.</span>
+                  <span>No hay receta activa. Crear o cargar una receta antes de preparar el lote.</span>
                   <button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Ir al Formulador</button>
                 </div>
               ):(
                 <>
                 {an&&!balanced&&(
                   <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-error)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--sim-r-sm)'}}>
-                    <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
+                    <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajustar los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div className="prod-batch-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
@@ -17360,7 +17360,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
                     <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
                     <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:productionBlockMsg||'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:productionBlockMsg||'Completar # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="var(--status-error)" /> sin sincronizar</span>}
                   </div>
                 </div>
@@ -17369,7 +17369,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
 
             {recipe.length>0&&<section aria-label="Humedad de preparación" style={{margin:'16px 0',padding:16,border:'1px solid var(--border-soft)'}}>
-              <p>Una preparación compartida con Formulador. Ingresa humedad medida para este lote; vacío conserva la estimación del catálogo.</p>
+              <p>Una preparación compartida con Formulador. Ingresar humedad medida para este lote; vacío conserva la estimación del catálogo.</p>
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,240px),1fr))',gap:12}}>
                 {recipe.map(r=>{const g=effectiveINGS.find(g=>g.id===r.id);return <label key={r.id} htmlFor={`ingredient-moisture-${r.id}`}>
                   {g?.name||r.id} · catálogo: {g?.moisture??'sin dato'}%
@@ -17530,7 +17530,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:1}}>báscula · res. {resG} g</div>
                   </div>
                 </div>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca tras redondeo: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> · objetivo seco: {preparation.target.dryKg.toFixed(3)} kg. Gramos redondeados a la báscula ({resG} g). Edita la humedad del insumo del día en los controles de preparación. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginBottom:8}}>Masa seca tras redondeo: <b style={{color:'var(--ink-900)'}}>{dryR.toFixed(2)} kg</b> · objetivo seco: {preparation.target.dryKg.toFixed(3)} kg. Gramos redondeados a la báscula ({resG} g). La humedad del insumo del día se edita en los controles de preparación. Vacío: usa referencia del catálogo para el cálculo, no registra una medición.</div>
                 <div className="ps-tbl-wrap">
                 <table className="prod-tbl" style={{marginBottom:8}}>
                   <thead><tr><th>Ingrediente</th><th style={{textAlign:'right'}}>%</th><th style={{textAlign:'center',width:62}}>H₂O%</th><th style={{textAlign:'right'}}>Gramos</th><th style={{textAlign:'right'}}>Kg</th><th style={{textAlign:'right'}}>Seco kg</th><th style={{textAlign:'center',width:46}}>Hecho</th></tr></thead>
@@ -17646,7 +17646,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           </div>
         )}
 
-        {tab==='inventario'&&<>{invLotes.length===0&&<section className="prototype-panel"><h3>Bodega sin existencias registradas</h3><p>El catálogo contiene referencias, no stock físico. Registra las cantidades disponibles antes de preparar un ensayo.</p><button type="button" className="inv-btn inv-btn-pri" onClick={()=>setInvTab('compra')}>Registrar primera compra</button></section>}{BodegaSection()}</>}
+        {tab==='inventario'&&<>{invLotes.length===0&&<section className="prototype-panel"><h3>Bodega sin existencias registradas</h3><p>El catálogo contiene referencias, no stock físico. Registrar las cantidades disponibles antes de preparar un ensayo.</p><button type="button" className="inv-btn inv-btn-pri" onClick={()=>setInvTab('compra')}>Registrar primera compra</button></section>}{BodegaSection()}</>}
 
         {tab==='clima'&&climateDashboardView}
 
@@ -18051,7 +18051,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       {(!harvestTareInput || harvestTareSource === 'unverified') && (
                         <div style={{ marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' }}>
                           <span style={{ fontSize: 10, color: 'var(--warning-text)', flex: 1 }}>
-                            <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Ingresa la tara (g) para calcular peso neto honesto:
+                            <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Ingresar la tara (g) para calcular peso neto honesto:
                           </span>
                           <input
                             type="number"
@@ -18272,7 +18272,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {scanMiss && (
                       <div role="status" data-testid="scan-unresolved" style={{ padding: '8px 10px', background: 'var(--accent-terracotta-dim)', color: 'var(--accent-terracotta)', borderLeft: '3px solid var(--accent-terracotta)', borderRadius: 2, fontSize: 11, marginBottom: 12, fontFamily: 'var(--font-sans)' }}>
-                        {scanMiss} Elige el lote manualmente o vuelve a escanear.
+                        {scanMiss} Elegir el lote manualmente o volver a escanear.
                       </div>
                     )}
 
@@ -18340,7 +18340,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           </div>
                         ) : (
                           <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 8, fontFamily: 'var(--font-sans)' }}>
-                            Pasa la cámara sobre las bolsas. Sonará un pitido y se agregarán a la hilera automáticamente.
+                            Pasar la cámara sobre las bolsas. Al sonar el pitido se agregan a la hilera automáticamente.
                           </div>
                         )}
 
@@ -18887,7 +18887,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         }
                       } catch (e) {
                         if (e && e.name === 'AbortError') return; // el operador cerró el share sheet
-                        setNoticeDlg({ title: 'No se pudo compartir la etiqueta', msg: e && e.message ? e.message : 'Intenta de nuevo o usa Imprimir.' });
+                        setNoticeDlg({ title: 'No se pudo compartir la etiqueta', msg: e && e.message ? e.message : 'Intentar de nuevo o usar Imprimir.' });
                       }
                     }}
                     className="inv-btn inv-btn-sec"
@@ -19735,7 +19735,7 @@ interval:
               {/* Selector de Especies para la Carpa */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-1)', marginBottom: 6 }}>
-                  Selecciona las especies que compartirán el cuarto / carpa:
+                  Seleccionar las especies que compartirán el cuarto / carpa:
                 </label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {speciesList.map((k) => {
@@ -20105,7 +20105,7 @@ interval:
             if (changesState && !(workflow && workflow.canTransition(currentLifecycle, targetState))) {
               setNoticeDlg({
                 title: 'Transición no permitida',
-                msg: `Un lote en ${lifecycleLabel[currentLifecycle] || currentLifecycle} no puede pasar directamente a ${lifecycleLabel[targetState] || targetState}. ${targetState === 'discarded' ? 'Trasládalo primero a cuarentena y descártalo desde allí.' : 'Revisa el estado del lote.'}`
+                msg: `Un lote en ${lifecycleLabel[currentLifecycle] || currentLifecycle} no puede pasar directamente a ${lifecycleLabel[targetState] || targetState}. ${targetState === 'discarded' ? 'Trasladarlo primero a cuarentena y descartarlo desde allí.' : 'Revisar el estado del lote.'}`
               });
               return;
             }
@@ -20462,7 +20462,7 @@ interval:
             const file = e.target.files && e.target.files[0];
             if (!file) return;
             if (file.size > 10 * 1024 * 1024) {
-              setDiagError('La imagen supera los 10 MB. Comprímela o toma una foto de menor resolución.');
+              setDiagError('La imagen supera los 10 MB. Comprimirla o tomar una foto de menor resolución.');
               return;
             }
             try {
@@ -20478,7 +20478,7 @@ interval:
 
           const handleRunDiagnosis = async () => {
             if (!diagImageBase64) {
-              setDiagError('Selecciona o toma una fotografía primero.');
+              setDiagError('Seleccionar o tomar una fotografía primero.');
               return;
             }
             setDiagRunning(true);
@@ -20951,7 +20951,7 @@ interval:
         <div className="bridge-inner">
           {!hasPickedSpecies?(<>
             <span className="bridge-activo"><span className="bridge-dot">●</span>Sin especie</span>
-            <span className="bridge-name">Elige una especie para empezar</span>
+            <span className="bridge-name">Elegir una especie para empezar</span>
             <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
               <select className="bridge-select" value="" onClick={e=>e.stopPropagation()} onChange={e=>{if(e.target.value)setSKey(e.target.value);}} aria-label="Elegir especie">
                 <option value="" disabled>Elegir especie…</option>

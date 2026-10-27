@@ -61,7 +61,7 @@
 
     const distanceFn = engine()?.recipeDistance;
     if (!options.force && options.expectedRecipe && typeof distanceFn === 'function' && distanceFn(before, options.expectedRecipe) > 0.012) {
-      return { ok: false, message: 'La receta cambió desde que se calculó este escenario. Espera el recálculo del Perito.' };
+      return { ok: false, message: 'La receta cambió desde que se calculó este escenario. Esperar el recálculo del Perito.' };
     }
     const guardLockedIds = getLockedIds(names);
     const beforeMap = Object.fromEntries(before.map(r => [r.id, r.p]));

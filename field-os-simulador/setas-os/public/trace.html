@@ -748,7 +748,7 @@
                   <div class="state-chip state-chip--warn">Pendiente de Sincronización</div>
                 </div>
                 <p style="font-size:12px;color:var(--ink-1);line-height:1.5;">
-                  La ficha pública detallada aún no ha sido sincronizada a la nube para este lote. Si formas parte del equipo operativo de Setas de la Peña, puedes consultar y registrar eventos directamente en Setas OS.
+                  La ficha pública detallada aún no ha sido sincronizada a la nube para este lote. El equipo operativo de Setas de la Peña consulta y registra eventos directamente en Setas OS.
                 </p>
               </div>
             </div>
@@ -1006,7 +1006,7 @@
           </header>
           <div class="state-msg">
             El enlace escaneado contiene parámetros en conflicto.<br>
-            Verifica el código impreso en la etiqueta térmica.
+            Verificar el código impreso en la etiqueta térmica.
           </div>
           <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
         return;
@@ -1019,7 +1019,7 @@
           </header>
           <div class="state-msg">
             El código contiene caracteres no permitidos.<br>
-            Verifica la etiqueta térmica.
+            Verificar la etiqueta térmica.
           </div>
           <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;
         return;
@@ -1107,7 +1107,7 @@
           </header>
           <div class="state-msg">
             ${isOffline
-              ? 'La consulta de trazabilidad pública en vivo requiere conexión de datos activa.<br>Por favor reconéctate y vuelve a escanear la etiqueta.'
+              ? 'La consulta de trazabilidad pública en vivo requiere conexión de datos activa.<br>Al recuperar la conexión, volver a escanear la etiqueta.'
               : `Error consultando ficha técnica pública (${esc(err.message || err.code || 'error de red')}).<br>Por favor reintenta en unos minutos.`}
           </div>
           <footer>Setas de la Peña · <a href="https://setasdelapena.co">setasdelapena.co</a></footer>`;

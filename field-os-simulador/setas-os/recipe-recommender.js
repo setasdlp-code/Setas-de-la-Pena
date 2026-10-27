@@ -137,7 +137,7 @@ function tryBuildRecipe(available, species, allIngredients, sKey) {
   if (needsAutoclave) score *= 0.85; // penaliza recetas que exigen autoclave por exceso de N
 
   const notes = [];
-  if (canMake < 5) notes.push(`⚠️ Solo puedes hacer ~${canMake} bolsas con estos ingredientes`);
+  if (canMake < 5) notes.push(`Alcanza para ~${canMake} bolsas con estos ingredientes`);
   else if (canMake < 20) notes.push(`⚠️ Limitado a ~${canMake} bolsas`);
   if (needsAutoclave) notes.push(`⚠️ Suplementación ${suppUsed.toFixed(0)}% supera el máximo seguro (${suppMax}%) — requiere autoclave, no pasteurización.`);
 

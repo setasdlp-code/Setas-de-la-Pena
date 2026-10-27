@@ -141,9 +141,9 @@
   const captureNumber = value => value == null || String(value).trim() === '' ? null : Number(value);
   const captureError = (value, {required=false,min=0,max=Infinity,integer=false}={}) => {
     const n=captureNumber(value);
-    if(n===null) return required?'Completa este campo.':'';
-    if(!Number.isFinite(n)) return 'Escribe un número válido.';
-    if(integer&&!Number.isInteger(n)) return 'Escribe un número entero.';
+    if(n===null) return required?'Campo obligatorio.':'';
+    if(!Number.isFinite(n)) return 'Falta un número válido.';
+    if(integer&&!Number.isInteger(n)) return 'Se requiere un número entero.';
     if(n<min||n>max) return `Valor fuera de rango (${min}–${max===Infinity?'∞':max}).`;
     return '';
   };

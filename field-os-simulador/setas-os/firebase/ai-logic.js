@@ -346,7 +346,7 @@ export function initSetasAI(firebaseApp) {
         return extractValidInvoiceJson(typeof resp === 'string' ? resp : JSON.stringify(resp));
       }
 
-      throw new Error('El servicio de IA no está configurado en este navegador. Ingresa los datos manualmente.');
+      throw new Error('El servicio de IA no está configurado en este navegador. Ingresar los datos manualmente.');
     },
 
     /**
@@ -376,7 +376,7 @@ export function initSetasAI(firebaseApp) {
         return extractValidInvoiceJson(typeof resp === 'string' ? resp : JSON.stringify(resp));
       }
 
-      throw new Error('El servicio de IA no está disponible. Ingresa los ítems en modo Manual.');
+      throw new Error('El servicio de IA no está disponible. Ingresar los ítems en modo Manual.');
     },
 
     /**

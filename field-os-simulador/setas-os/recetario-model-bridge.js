@@ -145,7 +145,7 @@
   };
   const summaryHtml = r => {
     const s = r.modelSnapshot;
-    if (!s) return `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">Modelo: receta legacy · carga y vuelve a guardar para crear snapshot trazable. ${fmtDiff(r)}</div>`;
+    if (!s) return `<div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-500)">Modelo: receta legacy · cargar y volver a guardar para crear snapshot trazable. ${fmtDiff(r)}</div>`;
     const eb = s.uncertainty?.eb || {};
     const hist = s.historyCalibration;
     const eco = s.economics;

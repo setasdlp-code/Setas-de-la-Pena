@@ -130,5 +130,5 @@ test('pasteurization does not ask for a bioindicator',()=>{
 });
 test('an unknown bioindicator value is not a valid record',()=>{
  const input=fixture();
- assert.throws(()=>evidence(input,'equipment',[],{details:{...details.equipment,bioindicatorResult:'tal vez'}}),/Completa responsable/);
+ assert.throws(()=>evidence(input,'equipment',[],{details:{...details.equipment,bioindicatorResult:'tal vez'}}),/Completar responsable/);
 });
