@@ -66,6 +66,10 @@ function build() {
     target: 'es2020',
     jsx: 'transform',
     charset: 'utf8',
+    // La pestaña reporta la versión que de verdad ejecuta (p. ej. al exportar la
+    // cola): tras un deploy el SW nuevo borra la caché vieja aunque la pestaña siga
+    // con el código anterior, así que el nombre de la caché no sirve para esto.
+    define: { __SETAS_BUILD__: JSON.stringify(sourceHash(src).slice(0, 12)) },
   });
   const banner =
     '// AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.\n' +

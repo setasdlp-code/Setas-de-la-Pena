@@ -57,3 +57,12 @@ test('los niveles de contaminacion coinciden con la KB', () => {
   assert.match(kb, /\| Rojo \| >10 %/);
   assert.match(kb, /\| Crítico \| ≥15–20 %/);
 });
+
+test('la app colorea la contaminacion solo con el semaforo del modulo, sin cortes propios', () => {
+  const src = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  // Cortes sueltos (>15, >20, >=20) se desalinean de la KB: todo pasa por contamLevelOf/contamColor.
+  assert.doesNotMatch(src, /contPct\s*>=?\s*[1-9]/); // >0 ("tiene contaminacion") si vale
+  assert.doesNotMatch(src, /avgCont\s*>=?\s*[1-9]/);
+  assert.match(src, /const contamLevelOf=pct=>SetasKpiThresholdsApi\?SetasKpiThresholdsApi\.contamLevel\(pct\):null;/);
+  assert.ok((src.match(/contamColor\(/g) || []).length >= 4, 'tabla, ficha, comparativa y resumen de Bitacora');
+});
