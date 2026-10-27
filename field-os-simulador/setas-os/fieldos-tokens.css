@@ -146,7 +146,17 @@
   --fg-primary:   var(--text-primary);
   --fg-secondary: var(--text-secondary);
   --fg-muted:     var(--text-metadata);
+  /* --text-disabled no existía en la app (solo en guia-setas-os.html): cada
+     color:var(--text-disabled) se descartaba y el texto heredaba tinta plena.
+     Se usa para horas y autores, que son información, así que debe pasar AA.
+     DS-2026 no tiene un tono más claro que --ink-500 que pase (5.93:1 sobre
+     #F7F4EC); por eso coincide con --text-metadata. */
+  --text-disabled: var(--text-metadata);
   --fg-faint:     var(--text-disabled);
+
+  /* --focus-outline lo usa setas-os-legacy.css y no estaba definido: el
+     outline quedaba inválido y el foco de teclado no se veía. */
+  --focus-outline: 2px solid var(--focus-ring);
   --fg-inverse:   var(--paper);
 
   --accent:        var(--status-active);
@@ -382,6 +392,10 @@ code, pre { font-family: var(--font-mono); font-size: 0.92em; }
   --text-lg:   var(--size-heading-03);
   --text-xl:   var(--size-heading-02);
   --text-2xl:  var(--size-heading-01);
+  /* --text-3xl y --leading-relaxed faltaban: --t-display-1/2/1i y --t-lede
+     eran declaraciones font inválidas. */
+  --text-3xl:  var(--size-display-02);
+  --leading-relaxed: 1.7;
 
   /* El interletrado del shell es más estrecho que el del sistema
      (--tracking-label son 0.15em). Mapearlo ensancharía cientos de
