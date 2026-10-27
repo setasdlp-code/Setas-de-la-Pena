@@ -134,8 +134,8 @@ window.addEventListener('afterprint', () => {
 
   function updateSummary() {
     const selected = selection();
-    quantity.setCustomValidity(selected.valid || quantity.value === '' ? '' : 'Escribe una cantidad entera positiva dentro del rango admitido.');
-    if (recipe && presentations.length) recipeGrams.setCustomValidity(selected.needed !== null || recipeGrams.value === '' ? '' : 'Escribe los gramos como un entero positivo.');
+    quantity.setCustomValidity(selected.valid || quantity.value === '' ? '' : 'Indicar una cantidad entera positiva dentro del rango admitido.');
+    if (recipe && presentations.length) recipeGrams.setCustomValidity(selected.needed !== null || recipeGrams.value === '' ? '' : 'Indicar los gramos como un entero positivo.');
     differenceRow.hidden = !(selected.valid && selected.needed !== null);
     if (!differenceRow.hidden) setText('#order-difference', describeDifference(selected));
     setText('#order-weight', selected.valid ? formatWeight(selected.weight) : '—');
@@ -174,7 +174,7 @@ window.addEventListener('afterprint', () => {
   });
   form.addEventListener('submit', event => {
     event.preventDefault();
-    municipality.setCustomValidity(text(municipality.value) ? '' : 'Escribe el municipio de entrega.');
+    municipality.setCustomValidity(text(municipality.value) ? '' : 'Falta el municipio de entrega.');
     updateSummary();
     if (!form.reportValidity()) return;
     const selected = selection();
