@@ -9,30 +9,35 @@
     .pack-stage { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
     .pack-unit { width: 340px; }
   </style>
+  <style>
+    .pack-wordmark { display: block; height: auto; }
+    .pack-wordmark--stacked { width: 140px; margin-inline: auto; }
+    .pack-wordmark--horizontal { width: 190px; }
+  </style>
 </head>
 <body data-mode="archive" data-content-status="illustrative">
   <div class="stage stage--col">
-    <div class="spec">01 · Empaque culinario de alta gastronomía · Caja rígida kraft con etiqueta verjurada</div>
+    <div class="spec">01 · Empaque culinario · Maqueta de frente y dorso, campos de lote en blanco</div>
 
     <div class="pack-stage">
       <!-- Frente: Shiitake -->
       <div class="sdp-pack sdp-pack--front pack-unit grain">
         <div>
-          <div class="sdp-pack__brand">Setas de la Peña</div>
-          <div class="t-micro" style="margin-top: 4px;">TENJO · 2.600 M · SABANA DE BOGOTÁ</div>
+          <img class="pack-wordmark pack-wordmark--stacked" src="../../brand-kit/assets/wordmark-stacked-moss.svg" alt="Setas de la Peña">
+          <div class="t-micro" style="margin-top: 8px;">TENJO · CUNDINAMARCA · COLOMBIA</div>
         </div>
         <img class="sdp-pack__illo engraving" src="../../assets/img/species/shiitake.png" alt="Shiitake">
         <div class="sdp-species" style="justify-items: center; width: 100%;">
           <div class="sdp-species__common">Shiitake</div>
           <div class="sdp-species__latin">Lentinula edodes</div>
-          <div class="sdp-pack__net">HONGO FRESCO SELECCIONADO · 150 G</div>
+          <div class="sdp-pack__net">HONGO FRESCO · PESO NETO ___ G</div>
         </div>
       </div>
 
       <!-- Dorso: Trazabilidad & Ficha de Origen -->
       <div class="sdp-pack sdp-pack--back pack-unit grain">
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
-          <div class="sdp-pack__brand">Setas de la Peña</div>
+          <img class="pack-wordmark pack-wordmark--horizontal" src="../../brand-kit/assets/wordmark-horizontal-moss.svg" alt="Setas de la Peña">
           <div class="t-micro">LÁM. III</div>
         </div>
 
@@ -44,7 +49,7 @@
 
         <div class="sdp-pack__sect">
           <span class="sdp-pack__sk">Origen & Sustrato</span>
-          <span class="sdp-pack__sv">Cultivado sobre aserrín de roble andino (<i>Quercus humboldtii</i>) y salvado de trigo. Agua pura de nacimiento de la Peña de Juaica.</span>
+          <span class="sdp-pack__sv">Sustrato y procedencia según el registro de este lote. Completar solo con datos verificados.</span>
         </div>
 
         <div class="sdp-pack__sect">
@@ -54,7 +59,7 @@
 
         <div class="sdp-pack__sect" style="margin-top: auto;">
           <span class="sdp-pack__sk">Trazabilidad de Cosecha</span>
-          <div class="sdp-statusline" style="font-size: 11px;">LOTE 026 · 17 AGO 2026 · COSECHADO CON CRITERIO</div>
+          <div class="sdp-statusline" style="font-size: 11px;">LOTE ____ · COSECHA __/__/____ · CONSUMIR ANTES DE __/__/____</div>
         </div>
       </div>
     </div>
