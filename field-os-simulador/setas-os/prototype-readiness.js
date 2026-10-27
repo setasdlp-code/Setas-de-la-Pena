@@ -16,7 +16,7 @@
   function recover(storage){
     const raw=storage.getItem(PENDING);if(!raw)return;
     const transaction=JSON.parse(raw);
-    if(transaction.schema!=='setas.local-write.v1'||!Array.isArray(transaction.entries))throw Error('Recuperación local inválida. Conserva el respaldo.');
+    if(transaction.schema!=='setas.local-write.v1'||!Array.isArray(transaction.entries))throw Error('Recuperación local inválida. Conservar el respaldo.');
     for(const entry of transaction.entries){
       if(!KEYS.includes(entry.key)&&entry.key!==ARCHIVE)throw Error('Clave de recuperación no permitida.');
       const current=storage.getItem(entry.key);
@@ -105,7 +105,7 @@
     if(db){fieldEvents=await new Promise((resolve,reject)=>{
       const tx=db.transaction(['field_events','queue_entries'],'readonly');let events=[],queue=[];
       tx.objectStore('field_events').getAll().onsuccess=e=>{events=e.target.result;};tx.objectStore('queue_entries').getAll().onsuccess=e=>{queue=e.target.result;};
-      tx.oncomplete=()=>{const records=queue.filter(q=>q.accountId===accountId).map(q=>({event:events.find(e=>e.id===q.eventId),delivery:q}));if(records.some(r=>!r.event)){reject(Error('Hay envíos de campo sin su evento original. Conserva este equipo para recuperar la evidencia.'));return;}resolve(records);};tx.onerror=()=>reject(tx.error);
+      tx.oncomplete=()=>{const records=queue.filter(q=>q.accountId===accountId).map(q=>({event:events.find(e=>e.id===q.eventId),delivery:q}));if(records.some(r=>!r.event)){reject(Error('Hay envíos de campo sin su evento original. Conservar este equipo para recuperar la evidencia.'));return;}resolve(records);};tx.onerror=()=>reject(tx.error);
     });}
     const data={schema:'setas.prototype-backup.v1',at,archive:validateArchive(JSON.parse(storage.getItem('sdp_recovery_archive_v1')||'null')||emptyArchive()),collections:Object.fromEntries(KEYS.map(k=>[k,read(storage,k)])),fieldEvents};validateBackup(data);return data;
   }

@@ -31,7 +31,7 @@
     &&(r.status==='verified'||text(r.notes));
   const readRecords=storage=>{
     const raw=storage.getItem(KEY);if(raw===null)return [];
-    let records;try{records=JSON.parse(raw);}catch{throw Error('El registro de preparación está dañado. Conserva un respaldo antes de corregirlo.');}
+    let records;try{records=JSON.parse(raw);}catch{throw Error('El registro de preparación está dañado. Conservar un respaldo antes de corregirlo.');}
     if(!Array.isArray(records)||records.some(r=>!validRecord(r))||new Set(records.map(r=>r.id)).size!==records.length)throw Error('El registro de preparación no tiene un formato válido. No se sobrescribió.');
     return records;
   };

@@ -955,7 +955,7 @@ const SPP_DETAILS={
   p_djamor_rosa:{hechos:[
     'Es la única orellana que fructifica bien a 28–30°C. Si en verano la sala no baja de 26°C, djamor rosa es la única opción viable — las demás cederán ante el calor.',
     'Su tasa de spawn óptima es inusualmente alta (18–22%). Bajar a 10% alarga la colonización 8–12 días y el riesgo de contaminación se multiplica por tres en climas cálidos.',
-    'Pierde el color rosa en menos de 6 horas tras la cosecha a temperatura ambiente. Para mantenerlo, cosecha en primordia pequeña y refrigera de inmediato. El simulador no puede optimizar esto — es post-cosecha pura.'
+    'Pierde el color rosa en menos de 6 horas tras la cosecha a temperatura ambiente. Para mantenerlo, cosechar en primordia pequeña y refrigerar de inmediato. El simulador no puede optimizar esto — es post-cosecha pura.'
   ]},
   p_eryngii:{hechos:[
     'Es la única seta de este simulador que requiere una fase de inducción de frío obligatoria (4–10°C, 4–7 días) para primordializar. Sin ese choque térmico, el sustrato con receta perfecta no producirá nada.',
@@ -2009,7 +2009,7 @@ const ClassChangeNote=({change,testId='perito-item-class-change'})=>{
   const cite=classCitation(change.to);
   return(
     <div data-testid={testId} data-from={change.from.resolvedClass} data-to={change.to.resolvedClass} style={{fontSize:'var(--text-sm)',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginTop:3}}>
-      <span style={{fontWeight:700}}>Cambia la clase de sustrato:</span> {change.from.label} → {change.to.label}.
+      <span style={{fontWeight:700}}>Cambiar la clase de sustrato:</span> {change.from.label} → {change.to.label}.
       {fmtClassRanges(change.to)?` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite?` (${cite})`:''}.`:''} El índice estimado ya usa esos rangos.
     </div>
   );
@@ -12157,7 +12157,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
         rhRange: [70.0, 78.0],
         co2Ideal: 650,
         co2Max: 800,
-        directives: "Baja la humedad al 75% en las últimas 48 horas antes de cosechar para endurecer y secar la superficie exterior del sombrero.",
+        directives: "Bajar la humedad al 75% en las últimas 48 horas antes de cosechar para endurecer y secar la superficie exterior del sombrero.",
         morphology: "Superficie del sombrero deshidratada y sellada contra la oxidación. Resistente a la manipulación en cocina."
       }
     };

@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 9bcc715585343fcbef9fa0f4c3e8661ab49fbab61e840e88442d87a199bc94b4
+// source-hash: 7148c306c7fa3bb95f5e92197ff09e1ac64cc3dfc1b47a53e3db295bafc6b249
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -773,7 +773,7 @@ const SPP_DETAILS = {
   p_djamor_rosa: { hechos: [
     "Es la única orellana que fructifica bien a 28–30°C. Si en verano la sala no baja de 26°C, djamor rosa es la única opción viable — las demás cederán ante el calor.",
     "Su tasa de spawn óptima es inusualmente alta (18–22%). Bajar a 10% alarga la colonización 8–12 días y el riesgo de contaminación se multiplica por tres en climas cálidos.",
-    "Pierde el color rosa en menos de 6 horas tras la cosecha a temperatura ambiente. Para mantenerlo, cosecha en primordia pequeña y refrigera de inmediato. El simulador no puede optimizar esto — es post-cosecha pura."
+    "Pierde el color rosa en menos de 6 horas tras la cosecha a temperatura ambiente. Para mantenerlo, cosechar en primordia pequeña y refrigerar de inmediato. El simulador no puede optimizar esto — es post-cosecha pura."
   ] },
   p_eryngii: { hechos: [
     "Es la única seta de este simulador que requiere una fase de inducción de frío obligatoria (4–10°C, 4–7 días) para primordializar. Sin ese choque térmico, el sustrato con receta perfecta no producirá nada.",
@@ -1534,7 +1534,7 @@ const SubstrateClassNote = ({ info }) => {
 const ClassChangeNote = ({ change, testId = "perito-item-class-change" }) => {
   if (!change) return null;
   const cite = classCitation(change.to);
-  return /* @__PURE__ */ React.createElement("div", { "data-testid": testId, "data-from": change.from.resolvedClass, "data-to": change.to.resolvedClass, style: { fontSize: "var(--text-sm)", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Cambia la clase de sustrato:"), " ", change.from.label, " → ", change.to.label, ".", fmtClassRanges(change.to) ? ` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite ? ` (${cite})` : ""}.` : "", " El índice estimado ya usa esos rangos.");
+  return /* @__PURE__ */ React.createElement("div", { "data-testid": testId, "data-from": change.from.resolvedClass, "data-to": change.to.resolvedClass, style: { fontSize: "var(--text-sm)", color: "var(--status-warn-text)", fontFamily: "var(--font-mono)", marginTop: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 700 } }, "Cambiar la clase de sustrato:"), " ", change.from.label, " → ", change.to.label, ".", fmtClassRanges(change.to) ? ` Objetivos nuevos: ${fmtClassRanges(change.to)}${cite ? ` (${cite})` : ""}.` : "", " El índice estimado ya usa esos rangos.");
 };
 const recipeKeyOf = (r) => JSON.stringify((r || []).map((x) => [x.id, Number(x.p) || 0]));
 const AutoImproveSummary = ({ result, onUndo, canUndo }) => {
@@ -9297,7 +9297,7 @@ BATCH (${numBags}×${kgBag} kg):
         rhRange: [70, 78],
         co2Ideal: 650,
         co2Max: 800,
-        directives: "Baja la humedad al 75% en las últimas 48 horas antes de cosechar para endurecer y secar la superficie exterior del sombrero.",
+        directives: "Bajar la humedad al 75% en las últimas 48 horas antes de cosechar para endurecer y secar la superficie exterior del sombrero.",
         morphology: "Superficie del sombrero deshidratada y sellada contra la oxidación. Resistente a la manipulación en cocina."
       }
     };
