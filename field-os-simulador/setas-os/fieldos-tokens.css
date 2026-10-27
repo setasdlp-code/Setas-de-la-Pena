@@ -286,23 +286,45 @@
   --opacity-medium:     0.8;  /* slightly faded text, icon groups */
   --opacity-strong:     0.85; /* scientific names, supplementary text */
 
-  /* ── Z-INDEX SCALE — named layers instead of guessed numbers.
-     Every stacking value in sim.css / simulador-app.jsx should reference one
-     of these, not a raw number. Add a new tier here before reaching for an
-     arbitrary value. ── */
-  --z-local:      1;   /* content sitting above its own sibling within one component */
-  --z-raised:     2;   /* small badge/marker layered on that same component */
-  --z-sticky-sub: 6;   /* sub-nav / summary bars sticky within a tab's content */
-  --z-sticky:     10;  /* sticky section headers, fade-edge gradients, inline badges */
-  --z-sticky-panel: 20; /* sticky panel headers, higher-priority sticky bars */
-  --z-sticky-nav: 25;  /* persistent sticky nav bar inside a view (.live-dash-bar) */
-  --z-nav:        40;  /* the app's persistent side/bottom rail */
-  --z-bottom-bar: 50;  /* sticky bottom bar docked under the nav */
-  --z-fab:        65;  /* floating action button, above the bottom bar */
-  --z-bottom-bar-mobile: 200; /* bottom bar's mobile override, above the FAB layer */
-  --z-modal:      300; /* first-level modal overlay */
-  --z-modal-top:  400; /* modal that can open on top of another modal */
-  --z-overlay:    1000; /* full-screen blocking overlay (loading/onboarding) */
+  /* ── Z-INDEX SCALE — única lista de capas de la app, en orden.
+     Antes había dos: esta y otra en el <style> del shell, y se cruzaban sin
+     que nadie lo viera. Shell, sim.css y simulador-app.jsx comparten un solo
+     contexto de apilamiento, así que todo nivel nuevo va aquí, en su sitio.
+     design-tokens.test.js rechaza números sueltos y --z-* definidos fuera. ── */
+  /* Contenido */
+  --z-local:             1;    /* contenido sobre su hermano dentro de un componente */
+  --z-raised:            2;    /* marca o insignia sobre ese mismo componente */
+  --z-sticky-header:     3;    /* cabecera sticky de una vista del shell */
+  --z-sticky-sub:        6;    /* sub-nav / barras resumen sticky dentro de una pestaña */
+  --z-sticky:            10;   /* cabeceras de sección sticky, degradados de borde */
+  --z-sticky-subnav:     19;   /* .workspace-subnav del shell */
+  --z-sticky-panel:      20;   /* cabeceras de panel sticky, barras prioritarias */
+  --z-sticky-nav:        25;   /* barra de navegación sticky dentro de una vista (.live-dash-bar) */
+  /* Navegación */
+  --z-nav:               40;   /* rail persistente (sim.css) */
+  --z-loading:           50;   /* carga del workspace: tapa el contenido, deja el rail encima */
+  --z-bottom-bar:        50;   /* barra inferior sticky bajo la navegación */
+  --z-edge-gesture:      59;   /* zona de gesto en el borde para abrir el rail */
+  --z-rail:              60;   /* rail del shell */
+  --z-fab:               65;   /* botón flotante sobre la barra inferior */
+  --z-rail-flyout:       65;   /* submenú del rail */
+  /* Hojas y diálogos del shell */
+  --z-capture-sheet:     80;
+  --z-qr-label:          85;
+  --z-sheet-secondary:   86;
+  --z-qr-scan:           88;
+  --z-info-modal:        90;
+  --z-command-palette:   95;
+  --z-toast:             96;
+  /* Modales de la app */
+  --z-bottom-bar-mobile: 200;  /* override móvil de la barra inferior, sobre el FAB */
+  --z-modal:             300;  /* modal de primer nivel */
+  --z-modal-top:         400;  /* modal que se abre sobre otro modal */
+  --z-modal-system:      900;  /* diagnóstico y QR de lote: sobre cualquier modal, nunca sobre el acceso */
+  /* Bloqueo */
+  --z-overlay:           1000; /* overlay de pantalla completa (radar, onboarding) */
+  --z-skip-link:         1000; /* enlace "saltar al contenido" */
+  --z-auth-gate:         1100; /* pantalla de acceso: tapa todo al cerrar sesión */
 }
 
 /* The packaged FOS operational components predate DS-2026. Keep their compact

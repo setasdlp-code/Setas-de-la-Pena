@@ -102,17 +102,40 @@ test('fieldos-tokens.css no redefine tokens :root de DS-2026', () => {
   assert.deepEqual(dead, [], `redefinidos en fieldos-tokens.css y anulados por DS-2026: ${dead.join(', ')}`);
 });
 
-test('z-index en sim.css y setas-os-legacy.css usa la escala --z-*', () => {
+test('z-index usa la escala --z-* en CSS, shell y JSX', () => {
+  // Shell, sim.css y la app React comparten un contexto de apilamiento. Un
+  // número suelto (9999, 99999) dejaba un modal de React sobre la pantalla de
+  // acceso al cerrar sesión.
+  const ok = (v) => v === '0' || v === 'auto' || /^var\(--z-[\w-]+(,\s*\d+)?\)$/.test(v);
   const offenders = [];
-  for (const file of ['sim.css', 'setas-os-legacy.css']) {
-    const css = stripComments(fs.readFileSync(path.join(ROOT, file), 'utf8'));
-    for (const m of css.matchAll(/z-index\s*:\s*([^;}]+)/g)) {
+  for (const file of ['sim.css', 'setas-os-legacy.css', 'Setas OS v5.dc.html']) {
+    const src = stripComments(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+    for (const m of src.matchAll(/z-index\s*:\s*([^;}"]+)/g)) {
       const v = m[1].replace(/!important/, '').trim();
-      if (v === '0' || v === 'auto' || /^var\(--z-[\w-]+(,\s*\d+)?\)$/.test(v)) continue;
-      offenders.push(`${file}: z-index:${v}`);
+      if (!ok(v)) offenders.push(`${file}: z-index:${v}`);
     }
   }
+  for (const m of APP.matchAll(/zIndex\s*:\s*([^,}]+)/g)) {
+    const v = m[1].trim().replace(/^['"]|['"]$/g, '');
+    if (!ok(v)) offenders.push(`simulador-app.jsx: zIndex:${v}`);
+  }
   assert.deepEqual(offenders, [], 'añade un nivel en fieldos-tokens.css (Z-INDEX SCALE) en vez de un número');
+});
+
+test('la escala --z-* se define en un solo archivo y el acceso queda arriba', () => {
+  const sources = [...loadedStylesheets()].map(([abs, css]) => [path.relative(ROOT, abs), css])
+    .concat([['Setas OS v5.dc.html', SHELL]]);
+  const elsewhere = [];
+  for (const [file, src] of sources) {
+    if (file === 'fieldos-tokens.css') continue;
+    for (const m of stripComments(src).matchAll(/(--z-[\w-]+)\s*:/g)) elsewhere.push(`${file}: ${m[1]}`);
+  }
+  assert.deepEqual(elsewhere, []);
+  const scale = {};
+  for (const m of fs.readFileSync(path.join(ROOT, 'fieldos-tokens.css'), 'utf8').matchAll(/(--z-[\w-]+)\s*:\s*(\d+)/g)) scale[m[1]] = Number(m[2]);
+  const top = Math.max(...Object.values(scale));
+  assert.equal(scale['--z-auth-gate'], top, 'la pantalla de acceso debe ser la capa más alta');
+  assert.equal(Object.values(scale).filter((v) => v === top).length, 1, 'nada puede empatar con la pantalla de acceso');
 });
 
 test('__harness.html carga las hojas en el mismo orden efectivo que el shell', () => {

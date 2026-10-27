@@ -307,7 +307,7 @@ export function buildGate() {
   const prebuilt = gate.dataset.setasAuthPrebuilt === "true";
   gate.id = "setas-auth-gate";
   Object.assign(gate.style, {
-    position: "fixed", inset: "0", zIndex: "var(--z-overlay, 1000)", display: "flex",
+    position: "fixed", inset: "0", zIndex: "var(--z-auth-gate, 1100)", display: "flex",
     alignItems: "center", justifyContent: "center",
     padding: "16px", background: "var(--surface-recessed)",
     contain: "strict",
