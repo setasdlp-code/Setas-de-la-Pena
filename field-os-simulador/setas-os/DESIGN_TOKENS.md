@@ -307,18 +307,22 @@ A `var(--x)` with no fallback that points to a missing token does not raise an e
 
 `design-tokens.test.js` now fails when any un-fallbacked `var()` in the loaded set references an undefined token.
 
-### Pending — same token name, different value by scope
+### Fixed — same token name, different value by scope
 
-These are not bugs the browser reports; they are places where one token name resolves to two values depending on whether the element sits inside `.sim-root`. Changing them changes rendered sizes across many screens, so each needs a visual review before it is unified.
+`sim.css` redefined seven global tokens inside `.sim-root`. The shell views (outside `.sim-root`) got one value and the React app (inside) another, and DS-2026 components and base `h1`/`h2` rendered inside the app were silently altered:
 
-| Token | `:root` | `.sim-root` (sim.css) | Note |
-|-------|---------|-----------------------|------|
-| `--text-lg` | 19px (`--size-heading-03`) | 24px (`--size-heading-02`) | One step apart |
-| `--text-xl` | 24px (`--size-heading-02`) | 32px (`--size-heading-01`) | One step apart |
-| `--tracking-wide` | 0.04em | 0.2em | 5× apart |
-| `--tracking-label` | 0.15em | 0.08em | |
-| `--tracking-tight` | -0.01em | -0.02em | |
-| `--radius-sm`, `--r-sm` | 2px | 0px | `.sim-root` is square-cornered by design |
+| Global token | `:root` | Was in `.sim-root` | Now in `.sim-root` |
+|--------------|---------|--------------------|--------------------|
+| `--text-lg` | 19px | 24px | `--sim-text-lg` 24px |
+| `--text-xl` | 24px | 32px | `--sim-text-xl` 32px |
+| `--tracking-label` | 0.15em | 0.08em | `--sim-tracking-label` 0.08em |
+| `--tracking-wide` | 0.04em | 0.2em | `--sim-tracking-wide` 0.2em |
+| `--tracking-tight` | -0.01em | -0.02em | `--sim-tracking-tight` -0.02em |
+| `--radius-sm`, `--r-sm` | 2px | 0px | `--sim-radius-sm`, `--sim-r-sm` 0px |
+
+`sim.css` rules under `.sim-root` and `simulador-app.jsx` use the `--sim-*` names, so the app's own elements render as before. Four `sim.css` rules without the `.sim-root` prefix use `var(--sim-x, var(--x))` and also render as before. The visible change (105 elements in the harness): DS-2026 components (`.sdp-sync-chip`, `.sdp-provenance`, `.sdp-btn`…) and base `h1`/`h2` inside the app now use DS values (labels 0.15em, headings -0.01em), the same as in the shell.
+
+**Rule:** never redefine a global token inside `.sim-root`. A value local to the app gets a `--sim-*` name.
 
 ### Fixed — harness rendered a different cascade than production
 
@@ -338,15 +342,26 @@ Removed 11 `:root` definitions that DS-2026 redefines and therefore never applie
 
 Verification for all three sections above: computed styles of every element (24 properties) in 9 harness views at 1280px and 390px, before vs after — 0 differences.
 
-### Pending — needs a visual decision
+### Fixed — one z-index scale
 
-These change what is rendered, so they were not applied.
+`fieldos-tokens.css` (Z-INDEX SCALE) is now the only place that defines `--z-*`; the shell's inline `:root` block was merged into it in order. Shell, `sim.css` and React share one stacking context, so the merge exposed one bug: on sign-out the access screen (`#setas-auth-gate`, 1000) reappears, but a React modal open with `zIndex: 9999` / `99999` (QR of a lot, diagnostic modals) stayed on top, and the fullscreen radar (`--z-overlay`, 1000, later in the DOM) tied with it. Now:
 
-1. **Same token name, different value by scope** (table above): `--text-lg`, `--text-xl`, `--tracking-*`, `--radius-sm`.
-2. **Two z-index scales.** `fieldos-tokens.css` (`--z-local` 1 … `--z-overlay` 1000) and the shell's inline `<style>` (`--z-sticky-header` 3 … `--z-skip-link` 1000) interleave: `--z-loading` and `--z-bottom-bar` are both 50; `sim.css` modals (300/400) sit above the shell's toast (96) and command palette (95); `simulador-app.jsx` uses literal `9999` and `99999` for two diagnostic modals. One ordered list of layers is needed before merging them.
-3. **`font-size` without an exact token** in `sim.css`: `12px` ×65, `10px` ×15, `15px` ×12, `22px` ×11, `28px` ×10, plus ~25 fractional values (`10.35px`, `14.95px`, `53.9px`…). Sizes of 5–8px belong to printed labels and should map to `--size-micro-print` / mm units, not to screen tokens.
-4. **`transition` durations without a token**: `.1s` ×2, `.2s`, `.3s` (progress-bar width).
-5. **`!important`** (768) and **inline `style=""`** in the shell (833) — unchanged.
+- `--z-modal-system: 900` for those three modals (still above every other modal);
+- `--z-auth-gate: 1100`, used by the shell markup and `firebase/auth-gate.js`, the single highest layer.
+
+All other layers keep their numbers. `design-tokens.test.js` rejects bare numbers in `sim.css`, `setas-os-legacy.css`, the shell and `simulador-app.jsx`, rejects `--z-*` defined outside `fieldos-tokens.css`, and requires the access screen to be the unique top layer.
+
+### Fixed — off-scale font sizes
+
+`font-size: 12px` → `--text-sm` (13px) and `10px` → `--text-xs` (11px) in `sim.css`: 76 declarations. Excluded: `@media print`, `.print-*` and `.thermal-*` (printed labels). Mobile gates (no horizontal overflow at 360/390/430px) and the browser suite pass.
+
+### Pending
+
+1. Remaining off-scale sizes: `15px` ×12, `22px` ×11, `28px` ×10, ~25 fractional values (`10.35px`, `14.95px`, `53.9px`…).
+2. Printed-label sizes (5–8px) should use `--size-micro-print` / mm units.
+3. `transition` durations without a token: `.1s` ×2, `.2s`, `.3s`.
+4. `!important` (768) and inline `style=""` in the shell (833).
+5. The mobile rail's "ESCANEAR" label overflows its button at 390px (visible before these changes).
 
 ---
 

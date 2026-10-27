@@ -867,7 +867,7 @@ function LabExtraction() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          zIndex: 9999,
+          zIndex: 'var(--z-modal-system)',
           padding: 16
         }}>
           <div style={{
@@ -1636,7 +1636,7 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   return(
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'var(--fos-space-5) 0 var(--fos-space-4)',background:'var(--paper-200)',marginBottom:14}}>
       <RadarSVG size={260}/>
-      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',letterSpacing:'var(--tracking-label)'}}><AppIcon name="target" size={12} style={{marginRight:4}} /> Pantalla completa</button>
+      <button onClick={()=>setFullscreen(true)} style={{marginTop:12,fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'var(--fos-space-2) var(--fos-space-3)',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',letterSpacing:'var(--sim-tracking-label)'}}><AppIcon name="target" size={12} style={{marginRight:4}} /> Pantalla completa</button>
     </div>
   );
 };
@@ -1654,7 +1654,7 @@ const NitrogenChart=({recipe})=>{
   const PAL=['var(--coral-700)','var(--accent-olive)','var(--ochre-600)','var(--accent-blue-grey)','var(--accent-terracotta)','var(--moss-700)','var(--ochre-500)','var(--slate-600,var(--accent-blue-grey))','var(--coral-700)','var(--moss-500)'];
   return(
     <div style={{marginBottom:20,background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'14px 16px'}}>
-      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Contribución de Nitrógeno por ingrediente</div>
+      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Contribución de Nitrógeno por ingrediente</div>
       <div style={{height:18,display:'flex',borderRadius:2,overflow:'hidden',marginBottom:11,border:'1px solid rgba(0,0,0,.07)'}}>
         {items.map((it,i)=>(
           <div key={i} title={`${it.name}: ${((it.contrib/total)*100).toFixed(1)}% del N total`}
@@ -1707,7 +1707,7 @@ const FlushChart=({an,sKey})=>{
     <div style={{marginBottom:16,background:'var(--paper-50,var(--paper-100))',border:'1px solid var(--border-soft)',overflow:'hidden'}}>
       {/* Header */}
       <div style={{padding:'10px 14px 8px',borderBottom:'1px solid var(--border-soft)',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas · {profile?.name||'Biomasa'}</span>
+        <span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-400)',fontWeight:600}}>Proyección de cosechas · {profile?.name||'Biomasa'}</span>
         <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:700}}>EB {ebLow}–{ebHigh}%</span>
       </div>
       {/* Flush columns */}
@@ -1718,11 +1718,11 @@ const FlushChart=({an,sKey})=>{
           return(
             <div key={i} style={{flex:1,borderRight:i<flushes.length-1?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
               {/* ordinal label */}
-              <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
+              <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
               {/* big number */}
-              <div style={{fontFamily:'var(--font-mono)',fontSize:28,fontWeight:700,lineHeight:1,color:f.color,letterSpacing:'var(--tracking-tight)'}}>{val.toFixed(0)}<span style={{fontSize:"var(--text-base)",fontWeight:400,opacity:.7}}>%</span></div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:28,fontWeight:700,lineHeight:1,color:f.color,letterSpacing:'var(--sim-tracking-tight)'}}>{val.toFixed(0)}<span style={{fontSize:"var(--text-base)",fontWeight:400,opacity:.7}}>%</span></div>
               {/* kg/kg */}
-              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',letterSpacing:'var(--tracking-label)'}}>{(val/100).toFixed(2)} kg/kg</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',letterSpacing:'var(--sim-tracking-label)'}}>{(val/100).toFixed(2)} kg/kg</div>
               {/* bar visual */}
               <div style={{width:'100%',marginTop:6,height:4,background:'rgba(0,0,0,.07)',borderRadius:2,overflow:'hidden'}}>
                 <div style={{height:'100%',width:`${(f.pct/maxPct)*100}%`,background:f.color,borderRadius:2,transition:'width .6s cubic-bezier(.4,0,.2,1)'}}/>
@@ -1758,7 +1758,7 @@ const CompositionChart=({recipe})=>{
   const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);
   return(
     <div style={{marginBottom:16,padding:'14px 16px',background:'var(--paper-100)',border:'1px solid var(--border-soft)'}}>
-      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Composición por función</div>
+      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Composición por función</div>
       <div style={{height:18,display:'flex',borderRadius:2,overflow:'hidden',border:'1px solid rgba(0,0,0,.07)',marginBottom:10}}>
         {entries.map(([role,val],i)=>(
           <div key={i} title={`${ROLE_LABELS[role]||role}: ${val.toFixed(1)}%`}
@@ -1829,7 +1829,7 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
             <span className="p-arch-code">{code}</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:band,opacity:.7}}>Guía de especie</span>
+            <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:band,opacity:.7}}>Guía de especie</span>
             <span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>▲</span>
           </div>
         </button>
@@ -1837,8 +1837,8 @@ const SpeciesGuide=({sKey,sp,recipe,onAddIngredient,onRemoveIngredient})=>{
         <div style={{position:'relative',borderBottom:'1px solid rgba(26,20,16,0.07)',overflow:'hidden',minHeight:img?140:70}}>
           {img&&<img src={img} alt={sp.name} width="320" height="240" loading="lazy" decoding="async" style={{position:'absolute',right:-10,top:'50%',transform:'translateY(-50%)',height:'160%',width:'auto',maxWidth:'55%',objectFit:'contain',objectPosition:'right center',filter:'saturate(.45) contrast(1.08)',mixBlendMode:'multiply',opacity:.55,pointerEvents:'none'}}/>}
           <div style={{padding:'14px 16px 16px',position:'relative',zIndex:'var(--z-local)',maxWidth:img?'60%':'100%'}}>
-            <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--tracking-label)'}}>{sp.scientific}</div>
-            <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
+            <div style={{fontFamily:'var(--font-sci)',fontSize:"var(--text-sm)",fontStyle:'italic',color:'var(--ink-400)',marginBottom:3,letterSpacing:'var(--sim-tracking-label)'}}>{sp.scientific}</div>
+            <div style={{fontFamily:'var(--font-display)',fontSize:36,color:`color-mix(in oklab,${band} 90%,var(--ink-900))`,lineHeight:.9,letterSpacing:'var(--sim-tracking-tight)',marginBottom:open?8:0}}>{sp.name}</div>
             {open&&sp.notes&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-600)',lineHeight:1.5,textWrap:'pretty',marginTop:5,maxWidth:300}}>{sp.notes}</div>}
           </div>
         </div>
@@ -1891,7 +1891,7 @@ const SpeciesRecommender=({recipe})=>{
   const bandColors=Object.fromEntries(Object.entries(BANDS));
   return(
     <div style={{padding:'14px 16px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',marginBottom:16}}>
-      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Compatibilidad por especie</div>
+      <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Compatibilidad por especie</div>
       {scores.map(({key,sp,score,eb},i)=>{
         const col=bandColors[key]||'var(--ink-2)';
         return(
@@ -2160,7 +2160,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
           type="button"
           title="Comparar y mezclar la receta activa con el resultado de esta sugerencia"
           onClick={()=>onMorph(deltaSim.resultingRecipe)}
-          style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer'}}>
+          style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'5px 8px',background:'transparent',color:'var(--slate-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer'}}>
           <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparar
         </button>
       )}
@@ -2734,7 +2734,7 @@ const PublicTraceabilityModal=({loteId,loteCode,lotes=[],cosechas=[],bolsas=[],o
         </div>
 
         {/* CABECERA CON QR MATRIX Y METADATOS DE FINCA */}
-        <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100)',padding:'12px 14px',borderRadius:'var(--r-sm,4px)',border:'1px solid var(--border-soft)'}}>
+        <div style={{display:'flex',gap:16,alignItems:'center',background:'var(--paper-100)',padding:'12px 14px',borderRadius:'var(--sim-r-sm,4px)',border:'1px solid var(--border-soft)'}}>
           <div style={{background:'var(--paper-50)',padding:4,borderRadius:4,border:'1px solid var(--border-soft)',display:'flex',alignItems:'center',justifyContent:'center'}}>
             <img src={qrDataUrl} alt={`QR Lote ${lote?.codigo||''}`} width="76" height="76" style={{display:'block'}} />
           </div>
@@ -3175,7 +3175,7 @@ const IoTHubModal = ({ isOpen, onClose, selectedRoomId = 'martha_01', onInjectRe
       label="Hub de Integración IoT & Telemetría"
       dialogClassName="inv-modal iot-hub-dialog"
       backdropClassName="inv-modal-bg iot-hub-backdrop"
-      dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
+      dialogStyle={{ width: 'min(860px, 94vw)', padding: 0, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm, 2px)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(26,20,16,0.18)' }}
     >
       {/* Header */}
       <div className="iot-hub-header" style={{ background: 'var(--ink-0)', color: 'var(--paper-50)', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -3945,7 +3945,7 @@ const FieldActionModal = ({
         </button>
       </div>
 
-      <div style={{ padding: '10px 12px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '10px 12px', background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm, 2px)', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--ink-2)', display: 'block' }}>
             Estado Actual
@@ -7874,7 +7874,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const CYCLE_INP={fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 10px',minHeight:44,background:'var(--paper-0)',color:'var(--ink-0)',width:'100%',boxSizing:'border-box'};
     const lbl={display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)',marginBottom:4};
     return <AccessibleModal onClose={()=>setCycleForm(null)} label={f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'} dialogStyle={{width:640,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 80px)',overflowY:'auto'}}>
-      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',margin:'0 0 12px'}}>{f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'}</h2>
+      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',margin:'0 0 12px'}}>{f.previousId?'Avanzar ciclo de sala':'Iniciar ciclo de sala'}</h2>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:12}}>
         <label><span style={lbl}>Sala</span>
           <select aria-label="Sala del ciclo" style={CYCLE_INP} value={f.roomId} disabled={!!f.previousId} onChange={e=>set({roomId:e.target.value})}>
@@ -8637,7 +8637,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-micro)",color:'rgba(255,255,255,.7)',letterSpacing:'var(--tracking-button)',marginTop:1}}>SCORE</span>
                       </div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:sm.badge,marginBottom:2}}>Perito · Veredicto</div>
                         <div style={{fontFamily:'var(--font-body)',fontSize:20,fontWeight:800,color:sm.txt,lineHeight:1,transition:'color .3s'}}>{sm.veredicto}</div>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,marginTop:4,lineHeight:1.4}}>
                           {sm.accion&&<div style={{fontWeight:700}}>{sm.accion}</div>}
@@ -8648,16 +8648,16 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
               {isWorkbench&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4}}>Especie: <b>{sp?.name||'Sin especie'}</b> ({recipe.length} ingrediente{recipe.length!==1?'s':''})</div>}
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
-                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
-                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
+                        {(criticals.length>0||warnings.length>0)&&<button onClick={autoImprove} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--coral-500)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="sparkles" size={11} color="var(--paper-0)" /> Auto-mejorar</button>}
+                        {recipeHistory.length>0&&<button onClick={undoLastRec} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-600)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',display:'flex',alignItems:'center',gap:4}}>
                           <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 7 12 4 18 7a9 9 0 010 10"/></svg>
                           Deshacer ({recipeHistory.length})
                         </button>}
-                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
+                        <button onClick={runFormNextAction} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'var(--moss-600,var(--accent-olive))',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>{formNextLabel}</button>
               {!isWorkbench&&<>
-                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
+                        {(status==='needs_work'||status==='critical')&&<button onClick={()=>{setPromptDlg({title:'Nueva prueba experimental',label:'Nombre de la prueba',placeholder:'ej. Ostra gris — ajuste C:N lote 12',confirmLabel:'Guardar prueba',onSubmit:nm=>{const trSave=calcTreatment(an, sKey, effectiveSPP);const e={id:Date.now(),name:nm,sKey,recipe:[...recipe],date:new Date().toLocaleDateString('es-CO'),eb:an.eb.toFixed(0),cn:an.cn.toFixed(1),score:opt.score,cost:Math.round(an.cost),treatCol:trSave?.col||null,energyCopKg:trSave?.energy?.cop_per_kg_seco||0};const u=[e,...saved];setSaved(u);try{localStorage.setItem('setas_v6',JSON.stringify(u));}catch(e2){}setNoticeDlg({msg:`Guardada como prueba: ${nm}`});}});}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:sm.badge,border:`1px solid ${sm.border}`,borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap'}}>+ Crear prueba</button>}
               </>}
-                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
+                        <button type="button" onClick={()=>{setShowAIFormModal(true);setAiFormResult(null);setAiFormError('');}} style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,padding:'6px 10px',background:'transparent',color:'var(--ink-700)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',cursor:'pointer',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
                           <AppIcon name="wand" size={13} /> Asistente IA (Gemini)
                         </button>
             </div>
@@ -8669,10 +8669,10 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         {isWorkbench&&<>
                   {/* Factor Restrictivo Estimado & Oportunidad Contrafactual */}
                   {restrictiveFactor&&restrictiveFactor.factor!=='none'&&(
-                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 8%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 30%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
+                    <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--sim-r-sm)',background:restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 8%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.08)':'rgba(77,98,53,.08)',border:`1px solid ${restrictiveFactor.severity==='critical'?'color-mix(in srgb, var(--status-error) 30%, transparent)':restrictiveFactor.severity==='warning'?'rgba(160,120,40,.3)':'rgba(77,98,53,.3)'}`}}>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                         <span style={{display:'inline-flex',alignItems:'center'}}>{restrictiveFactor.severity==='critical'?<AppIcon name="alert" size={16} color="var(--status-error)"/>:restrictiveFactor.severity==='warning'?<AppIcon name="scale" size={16} color="var(--status-warn-text)"/>:<AppIcon name="sprout" size={16} color="var(--status-ok)"/>}</span>
-                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':restrictiveFactor.severity==='warning'?'var(--status-warn-text)':'var(--status-ok)'}}>
+                        <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--sim-tracking-wide)',color:restrictiveFactor.severity==='critical'?'var(--status-error)':restrictiveFactor.severity==='warning'?'var(--status-warn-text)':'var(--status-ok)'}}>
                           Factor Restrictivo Estimado: {restrictiveFactor.label}
                         </span>
                       </div>
@@ -8694,9 +8694,9 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
 
                   {/* Contexto Físico y Capacidad de Proceso (Tenjo 2.600 msnm) */}
-                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
+                  <div style={{margin:'0 0 16px',padding:'12px 16px',borderRadius:'var(--sim-r-sm)',background:'rgba(43,76,126,.06)',border:'1px solid rgba(43,76,126,.2)'}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-wide)',color:'var(--slate-800)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-xs)',textTransform:'uppercase',letterSpacing:'var(--sim-tracking-wide)',color:'var(--slate-800)'}}>
                         <AppIcon name="globe" size={14} style={{marginRight:6}} /> Contexto Físico y Capacidad de Proceso (Tenjo · 2.600 msnm / 74.5 kPa)
                       </div>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',background:'var(--slate-700)',color:'var(--paper-50)',padding:'2px 8px',borderRadius:3,fontWeight:700}}>
@@ -8783,8 +8783,8 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                         {!isMassBalanced(an)&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'3px 9px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 25%, transparent)',borderRadius:3,color:'var(--status-error)',fontWeight:700,display:'inline-flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={11} color="var(--status-error)" /> Total {an.tot.toFixed(1)}%</span>}
                       </div>
                       {(criticals.length>0||warnings.length>0)&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sm.badge,padding:'6px 10px',background:'rgba(0,0,0,.04)',borderLeft:`2px solid ${sm.border}`,marginBottom:8,lineHeight:1.4}}><b id={isWorkbench?undefined:'perito-recommendations'}>Aplica una sugerencia a la vez</b> — cada cambio recalcula. Usa <b>Auto-mejorar</b> para automatizar.</div>}
-            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
-            {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
+            {criticals.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--status-error)',padding:'5px 10px',background:'color-mix(in srgb, var(--status-error) 7%, transparent)',borderBottom:'1px solid color-mix(in srgb, var(--status-error) 20%, transparent)'}}>Críticos ({criticals.length})</div>{renderItems(criticals)}</div>}
+            {warnings.length>0&&<div style={{marginBottom:8}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',padding:'5px 10px',background:'rgba(160,120,40,.07)',borderBottom:'1px solid rgba(160,120,40,.2)'}}>Mejoras ({warnings.length})</div>{renderItems(warnings)}</div>}
             {tips.length>0&&<details open={!phoneCompact} style={{marginBottom:6}}><summary className="summary-tap" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:"var(--text-sm)",padding:'5px 10px',background:'rgba(74,107,74,.05)',borderBottom:'1px solid rgba(74,107,74,.15)',cursor:'pointer',listStyle:'none',alignItems:'center',display:'flex',justifyContent:'space-between'}}><span>Opcionales ({tips.length})</span><span style={{fontSize:"var(--text-xs)"}}>▾</span></summary>{renderItems(tips)}</details>}
             {infos.map((item,i)=><div key={i} style={{display:'flex',gap:8,padding:'7px 12px',background:'rgba(74,90,58,.06)',borderTop:'1px solid rgba(74,90,58,.12)',alignItems:'flex-start',marginTop:4}}><span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',flexShrink:0}}>{item.icon}</span><div><span style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,color:'var(--ink-700)',marginRight:6}}>{item.label}</span><span style={{fontSize:"var(--text-sm)",color:'var(--ink-500)',fontFamily:'var(--font-mono)'}}>{item.action}</span></div></div>)}
           </>
@@ -10208,7 +10208,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {criticalStockItems.length > 4 && <button type="button" className="stock-alert-toggle" aria-expanded={stockAlertsExpanded} onClick={()=>setStockAlertsExpanded(v=>!v)}>{stockAlertsExpanded?'Ocultar alertas':'Ver las '+(criticalStockItems.length-4)+' alertas restantes'}</button>}
                           </div>
                         )}
-                        <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                        <div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                           Sin inventario.
                           <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
                         </div>
@@ -10402,7 +10402,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginTop:10,display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                     <button className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>setShowAddStockForm(v=>!v)}>＋ Agregar ingrediente al stock</button>
                     {showAddStockForm&&(
-                      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',padding:'10px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',width:'100%',boxSizing:'border-box'}}>
+                      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',padding:'10px 12px',background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',width:'100%',boxSizing:'border-box'}}>
                         <select name="newStockIngredient" aria-label="Ingrediente que se agregará al stock" className="inv-input" style={{flex:2,minWidth:180}} value={addStockId} onChange={e=>setAddStockId(e.target.value)}>
                           <option value="">Seleccionar ingrediente…</option>
                           {INGS.map(i=>(<option key={i.id} value={i.id}>{i.name}</option>))}
@@ -10430,7 +10430,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div style={{maxWidth:560}}>
                   {cmpConfirm?(
                     <div>
-                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--r-sm)',marginBottom:14}}>
+                      <div data-testid="purchase-confirm-banner" style={{padding:'14px 16px',background:cmpConfirm.pendiente?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${cmpConfirm.pendiente?'var(--status-attention)':'var(--moss-300)'}`,borderRadius:'var(--sim-r-sm)',marginBottom:14}}>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",fontWeight:700,color:'var(--ink-800)',marginBottom:2,display:'flex',alignItems:'center',gap:4}}><AppIcon name={cmpConfirm.pendiente?'clipboard':'check'} size={13} color="var(--ink-800)" /> {cmpConfirm.pendiente?'Pedido registrado':'Compra registrada'}</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>{cmpConfirm.proveedor||'Sin proveedor'} · {cmpConfirm.fecha} · ${cmpConfirm.total.toLocaleString('es-CO')} COP</div>
                         {cmpConfirm.pendiente&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:6}}>El stock físico de bodega NO cambió. Estos kilos quedan en camino hasta que confirmes la recepción.</div>}
@@ -10464,7 +10464,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {pendientes.map(c=>{
                           const prov=invProveedores.find(p=>p.id===c.proveedorId);
                           return(
-                            <div key={c.id} data-testid="pending-purchase" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',padding:'10px 12px',marginTop:6,border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)'}}>
+                            <div key={c.id} data-testid="pending-purchase" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap',padding:'10px 12px',marginTop:6,border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)'}}>
                               <div>
                                 <div style={{fontFamily:"var(--font-body)",fontWeight:600,fontSize:"var(--text-sm)",color:'var(--ink-800)'}}>{prov?.nombre||'Proveedor eliminado'}</div>
                                 <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>Esperado: {c.fechaEsperada||c.fecha}</div>
@@ -10486,13 +10486,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     {[['manual',<AppIcon name="edit" size={14}/>,'Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto',<AppIcon name="clipboard" size={14}/>,'Pegar texto']].map(([v,icon,l])=>(
                       <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
                         <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
-                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{l}</span>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--sim-tracking-label)'}}>{l}</span>
                       </button>
                     ))}
                   </div>
 
                   {cmpMode==='foto'&&(
-                    <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',textAlign:'center'}}>
+                    <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)',textAlign:'center'}}>
                       <input type="file" accept="image/*,application/pdf" capture="environment" ref={cmpFileRef} style={{display:'none'}} onChange={capturarFoto}/>
                       <button className="inv-btn inv-btn-pri inv-btn-sm" style={{display:'inline-flex',alignItems:'center',gap:6}} disabled={cmpParsing} onClick={()=>cmpFileRef.current&&cmpFileRef.current.click()}>{cmpParsing?'Leyendo recibo…':<><IconCamera size={12}/> Tomar foto / subir recibo (o PDF)</>}</button>
                       {cmpLastFoto&&!cmpParsing&&(
@@ -10514,7 +10514,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     const total=cmpItems.length;
                     const sinMatch=cmpItems.filter(it=>!it.ingId).length;
                     return(
-                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
+                      <div style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--sim-r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",background:sinMatch?'var(--status-warn-bg)':'var(--moss-tint)',border:`1px solid ${sinMatch?'var(--status-attention)':'var(--moss-300)'}`,color:'var(--ink-800)'}}>
                         Se {total===1?'detectó 1 ítem':`detectaron ${total} ítems`}
                         {sinMatch>0?` — ${sinMatch} sin coincidencia automática, revísalos abajo.`:' — revisa cantidades y precios antes de registrar.'}
                       </div>
@@ -10544,7 +10544,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {cmpItems.map(it=>{
                     const g=INGS.find(x=>x.id===it.ingId);
                     return(
-                    <div key={it.uid} style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',padding:'10px 12px',marginBottom:8,background:'var(--paper-50)'}}>
+                    <div key={it.uid} style={{border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',padding:'10px 12px',marginBottom:8,background:'var(--paper-50)'}}>
                       <div style={{display:'flex',gap:8,marginBottom:8}}>
                         <select name={`purchaseIngredient-${it.uid}`} aria-label="Ingrediente de la compra" className="inv-input" style={{flex:1,fontSize:"var(--text-sm)"}} value={it.ingId} onChange={e=>updCmpItem(it.uid,'ingId',e.target.value)}>
                           <option value="">Seleccionar ingrediente…</option>
@@ -10597,7 +10597,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {invTab==='historial'&&(
                 <div>
                   {invCompras.length===0
-                    ?<div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    ?<div style={{textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)',border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                         Sin compras registradas.
                         <div><button className="inv-btn inv-btn-pri" style={{marginTop:12}} onClick={()=>setInvTab('compra')}>Registrar primera compra →</button></div>
                       </div>
@@ -11644,7 +11644,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
             </div>
 
-            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+            <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
               <table className="prod-tbl" style={{marginBottom:0,minWidth:480}}>
                 <thead>
                   <tr>
@@ -12740,7 +12740,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </button>
             <div style={{
               padding:'6px 12px',
-              borderRadius:'var(--radius-sm)',
+              borderRadius:'var(--sim-radius-sm)',
               background: climateHealth.severity === 'critical' ? 'var(--accent-terracotta-dim)' : 'var(--moss-100)',
               color: climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-800)',
               border: `1px solid ${climateHealth.severity === 'critical' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--moss-600)'}`,
@@ -12760,7 +12760,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               style={{
                 width: '100%',
                 padding: '14px 16px',
-                borderRadius: 'var(--radius-sm, 3px)',
+                borderRadius: 'var(--sim-radius-sm, 3px)',
                 background: 'var(--paper-0)',
                 border: `1.5px solid ${coCultRoomOpt.groupScore >= 75 ? 'var(--accent-olive)' : coCultRoomOpt.groupScore >= 55 ? 'var(--ochre-500)' : 'var(--coral-700)'}`,
                 marginBottom: 12,
@@ -12859,7 +12859,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {climateHealth.alerts.map((al, idx) => (
               <div key={idx} style={{
                 padding:'8px 12px',
-                borderRadius:'var(--radius-sm)',
+                borderRadius:'var(--sim-radius-sm)',
                 background: al.level === 'alert' ? 'var(--accent-terracotta-dim)' : 'var(--paper-2)',
                 color: al.level === 'alert' ? 'color-mix(in oklab, var(--accent-terracotta) 80%, black)' : 'var(--ink-1)',
                 border: `1px solid ${al.level === 'alert' ? 'var(--accent-terracotta)' : 'var(--line-0)'}`,
@@ -13054,7 +13054,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    borderRadius: 'var(--radius-sm)',
+                    borderRadius: 'var(--sim-radius-sm)',
                     border: '1px solid var(--line-0)',
                     background: 'var(--paper-0)',
                     color: 'var(--ink-0)',
@@ -13074,7 +13074,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
 
               {/* Targets details */}
-              <div style={{background:'var(--paper-2)',border:'1px solid var(--line-0)',borderRadius:'var(--radius-sm)',padding:10,fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-1)'}}>
+              <div style={{background:'var(--paper-2)',border:'1px solid var(--line-0)',borderRadius:'var(--sim-radius-sm)',padding:10,fontSize:11,fontFamily:'var(--font-mono)',color:'var(--ink-1)'}}>
                 <div><strong>Target Fructificación:</strong> T: {CULINARY_PROFILES[activeCulinaryKey].tempIdeal.toFixed(1)}°C | HR: {CULINARY_PROFILES[activeCulinaryKey].rhIdeal.toFixed(0)}% | CO₂: {CULINARY_PROFILES[activeCulinaryKey].co2Ideal} ppm</div>
                 <div style={{marginTop:4,fontFamily:'var(--font-sans)',fontSize:10,color:'var(--ink-1)'}}>{CULINARY_PROFILES[activeCulinaryKey].directives}</div>
               </div>
@@ -13186,7 +13186,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
 
             {/* Radar Canvas Plot */}
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',border:'1px solid var(--line-0)',background:'var(--paper-0)',padding:12,borderRadius:'var(--radius-sm)'}}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',border:'1px solid var(--line-0)',background:'var(--paper-0)',padding:12,borderRadius:'var(--sim-radius-sm)'}}>
               <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-2)',textTransform:'uppercase',marginBottom:8}}>
                 Interactivo (Arrastra los puntos)
               </span>
@@ -13481,7 +13481,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               {lote.especieCientifico&&<div style={{fontFamily:'var(--font-sci)',fontStyle:'italic',fontSize:"var(--text-sm)",color:'var(--ink-600)',marginTop:1}}>{lote.especieCientifico}</div>}
                             </div>
                             <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
-                              <span className="sdp-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--tracking-label)'}}>{lote.estado}</span>
+                              <span className="sdp-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",padding:'2px 7px',borderRadius:0,background:EC[lote.estado]||'var(--ink-400)',color:'var(--paper-0)',textTransform:'uppercase',letterSpacing:'var(--sim-tracking-label)'}}>{lote.estado}</span>
                               {score!==null&&<span style={{fontFamily:'var(--font-num)',fontSize:22,color:'var(--coral-700)',lineHeight:1}}>{score}<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>/100</span></span>}
                             </div>
                           </div>
@@ -13677,8 +13677,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="sec" style={{marginBottom:0,borderBottom:'none'}}>Cosechas — {lote.codigo}</div>
                     <button className="inv-btn inv-btn-pri" onClick={()=>{const fb=bolsas.find(b=>b.estado==='sana');openHarvestCapture({bolsaId:fb?.id||'',loteId:bitActiveLoteId,codigo:fb?.codigo||'',flush:1,fecha:new Date().toISOString().split('T')[0],pesoFresco:'',calidad:'',observaciones:''});setShowBitCosecha(true);}}>+ Registrar cosecha</button>
                   </div>
-                  {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
-                  {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Sin cosechas registradas aún.</div>}
+                  {stats&&stats.totalFresco>0&&(<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border-soft)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',overflow:'hidden',marginBottom:14}}>{[['Total fresco',stats.totalFresco.toFixed(3)+' kg'],['BE estimada',stats.be!=null?stats.be.toFixed(1)+'%':'—'],['kg/bolsa sana',stats.bolsasSanas>0?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'],['Costo/kg',stats.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—']].map(([lb,v])=>(<div key={lb} style={{background:'var(--paper-50)',padding:'10px 8px',textAlign:'center'}}><div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3}}>{lb}</div><div style={{fontFamily:'var(--font-num)',fontSize:18,color:'var(--ink-900)'}}>{v}</div></div>))}</div>)}
+                  {cosechas.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>Sin cosechas registradas aún.</div>}
                   {cosechas.length>0&&(
                     <div className="inv-section">
                       <table className="inv-table">
@@ -13714,7 +13714,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               return(
                 <div className="panel">
                   <div className="sec">Comparador de recetas</div>
-                  {lotesConDatos.length<2&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)'}}>Necesitas al menos 2 lotes para comparar. Actualmente: {lotesConDatos.length}.</div>}
+                  {lotesConDatos.length<2&&<div style={{textAlign:'center',padding:'32px',color:'var(--ink-500)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>Necesitas al menos 2 lotes para comparar. Actualmente: {lotesConDatos.length}.</div>}
                   {lotesConDatos.length>=2&&(<div className="inv-section"><table className="inv-table"><thead><tr><th>Lote / Receta</th><th>Especie</th><th style={{textAlign:'right'}}>Contam.</th><th style={{textAlign:'right'}}>Días col.</th><th style={{textAlign:'right'}}>BE</th><th style={{textAlign:'right'}}>kg/bolsa</th><th style={{textAlign:'right'}}>Costo/kg</th><th style={{textAlign:'center'}}>Score</th><th>Veredicto</th></tr></thead><tbody>{lotesConDatos.map(lote=>{const stats=calcLoteStats(lote.id);const score=calcLoteScore(stats);const VC={'prometedora':'var(--moss-500)','descartar':'var(--coral-700)','buena para escalar':'var(--moss-700)','riesgo contaminación':'var(--ochre-500)','repetir':'var(--ink-600)','ajustar humedad':'var(--ochre-600)'};return(<tr key={lote.id}><td style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}><div style={{fontWeight:700,color:'var(--ink-900)'}}>{lote.codigo}</div>{lote.recipeRef&&<div style={{fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{lote.recipeRef.name}</div>}</td><td style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)"}}>{lote.especie}</td><td style={{textAlign:'right',color:stats?.contPct>20?'var(--coral-700)':'var(--moss-700)',fontWeight:700}}>{stats?.contPct!=null?stats.contPct.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.diasCol!=null?stats.diasCol.toFixed(1)+'d':'—'}</td><td style={{textAlign:'right',fontWeight:700,color:stats?.be>80?'var(--moss-700)':stats?.be>60?'var(--ochre-600)':'var(--coral-700)'}}>{stats?.be!=null?stats.be.toFixed(0)+'%':'—'}</td><td style={{textAlign:'right'}}>{stats?.bolsasSanas>0&&stats.totalFresco?(stats.totalFresco/stats.bolsasSanas).toFixed(3)+' kg':'—'}</td><td style={{textAlign:'right'}}>{stats?.costoKg!=null?'$'+Math.round(stats.costoKg).toLocaleString('es-CO'):'—'}</td><td style={{textAlign:'center',fontFamily:'var(--font-num)',fontSize:"var(--text-md)",color:'var(--coral-700)',fontWeight:700}}>{score!==null?score:'—'}</td><td><select value={lote.veredicto||''} onChange={e=>updateBitLote(lote.id,{veredicto:e.target.value})} style={{padding:'4px 7px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",border:'1px solid var(--border-soft)',borderRadius:4,background:'var(--paper-50)',color:VC[lote.veredicto]||'var(--ink-700)',width:'100%'}}><option value="">— sin veredicto —</option>{['prometedora','descartar','repetir','ajustar humedad','riesgo contaminación','buena para escalar'].map(v=><option key={v} value={v}>{v}</option>)}</select></td></tr>);})}</tbody></table></div>)}
                 </div>
               );
@@ -13730,7 +13730,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <div className="panel prod-sheet" style={{padding:'26px 28px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900)',paddingBottom:12,marginBottom:16}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Bitácora experimental</div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Bitácora experimental</div>
                       <div style={{fontFamily:'var(--font-num)',fontSize:26,fontWeight:700,color:'var(--ink-900)',lineHeight:1.1,marginTop:2}}>Ficha experimental</div>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-base)",color:'var(--ink-900)',marginTop:2}}>{lote.especie}{lote.especieCientifico&&<> · <i>{lote.especieCientifico}</i></>}</div>
                     </div>
@@ -13756,7 +13756,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {lote.notas&&<div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",color:'var(--ink-700)',padding:'8px 12px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',marginBottom:12}}><b>Notas:</b> {lote.notas}</div>}
                   <div style={{marginTop:16,paddingTop:12,borderTop:'2px solid var(--ink-900)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)'}}>Setas de la Peña · Tenjo 2.600 msnm · {new Date().toLocaleDateString('es-CO')}</div>
-                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
+                    <button className="no-print" onClick={()=>window.print()} style={{padding:'7px 14px',background:'var(--moss-700)',color:'var(--paper-0)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:'pointer'}}>Imprimir ficha</button>
                   </div>
                 </div>
               );
@@ -14409,14 +14409,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                         Copiloto de cultivo · sugerencias heurísticas
                       </span>
-                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
+                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                         Próximas mejores acciones
                       </h2>
                     </div>
                     {copilotBriefing && copilotBriefing.harvestCalendar && (
                       <div style={{textAlign:'right'}}>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Próx. 14 días</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-lg)',color:'var(--ink-0)'}}>{copilotBriefing.harvestCalendar.kgNext14d} kg</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--sim-text-lg)',color:'var(--ink-0)'}}>{copilotBriefing.harvestCalendar.kgNext14d} kg</div>
                       </div>
                     )}
                   </div>
@@ -14541,7 +14541,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                       SECCIÓN B · CICLO BIOLÓGICO TENJO
                     </span>
-                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
+                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                       Seguimiento de Lotes por Fase
                     </h2>
                   </div>
@@ -14664,7 +14664,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                       SECCIÓN C · AMBIENTES & SENSORES
                     </span>
-                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
+                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                       Cámaras de Cultivo
                     </h2>
                   </div>
@@ -14734,7 +14734,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
                         SECCIÓN D · SEGUIMIENTO DEL DÍA
                       </span>
-                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
+                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
                         Actividad Reciente
                       </h2>
                     </div>
@@ -15088,7 +15088,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       ];
                       return(
                         <div style={{marginTop:20,padding:'14px 0 2px',borderTop:'1px solid color-mix(in oklab,var(--moss-400) 30%,transparent)'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)',marginBottom:8}}>Parámetros de cultivo</div>
+                          <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)',marginBottom:8}}>Parámetros de cultivo</div>
                           <div style={{display:'flex',flexDirection:'column',gap:5}}>
                             {bars.map(b=>{
                               const lo=Math.min(b.min,b.max)/b.abs*100;
@@ -15573,7 +15573,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div>
                 <span className="form-flow-eyebrow">Recorrido metodológico</span>
                 <h2>Especie → Origen → Ingredientes → Validar y guardar</h2>
-                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--tracking-label)',textTransform:'uppercase'}}>
+                <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--ink-600)',marginTop:2,letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase'}}>
                   01 Especie · 02 Objetivo · 03 Ingredientes · 04 Balance · 05 Revisión
                 </div>
               </div>
@@ -16104,7 +16104,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         const positive=margin>=0;
                         return(
                           <div style={{marginTop:8,border:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,background:positive?'var(--status-ok-bg)':'var(--status-error-bg)'}}>
-                            <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
+                            <div style={{padding:'8px 12px',borderBottom:`1px solid ${positive?'var(--moss-500)':'var(--coral-500)'}`,fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:positive?'var(--moss-500)':'var(--coral-500)'}}>Proyección de ingresos · EB {an.eb.toFixed(0)}%</div>
                             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:positive?'var(--moss-500)':'var(--coral-500)'}}>
                               {[
                                 {l:'Cosecha est.',v:`${yieldKg.toFixed(1)} kg`},
@@ -16263,7 +16263,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               const label=lc?(lc.LIFECYCLE_LABELS[e.status]||e.status):e.status;
                               const color=RECIPE_LIFECYCLE_COLOR[e.status]||'var(--ink-500)';
                               const ident=lc?lc.recipeIdentity(e):{version:e.version||1};
-                              return <span data-testid="recipe-lifecycle-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-label)',color,border:`1px solid ${color}`,padding:'1px 7px',borderRadius:0}}>{label} · v{ident.version}</span>;
+                              return <span data-testid="recipe-lifecycle-badge" style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--sim-tracking-label)',color,border:`1px solid ${color}`,padding:'1px 7px',borderRadius:0}}>{label} · v{ident.version}</span>;
                             })()}
                           </div>
                           <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
@@ -16311,15 +16311,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
             {/* ── MESA DEL PERITO: encabezado y modos ── */}
             <div className="workbench-top-bar" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,margin:'12px 0 16px',flexWrap:'wrap',paddingBottom:12,borderBottom:'1.5px solid var(--border-soft)'}}>
               <div>
-                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Perito</div>
-                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Mesa del Perito</h1>
+                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--moss-700)'}}>Setas OS · Perito</div>
+                <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--sim-text-xl)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>Mesa del Perito</h1>
               </div>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
                 <button type="button" className="btn sm" onClick={()=>openBuilderSubTab('formular')}>← Volver a Mesa de Mezcla</button>
               </div>
             </div>
 
-            <div className="seg-row perito-workbench-modes" style={{marginBottom:18,display:'flex',gap:6,background:'var(--paper-200)',padding:4,borderRadius:'var(--r-sm)',flexWrap:'wrap'}}>
+            <div className="seg-row perito-workbench-modes" style={{marginBottom:18,display:'flex',gap:6,background:'var(--paper-200)',padding:4,borderRadius:'var(--sim-r-sm)',flexWrap:'wrap'}}>
               <button
                 type="button"
                 className={`seg${workbenchMode==='all'?' on':''}`}
@@ -16379,10 +16379,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <section className="panel perito-morph-panel" style={{background:'var(--paper-50)',border:'1.5px solid var(--border-soft)',marginBottom:24,padding:20,borderRadius:'var(--r-md)'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14,paddingBottom:10,borderBottom:'1px solid var(--border-soft)',flexWrap:'wrap',gap:12}}>
                     <div>
-                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
+                      <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--slate-700)'}}>
                         Mezcla gradual entre dos recetas
                       </div>
-                      <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
+                      <h2 style={{fontFamily:'var(--font-display)',fontSize:'var(--sim-text-lg)',fontWeight:700,color:'var(--ink-900)',margin:'2px 0 0'}}>
                         <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparar y mezclar recetas
                       </h2>
                     </div>
@@ -16403,7 +16403,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {(!hasBase || !hasCandidate)?(
-                    <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
+                    <div style={{padding:'16px 20px',background:'var(--paper-100)',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--ink-600)'}}>
                       {!hasBase
                         ? 'Agrega ingredientes a la Mesa de Mezcla para comenzar la hibridación.'
                         : 'Calcula Escenarios o usa «Comparar» en una sugerencia del Perito para mezclar recetas.'}
@@ -16411,7 +16411,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ):(
                     <div>
                       {!isMorphFeasible&&trajectoryAnalysis&&(
-                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--r-sm)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)'}}>
+                        <div style={{margin:'0 0 14px',padding:'10px 14px',borderRadius:'var(--sim-r-sm)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid color-mix(in srgb, var(--status-error) 30%, transparent)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)'}}>
                           <b><AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> Esta mezcla ({(morphAlpha*100).toFixed(0)} % de la candidata) no cumple los criterios agronómicos:</b> {trajectoryAnalysis.requestedViolations?.join(', ')}
                           {trajectoryAnalysis.feasibleInterval&&(
                             <div style={{marginTop:4,color:'var(--ink-800)'}}>
@@ -16420,7 +16420,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           )}
                         </div>
                       )}
-                      <div style={{margin:'14px 0 20px',background:'var(--paper-100)',padding:16,borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                      <div style={{margin:'14px 0 20px',background:'var(--paper-100)',padding:16,borderRadius:'var(--sim-r-sm)',border:'1px solid var(--border-soft)'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:8}}>
                           <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-900)'}}>
                             Receta Activa en Mesa ({(100 - morphAlpha * 100).toFixed(0)}%)
@@ -16445,25 +16445,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
 
                       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))',gap:10,marginBottom:18}}>
-                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--sim-r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Score de la mezcla</div>
                           <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--ink-900)'}}>{scoreMorph}/100</div>
                         </div>
-                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--sim-r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>EB de la mezcla</div>
                           <div style={{fontFamily:'var(--font-num)',fontSize:22,fontWeight:700,color:'var(--moss-700)'}}>{anMorph?.eb?.toFixed(0)||'—'}%</div>
                         </div>
-                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--sim-r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>C:N de la mezcla</div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>{anMorph?.cn?.toFixed(1)||'—'}:1</div>
                         </div>
-                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
+                        <div style={{padding:'8px 12px',background:'var(--paper-100)',borderRadius:'var(--sim-r-sm)',border:'1px solid var(--border-soft)',textAlign:'center'}}>
                           <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-micro)',textTransform:'uppercase',color:'var(--ink-500)'}}>Costo / kg Seco</div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:18,fontWeight:700,color:'var(--ink-900)',marginTop:2}}>${Math.round(anMorph?.cost||0).toLocaleString('es-CO')}</div>
                         </div>
                       </div>
 
-                      <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden'}}>
+                      <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',overflow:'hidden'}}>
                         <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)'}}>
                           <thead>
                             <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
@@ -16537,14 +16537,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {/* ── controles editoriales ── */}
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px',marginBottom:14}}>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <label htmlFor="generator-species-select" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</label>
+                                <label htmlFor="generator-species-select" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Especie objetivo</label>
                                 <select id="generator-species-select" value={hasPickedSpecies?optTarget:''} onChange={e=>e.target.value&&setSKey(e.target.value)}>
                                   <option value="" disabled>Elegir especie…</option>
                                   {Object.entries(SPP).map(([key,species])=><option key={key} value={key}>{species.name}</option>)}
                                 </select>
                               </div>
                               <div style={{borderBottom:'1px solid var(--ink-900)',paddingBottom:4}}>
-                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Insumos · COP/kg seco máximo</label>
+                                <label htmlFor="opt-max-cost" style={{display:'block',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:4}}>Insumos · COP/kg seco máximo</label>
                                 <input id="opt-max-cost" name="optimizerMaxCost" type="number" inputMode="numeric" min="0" step="100" value={optMaxCost||''} onChange={e=>setOptMaxCost(parseInt(e.target.value)||0)}
                                   autoComplete="off" aria-describedby="opt-max-cost-help"
                                   style={{width:'100%',border:'none',background:'transparent',fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)',padding:'2px 0'}} placeholder="Sin límite"/>
@@ -16554,7 +16554,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             {/* El origen se define una sola vez en el paso 02 del flujo. */}
                             <div style={{display:'flex',gap:16,alignItems:'flex-end',marginBottom:14,flexWrap:'wrap',position:'sticky',top:0,zIndex:'var(--z-sticky)',background:'var(--paper-50)',padding:'10px 0 10px',borderBottom:'1px solid var(--border-soft)',marginLeft:0,marginRight:0}}>
                               <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'var(--text-2xs)',letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',color:'var(--ink-500)'}}>Nivel</div>
                                 <div className="chip-row">
                                   {Object.entries(OPT_PROFILES).map(([k,p])=>(
                                     <button key={k} className={'chip'+(optProfile===k?' on':'')} aria-pressed={optProfile===k} style={optProfile===k?{color:p.color,borderBottomColor:p.color}:undefined} onClick={()=>setOptProfile(k)}>{p.label}</button>
@@ -16632,28 +16632,28 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             </div>
                             {optUseStock?(()=>{const sc=[...new Set(invLotes.filter(l=>l.activo&&l.cantidadKgDisponible>0).map(l=>l.ingredienteId))].length;
                               return sc>0?(
-                                <div style={{padding:'8px 12px',background:'var(--moss-tint)',border:'1px solid var(--moss-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
+                                <div style={{padding:'8px 12px',background:'var(--moss-tint)',border:'1px solid var(--moss-300)',borderRadius:'var(--sim-r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--moss-700,var(--accent-olive))',marginBottom:12}}>
                                   Usando solo ingredientes en stock · {sc} disponibles en inventario
                                 </div>
                               ):(
-                                <div style={{padding:'10px 14px',background:'var(--status-warn-bg)',border:'1px solid var(--status-warn)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-warn-text)',marginBottom:12}}>
+                                <div style={{padding:'10px 14px',background:'var(--status-warn-bg)',border:'1px solid var(--status-warn)',borderRadius:'var(--sim-r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-warn-text)',marginBottom:12}}>
                                   Inventario vacío. Cambia a <strong>Paleta completa</strong> para generar recetas con toda la paleta, o registra compras en Inventario.
                                 </div>
                               );
                             })():(
-                              <div style={{padding:'8px 12px',background:'var(--coral-tint)',border:'1px solid var(--coral-300)',borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600)',marginBottom:12}}>
+                              <div style={{padding:'8px 12px',background:'var(--coral-tint)',border:'1px solid var(--coral-300)',borderRadius:'var(--sim-r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--coral-600)',marginBottom:12}}>
                                 Generando con toda la paleta compatible con {SPP[optTarget]?.name} · ignora inventario · ideal para diseñar la receta antes de comprar
                               </div>
                             )}
                             {optResults&&optResults[optProfile]&&(
                               <div>
-                                <h3 id="generator-results-heading" tabIndex={-1} className="generator-results-heading" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',margin:'0 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
+                                <h3 id="generator-results-heading" tabIndex={-1} className="generator-results-heading" style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',margin:'0 0 12px',paddingBottom:8,borderBottom:'1px solid var(--border-soft)'}}>
                                   {optResults[optProfile].length} alternativas del modelo · perfil <b>{OPT_PROFILES[optProfile]?.label}</b> · {optUseStock?'solo stock':'paleta completa'} · objetivos resueltos por composición
                                 </h3>
                                 {(()=>{
                                   const evi=describePeritoEvidence(optResults[`_evidence_${optProfile}`]);
                                   return(
-                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-tint)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300)':'var(--border-soft)'}`,borderRadius:'var(--r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
+                                    <div style={{padding:'8px 12px',background:evi.hasEvidence?'var(--moss-tint)':'var(--paper-100)',border:`1px solid ${evi.hasEvidence?'var(--moss-300)':'var(--border-soft)'}`,borderRadius:'var(--sim-r-sm)',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:evi.hasEvidence?'var(--moss-700,var(--accent-olive))':'var(--ink-500)',marginBottom:12}}>
                                       {evi.hasEvidence
                                         ?`Evidencia de producción del Perito: ${evi.sampleSize} lote${evi.sampleSize===1?'':'s'} real${evi.sampleSize===1?'':'es'} de ${SPP[optTarget]?.name||optTarget} · confianza ${evi.confidenceLabel} (observacional — no ajusta el score del Escenario)`
                                         :`Sin resultados finales elegibles de producción para ${SPP[optTarget]?.name||optTarget} — Escenarios calculados solo con el modelo teórico.`}
@@ -16739,7 +16739,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                               const costBolsa=Math.round((r.an.cost+eCost2)*kgSeco);
                                               return(
                                                 <div key={b.nom} style={{flex:1,padding:'5px 8px',borderRight:'1px solid var(--border-soft)',textAlign:'center',background:'var(--paper-50)'}}>
-                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginBottom:2,letterSpacing:'var(--tracking-label)',fontWeight:600}}>{b.nom}</div>
+                                                  <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginBottom:2,letterSpacing:'var(--sim-tracking-label)',fontWeight:600}}>{b.nom}</div>
                                                   <div style={{fontFamily:'var(--font-num)',fontSize:"var(--text-base)",color:'var(--coral-700)',fontWeight:700}}>${costBolsa.toLocaleString('es-CO')}</div>
                                                   <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',fontWeight:500}}>COP / bolsa · insumos + tratamiento</div>
                                                 </div>
@@ -16769,7 +16769,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               </div>
                             )}
                             {!optRunning&&optResults&&!optResults.noStock&&optResults[optProfile]?.length===0&&(
-                              <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-100)'}}>
+                              <div style={{padding:'18px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-100)'}}>
                                 {(()=>{const d=optResults[`_diag_${optProfile}`]||{diag:optResults._diag?.diag};const diag=d?.diag;return diag?(
                                   <div>
                                     <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--coral-700)',marginBottom:10}}>Sin combinaciones válidas — diagnóstico</div>
@@ -16804,7 +16804,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 ):(<div style={{textAlign:'center',padding:'20px 0',color:'var(--ink-500)'}}>Selecciona especie y presiona Calcular.</div>);})()}</div>
                             )}
                             {!optRunning&&optResults&&optResults.noStock&&(
-                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--r-sm)',background:'var(--status-warn-bg)'}}>
+                              <button type="button" onClick={()=>{goTab('inventario');setInvTab('compra');}} style={{width:'100%',font:'inherit',cursor:'pointer',textAlign:'center',padding:'32px 20px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--status-attention-text)',border:'1px dashed var(--status-attention)',borderRadius:'var(--sim-r-sm)',background:'var(--status-warn-bg)'}}>
                                 Sin stock registrado. Ve a <strong>Bodega → Compra</strong> para agregar ingredientes.
                               </button>
                             )}
@@ -16819,19 +16819,19 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {sp&&(
                             <div className="manual-species-summary" style={{display:'flex',gap:24,marginBottom:16,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Especie activa</div>
                                 <div style={{fontFamily:'var(--font-display)',fontStyle:'italic',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.name}</div>
                               </div>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>C:N ideal</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>C:N ideal</div>
                                 <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.ideal}:1</div>
                               </div>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Rango</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>Rango</div>
                                 <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.cn_optimal.min}–{sp.cn_optimal.max}</div>
                               </div>
                               <div>
-                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>N objetivo</div>
+                                <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>N objetivo</div>
                                 <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-md)",color:'var(--ink-900)'}}>{sp.n_optimal.min}–{sp.n_optimal.max}%</div>
                               </div>
                             </div>
@@ -16984,7 +16984,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onClick={()=>setSchSubTab('cronograma')}
                 style={{
                   fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
-                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  padding:'7px 16px',borderRadius:'var(--sim-r-sm)',
                   background:schSubTab==='cronograma'?'var(--paper-100)':'transparent',
                   color:schSubTab==='cronograma'?'var(--ink-900)':'var(--ink-500)',
                   border:schSubTab==='cronograma'?'1.5px solid var(--accent-olive)':'1px solid transparent',
@@ -16998,7 +16998,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onClick={()=>setSchSubTab('forecast')}
                 style={{
                   fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
-                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  padding:'7px 16px',borderRadius:'var(--sim-r-sm)',
                   background:schSubTab==='forecast'?'var(--paper-100)':'transparent',
                   color:schSubTab==='forecast'?'var(--ink-900)':'var(--ink-500)',
                   border:schSubTab==='forecast'?'1.5px solid var(--accent-olive)':'1px solid transparent',
@@ -17012,7 +17012,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 onClick={()=>setSchSubTab('b2b')}
                 style={{
                   fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",
-                  padding:'7px 16px',borderRadius:'var(--r-sm)',
+                  padding:'7px 16px',borderRadius:'var(--sim-r-sm)',
                   background:schSubTab==='b2b'?'var(--paper-100)':'transparent',
                   color:schSubTab==='b2b'?'var(--ink-900)':'var(--ink-500)',
                   border:schSubTab==='b2b'?'1.5px solid var(--accent-olive)':'1px solid transparent',
@@ -17042,7 +17042,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                 {/* Badge cinético térmico Q10 */}
                 {sch&&(
-                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--r-sm)',background:sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 8%, transparent)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 25%, transparent)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-700)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                  <div style={{margin:'10px 0 14px',padding:'8px 14px',borderRadius:'var(--sim-r-sm)',background:sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 8%, transparent)':'rgba(77,98,53,.08)',border:`1px solid ${sch.thermalDelayPct>15?'color-mix(in srgb, var(--status-error) 25%, transparent)':'rgba(77,98,53,.25)'}`,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:sch.thermalDelayPct>15?'var(--coral-700)':'var(--moss-700)',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                     <span><AppIcon name="temp" size={14} style={{marginRight:6}} /> <b>Cinética Térmica Q10 (2.0):</b> Temp = {sch.ambientTemp}°C · Factor cinético: <b>{sch.thermalFactor.toFixed(2)}x</b> {sch.thermalDelayPct>0?`(+${sch.thermalDelayPct}% tiempo)`:sch.thermalDelayPct<0?`(${sch.thermalDelayPct}% tiempo)`:'(estándar 24°C)'}</span>
                     {sch.coldWarn&&<span style={{color:'var(--coral-600)',fontWeight:700}}>{sch.coldWarn}</span>}
                   </div>
@@ -17087,10 +17087,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
               return(
                 <div>
-                  <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-lg)",fontWeight:700,marginBottom:12}}>
+                  <div style={{fontFamily:'var(--font-display)',fontSize:"var(--sim-text-lg)",fontWeight:700,marginBottom:12}}>
                     Calculadora de Producción por Oleada (Balance de Materia Seca Estricto)
                   </div>
-                  <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:16,padding:12,background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                  <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:16,padding:12,background:'var(--paper-50)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                     <div style={{display:'flex',flexDirection:'column',gap:4}}>
                       <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Número de bolsas</label>
                       <input type="number" min="1" max="10000" value={fcBags} onChange={e=>setFcBags(parseInt(e.target.value,10)||1)} style={{width:90,padding:'5px 8px'}}/>
@@ -17118,17 +17118,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* Resultados del lote */}
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:16}}>
-                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Sustrato Total</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{(fcBags * fcKgBag).toFixed(1)} <span style={{fontSize:14}}>kg húmedo</span></div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:2}}>{proj.totalDryKg} kg materia seca (base real de EB)</div>
                     </div>
-                    <div style={{padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--moss-800)',textTransform:'uppercase',fontWeight:700}}>Cosecha Total Proyectada</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--moss-800)',marginTop:4}}>{proj.totalKg} <span style={{fontSize:14}}>kg fresco</span></div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-700)',marginTop:2}}>~{(proj.totalKg / fcBags).toFixed(2)} kg fresco / bolsa</div>
                     </div>
-                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Costo Sustrato / kg Hongo</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--coral-600)',marginTop:4}}>${Math.round(costPerFreshKg).toLocaleString('es-CO')} <span style={{fontSize:12}}>COP/kg</span></div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:2}}>Mezcla seca: ${Math.round(dryMixCost).toLocaleString('es-CO')}/kg ÷ ({curEb.toFixed(0)}% EB)</div>
@@ -17139,17 +17139,17 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{marginBottom:18}}>
                     <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',color:'var(--ink-500)',marginBottom:8}}>Desglose de Oleadas (Matriz Biológica Específica)</div>
                     <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(184,97,77,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(184,97,77,.08)',border:'1px solid var(--coral-500)',borderRadius:'var(--sim-r-sm)'}}>
                         <div style={{fontWeight:700,color:'var(--coral-500)',fontSize:"var(--text-sm)"}}>1ª Oleada (Fl. 1)</div>
                         <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--coral-500)',marginTop:4}}>{proj.flush1.kg} kg</div>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush1.pct * 100)}% de la cosecha</div>
                       </div>
-                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(77,98,53,.07)',border:'1px solid var(--accent-olive)',borderRadius:'var(--sim-r-sm)'}}>
                         <div style={{fontWeight:700,color:'var(--accent-olive)',fontSize:"var(--text-sm)"}}>2ª Oleada (Fl. 2)</div>
                         <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--accent-olive)',marginTop:4}}>{proj.flush2.kg} kg</div>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush2.pct * 100)}% de la cosecha</div>
                       </div>
-                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(160,120,40,.07)',border:'1px solid var(--ochre-500)',borderRadius:'var(--r-sm)'}}>
+                      <div style={{flex:1,minWidth:140,padding:12,background:'rgba(160,120,40,.07)',border:'1px solid var(--ochre-500)',borderRadius:'var(--sim-r-sm)'}}>
                         <div style={{fontWeight:700,color:'var(--ochre-500)',fontSize:"var(--text-sm)"}}>3ª Oleada (Fl. 3)</div>
                         <div style={{fontSize:24,fontFamily:'var(--font-mono)',fontWeight:700,color:'var(--ochre-500)',marginTop:4}}>{proj.flush3.kg} kg</div>
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:2}}>{Math.round(proj.flush3.pct * 100)}% de la cosecha</div>
@@ -17158,14 +17158,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {/* Calculadora Inversa: Requerimiento de Siembra */}
-                  <div style={{padding:14,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                  <div style={{padding:14,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                     <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-base)",fontWeight:700,marginBottom:6}}>Recomendación de Siembra para Déficit Comercial</div>
                     <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',marginBottom:8}}>
                       <label style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",fontWeight:700}}>Meta de cosecha requerida (kg):</label>
                       <input type="number" min="1" max="5000" value={fcDeficitTarget} onChange={e=>setFcDeficitTarget(parseFloat(e.target.value)||25)} style={{width:90,padding:'4px 8px'}}/>
                     </div>
                     {sowReq&&(
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-800)',background:'var(--paper-50)',padding:'10px 12px',borderRadius:'var(--r-sm)',border:'1px solid var(--border-soft)'}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-800)',background:'var(--paper-50)',padding:'10px 12px',borderRadius:'var(--sim-r-sm)',border:'1px solid var(--border-soft)'}}>
                         <AppIcon name="wand" size={14} style={{marginRight:6}} /> <b>Plan de inoculación:</b> {sowingRecommendation(fcDeficitTarget, schKey, { kgPerBag: fcKgBag, moisture: fcMoisture, eb: curEb })}
                       </div>
                     )}
@@ -17190,25 +17190,25 @@ body{margin:0;padding:20px 24px;background:#fff;}
               return(
                 <div>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                    <div style={{fontFamily:'var(--font-display)',fontSize:"var(--text-lg)",fontWeight:700}}>
+                    <div style={{fontFamily:'var(--font-display)',fontSize:"var(--sim-text-lg)",fontWeight:700}}>
                       Matriz B2B: Oferta Semanal Proyectada vs Compromisos Comerciales
                     </div>
-                    <div style={{padding:'6px 12px',borderRadius:'var(--r-sm)',background:'var(--paper-100)',border:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>
+                    <div style={{padding:'6px 12px',borderRadius:'var(--sim-r-sm)',background:'var(--paper-100)',border:'1px solid var(--border-soft)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}>
                       Estado general: {statusIcon} <b>{coverage.cobertura}% de cobertura</b>
                     </div>
                   </div>
 
                   {/* Resumen numérico */}
                   <div style={{display:'flex',gap:12,marginBottom:16,flexWrap:'wrap'}}>
-                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Cosecha Disponible Proyectada</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalProyectado} kg</div>
                     </div>
-                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:'var(--paper-100)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:'var(--ink-500)',textTransform:'uppercase',fontWeight:700}}>Compromisos B2B Restaurantes</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:'var(--ink-900)',marginTop:4}}>{coverage.totalComprometido} kg</div>
                     </div>
-                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'color-mix(in srgb, var(--status-error) 8%, transparent)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--r-sm)'}}>
+                    <div style={{flex:1,minWidth:150,padding:12,background:coverage.superavit>0?'rgba(77,98,53,.08)':'color-mix(in srgb, var(--status-error) 8%, transparent)',border:`1px solid ${coverage.superavit>0?'var(--accent-olive)':'var(--coral-500)'}`,borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",color:coverage.superavit>0?'var(--moss-800)':'var(--coral-600)',textTransform:'uppercase',fontWeight:700}}>
                         {coverage.superavit>0?'Superávit Comercial':'Déficit Comercial'}
                       </div>
@@ -17219,7 +17219,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {/* Tabla de pedidos B2B */}
-                  <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',overflow:'hidden',marginBottom:16}}>
+                  <div style={{border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',overflow:'hidden',marginBottom:16}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)"}}>
                       <thead>
                         <tr style={{background:'var(--paper-100)',borderBottom:'1px solid var(--border-soft)',textAlign:'left'}}>
@@ -17244,7 +17244,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   {/* Alerta de siembra en caso de déficit */}
                   {coverage.deficit>0&&(
-                    <div style={{padding:14,background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--coral-500)',borderRadius:'var(--r-sm)'}}>
+                    <div style={{padding:14,background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--coral-500)',borderRadius:'var(--sim-r-sm)'}}>
                       <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-sm)",fontWeight:700,color:'var(--coral-700)',marginBottom:4,display:'flex',alignItems:'center',gap:6}}>
                         <span>{deficit}</span> Déficit comercial proyectado: {coverage.deficit} kg de hongo fresco
                       </div>
@@ -17254,7 +17254,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
                   {coverage.superavit>0&&(
-                    <div style={{padding:12,background:'rgba(77,98,53,.08)',border:'1px solid var(--accent-olive)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-800)'}}>
+                    <div style={{padding:12,background:'rgba(77,98,53,.08)',border:'1px solid var(--accent-olive)',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--moss-800)'}}>
                       <span>{superavit}</span> Cobertura plena ({coverage.cobertura}%). Cuentas con {coverage.superavit} kg de superávit para nuevos clientes o venta directa en granja Tenjo.
                     </div>
                   )}
@@ -17270,14 +17270,14 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <ProductionReadinessDashboard assessment={productionReadiness} input={productionReadinessInput} rooms={Object.values(ROOMS_CONFIG)} onRoomChange={setSelectedClimateRoom} onAction={readinessAction} onSave={saveProductionEvidence} error={productionEvidence.error}/>
             {/* Selector de tipo de bolsa / recipiente */}
             <div className="panel no-print" style={{marginBottom:10}}>
-              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
+              <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Tipo de contenedor</div>
               <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:10}}>
                 {BAG_TYPES.map(bt=>{
                   const on=prodBagType===bt.id;
                   const stockUds=bt.stockId?stockActual(bt.stockId,invLotes):0;
                   const noStock=!bt.stockId||stockUds<=0;
                   return(
-                    <button key={bt.id} disabled={noStock} aria-disabled={noStock} title={noStock?'Sin unidades en Bodega — no se puede seleccionar para ejecutar el lote':`${stockUds} uds disponibles en Bodega`} onClick={()=>{if(noStock) return;setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:noStock?'not-allowed':'pointer',opacity:noStock?.5:1,textAlign:'left',minWidth:170,transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>
+                    <button key={bt.id} disabled={noStock} aria-disabled={noStock} title={noStock?'Sin unidades en Bodega — no se puede seleccionar para ejecutar el lote':`${stockUds} uds disponibles en Bodega`} onClick={()=>{if(noStock) return;setProdBagType(bt.id);setProdKg(bt.kgHumedo);}} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2,padding:'8px 12px',border:`1.5px solid ${on?bt.color:'var(--border-soft)'}`,borderRadius:'var(--sim-r-sm)',background:on?'var(--paper-100)':'var(--paper-50)',cursor:noStock?'not-allowed':'pointer',opacity:noStock?.5:1,textAlign:'left',minWidth:170,transition:'background-color .12s,border-color .12s,color .12s,transform .12s'}}>
                       <div style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",color:on?bt.color:'var(--ink-900)'}}>{bt.icon} {bt.name.split('·')[0].trim()}</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)'}}>{bt.dim} · {bt.kgHumedo} kg húmedo · {bt.vol_L} L</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:noStock?'var(--coral-700)':'var(--moss-700)',fontWeight:700}}>{bt.stockId?`${stockUds} uds en Bodega`:'Sin stock'}</div>
@@ -17313,54 +17313,54 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div className="panel no-print" style={{marginBottom:14}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--border-soft)'}}><span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-800)'}}>Hoja de Producción — Lote</span></div>
               {!recipe.length?(
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'color-mix(in oklab, var(--status-attention) 80%, black)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--r-sm)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',padding:'14px',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'color-mix(in oklab, var(--status-attention) 80%, black)',background:'var(--status-attention-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--sim-r-sm)'}}>
                   <span>No hay receta activa. Crea o carga una receta antes de preparar el lote.</span>
                   <button type="button" className="inv-btn inv-btn-pri" onClick={()=>goTab('formular')}>Ir al Formulador</button>
                 </div>
               ):(
                 <>
                 {an&&!balanced&&(
-                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-error)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--r-sm)'}}>
+                  <div style={{padding:'14px',marginBottom:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--status-error)',background:'color-mix(in srgb, var(--status-error) 8%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--sim-r-sm)'}}>
                     <AppIcon name="alert" size={13} color="var(--status-error)" style={{marginRight:4}} /> {balMsg} — no se puede ejecutar el lote ni guardar la receta hasta que la mezcla cierre en 100% (±{MASS_BALANCE_TOL}%). Ajusta los porcentajes en el <strong>Formulador</strong>.
                   </div>
                 )}
                 <div className="prod-batch-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1.2fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label htmlFor="prod-skey" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Especie</label>
-                    <select id="prod-skey" value={sKey} onChange={e=>setSKey(e.target.value)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-body)',fontSize:"var(--text-base)"}}>
+                    <select id="prod-skey" value={sKey} onChange={e=>setSKey(e.target.value)} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-body)',fontSize:"var(--text-base)"}}>
                       {Object.entries(SPP).map(([k,s])=><option key={k} value={k}>{s.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label htmlFor="prod-bags" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}># Bolsas</label>
-                    <CaptureInput id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>setProdBags(e.target.value)} rules={{required:true,min:1,integer:true}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-bags" type="number" min="1" step="1" value={prodBags} onChange={e=>setProdBags(e.target.value)} rules={{required:true,min:1,integer:true}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-kg" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>kg / bolsa</label>
-                    <CaptureInput id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>setProdKg(e.target.value)} rules={{required:true,min:0.1}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                    <CaptureInput id="prod-kg" type="number" min="0.1" step="0.1" value={prodKg} onChange={e=>setProdKg(e.target.value)} rules={{required:true,min:0.1}} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
                   </div>
                   <div>
                     <label htmlFor="prod-h" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Humedad % · Inóculo</label>
                     <div style={{display:'flex',gap:6}}>
-                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.hObj=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
-                      <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
+                      <CaptureInput id="prod-h" type="number" min="55" max="75" step="1" value={prodH} onChange={e=>{moistureTouched.current.hObj=true;setProdH(e.target.value);}} rules={{required:true,min:55,max:75}} style={{width:'50%',padding:'9px 8px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}/>
+                      <input type="date" name="fechaInoculo" aria-label="Fecha de inóculo" value={prodDate} onChange={e=>setProdDate(e.target.value)} style={{width:'50%',padding:'9px 6px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)"}}/>
                     </div>
                   </div>
                   <div>
                     <label htmlFor="prod-scale" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>Báscula (g)</label>
-                    <select id="prod-scale" value={prodScaleG} onChange={e=>setProdScaleG(parseFloat(e.target.value))} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}>
+                    <select id="prod-scale" value={prodScaleG} onChange={e=>setProdScaleG(parseFloat(e.target.value))} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-base)"}}>
                       {[['0.1','0.1 g (100 mg)'],['1','1 g'],['5','5 g'],['10','10 g'],['50','50 g']].map(([v,l])=><option key={v} value={v}>{l}</option>)}
                     </select>
                   </div>
                   <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
                     <div style={{flex:1,minWidth:140}}>
                       <label htmlFor="prod-lote" style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-500)',display:'block',marginBottom:5}}>N.º lote</label>
-                      <input id="prod-lote" name="numeroLote" autoComplete="off" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="Ej. L-2026-047…" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",boxSizing:'border-box'}}/>
+                      <input id="prod-lote" name="numeroLote" autoComplete="off" type="text" value={prodLoteNum} onChange={e=>setProdLoteNum(e.target.value)} placeholder="Ej. L-2026-047…" maxLength={24} style={{width:'100%',padding:'9px 11px',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",boxSizing:'border-box'}}/>
                     </div>
-                    {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
-                    <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
-                    <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
-                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:productionBlockMsg||'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
+                    {Object.keys(prodMoist).length>0&&<button onClick={()=>setProdMoist({})} title="Volver a las humedades de la base de datos" style={{padding:'9px 12px',background:'var(--paper-50)',color:'var(--ink-500)',border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:700,fontSize:"var(--text-sm)",cursor:'pointer',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↺ H₂O</button>}
+                    <button onClick={exportPDF} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--ink-900)':'var(--paper-300)',color:balanced?'var(--paper-50)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>↓ PDF</button>
+                    <button onClick={printProdSheet} disabled={!balanced} title={balanced?'':balMsg} style={{padding:'9px 14px',background:balanced?'var(--coral-500)':'var(--paper-300)',color:balanced?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end'}}>Imprimir</button>
+                    <button onClick={()=>ejecutarLote(prodRows,prodLoteNum,prodDate)} disabled={!balanced||!readyForProduction} title={prodRows&&readyForProduction?"Reservar los insumos de este lote; la bodega se descuenta al registrar la mezcla":(!balanced?balMsg:productionBlockMsg||'Completa # bolsas y kg/bolsa para generar la ficha')} style={{padding:'9px 14px',background:prodRows&&readyForProduction?'var(--moss-700)':'var(--paper-300)',color:prodRows&&readyForProduction?'var(--paper-0)':'var(--ink-500)',border:'none',borderRadius:'var(--sim-r-sm)',fontFamily:'var(--font-body)',fontWeight:800,fontSize:"var(--text-sm)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',cursor:balanced&&readyForProduction?'pointer':'not-allowed',whiteSpace:'nowrap',alignSelf:'flex-end',transition:'background .15s'}}><AppIcon name="bolt" size={13} style={{marginRight:4}} /> Planificar lote</button>
                     {loteSyncErr&&<span style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-error)',alignSelf:'flex-end',marginBottom:9,display:'inline-flex',alignItems:'center',gap:4}} title={loteSyncErr}><AppIcon name="alert" size={11} color="var(--status-error)" /> sin sincronizar</span>}
                   </div>
                 </div>
@@ -17442,9 +17442,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 {/* Encabezado */}
                 <div className="ps-head" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',borderBottom:'2px solid var(--ink-900)',paddingBottom:12,marginBottom:16}}>
                   <div>
-                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Tenjo 2.600 msnm</div>
+                    <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)'}}>Setas de la Peña · Tenjo 2.600 msnm</div>
                     <div style={{fontFamily:'var(--font-serif)',fontSize:28,fontWeight:700,color:'var(--ink-900)',lineHeight:1.1,marginTop:2}}>Hoja de Producción</div>
-                    <div style={{fontFamily:'var(--font-serif)',fontSize:"var(--text-lg)",color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i style={{fontFamily:'var(--font-serif)'}}>{an.sp?.scientific}</i></div>
+                    <div style={{fontFamily:'var(--font-serif)',fontSize:"var(--sim-text-lg)",color:'var(--ink-900)',marginTop:2}}>{an.sp?.name} · <i style={{fontFamily:'var(--font-serif)'}}>{an.sp?.scientific}</i></div>
                   </div>
                   <div className="ps-head-right" style={{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-500)'}}>
                     <div>Fecha lote: <b style={{color:'var(--ink-900)'}}>{prodDate}</b></div>
@@ -17572,7 +17572,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ['Sustrato húmedo objetivo',`${pb.wet.toFixed(1)} kg`,`${prodBags} bolsas × ${prodKg} kg · ${prodH}% H₂O`],
                   ].map(([l,v,s])=>(
                     <div key={l} style={{border:'1px solid var(--paper-300)',padding:'10px 12px',background:'var(--paper-50)'}}>
-                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
+                      <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',color:'var(--ink-700)',marginBottom:3,fontWeight:700}}>{l}</div>
                       <div style={{fontFamily:'var(--font-num)',fontSize:20,fontWeight:600,color:'var(--ink-900)'}}>{v}</div>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginTop:1,fontWeight:500}}>{s}</div>
                     </div>
@@ -17616,7 +17616,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div className="ps-fechas-wrap"><div className="ps-fechas" style={{display:'grid',gridTemplateColumns:`repeat(${fechas.length},1fr)`,gap:1,background:'var(--paper-300)',border:'1px solid var(--paper-300)'}}>
                       {fechas.map(([l,v])=>(
                         <div key={l} style={{background:'var(--paper-0)',padding:'8px 6px',textAlign:'center'}}>
-                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--tracking-label)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{l}</div>
+                          <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-2xs)",letterSpacing:'var(--sim-tracking-label)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:2}}>{l}</div>
                           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-sm)",color:'var(--ink-900)'}}>{v}</div>
                         </div>
                       ))}
@@ -17637,7 +17637,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{borderBottom:'1px solid var(--paper-400)',height:22,marginBottom:10}}></div>
                     <div style={{borderBottom:'1px solid var(--paper-400)',height:22}}></div>
                   </div>
-                  <div style={{marginTop:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',textAlign:'right',letterSpacing:'var(--tracking-label)'}}>Setas de la Pe\u00f1a · Tenjo 2.600 msnm · simulador v9.1</div>
+                  <div style={{marginTop:14,fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-400)',textAlign:'right',letterSpacing:'var(--sim-tracking-label)'}}>Setas de la Pe\u00f1a · Tenjo 2.600 msnm · simulador v9.1</div>
                 </div>
               </div>
               </div>
@@ -17816,7 +17816,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     data-testid="harvest-postharvest-advisor"
                     style={{
                       padding: '10px 12px',
-                      borderRadius: 'var(--radius-sm, 3px)',
+                      borderRadius: 'var(--sim-radius-sm, 3px)',
                       background: 'var(--paper-1)',
                       border: '1px solid var(--border-hairline)',
                       marginBottom: 14,
@@ -17925,7 +17925,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
           });
           return <AccessibleModal onClose={()=>{setShowDayClose(false);setDayCloseNote(null);}} label="Cerrar jornada" dialogStyle={{width:560,maxWidth:'calc(100vw - 32px)',maxHeight:'calc(100vh - 100px)',overflowY:'auto'}}>
             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--ink-2)'}}>Cierre de jornada</div>
-            <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--text-xl)',margin:'2px 0 12px'}}>Reporte del turno</h2>
+            <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',margin:'2px 0 12px'}}>Reporte del turno</h2>
             <div data-testid="day-close-report" style={{display:'flex',flexDirection:'column',gap:4,fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)'}}>
               <div>Eventos registrados: {report.eventsLogged}</div>
               <div>Tareas completadas: {report.tasksCompleted}</div>
@@ -18001,7 +18001,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* SELECTOR DE MODO DE ESCANEO */}
-                <div role="group" aria-label="Modo de captura" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--radius-sm, 3px)', marginBottom: 12 }}>
+                <div role="group" aria-label="Modo de captura" style={{ display: 'flex', flexWrap: 'wrap', gap: 4, background: 'var(--paper-2)', padding: 3, borderRadius: 'var(--sim-radius-sm, 3px)', marginBottom: 12 }}>
                   {[
                     { mode: 'round', icon: 'scan', label: 'Ronda Lote' },
                     { mode: 'harvest', icon: 'scale', label: 'Báscula Cosecha' },
@@ -18303,7 +18303,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                     {/* MODO BARRIDO: COLA DE BOLSAS Y ACCIONES MASIVAS */}
                     {qrScanMode === 'sweep' && (
-                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm, 2px)' }}>
+                      <div style={{ marginTop: 6, marginBottom: 12, padding: 10, background: 'var(--paper-0)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm, 2px)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                           <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-0)' }}>
                             <AppIcon name="bolt" size={13} style={{marginRight:4}} /> Hilera Actual: {sweepQueue.length} {sweepQueue.length === 1 ? 'bolsa' : 'bolsas'}
@@ -18480,7 +18480,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </button>
                     </div>
 
-                    <div style={{padding:'10px 12px',background:'var(--paper-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm,2px)',marginBottom:12}}>
+                    <div style={{padding:'10px 12px',background:'var(--paper-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm,2px)',marginBottom:12}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
                         <strong style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--ink-0)'}}>{currentLote.codigo}</strong>
                         <span style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--ink-2)'}}>{currentLote.especie}</span>
@@ -18965,12 +18965,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
 
                   {f.plan?.shortfalls?.length > 0 && (
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'var(--status-error-bg)',border:'1px solid var(--coral-200)',borderRadius:'var(--radius-sm)',padding:'8px 10px',marginBottom:8}}>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--coral-500)',background:'var(--status-error-bg)',border:'1px solid var(--coral-200)',borderRadius:'var(--sim-radius-sm)',padding:'8px 10px',marginBottom:8}}>
                       <AppIcon name="alert" size={12} color="var(--coral-500)" style={{marginRight:4}} /> Faltan insumos en bodega: {f.plan.shortfalls.map(s => `${s.ingredientId} (${s.missing} ${s.unidad})`).join(', ')}. Se descontará lo disponible.
                     </div>
                   )}
 
-                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+                  <div style={{border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
                     <table className="prod-launch-table" style={{minWidth:360}}>
                       <thead>
                         <tr>
@@ -19013,7 +19013,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           padding:'10px 12px',
                           border:`1.5px solid ${f.sala === r.id ? 'var(--moss-700)' : 'var(--border-hairline)'}`,
                           background: f.sala === r.id ? 'var(--paper-0)' : 'var(--paper-50)',
-                          borderRadius:'var(--radius-sm)',
+                          borderRadius:'var(--sim-radius-sm)',
                           textAlign:'left',
                           cursor:'pointer'
                         }}
@@ -19044,7 +19044,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         style={{
                           marginTop: 10,
                           padding: '12px 14px',
-                          borderRadius: 'var(--radius-sm, 3px)',
+                          borderRadius: 'var(--sim-radius-sm, 3px)',
                           background: 'var(--paper-0)',
                           border: `1.5px solid ${coCultAssignOpt.groupScore >= 75 ? 'var(--accent-olive)' : 'var(--ochre-500)'}`,
                         }}
@@ -19108,7 +19108,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
 
                 {/* Opciones Adicionales */}
-                <div style={{display:'flex',flexDirection:'column',gap:8,padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)'}}>
+                <div style={{display:'flex',flexDirection:'column',gap:8,padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--sim-radius-sm)'}}>
                   <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--ink-0)'}}>
                     <input
                       type="checkbox"
@@ -19523,7 +19523,7 @@ interval:
                     max="22"
                     value={autoclaveGaugePsi}
                     onChange={(e) => setAutoclaveGaugePsi(parseFloat(e.target.value) || 0)}
-                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
                   <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Tenjo requiere 19.04 psi</span>
                 </div>
@@ -19539,7 +19539,7 @@ interval:
                     max="240"
                     value={autoclaveHoldMin}
                     onChange={(e) => setAutoclaveHoldMin(parseInt(e.target.value, 10) || 0)}
-                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
                   <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>90–120 min según bolsa</span>
                 </div>
@@ -19555,7 +19555,7 @@ interval:
                     max="4.0"
                     value={autoclaveBagKg}
                     onChange={(e) => setAutoclaveBagKg(parseFloat(e.target.value) || 2.0)}
-                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
                   <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Inercia térmica de núcleo</span>
                 </div>
@@ -19571,7 +19571,7 @@ interval:
                     max="75"
                     value={autoclaveMoisturePct}
                     onChange={(e) => setAutoclaveMoisturePct(parseInt(e.target.value, 10) || 65)}
-                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
                   />
                   <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>Transferencia por vapor</span>
                 </div>
@@ -19608,7 +19608,7 @@ interval:
               {/* Veredicto y Status */}
               <div style={{
                 padding: '12px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: 'var(--sim-radius-sm)',
                 background: cycle.riskLevel === 'seguro' ? 'var(--moss-100)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
                 border: `1px solid ${cycle.riskLevel === 'seguro' ? 'var(--moss-600)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
                 color: cycle.riskLevel === 'seguro' ? 'var(--moss-800)' : cycle.riskLevel === 'moderado' ? 'var(--status-warn-text)' : 'var(--accent-rust)',
@@ -19660,7 +19660,7 @@ interval:
               </div>
 
               {/* Alerta de Desviación Barométrica a 15 PSI */}
-              <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+              <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--sim-radius-sm)', padding: 12, marginBottom: 16 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
                   <AppIcon name="scale" size={13} style={{marginRight:4}} /> Comparativa Barométrica: 15.0 psig vs 19.04 psig en Tenjo (74.5 kPa)
                 </div>
@@ -19768,7 +19768,7 @@ interval:
                 <>
                   <div style={{
                     padding: '12px 14px',
-                    borderRadius: 'var(--radius-sm)',
+                    borderRadius: 'var(--sim-radius-sm)',
                     background: opt.groupScore >= 70 ? 'var(--moss-100)' : opt.groupScore >= 50 ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
                     border: `1px solid ${opt.groupScore >= 70 ? 'var(--moss-600)' : opt.groupScore >= 50 ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
                     color: opt.groupScore >= 70 ? 'var(--moss-800)' : opt.groupScore >= 50 ? 'var(--status-warn-text)' : 'var(--accent-rust)',
@@ -19826,7 +19826,7 @@ interval:
 
                   {/* Cuellos de Botella y Alertas Biológicas */}
                   {(opt.bottlenecks?.length > 0 || opt.biologicalAlerts?.length > 0) && (
-                    <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                    <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--sim-radius-sm)', padding: 12, marginBottom: 16 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--accent-terracotta)', marginBottom: 6 }}>
                         <AppIcon name="alert" size={13} color="var(--status-warn-marker)" style={{marginRight:4}} /> Cuello de Botella de Liebig & Riesgos Biológicos Cruzados:
                       </div>
@@ -19895,7 +19895,7 @@ interval:
                   <select
                     value={postHarvestSelectedSpecies}
                     onChange={(e) => setPostHarvestSelectedSpecies(e.target.value)}
-                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-sans)', fontSize: 12 }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-sans)', fontSize: 12 }}
                   >
                     {spKeys.map((k) => (
                       <option key={k} value={k}>{allPostProfiles[k].name}</option>
@@ -19955,7 +19955,7 @@ interval:
                       max="500"
                       value={postHarvestBatchKg}
                       onChange={(e) => setPostHarvestBatchKg(parseFloat(e.target.value) || 1)}
-                      style={{ width: 80, padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                      style={{ width: 80, padding: '4px 8px', borderRadius: 'var(--sim-radius-sm)', border: '1px solid var(--line-0)', fontFamily: 'var(--font-mono)', fontSize: 12 }}
                     />
                     <label style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
                       <input
@@ -19974,7 +19974,7 @@ interval:
                 <>
                   <div style={{
                     padding: '12px 14px',
-                    borderRadius: 'var(--radius-sm)',
+                    borderRadius: 'var(--sim-radius-sm)',
                     background: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-100)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn-bg)' : 'var(--accent-terracotta-dim)',
                     border: `1px solid ${slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-600)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn)' : 'var(--accent-terracotta)'}`,
                     color: slResult.marketableShelfLifeDays >= 6 ? 'var(--moss-800)' : slResult.marketableShelfLifeDays >= 3 ? 'var(--status-warn-text)' : 'var(--accent-rust)',
@@ -20030,7 +20030,7 @@ interval:
 
                   {/* Respiración & Calor Vital */}
                   {resp && (
-                    <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                    <div style={{ background: 'var(--paper-2)', border: '1px solid var(--line-0)', borderRadius: 'var(--sim-radius-sm)', padding: 12, marginBottom: 16 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)', marginBottom: 4 }}>
                         <AppIcon name="bolt" size={14} style={{marginRight:6}} /> Fisiología Respiratoria & Carga Térmica (Lote {postHarvestBatchKg} kg):
                       </div>
@@ -20042,7 +20042,7 @@ interval:
                   )}
 
                   {/* Especificación de Empaque MAP */}
-                  <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: 12, marginBottom: 16 }}>
+                  <div style={{ background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm)', padding: 12, marginBottom: 16 }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--status-info)', marginBottom: 4 }}>
                       <AppIcon name="box" size={14} style={{marginRight:6}} /> Especificación Técnica de Empaque en Atmósfera Modificada (MAP):
                     </div>
@@ -20215,7 +20215,7 @@ interval:
                       Lote Afectado
                     </label>
                     <select
-                      style={{ width: '100%', padding: '7px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      style={{ width: '100%', padding: '7px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm)' }}
                       value={currentLote?.id || ''}
                       onChange={e => {
                         setTriageLoteId(e.target.value);
@@ -20233,7 +20233,7 @@ interval:
                     </label>
                     <input
                       type="text"
-                      style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm)' }}
                       value={triageLocation}
                       onChange={e => setTriageLocation(e.target.value)}
                       placeholder="Ej: Estantería B · Nivel 2"
@@ -20272,7 +20272,7 @@ interval:
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)', padding: '10px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--paper-1)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm)', padding: '10px 14px' }}>
                   <div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: 'var(--ink-0)' }}>
                       Bolsas con Síntomas Visibles
@@ -20294,7 +20294,7 @@ interval:
                       type="number"
                       min="1"
                       max={totalBags}
-                      style={{ width: 44, textAlign: 'center', padding: '5px 2px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                      style={{ width: 44, textAlign: 'center', padding: '5px 2px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm)' }}
                       value={triageAffectedBags}
                       onChange={e => {
                         const val = parseInt(e.target.value, 10);
@@ -20394,7 +20394,7 @@ interval:
                   </label>
                   <input
                     type="text"
-                    style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-sm)' }}
+                    style={{ width: '100%', padding: '6px 8px', fontFamily: 'var(--font-sans)', fontSize: 12, border: '1px solid var(--border-hairline)', borderRadius: 'var(--sim-radius-sm)' }}
                     value={triageNotes}
                     onChange={e => setTriageNotes(e.target.value)}
                     placeholder="Detalles sobre olor, avance de la mancha o causa probable..."
@@ -20565,7 +20565,7 @@ interval:
           };
 
           return (
-            <div className="inv-modal-bg" style={{zIndex:99999}} onClick={()=>setShowDiagModal(false)}>
+            <div className="inv-modal-bg" style={{zIndex:'var(--z-modal-system)'}} onClick={()=>setShowDiagModal(false)}>
               <div className="os-diag-modal" data-testid="ai-contamination-diagnosis-modal" onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
                   <div>
@@ -20590,7 +20590,7 @@ interval:
                   <div>
                     <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Lote</label>
                     <select
-                      style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                      style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)'}}
                       value={currentLote?.id||''}
                       onChange={e=>{
                         setDiagLoteId(e.target.value);
@@ -20605,7 +20605,7 @@ interval:
                   <div>
                     <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:10,color:'var(--ink-1)',marginBottom:2}}>Bolsa Específica</label>
                     <select
-                      style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                      style={{width:'100%',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)'}}
                       value={currentBolsa?.id||''}
                       onChange={e=>setDiagBolsaId(e.target.value)}
                     >
@@ -20637,14 +20637,14 @@ interval:
                   <input
                     type="text"
                     placeholder="Ej. Olor agrio, manchas circulares, 3 días de incubación..."
-                    style={{width:'100%',boxSizing:'border-box',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                    style={{width:'100%',boxSizing:'border-box',padding:'6px 8px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)'}}
                     value={diagNotes}
                     onChange={e=>setDiagNotes(e.target.value)}
                   />
                 </div>
 
                 {diagError && (
-                  <div style={{padding:'8px 12px',background:'var(--status-error-bg)',color:'var(--status-error)',borderRadius:'var(--radius-sm)',fontSize:12,marginBottom:12}}>
+                  <div style={{padding:'8px 12px',background:'var(--status-error-bg)',color:'var(--status-error)',borderRadius:'var(--sim-radius-sm)',fontSize:12,marginBottom:12}}>
                     <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {diagError}
                   </div>
                 )}
@@ -20709,7 +20709,7 @@ interval:
                           background:'var(--moss-700)',
                           color:'var(--paper-50)',
                           border:'none',
-                          borderRadius:'var(--radius-sm)',
+                          borderRadius:'var(--sim-radius-sm)',
                           fontFamily:'var(--font-sans)',
                           fontSize:12,
                           fontWeight:700
@@ -20727,7 +20727,7 @@ interval:
                           background:'var(--paper-1)',
                           color:'var(--ink-0)',
                           border:'1px solid var(--border-hairline)',
-                          borderRadius:'var(--radius-sm)',
+                          borderRadius:'var(--sim-radius-sm)',
                           fontFamily:'var(--font-sans)',
                           fontSize:12,
                           fontWeight:600
@@ -20782,7 +20782,7 @@ interval:
           };
 
           return (
-            <div className="inv-modal-bg" style={{zIndex:99999}} onClick={()=>setShowAIFormModal(false)}>
+            <div className="inv-modal-bg" style={{zIndex:'var(--z-modal-system)'}} onClick={()=>setShowAIFormModal(false)}>
               <div className="os-diag-modal" data-testid="ai-formulation-advisor-modal" style={{maxWidth:620}} onClick={e=>e.stopPropagation()}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
                   <div>
@@ -20796,7 +20796,7 @@ interval:
                   <button type="button" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--ink-2)'}} onClick={()=>setShowAIFormModal(false)} aria-label="Cerrar modal"><AppIcon name="close" size={12} /></button>
                 </div>
 
-                <div style={{padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--radius-sm)',border:'1px solid var(--border-hairline)',marginBottom:12}}>
+                <div style={{padding:'10px 12px',background:'var(--paper-1)',borderRadius:'var(--sim-radius-sm)',border:'1px solid var(--border-hairline)',marginBottom:12}}>
                   <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--ink-1)',marginBottom:4}}>
                     <b>Estado actual:</b> {sp?.name || sKey} · C:N {an?.cn?.toFixed(1) || '--'} · N {an?.n?.toFixed(2) || '--'}% · EB {((blendedEB || an?.be) || 0).toFixed(0)}%
                   </div>
@@ -20808,7 +20808,7 @@ interval:
                     placeholder="ej. Elevar C:N a 28, reducir costo por kg, o evitar Trichoderma en Orellana"
                     value={aiFormGoal}
                     onChange={e=>setAiFormGoal(e.target.value)}
-                    style={{width:'100%',padding:'8px 10px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-sm)'}}
+                    style={{width:'100%',padding:'8px 10px',fontFamily:'var(--font-sans)',fontSize:12,border:'1px solid var(--border-hairline)',borderRadius:'var(--sim-radius-sm)'}}
                   />
                 </div>
 
@@ -20823,7 +20823,7 @@ interval:
                       background:aiFormLoading?'var(--ink-500)':'var(--moss-700)',
                       color:'var(--paper-50)',
                       border:'none',
-                      borderRadius:'var(--radius-sm)',
+                      borderRadius:'var(--sim-radius-sm)',
                       fontFamily:'var(--font-sans)',
                       fontSize:13,
                       fontWeight:700,
@@ -20835,14 +20835,14 @@ interval:
                 )}
 
                 {aiFormError && (
-                  <div style={{marginTop:10,padding:'8px 12px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--radius-sm)',fontSize:12,color:'var(--status-error)'}}>
+                  <div style={{marginTop:10,padding:'8px 12px',background:'color-mix(in srgb, var(--status-error) 10%, transparent)',border:'1px solid var(--status-error)',borderRadius:'var(--sim-radius-sm)',fontSize:12,color:'var(--status-error)'}}>
                     <AppIcon name="alert" size={12} color="var(--status-error)" style={{marginRight:4}} /> {aiFormError}
                   </div>
                 )}
 
                 {aiFormResult && (
                   <div style={{marginTop:12}}>
-                    <div style={{padding:'12px',background:'rgba(56,89,51,.06)',border:'1px solid rgba(56,89,51,.2)',borderRadius:'var(--radius-sm)',marginBottom:12}}>
+                    <div style={{padding:'12px',background:'rgba(56,89,51,.06)',border:'1px solid rgba(56,89,51,.2)',borderRadius:'var(--sim-radius-sm)',marginBottom:12}}>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,textTransform:'uppercase',color:'var(--moss-700)',fontWeight:700,marginBottom:4}}>
                         Dictamen Agronómico Gemini (Confianza: {(aiFormResult.confianza||'alta').toUpperCase()})
                       </div>
@@ -20871,7 +20871,7 @@ interval:
                           background:'var(--moss-700)',
                           color:'var(--paper-50)',
                           border:'none',
-                          borderRadius:'var(--radius-sm)',
+                          borderRadius:'var(--sim-radius-sm)',
                           fontFamily:'var(--font-sans)',
                           fontSize:12,
                           fontWeight:700,
@@ -20889,7 +20889,7 @@ interval:
                           background:'var(--paper-1)',
                           color:'var(--ink-0)',
                           border:'1px solid var(--border-hairline)',
-                          borderRadius:'var(--radius-sm)',
+                          borderRadius:'var(--sim-radius-sm)',
                           fontFamily:'var(--font-sans)',
                           fontSize:12,
                           fontWeight:600,
