@@ -20,9 +20,9 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# Contains 100% complete coverage of all 126 active documents in the
-# Setas de la Peña knowledge base, validated for schema compliance,
-# controlled vocabularies, and cross-reference referential integrity.
+# 128 catalog entries as of 2026-10-27; the completeness of indexing of all
+# repository documents must be reassessed, as some later operational documents
+# were created after the original 126-entry census.
 #
 # =============================================================================
 
@@ -2136,3 +2136,33 @@ documents:
     supersedes: null
     confidence: high
     status: active
+
+  - id: manual-monte-jongas-shiitake-pellets-2026-10-27
+    title: "Manual Monte Jongas: sustrato de shiitake con pellets — transcripción fiel"
+    path: 02_substrates/manual_monte_jongas_shiitake_pellets_transcripcion_2026-10-27.md
+    authority: research_library
+    category: substrates
+    canonical: false
+    topics: [shiitake, hardwood-pellets, substrate-recipe, pilot-source, source-transcription]
+    keywords: ["Monte Jongas", "pellets de madera dura", "shiitake", "60% humedad", "cal hidratada", "80/20"]
+    related_documents: [auditoria-manual-shiitake-pellets-monte-jongas-2026-10-27, substrate-library, supplementation, sterilization]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: experimental
+    status: active
+
+  - id: auditoria-manual-shiitake-pellets-monte-jongas-2026-10-27
+    title: "Auditoría técnica — Manual Monte Jongas, shiitake con pellets (2026-10-27)"
+    path: 09_research/auditoria_manual_shiitake_pellets_monte_jongas_2026-10-27.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, thermal-commissioning, altitude, substrate-formulation, pilot-audit]
+    keywords: ["auditoría Monte Jongas", "All American 1941X", "Tenjo", "Ca(OH)2", "15 psi", "microlote"]
+    related_documents: [manual-monte-jongas-shiitake-pellets-2026-10-27, substrate-library, supplementation, sterilization, quality-control]
+    depends_on: [manual-monte-jongas-shiitake-pellets-2026-10-27]
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
