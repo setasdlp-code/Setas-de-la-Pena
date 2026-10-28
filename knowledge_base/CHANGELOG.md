@@ -24,6 +24,13 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-10-27
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporada la transcripción íntegra en texto (13 páginas; sin ilustraciones) del manual externo **Monte Jongas**, sustrato de shiitake con pellets, como `02_substrates/manual_monte_jongas_shiitake_pellets_transcripcion_2026-10-27.md` (`DOC-0125`). El PDF original se conserva en el archivo entregado, no está incrustado en el repositorio. |
+| `[KB]` | Registrada la auditoría `09_research/auditoria_manual_shiitake_pellets_monte_jongas_2026-10-27.md` (`DOC-0126`): cálculos consistentes, pH/Ca(OH)₂ a validar, **15 psi no implica 121 °C a ~2.600 m**, ciclo térmico pendiente de comisionamiento y conflicto de escala (4 × 2,75 kg vs. lote 1 de 30 × 2,0 kg). Ambos documentos indexados en `INDEX.yaml` como fuente/estudio no normativos; **sin modificar recetas aprobadas ni compuertas de inoculación**. |
+
 ### 2026-10-25
 
 | Tipo | Descripción |
