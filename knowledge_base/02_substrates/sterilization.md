@@ -3,7 +3,7 @@ title: Esterilización de Sustratos
 document_id: DOC-0012
 category: substrates
 load_priority: selective
-last_reviewed: 2026-08-19
+last_reviewed: 2026-10-28
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -20,6 +20,8 @@ related_documents:
   - ../05_equipment/autoclaves.md
   - ../06_operations/operational_commissioning.md
   - ../09_research/commissioning_validation_research.md
+  - shiitake_pellets_microlote_receta_v1.md
+  - ../06_operations/shiitake_microlote_pellets_sop_v1.md
 ---
 
 # Executive Summary
@@ -95,6 +97,12 @@ En Tenjo (~2600 m s.n.m.) la presión atmosférica difiere de la del nivel del m
 - verificar instrumentos antes del commissioning;
 - medir temperatura del producto cuando sea técnicamente posible;
 - seguir el manual y límites del fabricante del equipo.
+
+## Caso del microlote Monte Jongas — transferencia restringida
+
+La fuente propone 121 °C por 90–120 min a 15 psi para cuatro bolsas de 2,5 kg de sustrato con pellets + salvado. **Esa relación presión/temperatura no es directamente válida a ~2.600 m en Tenjo**, y el tiempo nominal no demuestra penetración térmica en el producto. Mantener como referencia bibliográfica, nunca como orden de procesamiento ni liberación. El procedimiento para cuatro bolsas figura en `../06_operations/shiitake_microlote_pellets_sop_v1.md` y su formulación en `shiitake_pellets_microlote_receta_v1.md`.
+
+Antes de inocular exigir ciclo versionado y aprobado para la carga representativa, instrucción oficial del All American 1941X para altitud, purga/seguridad, temperatura medida en el producto y evidencia de penetración y repetibilidad (`../06_operations/operational_commissioning.md`). No aumentar presión sin consultar límites del fabricante.
 
 ## Equipos para el programa actual
 
