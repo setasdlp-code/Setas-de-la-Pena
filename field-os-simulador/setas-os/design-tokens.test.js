@@ -147,3 +147,28 @@ test('__harness.html carga las hojas en el mismo orden efectivo que el shell', (
   const last = (list) => list.filter((h, i) => list.lastIndexOf(h) === i);
   assert.deepEqual(last(harness), last(shell));
 });
+
+test('sim.css no usa font-size en px ni duraciones literales', () => {
+  // Tamaños: escala --text-* / --sim-text-* (DS-2026); las etiquetas térmicas
+  // leen --thermal-*-size, que vienen de THERMAL_LABEL_SPECS.
+  // Duraciones: escala --duration-* de sim.css.
+  const css = stripComments(fs.readFileSync(path.join(ROOT, 'sim.css'), 'utf8'));
+  const sizes = [...css.matchAll(/font-size\s*:\s*([0-9.]+px)/g)].map((m) => m[1]);
+  assert.deepEqual(sizes, [], 'usa un token --text-* / --sim-text-* en vez de px');
+  const durations = [...css.matchAll(/transition\s*:\s*([^;}]+)/g)]
+    .map((m) => m[1]).filter((v) => /(^|[\s,])[0-9]*\.?[0-9]+m?s\b/.test(v.replace(/var\([^)]*\)/g, '')));
+  assert.deepEqual(durations, [], 'usa --duration-* en vez de una duración literal');
+});
+
+test('!important en sim.css y style="" en el shell no crecen', () => {
+  // Tope, no meta: quitarlos exige revisar cada regla con su estado visual
+  // (hover, modales, vistas del shell tras el acceso), que este harness no
+  // cubre. Al retirar alguno, baja el número aquí en el mismo cambio.
+  const MAX_IMPORTANT = 768;
+  const MAX_INLINE_STYLE = 832;
+  const css = stripComments(fs.readFileSync(path.join(ROOT, 'sim.css'), 'utf8'));
+  const important = (css.match(/!important/g) || []).length;
+  const inline = (SHELL.match(/\sstyle="/g) || []).length;
+  assert.ok(important <= MAX_IMPORTANT, `sim.css tiene ${important} !important (tope ${MAX_IMPORTANT})`);
+  assert.ok(inline <= MAX_INLINE_STYLE, `el shell tiene ${inline} style="" (tope ${MAX_INLINE_STYLE})`);
+});
