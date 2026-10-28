@@ -3,7 +3,7 @@ title: Control de Calidad — Programa Inicial de Shiitake
 document_id: DOC-0033
 category: operations
 load_priority: selective
-last_reviewed: 2026-07-24
+last_reviewed: 2026-10-28
 confidence: medium
 primary_sources:
   - Chang & Miles 2004 (book_007, capítulo 13)
@@ -16,6 +16,8 @@ related_documents:
   - ../02_substrates/sterilization.md
   - ../02_substrates/contamination.md
   - ../DECISIONS.md
+  - shiitake_microlote_pellets_sop_v1.md
+  - ../02_substrates/shiitake_pellets_microlote_receta_v1.md
 ---
 
 # Architectural Context
@@ -47,6 +49,14 @@ El proyecto está en preproducción, con 0 lotes activos. No existen todavía se
 | Instrumentación disponible | Sensor principal identificado, verificación cruzada y registro continuo listo | Bloquear validación ambiental |
 | Especificación del lote | Criterio de madurez, estrategia de inducción, bandas ambientales y criterio de cosecha definidos antes de aplicar cada fase | Retener transición de fase |
 | Trazabilidad | ID `YYYY-MM-LE-###` y vínculos a spawn, sustrato, ciclo, ubicación y operador | Bloquear liberación |
+
+# Microlote de cuatro bolsas (pellets): compuertas específicas
+
+El primer microlote de siembra con pellets, documentado en `../02_substrates/shiitake_pellets_microlote_receta_v1.md` y `shiitake_microlote_pellets_sop_v1.md`, tiene **4 bolsas de 2,5 kg de sustrato antes del spawn**, 250 g spawn por bolsa y masa final teórica de 2,75 kg. El lote previsto para calificar la incubadora (30 × 2,0 kg; DOC-0122/DOC-0123) queda separado. Registrar el lote real solamente al inocular.
+
+Esta fórmula es referencia de preparación, **no autorización de inoculación**. Cumplir todas las compuertas precedentes: madera dura sin aditivos documentada, humedad real/supuesta declarada, pH medido (meta 5,5–6,0 del manual sin demostrar), inoculación aséptica, matriz/lote/fecha de spawn, bolsa y filtro adecuados y ciclo del 1941X validado para la carga. El **10% spawn** es relativo al peso húmedo del sustrato *antes de inocular*; equivale a ~9,09% de la masa final sembrada.
+
+**No aceptar 15 psi a la altitud de Tenjo como prueba de 121 °C, ni 90–120 min como tiempo validado para esta carga.** Son referencias del documento original; prevalecen `../02_substrates/sterilization.md` y `operational_commissioning.md`. No aplicar choque frío ni apertura de bolsas por fecha sin criterio de madurez de la cepa.
 
 # Controles por etapa
 
