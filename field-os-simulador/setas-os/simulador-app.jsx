@@ -5091,9 +5091,9 @@ const cssPxToCanvas = (px) => px * (THERMAL_PX_PER_MM / CSS_PX_PER_MM);
 const FONT_EDITORIAL = "'Gaya Patched','Iowan Old Style',Georgia,serif";
 const FONT_SANS = "'IBM Plex Sans','Helvetica Neue',Arial,sans-serif";
 const FONT_MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace";
-// Mismos valores que .thermal-card-40x30/50x30 en sim.css (DS-2026 QR Maximizado) —
-// si el diseño de la etiqueta cambia ahí, hay que actualizar esto también para que
-// "Compartir" no se desalinee.
+// Fuente única de la geometría y los tamaños de texto de la etiqueta (DS-2026 QR
+// Maximizado). El PNG de "Compartir" los lee aquí y la vista previa/impresión los
+// recibe vía thermalCardTypeVars(); sim.css no repite los px de texto.
 const THERMAL_LABEL_SPECS = {
   '40x30': {
     wMm: 40,
@@ -5141,6 +5141,7 @@ const THERMAL_LABEL_SPECS = {
     badgePx: 8.5,
     codePx: 18.0,
     datePx: 11.0,
+    dateLabelPx: 6.5,
     metaPx: 7.0
   },
 };
@@ -5266,6 +5267,29 @@ function thermalVerticalText(item) {
     date: fit(formatThermalDate(item.date), spec.datePx, FONT_EDITORIAL, 1)
   };
 }
+// THERMAL_LABEL_SPECS es la única fuente de tamaños de texto: el PNG para la
+// Phomemo los lee directo y la vista previa/impresión los recibe aquí como
+// custom properties que sim.css usa. Antes sim.css tenía sus propios px y se
+// separaron (especie 10px en pantalla y papel del navegador, 11px en el PNG).
+function thermalCardTypeVars(size) {
+  const spec = THERMAL_LABEL_SPECS[size];
+  if (!spec) return undefined;
+  const px = (v) => (v == null ? undefined : `${v}px`);
+  // 50x70 ajusta especie, código, insignia y fecha en línea (thermalVerticalText).
+  if (spec.layout === 'vertical') return { '--thermal-date-label-size': px(spec.dateLabelPx) };
+  return {
+    '--thermal-eyebrow-size': px(spec.eyebrowPx),
+    '--thermal-species-size': px(spec.speciesPx),
+    '--thermal-badge-size': px(spec.badgePx),
+    '--thermal-code-size': px(spec.codePx),
+    '--thermal-meta-size': px(spec.metaPx),
+    '--thermal-date-label-size': px(spec.dateLabelPx),
+    // El PNG centra el filete en un solo hueco de gapPx; en flex el filete es
+    // un hijo más, así que cada lado lleva la mitad.
+    '--thermal-gap': px(spec.gapPx / 2),
+    '--thermal-pad': `${spec.padYMm}mm ${spec.padXMm}mm`,
+  };
+}
 function ThermalLabelCard({ item, size, print = false }) {
   const [fontsReady, setFontsReady] = React.useState(false);
   React.useEffect(() => {
@@ -5278,7 +5302,7 @@ function ThermalLabelCard({ item, size, print = false }) {
   }, []);
   const vertical = size === '50x70';
   const text = vertical ? thermalVerticalText(item) : null;
-  return <div className={`${print ? 'thermal-card-print' : 'thermal-card-preview'} thermal-card-${size}`} data-fonts-ready={fontsReady}>
+  return <div className={`${print ? 'thermal-card-print' : 'thermal-card-preview'} thermal-card-${size}`} style={thermalCardTypeVars(size)} data-fonts-ready={fontsReady}>
     <div className="thermal-aside"><img className="thermal-qr-img" src={generateQrSvgDataUrl(item.qrUrl)} alt={`QR ${item.id}`} width="96" height="96" /></div>
     <div className="thermal-divider" />
     <div className="thermal-body">
@@ -5318,7 +5342,7 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   block(text.species, 18, FONT_MONO, 1.1);
   const qrSize = spec.qrMm * mm;
   drawQrToCanvas(ctx, item, cx - qrSize / 2, 21 * mm, qrSize);
-  if (item.dateLabel) block({lines: [item.dateLabel], size: 6.5}, 55.5, FONT_MONO);
+  if (item.dateLabel) block({lines: [item.dateLabel], size: spec.dateLabelPx}, 55.5, FONT_MONO);
   block(text.date, 59, FONT_EDITORIAL);
   block(text.badge, 65, FONT_MONO);
   ctx.restore();

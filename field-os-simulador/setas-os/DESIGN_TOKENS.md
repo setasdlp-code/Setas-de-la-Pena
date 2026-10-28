@@ -355,13 +355,25 @@ All other layers keep their numbers. `design-tokens.test.js` rejects bare number
 
 `font-size: 12px` → `--text-sm` (13px) and `10px` → `--text-xs` (11px) in `sim.css`: 76 declarations. Excluded: `@media print`, `.print-*` and `.thermal-*` (printed labels). Mobile gates (no horizontal overflow at 360/390/430px) and the browser suite pass.
 
-### Pending
+### Fixed — remaining font sizes
 
-1. Remaining off-scale sizes: `15px` ×12, `22px` ×11, `28px` ×10, ~25 fractional values (`10.35px`, `14.95px`, `53.9px`…).
-2. Printed-label sizes (5–8px) should use `--size-micro-print` / mm units.
-3. `transition` durations without a token: `.1s` ×2, `.2s`, `.3s`.
-4. `!important` (768) and inline `style=""` in the shell (833).
-5. The mobile rail's "ESCANEAR" label overflows its button at 390px (visible before these changes).
+All 99 remaining `font-size: Npx` in `sim.css` (screen and print) now use a token. Rule: nearest step of the DS-2026 scale `11 · 13 · 14 · 16 · 19 · 24 · 28 · 32 · 44`; ties round up up to 16px (readability) and down above it (no growth in large type). Two role exceptions: `.ed-cartouche__l` → `--size-cartouche`, `.spp-info-sci` (scientific name) → `--size-latin`. New app tokens in the `.sim-root` block: `--sim-text-sub` (19), `--sim-text-metric` (28), `--sim-text-display` (44). Largest visible changes: sub-11px labels go up to 11px (DS micro floor); catalogue title 38→32, page title 36→32, species sheet name 53.9→44.
+
+### Fixed — thermal labels: one source for preview, print and PNG
+
+`THERMAL_LABEL_SPECS` (in `simulador-app.jsx`) said it mirrored `sim.css`, but they had drifted: in 40×30 the species printed at 10px from the browser and 11px in the PNG sent to the Phomemo; the eyebrow differed between preview and print; the 50×30 side padding was 2mm in CSS and 1.5mm in the spec; and the text column was ~6px narrower in the DOM than in the PNG (the divider took a full gap on each side instead of sharing one). Now `ThermalLabelCard` passes the spec to CSS as `--thermal-*-size`, `--thermal-gap` and `--thermal-pad`, and both preview and print rules read them. The preview frame is an `outline` so it does not narrow the column. `e2e/thermal-label-sizes.browser.cjs` checks sizes and column width against the spec in preview and print, and that a long species name stays inside the label.
+
+### Fixed — transitions
+
+`--duration-data: .3s` added for bars and gauges that change value; `.2s` on a button → `--duration-standard`; `transform .1s` (press) → `--duration-quick`. Guarded by `design-tokens.test.js` together with the font sizes.
+
+### Fixed — mobile rail scan label
+
+The scan button had a fixed 60px width and «ESCANEAR» overflowed it. It now sizes to its label (min 60px), in both `sim.css` and the shell. `mobile-criterio-gate.test.js` gate 03 asserts the label fits.
+
+### Capped, not removed — `!important` and inline `style=""`
+
+`sim.css` has 768 `!important` and the shell 832 inline `style=""`. Removing them means reviewing each rule against its visual states (hover, modals, shell views after sign-in), which the harness does not cover, so they were not touched. `design-tokens.test.js` caps both counts: they can only go down, and whoever removes some lowers the cap in the same change.
 
 ---
 

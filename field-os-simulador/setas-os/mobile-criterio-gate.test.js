@@ -219,6 +219,12 @@ test('mobile gate 03: global scan affordance — persistent and triggers scan su
       assert.ok(await scanBtn.isVisible(), `Scan button must be visible when on ${dest}`);
       const scanBox = await scanBtn.boundingBox();
       assert.ok(scanBox && scanBox.height >= 56, `Scan button must be elevated/prominent (>= 56px), got ${scanBox.height}`);
+      // La etiqueta cabe dentro del botón (antes «ESCANEAR» se salía 2-4px).
+      const labelFits = await scanBtn.evaluate((btn) => {
+        const b = btn.getBoundingClientRect(), l = btn.querySelector('span').getBoundingClientRect();
+        return l.left >= b.left && l.right <= b.right;
+      });
+      assert.ok(labelFits, 'La etiqueta del botón de escanear debe caber dentro del botón');
 
       // Click scan -> opens field quick capture modal
       await scanBtn.click();

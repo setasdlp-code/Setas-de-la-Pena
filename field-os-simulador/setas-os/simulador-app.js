@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 5a45a34e2a7ccb3fd525ea13e03fcfc1b3344e1e5579a59998b0a5ee96fa9608
+// source-hash: 81e95131ea15f16ba2a85bf53cb8439d60dae88ff077378ea1626cb21571d151
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3466,6 +3466,7 @@ const THERMAL_LABEL_SPECS = {
     badgePx: 8.5,
     codePx: 18,
     datePx: 11,
+    dateLabelPx: 6.5,
     metaPx: 7
   }
 };
@@ -3577,6 +3578,24 @@ function thermalVerticalText(item) {
     date: fit(formatThermalDate(item.date), spec.datePx, FONT_EDITORIAL, 1)
   };
 }
+function thermalCardTypeVars(size) {
+  const spec = THERMAL_LABEL_SPECS[size];
+  if (!spec) return void 0;
+  const px = (v) => v == null ? void 0 : `${v}px`;
+  if (spec.layout === "vertical") return { "--thermal-date-label-size": px(spec.dateLabelPx) };
+  return {
+    "--thermal-eyebrow-size": px(spec.eyebrowPx),
+    "--thermal-species-size": px(spec.speciesPx),
+    "--thermal-badge-size": px(spec.badgePx),
+    "--thermal-code-size": px(spec.codePx),
+    "--thermal-meta-size": px(spec.metaPx),
+    "--thermal-date-label-size": px(spec.dateLabelPx),
+    // El PNG centra el filete en un solo hueco de gapPx; en flex el filete es
+    // un hijo más, así que cada lado lleva la mitad.
+    "--thermal-gap": px(spec.gapPx / 2),
+    "--thermal-pad": `${spec.padYMm}mm ${spec.padXMm}mm`
+  };
+}
 function ThermalLabelCard({ item, size, print = false }) {
   const [fontsReady, setFontsReady] = React.useState(false);
   React.useEffect(() => {
@@ -3594,7 +3613,7 @@ function ThermalLabelCard({ item, size, print = false }) {
   }, []);
   const vertical = size === "50x70";
   const text = vertical ? thermalVerticalText(item) : null;
-  return /* @__PURE__ */ React.createElement("div", { className: `${print ? "thermal-card-print" : "thermal-card-preview"} thermal-card-${size}`, "data-fonts-ready": fontsReady }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: generateQrSvgDataUrl(item.qrUrl), alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, vertical ? /* @__PURE__ */ React.createElement("img", { className: "thermal-wordmark", src: THERMAL_WORDMARK_URL, alt: "Setas de la Peña" }) : item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species", style: vertical ? { fontSize: text.species.size } : void 0 }, vertical ? text.species.lines.join("\n") : item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge", style: vertical ? { fontSize: text.badge.size } : void 0 }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code", style: vertical ? { fontSize: text.code.size } : void 0 }, vertical ? text.code.lines.join("\n") : item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, vertical && item.dateLabel && /* @__PURE__ */ React.createElement("span", { className: "thermal-date-label" }, item.dateLabel), /* @__PURE__ */ React.createElement("span", { className: "thermal-date-value", style: vertical ? { fontSize: text.date.size } : void 0 }, vertical ? formatThermalDate(item.date) : item.date)))));
+  return /* @__PURE__ */ React.createElement("div", { className: `${print ? "thermal-card-print" : "thermal-card-preview"} thermal-card-${size}`, style: thermalCardTypeVars(size), "data-fonts-ready": fontsReady }, /* @__PURE__ */ React.createElement("div", { className: "thermal-aside" }, /* @__PURE__ */ React.createElement("img", { className: "thermal-qr-img", src: generateQrSvgDataUrl(item.qrUrl), alt: `QR ${item.id}`, width: "96", height: "96" })), /* @__PURE__ */ React.createElement("div", { className: "thermal-divider" }), /* @__PURE__ */ React.createElement("div", { className: "thermal-body" }, /* @__PURE__ */ React.createElement("div", { className: "thermal-eyebrow" }, vertical ? /* @__PURE__ */ React.createElement("img", { className: "thermal-wordmark", src: THERMAL_WORDMARK_URL, alt: "Setas de la Peña" }) : item.eyebrow || "SETAS DE LA PEÑA · TENJO"), /* @__PURE__ */ React.createElement("div", { className: "thermal-species", style: vertical ? { fontSize: text.species.size } : void 0 }, vertical ? text.species.lines.join("\n") : item.species), item.badge && /* @__PURE__ */ React.createElement("div", { className: "thermal-badge", style: vertical ? { fontSize: text.badge.size } : void 0 }, item.badge), /* @__PURE__ */ React.createElement("div", { className: "thermal-code", style: vertical ? { fontSize: text.code.size } : void 0 }, vertical ? text.code.lines.join("\n") : item.id), /* @__PURE__ */ React.createElement("div", { className: "thermal-meta" }, /* @__PURE__ */ React.createElement("div", null, vertical && item.dateLabel && /* @__PURE__ */ React.createElement("span", { className: "thermal-date-label" }, item.dateLabel), /* @__PURE__ */ React.createElement("span", { className: "thermal-date-value", style: vertical ? { fontSize: text.date.size } : void 0 }, vertical ? formatThermalDate(item.date) : item.date)))));
 }
 function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   const mm = THERMAL_PX_PER_MM;
@@ -3626,7 +3645,7 @@ function drawThermalLabelVertical(ctx, item, x0, y0, spec) {
   block(text.species, 18, FONT_MONO, 1.1);
   const qrSize = spec.qrMm * mm;
   drawQrToCanvas(ctx, item, cx - qrSize / 2, 21 * mm, qrSize);
-  if (item.dateLabel) block({ lines: [item.dateLabel], size: 6.5 }, 55.5, FONT_MONO);
+  if (item.dateLabel) block({ lines: [item.dateLabel], size: spec.dateLabelPx }, 55.5, FONT_MONO);
   block(text.date, 59, FONT_EDITORIAL);
   block(text.badge, 65, FONT_MONO);
   ctx.restore();
@@ -7368,7 +7387,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "5a45a34e2a7c" : null;
+    const appVersion = true ? "81e95131ea15" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
