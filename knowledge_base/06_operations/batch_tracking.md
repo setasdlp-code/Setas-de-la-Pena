@@ -3,7 +3,7 @@ title: Trazabilidad y Seguimiento de Lotes
 document_id: DOC-0030
 category: operations
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-10-28
 confidence: high
 primary_sources:
   - Internal protocols
@@ -17,6 +17,8 @@ related_documents:
   - DECISIONS.md
   - 04_facility/workflow.md
   - ../09_research/active_research_knowledge.md
+  - shiitake_microlote_pellets_sop_v1.md
+  - ../02_substrates/shiitake_pellets_microlote_receta_v1.md
 ---
 
 # Architectural Context
@@ -55,13 +57,16 @@ LOT ID: ________________  MODULE: ______  DATE LOGGED: _______
 ═══════════════════════════════════════════════════════════
 SPECIES: ________________________________  STRAIN / CLASS: _______________
 SPAWN SUPPLIER & LOT: ___________________  SPAWN MATRIX: [Rye/Wheat/Millet/Supp]
-SPAWN INOCULATION RATE: _____ kg (____% dry weight)
+SPAWN INOCULATION RATE: _____ kg (____% of _____ kg substrate [wet/dry] BEFORE spawn)
 
 SUBSTRATE FORMULATION: __________________________________
 BASE DRY WEIGHT: _____ kg  |  SUPPLEMENT DRY WEIGHT: _____ kg
-MINERAL BUFFER (Gypsum/CaCO3): _____ g (___%)
-TARGET MOISTURE (FC): ____%  |  MEASURED MOISTURE: ____%
+MINERAL AMENDMENT (Ca(OH)2/CaCO3/CaSO4/other): ____ g (___% of dry mixture base)
+TARGET MOISTURE (wet basis): ____%  |  MEASURED/ASSUMED MOISTURE: ____%
+INGREDIENT MOISTURE: wood ___% (measured/assumed); bran ___% (measured/assumed)
+WATER ADDED: ____ mL | WET MIX pH: ___ | pH METHOD/CALIBRATION: ______
 TOTAL WET WEIGHT PRE-STERILIZATION: _____ kg
+PROCESS_BATCH_ID: ______ | RECIPE VERSION: ______ | INITIAL DRY SUBSTRATE: ____ kg
 
 CONTAINER & GEOMETRY (ARK-007):
   Bag Model / Brand: ___________________  Filter Pore Size: _____ µm
@@ -69,8 +74,12 @@ CONTAINER & GEOMETRY (ARK-007):
   Block Dimensions (L × W × H): ____ × ____ × ____ cm
 
 STERILIZATION CYCLE RECORD:
-  Equipment: All American 1941X  |  Target: 121 °C (15 psi) × _____ min
-  Autoclave Exhaust & Dwell Profile: ______________________
+  Equipment: All American 1941X | THERMAL_CYCLE_ID: ____________
+  Approved for actual load [YES/NO] | Release authorized [YES/NO]
+  Product measured T: ____ °C | Hold at product target: ____ min
+  Gauge/absolute pressure: ____ | Local altitude considered [YES/NO]
+  Autoclave Purge & Dwell Profile: ______________________
+  Load: ____ bags × ____ kg (pre-spawn) | Distribution: ________________
   Sterilization Date: ____________  Operator: _____________
 
 INOCULATION DATE: __________________  INOCULATED BY: _______
@@ -142,6 +151,10 @@ Cross-Reference to:
 
 ═══════════════════════════════════════════════════════════
 ```
+
+## Formato adicional del microlote shiitake-pellets
+
+Para la receta `../02_substrates/shiitake_pellets_microlote_receta_v1.md`, completar la tabla de cuatro bolsas en `shiitake_microlote_pellets_sop_v1.md`. Los 10 kg de sustrato húmedo antes de spawn, 1 kg de spawn y 4 bolsas inoculadas de 2,75 kg son *objetivos*, no registros reales. Registrar masa seca inicial, humedad, pH, origen del insumo, porcentaje spawn y su denominador, temperatura del núcleo durante proceso, ciclo validado, contaminación y cosecha por bolsa. No utilizar "121 °C = 15 psi" como equivalencia a 2.600 m.
 
 ## Digital Recording (Alternative to Paper)
 
