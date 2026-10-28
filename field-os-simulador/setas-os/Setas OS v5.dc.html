@@ -1946,8 +1946,9 @@ const KB_SUB = {
 };
 // KPIs de producción (kpis.yaml)
 //
-// Los tres umbrales de EB clasifican el rendimiento por sustrato en el tablero
-// (alert < beAlert <= warn < beTarget <= ok < beOptimal <= optimal). Estaban en
+// Ningun codigo del shell lee ya los tres umbrales de EB (las filas de rendimiento se
+// fueron a Metricas/Bitacora en c7257bfd): se conservan como espejo de FALLBACK_BE de
+// kpi-thresholds.js y porque check_kb_sync.py los compara con la KB. Estaban en
 // 70/80/100, calibrados contra el techo de la literatura en vez del rango de
 // esta finca: con esos cortes una EB de 65% —normal y sana para Pleurotus sobre
 // paja pasteurizada— se pintaba en rojo, y `optimal` era inalcanzable por ciclo.
@@ -1964,8 +1965,8 @@ const KB_SUB = {
 // esta finca todavía. Cuando el corpus de campo exista, estos tres se calibran
 // contra él y se separan por especie y número de cosecha — hoy son un solo
 // escalar para todas las especies, que es la simplificación que queda pendiente.
-// Metas de BE por especie y semaforo de contaminacion: kpi-thresholds.js (propuesta KB 2026-10).
-// Los escalares de abajo son el FALLBACK para especie desconocida; contamAlert se conserva solo
+// Metas de BE por especie y semaforo de contaminacion: kpi-thresholds.js (propuesta KB 2026-10),
+// que la app usa en Bitacora. Los escalares de abajo = su FALLBACK; contamAlert se conserva solo
 // porque check_kb_sync.py lo compara con la KB y nada mas lo lee.
 // contamAlert: contamination.md fija UN solo umbral (>10% revisar protocolo); el 15 previo
 // no tenia fuente y no lo lee ningun codigo. yieldPerBlock (800 g) es SETPOINT NO VALIDADO.
@@ -3005,29 +3006,6 @@ class Component extends DCLogic {
     const camD = s.camDetail ? camView.find(c=>c.id===s.camDetail) : null;
     const camViewLive = camView.map(c=>({ ...c, ...this.liveMonitor(c) }));
 
-    // ---- Rendimiento: BE por sustrato (receta) y por especie ----
-    const beOf = y => y.freshG/(y.dryKg*1000)*100;
-    const gkOf = arr => Math.round(arr.reduce((t,y)=>t+y.freshG/y.dryKg,0)/arr.length);
-    const groupAvg = (keyFn) => { const g={}; s.yields.forEach(y=>{ (g[keyFn(y)]=g[keyFn(y)]||[]).push(beOf(y)); }); return g; };
-    // Metas de BE por especie (kpi-thresholds.js, propuesta KB 2026-10). Si el modulo no esta
-    // cargado, cae al escalar KPI de antes.
-    const KT = globalThis.SetasKpiThresholds;
-    const beStatusFor = (avg, speciesKeys) => KT
-      ? KT.classifyBe(avg, KT.mixThresholds(speciesKeys))
-      : (avg>=KPI.beOptimal?'optimal':(avg>=KPI.beTarget?'ok':(avg>=KPI.beAlert?'warn':'alert')));
-    const gSub = groupAvg(y=>y.sub);
-    const rendSub = Object.keys(gSub).map(k=>{ const arr=gSub[k]; const avg=arr.reduce((a,b)=>a+b,0)/arr.length; const meta=KB_SUB[k]||{name:k,be:[0,0],cn:'—'};
-      return { key:k, name:meta.name, cn:meta.cn, avg:Math.round(avg), gPerKg:gkOf(s.yields.filter(y=>y.sub===k)), n:arr.length, targetLabel:meta.be.join('–')+'%',
-        status: beStatusFor(avg, s.yields.filter(y=>y.sub===k).map(y=>y.spp)),
-        pct: Math.min(100, Math.round(avg/130*100)) }; });
-    const gSpp = groupAvg(y=>y.spp);
-    const rendSpp = Object.keys(gSpp).map(k=>{ const arr=gSpp[k]; const avg=arr.reduce((a,b)=>a+b,0)/arr.length; const meta=KB_SPP[k]||{be:[0,0]};
-      return { key:k, name:spName(k), sci:spSci(k), avg:Math.round(avg), gPerKg:gkOf(s.yields.filter(y=>y.spp===k)), n:arr.length, targetLabel:meta.be.join('–')+'%',
-        status: KT ? beStatusFor(avg, [k]) : (avg>=meta.be[1]?'optimal':(avg>=meta.be[0]?'ok':'warn')), pct: Math.min(100, Math.round(avg/(meta.be[1]||130)*100)) }; });
-    const rendStatusColor = { optimal:'var(--accent-olive)', ok:'var(--accent-blue-grey)', warn:'var(--accent-mushroom)', alert:'var(--status-error)' };
-    const rendSubV = rendSub.map(r=>({ ...r, accent:rendStatusColor[r.status] }));
-    const rendSppV = rendSpp.map(r=>({ ...r, accent:rendStatusColor[r.status] }));
-    const beOverall = Math.round(s.yields.reduce((a,y)=>a+beOf(y),0)/s.yields.length);
 
     // ---- Salidas: cosecha → destino ----
     const salidasView = s.salidas.map(x=>({ ...x, sppName:spName(x.spp), destLabel:destLabel(x.dest), kg:(x.pesoG/1000).toFixed(2) }));
@@ -3461,9 +3439,6 @@ class Component extends DCLogic {
       setTabEventos:()=>this.setState({reviewTab:'eventos'}), setTabRend:()=>this.setState({reviewTab:'rendimiento'}), setTabSalidas:()=>this.setState({reviewTab:'salidas'}), setTabConoc:()=>this.setState({reviewTab:'conocimiento'}),
       reviewSessions:s.reviewSessions.map(r=>r.label==='Sesión de laboratorio'?{...r,go:()=>{this.refreshSim();this.goSimTab('formular');}}:{...r,noGo:true}),
       reviewEvents: s.reviewEvents.map(e=>({ ...e, typeLabel:TYPES[e.type].label, accent:TYPES[e.type].accent })),
-      // rendimiento
-      beOverall, beTarget:KPI.beTarget, beOptimal:KPI.beOptimal, beAlert:KPI.beAlert,
-      rendSub:rendSubV, rendSpp:rendSppV,
       // salidas
       salidas:salidasView, destTotals, salidasTotal, salidasCount:s.salidas.length,
       // conocimiento

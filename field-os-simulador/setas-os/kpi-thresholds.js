@@ -35,15 +35,38 @@ function beThresholds(speciesKey) {
   return t ? { ...t, source: 'species' } : { ...FALLBACK_BE, source: 'fallback' };
 }
 
-// Promedio de umbrales de varias especies (un sustrato agrupa lotes de especies
-// distintas). Con una sola especie conocida devuelve las de esa especie; sin
-// especies, el fallback.
-function mixThresholds(speciesKeys) {
-  const list = (Array.isArray(speciesKeys) ? speciesKeys : []).map(beThresholds);
-  if (!list.length) return beThresholds(null);
-  const avg = k => list.reduce((a, t) => a + t[k], 0) / list.length;
-  const known = list.filter(t => t.source === 'species').length;
-  return { alert: avg('alert'), target: avg('target'), optimal: avg('optimal'), source: known === list.length ? 'species' : (known ? 'mixed' : 'fallback') };
+// Clave de umbral a partir del nombre cientifico del catalogo ("Pleurotus ostreatus" ->
+// "pleurotus_ostreatus"). Solo coincidencias exactas: P. florida, eryngii, enoki o nameko
+// no tienen fila en la KB y caen al fallback, no a la especie "mas parecida".
+function beKeyFromScientific(sci) {
+  if (typeof sci !== 'string') return null;
+  const k = sci.trim().toLowerCase().replace(/\s+/g, '_');
+  return Object.prototype.hasOwnProperty.call(BE_THRESHOLDS, k) ? k : null;
+}
+
+const BE_RANK = Object.freeze({ alert: 0, warn: 1, ok: 2, optimal: 3 });
+
+// Grupo de lotes de varias especies: cada especie se compara con SUS umbrales y se
+// devuelve la peor. Promediar umbrales mezcla escalas (Ganoderma meta 10, Pleurotus 60)
+// y el resultado dependeria de cuantos lotes hay de cada una, no de como rindieron.
+// entries: [{ speciesKey, be }]. Devuelve null si ninguna BE es numerica.
+function worstBeStatus(entries) {
+  const groups = new Map();
+  (Array.isArray(entries) ? entries : []).forEach(e => {
+    const v = Number(e && e.be);
+    if (e == null || e.be == null || !Number.isFinite(v)) return;
+    const key = e.speciesKey && Object.prototype.hasOwnProperty.call(BE_THRESHOLDS, e.speciesKey) ? e.speciesKey : null;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(v);
+  });
+  const bySpecies = [...groups].map(([speciesKey, vals]) => {
+    const be = vals.reduce((a, x) => a + x, 0) / vals.length;
+    const t = beThresholds(speciesKey);
+    return { speciesKey, be, n: vals.length, status: classifyBe(be, t), source: t.source };
+  });
+  if (!bySpecies.length) return null;
+  const worst = bySpecies.reduce((w, r) => (BE_RANK[r.status] < BE_RANK[w.status] ? r : w));
+  return { ...worst, bySpecies };
 }
 
 // alert < t.alert <= warn < t.target <= ok < t.optimal <= optimal
@@ -67,7 +90,7 @@ function contamLevel(pct) {
   return 'green';
 }
 
-const api = { FALLBACK_BE, BE_THRESHOLDS, CONTAM_GREEN_MAX, CONTAM_AMBER_MAX, CONTAM_STOP_MIN, beThresholds, mixThresholds, classifyBe, contamLevel };
+const api = { FALLBACK_BE, BE_THRESHOLDS, CONTAM_GREEN_MAX, CONTAM_AMBER_MAX, CONTAM_STOP_MIN, beThresholds, beKeyFromScientific, worstBeStatus, classifyBe, contamLevel };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof globalThis !== 'undefined') globalThis.SetasKpiThresholds = api;
 })();

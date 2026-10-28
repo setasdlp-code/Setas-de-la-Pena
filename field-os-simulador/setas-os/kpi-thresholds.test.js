@@ -36,12 +36,36 @@ test('classifyBe respeta los cortes por especie', () => {
   assert.equal(K.classifyBe(60), 'ok');
 });
 
-test('mixThresholds: una especie = la suya; mezcla = promedio; vacio = fallback', () => {
-  assert.deepEqual(K.mixThresholds(['pleurotus_djamor']), { alert: 30, target: 50, optimal: 70, source: 'species' });
-  const m = K.mixThresholds(['pleurotus_djamor', 'pleurotus_ostreatus']);
-  assert.deepEqual([m.alert, m.target, m.optimal], [35, 55, 75]);
-  assert.equal(K.mixThresholds([]).source, 'fallback');
-  assert.equal(K.mixThresholds(['x', 'pleurotus_djamor']).source, 'mixed');
+test('beKeyFromScientific: solo nombres cientificos con fila en la KB', () => {
+  assert.equal(K.beKeyFromScientific('Pleurotus ostreatus'), 'pleurotus_ostreatus');
+  assert.equal(K.beKeyFromScientific(' Ganoderma  lucidum '), 'ganoderma_lucidum');
+  assert.equal(K.beKeyFromScientific('Pleurotus florida'), null);
+  assert.equal(K.beKeyFromScientific(undefined), null);
+});
+
+test('worstBeStatus: cada especie contra sus umbrales, devuelve la peor', () => {
+  // Ganoderma 12 % cumple su meta (10); Pleurotus 35 % esta bajo su alerta (40).
+  const r = K.worstBeStatus([
+    { speciesKey: 'ganoderma_lucidum', be: 12 },
+    { speciesKey: 'pleurotus_ostreatus', be: 35 },
+  ]);
+  assert.equal(r.status, 'alert');
+  assert.equal(r.speciesKey, 'pleurotus_ostreatus');
+  assert.equal(r.bySpecies.find(x => x.speciesKey === 'ganoderma_lucidum').status, 'ok');
+  // El numero de lotes de cada especie no cambia el resultado (antes, el promedio de umbrales si).
+  const many = K.worstBeStatus([
+    { speciesKey: 'ganoderma_lucidum', be: 12 },
+    ...Array.from({ length: 5 }, () => ({ speciesKey: 'pleurotus_ostreatus', be: 65 })),
+  ]);
+  assert.equal(many.status, 'ok');
+  // Una Ganoderma sana sola no es alerta (con el escalar 40/55/70 si lo era).
+  assert.equal(K.worstBeStatus([{ speciesKey: 'ganoderma_lucidum', be: 12 }]).status, 'ok');
+  // Especie sin fila -> fallback; BE ausente se ignora; sin datos -> null.
+  const fb = K.worstBeStatus([{ speciesKey: null, be: 50 }, { speciesKey: 'pleurotus_djamor', be: null }]);
+  assert.equal(fb.source, 'fallback');
+  assert.equal(fb.status, 'warn');
+  assert.equal(K.worstBeStatus([]), null);
+  assert.equal(K.worstBeStatus([{ speciesKey: 'pleurotus_djamor', be: undefined }]), null);
 });
 
 test('contamLevel: verde <=5, ambar >5-10, rojo >10, parada >=15', () => {
@@ -56,4 +80,24 @@ test('los niveles de contaminacion coinciden con la KB', () => {
   assert.match(kb, /\| Ámbar \| 5–10 %/);
   assert.match(kb, /\| Rojo \| >10 %/);
   assert.match(kb, /\| Crítico \| ≥15–20 %/);
+});
+
+test('la app colorea la contaminacion solo con el semaforo del modulo, sin cortes propios', () => {
+  const src = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  // Cortes sueltos (>15, >20, >=20) se desalinean de la KB: todo pasa por contamLevelOf/contamColor.
+  assert.doesNotMatch(src, /contPct\s*>=?\s*[1-9]/); // >0 ("tiene contaminacion") si vale
+  assert.doesNotMatch(src, /avgCont\s*>=?\s*[1-9]/);
+  assert.match(src, /const contamLevelOf=pct=>SetasKpiThresholdsApi\?SetasKpiThresholdsApi\.contamLevel\(pct\):null;/);
+  assert.ok((src.match(/contamColor\(/g) || []).length >= 4, 'tabla, ficha, comparativa y resumen de Bitacora');
+});
+
+test('Bitacora colorea la EB por especie con nota de literatura, sin cortes fijos', () => {
+  const src = fs.readFileSync(path.join(__dirname, 'simulador-app.jsx'), 'utf8');
+  assert.doesNotMatch(src, /\.be\s*>=?\s*[1-9]/, 'cortes de EB fijos (>80, >60) ignoran la especie');
+  assert.ok((src.match(/beColorFor\(lote,stats\?\.be\)/g) || []).length >= 2, 'tabla de lotes y comparador');
+  assert.match(src, /beWorstOf\(wd\.map/, 'resumen: peor especie');
+  assert.equal((src.match(/\{BE_LIT_NOTE\}<\/div>/g) || []).length, 2, 'nota visible bajo ambas tablas');
+  assert.match(src, /lote\.recipeRef\?\.sKey/, 'lotes del Formulador guardan la especie en recipeRef');
+  const shell = fs.readFileSync(path.join(__dirname, 'Setas OS v5.dc.html'), 'utf8');
+  assert.doesNotMatch(shell, /rendSpp|rendSub|mixThresholds/, 'filas de BE del shell eliminadas (sin vista desde c7257bfd)');
 });
