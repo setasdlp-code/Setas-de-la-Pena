@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-09-13
+last_reviewed: 2026-10-28
 ---
 
 # CHANGELOG
@@ -23,6 +23,14 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-10-28
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Receta candidata del primer microlote de shiitake con pellets de madera dura registrada en `02_substrates/shiitake_pellets_microlote_receta_v1.md` (`DOC-0127`): 80% pellets + 20% salvado en base seca, Ca(OH)₂ al 1% de esa base, humedad 60% (base húmeda), cuatro bolsas de 2,5 kg de sustrato + 250 g spawn cada una; supuesto de 8% humedad pellets y 12% salvado. Referencia: manual externo Monte Jongas (DOC-0125), auditado (DOC-0126). **Receta documentada, sin validación local ni liberación.** |
+| `[SOP]` | Añadido `06_operations/shiitake_microlote_pellets_sop_v1.md` (`DOC-0128`): recepción y cálculo, hidratación, pH, bolsas y etiquetado, compuertas térmicas/asépticas, inoculación y registros por bolsa. La referencia externa de 121 °C/15 psi/90–120 min **no se considera ciclo aprobado** a la altitud de Tenjo; se exige `thermal_cycle_id` validado. |
+| `[KB]` | Actualizados `02_substrates/substrate_library.md`, `02_substrates/sterilization.md`, `06_operations/quality_control.md`, `06_operations/batch_tracking.md`, `06_operations/piloto_shiitake_incubacion_protocolo.md` y `CURRENT_OPERATIONS.md` para distinguir el primer microlote de 4 bolsas del banco de incubación de 30 bloques, y para corregir la plantilla que asumía 121 °C = 15 psi y una única base de cálculo del spawn. `INDEX.yaml` registra 130 entradas, incluidas DOC-0127/0128. **Sin cambiar firmware, setpoints ni el borrador versionado DOC-0122.** |
 
 ### 2026-10-27
 
