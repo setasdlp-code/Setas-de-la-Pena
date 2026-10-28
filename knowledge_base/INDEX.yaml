@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 128 catalog entries as of 2026-10-27; the completeness of indexing of all
+# 130 catalog entries as of 2026-10-28; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -263,7 +263,7 @@ documents:
     canonical: true
     topics: [release gates, traceability, biological efficiency, contamination rate, grading]
     keywords: [shiitake, batch specification, BE, contamination rate, quality control, QC]
-    related_documents: [batch-tracking, lessons-learned]
+    related_documents: [batch-tracking, lessons-learned, shiitake-microlote-pellets-sop-v1]
     depends_on: [lentinula-edodes, sterilization]
     implemented_by: []
     supersedes: null
@@ -730,8 +730,8 @@ documents:
     category: substrates
     canonical: true
     topics: [sterilization, pressure-processing, supplemented-substrates]
-    keywords: [esterilización, 121C, 15 psi, autoclave, Master's Mix]
-    related_documents: [pasteurization, supplementation, contamination, autoclaves]
+    keywords: [esterilización, 121C, altitud Tenjo, autoclave, Master's Mix]
+    related_documents: [pasteurization, supplementation, contamination, autoclaves, shiitake-pellets-microlote-receta-v1, shiitake-microlote-pellets-sop-v1]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -747,7 +747,7 @@ documents:
     canonical: true
     topics: [substrate-formulations, hardwood-sawdust, evidence-catalog]
     keywords: [serrín de madera dura, Master's Mix, paja de trigo, DEC-013, BE]
-    related_documents: [supplementation, sterilization, pasteurization, contamination, lentinula-edodes, pleurotus-djamor]
+    related_documents: [supplementation, sterilization, pasteurization, contamination, lentinula-edodes, pleurotus-djamor, shiitake-pellets-microlote-receta-v1]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1030,7 +1030,7 @@ documents:
     canonical: true
     topics: [batch-traceability, lot-numbering, learning-units]
     keywords: [lot ID, batch log, 2026-07-LE-001, traceability]
-    related_documents: [production-schedule, quality-control, lessons-learned, decisions, workflow]
+    related_documents: [production-schedule, quality-control, lessons-learned, decisions, workflow, shiitake-microlote-pellets-sop-v1]
     depends_on: [canon]
     implemented_by: []
     supersedes: null
@@ -2165,4 +2165,34 @@ documents:
     implemented_by: []
     supersedes: null
     confidence: medium
+    status: draft
+
+  - id: shiitake-pellets-microlote-receta-v1
+    title: "Shiitake — Receta de microlote con pellets de madera dura v1"
+    path: 02_substrates/shiitake_pellets_microlote_receta_v1.md
+    authority: canonical_knowledge
+    category: substrates
+    canonical: true
+    topics: [shiitake, substrate-formulation, hardwood-pellets, first-sowing-pilot, dry-basis-calculation]
+    keywords: ["shiitake pellets microlote", "80% pellets 20% salvado", "Ca(OH)2", "60% humedad", "10% spawn"]
+    related_documents: [shiitake-microlote-pellets-sop-v1, manual-monte-jongas-shiitake-pellets-2026-10-27, auditoria-manual-shiitake-pellets-monte-jongas-2026-10-27, sterilization, substrate-library, quality-control]
+    depends_on: [manual-monte-jongas-shiitake-pellets-2026-10-27, auditoria-manual-shiitake-pellets-monte-jongas-2026-10-27]
+    implemented_by: [shiitake-microlote-pellets-sop-v1]
+    supersedes: null
+    confidence: experimental
+    status: draft
+
+  - id: shiitake-microlote-pellets-sop-v1
+    title: "SOP piloto — microlote shiitake en pellets (4 bolsas) v1"
+    path: 06_operations/shiitake_microlote_pellets_sop_v1.md
+    authority: sops_and_workflows
+    category: operations
+    canonical: true
+    topics: [shiitake, microbatch, inoculation, process-gates, traceability, altitude-sterilization]
+    keywords: ["SOP microlote", "4 bolsas", "250 g spawn por bolsa", "All American 1941X", "toma de pH"]
+    related_documents: [shiitake-pellets-microlote-receta-v1, quality-control, batch-tracking, sterilization, operational-commissioning, auditoria-manual-shiitake-pellets-monte-jongas-2026-10-27]
+    depends_on: [shiitake-pellets-microlote-receta-v1, quality-control, sterilization]
+    implemented_by: []
+    supersedes: null
+    confidence: experimental
     status: draft
