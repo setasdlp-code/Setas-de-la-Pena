@@ -3,7 +3,7 @@ title: Biblioteca de Sustratos
 document_id: DOC-0013
 category: substrates
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-10-28
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -21,10 +21,11 @@ related_documents:
   - ../01_species/hericium_erinaceus.md
   - ../01_species/pleurotus_djamor.md
   - ../09_research/active_research_knowledge.md
+  - shiitake_pellets_microlote_receta_v1.md
 ---
 
 # Executive Summary
-Catálogo de evidencia sobre sustratos. DEC-013 establece shiitake como especie de arranque: la familia prioritaria es serrín de madera dura suplementado y esterilizado, pero la formulación del lote 1 continúa sin aprobar. Las recetas de Pleurotus quedan como referencia futura.
+Catálogo de evidencia sobre sustratos. DEC-013 establece shiitake como especie de arranque: la familia prioritaria es serrín de madera dura suplementado y esterilizado, pero la formulación del lote 1 continúa sin aprobar. Las recetas de Pleurotus quedan como referencia futura. El microlote de shiitake de cuatro bolsas tiene formulación candidata de trabajo en `shiitake_pellets_microlote_receta_v1.md` (DOC-0127), sin validación local; es distinto del piloto de incubadora de 30 bloques.
 
 # Research Consensus
 
@@ -94,6 +95,12 @@ Fuente: `09_research/corroboracion_2026-10/djamor_ganoderma_kpi.md` (snippets, s
 **Nota (sustratos de café):** las calificaciones provienen de una sola fuente colombiana (paper_006, Cenicafé 2005) para *L. edodes* y *G. lucidum*, en clima más cálido que Tenjo. No hay datos para Pleurotus/Hericium sobre café en esa fuente. Borra sola BE shiitake ~16,9%; aserrín de tallo ~17,1% — usar siempre en mezcla formulada, no puros.
 
 **Precaución sobre eucalipto:** la auditoría 2026-07-23 no encontró respaldo para una incompatibilidad universal con *P. djamor*. No aprobar una madera de eucalipto sin identificar especie, procedencia, tratamiento y respuesta de la cepa.
+
+## Receta candidata — pellets para microlote de shiitake (2026-10-28)
+
+La guía externa Monte Jongas aporta 80% pellets de madera dura + 20% salvado en base seca, 1% Ca(OH)₂ sobre la base seca, 60% humedad base húmeda y 10% spawn de grano respecto del sustrato húmedo antes de inocular. Para cuatro bolsas de 2,5 kg de sustrato más 250 g spawn cada una, consultar exclusivamente `shiitake_pellets_microlote_receta_v1.md` para las cantidades calculadas y `../06_operations/shiitake_microlote_pellets_sop_v1.md` para las compuertas. La fuente está en `manual_monte_jongas_shiitake_pellets_transcripcion_2026-10-27.md` y la auditoría en `../09_research/auditoria_manual_shiitake_pellets_monte_jongas_2026-10-27.md`.
+
+**Pendientes:** pH objetivo 5,5–6,0 y Ca(OH)₂ al 1% deben verificarse; a ~2.600 m, 15 psi no equivale automáticamente a 121 °C y 90–120 min no constituyen ciclo aprobado. No extrapolar esta geometría de cuatro bolsas al diseño independiente de 30 bloques de 2,0 kg (DOC-0122/0123).
 
 ## Perfiles de Sustratos
 
