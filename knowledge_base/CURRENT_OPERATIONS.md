@@ -3,8 +3,8 @@ title: Estado Operacional Actual — Setas de la Peña
 document_id: DOC-0051
 category: meta
 load_priority: always
-last_updated: 2026-09-03
-last_reviewed: 2026-09-03
+last_updated: 2026-10-28
+last_reviewed: 2026-10-28
 ---
 
 # CURRENT_OPERATIONS
@@ -19,8 +19,8 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 ## FASE ACTUAL
 
 **Fase del proyecto:** Pre-producción — Equipamiento en sitio en Tenjo / Banco de pruebas y comisionamiento
-**Fecha de inicio producción estimada:** Condicionada a validación de ciclo de autoclave All American 1941X, aprobación de formulación de sustrato y adquisición de spawn de shiitake trazable con clase térmica identificada.
-**Lotes activos:** 0 (Material biológico en refrigeración: ~2.0 kg P. djamor, ~2.0 kg H. erinaceus, ~2.0 kg P. ostreatus mantenidos a 2–4 °C para ensayos preliminares de cámara).
+**Fecha de inicio producción estimada:** Condicionada a validación del ciclo del All American 1941X, liberación del protocolo/receta y recepción de spawn de shiitake trazable. **DEC-019 permite cepa no identificada en lote 1**, pero no elimina proveedor, lote, fecha y condición de recepción.
+**Lotes activos (último registro de campo disponible):** 0. No hay evidencia recibida de inoculación del nuevo microlote. La presencia, masa y estado actual de spawn de otras especies se deben reconfirmar en Tenjo; inventarios históricos no equivalen a una inspección del 2026-10-28.
 
 ---
 
@@ -65,6 +65,16 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 
 ---
 
+## MICROLOTE SHIITAKE — FORMULACIÓN DOCUMENTAL (2026-10-28)
+
+**Estado:** receta de trabajo registrada, pendiente de liberación física y microbiológica; **no sembrado** según la evidencia disponible en este repositorio. Se propone un primer microlote de **4 bolsas × 2,5 kg de sustrato húmedo antes del spawn**, y **250 g de spawn de grano por bolsa** (≈2,75 kg finales por bolsa). Fórmula con humedades supuestas de 8% pellets y 12% salvado: **3,44 kg pellets, 900 g salvado, 40 g Ca(OH)₂ y 5,616 L de agua** para 10 kg de sustrato antes de inoculación; después 1 kg de spawn total. **60% humedad base húmeda** y **10% spawn respecto de sustrato húmedo preinoculación**.
+
+- **Receta candidata:** `02_substrates/shiitake_pellets_microlote_receta_v1.md` (DOC-0127).
+- **Procedimiento, ficha por bolsa y compuertas:** `06_operations/shiitake_microlote_pellets_sop_v1.md` (DOC-0128).
+- **Fuente externa:** manual Monte Jongas, transcrito en DOC-0125; auditoría en DOC-0126.
+- **No liberado:** validar pellets y su composición, humedad real, pH, spawn, inoculación aséptica y **ciclo del 1941X a la altitud de Tenjo para esa carga**, con temperatura de producto documentada. 15 psi del manual no garantiza 121 °C a esta altitud; 90–120 min no se aprueban automáticamente.
+- **Escala diferente:** la especificación previa para incubadora de **30 bloques × 2,0 kg** (DOC-0122/DOC-0123) conserva su carácter de borrador y banco de pruebas; no modificar firmware ni declarar que las cuatro bolsas satisfacen esa validación.
+
 ## ESPECIFICACIÓN AMBIENTAL DEL LOTE 1
 
 No hay setpoints operacionales aprobados para el lote 1. *Lentinula edodes* presenta clases térmicas de cepa y respuestas de inducción distintas; los rangos de literatura en `01_species/lentinula_edodes.md` sirven para diseñar el piloto, no para controlar producción sin una especificación versionada.
@@ -94,9 +104,9 @@ Especificación del lote 1: `06_operations/lote1_shiitake_especificacion_ambient
 **Lote ID:** YYYY-MM-LE-001 (LE = Lentinula edodes; registrar el código en `06_operations/batch_tracking.md` antes del primer lote si aún no existe)
 **Fecha inoculación:** YYYY-MM-DD
 **Cepa / proveedor:** [Identificación trazable]
-**Sustrato:** Serrín de madera dura suplementado o formulación aprobada — X kg en base seca
+**Sustrato:** Referencia a receta versionada (p. ej., DOC-0127) y masas reales seca/húmeda
 **Tratamiento:** Ciclo de esterilización validado — referencia del ciclo
-**Spawn:** Y% del peso seco = Z g
+**Spawn:** Z g = Y% del denominador declarado (p. ej. peso húmedo del sustrato antes de inocular)
 **Contenedor:** [Bolsa | Tote | Block] — dimensiones
 **Ubicación:** [Martha Tent | CLOUDLAB 844 — posición]
 
