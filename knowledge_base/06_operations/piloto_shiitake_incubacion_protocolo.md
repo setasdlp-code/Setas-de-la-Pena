@@ -3,7 +3,7 @@ title: Protocolo del Piloto de Shiitake — Incubación con Control de Temperatu
 document_id: DOC-0123
 category: operations
 load_priority: selective
-last_reviewed: 2026-10-13
+last_reviewed: 2026-10-28
 confidence: low
 primary_sources:
   - docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md
@@ -14,6 +14,7 @@ related_documents:
   - ../04_facility/incubation.md
   - ../01_species/lentinula_edodes.md
   - ../CURRENT_OPERATIONS.md
+  - shiitake_microlote_pellets_sop_v1.md
 ---
 
 # Alcance y estado
@@ -21,6 +22,10 @@ related_documents:
 Protocolo de campo del piloto de 30 bloques de 2,0 kg de *Lentinula edodes* en la incubadora nueva (80 × 60 × 100 cm, terraza de Tenjo). Fuente: la spec `docs/superpowers/specs/2026-10-13-piloto-shiitake-incubacion-design.md` (secciones 5 a 7). El firmware está en `esphome/incubadora_piloto.yaml` y es **banco de pruebas, no comisionado**.
 
 Este protocolo solo ordena las compuertas y los ensayos. No fija ningún setpoint: la banda sale de `lote1_shiitake_especificacion_ambiental.md`, que hoy está `PENDIENTE`.
+
+# Relación con el primer microlote en pellets (2026-10-28)
+
+Este documento conserva su alcance original de **ensayo de incubadora de 30 bloques × 2,0 kg**; sigue pendiente de las compuertas y de la especificación DOC-0122. El manual Monte Jongas se ha incorporado como **otro ensayo inicial de siembra de 4 × 2,75 kg finales** (4 bolsas con 2,5 kg de sustrato + 250 g spawn de grano) en `shiitake_microlote_pellets_sop_v1.md` y `../02_substrates/shiitake_pellets_microlote_receta_v1.md`. Son cargas y objetivos distintos; la receta no cambia automáticamente `setpoint_c`, `histeresis_c`, el tamaño de bloque ni las compuertas de este piloto de incubación. Cualquier transferencia requiere versión nueva de la especificación y validación de carga.
 
 # 1. Compuertas físicas previas
 
