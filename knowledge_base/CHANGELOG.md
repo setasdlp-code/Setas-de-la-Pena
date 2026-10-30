@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-10-28
+last_reviewed: 2026-10-30
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-10-30
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Reescrito `08_brand/identity.md` (`DOC-0038`) como resumen de la Identidad comercial v1.1 (`docs/brand-guidelines.md`). Sustituye la paleta, las tipografías (Playfair/Inter), el tagline y el reparto de herramientas de julio de 2026. Entrada de `INDEX.yaml` actualizada. Origen: auditoría de marca `docs/brand/brand-audit-2026-10.md`, P2-2. |
 
 ### 2026-10-28
 

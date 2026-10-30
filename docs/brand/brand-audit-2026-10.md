@@ -41,6 +41,9 @@ Las fugas son:
 
 ## Hallazgos
 
+> **Actualización 30 oct 2026:** P1-2, P1-3, P2-1 y P2-2 quedan aplicados. Se pasaron unos 600 imperativos y formas de segunda persona a infinitivo o a frases centradas en el producto en las páginas públicas. También se actualizaron el título, las descripciones y la firma territorial, y se reescribió `knowledge_base/08_brand/identity.md`. P0-1, P0-2, P1-1, P2-3 y P2-4 siguen pendientes de decisión.
+
+
 ### P0-1 · La firma depende de una Gaya de prueba parcheada, y se publica
 
 - **Evidencia:** `08_brand/ds-2026/SOURCES.md:134-137` describe `GayaPatched-*` como «un parche local de diacríticos sobre la Gaya de prueba… No se distribuyen fuera del equipo». `tokens/fonts.css:14-17` las carga en todo el sistema. `scripts/export_public_website.py:75-82` convierte las OTF referenciadas a WOFF2 y las incluye en la exportación pública. El JSON-LD de `index.html:23` declara como `logo` público `wordmark-horizontal-moss.svg`, cuyos metadatos dicen «Licencia comercial pendiente de verificación». La guía v1.1 §4 ya lo marca como pendiente.
