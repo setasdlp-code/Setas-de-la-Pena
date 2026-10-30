@@ -7,7 +7,7 @@ last_reviewed: 2026-10-30
 confidence: high
 primary_sources:
   - docs/brand-guidelines.md (Identidad comercial v1.1, 12 y 27 oct 2026)
-  - .claude/brand-voice-guidelines.md (Guía de voz v2.2)
+  - .claude/brand-voice-guidelines.md (Guía de voz v2.4)
   - 08_brand/ds-2026/DESIGN_SYSTEM.md
 related_documents:
   - illustration_style.md
@@ -32,7 +32,7 @@ No es:
 
 Es:
 - Un proyecto de cultivo técnico, con parámetros y registros.
-- Un interlocutor preciso para chefs; también para hogares.
+- Una voz culinaria para personas que cocinan, en cocinas profesionales y en casa, con la misma precisión y respeto que se ofrece a un chef.
 - Una sola marca. «Las setas», «En la cocina», «Origen» y «El cuaderno» son secciones, no submarcas. Setas OS es el ámbito operativo.
 
 ## Valores
@@ -100,10 +100,12 @@ Entrada única para piezas comerciales: `08_brand/ds-2026/market.css`.
 
 ## Audiencias
 
-| Segmento | Qué busca | Lenguaje |
+Una sola voz para quienes cocinan; cambia la información práctica, no el registro.
+
+| Necesidad | Qué busca | Información |
 |---|---|---|
-| Chef / equipo de cocina | Uso del ingrediente; cantidad, presentación, fecha y entrega | Técnico-culinario; la conversación empieza en el plato |
-| Hogar | Especie → receta → cantidad → consulta | Pasos accesibles, ingredientes disponibles en Colombia |
+| Cocina profesional | Uso del ingrediente; cantidad, presentación, fecha y entrega | La conversación empieza en el plato y termina en una consulta concreta |
+| Cocina en casa | Especie → receta → cantidad → consulta | Pasos accesibles, ingredientes disponibles en Colombia |
 | Interés en salud funcional | Información sobre especies como melena de león | Solo evidencia; cualquier línea funcional requiere revisión regulatoria (INVIMA) antes de redactar |
 
 # Best Practices
@@ -119,6 +121,6 @@ Entrada única para piezas comerciales: `08_brand/ds-2026/market.css`.
 
 # References
 - [Identidad comercial v1.1](../../docs/brand-guidelines.md)
-- [Guía de voz v2.2](../../.claude/brand-voice-guidelines.md)
+- [Guía de voz v2.4](../../.claude/brand-voice-guidelines.md)
 - [DS-2026](../../08_brand/ds-2026/DESIGN_SYSTEM.md)
 - [Auditoría de marca, oct 2026](../../docs/brand/brand-audit-2026-10.md)

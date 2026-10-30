@@ -1,0 +1,50 @@
+/* Homepage hero: rotating dishes, two per species. Script: home-hero.js. */
+.home-page .home-intro .dish-carousel { width: min(100%, 520px, calc(100svh - 360px)); min-width: min(100%, 360px); justify-self: end; position: relative; }
+.dish-track { display: grid; grid-template-columns: minmax(0, 1fr); }
+.dish { grid-area: 1 / 1; min-width: 0; margin: 0; opacity: 0; visibility: hidden; transition: opacity .7s ease, visibility 0s linear .7s; }
+.dish.is-active { opacity: 1; visibility: visible; transition: opacity .7s ease, visibility 0s; }
+.dish img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; mix-blend-mode: darken; transform: scale(.985); transition: transform 6.5s ease-out; }
+.dish.is-active img { transform: scale(1); }
+
+.dish-species { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 4px; padding-left: 12px; border-left: 2px solid var(--coral-500); }
+.dish-species b { font: 500 12px/1.3 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--coral-700); }
+.dish-species i { font: italic 500 16px/1.3 var(--font-editorial); color: var(--text-secondary); }
+
+.dish figcaption { border-top: var(--rule-heavy, 1px solid var(--ink-900)); padding-top: 12px; margin-top: -2%; position: relative; }
+.dish-name { margin: 0; font: 700 clamp(20px, 1.6vw, 25px)/1.15 var(--font-editorial); color: var(--text-primary); }
+.dish-line { margin: 4px 0 2px; font: 400 15px/1.45 var(--font-sans); color: var(--text-primary); }
+.dish-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 16px; margin: 0; }
+.dish-meta > span { font: var(--t-micro); letter-spacing: .12em; text-transform: uppercase; color: var(--text-secondary); }
+.dish-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: 500 16px/1 var(--font-sans); color: var(--brand-accent-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.dish-link:hover { text-decoration-thickness: 2px; }
+
+.dish-controls { display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: var(--rule-hairline); }
+.dish-controls[hidden] { display: none; }
+.dish-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; background: transparent; border: var(--rule-hairline); color: var(--brand-primary); font: 500 18px/1 var(--font-sans); cursor: pointer; }
+.dish-btn:hover { border-color: var(--brand-primary); background: var(--paper-50); }
+.dish-btn:focus-visible, .dish-dot:focus-visible, .dish-link:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 2px; }
+.ico-pause { display: block; width: 11px; height: 12px; border-inline: 3px solid currentColor; }
+.ico-play { display: block; width: 0; height: 0; border-left: 11px solid currentColor; border-block: 7px solid transparent; }
+.dish-dots { display: flex; flex: 1; gap: 4px; margin-inline: 6px; }
+.dish-dot { position: relative; flex: 1; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.dish-dot::before, .dish-dot::after { content: ""; position: absolute; left: 0; top: 50%; height: 2px; margin-top: -1px; }
+.dish-dot::before { right: 0; background: var(--border-hairline, rgba(26, 20, 16, .18)); }
+.dish-dot::after { width: 0; background: var(--brand-primary); }
+.dish-dot.is-done::after { width: 100%; }
+.dish-dot[aria-current="true"]::after { animation: dish-progress var(--dish-interval, 6500ms) linear forwards; }
+.dish-carousel.is-paused .dish-dot[aria-current="true"]::after { animation-play-state: paused; }
+.dish-carousel.is-static .dish-dot[aria-current="true"]::after { animation: none; width: 100%; }
+@keyframes dish-progress { from { width: 0; } to { width: 100%; } }
+.dish-count { min-width: 56px; text-align: center; font: var(--t-micro); letter-spacing: .12em; color: var(--text-secondary); }
+.dish-count b { font-weight: 500; color: var(--text-primary); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dish, .dish.is-active, .dish img { transition: none; transform: none; }
+}
+
+@media (max-width: 760px) {
+  .home-page .home-intro .dish-carousel { width: 100%; min-width: 0; justify-self: stretch; touch-action: pan-y; }
+  .dish img { width: 86%; margin-inline: auto; }
+  .dish figcaption { margin-top: 0; }
+  .dish-count { display: none; }
+}

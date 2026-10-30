@@ -1,6 +1,6 @@
 # Setas de la Peña — Identidad comercial v1.1
 
-Edición: **12 de octubre de 2026**; voz y frase principal revisadas el **27 de octubre de 2026**. Público: **chefs primero; también hogares**.
+Edición: **12 de octubre de 2026**; voz comercial revisada el **30 de octubre de 2026**. Público: **personas que cocinan, en cocinas profesionales y en casa**.
 
 [Manual visual](../08_brand/ds-2026/brand-kit/index.html) · [Investigación y decisiones](brand/competitive-research-2026-10.md) · [Recursos](../08_brand/ds-2026/brand-kit/README.md) · [DS vigente](../08_brand/ds-2026/DESIGN_SYSTEM.md)
 
@@ -31,7 +31,9 @@ Una sola marca. «Las setas», «En la cocina», «Origen» y «El cuaderno» so
 
 ## 2. Audiencia y recorrido
 
-**Chefs y equipos de cocina:** decidir cómo usar el ingrediente y consultar cantidad, presentación, consistencia, fecha y entrega. La ficha empieza con especie, textura y usos; termina con una consulta concreta. La marca no se presenta como un proveedor con abastecimiento regular confirmado.
+**Una voz para quienes cocinan:** hablar a toda la audiencia con el respeto y la precisión que se ofrecen a un chef. La especie, su sabor y textura documentados y una intención de plato abren la conversación. No se simplifica el lenguaje por tratarse de una cocina doméstica; se explican los términos cuando ayudan a decidir. La información práctica cambia según la preparación y la escala.
+
+**Cocinas profesionales:** decidir cómo usar el ingrediente y consultar cantidad, presentación, consistencia, fecha y entrega. La ficha empieza con especie, textura y usos; termina con una consulta concreta. La marca no se presenta como un proveedor con abastecimiento regular confirmado.
 
 Pauta para la conversación profesional: **especie/plato, cantidad solicitada, presentación deseada, ciudad y fecha requerida**. La respuesta comercial confirma por separado formato/peso, precio, disponibilidad y condiciones de entrega. No proponer mínimos, calendario recurrente, muestras gratuitas o tiempos de respuesta sin confirmarlos.
 
@@ -48,6 +50,8 @@ Ambos recorridos confirman precio, disponibilidad y entrega antes del pedido. No
 ## 3. Voz y mensajes
 
 Tres ideas: **conocer el ingrediente, cocinarlo con intención y comprender su origen**. Voz cercana, cuidadosa y precisa. Sin tuteo ni ustedeo: primera persona del plural para la marca, frases centradas en el producto y acciones en infinitivo (`.claude/brand-voice-guidelines.md` §3). Titulares breves. Explicar vocabulario técnico cuando ayuda; no encabezar una pieza comercial con C:N, telemetría o eficiencia biológica.
+
+La voz despierta curiosidad con una observación sensorial respaldada, una técnica o un plato concreto. En fichas de especie, seguir la secuencia **nombre común y científico → sabor y textura documentados → preparación o receta con su estado de prueba → consulta**. Una ilustración ayuda a reconocer la especie; el plato ayuda a imaginar su uso. No presentar una preparación propuesta como receta probada ni una ficha como oferta disponible.
 
 | Contexto | Texto de referencia |
 | --- | --- |
@@ -157,7 +161,7 @@ La siguiente validación propuesta es con cuatro chefs y dos personas que cocine
 
 ```text
 Marca: Setas de la Peña
-Prioridad: chefs; también hogares
+Audiencia: quienes cocinan, en cocinas profesionales y en casa
 Frase: Del micelio a la mesa.
 Descriptor: Hongos para cocinar con criterio.
 DS: 08_brand/ds-2026/market.css
