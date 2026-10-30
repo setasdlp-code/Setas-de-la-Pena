@@ -1,6 +1,6 @@
 # Guía de Voz de Marca — Setas de la Peña
 
-**Versión:** 2.3 · **Fecha:** 2026-10-27
+**Versión:** 2.4 · **Fecha:** 2026-10-30
 **Reemplaza a:** v1.0 (2026-05-11), archivada en `brand-voice-guidelines-2026-10-17.md`.
 **Alcance:** voz y tono (cómo se escribe). La identidad visual comercial (paleta, tipografía, firma) vive en `docs/brand-guidelines.md` y `08_brand/ds-2026/`; la de Setas OS, en `docs/brand/DESIGN_SYSTEM_CANONICAL.md` y `08_brand/field-os-identity/`. Aquí solo se referencia.
 **Uso:** `/brand-voice:enforce-voice` carga este archivo automáticamente.
@@ -29,10 +29,11 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 
 | Audiencia | Qué necesita | Registro |
 |---|---|---|
-| Chefs y compradores | Calidad, consistencia, origen, disponibilidad | Técnico-culinario, directo |
-| Consumidor final | Saber qué es, cómo cocinarlo, de dónde viene | Cálido y factual |
+| Personas que cocinan, en cocinas profesionales y en casa | Reconocer la especie, imaginar una preparación y consultar cantidad, presentación y disponibilidad | Una voz culinaria, cercana y precisa; explicar términos cuando ayudan |
 | Socios e inversionistas | Capacidad, márgenes, escalabilidad modular | Técnico-financiero, sin floritura |
 | Equipo operativo | Pasos claros, parámetros, qué hacer ante una desviación | Procedimental, respetuoso, sin culpa |
+
+La voz comercial trata a toda persona como alguien capaz de tomar decisiones de cocina. La información se adapta a la necesidad: una cocina profesional puede consultar cantidad, presentación y entrega para un servicio; una receta para casa puede incluir cantidades y pasos. No son personalidades de marca distintas. Los datos comerciales se confirman antes de cerrar el pedido.
 
 ---
 
@@ -70,13 +71,15 @@ Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.5
 **Generales** (Manual Canónico §2, vinculante)
 1. Sin signos de exclamación. Sin superlativos vacíos («el mejor», «increíble», «único»). La calidad se demuestra con un dato medido.
 2. Sin lenguaje místico o esotérico (ver lista en §5). Aplica a todo contenido nuevo desde 2026-05-11.
-3. **Tratamiento sin tuteo ni ustedeo.** Primera persona del plural para la marca («cultivamos», «revisamos», «proponemos»). Evitar «tú», «usted», posesivos de segunda persona e imperativos dirigidos al lector. Preferir frases centradas en el producto, preguntas sobre el pedido y llamadas a la acción en infinitivo («Consultar disponibilidad»). La cercanía se expresa con información útil y atención concreta; evitar fórmulas burocráticas como «se procederá». Con chefs se mantiene el registro técnico-culinario; con socios, el técnico-financiero.
+3. **Tratamiento sin tuteo ni ustedeo.** Primera persona del plural para la marca («cultivamos», «revisamos», «proponemos»). Evitar «tú», «usted», posesivos de segunda persona e imperativos dirigidos al lector. Preferir frases centradas en el producto, preguntas sobre el pedido y llamadas a la acción en infinitivo («Consultar disponibilidad»). La cercanía se expresa con información útil y atención concreta; evitar fórmulas burocráticas como «se procederá». Con quienes cocinan se mantiene una voz culinaria compartida; con socios, el registro técnico-financiero.
 4. Titulares de 3 a 6 palabras. Párrafos de 2 a 4 frases.
 5. Nombres científicos en cursiva y una sola vez (*Pleurotus ostreatus*, *Lentinula edodes*, *Hericium erinaceus*).
 6. Sin emojis en copy oficial (excepción: redes informales, con criterio).
 7. Sin claims medicinales o terapéuticos no respaldados por evidencia. Cualquier línea funcional/medicinal requiere revisión regulatoria (INVIMA) antes de redactar.
 
 **Cara al cliente: etiqueta, tienda, QR** (FOS-06.5)
+Una ficha de especie presenta nombre, sabor y textura documentados, una preparación o receta con su estado de prueba y una consulta concreta. Una lámina identifica la especie y un plato ilustrado ayuda a imaginar su uso; ninguna imagen demuestra disponibilidad o cosecha. No inventar notas de cata, origen de lote ni condiciones comerciales.
+
 1. **Nombre común primero.** «Orellana» como titular (decisión 2026-10-17); el latín, pequeño y en cursiva, una sola vez.
 2. **Frescura con hecho, no con adjetivo.** «Cortada esta mañana» ✓ · «Ultra fresca» ✗.
 3. **Cocina, no ficha técnica.** Cada producto lleva un uso concreto («plancha con mantequilla», «guisos y wok»). Nunca temperatura, humedad ni sustrato.
@@ -236,6 +239,7 @@ Sin transcripciones de llamadas ni PII en las fuentes procesadas. No se consulta
 
 | Fecha | Cambio |
 |---|---|
+| 2026-10-30 | v2.4: una voz culinaria para cocinas profesionales y domésticas; la información práctica se adapta a cada necesidad. |
 | 2026-10-27 | v2.3: §8 y «Alcance» remiten lo comercial a `docs/brand-guidelines.md` + DS-2026; conflictos de paleta y tipografía cerrados. |
 | 2026-10-27 | v2.3: frase principal «Del micelio a la mesa.» y descriptor «Hongos para cocinar con criterio.», alineados con `docs/brand-guidelines.md` §1. «Cultivo en sombra» pasa a descriptor del método. |
 | 2026-10-23 | v2.2: tratamiento sin tuteo ni ustedeo; primera persona del plural y registros técnico-culinario y técnico-financiero. Sustituye la decisión de tratamiento del 2026-10-17 y alinea manual y reglas de mercado. |
