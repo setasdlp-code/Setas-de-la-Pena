@@ -6779,7 +6779,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   align-items: start;
 }
 
-.sim-root .home-operational-queue > .sdp-band--ahora {
+.sim-root .home-primary-column > .sdp-band--ahora {
   min-width: 0;
   border: 0;
   padding: 6px;
@@ -6788,11 +6788,18 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   box-shadow: 0 8px 32px color-mix(in oklab, var(--ink-0) 4%, transparent);
 
 }
+.sim-root .home-primary-column { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.sim-root .home-pending-panel, .sim-root .home-session-panel { min-width: 0; padding: 24px; border-radius: 26px; background: var(--paper-0); box-shadow: inset 0 0 0 5px color-mix(in oklab, var(--ink-0) 3%, transparent); }
+.sim-root .home-panel-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.sim-root .home-panel-heading h2, .sim-root .home-session-panel h2 { margin: 0; font: 700 var(--text-lg)/1.2 var(--font-serif); color: var(--ink-0); }
+.sim-root .home-panel-heading > span, .sim-root .home-session-description { font: 400 var(--text-xs)/1.5 var(--font-sans); color: var(--ink-2); }
+.sim-root .home-task-print { display: grid; place-items: center; flex-shrink: 0; min-width: 48px; min-height: 48px; border: 0; background: transparent; color: var(--ink-1); cursor: pointer; }
+.sim-root .home-task-print:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .sim-root .home-quick-actions-strip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 .sim-root .home-shift-core { padding: 24px; border-radius: 26px; background: var(--paper-0); box-shadow: inset 0 1px 0 color-mix(in oklab, white 70%, transparent); }
 .sim-root .home-shift-title { margin: 8px 0; font: 700 var(--text-2xl)/1.1 var(--font-serif); letter-spacing: -0.025em; color: var(--ink-0); }
@@ -6832,7 +6839,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   .sim-root .home-kpi dt { font-size: var(--text-xs); }
   .sim-root .home-kpi dd { font-size: var(--text-xl); }
   .sim-root .home-quick-actions-strip { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .sim-root .home-shift-core { padding: 16px; }
+  .sim-root .home-shift-core, .sim-root .home-pending-panel, .sim-root .home-session-panel { padding: 16px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -6842,6 +6849,23 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media (prefers-reduced-motion: reduce) {
   .sim-root .home-quick-action, .sim-root .home-action-arrow { transition: none; }
   .sim-root .home-quick-action:hover, .sim-root .home-quick-action:active, .sim-root .home-quick-action:hover .home-action-arrow { transform: none; }
+}
+
+.sim-root .home-dashboard-switch { display: flex; gap: 8px; margin-bottom: 20px; }
+.sim-root .home-dashboard-switch button { min-height: 48px; padding: 10px 24px; border: 0; background: var(--paper-0); color: var(--ink-2); font: 600 var(--text-sm) var(--font-sans); cursor: pointer; }
+.sim-root .home-dashboard-switch button[aria-pressed="true"] { background: var(--accent-olive); color: var(--paper-0); }
+.sim-root .home-dashboard-switch button:focus-visible, .sim-root .home-tools-grid button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.sim-root .home-operational-queue[data-has-alerts="false"] { grid-template-columns: minmax(0,1fr); }
+.sim-root .home-followup { display: grid; gap: 20px; }
+.sim-root .home-followup-tools { padding: 24px; border-radius: 26px; background: var(--paper-0); box-shadow: inset 0 0 0 5px color-mix(in oklab,var(--ink-0) 3%,transparent); }
+.sim-root .home-followup-tools h2 { margin: 0 0 16px; font: 700 var(--text-lg)/1.2 var(--font-serif); color: var(--ink-0); }
+.sim-root .home-tools-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.sim-root .home-tools-grid button { display: flex; flex-direction: column; gap: 6px; padding: 16px; min-height: 64px; text-align: left; border: 0; background: var(--paper-1); color: var(--ink-0); cursor: pointer; font: 400 var(--text-sm)/1.4 var(--font-sans); }
+.sim-root .home-tools-grid button span { color: var(--ink-2); font-size: var(--text-xs); }
+.sim-root .home-operational-queue .home-quick-actions-strip { grid-template-columns: repeat(3,minmax(0,1fr)); }
+@media(max-width: 760px) {
+ .sim-root .home-operational-queue .home-quick-actions-strip, .sim-root .home-tools-grid { grid-template-columns: minmax(0,1fr); }
+ .sim-root .home-followup-tools { padding: 16px; }
 }
 
 /* Formulador: composición primero; metodología y procedencia a un paso. */

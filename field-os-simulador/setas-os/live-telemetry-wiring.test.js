@@ -166,14 +166,8 @@ test('los bloques en vivo se montan en el cockpit que de verdad se renderiza', (
   // Tablero de Control del tab 'home'. Poner ahí las alertas es la diferencia
   // entre que el operario las vea y que existan solo en el código.
   assert.equal((jsx.match(/<TodayV2\s*\/>/g) || []).length, 0, 'si TodayV2 se monta, revisar esta prueba');
-  assert.equal((jsx.match(/className="home-live-telemetry"/g) || []).length, 1,
-    'el cockpit operativo monta una sola franja de telemetría');
-  assert.match(jsx, /className="home-live-telemetry"/);
-  const homeStart = jsx.indexOf('className="home-live-telemetry"');
-  const homeBlock = jsx.slice(homeStart, homeStart + 400);
-  ['<LiveTelemetryStatusBar/>', '<LiveClimateStrip/>'].forEach(tag => {
-    assert.ok(homeBlock.includes(tag), `falta ${tag} en el cockpit home`);
-  });
+  assert.doesNotMatch(jsx, /className="home-live-telemetry"/, 'las lecturas detalladas pertenecen a Salas');
+  assert.match(jsx, /label:'Salas'[\s\S]{0,100}goTab\('clima'\)/);
   assert.equal((jsx.match(/<LiveAlertsSection\s*\/>/g)||[]).length, 1, 'las alertas operativas no se duplican');
   // Una sola definición de cada pieza: dos copias del markup vuelven a abrir la
   // puerta a que un cockpit muestre un criterio de severidad y el otro, otro.

@@ -126,13 +126,13 @@ test('gate 04: dynamic semantic mode', () => {
 
 test('gate 05: Hoy Attention/Now/Later', () => {
   assert.match(source, /sdp-band--atencion/);
-  assert.match(source, /Banda 1 · Atención/);
+  assert.match(source, /Alertas del cultivo/);
   assert.match(source, /sdp-task--critical/);
   assert.match(source, /sdp-band--ahora/);
-  assert.match(source, /Banda 2 · Ahora/);
+  assert.match(source, /Acciones rápidas/);
   assert.match(source, /sdp-task--now/);
   assert.match(source, /sdp-band--despues/);
-  assert.match(source, /Banda 3 · Después/);
+  assert.match(source, /Tareas programadas/);
   assert.match(source, /sdp-task--later/);
 });
 
@@ -173,7 +173,7 @@ test('gate 06: computed FIELD targets are >=44×44px', { timeout: 45_000 }, asyn
 });
 
 test('gate 07: screen text >=11px in Hoy', () => {
-  const hoySectionMatch = source.match(/className="home-operational-queue"[\s\S]+?\{\/\*\s*SECCIÓN B/);
+  const hoySectionMatch = source.match(/className="home-operational-queue"[\s\S]+?data-testid="home-followup"/);
   assert.ok(hoySectionMatch, 'Found Hoy queue in source');
   const sub11Match = hoySectionMatch[0].match(/fontSize:\s*['"]?(?:[1-9]|10)px?['"]?/g);
   assert.equal(sub11Match, null, `Found sub-11px font sizes in Hoy queue: ${sub11Match}`);
