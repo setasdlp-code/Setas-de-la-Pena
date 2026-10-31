@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-10-30
+last_reviewed: 2026-10-31
 ---
 
 # CHANGELOG
@@ -23,6 +23,15 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-10-31
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Añadido `09_research/retamo_espinoso_shiitake_2026-10-31.md` (`DOC-0129`): no se halló evidencia publicada de shiitake en *Ulex europaeus*. El único análogo verificado (*Caragana*, Xu et al. 2025) llega al 30 % con pérdida de rendimiento y retraso. La ficha de N del catálogo corresponde a brote joven. Retamo fuera del piloto de shiitake; se propone un microensayo exploratorio aparte. |
+| `[KB]` | Conservado el reporte externo de pellets y maderas para shiitake en `09_research/intake/pellets_maderas_shiitake_colombia_reporte_externo_2026-10-28.md` y auditado en `09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md` (`DOC-0130`). Candidato: pélet de *A. mangium* de Mandra, con compatibilidad no verificada. Conflictos registrados: Ca(OH)₂ frente a CaCO₃, tiempo de purga del 1941X y *A. decurrens*. |
+| `[BIZ]` | `07_business/procurement_cost_registry.md`: nueva sección de pellets y maderas para shiitake (Mandra, Mercado Libre, Homecenter, aserrín de Chía), todas con estado `unverified`. Corregida la nota de `retamo_espinoso`: existe pélet comercial reportado. |
+| `[KB]` | Punteros y pendientes añadidos en `02_substrates/substrate_library.md`, `02_substrates/shiitake_pellets_microlote_receta_v1.md` (sin cambiar cantidades) y `09_research/unresolved_questions.md` (SH10, SH11, AB10, AB11). `INDEX.yaml`: 133 entradas. **Sin cambios en el catálogo de Setas OS, DECISIONS.md ni CURRENT_OPERATIONS.md.** |
 
 ### 2026-10-30
 
