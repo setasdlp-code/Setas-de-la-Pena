@@ -77,3 +77,14 @@ test('el simulador no trae siembras de inventario ni valores de sala de ejemplo 
   assert.doesNotMatch(jsx, /demoMetrics|hasDemo/);
   assert.match(jsx, /if \(!hasLive\) return \{ key: metricKey, label, empty: true \};/);
 });
+
+test('los actuadores del tablero de clima no deciden en automático sin lectura medida', () => {
+  assert.match(jsx, /const hasMeasuredClimate = hasLiveMetrics \|\| !!injected;/);
+  assert.match(jsx, /'AUTO \[SIN LECTURA\]'/);
+  assert.match(jsx, /liveRoomAlerts\.length === 0 && climateHealth\.alerts\.length > 0 && \(hasLiveMetrics \|\| injected\)/);
+});
+
+test('el tablero de clima no muestra un historial de relés inventado', () => {
+  assert.doesNotMatch(jsx, /Pulso periódico FAE completado|Encendido por banda mínima \(84\.2%/);
+  assert.match(jsx, /data-testid="relay-log-empty"/);
+});
