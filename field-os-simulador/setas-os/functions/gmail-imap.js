@@ -34,13 +34,19 @@ const stripHtml = html => String(html || '')
  * corridas no traen PDFs sin XML). Quita los separadores de página que agrega.
  */
 async function pdfToText(buf) {
-  const { PDFParse } = require('pdf-parse');
-  const parser = new PDFParse({ data: new Uint8Array(buf) });
+  let parser;
   try {
+    const { PDFParse } = require('pdf-parse');
+    parser = new PDFParse({ data: new Uint8Array(buf) });
     const r = await parser.getText();
     return String((r && r.text) || '').replace(/^-- \d+ of \d+ --$/gm, '').trim();
+  } catch (err) {
+    // leerAdjuntos no lanza: sin esto, una instalación rota de pdf-parse sólo
+    // se vería como PDFs "ilegibles" en la bandeja.
+    console.warn('[importarCorreosCompra] no se pudo leer un PDF adjunto:', err && err.message);
+    throw err;
   } finally {
-    await parser.destroy().catch(() => {});
+    if (parser) await parser.destroy().catch(() => {});
   }
 }
 
