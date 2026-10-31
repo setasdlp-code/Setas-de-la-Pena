@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: cce084c884e606ee99f573805519c12bd518a244ee54e2818c43577cdd9b6cd2
+// source-hash: 332d2c91b2e1e8b818d6c32141053b42ea2924653084e849b920a4a87778229e
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -1658,6 +1658,8 @@ const useDialogA11y = (onClose) => {
 const AppIcon = ({ name, size = 14, className = "", style = {}, color = "currentColor" }) => {
   const s = { display: "inline-block", verticalAlign: "middle", flexShrink: 0, ...style };
   switch (name) {
+    case "mail":
+      return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("rect", { x: "2", y: "4", width: "20", height: "16", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "m22 7-10 6L2 7" }));
     case "print":
       return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: "1.75", strokeLinecap: "round", strokeLinejoin: "round", className, style: s, "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("polyline", { points: "6 9 6 2 18 2 18 9" }), /* @__PURE__ */ React.createElement("path", { d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" }), /* @__PURE__ */ React.createElement("rect", { x: "6", y: "14", width: "12", height: "8" }));
     case "tag":
@@ -5343,8 +5345,19 @@ function SimuladorShell(props) {
   const [cmpLastFoto, setCmpLastFoto] = useState(null);
   const [cmpConfirm, setCmpConfirm] = useState(null);
   const cmpFileRef = useRef(null);
+  const [invCorreos, setInvCorreos] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("sdp_correos_compra") || "[]");
+    } catch (e) {
+      return [];
+    }
+  });
+  const [correosRemoto, setCorreosRemoto] = useState(false);
+  const [cmpOrigenCorreo, setCmpOrigenCorreo] = useState(null);
+  const correosFileRef = useRef(null);
+  const cmpParseTokenRef = useRef(0);
   const [showProvModal, setShowProvModal] = useState(false);
-  const [newProv, setNewProv] = useState({ nombre: "", tipo: "plaza", municipio: "" });
+  const [newProv, setNewProv] = useState({ nombre: "", tipo: "plaza", municipio: "", remitenteCorreo: "" });
   const [publicTraceModalLoteId, setPublicTraceModalLoteId] = useState(() => {
     try {
       const p = new URLSearchParams(window.location.search);
@@ -7327,7 +7340,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "cce084c884e6" : null;
+    const appVersion = true ? "332d2c91b2e1" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7788,12 +7801,96 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const agregarProveedor = () => {
     const n = newProv.nombre.trim();
     if (!n || !newProv.municipio.trim()) return;
-    const prov = { id: "prov_" + Date.now(), nombre: n, tipo: newProv.tipo, municipio: newProv.municipio.trim() };
+    const remitente = String(newProv.remitenteCorreo || "").trim().toLowerCase().replace(/^@/, "");
+    const prov = { id: "prov_" + Date.now(), nombre: n, tipo: newProv.tipo, municipio: newProv.municipio.trim(), ...remitente ? { remitenteCorreo: remitente } : {} };
     const list = [...invProveedores, prov];
     saveProveedores(list);
     setCmpProvId(prov.id);
-    setNewProv({ nombre: "", tipo: "plaza", municipio: "" });
+    setNewProv({ nombre: "", tipo: "plaza", municipio: "", remitenteCorreo: "" });
     setShowProvModal(false);
+  };
+  const inboxApi = typeof window !== "undefined" ? window.SetasPurchaseEmailInbox : null;
+  const hoyBogota = () => inboxApi ? inboxApi.todayBogota() : (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  const saveCorreos = (fn) => setInvCorreos((prev) => {
+    const upd = inboxApi ? inboxApi.compactCorreos(fn(prev)) : fn(prev);
+    try {
+      localStorage.setItem("sdp_correos_compra", JSON.stringify(upd));
+    } catch (e) {
+    }
+    return upd;
+  });
+  useEffect(() => {
+    let unsub = null;
+    const conectar = () => {
+      const remote = window.SetasCorreosCompraDB;
+      if (unsub || !remote || !inboxApi) return;
+      try {
+        unsub = remote.suscribirCorreos(({ docs }) => {
+          const entrantes = docs.map((d) => inboxApi.normalizeCorreo(d)).filter(Boolean);
+          saveCorreos((prev) => inboxApi.mergeCorreos(prev, entrantes));
+          setCorreosRemoto(true);
+        }, (err) => {
+          console.warn("[Correos de compra] sin acceso a correos_compra", err);
+          setCorreosRemoto(false);
+        });
+      } catch (e) {
+        console.warn("[Correos de compra] no se pudo suscribir", e);
+      }
+    };
+    conectar();
+    window.addEventListener("setas-correos-compra-ready", conectar);
+    return () => {
+      window.removeEventListener("setas-correos-compra-ready", conectar);
+      if (typeof unsub === "function") unsub();
+    };
+  }, []);
+  const marcarCorreo = (id, estado, { compraId = null } = {}) => {
+    if (!inboxApi || !id) return;
+    const c = invCorreos.find((x) => x.id === id);
+    saveCorreos((prev) => inboxApi.markCorreo(prev, id, estado, { compraId }));
+    if (c && c.origen === "gmail" && window.SetasCorreosCompraDB) {
+      window.SetasCorreosCompraDB.marcarCorreo(id, estado, { compraId }).catch((err) => console.warn("[Correos de compra] no se pudo marcar en el servidor", err));
+    }
+  };
+  const importarArchivoCorreos = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file || !inboxApi) return;
+    try {
+      const nuevos = inboxApi.correosFromFile(JSON.parse(await file.text()));
+      const antes = new Set(invCorreos.map((c) => c.id));
+      const agregados = nuevos.filter((c) => !antes.has(c.id)).length;
+      saveCorreos((prev) => inboxApi.mergeCorreos(prev, nuevos));
+      setNoticeDlg({ title: "Correos importados", msg: agregados ? `${agregados} correo${agregados === 1 ? "" : "s"} nuevo${agregados === 1 ? "" : "s"} en la bandeja. Los que ya estaban no se duplicaron.` : "Todos los correos de este archivo ya estaban en la bandeja." });
+    } catch (err) {
+      setNoticeDlg({ title: "No se pudo importar", msg: `El archivo no se pudo leer: ${err.message}. Debe ser el sdp_emails.json que genera fetch_gmail.py.` });
+    }
+  };
+  const revisarCorreo = (c) => {
+    if (!c || !inboxApi) return;
+    const yaCompra = inboxApi.compraFromCorreo(invCompras, c.id);
+    if (yaCompra) {
+      marcarCorreo(c.id, "importada", { compraId: yaCompra.id });
+      setNoticeDlg({ title: "Correo ya importado", msg: `Este correo ya se registró como compra del ${yaCompra.fecha}. Se quitó de la bandeja.` });
+      return;
+    }
+    setCmpConfirm(null);
+    setCmpItems([{ uid: Date.now(), ingId: "", kg: "", precio: "" }]);
+    setCmpOrigenCorreo(c.id);
+    setCmpFuente("email");
+    setCmpRecibida(false);
+    setCmpProvId(inboxApi.matchProveedor(invProveedores, c.remitente) || "");
+    if (c.fecha) setCmpFecha(c.fecha);
+    setCmpMode("texto");
+    setCmpPasteText(inboxApi.textoParaParseo(c));
+    parseTextoCompra(inboxApi.textoParaParseo(c));
+  };
+  const descartarCorreo = (c) => {
+    if (!c) return;
+    setConfirmDlg({ title: "Descartar correo", msg: `¿Quitar "${c.asunto || "(sin asunto)"}" de la bandeja? No es una compra de insumos o ya se registró a mano.`, confirmLabel: "Descartar", onConfirm: () => {
+      marcarCorreo(c.id, "descartada");
+      if (cmpOrigenCorreo === c.id) resetCmpForm();
+    } });
   };
   const eliminarProveedor = (id) => {
     const tieneCompras = invCompras.some((c) => c.proveedorId === id);
@@ -7857,13 +7954,13 @@ ${errors.slice(0, 5).join("\n")}` : "");
       setHuboParseIA(false);
       return;
     }
-    const mapped = items.map((p, i) => ({ uid: Date.now() + i, ingId: matchIngId(p.ingrediente || p.nombre || ""), kg: p.kg || p.cantidad || "", precio: p.precio || p.precio_kg || "" }));
+    const mapped = items.map((p, i) => ({ uid: Date.now() + i, ingId: matchIngId(p.ingrediente || p.nombre || ""), kg: p.kg || p.cantidad || "", precio: p.precio || p.precio_kg || "", textoOriginal: String(p.ingrediente || p.nombre || "").trim() }));
     setCmpItems(mapped);
     setHuboParseIA(true);
     if (parsed && !Array.isArray(parsed)) {
       if (parsed.proveedor) {
         const pid = matchProvId(parsed.proveedor);
-        if (pid) setCmpProvId(pid);
+        if (pid) setCmpProvId((prev) => prev || pid);
       }
       if (parsed.fecha && /^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) setCmpFecha(parsed.fecha);
     }
@@ -7953,8 +8050,11 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setCmpFuente("ocr");
     parseFotoPayload(cmpLastFoto.fileBlock, cmpLastFoto.esPDF);
   };
-  const parsearTexto = async () => {
-    if (!cmpPasteText.trim()) return;
+  const parsearTexto = () => parseTextoCompra(cmpPasteText);
+  const parseTextoCompra = async (texto) => {
+    if (!String(texto || "").trim()) return;
+    const token = ++cmpParseTokenRef.current;
+    const vigente = () => token === cmpParseTokenRef.current;
     setCmpParsing(true);
     setCmpParseErr("");
     setHuboParseIA(false);
@@ -7962,9 +8062,10 @@ ${errors.slice(0, 5).join("\n")}` : "");
     try {
       if (window.SetasAI && typeof window.SetasAI.parseInvoiceText === "function") {
         const parsed = await window.SetasAI.parseInvoiceText({
-          text: cmpPasteText,
+          text: texto,
           knownIngredients: INGS
         });
+        if (!vigente()) return;
         applyParsedItems(parsed);
         setCmpParsing(false);
         return;
@@ -7973,18 +8074,19 @@ ${errors.slice(0, 5).join("\n")}` : "");
         const listaIngs = INGS.map((g) => g.name).join(", ");
         const resp = await window.claude.complete({ messages: [{ role: "user", content: `Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:
 
-"""${cmpPasteText}"""
+"""${texto}"""
 
 Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.` }] });
+        if (!vigente()) return;
         applyParsedItems(extraerJSON(resp));
         setCmpParsing(false);
         return;
       }
       throw new Error("Servicio de IA no disponible");
     } catch (err) {
-      setCmpParseErr("No se pudo interpretar el texto. Intentar de nuevo o usar Manual.");
+      if (vigente()) setCmpParseErr("No se pudo interpretar el texto. Intentar de nuevo o usar Manual.");
     }
-    setCmpParsing(false);
+    if (vigente()) setCmpParsing(false);
   };
   const resetCmpForm = () => {
     setCmpItems([{ uid: Date.now(), ingId: "", kg: "", precio: "" }]);
@@ -7994,6 +8096,10 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
     setHuboParseIA(false);
     setCmpLastFoto(null);
     setCmpRecibida(true);
+    setCmpOrigenCorreo(null);
+    setCmpParseErr("");
+    cmpParseTokenRef.current++;
+    setCmpParsing(false);
   };
   const registrarCompra = () => {
     const valid = cmpItems.filter((it) => it.ingId && parseFloat(it.kg) > 0);
@@ -8001,8 +8107,43 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
       setNoticeDlg({ msg: "Seleccionar proveedor y agregar al menos un ítem." });
       return;
     }
+    if (cmpOrigenCorreo && inboxApi) {
+      const ya = inboxApi.compraFromCorreo(invCompras, cmpOrigenCorreo);
+      if (ya) {
+        marcarCorreo(cmpOrigenCorreo, "importada", { compraId: ya.id });
+        setNoticeDlg({ title: "Correo ya importado", msg: `Este correo ya se registró como compra del ${ya.fecha} (quizá desde otro equipo). No se registró de nuevo.` });
+        resetCmpForm();
+        return;
+      }
+    }
+    const caidas = inboxApi ? inboxApi.droppedLines(cmpItems) : [];
+    if (caidas.length) {
+      const detalle = caidas.map((c) => {
+        const it = cmpItems.find((x) => x.uid === c.uid);
+        const g = it && INGS.find((x) => x.id === it.ingId);
+        return `• ${c.texto || g?.name || "Línea sin nombre"} — ${c.motivo}`;
+      }).join("\n");
+      setConfirmDlg({ title: "Hay líneas que no se registrarán", msg: `${caidas.length} línea${caidas.length === 1 ? "" : "s"} no ${caidas.length === 1 ? "entra" : "entran"} a Bodega:
+
+${detalle}
+
+Se registra${valid.length === 1 ? "" : "n"} sólo ${valid.length} ítem${valid.length === 1 ? "" : "s"}. Para incluirlas, elegir el ingrediente o poner los kilos.`, confirmLabel: "Registrar sin ellas", onConfirm: () => registrarCompraValida(valid) });
+      return;
+    }
+    registrarCompraValida(valid);
+  };
+  const registrarCompraValida = (valid) => {
     const cId = "compra_" + Date.now();
     const prov = invProveedores.find((p) => p.id === cmpProvId);
+    const correo = cmpOrigenCorreo ? invCorreos.find((c) => c.id === cmpOrigenCorreo) : null;
+    const enlazarCorreo = () => {
+      if (!correo) return;
+      marcarCorreo(correo.id, "importada", { compraId: cId });
+      const clave = correo.remitenteClave || (inboxApi ? inboxApi.senderKey(correo.remitente) : "");
+      if (prov && clave && !prov.remitenteCorreo && !invProveedores.some((p) => p.remitenteCorreo === clave)) {
+        saveProveedores(invProveedores.map((p) => p.id === prov.id ? { ...p, remitenteCorreo: clave } : p));
+      }
+    };
     const compraPendiente = {
       id: cId,
       fecha: cmpFecha,
@@ -8010,11 +8151,13 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
       items: valid.map((it) => ({ ingredienteId: it.ingId, kg: parseFloat(it.kg), precio: parseFloat(it.precio) || 0 })),
       fuenteCaptura: cmpFuente,
       revisadoManualmente: true,
+      ...correo ? { origenCorreoId: correo.id } : {},
       estado: "pendiente",
       fechaEsperada: cmpFecha
     };
     if (!cmpRecibida) {
       saveCompras([...invCompras, compraPendiente]);
+      enlazarCorreo();
       const resumen2 = valid.map((it) => {
         const g = INGS.find((x) => x.id === it.ingId);
         return { nombre: g ? g.name : it.ingId, kgComprado: parseFloat(it.kg) };
@@ -8037,6 +8180,7 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
     saveCompras([...invCompras, rec.compra]);
     saveLotes([...invLotes, ...rec.lots]);
     saveMovimientos([...invMovimientos, ...rec.movements]);
+    enlazarCorreo();
     const resumen = valid.map((it) => {
       const g = INGS.find((x) => x.id === it.ingId);
       const stockPrevio = invLotes.filter((l) => l.activo && l.ingredienteId === it.ingId).reduce((s, l) => s + l.cantidadKgDisponible, 0);
@@ -8059,7 +8203,7 @@ Devuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre 
           setNoticeDlg({ title: "No se pudo recibir", msg: "Falta el módulo de compras (purchases.js). No se registró nada — recarga la página o avisa al equipo técnico." });
           return;
         }
-        const hoy = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        const hoy = hoyBogota();
         let rec;
         try {
           rec = window.SetasPurchases.receiveCompra(compra, { at: hoy });
@@ -8169,7 +8313,10 @@ BATCH (${numBags}×${kgBag} kg):
   const BodegaSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "panel" }, SetasInventoryConsumptionApi.failuresForBanner(invOps).length > 0 && /* @__PURE__ */ React.createElement("div", { role: "alert", className: "inv-section", style: { borderColor: "var(--status-error)" } }, /* @__PURE__ */ React.createElement("strong", null, "Consumos de bodega sin guardar en el servidor"), /* @__PURE__ */ React.createElement("ul", null, SetasInventoryConsumptionApi.failuresForBanner(invOps).map((o) => /* @__PURE__ */ React.createElement("li", { key: o.opId }, o.codigo || o.loteId, " · ", o.attempts, " intentos · ", o.lastError))), /* @__PURE__ */ React.createElement("button", { className: "btn", style: { minHeight: 44 }, onClick: () => {
     saveInvOps(readInvOps().map((o) => o.status === "failed" ? { ...o, nextAttemptAt: 0 } : o));
     runInventorySync();
-  } }, "Reintentar ahora")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, [["stock", "Stock"], ["compra", "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k) }, l))), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
+  } }, "Reintentar ahora")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-row" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, [...new Set(invLotes.filter((l) => l.activo && l.cantidadKgDisponible > 0 && INGS.some((i) => i.id === l.ingredienteId)).map((l) => l.ingredienteId))].length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "En stock")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invLotes.filter((l) => l.activo && INGS.some((i) => i.id === l.ingredienteId)).reduce((s, l) => s + l.cantidadKgDisponible, 0).toFixed(1)), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "kg disp.")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invCompras.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Compras")), /* @__PURE__ */ React.createElement("div", { className: "inv-stat" }, /* @__PURE__ */ React.createElement("div", { className: "inv-stat-val" }, invProveedores.length), /* @__PURE__ */ React.createElement("div", { className: "inv-stat-lbl" }, "Proveedores"))), /* @__PURE__ */ React.createElement("div", { className: "inv-subtab-bar" }, (() => {
+    const nCorreos = inboxApi ? inboxApi.inboxPending(invCorreos, invCompras).length : 0;
+    return [["stock", "Stock"], ["compra", nCorreos ? `Compra · ${nCorreos}` : "Compra"], ["historial", "Historial"], ["proveedores", "Proveedores"]].map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: `inv-subtab${invTab === k ? " on" : ""}`, onClick: () => setInvTab(k), "aria-label": k === "compra" && nCorreos ? `Compra, ${nCorreos} correo${nCorreos === 1 ? "" : "s"} por revisar` : void 0 }, l));
+  })()), invTab === "stock" && /* @__PURE__ */ React.createElement("div", null, (() => {
     const sobregirados = invLotes.filter((l) => (Number(l.sobregiroKg) || 0) > 0);
     if (!sobregirados.length) return null;
     return /* @__PURE__ */ React.createElement("div", { role: "alert", "data-testid": "inventory-overdraw", className: "stock-critical-card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "color-mix(in oklab, var(--coral-700) 70%, black)", marginBottom: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 6 } }), " Recuento necesario (", sobregirados.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)", color: "var(--ink-1)", marginBottom: 6 } }, "Se registró más consumo que existencia: dos equipos descontaron los mismos kilos. Contar el lote y corregir su stock."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } }, sobregirados.map((l) => {
@@ -8290,18 +8437,38 @@ BATCH (${numBags}×${kgBag} kg):
         return /* @__PURE__ */ React.createElement("span", { key: i, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", padding: "1px 5px", background: "var(--paper-100)", border: "1px solid var(--paper-300)", color: "var(--ink-500)", borderRadius: 2 } }, g?.name || it.ingredienteId, " ", it.kg, "kg");
       }))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri sdp-btn--field", onClick: () => recibirCompra(c.id) }, "Registrar recepción"));
     }));
-  })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [["manual", /* @__PURE__ */ React.createElement(AppIcon, { name: "edit", size: 14 }), "Manual"], ["foto", /* @__PURE__ */ React.createElement(IconCamera, { size: 16 }), "Foto / PDF"], ["texto", /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 14 }), "Pegar texto"]].map(([v, icon, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: "inv-btn inv-btn-sec", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 8px", ...cmpMode === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} }, onClick: () => {
+  })(), (() => {
+    const nCorreos = inboxApi ? inboxApi.inboxPending(invCorreos, invCompras).length : 0;
+    if (!nCorreos || cmpMode === "correo" || cmpOrigenCorreo) return null;
+    return /* @__PURE__ */ React.createElement("button", { type: "button", "data-testid": "purchase-email-banner", onClick: () => setCmpMode("correo"), style: { width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minHeight: 44, padding: "10px 12px", marginBottom: 14, font: "inherit", cursor: "pointer", textAlign: "left", background: "var(--status-warn-bg)", border: "1px solid var(--status-attention)", borderRadius: "var(--sim-r-sm)", color: "var(--ink-800)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "mail", size: 13 }), " ", nCorreos, " correo", nCorreos === 1 ? "" : "s", " de compra por revisar"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textDecoration: "underline" } }, "Ver correos →"));
+  })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [["manual", /* @__PURE__ */ React.createElement(AppIcon, { name: "edit", size: 14 }), "Manual"], ["correo", /* @__PURE__ */ React.createElement(AppIcon, { name: "mail", size: 14 }), "Correos"], ["foto", /* @__PURE__ */ React.createElement(IconCamera, { size: 16 }), "Foto"], ["texto", /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 14 }), "Texto"]].map(([v, icon, l]) => /* @__PURE__ */ React.createElement("button", { key: v, type: "button", "data-testid": `cmp-mode-${v}`, "aria-pressed": cmpMode === v, "aria-label": { manual: "Manual", correo: "Correos de proveedores", foto: "Foto o PDF de factura", texto: "Pegar texto" }[v], className: "inv-btn inv-btn-sec", style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "10px 4px", ...cmpMode === v ? { background: "var(--ink-0)", color: "var(--paper-0)", borderColor: "var(--ink-0)" } : {} }, onClick: () => {
     setCmpMode(v);
     setCmpParseErr("");
     setCmpLastFoto(null);
     setHuboParseIA(false);
-  } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1 } }, icon), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--sim-tracking-label)" } }, l)))), cmpMode === "foto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16, padding: 14, border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*,application/pdf", capture: "environment", ref: cmpFileRef, style: { display: "none" }, onChange: capturarFoto }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { display: "inline-flex", alignItems: "center", gap: 6 }, disabled: cmpParsing, onClick: () => cmpFileRef.current && cmpFileRef.current.click() }, cmpParsing ? "Leyendo recibo…" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconCamera, { size: 12 }), " Tomar foto / subir recibo (o PDF)")), cmpLastFoto && !cmpParsing && /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { marginLeft: 8, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }, onClick: reintentarFoto, title: `Reintentar con ${cmpLastFoto.name}` }, "↻ Reintentar", cmpLastFoto.name ? ` (${cmpLastFoto.name.length > 18 ? cmpLastFoto.name.slice(0, 15) + "…" : cmpLastFoto.name})` : ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", marginTop: 8 } }, "La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisar antes de registrar."), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), cmpMode === "texto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("textarea", { className: "inv-input", rows: "4", style: { width: "100%", resize: "vertical", fontFamily: "var(--font-body)" }, placeholder: "Pegar aquí el mensaje o correo del proveedor…", value: cmpPasteText, onChange: (e) => setCmpPasteText(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { marginTop: 8 }, disabled: cmpParsing || !cmpPasteText.trim(), onClick: parsearTexto }, cmpParsing ? "Interpretando…" : cmpParseErr ? "↻ Reintentar" : "Interpretar texto"), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), huboParseIA && (() => {
+  } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1 } }, icon), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "var(--sim-tracking-label)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" } }, l)))), cmpMode === "correo" && (() => {
+    const pend = inboxApi ? inboxApi.inboxPending(invCorreos, invCompras) : [];
+    return /* @__PURE__ */ React.createElement("div", { "data-testid": "purchase-email-inbox", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-700)", padding: "8px 10px", marginBottom: 10, border: "1px solid var(--border-soft)", borderRadius: "var(--sim-r-sm)", background: correosRemoto ? "var(--moss-tint)" : "var(--paper-100)" } }, (() => {
+      const ultimo = inboxApi ? inboxApi.ultimoImportadoGmail(invCorreos) : null;
+      if (correosRemoto && ultimo) return `Importación automática desde Gmail. Último correo traído: ${inboxApi.bogotaDate(ultimo)}.`;
+      if (correosRemoto) return "Conectado a la bandeja del servidor, pero todavía no ha llegado ningún correo desde Gmail. Mientras tanto, se puede importar el archivo de fetch_gmail.py.";
+      return "Importación automática sin conectar. Mientras tanto, correr fetch_gmail.py e importar su archivo sdp_emails.json.";
+    })()), /* @__PURE__ */ React.createElement("input", { type: "file", accept: "application/json,.json", ref: correosFileRef, style: { display: "none" }, onChange: importarArchivoCorreos, "data-testid": "purchase-email-file" }), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", style: { marginBottom: 12 }, onClick: () => correosFileRef.current && correosFileRef.current.click() }, "Importar archivo de correos"), !pend.length ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "20px 12px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-500)", border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)" } }, "Sin correos de compra por revisar.") : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Por revisar (", pend.length, ")"), pend.map((c) => {
+      const provId = inboxApi.matchProveedor(invProveedores, c.remitente);
+      const prov = invProveedores.find((p) => p.id === provId);
+      const preview = String(c.cuerpo || "").replace(/\s+/g, " ").trim();
+      return /* @__PURE__ */ React.createElement("div", { key: c.id, "data-testid": "purchase-email", style: { padding: "10px 12px", marginTop: 6, border: "1px solid var(--border-soft)", borderRadius: "var(--sim-r-sm)", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-800)", overflowWrap: "anywhere" } }, c.asunto || "(sin asunto)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", overflowWrap: "anywhere" } }, c.remitente || "remitente desconocido", c.fecha ? ` · ${c.fecha}` : ""), preview && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, overflowWrap: "anywhere" } }, preview.length > 140 ? preview.slice(0, 137) + "…" : preview), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", marginTop: 4, color: prov ? "var(--accent-olive)" : "var(--status-warn-text)" } }, prov ? `Proveedor: ${prov.nombre}` : "Proveedor sin reconocer — se elige al revisar"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri sdp-btn--field", disabled: cmpParsing, onClick: () => revisarCorreo(c) }, "Revisar y registrar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec sdp-btn--field", onClick: () => descartarCorreo(c), "aria-label": `Descartar correo ${c.asunto || ""}` }, "Descartar")));
+    })));
+  })(), cmpOrigenCorreo && (() => {
+    const c = invCorreos.find((x) => x.id === cmpOrigenCorreo);
+    return /* @__PURE__ */ React.createElement("div", { "data-testid": "purchase-email-reviewing", style: { marginBottom: 14, padding: "10px 12px", borderRadius: "var(--sim-r-sm)", background: "var(--paper-100)", border: "1px solid var(--border-soft)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700, textTransform: "uppercase", color: "var(--ink-700)" } }, "Revisando correo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-sm)", color: "var(--ink-800)", overflowWrap: "anywhere" } }, c?.asunto || "(sin asunto)", " · ", c?.remitente || ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 4 } }, cmpProvId ? 'Revisar ítems, kilos y precios. Un correo entra como "Por recibir" hasta que lleguen los kilos.' : "Elegir el proveedor: Setas OS recordará este remitente para los próximos correos."), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", style: { marginTop: 8 }, onClick: resetCmpForm }, "Cancelar revisión"));
+  })(), cmpMode === "foto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16, padding: 14, border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)", textAlign: "center" } }, /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*,application/pdf", capture: "environment", ref: cmpFileRef, style: { display: "none" }, onChange: capturarFoto }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { display: "inline-flex", alignItems: "center", gap: 6 }, disabled: cmpParsing, onClick: () => cmpFileRef.current && cmpFileRef.current.click() }, cmpParsing ? "Leyendo recibo…" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(IconCamera, { size: 12 }), " Tomar foto / subir recibo (o PDF)")), cmpLastFoto && !cmpParsing && /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { marginLeft: 8, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }, onClick: reintentarFoto, title: `Reintentar con ${cmpLastFoto.name}` }, "↻ Reintentar", cmpLastFoto.name ? ` (${cmpLastFoto.name.length > 18 ? cmpLastFoto.name.slice(0, 15) + "…" : cmpLastFoto.name})` : ""), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--border-soft)", marginTop: 8 } }, "La foto o PDF se lee y llena proveedor, fecha e ítems abajo — revisar antes de registrar."), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), cmpMode === "texto" && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("textarea", { className: "inv-input", rows: "4", style: { width: "100%", resize: "vertical", fontFamily: "var(--font-body)" }, placeholder: "Pegar aquí el mensaje o correo del proveedor…", value: cmpPasteText, onChange: (e) => setCmpPasteText(e.target.value) }), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri inv-btn-sm", style: { marginTop: 8 }, disabled: cmpParsing || !cmpPasteText.trim(), onClick: parsearTexto }, cmpParsing ? "Interpretando…" : cmpParseErr ? "↻ Reintentar" : "Interpretar texto"), cmpParseErr && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--coral-500)", marginTop: 8 } }, cmpParseErr)), cmpMode !== "correo" && /* @__PURE__ */ React.createElement(React.Fragment, null, huboParseIA && (() => {
     const total = cmpItems.length;
     const sinMatch = cmpItems.filter((it) => !it.ingId).length;
     return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 14, padding: "10px 12px", borderRadius: "var(--sim-r-sm)", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", background: sinMatch ? "var(--status-warn-bg)" : "var(--moss-tint)", border: `1px solid ${sinMatch ? "var(--status-attention)" : "var(--moss-300)"}`, color: "var(--ink-800)" } }, "Se ", total === 1 ? "detectó 1 ítem" : `detectaron ${total} ítems`, sinMatch > 0 ? ` — ${sinMatch} sin coincidencia automática, revísalos abajo.` : " — revisa cantidades y precios antes de registrar.");
   })(), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "purchase-provider" }, "Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("select", { id: "purchase-provider", name: "purchaseProvider", className: "inv-input", value: cmpProvId, onChange: (e) => setCmpProvId(e.target.value), style: { flex: 1 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar…"), invProveedores.map((p) => /* @__PURE__ */ React.createElement("option", { key: p.id, value: p.id }, p.nombre, " — ", p.municipio))), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", style: { flexShrink: 0, padding: "9px 12px" }, onClick: () => setShowProvModal(true) }, "＋ Nuevo"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "purchase-date" }, cmpRecibida ? "Fecha de compra" : "Fecha esperada"), /* @__PURE__ */ React.createElement("input", { id: "purchase-date", name: "purchaseDate", type: "date", className: "inv-input", value: cmpFecha, onChange: (e) => setCmpFecha(e.target.value) }))), /* @__PURE__ */ React.createElement("span", { className: "inv-label" }, "Ítems"), cmpItems.map((it) => {
     const g = INGS.find((x) => x.id === it.ingId);
-    return /* @__PURE__ */ React.createElement("div", { key: it.uid, style: { border: "1px solid var(--border-soft)", borderRadius: "var(--sim-r-sm)", padding: "10px 12px", marginBottom: 8, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("select", { name: `purchaseIngredient-${it.uid}`, "aria-label": "Ingrediente de la compra", className: "inv-input", style: { flex: 1, fontSize: "var(--text-sm)" }, value: it.ingId, onChange: (e) => updCmpItem(it.uid, "ingId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar ingrediente…"), INGS.map((gg) => /* @__PURE__ */ React.createElement("option", { key: gg.id, value: gg.id }, gg.name))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => remCmpItem(it.uid), disabled: cmpItems.length === 1, "aria-label": `Quitar ${g?.name || "ítem"} de la compra` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))), !it.ingId && (it.kg || it.precio) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--coral-500)" }), " Sin coincidencia automática — elige el ingrediente."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String(Math.max(0, (parseFloat(it.kg) || 0) - 1))), "aria-label": `Reducir cantidad de ${g?.name || "ingrediente"} en 1 kg` }, "−"), /* @__PURE__ */ React.createElement("input", { name: `purchaseKg-${it.uid}`, "aria-label": `Cantidad en kg de ${g?.name || "ingrediente"}`, type: "number", className: "inv-input", style: { width: 64, textAlign: "center", fontSize: "var(--text-sm)" }, min: "0", step: "0.5", value: it.kg, onChange: (e) => updCmpItem(it.uid, "kg", e.target.value), placeholder: "kg" }), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String((parseFloat(it.kg) || 0) + 1)), "aria-label": `Aumentar cantidad de ${g?.name || "ingrediente"} en 1 kg` }, "＋"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg")), /* @__PURE__ */ React.createElement("input", { name: `purchasePrice-${it.uid}`, "aria-label": `Precio por kg de ${g?.name || "ingrediente"} en pesos colombianos`, type: "number", className: "inv-input", style: { width: 90, fontSize: "var(--text-sm)" }, min: "0", step: "100", value: it.precio, onChange: (e) => updCmpItem(it.uid, "precio", e.target.value), placeholder: "$/kg" }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginLeft: "auto", whiteSpace: "nowrap" } }, "$", ((parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0)).toLocaleString("es-CO"))));
+    return /* @__PURE__ */ React.createElement("div", { key: it.uid, style: { border: "1px solid var(--border-soft)", borderRadius: "var(--sim-r-sm)", padding: "10px 12px", marginBottom: 8, background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("select", { name: `purchaseIngredient-${it.uid}`, "aria-label": "Ingrediente de la compra", className: "inv-input", style: { flex: 1, fontSize: "var(--text-sm)" }, value: it.ingId, onChange: (e) => updCmpItem(it.uid, "ingId", e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Seleccionar ingrediente…"), INGS.map((gg) => /* @__PURE__ */ React.createElement("option", { key: gg.id, value: gg.id }, gg.name))), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => remCmpItem(it.uid), disabled: cmpItems.length === 1, "aria-label": `Quitar ${g?.name || "ítem"} de la compra` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))), !it.ingId && (it.kg || it.precio) && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--coral-500)", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 12, color: "var(--coral-500)" }), " ", it.textoOriginal ? `“${it.textoOriginal}” sin coincidencia — elegir el ingrediente o quitar la línea.` : "Sin coincidencia automática — elige el ingrediente."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String(Math.max(0, (parseFloat(it.kg) || 0) - 1))), "aria-label": `Reducir cantidad de ${g?.name || "ingrediente"} en 1 kg` }, "−"), /* @__PURE__ */ React.createElement("input", { name: `purchaseKg-${it.uid}`, "aria-label": `Cantidad en kg de ${g?.name || "ingrediente"}`, type: "number", className: "inv-input", style: { width: 64, textAlign: "center", fontSize: "var(--text-sm)" }, min: "0", step: "0.5", value: it.kg, onChange: (e) => updCmpItem(it.uid, "kg", e.target.value), placeholder: "kg" }), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec inv-btn-sm", onClick: () => updCmpItem(it.uid, "kg", String((parseFloat(it.kg) || 0) + 1)), "aria-label": `Aumentar cantidad de ${g?.name || "ingrediente"} en 1 kg` }, "＋"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)" } }, "kg")), /* @__PURE__ */ React.createElement("input", { name: `purchasePrice-${it.uid}`, "aria-label": `Precio por kg de ${g?.name || "ingrediente"} en pesos colombianos`, type: "number", className: "inv-input", style: { width: 90, fontSize: "var(--text-sm)" }, min: "0", step: "100", value: it.precio, onChange: (e) => updCmpItem(it.uid, "precio", e.target.value), placeholder: "$/kg" }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", marginLeft: "auto", whiteSpace: "nowrap" } }, "$", ((parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0)).toLocaleString("es-CO"))));
   }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec inv-btn-sm", onClick: addCmpItem }, "＋ Agregar ítem"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--ink-800)" } }, "Total: $", cmpItems.reduce((s, it) => s + (parseFloat(it.kg) || 0) * (parseFloat(it.precio) || 0), 0).toLocaleString("es-CO"), " COP")), /* @__PURE__ */ React.createElement("div", { className: "inv-label" }, "¿Ya llegó a bodega?"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [[true, "Ya la recibí"], [false, "Por recibir"]].map(([v, l]) => /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -8314,17 +8481,10 @@ BATCH (${numBags}×${kgBag} kg):
     },
     l
   ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: registrarCompra }, cmpRecibida ? "Registrar compra" : "Registrar pedido"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => {
-    setCmpItems([{ uid: Date.now(), ingId: "", kg: "", precio: "" }]);
+    resetCmpForm();
     setCmpProvId("");
-    setCmpFecha((/* @__PURE__ */ new Date()).toISOString().split("T")[0]);
-    setCmpMode("manual");
-    setCmpPasteText("");
-    setCmpFuente("manual");
-    setHuboParseIA(false);
-    setCmpLastFoto(null);
-    setCmpParseErr("");
-    setCmpRecibida(true);
-  } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }), " Limpiar")))), invTab === "historial" && /* @__PURE__ */ React.createElement("div", null, invCompras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)", border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)" } }, "Sin compras registradas.", /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", style: { marginTop: 12 }, onClick: () => setInvTab("compra") }, "Registrar primera compra →"))) : (() => {
+    setCmpFecha(hoyBogota());
+  } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }), " Limpiar"))))), invTab === "historial" && /* @__PURE__ */ React.createElement("div", null, invCompras.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "32px 20px", fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)", border: "1px dashed var(--border-soft)", borderRadius: "var(--sim-r-sm)" } }, "Sin compras registradas.", /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", style: { marginTop: 12 }, onClick: () => setInvTab("compra") }, "Registrar primera compra →"))) : (() => {
     const byMonth = {};
     [...invCompras].sort((a, b) => b.fecha.localeCompare(a.fecha)).forEach((c) => {
       const mes = c.fecha.slice(0, 7);
@@ -8347,7 +8507,7 @@ BATCH (${numBags}×${kgBag} kg):
         }))), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-num)", fontSize: "var(--text-base)", color: "var(--ink-900)" } }, "$", tot.toLocaleString("es-CO")), /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--ink-700)", fontWeight: 500 } }, c.fuenteCaptura), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("span", { className: `sdp-badge ${pendiente ? "sdp-badge--warn" : "sdp-badge--ok"}`, style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 700 } }, window.SetasPurchases ? window.SetasPurchases.COMPRA_ESTADO_LABELS[estado] : estado)));
       }))));
     });
-  })()), invTab === "proveedores" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setShowProvModal(true) }, "＋ Agregar proveedor")), invProveedores.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: 24, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "Sin proveedores. Agregar el primero.") : /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, invProveedores.map((p) => /* @__PURE__ */ React.createElement("div", { key: p.id, className: "prov-row" }, /* @__PURE__ */ React.createElement("span", { className: "prov-tipo-chip" }, p.tipo), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "prov-name" }, p.nombre), /* @__PURE__ */ React.createElement("div", { className: "prov-muni" }, p.municipio)), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => requireAdmin(eliminarProveedor)(p.id), "aria-label": `Eliminar proveedor ${p.nombre}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))))))), showProvModal && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowProvModal(false), label: "Nuevo proveedor" }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nuevo Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-name" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { id: "provider-name", name: "providerName", autoComplete: "organization", className: "inv-input", value: newProv.nombre, onChange: (e) => setNewProv((p) => ({ ...p, nombre: e.target.value })), placeholder: "Ej. Distribuidora Agro Sabana" })), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-type" }, "Tipo"), /* @__PURE__ */ React.createElement("select", { id: "provider-type", name: "providerType", className: "inv-input", value: newProv.tipo, onChange: (e) => setNewProv((p) => ({ ...p, tipo: e.target.value })) }, [["plaza", "Plaza de mercado"], ["industrial", "Industrial"], ["artesanal", "Artesanal"], ["directo", "Directo / Finca"], ["otro", "Otro"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-city" }, "Municipio"), /* @__PURE__ */ React.createElement("input", { id: "provider-city", name: "providerCity", autoComplete: "address-level2", className: "inv-input", value: newProv.municipio, onChange: (e) => setNewProv((p) => ({ ...p, municipio: e.target.value })), placeholder: "Ej. Tenjo" }))), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => setShowProvModal(false) }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: agregarProveedor }, "Guardar proveedor"))));
+  })()), invTab === "proveedores" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: () => setShowProvModal(true) }, "＋ Agregar proveedor")), invProveedores.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: 24, fontFamily: "var(--font-mono)", fontSize: "var(--text-sm)", color: "var(--border-soft)" } }, "Sin proveedores. Agregar el primero.") : /* @__PURE__ */ React.createElement("div", { className: "inv-section" }, invProveedores.map((p) => /* @__PURE__ */ React.createElement("div", { key: p.id, className: "prov-row" }, /* @__PURE__ */ React.createElement("span", { className: "prov-tipo-chip" }, p.tipo), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { className: "prov-name" }, p.nombre), /* @__PURE__ */ React.createElement("div", { className: "prov-muni" }, p.municipio, p.remitenteCorreo ? ` · ${p.remitenteCorreo}` : "")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-danger inv-btn-sm", onClick: () => requireAdmin(eliminarProveedor)(p.id), "aria-label": `Eliminar proveedor ${p.nombre}` }, /* @__PURE__ */ React.createElement(AppIcon, { name: "close", size: 12 }))))))), showProvModal && /* @__PURE__ */ React.createElement(AccessibleModal, { onClose: () => setShowProvModal(false), label: "Nuevo proveedor" }, /* @__PURE__ */ React.createElement("div", { className: "inv-modal-title" }, "Nuevo Proveedor"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-name" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { id: "provider-name", name: "providerName", autoComplete: "organization", className: "inv-input", value: newProv.nombre, onChange: (e) => setNewProv((p) => ({ ...p, nombre: e.target.value })), placeholder: "Ej. Distribuidora Agro Sabana" })), /* @__PURE__ */ React.createElement("div", { className: "inv-row inv-row-2", style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-type" }, "Tipo"), /* @__PURE__ */ React.createElement("select", { id: "provider-type", name: "providerType", className: "inv-input", value: newProv.tipo, onChange: (e) => setNewProv((p) => ({ ...p, tipo: e.target.value })) }, [["plaza", "Plaza de mercado"], ["industrial", "Industrial"], ["artesanal", "Artesanal"], ["directo", "Directo / Finca"], ["otro", "Otro"]].map(([v, l]) => /* @__PURE__ */ React.createElement("option", { key: v, value: v }, l)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-city" }, "Municipio"), /* @__PURE__ */ React.createElement("input", { id: "provider-city", name: "providerCity", autoComplete: "address-level2", className: "inv-input", value: newProv.municipio, onChange: (e) => setNewProv((p) => ({ ...p, municipio: e.target.value })), placeholder: "Ej. Tenjo" }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 12 } }, /* @__PURE__ */ React.createElement("label", { className: "inv-label", htmlFor: "provider-sender" }, "Correo o dominio del remitente (opcional)"), /* @__PURE__ */ React.createElement("input", { id: "provider-sender", name: "providerSender", type: "text", inputMode: "email", autoComplete: "off", className: "inv-input", value: newProv.remitenteCorreo, onChange: (e) => setNewProv((p) => ({ ...p, remitenteCorreo: e.target.value })), placeholder: "Ej. homecenter.com.co o ventas@gmail.com" }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", marginTop: 4 } }, "Sus correos de pedido llegan solos a Compra → Correos.")), /* @__PURE__ */ React.createElement("div", { className: "inv-modal-actions" }, /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-sec", onClick: () => setShowProvModal(false) }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "inv-btn inv-btn-pri", onClick: agregarProveedor }, "Guardar proveedor"))));
   const workflow = typeof window !== "undefined" ? window.SetasOSWorkflow : null;
   const loteLifecycleState = (lote) => {
     if (!lote) return "inoculated";

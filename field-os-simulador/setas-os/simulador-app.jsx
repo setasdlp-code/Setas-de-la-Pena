@@ -2219,6 +2219,13 @@ const useDialogA11y=(onClose)=>{
 const AppIcon=({name,size=14,className='',style={},color='currentColor'})=>{
   const s={display:'inline-block',verticalAlign:'middle',flexShrink:0,...style};
   switch(name){
+    case 'mail':
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="m22 7-10 6L2 7"/>
+        </svg>
+      );
     case 'print':
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={className} style={s} aria-hidden="true">
@@ -7253,8 +7260,19 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   const [cmpLastFoto,setCmpLastFoto]=useState(null); // {fileBlock,esPDF,name} — para reintentar sin resubir
   const [cmpConfirm,setCmpConfirm]=useState(null);
   const cmpFileRef=useRef(null);
+  // Bandeja de correos de compra (purchase-email-inbox.js). Los correos llegan
+  // de la función programada (Firestore correos_compra) o de un archivo de
+  // fetch_gmail.py; se guardan aquí para que la bandeja funcione sin red.
+  const [invCorreos,setInvCorreos]=useState(()=>{try{return JSON.parse(localStorage.getItem('sdp_correos_compra')||'[]');}catch(e){return [];}});
+  const [correosRemoto,setCorreosRemoto]=useState(false);
+  const [cmpOrigenCorreo,setCmpOrigenCorreo]=useState(null); // id del correo que se está revisando en el formulario
+  const correosFileRef=useRef(null);
+  // Turno de lectura del lector de facturas: una respuesta que llega después
+  // de "Cancelar revisión" (o de otra lectura) se descarta en vez de llenar
+  // el formulario sin el enlace al correo — eso permitiría registrarlo dos veces.
+  const cmpParseTokenRef=useRef(0);
   const [showProvModal,setShowProvModal]=useState(false);
-  const [newProv,setNewProv]=useState({nombre:'',tipo:'plaza',municipio:''});
+  const [newProv,setNewProv]=useState({nombre:'',tipo:'plaza',municipio:'',remitenteCorreo:''});
   const [publicTraceModalLoteId,setPublicTraceModalLoteId]=useState(()=>{
     try{
       const p=new URLSearchParams(window.location.search);
@@ -9791,12 +9809,95 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const agregarProveedor=()=>{
     const n=newProv.nombre.trim();if(!n||!newProv.municipio.trim()) return;
-    const prov={id:'prov_'+Date.now(),nombre:n,tipo:newProv.tipo,municipio:newProv.municipio.trim()};
+    const remitente=String(newProv.remitenteCorreo||'').trim().toLowerCase().replace(/^@/,'');
+    const prov={id:'prov_'+Date.now(),nombre:n,tipo:newProv.tipo,municipio:newProv.municipio.trim(),...(remitente?{remitenteCorreo:remitente}:{})};
     const list=[...invProveedores,prov];
     saveProveedores(list);
     setCmpProvId(prov.id);
-    setNewProv({nombre:'',tipo:'plaza',municipio:''});
+    setNewProv({nombre:'',tipo:'plaza',municipio:'',remitenteCorreo:''});
     setShowProvModal(false);
+  };
+
+  // ── Bandeja de correos de compra ──
+  const inboxApi=typeof window!=='undefined'?window.SetasPurchaseEmailInbox:null;
+  const hoyBogota=()=>inboxApi?inboxApi.todayBogota():new Date().toISOString().split('T')[0];
+  // Updater funcional: la suscripción de Firestore y un clic de "Descartar"
+  // pueden escribir en el mismo tick.
+  const saveCorreos=fn=>setInvCorreos(prev=>{
+    const upd=inboxApi?inboxApi.compactCorreos(fn(prev)):fn(prev);
+    try{localStorage.setItem('sdp_correos_compra',JSON.stringify(upd));}catch(e){}
+    return upd;
+  });
+  useEffect(()=>{
+    let unsub=null;
+    const conectar=()=>{
+      const remote=window.SetasCorreosCompraDB;
+      if(unsub||!remote||!inboxApi) return;
+      try{
+        unsub=remote.suscribirCorreos(({docs})=>{
+          const entrantes=docs.map(d=>inboxApi.normalizeCorreo(d)).filter(Boolean);
+          saveCorreos(prev=>inboxApi.mergeCorreos(prev,entrantes));
+          setCorreosRemoto(true);
+        },err=>{console.warn('[Correos de compra] sin acceso a correos_compra',err);setCorreosRemoto(false);});
+      }catch(e){console.warn('[Correos de compra] no se pudo suscribir',e);}
+    };
+    conectar();
+    window.addEventListener('setas-correos-compra-ready',conectar);
+    return()=>{window.removeEventListener('setas-correos-compra-ready',conectar);if(typeof unsub==='function') unsub();};
+  },[]);
+  // Marca local inmediata + Firestore si el correo vino de Gmail. Un correo
+  // de archivo sólo existe en este equipo.
+  const marcarCorreo=(id,estado,{compraId=null}={})=>{
+    if(!inboxApi||!id) return;
+    const c=invCorreos.find(x=>x.id===id);
+    saveCorreos(prev=>inboxApi.markCorreo(prev,id,estado,{compraId}));
+    if(c&&c.origen==='gmail'&&window.SetasCorreosCompraDB){
+      window.SetasCorreosCompraDB.marcarCorreo(id,estado,{compraId}).catch(err=>console.warn('[Correos de compra] no se pudo marcar en el servidor',err));
+    }
+  };
+  const importarArchivoCorreos=async e=>{
+    const file=e.target.files&&e.target.files[0];
+    e.target.value='';
+    if(!file||!inboxApi) return;
+    try{
+      // fetch_gmail.py ya filtró por remitente y asunto: aquí se acepta todo.
+      const nuevos=inboxApi.correosFromFile(JSON.parse(await file.text()));
+      const antes=new Set(invCorreos.map(c=>c.id));
+      const agregados=nuevos.filter(c=>!antes.has(c.id)).length;
+      saveCorreos(prev=>inboxApi.mergeCorreos(prev,nuevos));
+      setNoticeDlg({title:'Correos importados',msg:agregados?`${agregados} correo${agregados===1?'':'s'} nuevo${agregados===1?'':'s'} en la bandeja. Los que ya estaban no se duplicaron.`:'Todos los correos de este archivo ya estaban en la bandeja.'});
+    }catch(err){
+      setNoticeDlg({title:'No se pudo importar',msg:`El archivo no se pudo leer: ${err.message}. Debe ser el sdp_emails.json que genera fetch_gmail.py.`});
+    }
+  };
+  const revisarCorreo=c=>{
+    if(!c||!inboxApi) return;
+    const yaCompra=inboxApi.compraFromCorreo(invCompras,c.id);
+    if(yaCompra){
+      marcarCorreo(c.id,'importada',{compraId:yaCompra.id});
+      setNoticeDlg({title:'Correo ya importado',msg:`Este correo ya se registró como compra del ${yaCompra.fecha}. Se quitó de la bandeja.`});
+      return;
+    }
+    setCmpConfirm(null);
+    setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
+    setCmpOrigenCorreo(c.id);
+    setCmpFuente('email');
+    // Un correo confirma un pedido, no una entrega.
+    setCmpRecibida(false);
+    setCmpProvId(inboxApi.matchProveedor(invProveedores,c.remitente)||'');
+    if(c.fecha) setCmpFecha(c.fecha);
+    // Se abre en "Pegar texto" con el correo cargado: si la lectura falla,
+    // el texto queda a la vista para corregirlo y reintentar.
+    setCmpMode('texto');
+    setCmpPasteText(inboxApi.textoParaParseo(c));
+    parseTextoCompra(inboxApi.textoParaParseo(c));
+  };
+  const descartarCorreo=c=>{
+    if(!c) return;
+    setConfirmDlg({title:'Descartar correo',msg:`¿Quitar "${c.asunto||'(sin asunto)'}" de la bandeja? No es una compra de insumos o ya se registró a mano.`,confirmLabel:'Descartar',onConfirm:()=>{
+      marcarCorreo(c.id,'descartada');
+      if(cmpOrigenCorreo===c.id) resetCmpForm();
+    }});
   };
 
   const eliminarProveedor=id=>{
@@ -9861,11 +9962,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
   const applyParsedItems=parsed=>{
     const items=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed.items)?parsed.items:null);
     if(!items||!items.length){setCmpParseErr('No se detectaron ítems. Probar con Manual.');setHuboParseIA(false);return;}
-    const mapped=items.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||''}));
+    const mapped=items.map((p,i)=>({uid:Date.now()+i,ingId:matchIngId(p.ingrediente||p.nombre||''),kg:p.kg||p.cantidad||'',precio:p.precio||p.precio_kg||'',textoOriginal:String(p.ingrediente||p.nombre||'').trim()}));
     setCmpItems(mapped);
     setHuboParseIA(true);
     if(parsed&&!Array.isArray(parsed)){
-      if(parsed.proveedor){const pid=matchProvId(parsed.proveedor);if(pid) setCmpProvId(pid);}
+      // El proveedor que ya se reconoció por el remitente del correo manda
+      // sobre el nombre que lea la IA.
+      if(parsed.proveedor){const pid=matchProvId(parsed.proveedor);if(pid) setCmpProvId(prev=>prev||pid);}
       if(parsed.fecha&&/^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) setCmpFecha(parsed.fecha);
     }
     setCmpMode('manual');
@@ -9948,54 +10051,100 @@ body{margin:0;padding:20px 24px;background:#fff;}
     setHuboParseIA(false);setCmpFuente('ocr');
     parseFotoPayload(cmpLastFoto.fileBlock,cmpLastFoto.esPDF);
   };
-  const parsearTexto=async()=>{
-    if(!cmpPasteText.trim()) return;
+  const parsearTexto=()=>parseTextoCompra(cmpPasteText);
+  const parseTextoCompra=async texto=>{
+    if(!String(texto||'').trim()) return;
+    const token=++cmpParseTokenRef.current;
+    const vigente=()=>token===cmpParseTokenRef.current;
     setCmpParsing(true);setCmpParseErr('');setHuboParseIA(false);setCmpFuente('email');
     try{
       if(window.SetasAI&&typeof window.SetasAI.parseInvoiceText==='function'){
         const parsed=await window.SetasAI.parseInvoiceText({
-          text:cmpPasteText,
+          text:texto,
           knownIngredients:INGS
         });
+        if(!vigente()) return;
         applyParsedItems(parsed);
         setCmpParsing(false);
         return;
       }
       if(window.claude&&typeof window.claude.complete==='function'){
         const listaIngs=INGS.map(g=>g.name).join(', ');
-        const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${cmpPasteText}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
+        const resp=await window.claude.complete({messages:[{role:'user',content:`Este es un mensaje (email o WhatsApp) de un proveedor confirmando una compra de insumos para cultivo de hongos:\n\n"""${texto}"""\n\nDevuelve JSON puro (sin texto ni markdown) con esta forma: {"proveedor":"nombre del proveedor tal cual aparece, o null si no aparece","fecha":"YYYY-MM-DD de la compra, o null si no aparece","items":[{"ingrediente":"nombre","kg":numero,"precio":numero_precio_por_kg_COP}]}. Ingredientes conocidos: ${listaIngs}.`}]});
+        if(!vigente()) return;
         applyParsedItems(extraerJSON(resp));
         setCmpParsing(false);
         return;
       }
       throw new Error('Servicio de IA no disponible');
-    }catch(err){setCmpParseErr('No se pudo interpretar el texto. Intentar de nuevo o usar Manual.');}
-    setCmpParsing(false);
+    }catch(err){if(vigente()) setCmpParseErr('No se pudo interpretar el texto. Intentar de nuevo o usar Manual.');}
+    if(vigente()) setCmpParsing(false);
   };
 
   const resetCmpForm=()=>{
     setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);
     setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);
-    setCmpRecibida(true);
+    setCmpRecibida(true);setCmpOrigenCorreo(null);setCmpParseErr('');
+    cmpParseTokenRef.current++;setCmpParsing(false);
   };
 
   const registrarCompra=()=>{
     const valid=cmpItems.filter(it=>it.ingId&&parseFloat(it.kg)>0);
     if(!cmpProvId||valid.length===0){setNoticeDlg({msg:'Seleccionar proveedor y agregar al menos un ítem.'});return;}
+    // Otro equipo pudo registrar este mismo correo mientras se revisaba aquí.
+    if(cmpOrigenCorreo&&inboxApi){
+      const ya=inboxApi.compraFromCorreo(invCompras,cmpOrigenCorreo);
+      if(ya){
+        marcarCorreo(cmpOrigenCorreo,'importada',{compraId:ya.id});
+        setNoticeDlg({title:'Correo ya importado',msg:`Este correo ya se registró como compra del ${ya.fecha} (quizá desde otro equipo). No se registró de nuevo.`});
+        resetCmpForm();
+        return;
+      }
+    }
+    // Las líneas sin ingrediente o sin kilos no entran a Bodega. Antes
+    // desaparecían en silencio; ahora se dicen antes de confirmar.
+    const caidas=inboxApi?inboxApi.droppedLines(cmpItems):[];
+    if(caidas.length){
+      const detalle=caidas.map(c=>{
+        const it=cmpItems.find(x=>x.uid===c.uid);
+        const g=it&&INGS.find(x=>x.id===it.ingId);
+        return `• ${c.texto||g?.name||'Línea sin nombre'} — ${c.motivo}`;
+      }).join('\n');
+      setConfirmDlg({title:'Hay líneas que no se registrarán',msg:`${caidas.length} línea${caidas.length===1?'':'s'} no ${caidas.length===1?'entra':'entran'} a Bodega:\n\n${detalle}\n\nSe registra${valid.length===1?'':'n'} sólo ${valid.length} ítem${valid.length===1?'':'s'}. Para incluirlas, elegir el ingrediente o poner los kilos.`,confirmLabel:'Registrar sin ellas',onConfirm:()=>registrarCompraValida(valid)});
+      return;
+    }
+    registrarCompraValida(valid);
+  };
+  const registrarCompraValida=valid=>{
     const cId='compra_'+Date.now();
     const prov=invProveedores.find(p=>p.id===cmpProvId);
+    // Compra que viene de un correo: queda enlazada (origenCorreoId) para que
+    // ningún equipo la vuelva a importar, y el proveedor aprende el remitente
+    // si todavía no lo tenía.
+    // Se llama sólo después de guardar la compra.
+    const correo=cmpOrigenCorreo?invCorreos.find(c=>c.id===cmpOrigenCorreo):null;
+    const enlazarCorreo=()=>{
+      if(!correo) return;
+      marcarCorreo(correo.id,'importada',{compraId:cId});
+      const clave=correo.remitenteClave||(inboxApi?inboxApi.senderKey(correo.remitente):'');
+      if(prov&&clave&&!prov.remitenteCorreo&&!invProveedores.some(p=>p.remitenteCorreo===clave)){
+        saveProveedores(invProveedores.map(p=>p.id===prov.id?{...p,remitenteCorreo:clave}:p));
+      }
+    };
     // Siempre se construye como pendiente primero: es la única forma que
     // conoce nuevaCompra. "Ya la recibí" sólo decide si se le pasa de
     // inmediato por receiveCompra() — así queda UN solo constructor de lote.
     const compraPendiente={id:cId,fecha:cmpFecha,proveedorId:cmpProvId,
       items:valid.map(it=>({ingredienteId:it.ingId,kg:parseFloat(it.kg),precio:parseFloat(it.precio)||0})),
       fuenteCaptura:cmpFuente,revisadoManualmente:true,
+      ...(correo?{origenCorreoId:correo.id}:{}),
       estado:'pendiente',fechaEsperada:cmpFecha};
 
     if(!cmpRecibida){
       // Por recibir: sólo saveCompras. Ni lotes ni movimientos — el stock
       // físico no se toca hasta que alguien confirme que los kilos llegaron.
       saveCompras([...invCompras,compraPendiente]);
+      enlazarCorreo();
       const resumen=valid.map(it=>{
         const g=INGS.find(x=>x.id===it.ingId);
         return{nombre:g?g.name:it.ingId,kgComprado:parseFloat(it.kg)};
@@ -10019,6 +10168,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
     saveCompras([...invCompras,rec.compra]);
     saveLotes([...invLotes,...rec.lots]);
     saveMovimientos([...invMovimientos,...rec.movements]);
+    enlazarCorreo();
     const resumen=valid.map(it=>{
       const g=INGS.find(x=>x.id===it.ingId);
       const stockPrevio=invLotes.filter(l=>l.activo&&l.ingredienteId===it.ingId).reduce((s,l)=>s+l.cantidadKgDisponible,0);
@@ -10045,7 +10195,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           setNoticeDlg({title:'No se pudo recibir',msg:'Falta el módulo de compras (purchases.js). No se registró nada — recarga la página o avisa al equipo técnico.'});
           return;
         }
-        const hoy=new Date().toISOString().split('T')[0];
+        // Fecha en Bogotá: toISOString() da la de UTC, que después de las 7 pm ya es mañana.
+        const hoy=hoyBogota();
         let rec;
         try{
           rec=window.SetasPurchases.receiveCompra(compra,{at:hoy});
@@ -10147,9 +10298,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
               {/* SUB-TABS */}
               <div className="inv-subtab-bar">
-                {[['stock','Stock'],['compra','Compra'],['historial','Historial'],['proveedores','Proveedores']].map(([k,l])=>(
-                  <button key={k} className={`inv-subtab${invTab===k?' on':''}`} onClick={()=>setInvTab(k)}>{l}</button>
-                ))}
+                {(()=>{
+                  const nCorreos=inboxApi?inboxApi.inboxPending(invCorreos,invCompras).length:0;
+                  return [['stock','Stock'],['compra',nCorreos?`Compra · ${nCorreos}`:'Compra'],['historial','Historial'],['proveedores','Proveedores']].map(([k,l])=>(
+                    <button key={k} className={`inv-subtab${invTab===k?' on':''}`} onClick={()=>setInvTab(k)} aria-label={k==='compra'&&nCorreos?`Compra, ${nCorreos} correo${nCorreos===1?'':'s'} por revisar`:undefined}>{l}</button>
+                  ));
+                })()}
               </div>
               {/* ── STOCK ACTUAL ─────────────────────────────────────────── */}
               {invTab==='stock'&&(
@@ -10483,14 +10637,80 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       </div>
                     );
                   })()}
+                  {(()=>{
+                    const nCorreos=inboxApi?inboxApi.inboxPending(invCorreos,invCompras).length:0;
+                    if(!nCorreos||cmpMode==='correo'||cmpOrigenCorreo) return null;
+                    return(
+                      <button type="button" data-testid="purchase-email-banner" onClick={()=>setCmpMode('correo')} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,minHeight:44,padding:'10px 12px',marginBottom:14,font:'inherit',cursor:'pointer',textAlign:'left',background:'var(--status-warn-bg)',border:'1px solid var(--status-attention)',borderRadius:'var(--sim-r-sm)',color:'var(--ink-800)'}}>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",display:'inline-flex',alignItems:'center',gap:6}}><AppIcon name="mail" size={13} /> {nCorreos} correo{nCorreos===1?'':'s'} de compra por revisar</span>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textDecoration:'underline'}}>Ver correos →</span>
+                      </button>
+                    );
+                  })()}
                   <div style={{display:'flex',gap:8,marginBottom:14}}>
-                    {[['manual',<AppIcon name="edit" size={14}/>,'Manual'],['foto',<IconCamera size={16}/>,'Foto / PDF'],['texto',<AppIcon name="clipboard" size={14}/>,'Pegar texto']].map(([v,icon,l])=>(
-                      <button key={v} className="inv-btn inv-btn-sec" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 8px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
+                    {[['manual',<AppIcon name="edit" size={14}/>,'Manual'],['correo',<AppIcon name="mail" size={14}/>,'Correos'],['foto',<IconCamera size={16}/>,'Foto'],['texto',<AppIcon name="clipboard" size={14}/>,'Texto']].map(([v,icon,l])=>(
+                      <button key={v} type="button" data-testid={`cmp-mode-${v}`} aria-pressed={cmpMode===v} aria-label={{manual:'Manual',correo:'Correos de proveedores',foto:'Foto o PDF de factura',texto:'Pegar texto'}[v]} className="inv-btn inv-btn-sec" style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,padding:'10px 4px',...(cmpMode===v?{background:'var(--ink-0)',color:'var(--paper-0)',borderColor:'var(--ink-0)'}:{})}} onClick={()=>{setCmpMode(v);setCmpParseErr('');setCmpLastFoto(null);setHuboParseIA(false);}}>
                         <span style={{fontSize:16,lineHeight:1}}>{icon}</span>
-                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--sim-tracking-label)'}}>{l}</span>
+                        <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--sim-tracking-label)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{l}</span>
                       </button>
                     ))}
                   </div>
+
+                  {cmpMode==='correo'&&(()=>{
+                    const pend=inboxApi?inboxApi.inboxPending(invCorreos,invCompras):[];
+                    return(
+                      <div data-testid="purchase-email-inbox" style={{marginBottom:16}}>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-700)',padding:'8px 10px',marginBottom:10,border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:correosRemoto?'var(--moss-tint)':'var(--paper-100)'}}>
+                          {(()=>{
+                            // Se dice lo que consta, no lo que se supone: que el
+                            // listener conecte no prueba que la función corra.
+                            const ultimo=inboxApi?inboxApi.ultimoImportadoGmail(invCorreos):null;
+                            if(correosRemoto&&ultimo) return `Importación automática desde Gmail. Último correo traído: ${inboxApi.bogotaDate(ultimo)}.`;
+                            if(correosRemoto) return 'Conectado a la bandeja del servidor, pero todavía no ha llegado ningún correo desde Gmail. Mientras tanto, se puede importar el archivo de fetch_gmail.py.';
+                            return 'Importación automática sin conectar. Mientras tanto, correr fetch_gmail.py e importar su archivo sdp_emails.json.';
+                          })()}
+                        </div>
+                        <input type="file" accept="application/json,.json" ref={correosFileRef} style={{display:'none'}} onChange={importarArchivoCorreos} data-testid="purchase-email-file"/>
+                        <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" style={{marginBottom:12}} onClick={()=>correosFileRef.current&&correosFileRef.current.click()}>Importar archivo de correos</button>
+                        {!pend.length
+                          ?<div style={{textAlign:'center',padding:'20px 12px',fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-500)',border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)'}}>Sin correos de compra por revisar.</div>
+                          :<>
+                            <span className="inv-label">Por revisar ({pend.length})</span>
+                            {pend.map(c=>{
+                              const provId=inboxApi.matchProveedor(invProveedores,c.remitente);
+                              const prov=invProveedores.find(p=>p.id===provId);
+                              const preview=String(c.cuerpo||'').replace(/\s+/g,' ').trim();
+                              return(
+                                <div key={c.id} data-testid="purchase-email" style={{padding:'10px 12px',marginTop:6,border:'1px solid var(--border-soft)',borderRadius:'var(--sim-r-sm)',background:'var(--paper-50)'}}>
+                                  <div style={{fontFamily:"var(--font-body)",fontWeight:600,fontSize:"var(--text-sm)",color:'var(--ink-800)',overflowWrap:'anywhere'}}>{c.asunto||'(sin asunto)'}</div>
+                                  <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)',overflowWrap:'anywhere'}}>{c.remitente||'remitente desconocido'}{c.fecha?` · ${c.fecha}`:''}</div>
+                                  {preview&&<div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4,overflowWrap:'anywhere'}}>{preview.length>140?preview.slice(0,137)+'…':preview}</div>}
+                                  <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",marginTop:4,color:prov?'var(--accent-olive)':'var(--status-warn-text)'}}>{prov?`Proveedor: ${prov.nombre}`:'Proveedor sin reconocer — se elige al revisar'}</div>
+                                  <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
+                                    <button type="button" className="inv-btn inv-btn-pri sdp-btn--field" disabled={cmpParsing} onClick={()=>revisarCorreo(c)}>Revisar y registrar</button>
+                                    <button type="button" className="inv-btn inv-btn-sec sdp-btn--field" onClick={()=>descartarCorreo(c)} aria-label={`Descartar correo ${c.asunto||''}`}>Descartar</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </>}
+                      </div>
+                    );
+                  })()}
+
+                  {cmpOrigenCorreo&&(()=>{
+                    const c=invCorreos.find(x=>x.id===cmpOrigenCorreo);
+                    return(
+                      <div data-testid="purchase-email-reviewing" style={{marginBottom:14,padding:'10px 12px',borderRadius:'var(--sim-r-sm)',background:'var(--paper-100)',border:'1px solid var(--border-soft)'}}>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700,textTransform:'uppercase',color:'var(--ink-700)'}}>Revisando correo</div>
+                        <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-sm)",color:'var(--ink-800)',overflowWrap:'anywhere'}}>{c?.asunto||'(sin asunto)'} · {c?.remitente||''}</div>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:4}}>
+                          {cmpProvId?'Revisar ítems, kilos y precios. Un correo entra como "Por recibir" hasta que lleguen los kilos.':'Elegir el proveedor: Setas OS recordará este remitente para los próximos correos.'}
+                        </div>
+                        <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" style={{marginTop:8}} onClick={resetCmpForm}>Cancelar revisión</button>
+                      </div>
+                    );
+                  })()}
 
                   {cmpMode==='foto'&&(
                     <div style={{marginBottom:16,padding:14,border:'1px dashed var(--border-soft)',borderRadius:'var(--sim-r-sm)',textAlign:'center'}}>
@@ -10511,6 +10731,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
 
+                  {cmpMode!=='correo'&&<>
                   {huboParseIA&&(()=>{
                     const total=cmpItems.length;
                     const sinMatch=cmpItems.filter(it=>!it.ingId).length;
@@ -10553,7 +10774,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </select>
                         <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>remCmpItem(it.uid)} disabled={cmpItems.length===1} aria-label={`Quitar ${g?.name||'ítem'} de la compra`}><AppIcon name="close" size={12} /></button>
                       </div>
-                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-500)" /> Sin coincidencia automática — elige el ingrediente.</div>}
+                      {!it.ingId&&(it.kg||it.precio)&&<div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--coral-500)',marginBottom:8,display:'flex',alignItems:'center',gap:4}}><AppIcon name="alert" size={12} color="var(--coral-500)" /> {it.textoOriginal?`“${it.textoOriginal}” sin coincidencia — elegir el ingrediente o quitar la línea.`:'Sin coincidencia automática — elige el ingrediente.'}</div>}
                       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                         <div style={{display:'flex',alignItems:'center',gap:4}}>
                           <button type="button" className="inv-btn inv-btn-sec inv-btn-sm" onClick={()=>updCmpItem(it.uid,'kg',String(Math.max(0,(parseFloat(it.kg)||0)-1)))} aria-label={`Reducir cantidad de ${g?.name||'ingrediente'} en 1 kg`}>−</button>
@@ -10587,8 +10808,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                   <div style={{display:'flex',gap:10}}>
                     <button className="inv-btn inv-btn-pri" onClick={registrarCompra}>{cmpRecibida?'Registrar compra':'Registrar pedido'}</button>
-                    <button className="inv-btn inv-btn-sec" onClick={()=>{setCmpItems([{uid:Date.now(),ingId:'',kg:'',precio:''}]);setCmpProvId('');setCmpFecha(new Date().toISOString().split('T')[0]);setCmpMode('manual');setCmpPasteText('');setCmpFuente('manual');setHuboParseIA(false);setCmpLastFoto(null);setCmpParseErr('');setCmpRecibida(true);}}><AppIcon name="close" size={12} /> Limpiar</button>
+                    <button className="inv-btn inv-btn-sec" onClick={()=>{resetCmpForm();setCmpProvId('');setCmpFecha(hoyBogota());}}><AppIcon name="close" size={12} /> Limpiar</button>
                   </div>
+                  </>}
                   </div>
                   )}
                 </div>
@@ -10683,7 +10905,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           <span className="prov-tipo-chip">{p.tipo}</span>
                           <div style={{flex:1}}>
                             <div className="prov-name">{p.nombre}</div>
-                            <div className="prov-muni">{p.municipio}</div>
+                            <div className="prov-muni">{p.municipio}{p.remitenteCorreo?` · ${p.remitenteCorreo}`:''}</div>
                           </div>
                           <button type="button" className="inv-btn inv-btn-danger inv-btn-sm" onClick={()=>requireAdmin(eliminarProveedor)(p.id)} aria-label={`Eliminar proveedor ${p.nombre}`}><AppIcon name="close" size={12} /></button>
                         </div>
@@ -10715,6 +10937,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       <label className="inv-label" htmlFor="provider-city">Municipio</label>
                       <input id="provider-city" name="providerCity" autoComplete="address-level2" className="inv-input" value={newProv.municipio} onChange={e=>setNewProv(p=>({...p,municipio:e.target.value}))} placeholder="Ej. Tenjo"/>
                     </div>
+                  </div>
+                  <div style={{marginBottom:12}}>
+                    <label className="inv-label" htmlFor="provider-sender">Correo o dominio del remitente (opcional)</label>
+                    <input id="provider-sender" name="providerSender" type="text" inputMode="email" autoComplete="off" className="inv-input" value={newProv.remitenteCorreo} onChange={e=>setNewProv(p=>({...p,remitenteCorreo:e.target.value}))} placeholder="Ej. homecenter.com.co o ventas@gmail.com"/>
+                    <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)',marginTop:4}}>Sus correos de pedido llegan solos a Compra → Correos.</div>
                   </div>
                   <div className="inv-modal-actions">
                     <button className="inv-btn inv-btn-sec" onClick={()=>setShowProvModal(false)}>Cancelar</button>
