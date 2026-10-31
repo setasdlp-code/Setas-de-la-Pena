@@ -153,7 +153,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.origin-actions a[href="#coleccion"]').count(), 1);
     assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
     assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Consultar shiitake/);
-    assert.equal(await page.locator('.origin-story a[href="https://www.fao.org/food-safety/food-control-systems/traceability---recalls/en"]').count(), 1);
+    // The hero opens with cooking, not traceability (identidad comercial v1.1 §3; voz v2.4).
+    assert.equal(await page.locator('.origin-story a[href*="fao.org"]').count(), 0);
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
     assert.equal(await page.locator('.catalog-descriptor').count(), 0);
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');

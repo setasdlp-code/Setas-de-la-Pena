@@ -1163,12 +1163,12 @@ documents:
     category: brand
     canonical: true
     topics: [brand-identity, positioning]
-    keywords: [rigor técnico, Sabana de Bogotá, no místico, tagline]
+    keywords: [hongos para cocinar con criterio, del micelio a la mesa, firma, DS-2026, sin tuteo, Tenjo]
     related_documents: [illustration-style, packaging, colombian-market]
     depends_on: []
     implemented_by: []
     supersedes: null
-    confidence: medium
+    confidence: high
     status: active
 
   - id: illustration-style

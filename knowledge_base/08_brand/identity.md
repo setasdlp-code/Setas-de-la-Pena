@@ -3,10 +3,12 @@ title: Identidad de Marca — Setas de la Peña
 document_id: DOC-0038
 category: brand
 load_priority: on_request
-last_reviewed: 2026-07-24
-confidence: medium
+last_reviewed: 2026-10-30
+confidence: high
 primary_sources:
-  - Internal brand definition
+  - docs/brand-guidelines.md (Identidad comercial v1.1, 12 y 27 oct 2026)
+  - .claude/brand-voice-guidelines.md (Guía de voz v2.4)
+  - 08_brand/ds-2026/DESIGN_SYSTEM.md
 related_documents:
   - illustration_style.md
   - packaging.md
@@ -14,103 +16,111 @@ related_documents:
 ---
 
 # Executive Summary
-Definición de la identidad de marca de Setas de la Peña. La marca combina rigor técnico-científico con arraigo local en la Sabana de Bogotá. No es un proyecto hippie ni esotérico — es agricultura de precisión aplicada a hongos comestibles y medicinales de alta calidad.
+Resumen de la identidad comercial vigente de Setas de la Peña para agentes y consultas rápidas. **La fuente de autoridad es [`docs/brand-guidelines.md`](../../docs/brand-guidelines.md)**; este documento la resume y no la sustituye. Ante cualquier diferencia, prevalece la guía.
+
+La versión anterior de este archivo (julio de 2026) proponía otra paleta, Playfair/Inter, el tagline «Cultivadas en la Sabana. Cosechadas con criterio» y generación de identidad con herramientas de imagen. Todo ello queda reemplazado. Ver [auditoría de marca, oct 2026](../../docs/brand/brand-audit-2026-10.md), P2-2.
 
 # Core Principles
 
 ## Posicionamiento
-**Setas de la Peña es un cultivo técnico de setas gourmet y medicinales en la Sabana de Bogotá.**
+**Hongos para cocinar con criterio.** Setas de la Peña acerca el mundo de los hongos a la cocina desde Tenjo, Cundinamarca: ayuda a reconocer una especie, imaginar una preparación con ingredientes cercanos y reunir una consulta comercial. El origen y el proceso se cuentan con información comprobable.
 
 No es:
-- Un colectivo artesanal sin estándares.
-- Una marca "mística" o new-age de hongos.
-- Un productor industrial masivo.
+- Una marca mística o *new age* de hongos.
+- Un productor industrial ni un proveedor con abastecimiento regular confirmado.
+- Una marca de promesas medicinales.
 
 Es:
-- Producción controlada, trazable, con parámetros documentados.
-- Producto fresco y de temporada, con historia de origen conocida.
-- Interlocutor técnico con chefs y compradores sofisticados.
+- Un proyecto de cultivo técnico, con parámetros y registros.
+- Una voz culinaria para personas que cocinan, en cocinas profesionales y en casa, con la misma precisión y respeto que se ofrece a un chef.
+- Una sola marca. «Las setas», «En la cocina», «Origen» y «El cuaderno» son secciones, no submarcas. Setas OS es el ámbito operativo.
 
-## Valores de Marca
+## Valores
 
 | Valor | Expresión |
 |---|---|
-| **Rigor técnico** | Parámetros documentados, datos de BE, trazabilidad por lote |
-| **Origen local** | Tenjo, Cundinamarca — altitud 2600m — condiciones únicas |
-| **Calidad verificable** | Grading visual, protocolos de cosecha, fecha de corte visible |
-| **Transparencia** | El cliente sabe cómo se cultivó, qué sustrato, qué especie exacta |
-| **Escala humana** | No producción industrial — cada lote con supervisión directa |
+| Rigor técnico | Parámetros y registros por lote; vocabulario técnico solo cuando ayuda. |
+| Origen | Tenjo · Cundinamarca · Colombia, como dato, nunca como folclore. |
+| Calidad verificable | Una afirmación sobre la cosecha necesita su dato (fecha, lote, peso). |
+| Transparencia | Precio y disponibilidad se marcan como pendientes hasta confirmarse. |
+| Escala humana | Supervisión directa de cada lote. |
 
 # Technical Details
 
-## Nombre y Tagline
+## Nombre y mensajes
 
-**Nombre:** Setas de la Peña
-**Tagline propuesto:** *Cultivadas en la Sabana. Cosechadas con criterio.*
-**Alternativas:**
-- *Del cultivo controlado a la mesa.*
-- *Hongos gourmet de la Sabana de Bogotá.*
-
-## Paleta de Colores (Propuesta)
-
-| Color | Uso | Referencia HEX |
+| Pieza | Texto | Uso |
 |---|---|---|
-| Verde musgo / tierra | Color primario — naturaleza, rigor | #4A5E3A |
-| Beige cálido | Fondo — sustrato, naturaleza | #F5EDD6 |
-| Crema oscuro | Textos secundarios | #8B7355 |
-| Naranja terracota | Acento cálido territorial | #C4622D |
-| Blanco roto | Espacio limpio | #FAFAF5 |
+| Nombre | **Setas de la Peña** | Con ñ y tilde. Sin abreviar a «SdP» en piezas comerciales. |
+| Frase principal | **Del micelio a la mesa.** | Portadas, presentación y cierre. |
+| Descriptor | **Hongos para cocinar con criterio.** | Presentación comercial y materiales para cocina. |
+| Titular de entrada | **Conocer la seta. Imaginar el plato.** | Campañas; subordinado a la frase principal. |
+| Firma territorial | **Tenjo · Cundinamarca · Colombia** | Origen del proyecto, no garantía de origen de cada lote. No usar «Valle de Tenjo» ni «Sabana de Bogotá» como firma. |
+| Expresión de oficio | **Cultivar. Observar. Aprender.** | Sección de proceso. |
 
-*La paleta evita colores brillantes artificiales — transmite naturaleza real, no producto industrial.*
+## Firma
+«Setas» en Gaya Bold + «de la Peña» en Gaya Medium, horizontal o apilada, en musgo sobre papel, tinta a una tinta o papel sobre musgo. SVG en `08_brand/ds-2026/brand-kit/assets/`. No se usa un isotipo que sustituya el nombre. La licencia comercial de Gaya está **pendiente de confirmar** antes de producción o distribución.
 
-## Tipografía (Propuesta)
+## Color (DS-2026)
 
-| Uso | Estilo | Ejemplo |
+| Token | Hex | Función |
 |---|---|---|
-| Títulos / marca | Serif elegante, peso medio | Playfair Display, Cormorant |
-| Cuerpo de texto | Sans-serif limpia | Inter, DM Sans |
-| Datos técnicos | Monoespaciada o sans neutra | JetBrains Mono (solo datos) |
+| `paper-100` | `#FAF8F3` | Fondo principal |
+| `paper-50` | `#FEFDFB` | Superficie clara y firma inversa |
+| `ink-900` | `#1A1410` | Texto y firma a una tinta |
+| `moss-700` | `#2E3B2F` | Firma y acción principal |
+| `coral-500` | `#B8614D` | Acento gráfico; no texto pequeño |
+| `coral-700` | `#8A3E2D` | Texto de acento sobre papel |
+| `slate-500` | `#4E6A7A` | Acento secundario y datos |
 
-## Tono de Voz
+Papel y tinta dominan; el musgo identifica; el coral es puntual. Las paletas FOS (`08_brand/field-os-identity/`) son del ámbito operativo, no comercial.
 
-**Para comunicaciones técnicas (Claude):**
-- Registro técnico-agrónomo, directo, sin adornos.
-- Datos precisos con fuente cuando es posible.
-- Sin metáforas místicas, animistas o espirituales aplicadas al cultivo.
+## Tipografía
 
-**Para comunicaciones de marca/marketing (ChatGPT + DALL-E):**
-- Cálido pero sobrio.
-- El producto habla por sí solo — la historia amplifica.
-- Evitar: "magia de los hongos", "el micelio conecta", frases de bienestar pseudocientífico.
-- Permitido: origen geográfico, historia de cultivo, apreciación gastronómica.
+| Familia | Función |
+|---|---|
+| Gaya Patched | Firma, titulares y especie; itálica para el nombre científico |
+| IBM Plex Sans | Lectura, navegación, instrucciones y acciones |
+| IBM Plex Mono | Cantidades, códigos y rótulos breves; no párrafos |
 
-## Audiencia Primaria
+Entrada única para piezas comerciales: `08_brand/ds-2026/market.css`.
 
-| Segmento | Descripción | Lenguaje |
+## Imagen
+- **Especie:** grabado micológico o lámina, silueta completa, nombre común primero y científico en itálica.
+- **Cocina:** gouache con lápiz, plato completo e ingredientes reconocibles.
+- **Fotografía:** propia y excepcional, como evidencia con fecha y contexto. Sin stock que simule la finca o la cosecha.
+- Superficies planas, bordes rectos, sin sombras, degradados decorativos ni sellos inventados.
+
+## Voz
+- Cercana, cuidadosa y precisa. Primera persona del plural para la marca («cultivamos»).
+- **Sin tuteo ni ustedeo**: frases centradas en el producto y acciones en infinitivo («Consultar disponibilidad», «Retirar el laurel y colar»).
+- Sin exclamaciones, superlativos («premium», «el mejor», «único»), misticismo ni promesas medicinales.
+- Nombre común primero; latín en cursiva, una vez.
+- Detalle completo en `.claude/brand-voice-guidelines.md`.
+
+## Audiencias
+
+Una sola voz para quienes cocinan; cambia la información práctica, no el registro.
+
+| Necesidad | Qué busca | Información |
 |---|---|---|
-| Chef / cocinero profesional | Busca calidad y consistencia; valora el origen | Técnico-culinario; ingrediente, temporada, sabor |
-| Comprador gourmet / foodie | Curioso, dispuesto a pagar más por historia | Origen, proceso, diferenciación |
-| Interesado en salud funcional | Lion's Mane, Ganoderma como suplemento | Evidencia científica, sin claims exagerados |
-
-## División Temática Claude / ChatGPT
-
-| Tema | Herramienta | Razón |
-|---|---|---|
-| Parámetros técnicos, protocolos, automatización | Claude | Conocimiento técnico profundo, MCP directo |
-| Copywriting de marca, posts Instagram, storytelling | ChatGPT + DALL-E | Creatividad y generación de imagen |
-| Identidad visual, packaging, materiales gráficos | ChatGPT + DALL-E | Generación de imagen |
-| SOPs, documentación interna, análisis | Claude | Rigor y trazabilidad |
+| Cocina profesional | Uso del ingrediente; cantidad, presentación, fecha y entrega | La conversación empieza en el plato y termina en una consulta concreta |
+| Cocina en casa | Especie → receta → cantidad → consulta | Pasos accesibles, ingredientes disponibles en Colombia |
+| Interés en salud funcional | Información sobre especies como melena de león | Solo evidencia; cualquier línea funcional requiere revisión regulatoria (INVIMA) antes de redactar |
 
 # Best Practices
-- Siempre incluir nombre de especie en latín en comunicaciones técnicas y de producto.
-- Evitar claims medicinales no respaldados por evidencia en marketing.
-- Mantener coherencia visual entre redes sociales, etiqueta y presentación del producto.
-- El packaging debe comunicar fecha de cosecha y lote — esto diferencia a pequeño productor técnico.
+- Generar piezas desde el kit de `08_brand/ds-2026/`, no recrear la identidad en cada pieza.
+- No inventar pesos, lotes, precios, teléfonos ni QR en maquetas.
+- Una ilustración no demuestra producto disponible.
+- Empaque y etiqueta comunican fecha de cosecha y lote cuando existan datos reales.
 
 # Open Questions
-- ¿Nombre "Setas de la Peña" tiene connotaciones negativas o confusiones en Colombia?
-- ¿Diseño final de logotipo — internamente o contratar diseñador?
-- ¿Existe ya alguna marca de setas en Colombia con nombre similar?
+- Licencia comercial de Gaya, o redibujo de la firma como logotipo propio.
+- Sello de escala pequeña para favicon, avatar y etiqueta (conceptos en la auditoría de oct 2026, pendientes de elección).
+- ¿Existe en Colombia una marca de setas con nombre similar? (búsqueda marcaria no realizada).
 
 # References
-- Internal brand definition. Setas de la Peña.
+- [Identidad comercial v1.1](../../docs/brand-guidelines.md)
+- [Guía de voz v2.4](../../.claude/brand-voice-guidelines.md)
+- [DS-2026](../../08_brand/ds-2026/DESIGN_SYSTEM.md)
+- [Auditoría de marca, oct 2026](../../docs/brand/brand-audit-2026-10.md)
