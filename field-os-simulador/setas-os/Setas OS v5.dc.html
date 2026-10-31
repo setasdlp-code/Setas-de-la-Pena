@@ -2012,12 +2012,8 @@ const OPERATORS = [
   { key:'carolina',  name:'Carolina',  role:'Operador remoto' },
 ];
 
-const RECIPES = [
-  { id:'F-018 · v3', desc:'Roble + salvado · hidratación 62%', exp:false, spp:['hericium_erinaceus','ganoderma_lucidum'] },
-  { id:'F-022 · v1', desc:'Haya + salvado · hidratación 60%', exp:false, spp:['hericium_erinaceus','ganoderma_lucidum','lentinula_edodes'] },
-  { id:'F-011 · v5', desc:'Sustrato maestro shiitake', exp:false, spp:['lentinula_edodes'] },
-  { id:'F-030 · v1', desc:'Suplemento enriquecido · en prueba', exp:true }, // sin spp = compatible con cualquier especie (experimental)
-];
+// Sin recetas de ejemplo: las recetas vienen del Formulador (simRecipes).
+const RECIPES = [];
 const TYPES = {
   registro:     { label:'Registro',      accent:'var(--accent-olive)' },
   inoculacion:  { label:'Inoculación',   accent:'var(--accent-olive-dim)' },
@@ -2043,29 +2039,20 @@ const TRANSPARENT_PX = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAA
 const ROLE_GATE = { plan:['production','direction'], inventario:['production'], calidad:['production','direction'], costes:['direction'], aprender:['production','direction'], comercial:['direction'] };
 const ROLE_LABELS = [{key:'operator',label:'Operario'},{key:'production',label:'Producción'},{key:'direction',label:'Dirección'}];
 const KNOWLEDGE_LIFECYCLE = [{n:'1',label:'Observación'},{n:'2',label:'Documentación'},{n:'3',label:'Experimento'},{n:'4',label:'Validación'},{n:'5',label:'Lección'},{n:'6',label:'Decisión'},{n:'7',label:'SOP'}];
-const SCHEDULE_ROWS = [
-  { order:'OP-2609-01', sppKey:'pleurotus_djamor', start:'22 jul', camId:'martha', status:'Lista', color:'var(--accent-olive)' },
-  { order:'OP-2609-02', sppKey:'hericium_erinaceus', start:'24 jul', camId:'incub', status:'Falta spawn', color:'var(--accent-terracotta)' },
-  { order:'OP-2610-01', sppKey:'pleurotus_ostreatus', start:'27 jul', camId:'incub', status:'Borrador', color:'var(--accent-mushroom)' },
-  { order:'EXP-2609-03', sppKey:'hericium_erinaceus', start:'29 jul', camId:'cloudlab', status:'Experimental', color:'var(--accent-blue-grey)' },
-];
+// Arranque del piloto (lote 1): sin órdenes de ejemplo. Se llenan con lotes reales.
+const SCHEDULE_ROWS = [];
 const PLAN_METRICS = [
-  { label:'Demanda 8 semanas', value:'86 kg', note:'Confirmada + prevista' },
-  { label:'Capacidad comprometida', value:'71%', note:'3 cámaras activas' },
-  { label:'Próxima brecha', value:'6 kg', note:'Semana del 28 jul' },
-  { label:'Lotes por iniciar', value:'3', note:'22–29 jul' },
+  { label:'Demanda 8 semanas', value:'—', note:'Sin pedidos registrados' },
+  { label:'Capacidad comprometida', value:'—', note:'Sin lotes activos' },
+  { label:'Próxima brecha', value:'—', note:'Sin plan cargado' },
+  { label:'Lotes por iniciar', value:'0', note:'Piloto shiitake pendiente' },
 ];
-const INVENTORY_ROWS = [
-  { key:'wheat_straw', lot:'PT-2607 · mercado Tenjo', qty:'14,0 kg', cost:'$1.100', coverage:'10 días', status:'Disponible', color:'var(--accent-olive)' },
-  { key:'masters_mix', lot:'MM-2606 · propio', qty:'9,0 kg', cost:'$1.400', coverage:'8 lotes', status:'Disponible', color:'var(--accent-olive)' },
-  { key:'supplemented_sawdust', lot:'SS-2605 · propio', qty:'4,5 kg', cost:'$2.300', coverage:'5 lotes', status:'Reponer', color:'var(--accent-terracotta)' },
-  { key:'coffee_shiitake', lot:'CS-2603 · Cenicafé', qty:'2,0 kg', cost:'$900', coverage:'2 lotes', status:'Reponer', color:'var(--accent-terracotta)' },
-];
+const INVENTORY_ROWS = [];
 const INVENTORY_METRICS = [
-  { label:'Valor en stock', value:'$612.000', note:'COP · calculado' },
-  { label:'Insumos', value:'4', note:'2 por reponer' },
-  { label:'Por reponer', value:'2', note:'Según plan activo' },
-  { label:'Cobertura media', value:'6 lotes', note:'Antes de comprar' },
+  { label:'Valor en stock', value:'—', note:'Sin insumos registrados' },
+  { label:'Insumos', value:'0', note:'Registra compras reales' },
+  { label:'Por reponer', value:'0', note:'—' },
+  { label:'Cobertura media', value:'—', note:'—' },
 ];
 const RELEASE_CHECKLIST = [
   { label:'Peso fresco registrado' }, { label:'Apariencia y grado documentados' },
@@ -2109,12 +2096,33 @@ const CAUSAS = [
 ];
 const causeLabel = k => (CAUSAS.find(c=>c.key===k)||{label:'Sin determinar'}).label;
 
+// Arranque del piloto (lote 1, shiitake): la app ya no trae datos de ejemplo.
+// Los dispositivos que abrieron versiones anteriores guardaron esos ejemplos en
+// localStorage ('setas_os_state'); se quitan una sola vez, solo por id conocido.
+const PILOT_RESET_KEY = 'setas_os_pilot_reset_v1';
+const DEMO_CONTAINER_IDS = ['C-0414','C-0413','C-0412','C-0409','C-0402','C-0398'];
+const DEMO_LOTE_IDS = ['L-2604','L-2605','L-2606','L-2607','L-2608','L-2609'];
+function stripShellDemoState(d){
+  if(!d || typeof d!=='object') return d;
+  const out = Object.assign({}, d);
+  const demoCont = c => DEMO_CONTAINER_IDS.includes(c && (c.id||c.container));
+  if(Array.isArray(out.containers)) out.containers = out.containers.filter(c=>!demoCont(c) && !DEMO_LOTE_IDS.includes(c && c.batch));
+  // Las alertas 'clima' del shell salían del monitoreo simulado; ninguna es una lectura real.
+  if(Array.isArray(out.ledger)) out.ledger = out.ledger.filter(e=>e && e.type!=='clima' && !DEMO_CONTAINER_IDS.includes(e.container));
+  if(Array.isArray(out.salidas)) out.salidas = out.salidas.filter(x=>!DEMO_LOTE_IDS.includes(x && x.lote));
+  if(Array.isArray(out.yields)) out.yields = out.yields.filter(y=>!DEMO_LOTE_IDS.includes(y && y.lote));
+  return out;
+}
+// Monitoreo de cámaras simulado (ondas sintéticas y Banco Climático): apagado por defecto.
+// Solo para demos o pruebas: window.__setasClimateSim = true antes de cargar el shell.
+const climateSimEnabled = () => typeof window!=='undefined' && window.__setasClimateSim === true;
+
 class Component extends DCLogic {
   state = {
     gloves:false, cmdOpen:false, cmdQ:'', publicFor:null, recallLote:null,
     handoff:'', handoffDraft:'', lastPushAt:0, signed:{}, reviewed:{}, diagSymptom:null, planView:'semana',
     listening:false, voiceTarget:null,
-    workLog:[ {op:'Germán', horas:6.5, kg:4.2, tareas:14}, {op:'Íñigo', horas:5.0, kg:2.6, tareas:9}, {op:'Ana', horas:3.5, kg:1.4, tareas:6} ],
+    workLog:[],
     module: 'sim',
     screen: 'start',
     capture: false,
@@ -2149,63 +2157,17 @@ class Component extends DCLogic {
     camDetail: null,
     labelFor: null,
     hDest: 'restaurante',
-    ledger: [
-      { type:'observacion', time:'08:52', container:'C-0412', note:'Micelio cubre 90% del bloque.' },
-      { type:'traslado',    time:'08:40', container:'C-0413', note:'A cámara de fructificación.' },
-    ],
+    ledger: [],
     rSpecies: null, rRecipe: null,
     oContainers: [], oTags: [], oNote: '',
     hContainer: null, weight: 240, hClose: 'cosechado',
     quickType: null, qContainers: [], qNote: '', qCause: null, taskDone: {},
     detail: null,
-    containers: [
-      { id:'C-0414', key:'hericium_erinaceus', status:'activo', stage:'inoculación', recipe:'F-030 · v1', batch:'L-2609', tl:[
-        { type:'registro', date:'2 jul · 08:30', note:'Alta en registro. Referencia experimental.', by:'Íñigo' },
-        { type:'inoculacion', date:'2 jul · 08:34', note:'Inoculado con spawn de grano R-14.', by:'Íñigo' } ] },
-      { id:'C-0413', key:'pleurotus_djamor', status:'activo', stage:'primordios', recipe:'F-022 · v1', batch:'L-2608', tl:[
-        { type:'registro', date:'27 jun · 09:10', note:'Alta en registro.', by:'Íñigo' },
-        { type:'inoculacion', date:'27 jun · 09:14', note:'Bloque de haya + salvado.', by:'Íñigo' },
-        { type:'observacion', date:'1 jul · 08:20', note:'Colonización completa, superficie blanca.', by:'Íñigo' },
-        { type:'traslado', date:'2 jul · 08:40', note:'A cámara de fructificación.', by:'Íñigo' } ] },
-      { id:'C-0412', key:'hericium_erinaceus', status:'activo', stage:'incubación', recipe:'F-018 · v3', batch:'L-2608', tl:[
-        { type:'registro', date:'25 jun · 10:02', note:'Alta en registro.', by:'Íñigo' },
-        { type:'inoculacion', date:'25 jun · 10:06', note:'Roble + salvado, hidratación 62%.', by:'Íñigo' },
-        { type:'observacion', date:'2 jul · 08:52', note:'Micelio cubre 90% del bloque.', by:'Íñigo' } ] },
-      { id:'C-0409', key:'lentinula_edodes', status:'contaminado', stage:'incubación', recipe:'F-011 · v5', batch:'L-2607', tl:[
-        { type:'registro', date:'20 jun · 09:40', note:'Alta en registro.', by:'Íñigo' },
-        { type:'inoculacion', date:'20 jun · 09:45', note:'Sustrato maestro shiitake.', by:'Íñigo' },
-        { type:'contaminacion', date:'29 jun · 11:15', note:'Trichoderma verde en la base. Aislado.', by:'Íñigo' } ] },
-      { id:'C-0402', key:'pleurotus_ostreatus', status:'cosechado', stage:'ciclo cerrado', recipe:'F-022 · v1', batch:'L-2605', tl:[
-        { type:'registro', date:'8 jun · 08:15', note:'Alta en registro.', by:'Íñigo' },
-        { type:'inoculacion', date:'8 jun · 08:20', note:'Haya + salvado.', by:'Íñigo' },
-        { type:'observacion', date:'22 jun · 08:30', note:'Primer flush formándose.', by:'Íñigo' },
-        { type:'cosecha', date:'26 jun · 09:00', note:'Cosecha 310 g. Contenedor cerrado.', by:'Íñigo' } ] },
-    ],
-    reviewSessions: [
-      { label:'Sesión de laboratorio', time:'07:30 – 09:10', summary:'3 contenedores nuevos, 4 inoculaciones, 1 contaminación aislada.' },
-      { label:'Sesión de cultivo', time:'16:20 – 17:45', summary:'6 observaciones, 2 traslados, 2 cosechas (620 g total).' },
-    ],
-    reviewEvents: [
-      { type:'registro', time:'07:34', container:'C-0414', note:'Alta · Melena de león · ref. experimental F-030.' },
-      { type:'inoculacion', time:'07:41', container:'C-0414', note:'Inoculado con spawn R-14.' },
-      { type:'contaminacion', time:'08:12', container:'C-0409', note:'Trichoderma en la base. Aislado.' },
-      { type:'observacion', time:'08:20', container:'C-0413', note:'Colonización completa.' },
-      { type:'traslado', time:'08:40', container:'C-0413', note:'A cámara de fructificación.' },
-      { type:'cosecha', time:'16:55', container:'C-0402', note:'310 g. Contenedor cerrado.' },
-      { type:'cosecha', time:'17:20', container:'C-0398', note:'310 g. Contenedor cerrado.' },
-    ],
-    salidas: [
-      { fecha:'2 jul',  lote:'L-2605', spp:'pleurotus_ostreatus', pesoG:310, dest:'restaurante', grade:'A' },
-      { fecha:'26 jun', lote:'L-2605', spp:'pleurotus_ostreatus', pesoG:280, dest:'mercado', grade:'A' },
-      { fecha:'24 jun', lote:'L-2608', spp:'pleurotus_djamor', pesoG:180, dest:'deshidratado', grade:'B' },
-    ],
-    yields: [
-      { lote:'L-2608', spp:'pleurotus_djamor',    sub:'wheat_straw',     dryKg:2.0, freshG:2140 },
-      { lote:'L-2607', spp:'pleurotus_djamor',    sub:'wheat_straw',     dryKg:2.0, freshG:1980 },
-      { lote:'L-2605', spp:'pleurotus_ostreatus', sub:'wheat_straw',     dryKg:1.8, freshG:1560 },
-      { lote:'L-2606', spp:'pleurotus_ostreatus', sub:'wheat_straw',     dryKg:1.8, freshG:1490 },
-      { lote:'L-2604', spp:'lentinula_edodes',    sub:'coffee_shiitake', dryKg:2.5, freshG:1440 },
-    ],
+    containers: [],
+    reviewSessions: [],
+    reviewEvents: [],
+    salidas: [],
+    yields: [],
   };
 
   dialogIsOpen(s){
@@ -2255,7 +2217,7 @@ class Component extends DCLogic {
     window.addEventListener('storage', this._onStorage);
     this.fetchWeather();
     this._wt = setInterval(()=>this.fetchWeather(), 5*60000);
-    this._climaTick = setInterval(()=>{ this.setState({ climaClock:Date.now() }); this.detectChamberAlerts(); }, 2000);
+    if(climateSimEnabled()) this._climaTick = setInterval(()=>{ this.setState({ climaClock:Date.now() }); this.detectChamberAlerts(); }, 2000);
     this._onClimate = (e)=>{
       const d = e && e.data;
       if(!SetasBridgeProtocol.isBridgeMessage(d, SetasBridgeProtocol.BRIDGE_MESSAGES.CLIMATE_ALERT)) return;
@@ -2275,6 +2237,7 @@ class Component extends DCLogic {
     }catch(e){}
   }
   onClimateAlert(d){
+    if(!climateSimEnabled()) return; // el Banco Climático es un simulador, no una sonda
     const note = d.chamber+' · '+d.phase+' · '+(d.detail||('Desviaci\u00f3n de '+d.metric));
     this.push({ type:'clima', container:d.chamber, note });
     if(!(this.state.module==='camaras' && this.state.camarasTab==='clima')) this.setState(s=>({ climaBadge:s.climaBadge+1 }));
@@ -2326,7 +2289,12 @@ class Component extends DCLogic {
   loadPersisted(){
     try {
       const raw=localStorage.getItem('setas_os_state'); if(!raw) return;
-      const d=JSON.parse(raw);
+      let d=JSON.parse(raw);
+      if(d && typeof d==='object' && localStorage.getItem(PILOT_RESET_KEY)!=='1'){
+        d = stripShellDemoState(d);
+        localStorage.setItem('setas_os_state', JSON.stringify(d));
+        localStorage.setItem(PILOT_RESET_KEY, '1');
+      }
       if(d && typeof d==='object'){
         // v4: los lotes se unificaron a los ids de batch (L-26xx); descarta datos con el esquema viejo
         if(Array.isArray(d.salidas)) d.salidas = d.salidas.filter(x=>/^L-/.test(x.lote||''));
@@ -2405,6 +2373,17 @@ class Component extends DCLogic {
     this.toast('Último evento deshecho · '+(TYPES[ev.type]||{label:ev.type}).label+'.');
   }
   liveMonitor(cm){
+    if(!climateSimEnabled()){
+      const alert = this.state.ledger.find(e=>e.type==='clima' && (e.container===cm.name || e.container===cm.id));
+      return {
+        liveTemp:'—', liveHum:'—', liveCo2:'—',
+        liveAccent:'var(--text-metadata)', liveStatusLabel:'Sin lectura de sonda',
+        hasLiveAlert:!!alert, liveAlertNote: alert?alert.note:'',
+        tempSeries:[], humSeries:[], co2Series:[],
+        tempSpark:'', humSpark:'', co2Spark:'', tempSparkEndY:'0', humSparkEndY:'0', co2SparkEndY:'0',
+        sparkPoints:[], sparkTrendLabel:'Sin lecturas de sonda para esta cámara',
+      };
+    }
     const parseRange = (v)=>{ const m=(v||'').match(/(-?\d+(?:\.\d+)?)\D+(-?\d+(?:\.\d+)?)/); return m?[parseFloat(m[1]),parseFloat(m[2])]:null; };
     const tP = (cm.params||[]).find(p=>p.k==='T°'); const hP = (cm.params||[]).find(p=>p.k==='HR');
     const cP = (cm.params||[]).find(p=>p.k==='CO₂');
@@ -2476,6 +2455,7 @@ class Component extends DCLogic {
   }
   // Umbrales por especie/cámara: detecta desvíos y los convierte en tareas accionables ("Ventilar C2: CO₂ alto").
   detectChamberAlerts(){
+    if(!climateSimEnabled()) return;
     const s=this.state, found={};
     CAMARAS.forEach(cm=>{
       if(!cm.spp) return;
@@ -3046,9 +3026,9 @@ class Component extends DCLogic {
     const ncItems = ncSource.map(c=>({ title:'NC · '+c.id, detail:(c.tl.find(e=>e.type==='contaminacion')||{}).note || 'Contaminación registrada.', color:'var(--status-error)' }));
     const expBase = s.containers.find(c=>c.recipe==='F-018 · v3');
     const expTrial = s.containers.find(c=>c.recipe==='F-030 · v1');
-    const comparisonGrid = [
-      { label:(expBase?expBase.recipe:'F-018 · v3')+' (control)', eb:'BE 92%', contam:'Contam. 0%', style:'border:1px solid var(--border-soft);padding:16px;' },
-      { label:(expTrial?expTrial.recipe:'F-030 · v1')+' (tratamiento)', eb:'BE — pendiente', contam:expTrial?('En '+expTrial.stage):'Sin lote activo', style:'border:1px solid var(--border-soft);border-top:3px solid var(--accent-olive);padding:16px;' },
+    const comparisonGrid = !expTrial ? [] : [
+      { label:(expBase?expBase.recipe:'Control')+' (control)', eb:'BE — pendiente', contam:expBase?('En '+expBase.stage):'Sin lote control', style:'border:1px solid var(--border-soft);padding:16px;' },
+      { label:expTrial.recipe+' (tratamiento)', eb:'BE — pendiente', contam:'En '+expTrial.stage, style:'border:1px solid var(--border-soft);border-top:3px solid var(--accent-olive);padding:16px;' },
     ];
     const sopSteps = KNOWLEDGE_LIFECYCLE.map((k,i)=>{ const state = i<2?'done':(i===2?'active':'pending'); return {
       num:k.n, label:k.label,
@@ -3228,14 +3208,14 @@ class Component extends DCLogic {
       traceQrRef:(el)=>{ if(el) el.src = traceCont ? this.buildQr('https://setasdelapena.co/c/'+traceCont.id) : TRANSPARENT_PX; },
       // aprender
       expTitle: expTrial?('Ensayo · '+expTrial.recipe+' vs '+(expBase?expBase.recipe:'F-018')):'Ensayo experimental',
-      expHyp:'Hipótesis: el suplemento enriquecido mejora la eficiencia biológica sin aumentar la contaminación.',
+      expHyp: expTrial ? 'Hipótesis pendiente de registrar para este ensayo.' : 'Sin ensayos activos. El primer piloto (shiitake, lote 1) aún no tiene datos.',
       comparisonGrid, sopSteps,
       // comercial
       commercialMetrics:[
         { label:'Kg confirmados (30d)', value:salidasTotalKg+' kg', note:s.salidas.length+' salidas' },
         { label:'Destinos activos', value:String(new Set(s.salidas.map(x=>x.dest)).size), note:'Canales con despacho' },
         { label:'Grado A', value:Math.round(100*s.salidas.filter(x=>x.grade==='A').length/Math.max(1,s.salidas.length))+'%', note:'Del peso fresco' },
-        { label:'Próxima entrega', value:CLIENTS.restaurante, note:'20 jul' },
+        { label:'Próxima entrega', value:'—', note:'Sin pedidos registrados' },
       ],
       commercialRows:commercialClients,
       zonas:ZONAS,
@@ -3444,7 +3424,6 @@ class Component extends DCLogic {
       // conocimiento
       knowledgeLifecycle:KNOWLEDGE_LIFECYCLE,
       knowledgeItems:[
-        { title:'F-030 · Suplemento enriquecido', spp:'Melena de león', state:'Experimento', note:'C-0414 en incubación · resultado pendiente para validar BE contra F-018.', accent:'var(--accent-mushroom)' },
         { title:'Sustrato de café · T2 (Shiitake)', spp:'Shiitake', state:'Validación', note:'BE 57.6% documentado (Cenicéfe, zona cafetera) — revalidar bajo régimen frío de Tenjo antes de promover a SOP.', accent:'var(--accent-blue-grey)' },
       ],
       ...this.extraVals(s),

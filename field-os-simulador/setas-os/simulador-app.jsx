@@ -1175,7 +1175,7 @@ const PRESETS=SetasSubstrateCatalogApi.PRESETS;
 // kgHumedo: carga típica en kg húmedo por unidad
 // vol_L: volumen útil aproximado en litros
 // stockId: id del insumo en invLotes (Bodega) que rastrea las unidades físicas
-//   disponibles de este tipo de bolsa — ver SEED_LOTES para el stock inicial.
+//   disponibles de este tipo de bolsa (se registran como compras reales en Bodega).
 //   Un tipo sin stockId (o sin lotes activos) no tiene unidades en existencia:
 //   la UI lo debe mostrar deshabilitado, no ocultarlo, para que quede claro que
 //   es una técnica documentada pero sin insumo comprado todavía.
@@ -4715,48 +4715,6 @@ const realCostPerKgSeco=(recipe,invLotes,ings)=>{
   },0);
   return known?Math.round(total):null;
 };
-
-const SEED_PROVEEDORES=[
-  {id:'prov_paloquemao',nombre:'Plaza de Paloquemao',tipo:'plaza',municipio:'Bogotá'},
-  {id:'prov_bavaria',nombre:'Bavaria Tocancipá',tipo:'industrial',municipio:'Tocancipá'},
-  {id:'prov_elrosal',nombre:'Agrícola El Rosal',tipo:'directo',municipio:'El Rosal'},
-];
-// Tres compras separadas: una por proveedor
-const SEED_CID_PALO='compra_seed_palo';
-const SEED_CID_ELROSAL='compra_seed_elrosal';
-const SEED_CID_BAV='compra_seed_bav';
-// Las bolsas usan el mismo modelo de lotes/FIFO que los insumos de sustrato,
-// pero cantidadKgDisponible representa unidades (uds), no kg — ver stockId en
-// BAG_TYPES y el filtro por INGS en BodegaSection que las excluye de la tabla
-// de Bodega (que sí está etiquetada en kg). Cantidades tomadas del inventario
-// físico registrado en knowledge_base/05_equipment/hardware_inventory_august_2026.md.
-const SEED_CID_BOLSAS='compra_seed_bolsas';
-const SEED_LOTES=[
-  {id:'lote_s1',compraId:SEED_CID_PALO,ingredienteId:'paja_trigo',cantidadKgTotal:15,precioPorKgCOP:1200,fechaIngreso:'2026-06-01',cantidadKgDisponible:15,activo:true},
-  {id:'lote_s3',compraId:SEED_CID_PALO,ingredienteId:'salvado_trigo',cantidadKgTotal:5,precioPorKgCOP:2100,fechaIngreso:'2026-06-01',cantidadKgDisponible:5,activo:true},
-  {id:'lote_s2',compraId:SEED_CID_ELROSAL,ingredienteId:'aserrin_roble',cantidadKgTotal:8,precioPorKgCOP:800,fechaIngreso:'2026-06-01',cantidadKgDisponible:8,activo:true},
-  {id:'lote_s4',compraId:SEED_CID_BAV,ingredienteId:'afrecho_cerveceria',cantidadKgTotal:3,precioPorKgCOP:500,fechaIngreso:'2026-06-01',cantidadKgDisponible:3,activo:true},
-  {id:'lote_s5',compraId:SEED_CID_BOLSAS,ingredienteId:'bolsa_unicorn_microfiltro',cantidadKgTotal:100,precioPorKgCOP:0,fechaIngreso:'2026-08-01',cantidadKgDisponible:100,activo:true},
-  {id:'lote_s6',compraId:SEED_CID_BOLSAS,ingredienteId:'bolsa_pp_plana',cantidadKgTotal:20,precioPorKgCOP:0,fechaIngreso:'2026-08-01',cantidadKgDisponible:20,activo:true},
-];
-const SEED_COMPRAS=[
-  {id:SEED_CID_PALO,fecha:'2026-06-01',proveedorId:'prov_paloquemao',
-   items:[{ingredienteId:'paja_trigo',kg:15,precio:1200},{ingredienteId:'salvado_trigo',kg:5,precio:2100}],
-   fuenteCaptura:'manual',revisadoManualmente:true},
-  {id:SEED_CID_ELROSAL,fecha:'2026-06-01',proveedorId:'prov_elrosal',
-   items:[{ingredienteId:'aserrin_roble',kg:8,precio:800}],
-   fuenteCaptura:'manual',revisadoManualmente:true},
-  {id:SEED_CID_BAV,fecha:'2026-06-01',proveedorId:'prov_bavaria',
-   items:[{ingredienteId:'afrecho_cerveceria',kg:3,precio:500}],
-   fuenteCaptura:'manual',revisadoManualmente:true},
-  {id:SEED_CID_BOLSAS,fecha:'2026-08-01',proveedorId:'',
-   items:[{ingredienteId:'bolsa_unicorn_microfiltro',kg:100,precio:0},{ingredienteId:'bolsa_pp_plana',kg:20,precio:0}],
-   fuenteCaptura:'manual',revisadoManualmente:true},
-];
-const SEED_MOVIMIENTOS=SEED_LOTES.map((l,i)=>({
-  id:`mov_seed_${i}`,loteId:l.id,ingredienteId:l.ingredienteId,
-  tipo:'entrada',cantidadKg:l.cantidadKgTotal,fecha:'2026-06-01',referencia:l.compraId
-}));
 
 // Alias de claves del shell (species.yaml / KB) -> claves internas del SPP del simulador.
 const SPP_KEY_ALIAS={
@@ -11780,16 +11738,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Mismas bandas que Cámaras y el motor de alertas: las del ciclo activo
     // de la sala si lo hay, si no las fijas.
     const targetBands = roomId ? (effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null) : null;
-    const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
 
     const buildReading = (metricKey, label, unit, decimals) => {
       const band = targetBands && targetBands[metricKey];
       const hasLive = Number.isFinite(roomSample[metricKey]);
-      const hasDemo = !hasLive && demoMetrics && Number.isFinite(demoMetrics[metricKey]);
-      if (!hasLive && !hasDemo) return { key: metricKey, label, empty: true };
-      const value = hasLive ? roomSample[metricKey] : demoMetrics[metricKey];
-      const fresh = hasLive ? Boolean(roomLiveNow.freshMetrics && roomLiveNow.freshMetrics[metricKey]) : true;
-      const ageMs = hasLive ? (roomLiveNow.metricAgeMs && roomLiveNow.metricAgeMs[metricKey]) : null;
+      // Sin sonda no hay número: la ficha del lote muestra "sin lectura", nunca un valor de ejemplo.
+      if (!hasLive) return { key: metricKey, label, empty: true };
+      const value = roomSample[metricKey];
+      const fresh = Boolean(roomLiveNow.freshMetrics && roomLiveNow.freshMetrics[metricKey]);
+      const ageMs = roomLiveNow.metricAgeMs && roomLiveNow.metricAgeMs[metricKey];
       let relation = 'ok';
       if (band) {
         if (Number.isFinite(band.criticalMin) && value < band.criticalMin) relation = 'error';
@@ -12119,9 +12076,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Datos de telemetría actuales.
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
     const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: 'referencia de modelo · sin lectura de sonda' };
-    const physicalMetrics=selectedCamera?{
-      temp:Number(selectedCamera.liveTemp),rh:Number(selectedCamera.liveHum),co2:Number(selectedCamera.liveCo2),timestamp:'monitor de cámara'
-    }:{};
+    // El shell entrega '—' cuando no hay sonda: solo cuentan lecturas numéricas.
+    const physicalMetrics={};
+    if(selectedCamera){
+      [['temp','liveTemp'],['rh','liveHum'],['co2','liveCo2']].forEach(([k,src])=>{
+        const v=Number(selectedCamera[src]);
+        if(selectedCamera[src]!=null&&selectedCamera[src]!==''&&Number.isFinite(v)) physicalMetrics[k]=v;
+      });
+      if(Object.keys(physicalMetrics).length) physicalMetrics.timestamp='monitor de cámara';
+    }
     const injected = injectedClimateReadings[selectedClimateRoom];
 
     // Telemetría real del puente (WebSocket / MQTT / Firestore), ya compensada
@@ -12139,6 +12102,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
     // Prioridad: telemetría en vivo > webhook manual > monitor de cámara > demo.
     const currentMetrics = { ...baseMetrics, ...physicalMetrics, ...(injected||{}), ...liveMetrics };
+    // Sin lectura medida o ingresada, el modo automático de los actuadores no tiene con qué decidir.
+    const hasMeasuredClimate = hasLiveMetrics || !!injected;
+    const humidifierAutoOn = hasMeasuredClimate && currentMetrics.rh < defaultTargets.rh_pct.min;
+    const faeAutoPulse = hasMeasuredClimate && currentMetrics.co2 > defaultTargets.co2_ppm.max;
     const liveRoomAlerts = liveTelemetry.roomAlerts(selectedClimateRoom);
     const co2Correction = liveSample.co2_correction || null;
 
@@ -12897,7 +12864,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
             esta lista se oculta: dice lo mismo pero sin dwell ni histéresis, así
             que con telemetría real mostraría dos veces el mismo problema — y la
             copia sin filtrar parpadearía mientras la filtrada se mantiene. */}
-        {liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && (
+        {/* Sin lectura de sonda (ni manual) no se generan alertas: serían sobre valores de referencia. */}
+        {liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && (hasLiveMetrics || injected) && (
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             {climateHealth.alerts.map((al, idx) => (
               <div key={idx} style={{
@@ -13342,8 +13310,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 Control automatizado por histéresis y pulsos de renovación con protección anti-ciclo corto
               </div>
             </div>
-            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--moss-700)',fontWeight:700}}>
-              ● Lógica Local Activa (ESP32)
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,color:hasMeasuredClimate?'var(--moss-700)':'var(--text-metadata)',fontWeight:700}}>
+              {hasMeasuredClimate ? '● Lecturas recibidas' : '○ Sin lectura del ESP32'}
             </div>
           </div>
 
@@ -13354,13 +13322,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
                   <AppIcon name="droplet" size={13} style={{marginRight:4}} /> Humidificador (Relay Ch1 · T7/H05)
                 </span>
-                <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && currentMetrics.rh < defaultTargets.rh_pct.min) ? 'on' : 'off'}`}>
-                  {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (currentMetrics.rh < defaultTargets.rh_pct.min ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
+                <span className={`climate-actuator-badge ${humidifierOverride === 'ON' || (humidifierOverride === null && humidifierAutoOn) ? 'on' : 'off'}`}>
+                  {humidifierOverride === 'ON' ? 'OVERRIDE [ON]' : humidifierOverride === 'OFF' ? 'OVERRIDE [OFF]' : (!hasMeasuredClimate ? 'AUTO [SIN LECTURA]' : humidifierAutoOn ? 'AUTO [ENCENDIDO]' : 'AUTO [REPOSO]')}
                 </span>
               </div>
               <div className="climate-actuator-meta">
                 <b>Potencia:</b> 100% · <b>Modo:</b> {humidifierOverride ? 'Manual' : 'Bang-Bang con Histéresis'} (Min idle: 120s)<br/>
-                <b>Diagnóstico:</b> {humidifierOverride === 'ON' ? 'Forzado manualmente por el operario.' : (currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`)}
+                <b>Diagnóstico:</b> {humidifierOverride === 'ON' ? 'Forzado manualmente por el operario.' : !hasMeasuredClimate ? 'Sin lectura de sonda: el modo automático no actúa.' : (currentMetrics.rh >= defaultTargets.rh_pct.target ? `Target alcanzado (${currentMetrics.rh}% >= ${defaultTargets.rh_pct.target}%)` : `Humidificando hacia ${defaultTargets.rh_pct.target}%`)}
               </div>
               <div style={{display:'flex',gap:6,marginTop:4}}>
                 <button
@@ -13388,13 +13356,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:13,color:'var(--ink-0)'}}>
                   <AppIcon name="wind" size={13} style={{marginRight:4}} /> Extractor FAE (Relay Ch2 · Cloudline H4)
                 </span>
-                <span className={`climate-actuator-badge ${faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'pulse' : 'off'}`}>
-                  {faePulseActive || currentMetrics.co2 > defaultTargets.co2_ppm.max ? 'PULSO ACTIVO (35s)' : 'AUTO [EN ESPERA]'}
+                <span className={`climate-actuator-badge ${faePulseActive || faeAutoPulse ? 'pulse' : 'off'}`}>
+                  {faePulseActive || faeAutoPulse ? 'PULSO ACTIVO (35s)' : !hasMeasuredClimate ? 'AUTO [SIN LECTURA]' : 'AUTO [EN ESPERA]'}
                 </span>
               </div>
               <div className="climate-actuator-meta">
                 <b>Velocidad física:</b> 1–2 (~18 CFM efectivo) · <b>Duración pulso:</b> 35s<br/>
-                <b>Diagnóstico:</b> {faePulseActive ? 'Evacuando CO2 y renovando aire fresco...' : (currentMetrics.co2 > defaultTargets.co2_ppm.max ? `CO₂ alto (${currentMetrics.co2} ppm > ${defaultTargets.co2_ppm.max} ppm)` : `CO₂ en rango (${currentMetrics.co2} ppm). Próximo pulso programado en ~12 min`)}
+                <b>Diagnóstico:</b> {faePulseActive ? 'Evacuando CO2 y renovando aire fresco...' : !hasMeasuredClimate ? 'Sin lectura de sonda: el modo automático no actúa.' : (faeAutoPulse ? `CO₂ alto (${currentMetrics.co2} ppm > ${defaultTargets.co2_ppm.max} ppm)` : `CO₂ en rango (${currentMetrics.co2} ppm). Próximo pulso programado en ~12 min`)}
               </div>
               <div style={{display:'flex',gap:6,marginTop:4}}>
                 <button
@@ -13417,18 +13385,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
             <div style={{fontFamily:'var(--font-mono)',fontSize:11,fontWeight:700,color:'var(--ink-1)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em'}}>
               <AppIcon name="clipboard" size={13} style={{marginRight:4}} /> Historial Reciente de Conmutación de Relés
             </div>
+            {/* Sin registro de relés conectado todavía: no se muestran conmutaciones de ejemplo. */}
             <div className="climate-actuator-logs">
-              <div className="climate-log-row">
-                <span>[Ch2 · Extractor H4] Pulso periódico FAE completado (35s a vel. 1)</span>
-                <span style={{color:'var(--ink-2)'}}>hace 14m</span>
-              </div>
-              <div className="climate-log-row">
-                <span>[Ch1 · Humidificador T7] Apagado al alcanzar HR target (91.5% >= 90%)</span>
-                <span style={{color:'var(--ink-2)'}}>hace 22m</span>
-              </div>
-              <div className="climate-log-row">
-                <span>[Ch1 · Humidificador T7] Encendido por banda mínima (84.2% &lt; 85%)</span>
-                <span style={{color:'var(--ink-2)'}}>hace 26m</span>
+              <div className="climate-log-row" data-testid="relay-log-empty">
+                <span>Sin conmutaciones registradas. El historial aparece cuando el ESP32 reporte sus relés.</span>
               </div>
             </div>
           </div>
