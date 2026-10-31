@@ -361,5 +361,19 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow update, delete: if false;
     }
+
+    // Bandeja de correos de compra (functions/import-purchase-emails.js).
+    // Sólo la función programada crea documentos (Admin SDK, fuera de estas
+    // reglas). Un cliente sólo puede sacar un correo de la bandeja:
+    // nueva → importada | descartada, tocando estado, compraId y revisadoEn.
+    match /correos_compra/{id} {
+      allow read: if signedIn();
+      allow create, delete: if false;
+      allow update: if signedIn()
+        && resource.data.estado == 'nueva'
+        && request.resource.data.estado in ['importada', 'descartada']
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['estado', 'compraId', 'revisadoEn']);
+    }
   }
 }

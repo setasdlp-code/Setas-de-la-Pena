@@ -40,3 +40,30 @@ exports.acceptFieldEvent = onCall(async (request) => {
     throw new HttpsError(HTTPS_STATUS[code] || TERMINAL, err.message, { code });
   }
 });
+
+// ── Correos de compra → bandeja de Bodega ─────────────────────────────────
+// Cada 30 minutos revisa Gmail y deja los correos de proveedores en
+// correos_compra (estado "nueva"). No registra compras: una persona las revisa
+// en Compra → Correos. Configuración: ver docs/correos-compra.md.
+const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { defineSecret, defineString } = require('firebase-functions/params');
+const { createImportPurchaseEmails } = require('./import-purchase-emails.js');
+const { createGmailFetcher } = require('./gmail-imap.js');
+
+const GMAIL_USER = defineString('GMAIL_USER');
+const GMAIL_APP_PASSWORD = defineSecret('GMAIL_APP_PASSWORD');
+
+exports.importarCorreosCompra = onSchedule({
+  schedule: 'every 30 minutes',
+  timeZone: 'America/Bogota',
+  secrets: [GMAIL_APP_PASSWORD],
+  timeoutSeconds: 120,
+  memory: '256MiB',
+}, async () => {
+  const importar = createImportPurchaseEmails({
+    db,
+    fetchMessages: createGmailFetcher({ user: GMAIL_USER.value(), password: GMAIL_APP_PASSWORD.value() }),
+  });
+  const resumen = await importar();
+  console.log('[importarCorreosCompra]', JSON.stringify(resumen));
+});

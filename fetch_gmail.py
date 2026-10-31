@@ -174,6 +174,10 @@ def main():
 
                     emails.append({
                         'id':           f'imap_{mid.decode()}_{domain.replace(".","_")}',
+                        # Message-ID es estable entre sesiones (el número IMAP no):
+                        # Setas OS lo usa para no importar dos veces el mismo correo.
+                        'messageId':    (msg.get('Message-ID') or '').strip(),
+                        'rawDate':      date_,
                         'from':         from_,
                         'subject':      subject,
                         'date':         fecha,
@@ -201,7 +205,7 @@ def main():
 
     print(f"✓ Guardado en {OUTPUT_FILE}")
     print(f"\nSiguiente paso:")
-    print(f"  Abre captura-email.html → Pendientes → Importar JSON → selecciona {OUTPUT_FILE}")
+    print(f"  Setas OS → Bodega → Compra → Correos → Importar archivo de correos → selecciona {OUTPUT_FILE}")
 
 
 if __name__ == '__main__':
