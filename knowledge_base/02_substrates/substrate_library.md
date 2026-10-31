@@ -3,7 +3,7 @@ title: Biblioteca de Sustratos
 document_id: DOC-0013
 category: substrates
 load_priority: selective
-last_reviewed: 2026-10-28
+last_reviewed: 2026-10-31
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -101,6 +101,8 @@ Fuente: `09_research/corroboracion_2026-10/djamor_ganoderma_kpi.md` (snippets, s
 La guía externa Monte Jongas aporta 80% pellets de madera dura + 20% salvado en base seca, 1% Ca(OH)₂ sobre la base seca, 60% humedad base húmeda y 10% spawn de grano respecto del sustrato húmedo antes de inocular. Para cuatro bolsas de 2,5 kg de sustrato más 250 g spawn cada una, consultar exclusivamente `shiitake_pellets_microlote_receta_v1.md` para las cantidades calculadas y `../06_operations/shiitake_microlote_pellets_sop_v1.md` para las compuertas. La fuente está en `manual_monte_jongas_shiitake_pellets_transcripcion_2026-10-27.md` y la auditoría en `../09_research/auditoria_manual_shiitake_pellets_monte_jongas_2026-10-27.md`.
 
 **Pendientes:** pH objetivo 5,5–6,0 y Ca(OH)₂ al 1% deben verificarse; a ~2.600 m, 15 psi no equivale automáticamente a 121 °C y 90–120 min no constituyen ciclo aprobado. No extrapolar esta geometría de cuatro bolsas al diseño independiente de 30 bloques de 2,0 kg (DOC-0122/0123).
+
+**Abastecimiento y alternativas (2026-10-31):** la auditoría `../09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md` (DOC-0130) revisa un reporte externo de pellets y maderas. Candidato con mayor puntaje en ese reporte: pélet de *Acacia mangium* de Mandra Renovable (Cogua), con compatibilidad con shiitake **no verificada**. También registra el conflicto abierto de Ca(OH)₂ frente a CaCO₃. El retamo espinoso **no tiene evidencia de cultivo de shiitake** y no se usa como base del piloto (`../09_research/retamo_espinoso_shiitake_2026-10-31.md`, DOC-0129).
 
 ## Perfiles de Sustratos
 

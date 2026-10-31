@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-08-29
+last_reviewed: 2026-10-31
 confidence: high
 primary_sources:
   - Internal records
@@ -43,6 +43,8 @@ La auditoría documental de pendientes del 2026-08-29 confirmó que SH01–SH06 
 | SH07 | ¿Se necesita choque frío o basta la fluctuación natural? | Respuesta de la cepa en piloto instrumentado | Alta |
 | SH08 | ¿Qué definición se usará para rendimiento y BE? | Fórmula canónica y masa seca inicial registrada | Alta |
 | SH09 | ¿Qué relación CO₂–morfología presenta la cepa bajo el caudal real de la cámara? | Serie de CO₂, caudal, posición y fotografías | Alta antes de escalar |
+| SH10 | ¿Qué pH real dan 1 % Ca(OH)₂ frente a 1 % CaCO₃ en la mezcla de pellets + salvado, antes y después del autoclave, y cuál coloniza mejor? | pH medido con método registrado; comparación exploratoria 2 + 2 (DOC-0130) | Alta |
+| SH11 | ¿Es el retamo espinoso (*Ulex europaeus*) compatible con shiitake, y en qué proporción de leño? | Análisis N/C del leño; placa con extracto; microensayo exploratorio (DOC-0129) | Baja (fuera del piloto) |
 
 # Alta altitud y balance gaseoso
 
@@ -184,6 +186,8 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB07 | ¿Qué aserraderos/carpinterías entregan residuo sin MDF, pinturas, preservantes o mezcla desconocida? | Alta | Auditoría de proveedor y muestra |
 | AB08 | ¿El bagazo cervecero puede recibirse con humedad y estabilidad compatibles con el proceso? | Media | Caracterización, logística y piloto |
 | AB09 | ¿La cascarilla de arroz disponible es limpia, homogénea y útil como aireante? | Media | Muestra y ensayo de bloque |
+| AB10 | ¿El pélet de «acacia» comercial (Mandra, Mercado Libre) es *Acacia mangium* pura de fuste, sin corteza ni arrastre, y es compatible con shiitake? | Alta | Confirmación escrita del proveedor; buscar evidencia de *L. edodes* en *A. mangium* (no hallada al 2026-10-31) |
+| AB11 | ¿*Acacia decurrens* (acacia sabanera) sirve para shiitake, o sus taninos de corteza la descartan? | Media | Conflicto entre `deep_research_synthesis_2026.md` y DOC-0130; requiere ensayo |
 
 Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores.
 

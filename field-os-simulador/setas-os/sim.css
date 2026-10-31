@@ -5813,7 +5813,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .co-form-panel,
 .sim-root .co-form-species,
 .sim-root .builder-wrap,
-.sim-root button,
+.sim-root button:not(.home-quick-action),
 .sim-root input,
 .sim-root select,
 .sim-root textarea,
@@ -6750,17 +6750,98 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .inv-modal-bg.iot-hub-backdrop { padding:var(--space-2)!important; align-items:center!important; }
 .sim-root .inv-modal.iot-hub-dialog { padding:0!important; margin:0!important; overflow:hidden!important; }
 
-/* Hoy keeps turn actions ahead of optional summaries. */
-.sim-root .home-secondary-summary { border:1px solid var(--border-hairline); padding:0 var(--space-2); min-width:0; }
-.sim-root .home-secondary-summary summary { min-height:48px; display:flex; align-items:center; cursor:pointer; font-size:var(--text-base); font-weight:600; }
-.sim-root .home-secondary-summary summary::before { content:'+'; margin-right:10px; font-family:var(--font-mono); }
-.sim-root .home-secondary-summary[open] summary::before { content:'−'; }
-.sim-root .home-secondary-summary summary:focus-visible { outline:2px solid var(--focus-ring); outline-offset:3px; }
-.sim-root .home-secondary-summary .home-registro-row, .sim-root .home-secondary-summary .home-live-telemetry { margin-top:0!important; padding-top:12px!important; padding-bottom:var(--space-2); }
-@media(max-width:560px) {
- .sim-root .home-header-cockpit { padding:14px var(--space-2); }
- .sim-root .home-cockpit { gap:12px; }
- .sim-root .home-quick-actions-strip { grid-template-columns:minmax(0,1fr)!important; }
+/* Hoy: one operational focus, with supporting context available on demand. */
+.sim-root .home-header-cockpit {
+  border: 0;
+  border-bottom: 0;
+  background: transparent;
+  padding: 8px 0 4px;
+  overflow: visible;
+}
+.sim-root .home-operation-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 var(--text-xs) var(--font-sans);
+}
+.sim-root .home-operation-status > span { width: 7px; height: 7px; border-radius: 50%; }
+.sim-root .home-overview { padding: 24px; border-radius: 26px; background: var(--paper-0); box-shadow: inset 0 0 0 6px color-mix(in oklab, var(--ink-0) 3%, transparent); }
+.sim-root .home-overview h2 { margin: 0 0 16px; font: 700 var(--text-lg)/1.2 var(--font-serif); color: var(--ink-0); }
+.sim-root .home-kpi-grid { display: grid; margin: 0; gap: 0; }
+.sim-root .home-kpi { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 12px 0; min-width: 0; }
+.sim-root .home-kpi + .home-kpi { box-shadow: 0 -1px 0 color-mix(in oklab, var(--ink-0) 7%, transparent); }
+.sim-root .home-kpi dt { font: 400 var(--text-sm) var(--font-sans); color: var(--ink-2); }
+.sim-root .home-kpi dd { margin: 0; font: 600 var(--text-xl)/1.1 var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink-0); }
+.sim-root .home-operational-queue {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.sim-root .home-operational-queue > .sdp-band--ahora {
+  min-width: 0;
+  border: 0;
+  padding: 6px;
+  border-radius: 32px;
+  background: color-mix(in oklab, var(--accent-olive) 8%, var(--paper-1));
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--ink-0) 4%, transparent);
+
+}
+.sim-root .home-quick-actions-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.sim-root .home-shift-core { padding: 24px; border-radius: 26px; background: var(--paper-0); box-shadow: inset 0 1px 0 color-mix(in oklab, white 70%, transparent); }
+.sim-root .home-shift-title { margin: 8px 0; font: 700 var(--text-2xl)/1.1 var(--font-serif); letter-spacing: -0.025em; color: var(--ink-0); }
+.sim-root .home-shift-lede { margin: 0 0 24px; font: 400 var(--text-sm)/1.5 var(--font-sans); color: var(--ink-2); }
+.sim-root .home-shift-tag { font: 400 var(--text-xs) var(--font-sans); color: var(--ink-2); }
+.sim-root .home-quick-action { min-width: 0; border: 0; border-radius: 18px; background: var(--paper-1); transition: transform var(--duration-standard) cubic-bezier(.32,.72,0,1), background-color var(--duration-standard) cubic-bezier(.32,.72,0,1); }
+.sim-root .home-quick-action.is-jornada, .sim-root .home-quick-action.is-primary { border: 0; border-radius: 28px; background: color-mix(in oklab, var(--accent-olive) 9%, var(--paper-0)); }
+.sim-root .home-action-arrow { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in oklab, var(--ink-0) 5%, transparent); color: var(--ink-1); transition: transform var(--duration-standard) cubic-bezier(.32,.72,0,1); }
+.sim-root .home-quick-action:hover .home-action-arrow { transform: translate(2px,-2px); }
+.sim-root .home-quick-action:active { transform: scale(.98); }
+.sim-root .home-quick-action:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.sim-root .home-lots-shell { padding: 6px; border-radius: 32px; background: color-mix(in oklab, var(--ink-0) 4%, var(--paper-1)); }
+.sim-root .home-context > .sdp-band--atencion { min-width: 0; }
+
+.sim-root .home-context { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sim-root .home-context-label { font: 600 var(--text-xs) var(--font-sans); color: var(--ink-2); padding: 4px 0; }
+.sim-root .home-secondary-summary { border: 0; border-radius: 22px; background: var(--paper-0); padding: 0 20px; min-width: 0; box-shadow: inset 0 0 0 5px color-mix(in oklab, var(--ink-0) 3%, transparent); }
+.sim-root .home-secondary-summary > summary { min-height: 56px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; cursor: pointer; font: 600 var(--text-sm)/1.4 var(--font-sans); padding: 10px 0; list-style: none; }
+.sim-root .home-secondary-summary > summary::-webkit-details-marker { display: none; }
+.sim-root .home-secondary-summary > summary::before { content: '+'; font-family: var(--font-mono); color: var(--ink-2); }
+.sim-root .home-secondary-summary[open] > summary::before { content: '−'; }
+.sim-root .home-secondary-summary > summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.sim-root .home-summary-count { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.sim-root .home-summary-meta { margin-left: auto; font-size: var(--text-xs); font-weight: 400; color: var(--ink-2); }
+.sim-root .home-disclosure-body { padding: 16px 0; border-top: 1px solid var(--border-hairline); }
+.sim-root .home-secondary-summary .home-registro-row,
+.sim-root .home-secondary-summary .home-live-telemetry { margin-top: 0 !important; padding-top: 12px !important; padding-bottom: 16px; }
+.sim-root .home-context .sdp-band--despues { border: 0; padding: 12px 0 16px; }
+.sim-root .home-context .home-registro-chip { flex: 1 1 120px; justify-content: space-between; }
+@media (max-width: 960px) {
+  .sim-root .home-operational-queue { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .sim-root .home-context { gap: 8px; }
+}
+@media (max-width: 560px) {
+  .sim-root .home-header-cockpit { padding: 0 0 16px; }
+  .sim-root .home-cockpit { gap: 16px; }
+  .sim-root .home-kpi dt { font-size: var(--text-xs); }
+  .sim-root .home-kpi dd { font-size: var(--text-xl); }
+  .sim-root .home-quick-actions-strip { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .sim-root .home-shift-core { padding: 16px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sim-root .home-context, .sim-root .home-lots-shell { animation: home-soft-entry var(--duration-notice) cubic-bezier(.32,.72,0,1) both; }
+}
+@keyframes home-soft-entry { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .sim-root .home-quick-action, .sim-root .home-action-arrow { transition: none; }
+  .sim-root .home-quick-action:hover, .sim-root .home-quick-action:active, .sim-root .home-quick-action:hover .home-action-arrow { transform: none; }
 }
 
 /* Formulador: composición primero; metodología y procedencia a un paso. */

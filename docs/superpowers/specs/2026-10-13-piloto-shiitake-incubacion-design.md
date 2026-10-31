@@ -132,6 +132,7 @@ Qué se aprende: estabilidad y sobreimpulso, consumo, diferencia entre núcleo y
 2. **Banda de temperatura de incubación** y su histéresis, definidas a partir de la cepa.
 3. **Ventilación de la incubadora:** ya definida como ventilador de 12 V con entrada y salida pasivas. Falta confirmar el modelo y la función del ventilador (circulación o extracción) y las dimensiones de las aberturas, que se ajustan con las pruebas de las fases 1 y 2.
 4. **Formulación del sustrato** de los bloques de 2,0 kg (aprobada o pendiente) y validación del ciclo de autoclave con esa carga (cuántas bolsas caben en 39 L).
+   - 2026-10-31: el Formulador descarta retamo espinoso + salvado de trigo + cal (carbonato o hidratada) para shiitake. Da C:N ~31 con un objetivo de 35–70, N 1,5 % con un máximo de 1,2 % y riesgo de Trichoderma. No hay evidencia publicada de shiitake en retamo (KB DOC-0129). Sigue pendiente. Ver `docs/research/formulador_retamo_salvado_cal_2026-10-31.md`.
 
 **Compras o verificaciones (mi lectura del inventario):**
 - Cobertura Wi‑Fi en la terraza para ESP32 y Home Assistant.
