@@ -111,6 +111,26 @@ async function seedTestBatches(page) {
   });
 }
 
+// La ficha del lote ya no muestra valores de sala de ejemplo: sin sonda dice
+// "sin lectura". Para revisar el contrato de lecturas se envía una lectura
+// real de martha_01 por el mismo WebSocket que usa la telemetría de verdad.
+async function seedLiveReading(page) {
+  const socketUrl = `${baseUrl.replace('http', 'ws')}/telemetria`;
+  let socket = null;
+  await page.routeWebSocket(socketUrl, ws => { socket = ws; });
+  await page.addInitScript(url => {
+    window.SETAS_LIVE_TELEMETRY = { websocketUrl: url, firestore: false };
+  }, socketUrl);
+  return async () => {
+    for (let i = 0; i < 50 && !socket; i++) await page.waitForTimeout(100);
+    assert.ok(socket, 'el puente de telemetría debe conectarse al WebSocket de prueba');
+    socket.send(JSON.stringify({
+      room_id: 'martha_01', device_id: 'esp32-gate', observed_at: new Date().toISOString(),
+      temperature_c: 17.2, rh_pct: 91.5, co2_ppm: 680,
+    }));
+  };
+}
+
 test('mobile gate 01: layout floor — 0 horizontal overflow across 360×800, 390×844, 430×932', { timeout: 45_000 }, async () => {
   for (const vp of VIEWPORTS) {
     const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
@@ -247,8 +267,10 @@ test('mobile gate 04: canonical mobile batch detail — single column, 0 horizon
   const page = await context.newPage();
   try {
     await seedTestBatches(page);
+    const sendReading = await seedLiveReading(page);
     await page.goto(`${baseUrl}/__harness.html`, { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-testid="ux-v2-today"]', { state: 'visible' });
+    await sendReading();
 
     // Navigate to Lotes
     await page.locator('.app-rail-mobile [data-dest="lotes"]').click();
@@ -282,7 +304,8 @@ test('mobile gate 04: canonical mobile batch detail — single column, 0 horizon
     const nextActionBox = await nextActionBtn.boundingBox();
     assert.ok(nextActionBox && nextActionBox.height >= 47.9, 'Next action button must be >= 48px FIELD target');
 
-    // 3. Conditions & Readings
+    // 3. Conditions & Readings (el puente publica su snapshot cada pocos segundos)
+    await detail.locator('.sdp-reading__value').first().waitFor({ state: 'visible', timeout: 10_000 });
     const readings = detail.locator('.sdp-reading');
     assert.ok((await readings.count()) > 0, 'Conditions section must render operational readings');
     const provenance = detail.locator('.sdp-provenance');
@@ -351,13 +374,16 @@ test('mobile gate 06: screen typography floor >=11px in migrated mobile surfaces
   const page = await context.newPage();
   try {
     await seedTestBatches(page);
+    const sendReading = await seedLiveReading(page);
     await page.goto(`${baseUrl}/__harness.html`, { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-testid="ux-v2-today"]', { state: 'visible' });
+    await sendReading();
 
     // Open Batch Detail to inspect both rail and batch detail typography
     await page.locator('.app-rail-mobile [data-dest="lotes"]').click();
     await page.locator('.panel.sdp-lote[data-lote-id="SDP-2026-PO1"]').click();
     await page.waitForSelector('[data-testid="ux-v2-batch-detail-mobile"]', { state: 'visible' });
+    await page.waitForSelector('.sdp-reading__value', { state: 'visible', timeout: 10_000 });
 
     const typographyViolations = await page.evaluate(() => {
       const issues = [];
