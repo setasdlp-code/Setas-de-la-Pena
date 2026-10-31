@@ -49,6 +49,7 @@ const root=path.resolve(__dirname,'..');
 
    const lista=page.getByTestId('today-exceptions');
    await expect(lista).toBeVisible();
+   assert.ok(await page.locator('.sdp-band--ahora').evaluate(el=>!!(el.compareDocumentPosition(document.querySelector('.sdp-band--atencion')) & Node.DOCUMENT_POSITION_FOLLOWING)),'Banda 2 precedes visible exceptions in reading order');
    await expect(lista.locator('[data-exception-kind="sync"][data-severity="alarma"]')).toContainText('1 cambio sin sincronizar');
    await expect(lista.locator('[data-exception-kind="bodega"]')).toContainText('Recuento necesario en 1 lote de Bodega');
    const lote=lista.locator('[data-exception-kind="lote"]');

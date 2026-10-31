@@ -3,7 +3,7 @@ title: Registro de Abastecimiento y Costos — Insumos y Consumibles
 document_id: DOC-PRC-001
 category: business
 load_priority: on_request
-last_reviewed: 2026-08-19
+last_reviewed: 2026-10-31
 confidence: medium
 primary_sources:
   - Internal procurement research, August 2026
@@ -100,7 +100,7 @@ Para materiales húmedos, el indicador económico preferido para comparación t�
 | papel_periodico | Papel periódico / kraft | 1.500 | ~3.000 | Alta | observed_market | https://www.pinturastorcaza.com/product/papel-periodico/ | Recuperado directo puede costar menos pero requiere clasificación/trituración. |
 | pulpa_papel | Pulpa de papel, residuo industrial | 1.800 | N/D | Baja | unverified | — | Requiere acuerdo B2B; medir humedad y químicos de proceso. |
 | rastrojo_maiz | Rastrojo de maíz | 1.200 | N/D | Baja | unverified | — | Costo real incluye recolección, picado/enfardado y flete. |
-| retamo_espinoso | Retamo espinoso | 400 | N/D | Baja | unverified | — | No existe mercado verificable; no asumir suministro estable. |
+| retamo_espinoso | Retamo espinoso | 400 | 4.000 (pélet Mandra, reportado) | Baja | unverified | Reporte externo 2026-10-28 (ver sección «Pellets y maderas para shiitake») | Reportado: pélet de retamo de Mandra Renovable (Cogua) a $60.000/15 kg, no reverificado. Material de erradicación chipeado entero (espinas, vainas); no equivale a leño. Ver `../09_research/retamo_espinoso_shiitake_2026-10-31.md`. |
 | tallo_girasol | Tallo de girasol triturado | 1.200 | N/D | Baja | unverified | — | Triturado ya incorpora procesamiento. |
 | tamo_trigo | Tamo de trigo | 1.600 | N/D | Baja | unverified | — | Cotizar por paca/tonelada con peso comprobado. |
 | turba_coco_buferizada | Turba de coco buferizada | 8.500 | 5.000 local; banda 5.000–8.000 | Alta | observed_market | https://tienda.bioespacio.co/702-organicos?p=2 ; https://sacredganjah.com.co/productos/sustrato-de-coco-buferizado-4l-1kg/ | Mejor referencia local observada: 1 kg/4 L por $5.000. |
@@ -151,6 +151,22 @@ Para materiales húmedos, el indicador económico preferido para comparación t�
 | hoja_platano | Hoja de plátano seca | 2.500 | N/D | Baja | unverified | — | Cotizar productor, no retail gastronómico. |
 | pseudotallo_platano | Pseudotallo de plátano | 1.200 | N/D | Baja | unverified | — | Extremadamente húmedo/voluminoso; transporte y secado dominan. |
 | pulpa_cacao | Pulpa/mucílago de cacao | 4.500 | N/D | Baja | unverified | — | Perecedero; necesita uso inmediato o estabilización. |
+
+# Pellets y maderas para shiitake — reporte externo 2026-10-28
+
+Ofertas tomadas del reporte externo asistido por IA `../09_research/intake/pellets_maderas_shiitake_colombia_reporte_externo_2026-10-28.md` (auditoría: `../09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md`, DOC-0130). **Todas en estado `unverified`:** son precios, stock y cotizaciones afirmados por el reporte el 2026-10-28; la verificación directa del sitio de Mandra falló (HTTP 429) el 2026-10-31. Confirmar con el proveedor antes de usarlos para compra. Costo por kg seco calculado por el reporte con 8 % de humedad para pellets.
+
+| item | proveedor / presentación | precio reportado (COP) | COP/kg | especie declarada | estado | fuente | notas |
+|---|---|---:|---:|---|---|---|---|
+| pellet_acacia_mangium | Mandra Renovable (Km 6 Vía Zipaquirá–Ubaté, Cogua), saco 15 kg, línea ahumado | 75.000 | 5.000 | *Acacia mangium* («acacia magium») de plantaciones | unverified | https://mandra.com.co/products/pelet-de-cacao | Candidato del microlote DOC-0127. Confirmar por escrito especie única, corteza <10 %, sin hojas ni aglutinantes. Compatibilidad con shiitake no verificada. |
+| pellet_retamo_espinoso | Mandra Renovable / Humo Artesanal, saco 15 kg | 60.000 | 4.000 | *Ulex europaeus* | unverified | https://mandra.com.co/products/pelet-de-cacao | Clasificado por el fabricante para *Pleurotus*. No apto para el piloto de shiitake (DOC-0129). |
+| pellet_bagazo_caña | Mandra Renovable, línea setas, saco 15 kg | 60.000 | 4.000 | Bagazo de caña (Tequendama) | unverified | https://mandra.com.co/products/pelets-para-cultivo-de-setas | Recomendado por el fabricante para *Pleurotus*. Otras biomasas de esa línea (paja de cebada, arroz, cedro) figuraban agotadas en 15 kg; paja de arroz en lote de 150 kg a $570.000. |
+| pellet_acacia_cerezo_ml | Mercado Libre MCO2123989000, bolsa 1 kg | 9.000 | 9.000 | «Acacia/cerezo» por defecto; retamo bajo pedido | unverified | https://www.mercadolibre.com.co/pellets-madera-parrilla-fungicultura-1-kg/p/MCO2123989000 | Proporción acacia/cerezo y especie del cerezo no declaradas; posible reempaque de Mandra (inferencia del reporte). |
+| pellet_acacia_homecenter | Homecenter SKU 3081094, 700 g | 49.900 | 71.286 | Acacia, especie no declarada | unverified | https://www.homecenter.com.co/homecenter-co/product/3081094/pellets-ahumadores-de-madera-acacia-x-700g/3081094/ | Sobrecosto extremo; especie desconocida. |
+| pellet_aliso_importado | Bear Mountain (Mercado Libre, importado), 9 kg | 226.455–236.422 | ~25.000 | *Alnus* | unverified | Mercado Libre Colombia | Referencia biológica; inviable en costo. Entrega ~12 días. |
+| aserrin_eucalipto_chia | Multimaderas Páez (Calle 2 # 1A-76, Variante de Chía), bulto ~20 kg (~25 % hum.) | ~15.000 | ~750 húmedo | *Eucalyptus* spp. | unverified | https://multimaderaspaez.com/ | «Cotización telefónica» afirmada por el reporte, sin confirmar. El aserradero también corta pino y madera inmunizada: exigir corte puro de eucalipto sin tratar (AB07). |
+
+Excluidos por el reporte para shiitake: madera mezcla, madera de cacao y cedro canadiense de Mandra (posibles coníferas, mucílagos, tuyaplicinas) y los pellets híbridos de carbón de CarboProduccol.
 
 # Hallazgos prioritarios
 

@@ -14254,28 +14254,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Tablero de Control
                     </h1>
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
-                    {[
-                      {value:activeLotes.length,label:'Lotes activos',icon:IconMicroscope,tone:'neutral'},
-                      {value:pendingTaskCount,label:'Tareas pendientes',icon:IconClipboard,tone:pendingTaskCount>0?'attention':'neutral'},
-                      {value:incidentCount,label:'Incidencias',icon:IconAlert,tone:incidentCount>0?'critical':'neutral'}
-                    ].map(kpi=>{
-                      const tones={
-                        neutral:{bg:'var(--paper-1)',border:'var(--border-hairline)',ink:'var(--ink-0)',weight:600},
-                        attention:{bg:'color-mix(in oklab,var(--accent-terracotta) 10%,var(--paper-0))',border:'var(--accent-terracotta)',ink:'var(--accent-terracotta)',weight:700},
-                        critical:{bg:'color-mix(in oklab,var(--accent-rust) 12%,var(--paper-0))',border:'var(--accent-rust)',ink:'var(--accent-rust)',weight:700}
-                      };
-                      const t=tones[kpi.tone];
-                      return <span key={kpi.label} style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',padding:'6px 10px',background:t.bg,border:`1px solid ${t.border}`,borderRadius:0,color:t.ink,fontWeight:t.weight}}>
-                        <kpi.icon size={12}/>
-                        <strong style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:t.ink}}>{kpi.value}</strong> {kpi.label}
-                      </span>;
-                    })}
-                    <span role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',padding:'6px 10px',background:'var(--paper-0)',border:`1px solid ${operationStatus.color}`,borderRadius:0,color:operationStatus.color}}>
-                      {operationStatus.label}
-                    </span>
-                  </div>
+                  <span className="home-operation-status" role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{color:operationStatus.color}}>
+                    <span aria-hidden="true" style={{background:operationStatus.color}} />
+                    {operationStatus.label}
+                  </span>
                 </div>
+
+
 
                 {(props.hasHandoff===true||props.hasHandoff==='true')&&(
                   <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border-hairline)'}}>
@@ -14291,8 +14276,169 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
 
               {/* COLA OPERATIVA DE HOY · 3 BANDAS DE PRIORIDAD (DS-2026 CRITERIO FIELD MODE) */}
-              <div className="home-operational-queue" data-testid="ux-v2-today" style={{marginTop:18,display:'flex',flexDirection:'column',gap:16}}>
+              <div className="home-operational-queue" data-testid="ux-v2-today">
 
+                {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
+                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso">
+                  <div className="home-shift-core">
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{width:8,height:8,background:'var(--status-ok)',display:'inline-block'}}></span>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok)'}}>
+                        Banda 2 · Ahora
+                      </span>
+                      <span className="home-shift-tag">Registro de campo</span>
+                    </div>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
+                      {nowLots.length + tasksHoy.filter(t=>!t.done).length} pendiente{nowLots.length + tasksHoy.filter(t=>!t.done).length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+
+                  <h2 className="home-shift-title">Tu turno, en marcha.</h2>
+                  <p className="home-shift-lede">Registra lo que ocurre. Continúa con lo pendiente.</p>
+
+                  {/* Acciones Rápidas con touch target >= 44px */}
+                  <div className="home-quick-actions-strip">
+                    {[
+                      {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
+                        const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
+                        if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
+                        else props.onStartSession&&props.onStartSession();
+                      },jornada:true},
+                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
+                      {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
+                      {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
+                      {label:'Preparación para producción',sub:`${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`,icon:IconBox,onClick:openProductionReadiness},
+                      {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
+                    ].map(btn=>{
+                      const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
+                      return (
+                        <button
+                          key={btn.label}
+                          onClick={btn.onClick}
+                          className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
+                          style={{
+                            display:'flex',
+                            alignItems:'center',
+                            gap:10,
+                            padding:'10px 12px',
+                            minHeight:48,
+
+                            textAlign:'left',
+                            cursor:'pointer',
+                            position:'relative'
+                          }}
+                        >
+                          <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
+                          <div style={{minWidth:0,flex:1}}>
+                            <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.3,overflowWrap:'anywhere'}}>
+                              {btn.label}
+                            </div>
+                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.4,overflowWrap:'anywhere'}}>
+                              {btn.sub}
+                            </div>
+                          </div>
+                          <span className="home-action-arrow" aria-hidden="true">↗</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Lotes activos que requieren acción ahora (overdue o now) */}
+                  {nowLots.length > 0 && (
+                    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
+                      {nowLots.map(item => (
+                        <div key={item.taskId} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
+                          <div className="sdp-task__body">
+                            <div style={{display:'flex',alignItems:'center',gap:8}}>
+                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
+                                {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
+                              </span>
+                              <span className="sdp-task__title">{item.what}</span>
+                            </div>
+                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:8}}>
+                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
+                              Ejecutar transición →
+                            </button>
+                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
+                              <AppIcon name="print" size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tareas del día (checklist de turno) */}
+                  <div>
+                    <div style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:8}}>
+                      {/* El contador tiene que contar LO QUE SE VE, no una prop
+                          suelta que puede no coincidir con la lista del motor. */}
+                      Checklist del Turno · <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
+                    </div>
+                    {tasksHoy.length === 0 ? (
+                      <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0,display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+                        <span>Sin tareas registradas para hoy.</span>
+                        <button type="button" onClick={()=>setShowQrSheet(true)} style={{minHeight:48,padding:'8px 14px',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-0)',background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,cursor:'pointer'}}>
+                          Registrar observación
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                        {tasksHoy.map(t => (
+                          <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
+                            {/* 48×48: es una acción de campo y se toca con guantes
+                                (estándar del proyecto, MOBILE_A11Y_REVIEW). */}
+                            <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label={`Marcar tarea: ${t.title}`}
+                              style={{cursor:'pointer',flexShrink:0,width:48,height:48,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
+                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)'}}>{t.done ? <AppIcon name="check" size={12} color="var(--paper-0)" /> : ''}</span>
+                            </button>
+                            <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
+                              <span className="sdp-task__title" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
+                              <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
+                              {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
+                            </button>
+                            <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* El estado de sincronización va en la pantalla de inicio, no
+                      sólo en el detalle del lote: el operario tiene que poder ver
+                      desde donde trabaja si algo quedó sin subir, sin navegar a
+                      buscarlo. Es la mitad visible de la cola. Junto a él, el
+                      cierre de jornada, para que lo ocurrido no se reconstruya
+                      después desde memoria o WhatsApp. */}
+                  <div style={{marginTop:12,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                    {(()=>{
+                      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+                      const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
+                      const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
+                      return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true"
+                        style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
+                        <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
+                        {label}
+                        {remoteSyncNote()}
+                        {st.stuck>0&&<button type="button" onClick={()=>{
+                          const next=syncQueueApi.retryStuck(syncQueue,Date.now());
+                          setSyncQueue(next);
+                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
+                        }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
+                      </span>;
+                    })()}
+                    <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
+                      style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
+                      Cerrar jornada
+                    </button>
+                  </div>
+                  </div>
+                </section>
+
+                <aside className="home-context" aria-label="Contexto del turno">
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
                 <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-error)',padding:'16px 18px'}}>
@@ -14403,161 +14549,22 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </section>
                 )}
 
-                {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
-                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-ok)',padding:'16px 18px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{width:8,height:8,background:'var(--status-ok)',display:'inline-block'}}></span>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok)'}}>
-                        Banda 2 · Ahora
-                      </span>
-                      <span className="sdp-provenance">Registro de campo</span>
+
+                <div className="home-overview"><h2>La operación, de un vistazo</h2>
+                <dl className="home-kpi-grid" aria-label="Resumen operativo">
+                  {[
+                    {value:activeLotes.length,label:'Lotes activos'},
+                    {value:pendingTaskCount,label:'Tareas pendientes'},
+                    {value:incidentCount,label:'Incidencias'}
+                  ].map(kpi=>(
+                    <div className="home-kpi" key={kpi.label}>
+                      <dt>{kpi.label}</dt>
+                      <dd>{kpi.value}</dd>
                     </div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
-                      {nowLots.length + tasksHoy.filter(t=>!t.done).length} pendiente{nowLots.length + tasksHoy.filter(t=>!t.done).length === 1 ? '' : 's'}
-                    </span>
-                  </div>
-
-                  {/* Acciones Rápidas con touch target >= 44px */}
-                  <div className="home-quick-actions-strip" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(190px, 1fr))',gap:8,marginBottom:14}}>
-                    {[
-                      {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
-                        const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
-                        if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
-                        else props.onStartSession&&props.onStartSession();
-                      },jornada:true},
-                      {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
-                      {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                      {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
-                      {label:'Preparación para producción',sub:`${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`,icon:IconBox,onClick:openProductionReadiness},
-                      {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
-                    ].map(btn=>{
-                      const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
-                      return (
-                        <button
-                          key={btn.label}
-                          onClick={btn.onClick}
-                          className={'home-quick-action'+(btn.pri?' is-primary':'')+(btn.jornada?' is-jornada':'')}
-                          style={{
-                            display:'flex',
-                            alignItems:'center',
-                            gap:10,
-                            padding:'10px 12px',
-                            minHeight:48,
-                            borderRadius:0,
-                            textAlign:'left',
-                            cursor:'pointer',
-                            position:'relative'
-                          }}
-                        >
-                          <span style={{display:'inline-flex',flexShrink:0,color:accent||'var(--ink-1)'}}><btn.icon size={18}/></span>
-                          <div style={{minWidth:0,flex:1}}>
-                            <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:accent||'var(--ink-0)',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                              {btn.label}
-                            </div>
-                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:2,lineHeight:1.1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-                              {btn.sub}
-                            </div>
-                          </div>
-                          <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:accent||'var(--ink-2)',fontWeight:700}}>→</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Lotes activos que requieren acción ahora (overdue o now) */}
-                  {nowLots.length > 0 && (
-                    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
-                      {nowLots.map(item => (
-                        <div key={item.taskId} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
-                          <div className="sdp-task__body">
-                            <div style={{display:'flex',alignItems:'center',gap:8}}>
-                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
-                                {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
-                              </span>
-                              <span className="sdp-task__title">{item.what}</span>
-                            </div>
-                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
-                          </div>
-                          <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
-                              Ejecutar transición →
-                            </button>
-                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
-                              <AppIcon name="print" size={15} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Tareas del día (checklist de turno) */}
-                  <div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:8}}>
-                      {/* El contador tiene que contar LO QUE SE VE, no una prop
-                          suelta que puede no coincidir con la lista del motor. */}
-                      Checklist del Turno · <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
-                    </div>
-                    {tasksHoy.length === 0 ? (
-                      <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0,display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
-                        <span>Sin tareas registradas para hoy.</span>
-                        <button type="button" onClick={()=>setShowQrSheet(true)} style={{minHeight:48,padding:'8px 14px',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-0)',background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,cursor:'pointer'}}>
-                          Registrar observación
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                        {tasksHoy.map(t => (
-                          <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
-                            {/* 48×48: es una acción de campo y se toca con guantes
-                                (estándar del proyecto, MOBILE_A11Y_REVIEW). */}
-                            <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label={`Marcar tarea: ${t.title}`}
-                              style={{cursor:'pointer',flexShrink:0,width:48,height:48,display:'grid',placeItems:'center',padding:0,background:'none',border:'none'}}>
-                              <span style={{width:18,height:18,borderRadius:0,border:`1.5px solid ${t.done?'var(--accent-olive)':'var(--line-0)'}`,background:t.done?'var(--accent-olive)':'transparent',display:'grid',placeItems:'center',color:'var(--paper-0)'}}>{t.done ? <AppIcon name="check" size={12} color="var(--paper-0)" /> : ''}</span>
-                            </button>
-                            <button data-testid="cockpit-task-row" onClick={()=>t.fromEngine&&t.objectType==='batch'?openBatchDetail(t.objectId):(props.onTaskGo&&props.onTaskGo(t.key))} style={{cursor:'pointer',flex:1,minWidth:0,minHeight:44,textAlign:'left',background:'none',border:'none',padding:'4px 0',display:'flex',flexDirection:'column',justifyContent:'center',gap:2}}>
-                              <span className="sdp-task__title" style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:'var(--text-sm)',color:'var(--ink-0)',textDecoration:t.done?'line-through':'none'}}>{t.title}</span>
-                              <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
-                              {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
-                            </button>
-                            <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* El estado de sincronización va en la pantalla de inicio, no
-                      sólo en el detalle del lote: el operario tiene que poder ver
-                      desde donde trabaja si algo quedó sin subir, sin navegar a
-                      buscarlo. Es la mitad visible de la cola. Junto a él, el
-                      cierre de jornada, para que lo ocurrido no se reconstruya
-                      después desde memoria o WhatsApp. */}
-                  <div style={{marginTop:12,display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                    {(()=>{
-                      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-                      const st=syncQueueApi?syncQueueApi.stats(syncQueue,Date.now()):{pending:0,stuck:0};
-                      const label=syncQueueApi?syncQueueApi.describeForOperator(st):'Sincronizado';
-                      return <span data-testid="sync-indicator" role="status" aria-live="polite" aria-atomic="true"
-                        style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-700)':'var(--ink-2)')}}>
-                        <span aria-hidden="true" style={{width:8,height:8,borderRadius:0,display:'inline-block',background:st.stuck>0?'var(--coral-700)':(st.pending>0?'var(--ochre-500)':'var(--moss-700)')}}></span>
-                        {label}
-                        {remoteSyncNote()}
-                        {st.stuck>0&&<button type="button" onClick={()=>{
-                          const next=syncQueueApi.retryStuck(syncQueue,Date.now());
-                          setSyncQueue(next);
-                          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(next));}catch(e){}
-                        }} style={{cursor:'pointer',minHeight:48,padding:'0 14px',background:'var(--paper-0)',color:'var(--coral-700)',border:'1px solid var(--coral-700)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>Reintentar</button>}
-                      </span>;
-                    })()}
-                    <button type="button" data-testid="open-day-close" onClick={()=>{setDayCloseNote(null);setShowDayClose(true);}}
-                      style={{cursor:'pointer',minHeight:40,padding:'0 16px',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--line-0)',borderRadius:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)'}}>
-                      Cerrar jornada
-                    </button>
-                  </div>
-                </section>
-
+                  ))}
+                </dl>
+                </div>
+                <div className="home-context-label">Consultar</div>
                 <details className="home-secondary-summary" data-testid="today-record-summary">
                   <summary>Resumen del registro de cultivo</summary>
                 <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--border-hairline)'}}>
@@ -14592,7 +14599,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </details>
 
                 {/* ── BANDA 3: DESPUÉS (Transiciones programadas & Monitoreo) ── */}
-                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--text-secondary)',padding:'16px 18px'}}>
+                <details className="home-secondary-summary" data-testid="today-planning-summary">
+                  <summary>Próximas tareas <span className="home-summary-count">{laterLots.length}</span></summary>
+                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{width:8,height:8,background:'var(--text-secondary)',display:'inline-block'}}></span>
@@ -14633,142 +14642,15 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   )}
                 </section>
+                </details>
+                </aside>
               </div>
 
-              {/* COPILOTO DE CULTIVO — compone biological-clock / contamination-risk /
-                  harvest-calendar / vision-diagnosis. Se oculta por completo si el
-                  motor o los datos no están disponibles (nunca rompe Hoy). */}
-              {(copilotBriefing || (typeof window !== 'undefined' && window.SetasVisionDiagnosis)) && (
-                <div className="home-cultivation-copilot" style={{background:'var(--paper-0)',border:'1px solid var(--border-soft)',borderRadius:0,padding:'20px',marginTop:18}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
-                    <div>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                        Copiloto de cultivo · sugerencias heurísticas
-                      </span>
-                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                        Próximas mejores acciones
-                      </h2>
-                    </div>
-                    {copilotBriefing && copilotBriefing.harvestCalendar && (
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Próx. 14 días</div>
-                        <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--sim-text-lg)',color:'var(--ink-0)'}}>{copilotBriefing.harvestCalendar.kgNext14d} kg</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {copilotRoomTelemetryRows.some(r => r.state !== 'measured') && (
-                    <div data-testid="copilot-telemetry-status" style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14,padding:'8px 10px',border:'1px dashed var(--line-0)',background:'var(--paper-1)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
-                      {copilotRoomTelemetryRows.filter(r => r.state !== 'measured').map(r => (
-                        <span key={r.roomId} data-room-id={r.roomId} data-telemetry-state={r.state}>
-                          {r.name}: {r.state === 'stale' ? 'Telemetría desactualizada' : 'Sin telemetría medida'}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {copilotBriefing && (
-                    <React.Fragment>
-                      <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',marginTop:0,marginBottom:14,lineHeight:1.4}}>
-                        {copilotBriefing.headline}
-                      </p>
-
-                      {copilotTopActions.length > 0 ? (
-                        <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
-                          {copilotTopActions.map(action => (
-                            <div key={action.id} style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,padding:'10px 12px',border:'1px solid var(--border-hairline)',borderLeft:`4px solid ${copilotActionColor(action.priority)}`,borderRadius:0,background:'var(--paper-1)'}}>
-                              <div style={{minWidth:0}}>
-                                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:copilotActionColor(action.priority),border:`1px solid ${copilotActionColor(action.priority)}`,padding:'1px 5px'}}>
-                                    {action.kind}
-                                  </span>
-                                  <span style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{action.title}</span>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)',border:'1px solid var(--border-hairline)',padding:'1px 5px'}}>
-                                    {copilotConfidenceLabel(action.confidence)}
-                                  </span>
-                                </div>
-                                <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:4,lineHeight:1.4}}>{action.why}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',marginBottom:14}}>
-                          Sin sugerencias del copiloto por ahora.
-                        </div>
-                      )}
-
-                      {copilotBriefing.harvestCalendar && copilotBriefing.harvestCalendar.nextDeficitWeek && (
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ochre-700)',marginBottom:14}}>
-                          Déficit proyectado en {copilotBriefing.harvestCalendar.nextDeficitWeek.week}: {copilotBriefing.harvestCalendar.nextDeficitWeek.deficitKg} kg
-                          (oferta {copilotBriefing.harvestCalendar.nextDeficitWeek.supply} kg vs. demanda {copilotBriefing.harvestCalendar.nextDeficitWeek.demand} kg).
-                        </div>
-                      )}
-
-                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                        <button type="button" onClick={handleCopilotExportIcs} style={{cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                          Exportar calendario (.ics)
-                        </button>
-                        <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)'}}>
-                          Motores: {copilotBriefing.enginesUsed.join(', ') || 'ninguno disponible'}
-                          {copilotBriefing.enginesMissing.length > 0 ? ` · faltan: ${copilotBriefing.enginesMissing.join(', ')}` : ''}
-                        </span>
-                      </div>
-
-                      <div style={{fontFamily:'var(--font-sans)',fontSize:'11px',color:'var(--ink-2)',marginTop:10,lineHeight:1.4,fontStyle:'italic'}}>
-                        {copilotBriefing.disclaimer}
-                      </div>
-                    </React.Fragment>
-                  )}
-
-                  {/* Cribado de foto — tamizaje visual offline, nunca un diagnóstico */}
-                  {typeof window !== 'undefined' && window.SetasVisionDiagnosis && (
-                    <div style={{marginTop:copilotBriefing?18:0,paddingTop:copilotBriefing?16:0,borderTop:copilotBriefing?'1px solid var(--border-hairline)':'none'}}>
-                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-2)',marginBottom:8}}>
-                        Cribado de foto (bolsa/bloque)
-                      </div>
-                      <label style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                        {copilotVisionBusy ? 'Analizando…' : 'Tomar/elegir foto'}
-                        <input type="file" accept="image/*" capture="environment" onChange={handleCopilotPhotoChange} style={{display:'none'}} disabled={copilotVisionBusy} />
-                      </label>
-
-                      {copilotVisionError && (
-                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)',marginTop:8}}>{copilotVisionError}</div>
-                      )}
-
-                      {copilotVisionResult && (
-                        <div style={{marginTop:10,padding:'10px 12px',border:'1px solid var(--border-hairline)',background:'var(--paper-1)'}}>
-                          <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>
-                              Colonización estimada: {copilotVisionResult.colonizationPct}%
-                            </span>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)',border:'1px solid var(--border-hairline)',padding:'1px 5px'}}>
-                              {copilotConfidenceLabel(copilotVisionResult.confidence)}
-                            </span>
-                          </div>
-                          {copilotVisionResult.flags.length > 0 && (
-                            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:8}}>
-                              {copilotVisionResult.flags.map((flag,i) => (
-                                <span key={i} style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'2px 6px',border:'1px solid var(--ochre-700)',color:'var(--ochre-700)'}}>
-                                  {flag.pathogenId} · {flag.severity}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:8}}>{copilotVisionResult.recommendation}</div>
-                          <div style={{fontFamily:'var(--font-sans)',fontSize:'11px',color:'var(--ink-2)',marginTop:6,fontStyle:'italic'}}>{copilotVisionResult.disclaimer}</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
-              <div style={{
+              <div className="home-lots-shell"><div className="home-lots-core" style={{
                 background:'var(--paper-0)',
-                border:'1px solid var(--border-soft)',
-                borderRadius:0,
+                border:'none',
+                borderRadius:26,
                 padding:'24px',
                 boxShadow:'none'
               }}>
@@ -14893,8 +14775,144 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
+              </div>
+
+              {/* COPILOTO DE CULTIVO — compone biological-clock / contamination-risk /
+                  harvest-calendar / vision-diagnosis. Se oculta por completo si el
+                  motor o los datos no están disponibles (nunca rompe Hoy). */}
+              {(copilotBriefing || (typeof window !== 'undefined' && window.SetasVisionDiagnosis)) && (
+                <details className="home-secondary-summary home-cultivation-copilot" data-testid="today-copilot-summary">
+                  <summary>Copiloto de cultivo <span className="home-summary-meta">Sugerencias heurísticas · {copilotTopActions.length}</span></summary>
+                  <div className="home-disclosure-body">
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
+                    <div>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
+                        Copiloto de cultivo · sugerencias heurísticas
+                      </span>
+                      <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
+                        Próximas mejores acciones
+                      </h2>
+                    </div>
+                    {copilotBriefing && copilotBriefing.harvestCalendar && (
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',textTransform:'uppercase',letterSpacing:'0.06em'}}>Próx. 14 días</div>
+                        <div style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--sim-text-lg)',color:'var(--ink-0)'}}>{copilotBriefing.harvestCalendar.kgNext14d} kg</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {copilotRoomTelemetryRows.some(r => r.state !== 'measured') && (
+                    <div data-testid="copilot-telemetry-status" style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:14,padding:'8px 10px',border:'1px dashed var(--line-0)',background:'var(--paper-1)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
+                      {copilotRoomTelemetryRows.filter(r => r.state !== 'measured').map(r => (
+                        <span key={r.roomId} data-room-id={r.roomId} data-telemetry-state={r.state}>
+                          {r.name}: {r.state === 'stale' ? 'Telemetría desactualizada' : 'Sin telemetría medida'}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {copilotBriefing && (
+                    <React.Fragment>
+                      <p style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-sm)',color:'var(--ink-1)',marginTop:0,marginBottom:14,lineHeight:1.4}}>
+                        {copilotBriefing.headline}
+                      </p>
+
+                      {copilotTopActions.length > 0 ? (
+                        <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
+                          {copilotTopActions.map(action => (
+                            <div key={action.id} style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,padding:'10px 12px',border:'1px solid var(--border-hairline)',borderLeft:`4px solid ${copilotActionColor(action.priority)}`,borderRadius:0,background:'var(--paper-1)'}}>
+                              <div style={{minWidth:0}}>
+                                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:copilotActionColor(action.priority),border:`1px solid ${copilotActionColor(action.priority)}`,padding:'1px 5px'}}>
+                                    {action.kind}
+                                  </span>
+                                  <span style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>{action.title}</span>
+                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)',border:'1px solid var(--border-hairline)',padding:'1px 5px'}}>
+                                    {copilotConfidenceLabel(action.confidence)}
+                                  </span>
+                                </div>
+                                <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)',marginTop:4,lineHeight:1.4}}>{action.why}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-ok)',marginBottom:14}}>
+                          Sin sugerencias del copiloto por ahora.
+                        </div>
+                      )}
+
+                      {copilotBriefing.harvestCalendar && copilotBriefing.harvestCalendar.nextDeficitWeek && (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ochre-700)',marginBottom:14}}>
+                          Déficit proyectado en {copilotBriefing.harvestCalendar.nextDeficitWeek.week}: {copilotBriefing.harvestCalendar.nextDeficitWeek.deficitKg} kg
+                          (oferta {copilotBriefing.harvestCalendar.nextDeficitWeek.supply} kg vs. demanda {copilotBriefing.harvestCalendar.nextDeficitWeek.demand} kg).
+                        </div>
+                      )}
+
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                        <button type="button" onClick={handleCopilotExportIcs} style={{cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
+                          Exportar calendario (.ics)
+                        </button>
+                        <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)'}}>
+                          Motores: {copilotBriefing.enginesUsed.join(', ') || 'ninguno disponible'}
+                          {copilotBriefing.enginesMissing.length > 0 ? ` · faltan: ${copilotBriefing.enginesMissing.join(', ')}` : ''}
+                        </span>
+                      </div>
+
+                      <div style={{fontFamily:'var(--font-sans)',fontSize:'11px',color:'var(--ink-2)',marginTop:10,lineHeight:1.4,fontStyle:'italic'}}>
+                        {copilotBriefing.disclaimer}
+                      </div>
+                    </React.Fragment>
+                  )}
+
+                  {/* Cribado de foto — tamizaje visual offline, nunca un diagnóstico */}
+                  {typeof window !== 'undefined' && window.SetasVisionDiagnosis && (
+                    <div style={{marginTop:copilotBriefing?18:0,paddingTop:copilotBriefing?16:0,borderTop:copilotBriefing?'1px solid var(--border-hairline)':'none'}}>
+                      <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-2)',marginBottom:8}}>
+                        Cribado de foto (bolsa/bloque)
+                      </div>
+                      <label style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
+                        {copilotVisionBusy ? 'Analizando…' : 'Tomar/elegir foto'}
+                        <input type="file" accept="image/*" capture="environment" onChange={handleCopilotPhotoChange} style={{display:'none'}} disabled={copilotVisionBusy} />
+                      </label>
+
+                      {copilotVisionError && (
+                        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--status-error)',marginTop:8}}>{copilotVisionError}</div>
+                      )}
+
+                      {copilotVisionResult && (
+                        <div style={{marginTop:10,padding:'10px 12px',border:'1px solid var(--border-hairline)',background:'var(--paper-1)'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                            <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)'}}>
+                              Colonización estimada: {copilotVisionResult.colonizationPct}%
+                            </span>
+                            <span style={{fontFamily:'var(--font-mono)',fontSize:'11px',color:'var(--ink-2)',border:'1px solid var(--border-hairline)',padding:'1px 5px'}}>
+                              {copilotConfidenceLabel(copilotVisionResult.confidence)}
+                            </span>
+                          </div>
+                          {copilotVisionResult.flags.length > 0 && (
+                            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:8}}>
+                              {copilotVisionResult.flags.map((flag,i) => (
+                                <span key={i} style={{fontFamily:'var(--font-mono)',fontSize:'11px',padding:'2px 6px',border:'1px solid var(--ochre-700)',color:'var(--ochre-700)'}}>
+                                  {flag.pathogenId} · {flag.severity}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-1)',marginTop:8}}>{copilotVisionResult.recommendation}</div>
+                          <div style={{fontFamily:'var(--font-sans)',fontSize:'11px',color:'var(--ink-2)',marginTop:6,fontStyle:'italic'}}>{copilotVisionResult.disclaimer}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                </details>
+              )}
+
               {/* SECCIÓN C: AMBIENTES & SENSORES — Tira compacta de cámaras */}
-              <div>
+              <details className="home-secondary-summary" data-testid="today-rooms-summary">
+                <summary>Cámaras de cultivo <span className="home-summary-count">{camaras.length}</span></summary>
+                <div className="home-disclosure-body">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                   <div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
@@ -14956,6 +14974,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   </div>
                 )}
               </div>
+              </details>
 
 
               {/* SECCIÓN D: ACTIVIDAD RECIENTE — Tareas de hoy se movió a Sección A, junto
@@ -14964,7 +14983,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   se pasa el tipo porque los eventos 'clima' no guardan un id de
                   contenedor sino un nombre de cámara (se resuelve del otro lado). */}
               {recentActivity.length>0 && (
-                <div>
+                <details className="home-secondary-summary" data-testid="today-activity-summary">
+                  <summary>Actividad reciente <span className="home-summary-count">{recentActivity.length}</span></summary>
+                  <div className="home-disclosure-body">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                     <div>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
@@ -14993,6 +15014,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     </div>
                   </div>
                 </div>
+                </details>
               )}
 
             </div>

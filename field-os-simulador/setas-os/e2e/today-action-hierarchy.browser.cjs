@@ -14,13 +14,14 @@ const root=path.resolve(__dirname,'..');
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
   browser=await chromium.launch({executablePath:process.env.SETAS_CHROMIUM_EXECUTABLE||undefined});
-  for(const [width,height] of [[1280,900],[390,844],[320,568]]){
+  for(const [width,height] of [[1440,1000],[1280,900],[768,1024],[390,844],[320,568]]){
    const page=await browser.newPage({viewport:{width,height}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
    await page.addInitScript(()=>{localStorage.setItem('sdp_seeded','1');localStorage.setItem('sdp_lotes','[]');});
    await page.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=home`);
    const cockpit=page.locator('.home-cockpit');
    const now=cockpit.getByRole('region',{name:'Banda 2: Ahora Turno en Curso'});
+   assert.equal(await cockpit.getByTestId('ux-v2-today').locator(':scope > :first-child').getAttribute('aria-label'),'Banda 2: Ahora Turno en Curso','shift actions lead in reading and keyboard order');
    const start=now.getByRole('button',{name:/Iniciar jornada/});await expect(start).toBeVisible();
    const box=await start.boundingBox();assert.ok(box.y+box.height<height-70,`first action above mobile rail at ${width}`);
    await expect(cockpit.getByRole('region',{name:'Banda 1: Atención Inmediata'})).toHaveCount(0);
@@ -29,8 +30,28 @@ const root=path.resolve(__dirname,'..');
    await telemetry.locator('summary').press('Enter');await expect(telemetry).toHaveAttribute('open','');
    await expect(telemetry.getByTestId('today-climate-strip')).toBeVisible();
    await telemetry.locator('summary').press('Enter');await expect(telemetry).not.toHaveAttribute('open','');
+   // Secondary tools remain keyboard-accessible without displacing the shift.
+   for(const id of ['today-planning-summary','today-copilot-summary','today-rooms-summary']){
+    const detail=cockpit.getByTestId(id);
+    await expect(detail).not.toHaveAttribute('open','');
+    await detail.locator(':scope > summary').press('Enter');
+    await expect(detail).toHaveAttribute('open','');
+    assert.ok(await cockpit.evaluate(el=>el.scrollWidth<=el.clientWidth),`${id} expanded fits at ${width}`);
+    await detail.locator(':scope > summary').press('Enter');
+    await expect(detail).not.toHaveAttribute('open','');
+   }
+   const context=cockpit.getByRole('complementary',{name:'Contexto del turno'});
+   const shiftBox=await now.boundingBox(),contextBox=await context.boundingBox();
+   if(width>=1024){
+    assert.ok(contextBox.x>=shiftBox.x+shiftBox.width,'context beside shift on desktop');
+   }else{
+    assert.ok(contextBox.y>=shiftBox.y+shiftBox.height,'context follows shift on mobile and tablet');
+   }
+   await expect(cockpit.locator('.home-kpi dd')).toHaveText(['0','0','0']);
    const buttons=now.locator('.home-quick-action');assert.equal(await buttons.count(),6);
    assert.ok(await buttons.evaluateAll(els=>els.every(e=>e.getBoundingClientRect().height>=44)));
+   assert.ok(await buttons.evaluateAll(els=>els.every(e=>e.scrollWidth<=e.clientWidth)),'action labels fit their buttons');
+   assert.ok(await buttons.locator('div > div:first-child').evaluateAll(els=>els.every(e=>getComputedStyle(e).textOverflow!=='ellipsis')),'action names remain readable');
    await now.getByRole('button',{name:/Escanear lote/}).click();await expect(page.getByRole('dialog')).toBeVisible();
    await page.getByRole('dialog').press('Escape');
    await now.getByRole('button',{name:/Entrada a Bodega/}).click();await expect(page).toHaveURL(/view=inventario/);

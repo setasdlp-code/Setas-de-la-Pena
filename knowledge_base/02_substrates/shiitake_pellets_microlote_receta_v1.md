@@ -4,7 +4,7 @@ document_id: DOC-0127
 category: substrates
 load_priority: selective
 status: draft
-last_reviewed: 2026-10-28
+last_reviewed: 2026-10-31
 confidence: experimental
 primary_sources:
   - "Monte Jongas, Sustrato de shiitake con pellets de madera dura, octubre de 2026 (manual recibido, 13 páginas)"
@@ -79,7 +79,9 @@ Ejecutar exclusivamente mediante `../06_operations/shiitake_microlote_pellets_so
 # Pendientes de aprobación y promoción
 
 - Proveedor/especie de madera y ficha de pellets; porcentajes de humedad medidos.
+  - Candidato reportado (2026-10-31, DOC-0130): saco de 15 kg de pélet de *Acacia mangium* de Mandra Renovable (Cogua). Antes de comprar hay que confirmar por escrito especie única, corteza <10 % sin hojas, ausencia de aglutinantes, y humedad y diámetro del lote. Su compatibilidad con shiitake no está verificada. Si se usa, se registra como especie de madera del microlote, no como cambio de receta.
 - Decisión sobre conservar Ca(OH)₂ al 1% tras la medición del pH; cualquier cambio origina v2 con sus nuevas cuentas.
+  - Conflicto registrado (DOC-0130, SH10): un reporte externo afirma que 1 % de Ca(OH)₂ da un pH de mezcla de 9,8–10,5. Esa cifra es modelada, no medida, y DOC-0126 cita un ensayo con 1–5 % de cal hidratada en *L. edodes*. Opción exploratoria pendiente de aprobación: 2 bolsas con 1 % Ca(OH)₂ y 2 con 1 % CaCO₃ (sin yeso), todo lo demás igual. Con n = 2 por grupo solo da una señal.
 - Aceptación de dosis 10% y tipo real de spawn; si el lote usa spawn distinto, revisar el diseño.
 - Validación del ciclo del 1941X para **esa carga** de bolsas y demostración de manipulación aséptica.
 - Definición ambiental por lote y verificación de preparación de la incubadora.

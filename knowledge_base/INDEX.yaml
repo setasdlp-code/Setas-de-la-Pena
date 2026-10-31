@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 130 catalog entries as of 2026-10-28; the completeness of indexing of all
+# 133 catalog entries as of 2026-10-31; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -2195,4 +2195,49 @@ documents:
     implemented_by: []
     supersedes: null
     confidence: experimental
+    status: draft
+
+  - id: retamo-espinoso-shiitake-2026-10-31
+    title: "Retamo espinoso (Ulex europaeus) como sustrato para shiitake — evidencia y Formulador (2026-10-31)"
+    path: 09_research/retamo_espinoso_shiitake_2026-10-31.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, retamo-espinoso, invasive-biomass, substrate-compatibility, legume-shrub]
+    keywords: ["retamo espinoso", "Ulex europaeus", "Caragana", "alcaloides quinolizidínicos", "Res. 684/2018"]
+    related_documents: [auditoria-pellets-maderas-shiitake-2026-10-31, substrate-library, shiitake-pellets-microlote-receta-v1, procurement-cost-registry]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: low
+    status: draft
+
+  - id: auditoria-pellets-maderas-shiitake-2026-10-31
+    title: "Auditoría — Pellets y maderas para shiitake en Colombia (reporte externo 2026-10-28)"
+    path: 09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, hardwood-pellets, wood-species, sourcing, calcium-source, altitude-sterilization]
+    keywords: ["Acacia mangium", "Mandra Renovable", "pellets shiitake", "Ca(OH)2 vs CaCO3", "aserrín eucalipto"]
+    related_documents: [pellets-maderas-shiitake-reporte-externo-2026-10-28, auditoria-manual-shiitake-pellets-monte-jongas-2026-10-27, shiitake-pellets-microlote-receta-v1, sterilization, procurement-cost-registry, retamo-espinoso-shiitake-2026-10-31]
+    depends_on: [pellets-maderas-shiitake-reporte-externo-2026-10-28]
+    implemented_by: []
+    supersedes: null
+    confidence: low
+    status: draft
+
+  - id: pellets-maderas-shiitake-reporte-externo-2026-10-28
+    title: "Reporte externo — Selección de pellets y sustratos de madera para shiitake en Colombia (2026-10-28)"
+    path: 09_research/intake/pellets_maderas_shiitake_colombia_reporte_externo_2026-10-28.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, hardwood-pellets, wood-species, supplier-scan, external-ai-report]
+    keywords: ["reporte externo pellets", "Mandra", "MCO2123989000", "Multimaderas Páez", "All American 1941X altitud"]
+    related_documents: [auditoria-pellets-maderas-shiitake-2026-10-31]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: low
     status: draft
