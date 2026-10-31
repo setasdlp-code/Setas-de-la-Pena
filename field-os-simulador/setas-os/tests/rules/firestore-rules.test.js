@@ -260,3 +260,35 @@ test('la cuenta de sincronización escribe en public_lotes sin documento en usua
   await assertSucceeds(setDoc(doc(svc, 'public_lotes/SDP-X'), { codigo: 'SDP-X', estado: 'incubacion' }));
   await assertFails(setDoc(doc(asOperator(), 'public_lotes/SDP-Y'), { codigo: 'SDP-Y', estado: 'incubacion' }));
 });
+
+// ── Bandeja de correos de compra ────────────────────────────────────────────
+const CORREO = { estado: 'nueva', remitente: 'pedidos@homecenter.com.co', asunto: 'Pedido', cuerpo: 'Cal 25 kg' };
+
+test('un cliente no puede crear un correo de compra (sólo la función programada)', async () => {
+  await assertFails(setDoc(doc(asOperator(), 'correos_compra/mail_x'), CORREO));
+});
+
+test('un cliente puede marcar un correo nuevo como importado o descartado', async () => {
+  await seed('correos_compra/mail_a', CORREO);
+  await seed('correos_compra/mail_b', CORREO);
+  await assertSucceeds(updateDoc(doc(asOperator(), 'correos_compra/mail_a'), { estado: 'importada', compraId: 'compra_1', revisadoEn: new Date() }));
+  await assertSucceeds(updateDoc(doc(asOperator(), 'correos_compra/mail_b'), { estado: 'descartada', compraId: null }));
+});
+
+test('un correo ya importado no vuelve a la bandeja ni se reescribe', async () => {
+  await seed('correos_compra/mail_c', { ...CORREO, estado: 'importada' });
+  await assertFails(updateDoc(doc(asOperator(), 'correos_compra/mail_c'), { estado: 'nueva' }));
+  await assertFails(updateDoc(doc(asOperator(), 'correos_compra/mail_c'), { estado: 'descartada' }));
+});
+
+test('al marcar un correo no se puede cambiar su contenido', async () => {
+  await seed('correos_compra/mail_d', CORREO);
+  await assertFails(updateDoc(doc(asOperator(), 'correos_compra/mail_d'), { estado: 'importada', cuerpo: 'otro' }));
+  await assertFails(deleteDoc(doc(asOperator(), 'correos_compra/mail_d')));
+});
+
+test('sin sesión no se leen correos de compra', async () => {
+  await seed('correos_compra/mail_e', CORREO);
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'correos_compra/mail_e')));
+  await assertSucceeds(getDoc(doc(asOperator(), 'correos_compra/mail_e')));
+});

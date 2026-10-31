@@ -97,6 +97,7 @@ const PROTECTED_APP_SCRIPTS = [
   "../inventory-consumption.js",
   "../inventory-ledger.js",
   "../purchases.js",
+  "../purchase-email-inbox.js",
   // Sincronización entre dispositivos (ADR-0009). device-sync.js resuelve
   // sync-merge, inventory-entries y sync-queue en cada llamada.
   "../sync-merge.js",
@@ -212,6 +213,7 @@ function loadDataRuntime() {
         import("./remote-sync.js"),
         import("./public-trace-sync.js"),
         import("./eventos-cultivo-sync.js"),
+        import("./correos-compra-sync.js"),
       ]);
       // Estos motores UMD dependen entre sí y el bundle React los resuelve
       // como globals. Se ejecutan en orden solo tras Auth, antes del bundle.
