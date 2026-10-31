@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: d5f0576026c2155398cb371b29b99e521d0aa6c6e7f4b2c2dd0a0759e1957560
+// source-hash: c9aa0fea42ab1d4d9fdda20d2ed605078d9b1602d6613d76a6640dfba8de76b6
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -4226,7 +4226,7 @@ function SimuladorShell(props) {
       return "home";
     }
   });
-  const TAB_LABELS = { home: "Tablero de Control", inicio: "Inicio", catalogo: "Catálogo & Recetario", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", clima: "Cámaras & IoT", bitacora: "Bitácora", metricas: "Métricas", bioCheck: "Bio-Check", labExtraction: "Laboratorio" };
+  const TAB_LABELS = { home: "Hoy", inicio: "Inicio", catalogo: "Catálogo & Recetario", formular: "Formular", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma", clima: "Cámaras & IoT", bitacora: "Bitácora", metricas: "Métricas", bioCheck: "Bio-Check", labExtraction: "Laboratorio" };
   const NAV_GROUPS = [
     { key: "inicio", label: "Inicio", tabs: ["home", "inicio"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M3 11l9-7 9 7M5 10v10h14V10" })) },
     { key: "recetas", label: "Formular", tabs: ["catalogo", "formular"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7.5 15h9" })) },
@@ -4235,7 +4235,7 @@ function SimuladorShell(props) {
     { key: "registro", label: "Bitácora", tabs: ["bitacora", "metricas"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M5 4h14v16H5zM9 4V2h6v2M8 10h8M8 14h8M8 18h5" })) },
     { key: "lab", label: "Laboratorio", tabs: ["labExtraction", "bioCheck"], icon: /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.5" }, /* @__PURE__ */ React.createElement("path", { d: "M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6" })) }
   ];
-  const TAB_PAGE_TITLES = { home: "Centro de Mando · Hoy", inicio: "Inicio", catalogo: "Catálogo de especies & Recetario", formular: "Formulador de receta", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma de cultivo", clima: "Cámaras & Telemetría IoT", bitacora: "Bitácora de pruebas", metricas: "Métricas de cultivo", bioCheck: "Checklist Digital de Bioseguridad", labExtraction: "Laboratorio de Extracciones & Tinturas" };
+  const TAB_PAGE_TITLES = { home: "Hoy", inicio: "Inicio", catalogo: "Catálogo de especies & Recetario", formular: "Formulador de receta", inventario: "Bodega", produccion: "Preparar mezcla", schedule: "Cronograma de cultivo", clima: "Cámaras & Telemetría IoT", bitacora: "Bitácora de pruebas", metricas: "Métricas de cultivo", bioCheck: "Checklist Digital de Bioseguridad", labExtraction: "Laboratorio de Extracciones & Tinturas" };
   const [homeDashboard, setHomeDashboard] = useState("today");
   const [mode, setMode] = useState("receta");
   const RECETA_TABS = ["catalogo", "formular"];
@@ -7341,7 +7341,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "d5f0576026c2" : null;
+    const appVersion = true ? "c9aa0fea42ab" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));

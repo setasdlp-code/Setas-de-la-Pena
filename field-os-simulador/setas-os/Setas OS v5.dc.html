@@ -3112,7 +3112,7 @@ class Component extends DCLogic {
       contextTab('Cosechas',s.module==='sim'&&s.simTab==='bitacora'&&s.bitSubtab==='bit_cosechas',()=>this.goBitTab('bit_cosechas')),
     ];
     if(activeWorkspace==='control') workspaceTabs = [
-      contextTab('Tablero de Control',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
+      contextTab('Hoy',s.module==='sim'&&s.simTab==='home',()=>this.goSimTab('home')),
       contextTab('Cámaras & IoT',(s.module==='sim'&&s.simTab==='clima')||(s.module==='camaras'&&!!s.camDetail),()=>this.goSimTab('clima')),
       contextTab('Métricas',s.module==='sim'&&s.simTab==='metricas',()=>this.goSimTab('metricas')),
     ];
@@ -3681,7 +3681,7 @@ class Component extends DCLogic {
     const detail = s.detail ? s.containers.find(c=>c.id===s.detail) : null;
     const photos = detail ? detail.tl.filter(e=>e.photo).map((e,i)=>({ date:e.date, label:'día '+(i*4+3), ref:(el)=>{ if(el) el.src=e.photo; } })) : [];
     const sym = s.diagSymptom ? SYMPTOMS.find(x=>x.key===s.diagSymptom) : null;
-    const SIM_CRUMB = { metricas:'Métricas', catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Tablero de Control', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
+    const SIM_CRUMB = { metricas:'Métricas', catalogo:'Catálogo de especies & Recetario', produccion:'Ficha de siembra', bitacora:'Bitácora', schedule:'Cronograma', formular:'Formulador de receta', inventario:'Bodega', home:'Hoy', bioCheck:'Bio-Check', labExtraction:'Laboratorio' };
     const SIM_WORKSPACE = {metricas:'Control',catalogo:'Formular',formular:'Formular',produccion:'Producción',inventario:'Producción',schedule:'Producción',bitacora:'Bitácora',home:'Control',bioCheck:'Producción',labExtraction:'Producción'};
     const crumbMap = { inicio:'Control · Sesión', sesion:'Bitácora · Sesión', sim:((SIM_WORKSPACE[s.simTab]||'Setas OS')+' · '+(SIM_CRUMB[s.simTab]||'')), camaras:'Control · Cámaras', plan:'Producción · Planificar',
       inventario:'Producción · Inventario histórico', calidad:'Control · Calidad', costes:'Control · Costos',
