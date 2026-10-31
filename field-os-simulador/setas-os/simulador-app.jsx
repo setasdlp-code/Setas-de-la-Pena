@@ -9885,9 +9885,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     // Un correo confirma un pedido, no una entrega.
     setCmpRecibida(false);
     setCmpProvId(inboxApi.matchProveedor(invProveedores,c.remitente)||'');
-    if(c.fecha) setCmpFecha(c.fecha);
+    // La fecha de la factura adjunta, si la hay, es la de la compra; la del
+    // correo puede ser días después.
+    const fechaFactura=inboxApi.tieneLineasFactura(c)&&c.factura.fecha;
+    if(fechaFactura||c.fecha) setCmpFecha(fechaFactura||c.fecha);
     // Se abre en "Pegar texto" con el correo cargado: si la lectura falla,
-    // el texto queda a la vista para corregirlo y reintentar.
+    // el texto queda a la vista para corregirlo y reintentar. Si un adjunto
+    // traía la factura electrónica (XML), el texto son sus líneas, no el cuerpo.
     setCmpMode('texto');
     setCmpPasteText(inboxApi.textoParaParseo(c));
     parseTextoCompra(inboxApi.textoParaParseo(c));
@@ -10685,6 +10689,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   <div style={{fontFamily:"var(--font-body)",fontWeight:600,fontSize:"var(--text-sm)",color:'var(--ink-800)',overflowWrap:'anywhere'}}>{c.asunto||'(sin asunto)'}</div>
                                   <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-500)',overflowWrap:'anywhere'}}>{c.remitente||'remitente desconocido'}{c.fecha?` · ${c.fecha}`:''}</div>
                                   {preview&&<div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:4,overflowWrap:'anywhere'}}>{preview.length>140?preview.slice(0,137)+'…':preview}</div>}
+                                  {(()=>{const adj=inboxApi.resumenAdjuntos(c);return adj?<div data-testid="purchase-email-adjunto" style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",marginTop:4,overflowWrap:'anywhere',color:inboxApi.tieneLineasFactura(c)||c.adjuntoTexto?'var(--ink-700)':'var(--status-warn-text)'}}>{adj}</div>:null;})()}
                                   <div style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",marginTop:4,color:prov?'var(--accent-olive)':'var(--status-warn-text)'}}>{prov?`Proveedor: ${prov.nombre}`:'Proveedor sin reconocer — se elige al revisar'}</div>
                                   <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
                                     <button type="button" className="inv-btn inv-btn-pri sdp-btn--field" disabled={cmpParsing} onClick={()=>revisarCorreo(c)}>Revisar y registrar</button>

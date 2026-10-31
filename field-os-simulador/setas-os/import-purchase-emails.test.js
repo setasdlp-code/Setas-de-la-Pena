@@ -75,3 +75,22 @@ test('un error que no es "ya existe" se propaga', async () => {
   const importar = createImportPurchaseEmails({ db, inbox, fetchMessages: async () => [MSGS[0]] });
   await assert.rejects(importar(), /boom/);
 });
+
+test('guarda la factura leída del adjunto, con el documento muy por debajo de 1 MiB', async () => {
+  const db = fakeDb();
+  const factura = {
+    tipo: 'factura', numero: 'SETP1', fecha: '2026-10-28', proveedor: 'Ficticio', nit: '900000001', moneda: 'COP', total: 1000,
+    lineas: Array.from({ length: 150 }, (_, i) => ({ descripcion: 'Ítem '.repeat(40) + i, cantidad: 1, unidad: 'kg', unidadCodigo: 'KGM', precioUnitario: 1, total: 1, kg: 1, precioKg: 1 })),
+    lineasOmitidas: 0,
+  };
+  const importar = createImportPurchaseEmails({
+    db, inbox,
+    fetchMessages: async () => [{ ...MSGS[0], subject: 'Factura electrónica SETP1', text: 'adjunto factura', factura, adjuntos: [{ nombre: 'f.zip', tipo: 'zip', bytes: 900, estado: 'leido' }], adjuntoTexto: '' }],
+  });
+  assert.equal((await importar()).creados, 1);
+  const [doc] = [...db.cols.correos_compra.values()];
+  assert.equal(doc.factura.lineas.length, 150);
+  assert.deepEqual(doc.adjuntos, [{ nombre: 'f.zip', tipo: 'zip', bytes: 900, estado: 'leido' }]);
+  assert.ok(Buffer.byteLength(JSON.stringify(doc)) < 200 * 1024);
+  assert.match(inbox.textoParaParseo(doc), /Ítem/);
+});

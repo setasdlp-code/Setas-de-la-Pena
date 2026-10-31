@@ -6,10 +6,16 @@
  * Usa una contraseña de aplicación de Google (la misma que fetch_gmail.py),
  * guardada como secreto de Firebase: nunca vive en el repositorio. Sólo lee;
  * no marca, mueve ni borra correos.
+ *
+ * Las facturas electrónicas de la DIAN llegan como adjunto (ZIP con PDF + XML,
+ * o PDF suelto) y el cuerpo sólo dice "adjunto factura": los adjuntos se leen
+ * con invoice-attachments.js y al correo se le agrega `factura` (líneas del
+ * XML), `adjuntos` (qué llegó) y `adjuntoTexto` (texto del PDF).
  */
 
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
+const { leerAdjuntos } = require('./invoice-attachments.js');
 
 const MAX_MENSAJES = 200;
 const MAX_TEXTO = 6000;
@@ -22,6 +28,21 @@ const stripHtml = html => String(html || '')
   .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'")
   .replace(/\n{3,}/g, '\n\n')
   .trim();
+
+/**
+ * Texto de un PDF con pdf-parse (se carga al primer uso: la mayoría de las
+ * corridas no traen PDFs sin XML). Quita los separadores de página que agrega.
+ */
+async function pdfToText(buf) {
+  const { PDFParse } = require('pdf-parse');
+  const parser = new PDFParse({ data: new Uint8Array(buf) });
+  try {
+    const r = await parser.getText();
+    return String((r && r.text) || '').replace(/^-- \d+ of \d+ --$/gm, '').trim();
+  } finally {
+    await parser.destroy().catch(() => {});
+  }
+}
 
 /**
  * @returns {(q: {since: Date, senders: string[]}) => Promise<Array>}
@@ -48,12 +69,16 @@ function createGmailFetcher({ user, password }) {
         if (!recientes.length) return out;
         for await (const msg of client.fetch(recientes, { source: true }, { uid: true })) {
           const parsed = await simpleParser(msg.source);
+          const { factura, adjuntos, adjuntoTexto } = await leerAdjuntos(parsed.attachments || [], { pdfToText });
           out.push({
             messageId: parsed.messageId || '',
             from: parsed.from ? parsed.from.text : '',
             subject: parsed.subject || '',
             date: parsed.date ? parsed.date.toISOString() : null,
             text: String(parsed.text || stripHtml(parsed.html)).slice(0, MAX_TEXTO),
+            factura,
+            adjuntos,
+            adjuntoTexto,
           });
         }
       } finally {
@@ -66,4 +91,4 @@ function createGmailFetcher({ user, password }) {
   };
 }
 
-module.exports = { createGmailFetcher, stripHtml };
+module.exports = { createGmailFetcher, stripHtml, pdfToText };

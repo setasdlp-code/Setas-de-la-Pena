@@ -14,9 +14,32 @@ revisa ítems, kilos y precio antes de registrarlo.
   remitente (`remitenteCorreo`), y sus próximos correos llegan ya emparejados.
   También se puede escribir al crear el proveedor.
 
+## Facturas adjuntas (DIAN)
+
+La factura electrónica casi nunca viene en el cuerpo ("adjunto factura"): llega
+como ZIP con PDF + XML, o como PDF suelto. La función programada lee los
+adjuntos (`functions/invoice-attachments.js`) y guarda en el documento:
+
+- `factura`: número, fecha, proveedor, NIT, total y las líneas del XML UBL
+  (descripción, cantidad, unidad, precio unitario; kilos y precio por kilo
+  cuando la unidad es de masa). Reconoce el sobre `AttachedDocument` de la
+  DIAN. Una nota crédito se marca como tal y no aporta líneas.
+- `adjuntoTexto`: el texto del PDF (pdf-parse), sólo si ningún XML trajo
+  líneas. Un PDF escaneado sin capa de texto queda como `sin_texto`.
+- `adjuntos`: qué llegó y qué se pudo leer (`leido`, `sin_lineas`, `sin_leer`,
+  `sin_texto`, `ilegible`, `muy_grande`, `nota_credito`).
+
+No se guardan los archivos: el documento queda en unas decenas de KB como
+mucho (topes de 150 líneas, 6000 caracteres de PDF y una red de seguridad de
+200 KB en `ajustarTamano`). Al revisar, el lector de facturas recibe las
+líneas del XML en vez del cuerpo; sin XML, el texto del PDF; sin nada, el
+cuerpo. La fecha de la compra se toma de la factura. El XML y el ZIP vienen de
+un tercero: se leen sin parser de entidades y con topes contra bombas de
+compresión, y como todo correo, sólo prellenan el formulario.
+
 Código: `purchase-email-inbox.js` (lógica compartida),
-`firebase/correos-compra-sync.js` (cliente), `functions/import-purchase-emails.js`
-y `functions/gmail-imap.js` (servidor).
+`firebase/correos-compra-sync.js` (cliente), `functions/import-purchase-emails.js`,
+`functions/gmail-imap.js` y `functions/invoice-attachments.js` (servidor).
 
 ## Dos caminos para traer los correos
 

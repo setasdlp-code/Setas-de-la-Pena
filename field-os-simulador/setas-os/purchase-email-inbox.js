@@ -65,6 +65,12 @@
   ]);
 
   const MAX_CUERPO = 6000;
+  const MAX_TEXTO_ADJUNTO = 6000;
+  const MAX_LINEAS = 150;
+  const MAX_ADJUNTOS = 20;
+  // Firestore admite hasta 1 MiB por documento. Un correo normal pesa unos
+  // pocos KB; este tope deja margen de sobra y es el que verifica la función.
+  const MAX_BYTES_DOC = 200 * 1024;
 
   /** Dirección de correo de un encabezado From ("Nombre <a@b.com>" → "a@b.com"). */
   const senderAddress = from => {
@@ -176,6 +182,48 @@
 
   const todayBogota = (nowMs = Date.now()) => bogotaDate(new Date(nowMs));
 
+  const str = (v, n) => String(v ?? '').slice(0, n);
+  const numOrNull = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const TIPOS_FACTURA = ['factura', 'nota_credito', 'nota_debito'];
+
+  /**
+   * Resumen de una factura electrónica leída de un adjunto (ver
+   * functions/invoice-attachments.js), con topes. null si no trae nada útil.
+   */
+  const normalizeFactura = f => {
+    if (!f || typeof f !== 'object' || !TIPOS_FACTURA.includes(f.tipo)) return null;
+    const lineas = (Array.isArray(f.lineas) ? f.lineas : []).slice(0, MAX_LINEAS)
+      .filter(l => l && typeof l === 'object')
+      .map(l => {
+        const out = {
+          descripcion: str(l.descripcion, 200),
+          cantidad: numOrNull(l.cantidad),
+          unidad: str(l.unidad, 12),
+          unidadCodigo: l.unidadCodigo ? str(l.unidadCodigo, 6) : null,
+          precioUnitario: numOrNull(l.precioUnitario),
+          total: numOrNull(l.total),
+        };
+        if (numOrNull(l.kg) != null) out.kg = l.kg;
+        if (numOrNull(l.precioKg) != null) out.precioKg = l.precioKg;
+        return out;
+      });
+    return {
+      tipo: f.tipo,
+      numero: str(f.numero, 60),
+      fecha: typeof f.fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.fecha) ? f.fecha : null,
+      proveedor: str(f.proveedor, 120),
+      nit: str(f.nit, 20),
+      moneda: f.moneda ? str(f.moneda, 3) : null,
+      total: numOrNull(f.total),
+      lineas,
+      lineasOmitidas: Math.max(0, Math.floor(Number(f.lineasOmitidas) || 0)) + Math.max(0, (Array.isArray(f.lineas) ? f.lineas.length : 0) - MAX_LINEAS),
+    };
+  };
+
+  const normalizeAdjuntos = list => (Array.isArray(list) ? list : []).slice(0, MAX_ADJUNTOS)
+    .filter(a => a && typeof a === 'object')
+    .map(a => ({ nombre: str(a.nombre, 120), tipo: str(a.tipo, 8), bytes: Math.max(0, Number(a.bytes) || 0), estado: str(a.estado, 20) }));
+
   /**
    * Forma canónica de un correo de compra. Acepta lo que escribe
    * fetch_gmail.py ({from, subject, date, body, messageId?}), lo que guarda la
@@ -198,6 +246,9 @@
       asunto: subject,
       fecha: bogotaDate(dateRaw),
       cuerpo: body,
+      factura: normalizeFactura(raw.factura),
+      adjuntos: normalizeAdjuntos(raw.adjuntos),
+      adjuntoTexto: str(raw.adjuntoTexto, MAX_TEXTO_ADJUNTO),
       estado,
       compraId: raw.compraId || null,
       origen: raw.origen || 'archivo',
@@ -212,7 +263,35 @@
    * agotando la cuota de localStorage que comparten compras y lotes.
    */
   const compactCorreos = (correos = []) =>
-    (correos || []).map(c => (c && c.estado !== ESTADOS.NUEVA && c.cuerpo) ? { ...c, cuerpo: '' } : c);
+    (correos || []).map(c => (c && c.estado !== ESTADOS.NUEVA && (c.cuerpo || c.factura || c.adjuntoTexto))
+      ? { ...c, cuerpo: '', factura: null, adjuntoTexto: '' }
+      : c);
+
+  const bytesDe = obj => {
+    const json = JSON.stringify(obj);
+    return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(json).length : json.length * 3;
+  };
+
+  /**
+   * Garantiza que el documento quepa holgado en Firestore. Los topes de
+   * normalizeCorreo ya lo hacen casi siempre; esto es la red de seguridad: se
+   * suelta primero el texto del PDF, luego líneas del final (contándolas como
+   * omitidas), luego el cuerpo.
+   */
+  const ajustarTamano = (doc, maxBytes = MAX_BYTES_DOC) => {
+    if (!doc || bytesDe(doc) <= maxBytes) return doc;
+    let d = { ...doc, adjuntoTexto: '' };
+    if (d.factura && d.factura.lineas) {
+      const f = { ...d.factura, lineas: d.factura.lineas.slice() };
+      d = { ...d, factura: f };
+      while (f.lineas.length && bytesDe(d) > maxBytes) {
+        f.lineas.length = Math.floor(f.lineas.length / 2);
+        f.lineasOmitidas = (doc.factura.lineasOmitidas || 0) + doc.factura.lineas.length - f.lineas.length;
+      }
+    }
+    if (bytesDe(d) > maxBytes) d = { ...d, cuerpo: String(d.cuerpo || '').slice(0, 1000) };
+    return d;
+  };
 
   /** Fecha más reciente en que la función programada trajo un correo de Gmail, o null. */
   const ultimoImportadoGmail = (correos = []) =>
@@ -278,16 +357,75 @@
   const compraFromCorreo = (compras = [], id) =>
     (compras || []).find(c => c && c.origenCorreoId === id) || null;
 
-  /** Texto que se entrega al lector de facturas (el mismo de "Pegar texto"). */
+  const fmtNum = n => (n == null ? '' : Number(n).toLocaleString('es-CO', { maximumFractionDigits: 4 }));
+  const fmtPeso = n => (n == null ? '' : '$' + Number(n).toLocaleString('es-CO', { maximumFractionDigits: 2 }));
+
+  /** Una línea de factura como texto: "Cal agrícola — 50 kg — $2.000 por kg — total $100.000". */
+  const lineaFacturaTexto = l => {
+    const partes = [l.descripcion || '(sin descripción)'];
+    if (l.kg != null) partes.push(`${fmtNum(l.kg)} kg`);
+    else if (l.cantidad != null) partes.push(`${fmtNum(l.cantidad)} ${l.unidad || ''}`.trim());
+    if (l.precioKg != null) partes.push(`${fmtPeso(l.precioKg)} por kg`);
+    else if (l.precioUnitario != null) partes.push(`${fmtPeso(l.precioUnitario)} por ${l.unidad || 'unidad'}`);
+    if (l.total != null) partes.push(`total ${fmtPeso(l.total)} antes de IVA`);
+    return '- ' + partes.join(' — ');
+  };
+
+  /** ¿El correo trae líneas leídas de una factura adjunta? */
+  const tieneLineasFactura = correo =>
+    !!(correo && correo.factura && correo.factura.tipo !== 'nota_credito' && Array.isArray(correo.factura.lineas) && correo.factura.lineas.length);
+
+  /**
+   * Una frase para la bandeja sobre lo que trajo el correo adjunto, o '' si
+   * no trajo nada. Dice lo que se leyó, no lo que se supone.
+   */
+  const resumenAdjuntos = correo => {
+    if (!correo) return '';
+    const f = correo.factura;
+    if (f && f.tipo === 'nota_credito') return `Nota crédito ${f.numero || ''}`.trim() + ' adjunta: no es una compra.';
+    if (tieneLineasFactura(correo)) {
+      const n = f.lineas.length + (f.lineasOmitidas || 0);
+      return `Factura electrónica ${f.numero || ''}`.trim() + `: ${n} ítem${n === 1 ? '' : 's'} leído${n === 1 ? '' : 's'} del XML.`;
+    }
+    if (String(correo.adjuntoTexto || '').trim()) return 'Factura en PDF adjunto: se lee su texto.';
+    const sinLeer = (correo.adjuntos || []).filter(a => a && a.estado !== 'leido');
+    if (sinLeer.length) return `Adjunto sin leer (${sinLeer.map(a => a.nombre).join(', ')}): revisar el correo en Gmail.`;
+    return '';
+  };
+
+  /**
+   * Texto que se entrega al lector de facturas (el mismo de "Pegar texto").
+   *
+   * Si un adjunto traía la factura electrónica (XML DIAN), se usan sus líneas
+   * y no el cuerpo: el cuerpo suele ser "adjunto factura", y si también
+   * describiera los ítems, el lector los contaría dos veces. Sin XML, el texto
+   * del PDF adjunto; sin nada de eso, el cuerpo.
+   */
   const textoParaParseo = correo => {
     if (!correo) return '';
-    return [
+    const cab = [
       `De: ${correo.remitente || ''}`,
       `Asunto: ${correo.asunto || ''}`,
       `Fecha: ${correo.fecha || ''}`,
       '',
-      correo.cuerpo || '',
-    ].join('\n').trim();
+    ];
+    if (tieneLineasFactura(correo)) {
+      const f = correo.factura;
+      const resumen = [
+        `Factura electrónica ${f.numero || ''}`.trim() + (f.fecha ? ` del ${f.fecha}` : ''),
+        f.proveedor ? `Proveedor: ${f.proveedor}${f.nit ? ` (NIT ${f.nit})` : ''}` : '',
+        f.total != null ? `Total a pagar: ${fmtPeso(f.total)} ${f.moneda || ''}`.trim() : '',
+        '',
+        'Ítems:',
+        ...f.lineas.map(lineaFacturaTexto),
+        f.lineasOmitidas ? `(${f.lineasOmitidas} ítems más no se incluyeron)` : '',
+      ].filter((x, i, a) => x !== '' || (i > 0 && a[i - 1] !== ''));
+      return [...cab, ...resumen].join('\n').trim();
+    }
+    if (String(correo.adjuntoTexto || '').trim()) {
+      return [...cab, 'Factura adjunta (PDF):', correo.adjuntoTexto].join('\n').trim();
+    }
+    return [...cab, correo.cuerpo || ''].join('\n').trim();
   };
 
   /**
@@ -326,7 +464,12 @@
     bogotaDate,
     todayBogota,
     normalizeCorreo,
+    normalizeFactura,
     compactCorreos,
+    ajustarTamano,
+    MAX_BYTES_DOC,
+    tieneLineasFactura,
+    resumenAdjuntos,
     ultimoImportadoGmail,
     correosFromFile,
     mergeCorreos,

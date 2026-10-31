@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: f00c42e622b31adb81808234b50fe62576f4cbec8a568f1835a93cbee7057cd2
+// source-hash: 51da9449b7dc0671162a51224dccfd666f65c0b462e98b00ac5ba1ee6c662c98
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -7340,7 +7340,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "f00c42e622b3" : null;
+    const appVersion = true ? "51da9449b7dc" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7880,7 +7880,8 @@ ${errors.slice(0, 5).join("\n")}` : "");
     setCmpFuente("email");
     setCmpRecibida(false);
     setCmpProvId(inboxApi.matchProveedor(invProveedores, c.remitente) || "");
-    if (c.fecha) setCmpFecha(c.fecha);
+    const fechaFactura = inboxApi.tieneLineasFactura(c) && c.factura.fecha;
+    if (fechaFactura || c.fecha) setCmpFecha(fechaFactura || c.fecha);
     setCmpMode("texto");
     setCmpPasteText(inboxApi.textoParaParseo(c));
     parseTextoCompra(inboxApi.textoParaParseo(c));
@@ -8457,7 +8458,10 @@ BATCH (${numBags}×${kgBag} kg):
       const provId = inboxApi.matchProveedor(invProveedores, c.remitente);
       const prov = invProveedores.find((p) => p.id === provId);
       const preview = String(c.cuerpo || "").replace(/\s+/g, " ").trim();
-      return /* @__PURE__ */ React.createElement("div", { key: c.id, "data-testid": "purchase-email", style: { padding: "10px 12px", marginTop: 6, border: "1px solid var(--border-soft)", borderRadius: "var(--sim-r-sm)", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-800)", overflowWrap: "anywhere" } }, c.asunto || "(sin asunto)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", overflowWrap: "anywhere" } }, c.remitente || "remitente desconocido", c.fecha ? ` · ${c.fecha}` : ""), preview && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, overflowWrap: "anywhere" } }, preview.length > 140 ? preview.slice(0, 137) + "…" : preview), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", marginTop: 4, color: prov ? "var(--accent-olive)" : "var(--status-warn-text)" } }, prov ? `Proveedor: ${prov.nombre}` : "Proveedor sin reconocer — se elige al revisar"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri sdp-btn--field", disabled: cmpParsing, onClick: () => revisarCorreo(c) }, "Revisar y registrar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec sdp-btn--field", onClick: () => descartarCorreo(c), "aria-label": `Descartar correo ${c.asunto || ""}` }, "Descartar")));
+      return /* @__PURE__ */ React.createElement("div", { key: c.id, "data-testid": "purchase-email", style: { padding: "10px 12px", marginTop: 6, border: "1px solid var(--border-soft)", borderRadius: "var(--sim-r-sm)", background: "var(--paper-50)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--ink-800)", overflowWrap: "anywhere" } }, c.asunto || "(sin asunto)"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--ink-500)", overflowWrap: "anywhere" } }, c.remitente || "remitente desconocido", c.fecha ? ` · ${c.fecha}` : ""), preview && /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-body)", fontSize: "var(--text-xs)", color: "var(--ink-700)", marginTop: 4, overflowWrap: "anywhere" } }, preview.length > 140 ? preview.slice(0, 137) + "…" : preview), (() => {
+        const adj = inboxApi.resumenAdjuntos(c);
+        return adj ? /* @__PURE__ */ React.createElement("div", { "data-testid": "purchase-email-adjunto", style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", marginTop: 4, overflowWrap: "anywhere", color: inboxApi.tieneLineasFactura(c) || c.adjuntoTexto ? "var(--ink-700)" : "var(--status-warn-text)" } }, adj) : null;
+      })(), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", marginTop: 4, color: prov ? "var(--accent-olive)" : "var(--status-warn-text)" } }, prov ? `Proveedor: ${prov.nombre}` : "Proveedor sin reconocer — se elige al revisar"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri sdp-btn--field", disabled: cmpParsing, onClick: () => revisarCorreo(c) }, "Revisar y registrar"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec sdp-btn--field", onClick: () => descartarCorreo(c), "aria-label": `Descartar correo ${c.asunto || ""}` }, "Descartar")));
     })));
   })(), cmpOrigenCorreo && (() => {
     const c = invCorreos.find((x) => x.id === cmpOrigenCorreo);

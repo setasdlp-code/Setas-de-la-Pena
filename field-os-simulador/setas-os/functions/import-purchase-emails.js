@@ -25,7 +25,7 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 /**
  * @param {object} deps
  * @param {FirebaseFirestore.Firestore} deps.db
- * @param {(q: {since: Date, senders: string[]}) => Promise<Array<{messageId,from,subject,date,text}>>} deps.fetchMessages
+ * @param {(q: {since: Date, senders: string[]}) => Promise<Array<{messageId,from,subject,date,text,factura?,adjuntos?,adjuntoTexto?}>>} deps.fetchMessages
  * @param {object} [deps.inbox] purchase-email-inbox.js (por defecto, la copia de shared/)
  * @param {() => number} [deps.now]
  * @param {number} [deps.ventanaDias] cuántos días hacia atrás se revisan en cada corrida
@@ -56,15 +56,19 @@ function createImportPurchaseEmails({ db, fetchMessages, inbox, now = () => Date
         subject: m.subject,
         date: m.date,
         body: m.text,
+        factura: m.factura,
+        adjuntos: m.adjuntos,
+        adjuntoTexto: m.adjuntoTexto,
         origen: 'gmail',
       });
       if (!correo) { resumen.ignorados++; continue; }
+      const doc = api.ajustarTamano({
+        ...correo,
+        estado: api.ESTADOS.NUEVA,
+        importadoEn: new Date(now()).toISOString(),
+      });
       try {
-        await db.collection(COLECCION).doc(correo.id).create({
-          ...correo,
-          estado: api.ESTADOS.NUEVA,
-          importadoEn: new Date(now()).toISOString(),
-        });
+        await db.collection(COLECCION).doc(correo.id).create(doc);
         resumen.creados++;
       } catch (err) {
         if (err && (err.code === ALREADY_EXISTS || err.code === 'already-exists')) resumen.existentes++;

@@ -142,8 +142,29 @@ const leer=(page,key)=>page.evaluate(k=>JSON.parse(localStorage.getItem(k)||'[]'
   const guardados2=await leer(page,'sdp_correos_compra');
   assert.equal(guardados2.find(c=>c.id===CORREO_HC.id).cuerpo,'');
 
+  // ── 7. Factura DIAN adjunta: se leen las líneas del XML, no el cuerpo ───
+  // Factura sintética, con la forma que deja functions/invoice-attachments.js.
+  fs.writeFileSync(archivo,JSON.stringify({emails:[{
+    messageId:'<dian-1@homecenter.com.co>',from:'Homecenter <facturacion@homecenter.com.co>',subject:'Factura electrónica SETP99',date:'2026-11-01T15:00:00Z',body:'Adjunto factura electrónica.',
+    factura:{tipo:'factura',numero:'SETP99',fecha:'2026-10-28',proveedor:'Proveedor Ficticio S.A.S.',nit:'900000001',moneda:'COP',total:12000,lineasOmitidas:0,
+      lineas:[{descripcion:'Paja de trigo picada',cantidad:10,unidad:'kg',unidadCodigo:'KGM',precioUnitario:1200,total:12000,kg:10,precioKg:1200}]},
+    adjuntos:[{nombre:'z900000001.zip',tipo:'zip',bytes:2048,estado:'leido'}],
+  }]}));
+  // Lector fijo sin fecha: así se ve la que pone revisarCorreo.
+  await page.evaluate(()=>{window.__textoLeido='';window.SetasAI.parseInvoiceText=async({text})=>{window.__textoLeido=text;return {proveedor:null,fecha:null,items:[{ingrediente:'paja_trigo',kg:10,precio:1200}]};};});
+  await page.locator('[data-testid="cmp-mode-correo"]').click();
+  await page.locator('[data-testid="purchase-email-file"]').setInputFiles(archivo);
+  await page.locator('.inv-modal-actions button',{hasText:'Aceptar'}).click();
+  await expect(correos.first()).toContainText('Factura electrónica SETP99');
+  await expect(correos.first().locator('[data-testid="purchase-email-adjunto"]')).toHaveText('Factura electrónica SETP99: 1 ítem leído del XML.');
+  await correos.first().getByRole('button',{name:'Revisar y registrar'}).click();
+  await expect.poll(()=>page.evaluate(()=>window.__textoLeido||'')).toMatch(/- Paja de trigo picada — 10 kg — \$1\.200 por kg/);
+  assert.doesNotMatch(await page.evaluate(()=>window.__textoLeido),/Adjunto factura electrónica/);
+  // La fecha de la compra es la de la factura, no la del correo.
+  assert.equal(await page.locator('#purchase-date').inputValue(),'2026-10-28');
+
   assert.deepEqual(errores,[]);
-  console.log('OK e2e/purchase-email-inbox: correo → revisión → "Por recibir" sin mover físico; líneas caídas avisadas; descartar; archivo idempotente');
+  console.log('OK e2e/purchase-email-inbox: correo → revisión → "Por recibir" sin mover físico; líneas caídas avisadas; descartar; archivo idempotente; factura adjunta leída del XML');
  }finally{
   if(browser)await browser.close();
   server.close();
