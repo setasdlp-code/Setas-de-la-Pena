@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 81e95131ea15f16ba2a85bf53cb8439d60dae88ff077378ea1626cb21571d151
+// source-hash: 51858c63c8e32d2590fb9b28e5bff080ee03e7f06e364430595675b5606ca40a
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3092,66 +3092,6 @@ const realCostPerKgSeco = (recipe, invLotes, ings) => {
   }, 0);
   return known ? Math.round(total) : null;
 };
-const SEED_PROVEEDORES = [
-  { id: "prov_paloquemao", nombre: "Plaza de Paloquemao", tipo: "plaza", municipio: "Bogotá" },
-  { id: "prov_bavaria", nombre: "Bavaria Tocancipá", tipo: "industrial", municipio: "Tocancipá" },
-  { id: "prov_elrosal", nombre: "Agrícola El Rosal", tipo: "directo", municipio: "El Rosal" }
-];
-const SEED_CID_PALO = "compra_seed_palo";
-const SEED_CID_ELROSAL = "compra_seed_elrosal";
-const SEED_CID_BAV = "compra_seed_bav";
-const SEED_CID_BOLSAS = "compra_seed_bolsas";
-const SEED_LOTES = [
-  { id: "lote_s1", compraId: SEED_CID_PALO, ingredienteId: "paja_trigo", cantidadKgTotal: 15, precioPorKgCOP: 1200, fechaIngreso: "2026-06-01", cantidadKgDisponible: 15, activo: true },
-  { id: "lote_s3", compraId: SEED_CID_PALO, ingredienteId: "salvado_trigo", cantidadKgTotal: 5, precioPorKgCOP: 2100, fechaIngreso: "2026-06-01", cantidadKgDisponible: 5, activo: true },
-  { id: "lote_s2", compraId: SEED_CID_ELROSAL, ingredienteId: "aserrin_roble", cantidadKgTotal: 8, precioPorKgCOP: 800, fechaIngreso: "2026-06-01", cantidadKgDisponible: 8, activo: true },
-  { id: "lote_s4", compraId: SEED_CID_BAV, ingredienteId: "afrecho_cerveceria", cantidadKgTotal: 3, precioPorKgCOP: 500, fechaIngreso: "2026-06-01", cantidadKgDisponible: 3, activo: true },
-  { id: "lote_s5", compraId: SEED_CID_BOLSAS, ingredienteId: "bolsa_unicorn_microfiltro", cantidadKgTotal: 100, precioPorKgCOP: 0, fechaIngreso: "2026-08-01", cantidadKgDisponible: 100, activo: true },
-  { id: "lote_s6", compraId: SEED_CID_BOLSAS, ingredienteId: "bolsa_pp_plana", cantidadKgTotal: 20, precioPorKgCOP: 0, fechaIngreso: "2026-08-01", cantidadKgDisponible: 20, activo: true }
-];
-const SEED_COMPRAS = [
-  {
-    id: SEED_CID_PALO,
-    fecha: "2026-06-01",
-    proveedorId: "prov_paloquemao",
-    items: [{ ingredienteId: "paja_trigo", kg: 15, precio: 1200 }, { ingredienteId: "salvado_trigo", kg: 5, precio: 2100 }],
-    fuenteCaptura: "manual",
-    revisadoManualmente: true
-  },
-  {
-    id: SEED_CID_ELROSAL,
-    fecha: "2026-06-01",
-    proveedorId: "prov_elrosal",
-    items: [{ ingredienteId: "aserrin_roble", kg: 8, precio: 800 }],
-    fuenteCaptura: "manual",
-    revisadoManualmente: true
-  },
-  {
-    id: SEED_CID_BAV,
-    fecha: "2026-06-01",
-    proveedorId: "prov_bavaria",
-    items: [{ ingredienteId: "afrecho_cerveceria", kg: 3, precio: 500 }],
-    fuenteCaptura: "manual",
-    revisadoManualmente: true
-  },
-  {
-    id: SEED_CID_BOLSAS,
-    fecha: "2026-08-01",
-    proveedorId: "",
-    items: [{ ingredienteId: "bolsa_unicorn_microfiltro", kg: 100, precio: 0 }, { ingredienteId: "bolsa_pp_plana", kg: 20, precio: 0 }],
-    fuenteCaptura: "manual",
-    revisadoManualmente: true
-  }
-];
-const SEED_MOVIMIENTOS = SEED_LOTES.map((l, i) => ({
-  id: `mov_seed_${i}`,
-  loteId: l.id,
-  ingredienteId: l.ingredienteId,
-  tipo: "entrada",
-  cantidadKg: l.cantidadKgTotal,
-  fecha: "2026-06-01",
-  referencia: l.compraId
-}));
 const SPP_KEY_ALIAS = {
   pleurotus_ostreatus: "p_ostreatus_gris",
   pleurotus_djamor: "p_djamor_rosa",
@@ -7387,7 +7327,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "81e95131ea15" : null;
+    const appVersion = true ? "51858c63c8e3" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -9069,15 +9009,13 @@ BATCH (${numBags}×${kgBag} kg):
     const roomLiveNow = roomId ? liveTelemetry.roomLive(roomId) : null;
     const roomSample = roomLiveNow && roomLiveNow.sample || {};
     const targetBands = roomId ? effectiveRoomBands[roomId] || ROOM_TARGET_BANDS[roomId] || null : null;
-    const demoMetrics = roomId ? DEMO_ROOM_METRICS[roomId] : null;
     const buildReading = (metricKey, label, unit, decimals) => {
       const band = targetBands && targetBands[metricKey];
       const hasLive = Number.isFinite(roomSample[metricKey]);
-      const hasDemo = !hasLive && demoMetrics && Number.isFinite(demoMetrics[metricKey]);
-      if (!hasLive && !hasDemo) return { key: metricKey, label, empty: true };
-      const value = hasLive ? roomSample[metricKey] : demoMetrics[metricKey];
-      const fresh = hasLive ? Boolean(roomLiveNow.freshMetrics && roomLiveNow.freshMetrics[metricKey]) : true;
-      const ageMs = hasLive ? roomLiveNow.metricAgeMs && roomLiveNow.metricAgeMs[metricKey] : null;
+      if (!hasLive) return { key: metricKey, label, empty: true };
+      const value = roomSample[metricKey];
+      const fresh = Boolean(roomLiveNow.freshMetrics && roomLiveNow.freshMetrics[metricKey]);
+      const ageMs = roomLiveNow.metricAgeMs && roomLiveNow.metricAgeMs[metricKey];
       let relation = "ok";
       if (band) {
         if (Number.isFinite(band.criticalMin) && value < band.criticalMin) relation = "error";
@@ -9247,12 +9185,14 @@ BATCH (${numBags}×${kgBag} kg):
     const defaultTargets = effectiveRoomBands[selectedClimateRoom] || ROOM_TARGET_BANDS[selectedClimateRoom] || ROOM_TARGET_BANDS.martha_01;
     const demoRoom = DEMO_ROOM_METRICS[selectedClimateRoom] || DEMO_ROOM_METRICS.martha_01;
     const baseMetrics = { temp: demoRoom.temperature_c, rh: demoRoom.rh_pct, co2: demoRoom.co2_ppm, subTemp: demoRoom.substrate_temperature_c, timestamp: "referencia de modelo · sin lectura de sonda" };
-    const physicalMetrics = selectedCamera ? {
-      temp: Number(selectedCamera.liveTemp),
-      rh: Number(selectedCamera.liveHum),
-      co2: Number(selectedCamera.liveCo2),
-      timestamp: "monitor de cámara"
-    } : {};
+    const physicalMetrics = {};
+    if (selectedCamera) {
+      [["temp", "liveTemp"], ["rh", "liveHum"], ["co2", "liveCo2"]].forEach(([k, src]) => {
+        const v = Number(selectedCamera[src]);
+        if (selectedCamera[src] != null && selectedCamera[src] !== "" && Number.isFinite(v)) physicalMetrics[k] = v;
+      });
+      if (Object.keys(physicalMetrics).length) physicalMetrics.timestamp = "monitor de cámara";
+    }
     const injected = injectedClimateReadings[selectedClimateRoom];
     const roomLive = liveTelemetry.roomLive(selectedClimateRoom);
     const liveSample = roomLive && roomLive.sample || {};
@@ -9782,7 +9722,7 @@ BATCH (${numBags}×${kgBag} kg):
       /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-2)", marginBottom: 6 } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "target", size: 13, style: { marginRight: 4 } }), " Setpoints Pareto Minimax Recomendados para Co-Existencia:"),
       /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "T° Pareto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)" } }, coCultRoomOpt.setpoints.tempC, "°C")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "HR Pareto"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)" } }, coCultRoomOpt.setpoints.rhPct, "%")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "CO₂ Límite"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)" } }, coCultRoomOpt.setpoints.co2Ppm, " ppm")), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px", background: "var(--paper-1)", border: "1px solid var(--border-hairline)", borderRadius: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-2)" } }, "VPD Óptimo"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-num)", fontSize: 16, fontWeight: 700, color: "var(--ink-0)" } }, coCultRoomOpt.setpoints.vpdKpa, " kPa"))),
       (coCultRoomOpt.bottlenecks.length > 0 || coCultRoomOpt.penalties.length > 0) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--coral-700)" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "alert", size: 13, color: "var(--status-warn-marker)", style: { marginRight: 4 } }), " Cuellos de Botella Biológicos (Ley del Mínimo de Liebig):"), coCultRoomOpt.bottlenecks.map((b, idx) => /* @__PURE__ */ React.createElement("div", { key: `bn-${idx}`, style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--coral-700)", background: "var(--coral-100)", padding: "4px 8px", borderRadius: 2, border: "1px solid var(--coral-300)" } }, "• ", b)), coCultRoomOpt.penalties.map((p2, idx) => /* @__PURE__ */ React.createElement("div", { key: `pen-${idx}`, style: { fontFamily: "var(--font-sans)", fontSize: 11, color: "var(--ochre-700)", background: "var(--ochre-100)", padding: "4px 8px", borderRadius: 2, border: "1px solid var(--ochre-300)" } }, "• ", p2)))
-    )), liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, climateHealth.alerts.map((al, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, style: {
+    )), liveRoomAlerts.length === 0 && climateHealth.alerts.length > 0 && (hasLiveMetrics || injected) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, climateHealth.alerts.map((al, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, style: {
       padding: "8px 12px",
       borderRadius: "var(--sim-radius-sm)",
       background: al.level === "alert" ? "var(--accent-terracotta-dim)" : "var(--paper-2)",
