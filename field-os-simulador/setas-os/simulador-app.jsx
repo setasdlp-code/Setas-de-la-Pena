@@ -6080,6 +6080,7 @@ function SimuladorShell(props){
     {key:'lab',label:'Laboratorio',tabs:['labExtraction','bioCheck'],icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2v6l-4 8a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-4-8V2M6 2h12M9 14h6"/></svg>}
   ];
   const TAB_PAGE_TITLES={home:'Centro de Mando · Hoy',inicio:'Inicio',catalogo:'Catálogo de especies & Recetario',formular:'Formulador de receta',inventario:'Bodega',produccion:'Preparar mezcla',schedule:'Cronograma de cultivo',clima:'Cámaras & Telemetría IoT',bitacora:'Bitácora de pruebas',metricas:'Métricas de cultivo',bioCheck:'Checklist Digital de Bioseguridad',labExtraction:'Laboratorio de Extracciones & Tinturas'};
+  const [homeDashboard,setHomeDashboard]=useState('today');
   const [mode,setMode]=useState('receta');
   const RECETA_TABS=['catalogo','formular'];
   const CULTIVO_TABS=['inventario','produccion','schedule','clima','bitacora','metricas','labExtraction','bioCheck'];
@@ -13832,17 +13833,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
         {(tab==='home'||tab==='inicio')&&(()=>{
           // Cálculos y Métricas en vivo para el Centro de Mando
-          const totalStockKg = invLotes.filter(l=>l.activo&&INGS.some(i=>i.id===l.ingredienteId)).reduce((s,l)=>s+(Number(l.cantidadKgDisponible)||0),0);
           const criticalStockItems = stockAlerts;
           const lowStockCount = criticalStockItems.length;
-          const totalBolsasCount = bitBolsas.length;
-          const bolsasIncubacion = bitBolsas.filter(b=>b.estado==='sana'&&!b.col100).length;
-          const bolsasFructificacion = bitBolsas.filter(b=>b.estado==='sana'&&b.col100).length;
-          const bolsasContaminadas = bitBolsas.filter(b=>b.estado==='contaminada').length;
-          const totalCosechasKg = bitCosechas.reduce((s,c)=>s+(parseFloat(c.pesoFresco)||0),0)/1000;
-          const totalCosechasCount = bitCosechas.length;
-          const activeRecipeCount = recipe.length;
-          const activeScore = opt?.score ?? (an ? scoreAn(an, { treatment: tr, recipe, stockIds }).score : null);
           const activeLotes = bitLotes.filter(l=>!['completado','descartado'].includes(l.estado));
           const operationalNow = Date.now();
           // La cola sale del motor de tareas: cada fila es una Tarea real con su
@@ -13867,12 +13859,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
           // como key, where/what/why ya resueltos contra el índice de lotes, y
           // objectId/objectType para poder abrir el lote o imprimir su etiqueta.
           const criticalLots=operationalQueue.filter(item=>item.bucket==='critical'||item.bucket==='blocked');
-          const nowLots=operationalQueue.filter(item=>item.bucket==='overdue'||item.bucket==='now');
           const laterLots=operationalQueue.filter(item=>item.bucket==='later'||item.bucket==='context');
 
-          // Ambientes & Sensores: cámaras físicas REALES
-          let camaras=[];
-          try{ camaras=JSON.parse(props.hoyCamarasJson||'[]'); }catch(e){ camaras=[]; }
 
           // Tareas de hoy y Actividad reciente.
           // La lista visible se mapea desde la cola del motor a la forma que este
@@ -13890,8 +13878,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
             objectId:row.objectId,
             objectType:row.objectType,
             fromEngine:true,
+            bucket:row.bucket,
           }));
-          const tasksHoy=motorRows;
+          const tasksHoy=motorRows.filter(row=>!['later','context'].includes(row.bucket));
           try{ recentActivity=JSON.parse(props.recentActivityJson||'[]'); }catch(e){ recentActivity=[]; }
           const prioColor=p=>p==='alta'?'var(--coral-700)':(p==='media'?'var(--ochre-500)':'var(--ink-400)');
 
@@ -14014,12 +14003,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                       <span style={{width:8,height:8,borderRadius:0,background:operationStatus.color,display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:operationStatus.color}}>
-                        CONTROL · TURNO ACTUAL
+                        TURNO ACTUAL
                       </span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>· Tenjo · 2.592 msnm</span>
                     </div>
                     <h1 style={{fontFamily:'var(--font-serif, "Gaya", serif)',fontWeight:700,fontSize:'var(--text-2xl)',lineHeight:1.1,letterSpacing:'-0.01em',color:'var(--ink-0)',margin:0}}>
-                      Tablero de Control
+                      {homeDashboard==='today'?'Hoy':'Seguimiento'}
                     </h1>
                   </div>
                   <span className="home-operation-status" role="status" aria-label={`Estado operativo: ${operationStatus.label}`} style={{color:operationStatus.color}}>
@@ -14043,41 +14032,41 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
               </div>
 
+              <nav className="home-dashboard-switch" aria-label="Vista de inicio">
+                <button type="button" aria-pressed={homeDashboard==='today'} onClick={()=>setHomeDashboard('today')}>Hoy</button>
+                <button type="button" aria-pressed={homeDashboard==='followup'} onClick={()=>setHomeDashboard('followup')}>Seguimiento</button>
+              </nav>
+              {homeDashboard==='today'?<div data-testid="home-essential">
               {/* COLA OPERATIVA DE HOY · 3 BANDAS DE PRIORIDAD (DS-2026 CRITERIO FIELD MODE) */}
-              <div className="home-operational-queue" data-testid="ux-v2-today">
+              <div className="home-operational-queue" data-testid="ux-v2-today" data-has-alerts={liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0}>
 
+                <div className="home-primary-column">
                 {/* ── BANDA 2: AHORA (Tareas del turno en curso & Acciones de campo) ── */}
-                <section className="sdp-band sdp-band--ahora" aria-label="Banda 2: Ahora Turno en Curso">
+                <section className="sdp-band sdp-band--ahora" aria-label="Acciones rápidas">
                   <div className="home-shift-core">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{width:8,height:8,background:'var(--status-ok)',display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-ok)'}}>
-                        Banda 2 · Ahora
+                        Registro de campo
                       </span>
-                      <span className="home-shift-tag">Registro de campo</span>
                     </div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
-                      {nowLots.length + tasksHoy.filter(t=>!t.done).length} pendiente{nowLots.length + tasksHoy.filter(t=>!t.done).length === 1 ? '' : 's'}
-                    </span>
+
                   </div>
 
-                  <h2 className="home-shift-title">Tu turno, en marcha.</h2>
-                  <p className="home-shift-lede">Registra lo que ocurre. Continúa con lo pendiente.</p>
+                  <h2 className="home-shift-title">Acciones rápidas</h2>
+                  <p className="home-shift-lede">Registrar el trabajo de campo.</p>
 
                   {/* Acciones Rápidas con touch target >= 44px */}
                   <div className="home-quick-actions-strip">
                     {[
-                      {label:props.sessionLabel||'Iniciar jornada',sub:props.sessionSub||'Registro de campo',icon:IconFlame,onClick:()=>{
+                      {label:props.sessionLabel||'Iniciar jornada',sub:'Abrir el registro del turno',icon:IconFlame,onClick:()=>{
                         const hasActiveSession=props.hasActiveSession===true||props.hasActiveSession==='true';
                         if(hasActiveSession) props.onContinueSession&&props.onContinueSession();
                         else props.onStartSession&&props.onStartSession();
                       },jornada:true},
                       {label:'Escanear lote',sub:'Registro de campo por QR',icon:IconTarget,tab:'registro',onClick:()=>openFieldScanSheet(),pri:true},
-                      {label:'Entrada a Bodega',sub:'Compras & stock FIFO',icon:IconBox,tab:'inventario',onClick:()=>{goTab('inventario');setInvTab('compra');}},
-                      {label:'Formular Sustrato',sub:'Balance C:N & Perito',icon:IconBolt,tab:'formular',onClick:()=>goTab('formular')},
-                      {label:'Preparación para producción',sub:`${productionReadiness.counts.blocked} bloqueados · ${productionReadiness.counts.unknown} sin verificar`,icon:IconBox,onClick:openProductionReadiness},
-                      {label:'Registrar Evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
+                      {label:'Registrar evento',sub:'Observación, traslado o corrección',icon:IconEdit,onClick:()=>props.onGoSesion&&props.onGoSesion()}
                     ].map(btn=>{
                       const accent=btn.jornada?'var(--accent-terracotta)':(btn.pri?'var(--accent-olive)':null);
                       return (
@@ -14112,40 +14101,16 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     })}
                   </div>
 
-                  {/* Lotes activos que requieren acción ahora (overdue o now) */}
-                  {nowLots.length > 0 && (
-                    <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:12}}>
-                      {nowLots.map(item => (
-                        <div key={item.taskId} className="sdp-task sdp-task--now" style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',padding:'10px 14px',gap:12}}>
-                          <div className="sdp-task__body">
-                            <div style={{display:'flex',alignItems:'center',gap:8}}>
-                              <span className="sdp-badge sdp-badge--ok" style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,textTransform:'uppercase',color:'var(--status-ok)',border:'1px solid var(--status-ok)',padding:'1px 5px'}}>
-                                {item.bucket === 'overdue' ? 'Vencido' : 'Ahora'}
-                              </span>
-                              <span className="sdp-task__title">{item.what}</span>
-                            </div>
-                            <div className="sdp-task__meta">{item.where} · {item.why}</div>
-                          </div>
-                          <div style={{display:'flex',alignItems:'center',gap:8}}>
-                            <button className="sdp-btn sdp-btn--field sdp-btn--primary" type="button" onClick={()=>item.objectType==='batch'&&openBatchDetail(item.objectId)}>
-                              Ejecutar transición →
-                            </button>
-                            <button className="sdp-btn sdp-btn--field" type="button" title="Imprimir etiquetas térmicas del lote" onClick={()=>item.objectType==='batch'&&openThermalForLote(item.objectId)}>
-                              <AppIcon name="print" size={15} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  </div>
+                </section>
 
+                <section className="home-pending-panel" aria-labelledby="today-pending-title" data-testid="today-pending-panel">
+                  <div className="home-panel-heading">
+                    <h2 id="today-pending-title">Tareas del turno</h2>
+                    <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
+                  </div>
                   {/* Tareas del día (checklist de turno) */}
                   <div>
-                    <div style={{fontFamily:'var(--font-mono)',fontSize:'11px',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)',marginBottom:8}}>
-                      {/* El contador tiene que contar LO QUE SE VE, no una prop
-                          suelta que puede no coincidir con la lista del motor. */}
-                      Checklist del Turno · <span data-testid="cockpit-task-count">{(()=>{const n=tasksHoy.filter(t=>!t.done).length;return `${n} pendiente${n===1?'':'s'}`;})()}</span>
-                    </div>
                     {tasksHoy.length === 0 ? (
                       <div style={{textAlign:'center',padding:'16px',color:'var(--ink-2)',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',border:'1px dashed var(--line-0)',borderRadius:0,display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
                         <span>Sin tareas registradas para hoy.</span>
@@ -14156,7 +14121,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     ) : (
                       <div style={{display:'flex',flexDirection:'column',gap:6}}>
                         {tasksHoy.map(t => (
-                          <div key={t.key} className="sdp-task" style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
+                          <div key={t.key} className={`sdp-task ${t.bucket==='now'||t.bucket==='overdue'?'sdp-task--now':''}`} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 12px 4px 4px',border:'1px solid var(--line-0)',borderRadius:0,opacity:t.done?0.5:1}}>
                             {/* 48×48: es una acción de campo y se toca con guantes
                                 (estándar del proyecto, MOBILE_A11Y_REVIEW). */}
                             <button onClick={()=>t.fromEngine?closeTaskFromCheckbox(t):(props.onTaskToggle&&props.onTaskToggle(t.key))} aria-pressed={t.done} aria-label={`Marcar tarea: ${t.title}`}
@@ -14168,6 +14133,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                               <span className="sdp-task__meta" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}><span style={{fontFamily:'var(--font-mono)'}}>{t.id}</span> · {t.why}</span>
                               {t.action&&<span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:'var(--accent-terracotta)'}}>{t.action} →</span>}
                             </button>
+                            {t.fromEngine&&t.objectType==='batch'&&<button type="button" className="home-task-print" aria-label={`Imprimir etiquetas de ${t.id}`} onClick={()=>openThermalForLote(t.objectId)}><AppIcon name="print" size={15}/></button>}
                             <span style={{flexShrink:0,fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,textTransform:'uppercase',letterSpacing:'var(--tracking-button)',color:prioColor(t.prio),border:`1px solid ${prioColor(t.prio)}`,padding:'2px 7px',borderRadius:0}}>{t.prio}</span>
                           </div>
                         ))}
@@ -14175,6 +14141,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
                     )}
                   </div>
 
+                </section>
+
+                <section className="home-session-panel" aria-labelledby="today-session-title" data-testid="today-session-panel">
+                  <h2 id="today-session-title">Sincronización y jornada</h2>
+                  {props.sessionSub&&<p className="home-session-description">{props.sessionSub}</p>}
                   {/* El estado de sincronización va en la pantalla de inicio, no
                       sólo en el detalle del lote: el operario tiene que poder ver
                       desde donde trabaja si algo quedó sin subir, sin navegar a
@@ -14203,20 +14174,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                       Cerrar jornada
                     </button>
                   </div>
-                  </div>
                 </section>
+                </div>
 
-                <aside className="home-context" aria-label="Contexto del turno">
+                {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0)&&<aside className="home-context" aria-label="Contexto del turno">
                 {/* ── BANDA 1: ATENCIÓN (Excepciones fuera de banda, anomalías y cuarentena) ── */}
                 {(liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length > 0) && (
-                <section className="sdp-band sdp-band--atencion" aria-label="Banda 1: Atención Inmediata" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-error)',padding:'16px 18px'}}>
+                <section className="sdp-band sdp-band--atencion" aria-label="Alertas del cultivo" style={{background:'var(--surface-page)',border:'1px solid var(--border-heavy)',borderLeft:'5px solid var(--status-error)',padding:'16px 18px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{width:8,height:8,background:'var(--status-error)',display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--status-error)'}}>
-                        Banda 1 · Atención
+                        Alertas del cultivo
                       </span>
-                      <span className="sdp-provenance">Sensores · Sincronización · Cuarentena · Insumos</span>
+                      <span className="sdp-provenance">Sensores, lotes e insumos</span>
                     </div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
                       {liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length} excepción{liveTelemetry.alerts.length + todayExceptions.length + criticalStockItems.length + criticalLots.length === 1 ? '' : 'es'}
@@ -14277,7 +14248,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         </div>
                       </div>
                       <button type="button" onClick={() => { setInvTab('compra'); goTab('inventario'); }} style={{background:'none',border:'none',color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,textDecoration:'underline',cursor:'pointer',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center'}}>
-                        Registrar Compra +
+                        Registrar compra
                       </button>
                     </div>
                   )}
@@ -14318,7 +14289,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 )}
 
 
-                <div className="home-overview"><h2>La operación, de un vistazo</h2>
+                </aside>}
+              </div>
+              </div>:<section className="home-followup" data-testid="home-followup" aria-label="Seguimiento del cultivo">
+                <div className="home-overview"><h2>Resumen del cultivo</h2>
                 <dl className="home-kpi-grid" aria-label="Resumen operativo">
                   {[
                     {value:activeLotes.length,label:'Lotes activos'},
@@ -14332,51 +14306,29 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   ))}
                 </dl>
                 </div>
-                <div className="home-context-label">Consultar</div>
-                <details className="home-secondary-summary" data-testid="today-record-summary">
-                  <summary>Resumen del registro de cultivo</summary>
-                <div className="home-registro-row" style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:12,marginTop:14,paddingTop:14,borderTop:'1px solid var(--border-hairline)'}}>
-                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-widest, 0.12em)',textTransform:'uppercase',color:'var(--ink-2)',flexShrink:0}}>
-                    Registro de cultivo · vista previa
-                  </span>
-                  <div style={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:8,flex:1}}>
-                    {[
-                      {label:'Eventos',value:!metricsLoadError&&bitLotesLoaded?metricsData.events.length:'—',onClick:()=>goMetrics('eventos')},
-                      {label:'Rendimiento (EB)',value:metricsLoadError?'Sin datos':metricsData.meanEB==null?'Sin finales':`${metricsData.meanEB.toFixed(1)}%`,onClick:()=>goMetrics('rendimiento')},
-                      {label:'Trabajo',value:'Sin datos',onClick:()=>goMetrics('trabajo')},
-                      {label:'Supervisión',value:!metricsLoadError&&bitLotesLoaded?metricsData.issues.filter(i=>!i.review).length:'—',onClick:()=>goMetrics('supervision')},
-                      {label:'Cosechas',value:bitLotesLoaded?`${metricsData.freshKg.toFixed(2)} kg`:'—',onClick:()=>goMetrics('salidas')}
-                    ].map(m=>(
-                      <button key={m.label} onClick={()=>m.onClick&&m.onClick()} className="home-registro-chip" style={{cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5,background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'6px 12px',minHeight:44,minWidth:44}}>
-                        <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>{m.label}</span>
-                        <span style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-sm)',color:m.color||'var(--ink-0)'}}>{m.value}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={()=>props.onGoRegistro&&props.onGoRegistro()} style={{cursor:'pointer',background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--accent-terracotta)',flexShrink:0,whiteSpace:'nowrap'}}>Ver registro completo →</button>
+              <section className="home-followup-tools" aria-labelledby="home-tools-title">
+                <h2 id="home-tools-title">Consultar y preparar</h2>
+                <div className="home-tools-grid">
+                  {[
+                    {label:'Lotes',sub:'Estado y registro por lote',go:()=>{goTab('bitacora');goBitTab('bit_dash',true);}},
+                    {label:'Salas',sub:'Lecturas, alertas y sensores',go:()=>goTab('clima')},
+                    {label:'Métricas',sub:'Cosechas, rendimiento y eventos',go:()=>goMetrics('eventos')},
+                    {label:'Bodega',sub:'Entradas y existencias',go:()=>{goTab('inventario');setInvTab('compra');}},
+                    {label:'Formular sustrato',sub:'Composición y evaluación de la mezcla',go:()=>goTab('formular')},
+                    {label:'Revisar preparación',sub:'Insumos y requisitos de producción',go:openProductionReadiness},
+                  ].map(item=><button type="button" key={item.label} onClick={item.go}><strong>{item.label}</strong><span>{item.sub}</span></button>)}
                 </div>
-
-                </details>
-                <details className="home-secondary-summary" data-testid="today-telemetry-summary">
-                  <summary>Lecturas de salas y conexión</summary>
-                <div className="home-live-telemetry" style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--paper-300)'}}>
-                  <LiveTelemetryStatusBar/>
-                  <LiveClimateStrip/>
-                </div>
-
-                </details>
-
+              </section>
                 {/* ── BANDA 3: DESPUÉS (Transiciones programadas & Monitoreo) ── */}
                 <details className="home-secondary-summary" data-testid="today-planning-summary">
-                  <summary>Próximas tareas <span className="home-summary-count">{laterLots.length}</span></summary>
-                <section className="sdp-band sdp-band--despues" aria-label="Banda 3: Después y Monitoreo">
+                  <summary>Tareas programadas <span className="home-summary-count">{laterLots.length}</span></summary>
+                <section className="sdp-band sdp-band--despues" aria-label="Tareas programadas">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{width:8,height:8,background:'var(--text-secondary)',display:'inline-block'}}></span>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--text-secondary)'}}>
-                        Banda 3 · Después
+                        Seguimiento de lotes
                       </span>
-                      <span className="sdp-provenance">Planificación / Tarde</span>
                     </div>
                     <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>
                       {laterLots.length} programado{laterLots.length === 1 ? '' : 's'}
@@ -14411,154 +14363,20 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   )}
                 </section>
                 </details>
-                </aside>
-              </div>
-
-              {/* SECCIÓN B: SEGUIMIENTO DE LOTES POR FASE — Ciclo Biológico en ancho completo */}
-              <div className="home-lots-shell"><div className="home-lots-core" style={{
-                background:'var(--paper-0)',
-                border:'none',
-                borderRadius:26,
-                padding:'24px',
-                boxShadow:'none'
-              }}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:16,flexWrap:'wrap',gap:8}}>
-                  <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                      SECCIÓN B · CICLO BIOLÓGICO TENJO
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                      Seguimiento de Lotes por Fase
-                    </h2>
-                  </div>
-                  <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
-                    Ciclo total promedio: ~42–48 días
-                  </div>
-                </div>
-
-                {bitLotes.length>0 ? (()=>{
-                  const columnas = [
-                    {key:'incubacion',title:'Incubación',sub:'Días 1–18 · Oscuridad 22–24°C',accent:'var(--ink-2)',icon:IconSprout,linkTab:'bitacora'},
-                    {key:'primordios',title:'Primordios',sub:'Colonización 100% · Espera de shock térmico',accent:'var(--accent-terracotta)',icon:IconSnowflake,linkTab:'schedule'},
-                    {key:'fruta',title:'Fructificación & Cosecha',sub:'Días 24–45 · Cosecha en botón/sombrero',accent:'var(--accent-olive)',icon:IconMushroom,linkTab:'bitacora'},
-                    {key:'post',title:'Post-Cosecha',sub:'2°/3° flush · Trazabilidad de EB',accent:'var(--ink-0)',icon:IconScale,linkTab:'catalogo'}
-                  ];
-                  const clasificados = bitLotes.filter(l=>l.estado!=='descartado').map(lote=>{
-                    const stats = calcLoteStats(lote.id);
-                    const bolsasLote = bitBolsas.filter(b=>b.loteId===lote.id);
-                    const sanas = bolsasLote.filter(b=>b.estado==='sana');
-                    const colonizado = sanas.length>0 && sanas.every(b=>!!b.col100);
-                    const columna = lote.estado==='completado'?'post':lote.estado==='fructificacion'?'fruta':(colonizado?'primordios':'incubacion');
-                    const inoculated = Date.parse(lote.fechaInoculacion||'');
-                    const age = Number.isFinite(inoculated)?Math.max(0,Math.floor((operationalNow-inoculated)/86400000)):null;
-                    return {lote,stats,columna,age,colonizado};
-                  });
-                  return (
-                    <div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))',gap:14}}>
-                        {columnas.map(col=>{
-                          const items = clasificados.filter(c=>c.columna===col.key);
-                          return (
-                            <div key={col.key} style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderTop:`3px solid ${col.accent}`,borderRadius:0,padding:'14px',display:'flex',flexDirection:'column',gap:10,minHeight:120}}>
-                              <button onClick={()=>goTab(col.linkTab)} style={{background:'none',border:'none',padding:0,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
-                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
-                                  <span style={{display:'inline-flex',alignItems:'center',gap:6,color:col.accent}}>
-                                    <col.icon size={13}/>
-                                    <span style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-0)'}}>{col.title}</span>
-                                  </span>
-                                  <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-1)'}}>{items.length}</span>
-                                </div>
-                                <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',lineHeight:1.3}}>{col.sub}</div>
-                              </button>
-                              <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                                {items.length===0 && <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)',fontStyle:'italic'}}>Sin lotes</div>}
-                                {items.map(({lote:lt,stats,age,colonizado})=>{
-                                  const contamLvl = stats ? contamLevelOf(stats.contPct) : null;
-                                  const critical = contamLvl==='red' || contamLvl==='stop'; // KB: >10 % rojo, >=15 % parada
-                                  const contaminated = stats && stats.contPct>0;
-                                  return (
-                                    <button
-                                      key={lt.id}
-                                      data-lote-id={lt.id}
-                                      aria-label={`Abrir lote ${lt.codigo} · ${lt.especie||'sin especie'}`}
-                                      onClick={()=>{setBitActiveLoteId(lt.id);goTab('bitacora');goBitTab('bit_ficha',true);}}
-                                      className={`sdp-lote home-lote-card ${critical?'sdp-lote--error':contaminated?'sdp-lote--warn':'sdp-lote--ok'}`}
-                                      style={{
-                                        display:'flex',flexDirection:'column',gap:4,
-                                        padding:'9px 10px',
-                                        background:'var(--paper-0)',
-                                        border:`1px solid ${critical?'var(--accent-terracotta)':'var(--line-0)'}`,
-                                        borderRadius:0,
-                                        cursor:'pointer',
-                                        textAlign:'left',
-                                        fontFamily:'inherit',
-                                        width:'100%'
-                                      }}
-                                    >
-                                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-                                        <span className="sdp-lote__id" style={{fontFamily:'var(--font-mono)',fontWeight:700,fontSize:'var(--text-xs)',color:'var(--ink-0)'}}>{lt.codigo}</span>
-                                        {age!=null && <span className="sdp-plateline" style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>día {age}</span>}
-                                      </div>
-                                      <div className="sdp-species sdp-species--compact" style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-1)'}}>
-                                        <span className="sdp-species__common" style={{fontSize:'var(--text-xs)'}}>{lt.especie}</span>
-                                        <span className="sdp-statusline" style={{fontSize:'var(--text-2xs)'}}> · {lt.numBolsas || 1} bolsas</span>
-                                      </div>
-                                      <div className="sdp-lote__status" style={{marginTop:2}}>
-                                        <span className="sdp-lote__state" style={{fontSize:'var(--text-micro)'}}>{col.title}</span>
-                                        <span className="sdp-lote__bar"><span style={{width: colonizado ? '100%' : '65%'}}></span></span>
-                                      </div>
-                                      {(contaminated||stats?.totalFresco>0) && (
-                                        <div className="sdp-lote__meta" style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-                                          {contaminated && (
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:0,color:critical?'var(--accent-terracotta)':'var(--ink-1)',background:critical?'color-mix(in oklab,var(--accent-terracotta) 14%,var(--paper-0))':'color-mix(in oklab,var(--ink-2) 12%,var(--paper-0))'}}>
-                                              {stats.contPct.toFixed(0)}% contam.
-                                            </span>
-                                          )}
-                                          {stats?.totalFresco>0 && (
-                                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',color:'var(--accent-olive)',fontWeight:700}}>
-                                              {stats.totalFresco.toFixed(2)} kg
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })() : (
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-                    <span style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
-                      No hay lotes activos. Iniciar un nuevo lote desde la Ficha de Producción o la Bitácora.
-                    </span>
-                    <button onClick={()=>{setBitNuevoForm(p=>Object.keys(p).length?p:buildBitNuevoForm());setShowBitNuevo(true);}} className="sdp-btn sdp-btn--field sdp-btn--primary" style={{padding:'8px 16px',minHeight:44,minWidth:44,cursor:'pointer'}}>
-                      + Iniciar Primer Lote
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              </div>
-
               {/* COPILOTO DE CULTIVO — compone biological-clock / contamination-risk /
                   harvest-calendar / vision-diagnosis. Se oculta por completo si el
                   motor o los datos no están disponibles (nunca rompe Hoy). */}
               {(copilotBriefing || (typeof window !== 'undefined' && window.SetasVisionDiagnosis)) && (
                 <details className="home-secondary-summary home-cultivation-copilot" data-testid="today-copilot-summary">
-                  <summary>Copiloto de cultivo <span className="home-summary-meta">Sugerencias heurísticas · {copilotTopActions.length}</span></summary>
+                  <summary>Recomendaciones de cultivo <span className="home-summary-meta">Sugerencias heurísticas · {copilotTopActions.length}</span></summary>
                   <div className="home-disclosure-body">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12,flexWrap:'wrap',gap:8}}>
                     <div>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                        Copiloto de cultivo · sugerencias heurísticas
+                        Sugerencias heurísticas
                       </span>
                       <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                        Próximas mejores acciones
+                        Acciones sugeridas
                       </h2>
                     </div>
                     {copilotBriefing && copilotBriefing.harvestCalendar && (
@@ -14637,10 +14455,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {typeof window !== 'undefined' && window.SetasVisionDiagnosis && (
                     <div style={{marginTop:copilotBriefing?18:0,paddingTop:copilotBriefing?16:0,borderTop:copilotBriefing?'1px solid var(--border-hairline)':'none'}}>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--ink-2)',marginBottom:8}}>
-                        Cribado de foto (bolsa/bloque)
+                        Revisión visual de bolsas
                       </div>
                       <label style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer',background:'var(--paper-1)',border:'1px solid var(--border-hairline)',borderRadius:0,padding:'8px 12px',minHeight:44,fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                        {copilotVisionBusy ? 'Analizando…' : 'Tomar/elegir foto'}
+                        {copilotVisionBusy ? 'Analizando…' : 'Añadir foto'}
                         <input type="file" accept="image/*" capture="environment" onChange={handleCopilotPhotoChange} style={{display:'none'}} disabled={copilotVisionBusy} />
                       </label>
 
@@ -14677,79 +14495,6 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </details>
               )}
 
-              {/* SECCIÓN C: AMBIENTES & SENSORES — Tira compacta de cámaras */}
-              <details className="home-secondary-summary" data-testid="today-rooms-summary">
-                <summary>Cámaras de cultivo <span className="home-summary-count">{camaras.length}</span></summary>
-                <div className="home-disclosure-body">
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
-                  <div>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                      SECCIÓN C · AMBIENTES & SENSORES
-                    </span>
-                    <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                      Cámaras de Cultivo
-                    </h2>
-                  </div>
-                  <button onClick={()=>goTab('clima')} style={{background:'none',border:'none',padding:'8px 12px',minHeight:44,minWidth:44,display:'inline-flex',alignItems:'center',cursor:'pointer',fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--accent-terracotta)',fontWeight:700}}>
-                    Ver Cámaras & IoT ({camaras.length}) →
-                  </button>
-                </div>
-
-                {camaras.length===0 ? (
-                  <div style={{border:'1px dashed var(--line-0)',borderRadius:0,padding:'16px',textAlign:'center',fontFamily:'var(--font-sans)',fontSize:'var(--text-xs)',color:'var(--ink-2)'}}>
-                    Sin datos de cámaras disponibles.
-                  </div>
-                ) : (
-                  <div className="home-ambient-strip">
-                    {camaras.map(c=>(
-                      <div key={c.id} className="sdp-tele ambient-chamber-card" style={{borderLeft:`4px solid ${c.estadoAccent||'var(--ink-2)'}`}}>
-                        <div style={{minWidth:0,flex:1}}>
-                          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
-                            <span style={{display:'inline-flex',color:c.estadoAccent||'var(--ink-2)'}}><IconCamera size={13}/></span>
-                            <strong style={{fontFamily:'var(--font-sans)',fontWeight:700,fontSize:'var(--text-sm)',color:'var(--ink-0)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{c.name}</strong>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,padding:'1px 5px',borderRadius:0,background:'var(--status-active-bg)',color:'color-mix(in oklab, var(--accent-olive) 75%, black)',textTransform:'uppercase'}}>
-                              {c.estadoLabel}
-                            </span>
-                          </div>
-                          <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--ink-2)'}}>
-                            Zona {c.zona} · {c.sppName} · {c.occupancy}% cap.
-                          </div>
-                          {c.hasLiveAlert && (
-                            <div style={{fontFamily:'var(--font-sans)',fontSize:'var(--text-2xs)',color:'var(--accent-terracotta)',marginTop:2,fontWeight:700}}>
-                              <AppIcon name="alert" size={11} color="var(--accent-terracotta)" style={{marginRight:4}} /> {c.liveAlertNote}
-                            </div>
-                          )}
-                        </div>
-
-                        <div style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
-                          <div style={{display:'flex',gap:6,textAlign:'center',fontFamily:'var(--font-mono)'}}>
-                            <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveTemp}°C
-                            </span>
-                            <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveHum}%
-                            </span>
-                            <span style={{background:'var(--paper-1)',border:'1px solid var(--line-0)',borderRadius:0,padding:'4px 6px',fontSize:'var(--text-xs)',fontWeight:700,color:'var(--ink-0)'}}>
-                              {c.liveCo2} <span className="chem" style={{fontSize:'var(--text-micro)',color:'var(--ink-2)'}}>CO₂ ppm</span>
-                            </span>
-                          </div>
-                          <button onClick={()=>props.onOpenCamara&&props.onOpenCamara(c.id)} title="Abrir detalle de cámara" style={{cursor:'pointer',background:'none',border:'none',padding:4,color:'var(--ink-2)',display:'grid',placeItems:'center'}}>
-                            <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',fontWeight:700,color:'var(--accent-terracotta)'}}>→</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              </details>
-
-
-              {/* SECCIÓN D: ACTIVIDAD RECIENTE — Tareas de hoy se movió a Sección A, junto
-                  a Acciones Rápidas. Cada evento es un botón: lleva directo al lote/
-                  contenedor/cámara de origen vía props.onActivityGo(container, type) —
-                  se pasa el tipo porque los eventos 'clima' no guardan un id de
-                  contenedor sino un nombre de cámara (se resuelve del otro lado). */}
               {recentActivity.length>0 && (
                 <details className="home-secondary-summary" data-testid="today-activity-summary">
                   <summary>Actividad reciente <span className="home-summary-count">{recentActivity.length}</span></summary>
@@ -14757,10 +14502,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
                     <div>
                       <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',fontWeight:700,letterSpacing:'var(--tracking-button)',textTransform:'uppercase',color:'var(--ink-2)'}}>
-                        SECCIÓN D · SEGUIMIENTO DEL DÍA
+                        REGISTRO DEL DÍA
                       </span>
                       <h2 style={{fontFamily:'var(--font-serif)',fontWeight:700,fontSize:'var(--sim-text-xl)',letterSpacing:'-0.01em',color:'var(--ink-0)',marginTop:2,marginBottom:0}}>
-                        Actividad Reciente
+                        Actividad reciente
                       </h2>
                     </div>
                   </div>
@@ -14784,6 +14529,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 </div>
                 </details>
               )}
+
+              </section>}
 
             </div>
           );

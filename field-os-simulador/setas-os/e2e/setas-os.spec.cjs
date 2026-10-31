@@ -67,7 +67,7 @@ test.describe('desktop navigation contract', () => {
     await expectWorkspace(page, 'bitacora', 'Lotes');
 
     await workspaceButton(page, 'control').click();
-    await expectWorkspace(page, 'control', 'Tablero de Control');
+    await expectWorkspace(page, 'control', 'Hoy');
   });
 
   test('internal React tab changes remain synchronized with shell navigation', async ({ page }) => {
@@ -269,7 +269,7 @@ test.describe('desktop navigation contract', () => {
       await expectWorkspace(page, 'bitacora', 'Lotes');
 
       await workspaceButton(page, 'control').click();
-      await expectWorkspace(page, 'control', 'Tablero de Control');
+      await expectWorkspace(page, 'control', 'Hoy');
 
       await workspaceButton(page, 'formular').click();
       await expectWorkspace(page, 'formular', 'Formular');

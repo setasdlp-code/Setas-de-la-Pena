@@ -50,20 +50,20 @@ test('cockpit Hoy is structured into 3 explicit priority bands in Field mode', (
 
   // Banda 1: ATENCIÓN (sensor anomalies, critical stock, quarantine/blocked lots)
   assert.match(source, /sdp-band--atencion/);
-  assert.match(source, /Banda 1 · Atención/);
-  assert.match(source, /Sensores · Sincronización · Cuarentena · Insumos/);
+  assert.match(source, /Alertas del cultivo/);
+  assert.match(source, /Sensores, lotes e insumos/);
   assert.match(source, /sdp-task--critical/);
 
   // Banda 2: AHORA (shift actions, now lots, shift checklist)
   assert.match(source, /sdp-band--ahora/);
-  assert.match(source, /Banda 2 · Ahora/);
+  assert.match(source, /Acciones rápidas/);
   assert.match(source, /Registro de campo/);
   assert.match(source, /sdp-task--now/);
 
   // Banda 3: DESPUÉS (scheduled later transitions, monitoring)
   assert.match(source, /sdp-band--despues/);
-  assert.match(source, /Banda 3 · Después/);
-  assert.match(source, /Planificación \/ Tarde/);
+  assert.match(source, /Tareas programadas/);
+  assert.match(source, /Seguimiento de lotes/);
   assert.match(source, /sdp-task--later/);
 });
 

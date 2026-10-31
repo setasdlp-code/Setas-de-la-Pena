@@ -230,7 +230,7 @@ test('Hoy quick actions only cover destinations with no equivalent CTA in Espaci
   // pestañas que "Ir al Formulador", "Ver Bitácora" y "Ficha de Mezclado" en
   // Espacios de Trabajo, duplicando destino sin más contexto. Quedan solo los
   // accesos que esa sección no cubre.
-  assert.match(source, /label:'Escanear lote'[\s\S]*label:'Entrada a Bodega'/);
+  assert.match(source, /label:'Escanear lote'[\s\S]*label:'Registrar evento'/);
   assert.doesNotMatch(source, /label:'Formular Receta'/);
   assert.doesNotMatch(source, /label:'Lotes',sub:'Crear y gestionar lotes'/);
   assert.doesNotMatch(source, /label:'Módulos de cultivo'/);
@@ -455,10 +455,9 @@ test('climate dashboard generates and exports customizable ESPHome firmware YAML
   assert.match(styles, /\.sim-root \.esp32-code-preview/);
 });
 
-test('home lot cards scope colonizado properly without ReferenceError', () => {
-  assert.match(source, /return \{lote,stats,columna,age,colonizado\};/);
-  assert.match(source, /items\.map\(\(\{lote:lt,stats,age,colonizado\}\)=>\{/);
-  assert.match(source, /width: colonizado \? '100%' : '65%'/);
+test('home usa el tablero de lotes existente en vez de duplicar sus tarjetas', () => {
+  assert.doesNotMatch(source, /className=\{`sdp-lote home-lote-card/);
+  assert.match(source, /label:'Lotes'[\s\S]{0,150}goBitTab\('bit_dash',true\)/);
 });
 
 // ── Libro de reservas de inventario (inventory-ledger.js) ──────────────────
