@@ -75,19 +75,18 @@ La voz despierta apetito con ingredientes y acciones: «Shiitake, maíz dorado y
 
 ## 4. Firma
 
-**Setas** en Gaya Bold + **de la Peña** en Gaya Medium: conserva la construcción de la firma usada en la web.
+**Decisión de Sebastián, 31 de octubre de 2026:** en los materiales gráficos, usar la firma original proporcionada en [`firma-setas-de-la-pena-original.png`](../08_brand/ds-2026/brand-kit/assets/firma-setas-de-la-pena-original.png). Su composición en minúsculas, en dos líneas, con «de la» en cursiva y «peña» de mayor tamaño, debe conservarse tal como aparece en el archivo. No sustituirla por texto reescrito ni por las firmas Gaya de exploración. El nombre de la marca en texto corrido sigue siendo «Setas de la Peña».
 
-- **Horizontal:** cabecera, ficha ancha y firma de contacto.
-- **Apilada:** portada, pieza cuadrada y frente de empaque. Dos líneas completas: «Setas» / «de la Peña».
-- **Colores:** musgo sobre papel; tinta para una tinta; papel sobre musgo o tinta.
+- Usar el PNG original con transparencia sobre un fondo que permita leerlo; conservar proporciones y detalles. El archivo disponible es rasterizado (1961 × 1015 px), no un vector maestro.
+- Comprobar legibilidad y calidad a escala en cada soporte. Las variantes inversas, horizontales o vectoriales todavía no están definidas ni aprobadas; desarrollarlas sin alterar el diseño y validarlas antes de su uso.
 - El grabado acompaña al producto; no se incorpora una especie al wordmark.
 - No introducir un isotipo o monograma para sustituir el nombre. El icono de hongo existente sigue siendo un recurso de interfaz, no un símbolo exclusivo declarado.
 
-Zona de protección: **media altura de la S** alrededor, además del margen del SVG. No recortar al contorno, deformar, rotar, añadir sombras o recolorear fuera del sistema.
+Dejar espacio libre alrededor de la firma. No deformar, rotar, alterar la composición ni añadir sombras; no recortar sus elementos.
 
-Mínimos de referencia para esta composición: horizontal **180 px / 45 mm**, apilada **120 px / 30 mm**. Comprobar en el soporte real. En etiquetas pequeñas, omitir la frase principal antes de reducir el nombre. La revisión PDF no equivale a una prueba física.
+Los mínimos de la antigua firma Gaya no son aplicables a este archivo. En etiquetas pequeñas, comprobar el nombre completo y omitir elementos secundarios antes de reducirlo. La revisión en pantalla no equivale a una prueba física.
 
-Los seis SVG tienen contornos, fondo transparente y hashes registrados. Son recursos internos de revisión. [SOURCES.md](../08_brand/ds-2026/SOURCES.md) describe archivos Gaya de prueba y no documenta licencia comercial. **Confirmar la licencia de Gaya para logotipo y web antes de distribución o producción.** Convertir a contornos no resuelve la licencia. No se añaden binarios tipográficos al kit.
+Los seis SVG Gaya del kit son exploraciones anteriores, no la firma seleccionada. [SOURCES.md](../08_brand/ds-2026/SOURCES.md) describe archivos Gaya de prueba y no documenta licencia comercial. **Confirmar los derechos de uso de la firma recibida y la licencia de Gaya donde siga utilizándose antes de producción o distribución.** Convertir un diseño a contornos no resuelve la licencia.
 
 ## 5. Tipografía y color
 
@@ -95,7 +94,7 @@ Los seis SVG tienen contornos, fondo transparente y hashes registrados. Son recu
 
 | Familia | Función |
 | --- | --- |
-| Gaya Patched | Firma, titulares y especie; itálica para nombre científico |
+| Gaya Patched | Titulares y especie; itálica para nombre científico. Su licencia comercial sigue pendiente de verificación. |
 | IBM Plex Sans | Lectura, navegación, instrucciones y acciones |
 | IBM Plex Mono | Cantidades, códigos y rótulos breves; no párrafos |
 
@@ -166,7 +165,7 @@ Frase: Del micelio a la mesa.
 Descriptor: Hongos para cocinar con criterio.
 DS: 08_brand/ds-2026/market.css
 Tipos: Gaya / IBM Plex Sans / IBM Plex Mono
-Firma: Setas Bold + de la Peña Medium
+Firma gráfica: archivo original en minúsculas, en dos líneas (ver §4)
 Especie: grabado micológico; cocina: gouache con lápiz
 Datos comerciales: solo confirmados
 Kit: 08_brand/ds-2026/brand-kit/

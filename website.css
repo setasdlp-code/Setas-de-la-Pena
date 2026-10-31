@@ -555,3 +555,9 @@ sup a { font: 400 12px/1 var(--font-mono); padding-inline: 3px; text-underline-o
   :is(.home-page, .species-page, .recipes-page) :is(a, .text-link, .sdp-btn, .filter, summary) { transition: none; }
   .specimen-button:focus-visible img, .home-page .specimen-button:focus-visible img { transform: none; }
 }
+
+/* Firma original aprobada para materiales gráficos. */
+.wordmark { align-items: center; line-height: 0; }
+.wordmark img { display: block; width: 180px; height: auto; }
+footer .wordmark img { width: 160px; }
+@media (max-width: 650px) { .masthead .wordmark img { width: 158px; } }

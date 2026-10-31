@@ -205,3 +205,7 @@ code { font: 400 13px/1.5 var(--font-mono); }
   .sdp-editorial-card__image { height: 65mm; }
   .sdp-chef-brief { break-before: page; }
 }
+
+/* La firma seleccionada conserva la proporción de su archivo original. */
+.brand-name img { display: block; width: 180px; height: auto; }
+.signature-card img, .sdp-ingredient-sheet__header img, .sdp-editorial-card__header img { height: auto; max-width: 100%; }
