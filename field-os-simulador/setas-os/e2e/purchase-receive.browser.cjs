@@ -150,8 +150,56 @@ const stockDe=async(page,id)=>page.evaluate(ing=>{
   const textoHistorial=await filaHistorial.innerText();
   assert.match(textoHistorial,/Recibida/i,`el historial no marca la compra como Recibida: ${textoHistorial}`);
 
+  // Importar evidencia histórica no acredita kilos, precio ni saldo actual.
+  // Probar la UI real también evita confundir el total parcial del mes con
+  // un total completo, sin ocultar las compras gratuitas documentadas.
+  const historyPage=await browser.newPage({viewport:{width:1280,height:900}});
+  historyPage.on('pageerror',e=>errores.push(e.message));
+  await historyPage.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+  await historyPage.addInitScript(()=>{
+    localStorage.setItem('sdp_seeded','1');
+    localStorage.setItem('sdp_lotes',JSON.stringify([{id:'saldo',ingredienteId:'paja_trigo',activo:true,cantidadKgTotal:5,cantidadKgDisponible:5,precioPorKgCOP:1000,fechaIngreso:'2026-01-01'}]));
+    localStorage.setItem('sdp_proveedores',JSON.stringify([{id:'prov',nombre:'Proveedor de prueba',tipo:'directo'}]));
+    localStorage.setItem('sdp_compras',JSON.stringify([
+      {id:'documental',fecha:'2026-07-02',fechaTipo:'recepcion_compra_sin_fecha',estado:'recibida',proveedorId:'prov',conciliacionStock:'historico_sin_recuento',fuenteCaptura:'Correo · presentación 50 L',items:[{ingredienteId:'producto_sin_catalogar',nombreOriginal:'Material documentado en correo',kg:null,precio:null}]},
+      {id:'conocida',fecha:'2026-07-01',estado:'recibida',proveedorId:'prov',items:[{ingredienteId:'paja_trigo',kg:2,precio:1000}]},
+      {id:'gratuita',fecha:'2026-06-01',estado:'recibida',proveedorId:'prov',items:[{ingredienteId:'paja_trigo',kg:5,precio:0}]},
+    ]));
+    localStorage.setItem('sdp_movimientos','[]');
+    localStorage.setItem('sdp_inv_reservas','[]');
+  });
+  await historyPage.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=inventario`);
+  await historyPage.locator('.inv-subtab-bar button',{hasText:'Historial'}).click();
+  const historyRows=historyPage.locator('.inv-month-group tbody tr');
+  await expect(historyRows).toHaveCount(3);
+  const documentary=historyRows.filter({hasText:'Material documentado en correo'});
+  await expect(documentary).toContainText('Cantidad por confirmar');
+  await expect(documentary).toContainText('Costo por confirmar');
+  await expect(documentary).toContainText('Recepción · fecha de compra por confirmar');
+  await expect(documentary).toContainText('Registro histórico · saldo actual sin verificar');
+  await expect(documentary).not.toContainText('$0');
+  await expect(historyPage.locator('.inv-month-total')).toHaveText(['Total por confirmar','$0 COP']);
+  await expect(historyRows.filter({hasText:'2026-07-01'})).toContainText('$2.000');
+  await expect(historyRows.filter({hasText:'2026-06-01'})).toContainText('$0');
+  await expect(historyRows.filter({hasText:'2026-06-01'})).toContainText('5 kg');
+  assert.equal(await stockDe(historyPage,'paja_trigo'),5,'consultar historia documental no debe sumar kilos');
+  if(process.env.SETAS_E2E_SCREENSHOT_DIR){
+    fs.mkdirSync(process.env.SETAS_E2E_SCREENSHOT_DIR,{recursive:true});
+    await historyPage.screenshot({path:path.join(process.env.SETAS_E2E_SCREENSHOT_DIR,'bodega-history-desktop.png'),fullPage:true});
+  }
+  await historyPage.setViewportSize({width:390,height:844});
+  await expect(documentary).toContainText('Cantidad por confirmar');
+  const scrollRegion=historyPage.getByRole('region',{name:'Compras de julio de 2026'});
+  assert.ok(await scrollRegion.evaluate(el=>el.scrollWidth>el.clientWidth),'en móvil la tabla ancha necesita desplazamiento');
+  await scrollRegion.focus();
+  await scrollRegion.press('ArrowRight');
+  await expect.poll(()=>scrollRegion.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);
+  assert.ok(await historyPage.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'el historial no debe ensanchar toda la página');
+  if(process.env.SETAS_E2E_SCREENSHOT_DIR)await historyPage.screenshot({path:path.join(process.env.SETAS_E2E_SCREENSHOT_DIR,'bodega-history-mobile.png'),fullPage:true});
+  await historyPage.close();
+
   assert.deepEqual(errores,[]);
-  console.log('OK e2e/purchase-receive: "Por recibir" no mueve bodega y se proyecta como entrante; "Registrar recepción" sí mueve el físico');
+  console.log('OK e2e/purchase-receive: recepción mueve físico; historial distingue datos desconocidos de cero sin alterar stock');
  }finally{
   if(browser)await browser.close();
   server.close();
