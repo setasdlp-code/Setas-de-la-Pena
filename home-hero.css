@@ -31,3 +31,5 @@
   .home-page .home-intro .dish-carousel { width: 100%; min-width: 0; justify-self: stretch; touch-action: pan-y; }
   .dish figcaption { margin-top: 0; }
 }
+
+.dish-position { font: 400 12px/1 var(--font-mono); color: var(--text-secondary); }

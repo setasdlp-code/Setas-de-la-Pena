@@ -18,6 +18,7 @@
           if (img.loading === 'lazy') img.loading = 'eager';
         }
       });
+      root.querySelector('.dish-position').textContent = (index + 1) + ' / ' + slides.length;
       if (announce) live.textContent = slides[index].getAttribute('aria-label') + ': ' + slides[index].querySelector('.dish-name').textContent;
     }
 
