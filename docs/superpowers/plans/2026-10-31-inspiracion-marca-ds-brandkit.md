@@ -10,7 +10,7 @@
 
 **Spec:** [`docs/brand/brand-inspiration-2026-10-31.md`](../../brand/brand-inspiration-2026-10-31.md), §6 «Síntesis» y §7 «Qué verificar después». Se lee junto con [`docs/brand-guidelines.md`](../../brand-guidelines.md) §2, §5 y §6.
 
-Todas las rutas de código son relativas a `08_brand/ds-2026/`, salvo las que empiezan por `docs/`.
+Todas las rutas de código son relativas a `08_brand/ds-2026/`, salvo las que empiezan por `docs/`. Los comandos se ejecutan desde `08_brand/ds-2026/`, así que en `git add` los archivos de `docs/` se escriben como `../../docs/…`.
 
 ## Restricciones globales
 
@@ -26,7 +26,7 @@ Todas las rutas de código son relativas a `08_brand/ds-2026/`, salvo las que em
 
 1. **Lámina sin fuente:** si a una leyenda le falta la fuente, la puerta 1 debe fallar. Se prueba en la Tarea 1, paso 2.
 2. **Cifra de origen sin fuente o sin fecha:** debe verse «Dato pendiente», nunca un número suelto. Lo prueban la puerta de la Tarea 2 y su mockup.
-3. **Nombre científico largo** («Hericium erinaceus», «Lentinula edodes») a 360 px de ancho: debe partir en dos líneas sin desbordar. Se comprueba en la Tarea 1, paso 5, con una captura a 360 px.
+3. **Nombre científico largo** («Hericium erinaceus», «Lentinula edodes») a 360 px de ancho: debe partir en dos líneas sin desbordar. Se comprueba en la Tarea 1, paso 5, sobre `mockups/ficha.html`.
 4. **Literal `font-family: 'Gaya…'` fuera de `tokens/fonts.css`:** rompería el cambio a otra tipografía. Lo cubre la puerta de la Tarea 4.
 5. **Imagen patrimonial colada en `assets/`:** debe fallar `validate.py` (Tarea 4).
 
@@ -39,8 +39,7 @@ Parte de `.ed-cartouche` (`__n`, `__l`, `__d`), que ya existe, y le añade dos p
 **Archivos:**
 - Modificar: `components/market/archive.css` (bloque `.ed-cartouche`, líneas ~66-69)
 - Modificar: `components/COMPONENTS.md` §19 (tabla de dispositivos)
-- Modificar: `mockups/ficha.html`, `mockups/ficha-editorial.html`, `mockups/editorial.html` (las 4 + 4 + 4 leyendas existentes)
-- Modificar: `mockups/market/02-botanical-plate.html`
+- Modificar: `mockups/ficha.html`, `mockups/ficha-editorial.html`, `mockups/editorial.html` (una leyenda `.ed-cartouche` en cada uno)
 - Modificar: `scripts/visual-contract.mjs` (puerta nueva)
 
 **Interfaces:**
@@ -69,7 +68,7 @@ Esperado: `FAIL [gate NN] every .ed-cartouche…`, con las leyendas de `ficha.ht
 - [ ] **Paso 5: verificar**
 
 Ejecutar: `node scripts/visual-contract.mjs && python3 scripts/validate.py`
-Esperado: todas las puertas en `ok`. Abrir `mockups/market/02-botanical-plate.html` a 360 px (`python3 -m http.server 4187 --bind 127.0.0.1 --directory ../..`) y comprobar que `__l` no desborda.
+Esperado: todas las puertas en `ok`. Cambiar provisionalmente el `__l` de `mockups/ficha.html` por «Hericium erinaceus». Abrir el mockup a 360 px (`python3 -m http.server 4187 --bind 127.0.0.1 --directory ../..`) y comprobar que `__l` no desborda. Después, restaurar el texto original.
 
 - [ ] **Paso 6: commit**
 
@@ -142,11 +141,9 @@ Ejecutar: `node scripts/visual-contract.mjs` · Esperado: todo en `ok`. Abrir `h
 - [ ] **Paso 4: commit**
 
 ```bash
-git add brand-kit docs/brand-guidelines.md
+git add brand-kit ../../docs/brand-guidelines.md
 git commit -m "feat(brand-kit): patrón de tres puertas chef / hogar / origen"
 ```
-
-> Desde aquí, las rutas de `git add` usan `../../docs/` porque se ejecuta en `08_brand/ds-2026/`. Si se trabaja desde la raíz, usar `08_brand/ds-2026/…` y `docs/…`.
 
 ### Tarea 4: Tipografía sustituible y bloqueo de imágenes patrimoniales
 
@@ -157,7 +154,7 @@ git commit -m "feat(brand-kit): patrón de tres puertas chef / hogar / origen"
 - Modificar: `docs/brand-guidelines.md` §5 y §6
 
 **Interfaces:**
-- Consume: `--font-editorial`, definido en `tokens/tokens.css`. Sustituir Gaya debe significar cambiar solo `tokens/fonts.css` y la primitiva de familia en `tokens/primitives.json`.
+- Consume: `--font-editorial`, definido en `tokens/fonts.css:104` (`'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif`). `tokens/primitives.json` no tiene familias. Sustituir Gaya debe significar cambiar solo `tokens/fonts.css`: los `@font-face` y esa pila. Comprobado el 31 de octubre: ningún CSS de `components/`, `market.css`, `index.css`, `operations.css` ni `brand-kit/brand-kit.css` usa un `font`/`font-family` literal.
 
 - [ ] **Paso 1: puerta «font families only in tokens».** Quitar los comentarios `/* … */` y fallar si algún CSS en `components/`, `market.css`, `index.css`, `operations.css` o `brand-kit/brand-kit.css` contiene `font-family:` con un nombre literal (`Gaya`, `IBM Plex`, `Juana`, etc.) en vez de `var(--font-…)`. Hoy `Gaya` solo aparece en comentarios de `provenance.css` y `packaging.css`, así que debe pasar. Si no pasa, corregir el literal en vez de relajar la puerta.
 
@@ -201,5 +198,6 @@ git commit -m "docs(brand-kit): edición 1.2 con leyenda de lámina, origen y tr
 | --- | --- | --- |
 | Pedir por escrito condiciones de uso al RJB-CSIC, la BNC / Banco de la República y el Armitt | Sebastián | Cualquier uso de láminas patrimoniales |
 | Pedir a Latinotype fuentes de prueba de Juana y cotizar Desktop + Web | Sebastián | Prueba visual y decisión Gaya / Juana |
+| Decidir la firma (wordmark): `brand-kit/build_wordmarks.py` la contornea desde Gaya, y cambiar los tokens no la cambia | Sebastián | Que la firma no dependa de la licencia de Gaya |
 | Reunir un dato comprobable de Tenjo por especie (con fuente y fecha) | Operación | Pasar `.sdp-origen__cifra` de `--pending` a real |
 | Probar las tres puertas con los 4 chefs y 2 personas de hogar previstos | Sebastián | Aplicar el patrón en la web pública |
