@@ -2241,3 +2241,18 @@ documents:
     supersedes: null
     confidence: low
     status: draft
+
+  - id: auditoria-termica-incubadora-placas-2026-11-01
+    title: "Auditoría térmica — Guía experimental de incubadora de placas (borrador 2026-10-31)"
+    path: 09_research/auditoria_termica_incubadora_placas_2026-11-01.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [incubation, heating, heat-balance, insulation, ventilation, electrical-safety]
+    keywords: ["placa calefactora", "168 ohm", "densidad de potencia", "Thermolon 15 mm", "ducto 4 pulgadas", "C1 vs C2", "corte térmico"]
+    related_documents: [incubation, environmental-control, incubation-module-engineering-review-2026-08-05]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: low
+    status: draft
