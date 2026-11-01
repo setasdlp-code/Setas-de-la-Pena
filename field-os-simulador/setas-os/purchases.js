@@ -35,6 +35,29 @@
 
   const round3 = x => Math.round(x * 1000) / 1000;
 
+  // El historial importado puede acreditar el producto sin acreditar kilos
+  // ni precio. Number(null) y Number('') darían cero: conservar desconocido.
+  const knownPurchaseNumber = value => {
+    if (typeof value !== 'number' && typeof value !== 'string') return null;
+    if (typeof value === 'string' && !value.trim()) return null;
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 ? number : null;
+  };
+
+  /** Total documentado, o null si falta algún dato. Cero explícito sí vale. */
+  const purchaseTotal = items => {
+    if (!Array.isArray(items) || !items.length) return null;
+    let total = 0;
+    for (const item of items) {
+      const kg = knownPurchaseNumber(item?.kg);
+      const precio = knownPurchaseNumber(item?.precio);
+      if (kg === null || precio === null) return null;
+      total += kg * precio;
+      if (!Number.isFinite(total)) return null;
+    }
+    return total;
+  };
+
   const COMPRA_ESTADOS = {
     PENDIENTE: 'pendiente',
     RECIBIDA: 'recibida',
@@ -152,6 +175,8 @@
   };
 
   const api = {
+    knownPurchaseNumber,
+    purchaseTotal,
     COMPRA_ESTADOS,
     COMPRA_ESTADO_LABELS,
     compraEstado,

@@ -1,0 +1,139 @@
+/* Landing hero drafts · Oct 2026. Tokens and vendored fonts come from DS-2026. */
+@import "../../../08_brand/ds-2026/tokens/tokens.css";
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper-100); color: var(--ink-900); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+img { display: block; max-width: 100%; }
+
+.hero { position: relative; width: 100%; height: 100vh; min-height: 640px; overflow: hidden; }
+
+/* Shared type */
+.kicker { font: 500 13px/1.2 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--moss-700); margin: 0; display: flex; align-items: center; gap: 14px; }
+.kicker::before { content: ""; width: 36px; height: 1px; background: currentColor; }
+.title { font-family: var(--font-editorial); font-weight: 900; line-height: .9; letter-spacing: -.02em; color: var(--moss-700); margin: 0; }
+.title em { font-style: italic; font-weight: 500; color: var(--coral-700); }
+.descriptor { font: 400 20px/1.45 var(--font-sans); color: var(--ink-700); margin: 0; max-width: 32ch; }
+.cta { display: inline-flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 28px; background: var(--moss-700); color: var(--paper-50); font: 500 18px/1 var(--font-sans); text-decoration: none; border: 1px solid var(--moss-700); white-space: nowrap; }
+.cta:hover { background: var(--moss-900); }
+.cta:focus-visible { outline: 3px solid var(--coral-500); outline-offset: 3px; }
+.label { font: 500 12px/1.3 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-500); margin: 0; }
+.label b { color: var(--coral-700); font-weight: 500; }
+.sp-name { font: 700 24px/1.1 var(--font-editorial); color: var(--ink-900); margin: 0; }
+.sp-latin { font: italic 500 16px/1.2 var(--font-editorial); color: var(--ink-500); margin: 3px 0 0; }
+.ink { mix-blend-mode: multiply; } /* lets white-ground engravings sit on paper */
+
+/* ───────── A · Frontispicio ───────── */
+.hero--front { padding: 36px; }
+.front-frame { height: 100%; border: 1px solid var(--ink-900); outline: 1px solid var(--ink-900); outline-offset: -7px; display: grid; grid-template-rows: auto 1fr auto; padding: 26px 48px 0; }
+.front-top { display: flex; justify-content: space-between; align-items: center; }
+.front-top .label { color: var(--moss-700); }
+.front-emblem { position: relative; min-height: 0; }
+/* The SVG carries its own whitespace; let it bleed into the padding instead of shrinking the lockup. */
+.front-emblem img { position: absolute; left: 50%; top: 50%; height: calc(100% + 80px); width: auto; max-width: 72%; object-fit: contain; transform: translate(-50%, -50%); }
+.front-foot { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 48px; border-top: 1px solid var(--ink-900); padding: 22px 0 26px; }
+.front-foot .title { font-size: 66px; line-height: 1; }
+.front-foot .descriptor { font-size: 18px; max-width: 26ch; }
+
+/* ───────── B · La peña ───────── */
+.hero--pena { display: grid; grid-template-columns: 40fr 60fr; padding: 0 5.5vw; gap: 4vw; }
+.pena-copy { display: flex; flex-direction: column; justify-content: center; gap: 34px; }
+.pena-copy .title { font-size: clamp(64px, 7vw, 132px); }
+.pena-copy .title em { display: block; }
+.pena-visual { display: grid; grid-template-rows: 1fr auto; padding: 56px 0 48px; min-height: 0; }
+.pena-land { position: relative; margin: 0; min-height: 0; }
+.pena-land img { position: absolute; inset: 0 0 14px; width: 100%; height: calc(100% - 14px); object-fit: contain; object-position: center bottom; }
+.pena-land figcaption { position: absolute; top: 4px; right: 0; text-align: right; }
+.pena-row { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--ink-900); margin-top: 6px; }
+.pena-row figure { margin: 0; display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 16px; padding: 18px 20px 0 0; }
+.pena-row figure + figure { border-left: 1px solid rgba(26,20,16,.22); padding-left: 20px; }
+.pena-row img { width: 96px; height: 96px; object-fit: contain; }
+.pena-row .sp-name { font-size: 22px; }
+.pena-row .sp-latin { font-size: 15px; }
+
+/* ───────── C · Recorrido ───────── */
+.hero--ruta { display: grid; grid-template-rows: auto 1fr; padding: 52px 5.5vw 44px; gap: 34px; }
+.ruta-head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 48px; }
+.ruta-head .kicker { margin-bottom: 26px; }
+.ruta-head .title { font-size: clamp(64px, 6.6vw, 128px); }
+.ruta-side { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; padding-bottom: 8px; }
+.ruta-steps { display: grid; grid-template-columns: 1.15fr .85fr 1fr; border-top: 1px solid var(--ink-900); border-bottom: 1px solid var(--ink-900); min-height: 0; }
+.ruta-steps figure { margin: 0; display: grid; grid-template-rows: auto 1fr auto; padding: 16px 28px 18px; min-height: 0; position: relative; }
+.ruta-steps figure + figure { border-left: 1px solid rgba(26,20,16,.22); }
+.ruta-steps figure + figure::before { content: "→"; position: absolute; left: -11px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: grid; place-items: center; background: var(--paper-100); color: var(--coral-700); font: 500 15px/1 var(--font-mono); }
+.ruta-steps .art { position: relative; min-height: 0; margin: 10px 0; }
+.ruta-steps .art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* Gouache plates sit on a slightly warmer ground than paper-100; feather the square edge away. */
+.ruta-steps .art img.plate { -webkit-mask-image: radial-gradient(closest-side, #000 82%, transparent 100%); mask-image: radial-gradient(closest-side, #000 82%, transparent 100%); }
+.ruta-steps figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.ruta-steps .sp-name { font-size: 22px; }
+
+/* ───────── Tablet / narrow desktop ───────── */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .front-foot { grid-template-columns: 1fr auto; row-gap: 14px; }
+  .front-foot .title { grid-column: 1 / -1; font-size: 60px; }
+  .hero--pena { grid-template-columns: 1fr 1fr; }
+  .pena-copy .title { font-size: 64px; }
+  .pena-row figure { grid-template-columns: 1fr; gap: 8px; }
+  .pena-row img { width: 72px; height: 72px; }
+  .pena-row .sp-name { font-size: 18px; }
+  .ruta-head { grid-template-columns: 1fr; gap: 20px; }
+  .ruta-side { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; }
+  .ruta-steps figcaption { flex-direction: column; gap: 2px; }
+}
+@media (min-width: 761px) and (max-width: 1180px) and (orientation: portrait) {
+  .hero { height: auto; min-height: 0; }
+  .front-frame { height: auto; }
+  .front-emblem { padding: 40px 0; }
+  .front-emblem img { position: static; transform: none; width: 100%; max-width: 100%; height: auto; }
+  .hero--pena { grid-template-columns: 1fr; padding: 64px 40px 40px; }
+  .pena-land img { position: static; width: 100%; height: auto; }
+  .ruta-steps .art { height: 300px; }
+}
+
+/* ───────── Mobile ───────── */
+@media (max-width: 760px) {
+  .hero { height: auto; min-height: 0; }
+  .kicker { font-size: 11px; letter-spacing: .16em; gap: 10px; }
+  .kicker::before { width: 22px; }
+  .descriptor { font-size: 17px; }
+  .cta { width: 100%; justify-content: center; min-height: 52px; font-size: 17px; }
+
+  .hero--front { padding: 14px; }
+  .front-frame { padding: 18px 16px 0; outline-offset: -5px; }
+  .front-frame { height: auto; }
+  .front-top .label:last-child { display: none; }
+  .front-emblem { padding: 28px 0 20px; }
+  .front-emblem img { position: static; transform: none; width: 100%; max-width: 100%; height: auto; }
+  .front-foot { grid-template-columns: 1fr; gap: 16px; padding: 20px 0 22px; }
+  .front-foot .title { font-size: 46px; line-height: .95; }
+  .front-foot .title em { display: block; }
+
+  .hero--pena { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 44px 16px 24px; gap: 8px; }
+  .pena-copy { gap: 20px; }
+  .pena-copy .title { font-size: 56px; }
+  .pena-visual { padding: 28px 0 0; }
+  .pena-land img { position: static; width: 100%; height: auto; }
+  .pena-land figcaption { display: none; }
+  .pena-row figure { grid-template-columns: 1fr; gap: 6px; padding: 12px 6px 0 0; justify-items: start; }
+  .pena-row figure + figure { padding-left: 8px; }
+  .pena-row img { width: 64px; height: 64px; }
+  .pena-row .sp-name { font-size: 16px; }
+  .pena-row .sp-latin { font-size: 12px; }
+
+  .hero--ruta { padding: 40px 16px 20px; gap: 22px; }
+  .ruta-head { grid-template-columns: 1fr; gap: 18px; }
+  .ruta-head .kicker { margin-bottom: 18px; }
+  .ruta-head .title { font-size: 52px; }
+  .ruta-head .title em { display: block; }
+  .ruta-side { gap: 18px; padding: 0; }
+  .ruta-steps { grid-template-columns: 1fr; }
+  .ruta-steps figure { grid-template-columns: 120px 1fr; grid-template-rows: auto auto; column-gap: 18px; align-items: center; padding: 14px 0; }
+  .ruta-steps figure + figure { border-left: 0; border-top: 1px solid rgba(26,20,16,.22); }
+  .ruta-steps figure + figure::before { content: "↓"; left: 52px; top: -11px; transform: none; }
+  .ruta-steps figure > .label { grid-column: 2; grid-row: 1; align-self: end; }
+  .ruta-steps .art { grid-column: 1; grid-row: 1 / 3; margin: 0; }
+  .ruta-steps .art img { position: static; width: 120px; height: 96px; }
+  .ruta-steps figcaption { grid-column: 2; grid-row: 2; flex-direction: column; align-items: flex-start; gap: 2px; align-self: start; margin-top: 6px; }
+  .ruta-steps .sp-name { font-size: 19px; }
+}
