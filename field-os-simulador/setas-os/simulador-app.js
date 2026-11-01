@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: c9aa0fea42ab1d4d9fdda20d2ed605078d9b1602d6613d76a6640dfba8de76b6
+// source-hash: c5c87389ee6edbafe4d3579dc4e1e7c050ae229b7888389afd6e0891dc864a07
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -135,22 +135,12 @@ function PrototypeTrialsPanel({ saved, active, onPrepare, onReload }) {
     }
   };
   const exportData = async () => {
-    let db;
     try {
-      if (window.SetasFieldEventQueue) db = await window.SetasFieldEventQueue.initializeQueue();
-      const data = await SetasPrototype.backup(localStorage, { db, accountId: window.SetasFirebase?.auth?.currentUser?.uid || null });
-      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "setas-ensayos-" + (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) + ".json";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1e3);
+      await downloadPrototypeBackup("setas-ensayos-");
       setMessage("Respaldo exportado. Conserva también una copia fuera de este equipo.");
       setError("");
     } catch (e) {
       setError(e.message);
-    } finally {
-      db?.close();
     }
   };
   const loadFile = async (event) => {
@@ -181,6 +171,37 @@ function PrototypeTrialsPanel({ saved, active, onPrepare, onReload }) {
     setImportData(null);
     setPreview(null);
   } }, "Cancelar importación"))), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message));
+}
+async function downloadPrototypeBackup(prefix) {
+  let db;
+  try {
+    if (window.SetasFieldEventQueue) db = await window.SetasFieldEventQueue.initializeQueue();
+    const data = await SetasPrototype.backup(localStorage, { db, accountId: window.SetasFirebase?.auth?.currentUser?.uid || null });
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = prefix + (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) + ".json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1e3);
+    return data;
+  } finally {
+    db?.close();
+  }
+}
+function PilotResetPanel({ counts, onReset }) {
+  const confirmWord = SetasPrototype.PILOT_RESET_CONFIRM;
+  const [typed, setTyped] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const run = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await onReset(typed);
+    } catch (e) {
+      setError(e.message);
+      setBusy(false);
+    }
+  };
+  return /* @__PURE__ */ React.createElement("details", { className: "prototype-panel", "aria-label": "Reiniciar para el piloto" }, /* @__PURE__ */ React.createElement("summary", null, "Reiniciar para el piloto de producción"), /* @__PURE__ */ React.createElement("p", null, "Borra en todos los dispositivos los ", counts.lotes, " lotes de prueba, con sus ", counts.bolsas, " bolsas y ", counts.cosechas, " cosechas, y su ficha pública de QR. Vacía la cola de tareas, el registro del turno y la nota de relevo, y libera las reservas de Bodega de esos lotes."), /* @__PURE__ */ React.createElement("p", null, "No toca inventario, compras, proveedores ni telemetría. Primero se descarga un respaldo; si el respaldo falla, no se borra nada. No se puede deshacer desde la app."), /* @__PURE__ */ React.createElement("label", null, "Escribe ", confirmWord, " para confirmar", /* @__PURE__ */ React.createElement("input", { value: typed, onChange: (e) => setTyped(e.target.value), autoComplete: "off", disabled: busy })), /* @__PURE__ */ React.createElement("div", { className: "prototype-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri", disabled: busy || typed.trim() !== confirmWord, onClick: run }, busy ? "Reiniciando…" : "Descargar respaldo y reiniciar")), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error));
 }
 function PrototypeReleaseDialog({ lote, onClose, onAuthorize }) {
   const [form, setForm] = useState({ equipment: "", protocol: lote.tratamiento || "", reviewer: "", acknowledged: false, legacyReviewed: false }), [error, setError] = useState("");
@@ -7341,7 +7362,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "c9aa0fea42ab" : null;
+    const appVersion = true ? "c5c87389ee6e" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -7534,70 +7555,95 @@ ${errors.slice(0, 5).join("\n")}` : "");
       window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, id).catch((err) => console.warn("No se pudo quitar la cosecha de la ficha pública:", err));
     }
   };
+  const purgeBitLote = (loteId) => {
+    const publicCleanup = [];
+    const lote = bitLotes.find((l) => l.id === loteId);
+    const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
+    const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
+    const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
+    if (ledgerApi) {
+      setInvReservas((prev) => {
+        const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() });
+        try {
+          localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
+        } catch (e) {
+        }
+        return upd;
+      });
+    }
+    setBitLotes((prev) => {
+      const upd = prev.filter((l) => l.id !== loteId);
+      try {
+        localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+    setBitBolsas((prev) => {
+      const upd = prev.filter((b) => b.loteId !== loteId);
+      try {
+        localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+    setBitCosechas((prev) => {
+      const upd = prev.filter((c) => c.loteId !== loteId);
+      try {
+        localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
+      } catch (e) {
+      }
+      return upd;
+    });
+    if (bitActiveLoteId === loteId) {
+      setBitActiveLoteId(null);
+      goBitTab("bit_dash");
+    }
+    const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
+    if (syncQueueApi) {
+      setSyncQueue((prev) => {
+        const purged = syncQueueApi.purgeKeys(prev, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
+        try {
+          localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
+        } catch (e) {
+        }
+        return purged;
+      });
+    }
+    encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
+    if (lote?.codigo && window.SetasPublicTraceDB) {
+      cosechaIds.forEach((cid) => {
+        publicCleanup.push(Promise.resolve(window.SetasPublicTraceDB.eliminarCosecha(lote.codigo, cid)).catch((err) => console.warn("No se pudo quitar una cosecha de la ficha pública:", err)));
+      });
+      publicCleanup.push(Promise.resolve(window.SetasPublicTraceDB.eliminarLote(lote.codigo)).catch((err) => console.warn("No se pudo quitar la ficha pública del lote:", err)));
+    }
+    return Promise.all(publicCleanup);
+  };
   const deleteBitLote = (loteId) => {
-    const doDelete = () => {
-      const lote = bitLotes.find((l) => l.id === loteId);
-      const bolsaIds = bitBolsas.filter((b) => b.loteId === loteId).map((b) => b.id);
-      const cosechaIds = bitCosechas.filter((c) => c.loteId === loteId).map((c) => c.id);
-      const ledgerApi = typeof window !== "undefined" ? window.SetasInventoryLedger : null;
-      if (ledgerApi) {
-        setInvReservas((prev) => {
-          const upd = ledgerApi.releaseForBatch(prev, loteId, { reason: "Lote de producción eliminado", at: (/* @__PURE__ */ new Date()).toISOString() });
-          try {
-            localStorage.setItem("sdp_inv_reservas", JSON.stringify(upd));
-          } catch (e) {
-          }
-          return upd;
-        });
-      }
-      setBitLotes((prev) => {
-        const upd = prev.filter((l) => l.id !== loteId);
-        try {
-          localStorage.setItem("sdp_bit_lotes", JSON.stringify(upd));
-        } catch (e) {
-        }
-        return upd;
-      });
-      setBitBolsas((prev) => {
-        const upd = prev.filter((b) => b.loteId !== loteId);
-        try {
-          localStorage.setItem("sdp_bit_bolsas", JSON.stringify(upd));
-        } catch (e) {
-        }
-        return upd;
-      });
-      setBitCosechas((prev) => {
-        const upd = prev.filter((c) => c.loteId !== loteId);
-        try {
-          localStorage.setItem("sdp_bit_cosechas", JSON.stringify(upd));
-        } catch (e) {
-        }
-        return upd;
-      });
-      if (bitActiveLoteId === loteId) {
-        setBitActiveLoteId(null);
-        goBitTab("bit_dash");
-      }
-      const syncQueueApi = typeof window !== "undefined" ? window.SetasSyncQueue : null;
-      if (syncQueueApi) {
-        setSyncQueue((prev) => {
-          const purged = syncQueueApi.purgeKeys(prev, [...bolsaIds.map((id) => "bolsa:" + id), ...cosechaIds.map((id) => "cosecha:" + id)]);
-          try {
-            localStorage.setItem("sdp_sync_queue", syncQueueApi.serialize(purged));
-          } catch (e) {
-          }
-          return purged;
-        });
-      }
-      encolarSync({ type: "eliminarLoteCascade", key: "lote:" + loteId, args: [loteId, bolsaIds, cosechaIds] });
-      if (lote?.codigo) {
-        cosechaIds.forEach((cid) => {
-          window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo, cid).catch((err) => console.warn("No se pudo quitar una cosecha de la ficha pública:", err));
-        });
-        window.SetasPublicTraceDB?.eliminarLote(lote.codigo).catch((err) => console.warn("No se pudo quitar la ficha pública del lote:", err));
-      }
-    };
-    setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: doDelete });
+    setConfirmDlg({ title: "Eliminar lote", msg: "¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.", danger: true, confirmLabel: "Eliminar", onConfirm: () => {
+      purgeBitLote(loteId);
+    } });
+  };
+  const resetForPilot = async (typed) => {
+    const plan = SetasPrototype.planPilotReset({ lotes: bitLotes, bolsas: bitBolsas, cosechas: bitCosechas, role: fieldOperatorRole, typed });
+    try {
+      await downloadPrototypeBackup("setas-respaldo-antes-del-piloto-");
+    } catch (e) {
+      throw Error("No se pudo descargar el respaldo; no se borró nada. " + (e.message || ""));
+    }
+    const cleanup = plan.map((p) => purgeBitLote(p.loteId));
+    setBitTasks([]);
+    try {
+      localStorage.setItem("sdp_bit_tasks", "[]");
+    } catch (e) {
+    }
+    try {
+      localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER, (/* @__PURE__ */ new Date()).toISOString());
+    } catch (e) {
+    }
+    await Promise.all(cleanup);
+    await new Promise((r) => setTimeout(r, 300));
+    location.reload();
   };
   const calcLoteStats = (loteId) => {
     const lote = bitLotes.find((lt) => lt.id === loteId);
@@ -10069,7 +10115,7 @@ BATCH (${numBags}×${kgBag} kg):
     )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "var(--ink-1)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" } }, /* @__PURE__ */ React.createElement(AppIcon, { name: "clipboard", size: 13, style: { marginRight: 4 } }), " Historial Reciente de Conmutación de Relés"), /* @__PURE__ */ React.createElement("div", { className: "climate-actuator-logs" }, /* @__PURE__ */ React.createElement("div", { className: "climate-log-row", "data-testid": "relay-log-empty" }, /* @__PURE__ */ React.createElement("span", null, "Sin conmutaciones registradas. El historial aparece cuando el ESP32 reporte sus relés."))))));
   };
   const climateDashboardView = useClimateDashboardView();
-  const BitacoraSection = () => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(PrototypeTrialsPanel, { key: bitLotes.length, saved, active: recipe.length && balanced ? { recipe, sKey } : null, onReload: () => location.reload(), onPrepare: (plan, arm) => {
+  const BitacoraSection = () => /* @__PURE__ */ React.createElement("div", null, fieldOperatorRole === "direccion" && /* @__PURE__ */ React.createElement(PilotResetPanel, { counts: { lotes: bitLotes.length, bolsas: bitBolsas.length, cosechas: bitCosechas.length }, onReset: resetForPilot }), /* @__PURE__ */ React.createElement(PrototypeTrialsPanel, { key: bitLotes.length, saved, active: recipe.length && balanced ? { recipe, sKey } : null, onReload: () => location.reload(), onPrepare: (plan, arm) => {
     setSelectedTrial({ experimentId: plan.id, armId: arm.id, title: plan.title, label: arm.label });
     setHasPickedSpecies(true);
     setSKey(arm.recipeSnapshot.sKey);

@@ -539,7 +539,7 @@ test('descartar o eliminar un lote libera sus reservas con releaseForBatch', () 
   assert.match(updateBlock, /fields\.estado==='descartado'/);
   assert.match(updateBlock, /ledgerApi\.releaseForBatch\(prev,loteId,\{reason:'Lote de producción descartado',at:new Date\(\)\.toISOString\(\)\}\)/);
 
-  const deleteStart = source.indexOf('const deleteBitLote=(loteId)=>{');
+  const deleteStart = source.indexOf('const purgeBitLote=(loteId)=>{');
   assert.ok(deleteStart > -1);
   const deleteBlock = source.slice(deleteStart, deleteStart + 900);
   assert.match(deleteBlock, /ledgerApi\.releaseForBatch\(prev,loteId,\{reason:'Lote de producción eliminado',at:new Date\(\)\.toISOString\(\)\}\)/);
