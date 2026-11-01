@@ -29,7 +29,6 @@
   <script src="navigation.js" defer></script>
   <script src="website.js" defer></script>
   <script src="home-navigation.js" defer></script>
-  <script src="home-hero.js" defer></script>
 </head>
 <body class="home-page public-content-page">
   <a class="skip-link sdp-btn" href="#contenido">Saltar al contenido</a>
@@ -40,28 +39,25 @@
     <nav id="primary-nav" aria-label="Navegación principal"><a href="#coleccion">Las setas</a><a href="/cocina">Recetas</a><a href="/restaurantes">Restaurantes</a><a href="/mundo-micelar">El mundo micelar</a><a class="nav-inquiry" href="/shiitake#producto">Consultar shiitake <span aria-hidden="true">↗</span></a></nav>
   </header>
   <main id="contenido">
-    <section class="origin home-intro" id="inicio" aria-labelledby="hero-title">
-      <div class="origin-inner page-width">
-        <div class="origin-story">
-          <h1 id="hero-title">Del micelio<br><em>a la mesa.</em></h1>
-          <p>Desde Tenjo, exploramos las setas a través de perfiles culinarios de referencia y recetas para imaginar el plato.</p>
-          <div class="origin-actions" aria-label="Explorar la portada">
-            <a href="#coleccion"><strong>Explorar las setas <span aria-hidden="true">↗</span></strong></a>
-            <a href="/cocina">Ver recetas <span aria-hidden="true">↗</span></a>
-          </div>
+    <section class="hero-pena page-width" id="inicio" aria-labelledby="hero-title">
+      <div class="origin-story">
+        <h1 id="hero-title">Del micelio <em>a la mesa.</em></h1>
+        <p>Hongos para cocinar con criterio. Conocer la seta. Imaginar el plato.</p>
+        <div class="origin-actions" aria-label="Explorar la portada">
+          <a class="hero-cta" href="#coleccion">Explorar las setas <span aria-hidden="true">↗</span></a>
+          <a href="/cocina">Ver recetas <span aria-hidden="true">↗</span></a>
         </div>
-        <div class="dish-carousel" aria-roledescription="carrusel" aria-label="Ideas de platos con setas">
-          <div class="dish-track">
-            <figure class="dish is-active" aria-roledescription="diapositiva" aria-label="1 de 6"><p class="dish-species"><b>Shiitake</b> <i>Lentinula edodes</i></p><a class="dish-link" href="/recetas#receta-arepa">Ver receta <span aria-hidden="true">↗</span></a><img src="assets/illustrations/culinary/arepa-shiitake-gouache.webp" alt="Ilustración de una arepa con shiitake, aguacate y maíz" width="1254" height="1254" fetchpriority="high"><figcaption><p class="dish-name">Arepa de shiitake, maíz dorado y aguacate</p><p class="dish-line">Maíz en dos texturas y shiitake salteado.</p></figcaption></figure>
-            <figure class="dish" aria-roledescription="diapositiva" aria-label="2 de 6"><p class="dish-species"><b>Melena de león</b> <i>Hericium erinaceus</i></p><a class="dish-link" href="/recetas-melena#melena-encocado">Ver receta <span aria-hidden="true">↗</span></a><img src="assets/illustrations/culinary/encocado-melena-gouache.webp" alt="Ilustración de un encocado de melena de león con patacones" width="1254" height="1254" loading="lazy"><figcaption><p class="dish-name">Encocado con chillangua y patacones</p><p class="dish-line">Gajos dorados de melena, leche de coco y hogao.</p></figcaption></figure>
-            <figure class="dish" aria-roledescription="diapositiva" aria-label="3 de 6"><p class="dish-species"><b>Eryngii</b> <i>Pleurotus eryngii</i></p><a class="dish-link" href="/recetas-eryngii#eryngii-chuzos">Ver receta <span aria-hidden="true">↗</span></a><img src="assets/illustrations/culinary/chuzos-eryngii-gouache.webp" alt="Ilustración de chuzos de eryngii glaseados sobre arepa blanca" width="1254" height="1254" loading="lazy"><figcaption><p class="dish-name">Chuzos con panela y limón mandarino</p><p class="dish-line">Cintas de eryngii glaseadas, sobre arepa blanca.</p></figcaption></figure>
-            <figure class="dish" aria-roledescription="diapositiva" aria-label="4 de 6"><p class="dish-species"><b>Shiitake</b> <i>Lentinula edodes</i></p><a class="dish-link" href="/recetas#receta-sopa">Ver receta <span aria-hidden="true">↗</span></a><img src="assets/illustrations/culinary/sopa-shiitake-gouache.webp" alt="Ilustración de una sopa de coco con shiitake" width="1254" height="1254" loading="lazy"><figcaption><p class="dish-name">Sopa de shiitake, coco y jengibre</p><p class="dish-line">Leche de coco, jengibre, limón y cilantro.</p></figcaption></figure>
-            <figure class="dish" aria-roledescription="diapositiva" aria-label="5 de 6"><p class="dish-species"><b>Melena de león</b> <i>Hericium erinaceus</i></p><a class="dish-link" href="/recetas-melena#melena-posta">Ver receta <span aria-hidden="true">↗</span></a><img src="assets/illustrations/culinary/posta-melena-gouache.webp" alt="Ilustración de melena de león prensada con salsa oscura" width="1254" height="1254" loading="lazy"><figcaption><p class="dish-name">Melena prensada con salsa oscura</p><p class="dish-line">Panela, plátano maduro y queso costeño.</p></figcaption></figure>
-            <figure class="dish" aria-roledescription="diapositiva" aria-label="6 de 6"><p class="dish-species"><b>Eryngii</b> <i>Pleurotus eryngii</i></p><a class="dish-link" href="/recetas-eryngii#eryngii-pipian">Ver receta <span aria-hidden="true">↗</span></a><img src="assets/illustrations/culinary/tartaletas-pipian-eryngii-gouache.webp" alt="Ilustración de tartaletas de maíz con eryngii y ají de maní" width="1254" height="1254" loading="lazy"><figcaption><p class="dish-name">Tartaletas de maíz con pipián</p><p class="dish-line">Dados de eryngii, papa y maní en canastilla de maíz.</p></figcaption></figure>
-          </div>
-          <div class="dish-controls" hidden><button class="dish-btn dish-prev" type="button" aria-label="Plato anterior"><span aria-hidden="true">←</span></button><span class="dish-position" aria-hidden="true">1 / 6</span><button class="dish-btn dish-next" type="button" aria-label="Plato siguiente"><span aria-hidden="true">→</span></button></div>
-          <p class="sr-only" aria-live="polite" aria-atomic="true"></p>
-        </div>
+      </div>
+      <div class="hero-pena-visual">
+        <figure class="hero-pena-land">
+          <img src="assets/la-pena-paisaje.webp" alt="Dibujo a lápiz de una peña de roca en columnas sobre laderas con árboles" width="1024" height="680" fetchpriority="high">
+          <figcaption class="t-label">Dibujo a lápiz · <b>La peña</b></figcaption>
+        </figure>
+        <ul class="hero-pena-species" aria-label="Láminas de especies">
+          <li><a href="/especies/shiitake"><img src="08_brand/ds-2026/assets/img/species/shiitake.png" alt="" width="326" height="350"><span><b>Shiitake</b> <i>Lentinula edodes</i></span></a></li>
+          <li><a href="/especies/melena-de-leon"><img src="08_brand/ds-2026/assets/img/species/lions-mane.png" alt="" width="350" height="350"><span><b>Melena de león</b> <i>Hericium erinaceus</i></span></a></li>
+          <li><a href="/especies/eryngii"><img src="08_brand/ds-2026/assets/img/species/cardo.png" alt="" width="350" height="350"><span><b>Eryngii</b> <i>Pleurotus eryngii</i></span></a></li>
+        </ul>
       </div>
     </section>
     <section class="collection page-width" id="coleccion" aria-labelledby="collection-title">
