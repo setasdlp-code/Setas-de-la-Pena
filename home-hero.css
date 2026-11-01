@@ -1,35 +1,54 @@
-/* Homepage hero: rotating dishes, two per species. Script: home-hero.js. */
-.home-page .home-intro .dish-carousel { width: min(100%, 570px, calc(100svh - 300px)); min-width: min(100%, 360px); justify-self: end; position: relative; container-type: inline-size; }
-.dish-track { display: grid; grid-template-columns: minmax(0, 1fr); }
-.dish { position: relative; grid-area: 1 / 1; min-width: 0; margin: 0; opacity: 0; visibility: hidden; transition: opacity .7s ease, visibility 0s linear .7s; }
-.dish.is-active { opacity: 1; visibility: visible; transition: opacity .7s ease, visibility 0s; }
-.dish img { display: block; width: 94%; margin-inline: auto; height: auto; aspect-ratio: 1; object-fit: contain; mix-blend-mode: darken; transform: scale(.985); transition: transform 6.5s ease-out; }
-.dish.is-active img { transform: scale(1); }
+/* Homepage hero: headline beside the engraving of the peña de Juaica with its mushrooms (from the DS-2026 emblem),
+   with the three species underneath. Direction D: draft B (assets/banners/landing-2026-10/) with this engraving in place of the pencil landscape. */
+.home-page .hero-pena { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); gap: 32px 4vw; align-items: center; padding-block: 24px 40px; }
 
-.dish-species { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; min-height: 44px; box-sizing: border-box; margin: 0 0 4px; padding: 0 100px 0 12px; border-left: 2px solid var(--coral-500); }
-.dish-species b { font: 500 12px/1.3 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--coral-700); }
-.dish-species i { font: italic 500 16px/1.3 var(--font-editorial); color: var(--text-secondary); }
+.home-page .hero-pena h1 { margin: 0; font: 900 clamp(56px, 6.6vw, 112px)/.92 var(--font-editorial); letter-spacing: -.02em; color: var(--brand-primary); text-wrap: balance; }
+.home-page .hero-pena h1 em { display: block; font-style: italic; font-weight: 500; color: var(--brand-accent-text, var(--coral-700)); }
+.home-page .hero-pena .origin-story > p { max-width: 32ch; margin: 28px 0 32px; font: 400 clamp(18px, 1.35vw, 21px)/1.5 var(--font-sans); color: var(--text-secondary); }
 
-.dish figcaption { padding: 12px 0 0 12px; margin-top: -2%; position: relative; }
-.dish figcaption::before { content: ""; position: absolute; top: 12px; bottom: 0; left: 0; border-left: 2px solid var(--coral-500); }
-.dish-name { margin: 0; font: 500 17px/1.25 var(--font-editorial); color: var(--text-primary); }
-.dish-line { margin: 4px 0 2px; font: 400 14px/1.45 var(--font-sans); color: var(--text-secondary); }
-.dish-link { position: absolute; top: 0; right: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: 500 13px/1 var(--font-sans); color: var(--brand-accent-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-.dish-link:hover { text-decoration-thickness: 2px; }
+.home-page .hero-pena .origin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; margin: 0; }
+.home-page .hero-pena .origin-actions a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 400 17px/1.3 var(--font-sans); color: var(--text-primary); text-decoration: underline; text-underline-offset: 5px; }
+.home-page .hero-pena .origin-actions .hero-cta { min-height: 56px; padding: 0 28px; background: var(--brand-primary); color: var(--text-inverse); font-weight: 500; text-decoration: none; border: 1px solid var(--brand-primary); }
+.home-page .hero-pena .origin-actions .hero-cta:hover { background: var(--moss-900); }
+.home-page .hero-pena a:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 3px; }
 
-.dish-controls { position: absolute; z-index: 1; inset-inline: 0; top: calc(94cqw + 48px - 44px); display: flex; align-items: center; justify-content: space-between; }
-.dish-controls[hidden] { display: none; }
-.dish-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; background: transparent; border: 0; color: var(--brand-primary); font: 500 18px/1 var(--font-sans); cursor: pointer; }
-.dish-btn:hover { color: var(--coral-700); }
-.dish-btn:focus-visible, .dish-link:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 2px; }
+.hero-pena-visual { min-width: 0; }
+.hero-pena-land { position: relative; margin: 0; }
+/* The engraving has a transparent ground, so it sits directly on the paper. */
+.hero-pena-land img { display: block; width: 100%; height: auto; max-height: calc(100svh - 340px); min-height: 260px; object-fit: contain; object-position: center bottom; }
+.hero-pena-land figcaption { position: absolute; top: 0; right: 0; color: var(--text-secondary); }
+.hero-pena-land figcaption b { font-weight: inherit; color: var(--brand-accent-text, var(--coral-700)); }
 
-@media (prefers-reduced-motion: reduce) {
-  .dish, .dish.is-active, .dish img { transition: none; transform: none; }
+.hero-pena-species { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 8px 0 0; padding: 0; list-style: none; border-top: var(--rule-heavy); }
+.hero-pena-species li + li { border-left: var(--rule-hairline); }
+.hero-pena-species a { display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 14px 12px 4px; color: inherit; text-decoration: none; }
+.hero-pena-species li:first-child a { padding-left: 0; }
+.hero-pena-species img { flex: none; width: 72px; height: 72px; object-fit: contain; transition: transform .3s ease; }
+.hero-pena-species span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hero-pena-species b { font: 700 20px/1.1 var(--font-editorial); color: var(--text-primary); }
+.hero-pena-species i { font: italic 500 15px/1.2 var(--font-editorial); color: var(--text-secondary); }
+.hero-pena-species a:hover b { text-decoration: underline; text-underline-offset: 4px; }
+.hero-pena-species a:hover img { transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) { .hero-pena-species img { transition: none; } .hero-pena-species a:hover img { transform: none; } }
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .home-page .hero-pena { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .hero-pena-species a { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .hero-pena-species img { width: 56px; height: 56px; }
+  .hero-pena-species b { font-size: 17px; }
+  .hero-pena-species i { font-size: 13px; }
 }
 
 @media (max-width: 760px) {
-  .home-page .home-intro .dish-carousel { width: 100%; min-width: 0; justify-self: stretch; touch-action: pan-y; }
-  .dish figcaption { margin-top: 0; }
+  .home-page .hero-pena { grid-template-columns: 1fr; gap: 28px; padding-block: 28px 32px; }
+  .home-page .hero-pena h1 { font-size: clamp(46px, 13.5vw, 64px); }
+  .home-page .hero-pena .origin-story > p { margin: 18px 0 22px; font-size: 17px; }
+  .home-page .hero-pena .origin-actions .hero-cta { flex: 1 1 100%; justify-content: center; }
+  .hero-pena-land img { max-height: none; min-height: 0; }
+  .hero-pena-land figcaption { display: none; }
+  .hero-pena-species a { flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 8px 0; }
+  .hero-pena-species img { width: 60px; height: 60px; }
+  .hero-pena-species b { font-size: 16px; }
+  .hero-pena-species i { font-size: 12px; }
 }
-
-.dish-position { font: 400 12px/1 var(--font-mono); color: var(--text-secondary); }
