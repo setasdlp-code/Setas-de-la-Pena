@@ -64,7 +64,8 @@ const TIPOS_Y_SITIOS = [
   ['updateBitBolsa', 'const updateBitBolsa=', 'actualizarBolsa'],
   ['addBitCosecha', 'const addBitCosecha=', 'guardarCosecha'],
   ['deleteBitCosecha', 'const deleteBitCosecha=', 'eliminarCosecha'],
-  ['deleteBitLote', 'const deleteBitLote=', 'eliminarLoteCascade'],
+  // deleteBitLote y el reinicio para el piloto borran a través de purgeBitLote.
+  ['purgeBitLote', 'const purgeBitLote=', 'eliminarLoteCascade'],
 ];
 
 test('cada mutador de Bitácora encola su operación en vez de dispararla y olvidarla', () => {
@@ -153,4 +154,20 @@ test('ADR-0009: los borrados de Bitácora son lápidas y lifecycleEvents se une 
 test('ADR-0009: remote-sync conserva el id guardado en los datos al leer', () => {
   const src = read('firebase/remote-sync.js');
   assert.match(src, /\(\{ id: d\.id, \.\.\.d\.data\(\) \}\)/);
+});
+
+test('eliminar un lote y reiniciar para el piloto comparten el mismo borrado', () => {
+  const jsx = read('simulador-app.jsx');
+  const del = jsx.slice(jsx.indexOf('const deleteBitLote='), jsx.indexOf('const deleteBitLote=') + 400);
+  assert.match(del, /purgeBitLote\(loteId\)/);
+  const start = jsx.indexOf('const resetForPilot=');
+  assert.ok(start > -1, 'no se encontró resetForPilot');
+  const body = jsx.slice(start, start + 1400);
+  // Validación (rol + confirmación) → respaldo → borrado, en ese orden.
+  const plan = body.indexOf('SetasPrototype.planPilotReset(');
+  const backup = body.indexOf('downloadPrototypeBackup(');
+  const purge = body.indexOf('purgeBitLote(');
+  assert.ok(plan > -1 && backup > plan && purge > backup, 'el respaldo debe ir antes de borrar');
+  assert.match(body, /role:fieldOperatorRole/, 'el rol sale de la sesión, no del selector del encabezado');
+  assert.match(body, /setBitTasks\(\[\]\)/);
 });

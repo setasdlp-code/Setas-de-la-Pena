@@ -179,7 +179,23 @@
     if(consumption)entries.push(['sdp_lotes',consumption.lotes],['sdp_movimientos',[...read(storage,'sdp_movimientos'),...consumption.movimientos]],['sdp_inventory_ops',[...queue,consumption.appliedOp]]);
     persist(storage,entries);return {entries:Object.fromEntries(entries),lote:next,transition:consequences.transition,reused:false};
   }
-  const api={planBatch,prepareBatch,PENDING,PLANS,KEYS,read,recover,persist,savePlan,linkBatch,recipeSignature,release,releaseBasis,releaseCurrent,validateBackup,backup,restore};
+  // Reinicio para el piloto de producción: borra los lotes de prueba en todos
+  // los dispositivos (cada lote viaja como lápida, ADR-0009) y vacía la cola de
+  // tareas. Solo dirección, con confirmación escrita. Inventario, compras,
+  // proveedores y telemetría no se tocan.
+  const PILOT_RESET_CONFIRM='REINICIAR';
+  // El shell lee esta marca al arrancar y descarta su estado guardado (setas_os_state).
+  const PILOT_RESET_MARKER='sdp_pilot_wipe_request_v1';
+  function planPilotReset({lotes=[],bolsas=[],cosechas=[],role,typed}={}){
+    if(role!=='direccion')throw Error('Solo dirección puede reiniciar para el piloto.');
+    if(String(typed??'').trim()!==PILOT_RESET_CONFIRM)throw Error(`Escribe ${PILOT_RESET_CONFIRM} para confirmar.`);
+    return lotes.filter(l=>l&&l.id).map(l=>({
+      loteId:l.id,codigo:l.codigo||null,
+      bolsaIds:bolsas.filter(b=>b&&b.loteId===l.id).map(b=>b.id),
+      cosechaIds:cosechas.filter(c=>c&&c.loteId===l.id).map(c=>c.id),
+    }));
+  }
+  const api={planBatch,prepareBatch,PENDING,PLANS,KEYS,read,recover,persist,savePlan,linkBatch,recipeSignature,release,releaseBasis,releaseCurrent,validateBackup,backup,restore,PILOT_RESET_CONFIRM,PILOT_RESET_MARKER,planPilotReset};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   globalThis.SetasPrototype=api;
 })();

@@ -102,11 +102,9 @@ function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
     SetasPrototype.savePlan(localStorage,{id,title:form.title?.trim(),hypothesis:form.hypothesis?.trim(),speciesId:a.sKey,design:comparison?'comparison':'exploratory',primaryMetric:form.metric||'be_pct',status:'draft',control:arm(a,'control'),treatments:comparison?[arm(b,'treatment')]:[],fixedFactors:{notes:form.fixed||''},plannedAt:new Date().toISOString()});
     setPlans(SetasPrototype.read(localStorage,SetasPrototype.PLANS));setOpen(false);setMessage('Plan guardado. Aún no se crearon lotes ni se descontó inventario.');setError('');
   }catch(e){setError(e.message);}};
-  const exportData=async()=>{let db;try{
-    if(window.SetasFieldEventQueue)db=await window.SetasFieldEventQueue.initializeQueue();
-    const data=await SetasPrototype.backup(localStorage,{db,accountId:window.SetasFirebase?.auth?.currentUser?.uid||null});
-    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='setas-ensayos-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setMessage('Respaldo exportado. Conserva también una copia fuera de este equipo.');setError('');
-  }catch(e){setError(e.message);}finally{db?.close();}};
+  const exportData=async()=>{try{
+    await downloadPrototypeBackup('setas-ensayos-');setMessage('Respaldo exportado. Conserva también una copia fuera de este equipo.');setError('');
+  }catch(e){setError(e.message);}};
   const loadFile=async event=>{try{const file=event.target.files?.[0];if(!file)return;const data=JSON.parse(await file.text());setPreview(SetasPrototype.validateBackup(data));setImportData(data);setError('');}catch(e){setImportData(null);setPreview(null);setError(e.message);}finally{event.target.value='';}};
   const restore=()=>{try{SetasPrototype.restore(localStorage,importData);onReload();}catch(e){setError(e.message);}};
   return <section className="prototype-panel" aria-label="Ensayos y respaldos">
@@ -122,6 +120,32 @@ function PrototypeTrialsPanel({saved,active,onPrepare,onReload}) {
     <details><summary>Restaurar respaldo en espacio vacío</summary><p>Se restauran registros locales. Los envíos pendientes quedan archivados para revisión, sin reenvío ni descuento automático.</p><label>Archivo de respaldo<input type="file" accept=".json,application/json" onChange={loadFile}/></label>{preview&&<><p>{preview.batches} lotes · {preview.bags} bolsas · {preview.harvests} cosechas · {preview.pending} pendientes para revisar.</p><button type="button" className="inv-btn inv-btn-sec" onClick={restore}>Confirmar restauración local</button><button type="button" className="inv-btn inv-btn-sec" onClick={()=>{setImportData(null);setPreview(null);}}>Cancelar importación</button></>}</details>
     {error&&<p role="alert">{error}</p>}{message&&<p role="status">{message}</p>}
   </section>;
+}
+// Descarga el respaldo completo del espacio local (incluye los eventos de campo
+// pendientes). Lanza si no se pudo armar: quien llama decide si aborta.
+async function downloadPrototypeBackup(prefix){
+  let db;
+  try{
+    if(window.SetasFieldEventQueue)db=await window.SetasFieldEventQueue.initializeQueue();
+    const data=await SetasPrototype.backup(localStorage,{db,accountId:window.SetasFirebase?.auth?.currentUser?.uid||null});
+    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download=prefix+new Date().toISOString().slice(0,10)+'.json';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    return data;
+  }finally{db?.close();}
+}
+function PilotResetPanel({counts,onReset}) {
+  const confirmWord=SetasPrototype.PILOT_RESET_CONFIRM;
+  const [typed,setTyped]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  const run=async()=>{setBusy(true);setError('');try{await onReset(typed);}catch(e){setError(e.message);setBusy(false);}};
+  return <details className="prototype-panel" aria-label="Reiniciar para el piloto">
+    <summary>Reiniciar para el piloto de producción</summary>
+    <p>Borra en todos los dispositivos los {counts.lotes} lotes de prueba, con sus {counts.bolsas} bolsas y {counts.cosechas} cosechas, y su ficha pública de QR. Vacía la cola de tareas, el registro del turno y la nota de relevo, y libera las reservas de Bodega de esos lotes.</p>
+    <p>No toca inventario, compras, proveedores ni telemetría. Primero se descarga un respaldo; si el respaldo falla, no se borra nada. No se puede deshacer desde la app.</p>
+    <label>Escribe {confirmWord} para confirmar<input value={typed} onChange={e=>setTyped(e.target.value)} autoComplete="off" disabled={busy}/></label>
+    <div className="prototype-actions"><button type="button" className="inv-btn inv-btn-pri" disabled={busy||typed.trim()!==confirmWord} onClick={run}>{busy?'Reiniciando…':'Descargar respaldo y reiniciar'}</button></div>
+    {error&&<p role="alert">{error}</p>}
+  </details>;
 }
 function PrototypeReleaseDialog({lote,onClose,onAuthorize}) {
   const [form,setForm]=useState({equipment:'',protocol:lote.tratamiento||'',reviewer:'',acknowledged:false,legacyReviewed:false}),[error,setError]=useState('');
@@ -9604,53 +9628,75 @@ body{margin:0;padding:20px 24px;background:#fff;}
       window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo,id).catch(err=>console.warn('No se pudo quitar la cosecha de la ficha pública:',err));
     }
   };
+  // Borra un lote con sus bolsas y cosechas en este dispositivo y encola la
+  // lápida para los demás. Devuelve una promesa que se resuelve cuando la
+  // ficha pública terminó de limpiarse (nunca rechaza).
+  const purgeBitLote=(loteId)=>{
+    const publicCleanup=[];
+    const lote=bitLotes.find(l=>l.id===loteId);
+    const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
+    const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
+    // Eliminar el lote es más definitivo que descartarlo — igual libera sus
+    // reservas held, o un lote borrado seguiría bloqueando kilos.
+    const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
+    if(ledgerApi){
+      setInvReservas(prev=>{
+        const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
+        try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
+        return upd;
+      });
+    }
+    setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
+    setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
+    if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
+    // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
+    // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
+    // descarta 'lote:'+loteId — sin este purgado, una actualizarBolsa o
+    // guardarCosecha pendiente de este lote podía ejecutarse después (o
+    // revivirse con retryStuck) y resucitar en Firestore un documento que
+    // ya no existe localmente.
+    const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
+    if(syncQueueApi){
+      setSyncQueue(prev=>{
+        const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
+        try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
+        return purged;
+      });
+    }
+    encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
+    // eliminarLoteCascade (arriba) es solo bitacora_* — la ficha pública
+    // (public_lotes) es una colección aparte que nadie más limpia: sin
+    // esto, el QR de una etiqueta ya impresa seguía resolviendo al lote
+    // borrado indefinidamente. deleteDoc del lote no borra su subcolección
+    // "cosechas" sola, por eso cada cosecha se borra explícitamente aquí.
+    if(lote?.codigo&&window.SetasPublicTraceDB){
+      cosechaIds.forEach(cid=>{
+        publicCleanup.push(Promise.resolve(window.SetasPublicTraceDB.eliminarCosecha(lote.codigo,cid)).catch(err=>console.warn('No se pudo quitar una cosecha de la ficha pública:',err)));
+      });
+      publicCleanup.push(Promise.resolve(window.SetasPublicTraceDB.eliminarLote(lote.codigo)).catch(err=>console.warn('No se pudo quitar la ficha pública del lote:',err)));
+    }
+    return Promise.all(publicCleanup);
+  };
   const deleteBitLote=(loteId)=>{
-    const doDelete=()=>{
-      const lote=bitLotes.find(l=>l.id===loteId);
-      const bolsaIds=bitBolsas.filter(b=>b.loteId===loteId).map(b=>b.id);
-      const cosechaIds=bitCosechas.filter(c=>c.loteId===loteId).map(c=>c.id);
-      // Eliminar el lote es más definitivo que descartarlo — igual libera sus
-      // reservas held, o un lote borrado seguiría bloqueando kilos.
-      const ledgerApi=typeof window!=='undefined'?window.SetasInventoryLedger:null;
-      if(ledgerApi){
-        setInvReservas(prev=>{
-          const upd=ledgerApi.releaseForBatch(prev,loteId,{reason:'Lote de producción eliminado',at:new Date().toISOString()});
-          try{localStorage.setItem('sdp_inv_reservas',JSON.stringify(upd));}catch(e){}
-          return upd;
-        });
-      }
-      setBitLotes(prev=>{const upd=prev.filter(l=>l.id!==loteId);try{localStorage.setItem('sdp_bit_lotes',JSON.stringify(upd));}catch(e){}return upd;});
-      setBitBolsas(prev=>{const upd=prev.filter(b=>b.loteId!==loteId);try{localStorage.setItem('sdp_bit_bolsas',JSON.stringify(upd));}catch(e){}return upd;});
-      setBitCosechas(prev=>{const upd=prev.filter(c=>c.loteId!==loteId);try{localStorage.setItem('sdp_bit_cosechas',JSON.stringify(upd));}catch(e){}return upd;});
-      if(bitActiveLoteId===loteId){setBitActiveLoteId(null);goBitTab('bit_dash');}
-      // Purgar antes de encolar el borrado: bolsas/cosechas tienen su propia
-      // key ('bolsa:'+id, 'cosecha:'+id) y el borrado en cascada solo
-      // descarta 'lote:'+loteId — sin este purgado, una actualizarBolsa o
-      // guardarCosecha pendiente de este lote podía ejecutarse después (o
-      // revivirse con retryStuck) y resucitar en Firestore un documento que
-      // ya no existe localmente.
-      const syncQueueApi=typeof window!=='undefined'?window.SetasSyncQueue:null;
-      if(syncQueueApi){
-        setSyncQueue(prev=>{
-          const purged=syncQueueApi.purgeKeys(prev,[...bolsaIds.map(id=>'bolsa:'+id),...cosechaIds.map(id=>'cosecha:'+id)]);
-          try{localStorage.setItem('sdp_sync_queue',syncQueueApi.serialize(purged));}catch(e){}
-          return purged;
-        });
-      }
-      encolarSync({type:'eliminarLoteCascade',key:'lote:'+loteId,args:[loteId,bolsaIds,cosechaIds]});
-      // eliminarLoteCascade (arriba) es solo bitacora_* — la ficha pública
-      // (public_lotes) es una colección aparte que nadie más limpia: sin
-      // esto, el QR de una etiqueta ya impresa seguía resolviendo al lote
-      // borrado indefinidamente. deleteDoc del lote no borra su subcolección
-      // "cosechas" sola, por eso cada cosecha se borra explícitamente aquí.
-      if(lote?.codigo){
-        cosechaIds.forEach(cid=>{
-          window.SetasPublicTraceDB?.eliminarCosecha(lote.codigo,cid).catch(err=>console.warn('No se pudo quitar una cosecha de la ficha pública:',err));
-        });
-        window.SetasPublicTraceDB?.eliminarLote(lote.codigo).catch(err=>console.warn('No se pudo quitar la ficha pública del lote:',err));
-      }
-    };
-    setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:doDelete});
+    setConfirmDlg({title:'Eliminar lote',msg:'¿Eliminar este lote y todas sus bolsas y cosechas? Esta acción no se puede deshacer.',danger:true,confirmLabel:'Eliminar',onConfirm:()=>{purgeBitLote(loteId);}});
+  };
+  // Reinicio para el piloto: respaldo obligatorio, después cada lote sale por
+  // el mismo borrado que "Eliminar lote" y la cola de tareas queda vacía. La
+  // marca hace que el shell descarte su registro del turno al recargar.
+  const resetForPilot=async(typed)=>{
+    const plan=SetasPrototype.planPilotReset({lotes:bitLotes,bolsas:bitBolsas,cosechas:bitCosechas,role:fieldOperatorRole,typed});
+    try{await downloadPrototypeBackup('setas-respaldo-antes-del-piloto-');}
+    catch(e){throw Error('No se pudo descargar el respaldo; no se borró nada. '+(e.message||''));}
+    const cleanup=plan.map(p=>purgeBitLote(p.loteId));
+    setBitTasks([]);
+    try{localStorage.setItem('sdp_bit_tasks','[]');}catch(e){}
+    try{localStorage.setItem(SetasPrototype.PILOT_RESET_MARKER,new Date().toISOString());}catch(e){}
+    await Promise.all(cleanup);
+    // Deja que React aplique los cambios encolados (cola de sync, reservas)
+    // antes de recargar.
+    await new Promise(r=>setTimeout(r,300));
+    location.reload();
   };
   // Cálculo puro en bitacora-model.js (testeado por separado) — aquí solo se
   // resuelve el loteId contra el estado de React y se delega.
@@ -13633,6 +13679,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const BitacoraSection=()=>(
 <div>
+  {fieldOperatorRole==='direccion'&&<PilotResetPanel counts={{lotes:bitLotes.length,bolsas:bitBolsas.length,cosechas:bitCosechas.length}} onReset={resetForPilot}/>}
   <PrototypeTrialsPanel key={bitLotes.length} saved={saved} active={recipe.length&&balanced?{recipe,sKey}:null} onReload={()=>location.reload()} onPrepare={(plan,arm)=>{setSelectedTrial({experimentId:plan.id,armId:arm.id,title:plan.title,label:arm.label});setHasPickedSpecies(true);setSKey(arm.recipeSnapshot.sKey);setRecipe(arm.recipeSnapshot.recipe.map(r=>({...r})));goTab('formular');}}/>
 
             <div className="panel" style={{paddingBottom:0,marginBottom:0}}>

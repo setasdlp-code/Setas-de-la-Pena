@@ -127,3 +127,20 @@ test('known planning shortfalls cannot be hidden by a partial allocation',()=>{
  assert.throws(()=>p.prepareBatch(storage,args),/insumos faltantes/);
  assert.equal(p.read(storage,'sdp_lotes')[0].cantidadKgDisponible,10);
 });
+test('pilot reset requires dirección and the typed confirmation',()=>{
+ const lotes=[{id:'L1',codigo:'L-2601'}];
+ assert.throws(()=>p.planPilotReset({lotes,role:'operario',typed:'REINICIAR'}),/dirección/);
+ assert.throws(()=>p.planPilotReset({lotes,role:'produccion',typed:'REINICIAR'}),/dirección/);
+ for(const typed of [undefined,'','reiniciar','REINICIA'])assert.throws(()=>p.planPilotReset({lotes,role:'direccion',typed}),/REINICIAR/);
+});
+test('pilot reset plans every lot with its own bags and harvests',()=>{
+ const plan=p.planPilotReset({role:'direccion',typed:' REINICIAR ',
+  lotes:[{id:'L1',codigo:'L-2601'},{id:'L2'},null,{codigo:'sin-id'}],
+  bolsas:[{id:'B1',loteId:'L1'},{id:'B2',loteId:'L2'},{id:'B3',loteId:'L1'}],
+  cosechas:[{id:'C1',loteId:'L1'}]});
+ assert.deepEqual(plan,[
+  {loteId:'L1',codigo:'L-2601',bolsaIds:['B1','B3'],cosechaIds:['C1']},
+  {loteId:'L2',codigo:null,bolsaIds:['B2'],cosechaIds:[]},
+ ]);
+ assert.deepEqual(p.planPilotReset({role:'direccion',typed:'REINICIAR'}),[]);
+});

@@ -2288,6 +2288,14 @@ class Component extends DCLogic {
   }
   loadPersisted(){
     try {
+      // Reinicio pedido desde Bitácora → "Reiniciar para el piloto": a
+      // diferencia de PILOT_RESET_KEY (que solo quita ejemplos conocidos),
+      // descarta todo el registro del turno de prueba y arranca vacío.
+      if(localStorage.getItem('sdp_pilot_wipe_request_v1')){
+        localStorage.removeItem('setas_os_state');
+        localStorage.removeItem('sdp_pilot_wipe_request_v1');
+        return;
+      }
       const raw=localStorage.getItem('setas_os_state'); if(!raw) return;
       let d=JSON.parse(raw);
       if(d && typeof d==='object' && localStorage.getItem(PILOT_RESET_KEY)!=='1'){
