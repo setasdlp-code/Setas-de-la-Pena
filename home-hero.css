@@ -13,9 +13,9 @@
 .home-page .hero-pena a:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 3px; }
 
 .hero-pena-visual { min-width: 0; }
-.hero-pena-land { position: relative; margin: 0; }
+.hero-pena-land { position: relative; margin: 0; padding-block: clamp(20px, 3vw, 44px); }
 /* The engraving has a transparent ground, so it sits directly on the paper. */
-.hero-pena-land img { display: block; width: 100%; height: auto; max-height: calc(100svh - 220px); min-height: 260px; object-fit: contain; object-position: center bottom; }
+.hero-pena-land img { display: block; width: 84%; height: auto; margin-inline: auto; max-height: calc(100svh - 220px); min-height: 0; object-fit: contain; object-position: center bottom; }
 
 
 
