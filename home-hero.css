@@ -1,5 +1,5 @@
 /* Homepage hero: headline beside the engraving of the peña de Juaica with its mushrooms (from the DS-2026 emblem),
-   with the three species underneath. Direction D: draft B (assets/banners/landing-2026-10/) with this engraving in place of the pencil landscape. */
+   shown without a caption or duplicate species navigation. */
 .home-page .hero-pena { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); gap: 32px 4vw; align-items: center; padding-block: 24px 40px; }
 
 .home-page .hero-pena h1 { margin: 0; font: 900 clamp(56px, 6.6vw, 112px)/.92 var(--font-editorial); letter-spacing: -.02em; color: var(--brand-primary); text-wrap: balance; }
@@ -15,29 +15,12 @@
 .hero-pena-visual { min-width: 0; }
 .hero-pena-land { position: relative; margin: 0; }
 /* The engraving has a transparent ground, so it sits directly on the paper. */
-.hero-pena-land img { display: block; width: 100%; height: auto; max-height: calc(100svh - 340px); min-height: 260px; object-fit: contain; object-position: center bottom; }
-.hero-pena-land figcaption { position: absolute; top: 0; right: 0; color: var(--text-secondary); }
-.hero-pena-land figcaption b { font-weight: inherit; color: var(--brand-accent-text, var(--coral-700)); }
+.hero-pena-land img { display: block; width: 100%; height: auto; max-height: calc(100svh - 220px); min-height: 260px; object-fit: contain; object-position: center bottom; }
 
-.hero-pena-species { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 8px 0 0; padding: 0; list-style: none; border-top: var(--rule-heavy); }
-.hero-pena-species li + li { border-left: var(--rule-hairline); }
-.hero-pena-species a { display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 14px 12px 4px; color: inherit; text-decoration: none; }
-.hero-pena-species li:first-child a { padding-left: 0; }
-.hero-pena-species img { flex: none; width: 72px; height: 72px; object-fit: contain; transition: transform .3s ease; }
-.hero-pena-species span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.hero-pena-species b { font: 700 20px/1.1 var(--font-editorial); color: var(--text-primary); }
-.hero-pena-species i { font: italic 500 15px/1.2 var(--font-editorial); color: var(--text-secondary); }
-.hero-pena-species a:hover b { text-decoration: underline; text-underline-offset: 4px; }
-.hero-pena-species a:hover img { transform: translateY(-2px); }
 
-@media (prefers-reduced-motion: reduce) { .hero-pena-species img { transition: none; } .hero-pena-species a:hover img { transform: none; } }
 
 @media (max-width: 1100px) and (min-width: 761px) {
   .home-page .hero-pena { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .hero-pena-species a { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .hero-pena-species img { width: 56px; height: 56px; }
-  .hero-pena-species b { font-size: 17px; }
-  .hero-pena-species i { font-size: 13px; }
 }
 
 @media (max-width: 760px) {
@@ -46,9 +29,4 @@
   .home-page .hero-pena .origin-story > p { margin: 18px 0 22px; font-size: 17px; }
   .home-page .hero-pena .origin-actions .hero-cta { flex: 1 1 100%; justify-content: center; }
   .hero-pena-land img { max-height: none; min-height: 0; }
-  .hero-pena-land figcaption { display: none; }
-  .hero-pena-species a { flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 8px 0; }
-  .hero-pena-species img { width: 60px; height: 60px; }
-  .hero-pena-species b { font-size: 16px; }
-  .hero-pena-species i { font-size: 12px; }
 }
