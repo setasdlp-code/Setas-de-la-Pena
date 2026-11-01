@@ -7,6 +7,29 @@ const ledgerApi = require('./inventory-ledger.js');
 
 const NOW = Date.parse('2026-09-27T09:00:00-05:00');
 
+describe('totales documentales de compras', () => {
+  test('datos vacíos o inválidos no se convierten en compras gratuitas', () => {
+    for (const value of [null, undefined, '', '  ', false, -1, NaN, Infinity, 'pendiente']) {
+      assert.equal(purchasesApi.knownPurchaseNumber(value), null);
+      assert.equal(purchasesApi.purchaseTotal([{ kg: 5, precio: value }]), null);
+      assert.equal(purchasesApi.purchaseTotal([{ kg: value, precio: 1000 }]), null);
+    }
+  });
+
+  test('preserva cero explícito y cantidades numéricas del formulario', () => {
+    assert.equal(purchasesApi.purchaseTotal([{ kg: '5', precio: '0' }]), 0);
+    assert.equal(purchasesApi.purchaseTotal([{ kg: 0, precio: 1200 }]), 0);
+    assert.equal(purchasesApi.purchaseTotal([{ kg: 2.5, precio: 1200 }, { kg: '3', precio: '500' }]), 4500);
+  });
+
+  test('una línea incompleta impide presentar un total parcial como completo', () => {
+    assert.equal(purchasesApi.purchaseTotal([{ kg: 5, precio: 1000 }, { kg: null, precio: null }]), null);
+    assert.equal(purchasesApi.purchaseTotal([]), null);
+    assert.equal(purchasesApi.purchaseTotal(), null);
+    assert.equal(purchasesApi.purchaseTotal([{ kg: Number.MAX_VALUE, precio: 2 }]), null);
+  });
+});
+
 describe('compraEstado', () => {
   test('compra sin estado es histórica: se lee como recibida', () => {
     assert.equal(purchasesApi.compraEstado({ id: 'C-1', items: [] }), 'recibida');

@@ -10833,7 +10833,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         byMonth[mes].push(c);
                       });
                       return Object.entries(byMonth).sort((a,b)=>b[0].localeCompare(a[0])).map(([mes,cmpras])=>{
-                        const totalMes=cmpras.reduce((s,c)=>s+c.items.reduce((si,it)=>si+(it.kg||0)*(it.precio||0),0),0);
+                        const totalMes=window.SetasPurchases.purchaseTotal(cmpras.flatMap(c=>c.items?.length?c.items:[{}]));
                         const collapsed=!!collapsedMonths[mes];
                         const [yr,mo]=mes.split('-');
                         const label=new Date(parseInt(yr),parseInt(mo)-1,1).toLocaleDateString('es-CO',{month:'long',year:'numeric'});
@@ -10842,11 +10842,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             <button type="button" className="inv-month-head" aria-expanded={!collapsed} onClick={()=>setCollapsedMonths(prev=>({...prev,[mes]:!prev[mes]}))}>
                               <span className="inv-month-label">{label}</span>
                               <div style={{display:'flex',alignItems:'center',gap:12}}>
-                                <span className="inv-month-total">${totalMes.toLocaleString('es-CO')} COP</span>
+                                <span className="inv-month-total">{totalMes===null?'Total por confirmar':`$${totalMes.toLocaleString('es-CO')} COP`}</span>
                                 <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--border-soft)'}}>{collapsed?'▸':'▾'}</span>
                               </div>
                             </button>
                             {!collapsed&&(
+                              <div role="region" aria-label={`Compras de ${label}`} tabIndex={0} style={{overflowX:'auto'}}>
                               <table className="inv-table">
                                 <thead>
                                   <tr>
@@ -10856,23 +10857,24 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                 <tbody>
                                   {cmpras.map(c=>{
                                     const prov=invProveedores.find(p=>p.id===c.proveedorId);
-                                    const tot=c.items.reduce((s,it)=>s+(it.kg||0)*(it.precio||0),0);
+                                    const tot=window.SetasPurchases.purchaseTotal(c.items);
                                     const estado=window.SetasPurchases?window.SetasPurchases.compraEstado(c):'recibida';
                                     const pendiente=estado==='pendiente';
                                     return(
                                       <tr key={c.id}>
-                                        <td>{c.fecha}</td>
+                                        <td>{c.fecha}{c.fechaTipo==='recepcion_compra_sin_fecha'&&<small style={{display:'block'}}>Recepción · fecha de compra por confirmar</small>}</td>
                                         <td style={{fontFamily:"var(--font-body)",fontSize:"var(--text-sm)"}}>{prov?.nombre||'Proveedor eliminado'}</td>
                                         <td>
                                           <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
-                                            {c.items.map((it,i)=>{
+                                            {(c.items||[]).map((it,i)=>{
                                               const g=INGS.find(x=>x.id===it.ingredienteId);
-                                              return<span key={i} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)',borderRadius:2}}>{g?.name||it.ingredienteId} {it.kg}kg</span>;
+                                              const kg=window.SetasPurchases.knownPurchaseNumber(it.kg);
+                                              return<span key={i} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",padding:'1px 5px',background:'var(--paper-100)',border:'1px solid var(--paper-300)',color:'var(--ink-500)',borderRadius:2}}>{it.nombreOriginal||g?.name||it.ingredienteId} · {kg===null?'Cantidad por confirmar':`${kg.toLocaleString('es-CO')} kg`}</span>;
                                             })}
                                           </div>
                                         </td>
-                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--ink-900)'}}>${tot.toLocaleString('es-CO')}</td>
-                                        <td style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}</td>
+                                        <td style={{fontFamily:"var(--font-num)",fontSize:"var(--text-base)",color:'var(--ink-900)'}}>{tot===null?'Costo por confirmar':`$${tot.toLocaleString('es-CO')}`}</td>
+                                        <td style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>{c.fuenteCaptura}{c.conciliacionStock==='historico_sin_recuento'&&<small style={{display:'block'}}>Registro histórico · saldo actual sin verificar</small>}</td>
                                         <td>
                                           <span className={`sdp-badge ${pendiente?'sdp-badge--warn':'sdp-badge--ok'}`} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",fontWeight:700}}>
                                             {window.SetasPurchases?window.SetasPurchases.COMPRA_ESTADO_LABELS[estado]:estado}
@@ -10883,6 +10885,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                   })}
                                 </tbody>
                               </table>
+                              </div>
                             )}
                           </div>
                         );
