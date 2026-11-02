@@ -52,3 +52,33 @@
   .hero-pena-species b { font-size: 16px; }
   .hero-pena-species i { font-size: 12px; }
 }
+
+/* Portada colour roles (docs/superpowers/plans/2026-11-01-home-redesign-audit.md, Phase 2).
+   Only index.html carries .portada. The other .home-page pages keep the ink-only reset in home-catalog.css.
+   Moss = identity and main action · coral = voice and appetite · slate = labels and data · ochre = status band.
+   Colour marks a role, never a species (brand guidelines §5). */
+.home-page.portada {
+  --brand-primary: var(--moss-700);
+  --brand-accent: var(--coral-500);
+  --brand-accent-text: var(--coral-700);
+  --action-primary: var(--moss-700);
+  --action-primary-hover: var(--moss-900);
+  --focus-ring: var(--coral-500);
+  --rule-heavy: 2px solid var(--moss-700);
+}
+.portada .t-label { color: var(--slate-500); }
+.portada .hero-pena-land figcaption { color: var(--slate-500); }
+
+/* Botany: species names stay ink, Latin names in moss. */
+.portada .species-card h3 { color: var(--text-primary); }
+.portada .t-latin, .portada .hero-pena-species i { color: var(--moss-700); }
+
+/* Cooking links carry the terracotta; the species-page link stays ink. */
+.portada .card-recipes { color: var(--coral-700); text-decoration-color: currentColor; }
+.portada main a:not(.hero-cta):hover, .portada footer a:hover { text-decoration-color: var(--coral-500); }
+
+.home-page.portada .hero-pena .origin-actions .hero-cta:hover { background: var(--moss-900); border-color: var(--moss-900); box-shadow: inset 0 -3px 0 var(--coral-500); }
+
+/* Pressed feedback for the main actions (Phase 3 extends this to all links). */
+.home-page.portada .hero-pena .origin-actions .hero-cta:active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { .home-page.portada .hero-pena .origin-actions .hero-cta:active { transform: none; } }
