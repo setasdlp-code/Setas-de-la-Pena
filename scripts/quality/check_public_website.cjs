@@ -152,7 +152,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#hero-title').innerText().then(text => text.replace(/\s+/g, ' ')), 'Del micelio a la mesa.');
     assert.equal(await page.locator('.origin-actions a[href="#coleccion"]').count(), 1);
     assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
-    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Consultar shiitake/);
+    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Aviso de cosecha/);
     // The hero opens with cooking, not traceability (identidad comercial v1.1 §3; voz v2.4).
     assert.equal(await page.locator('.origin-story a[href*="fao.org"]').count(), 0);
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
@@ -232,7 +232,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.getByLabel('Municipio de entrega', { exact: true }).fill('   ');
     await page.locator('.purchase-submit').click();
     assert.equal(await page.locator('#order-review').isVisible(), false);
-    await page.getByLabel('Para restaurante', { exact: true }).check();
+    await page.getByLabel('Para un servicio', { exact: true }).check();
     assert.equal(await page.locator('#restaurant-fields').isVisible(), true);
     await page.locator('#order-frequency').fill('Semanal');
     await page.locator('#order-date').fill('Fecha por acordar');
@@ -241,12 +241,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#order-review').isVisible(), true);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'order-review');
     const message = await page.locator('#order-message').inputValue();
-    assert.match(message, /mi restaurante/);
+    assert.match(message, /un servicio de cocina/);
     assert.match(message, /Frecuencia de compra: Semanal/);
     assert.match(message, /Fecha deseada: Fecha por acordar/);
-    assert.match(await page.locator('#review-title').innerText(), /Borrador listo/);
+    // Estado por defecto: piloto, antes de la primera cosecha (commercial-data.js).
+    assert.match(await page.locator('#review-title').innerText(), /Mensaje de aviso listo/);
+    assert.match(message, /aviso de la primera cosecha de shiitake/);
     assert.match(message, /Cantidad solicitada: 500 g/);
-    assert.match(message, /Precio: por confirmar/);
+    assert.doesNotMatch(message, /Precio/);
     assert.match(message, /Municipio de entrega: Tenjo/);
     assert.equal(await page.locator('#order-whatsapp').getAttribute('href'), null);
     assert.equal(await page.locator('#order-whatsapp').isVisible(), false);
@@ -733,7 +735,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await chefPage.locator('#order-quantity').inputValue(), '900');
     await chefPage.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
     await chefPage.locator('.purchase-submit').click();
-    assert.match(await chefPage.locator('#order-message').inputValue(), /mi restaurante/);
+    assert.match(await chefPage.locator('#order-message').inputValue(), /un servicio de cocina/);
     assert.match(await chefPage.locator('#order-message').inputValue(), /900 g/);
     assert.equal(await chefPage.locator('#order-whatsapp').isVisible(), false);
     await capture(chefPage, 'chef-consulta-1440.png', '#producto');

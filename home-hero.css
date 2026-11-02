@@ -1,5 +1,5 @@
-/* Homepage hero: headline beside the engraving of the peña de Juaica with its mushrooms (from the DS-2026 emblem).
-   Direction D. The species strip that sat under the engraving was removed (audit 2026-11-01, L1): the catalogue right below already lists the three species. */
+/* Homepage hero: headline beside the engraving of the peña de Juaica with its mushrooms (from the DS-2026 emblem),
+   shown without a caption or duplicate species navigation (#441; audit 2026-11-01, L1). More space below than above (L3). */
 .home-page .hero-pena { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); gap: 32px 4vw; align-items: center; padding-block: clamp(32px, 5vw, 64px) clamp(48px, 7vw, 96px); }
 
 .home-page .hero-pena h1 { margin: 0; font: 900 clamp(56px, 6.6vw, 112px)/.92 var(--font-editorial); letter-spacing: -.02em; color: var(--brand-primary); text-wrap: balance; }
@@ -13,11 +13,9 @@
 .home-page .hero-pena a:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 3px; }
 
 .hero-pena-visual { min-width: 0; }
-.hero-pena-land { position: relative; margin: 0; }
+.hero-pena-land { position: relative; margin: 0; padding-block: clamp(20px, 3vw, 44px); }
 /* The engraving has a transparent ground, so it sits directly on the paper. */
-.hero-pena-land img { display: block; width: 100%; height: auto; max-height: calc(100svh - 280px); min-height: 260px; object-fit: contain; object-position: center bottom; }
-.hero-pena-land figcaption { position: absolute; top: 0; right: 0; color: var(--text-secondary); }
-.hero-pena-land figcaption b { font-weight: inherit; color: var(--brand-accent-text, var(--coral-700)); }
+.hero-pena-land img { display: block; width: 84%; height: auto; margin-inline: auto; max-height: calc(100svh - 220px); min-height: 0; object-fit: contain; object-position: center bottom; }
 
 @media (max-width: 1100px) and (min-width: 761px) {
   .home-page .hero-pena { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -28,9 +26,7 @@
   .home-page .hero-pena h1 { font-size: clamp(46px, 13.5vw, 64px); }
   .home-page .hero-pena .origin-story > p { margin: 18px 0 22px; font-size: 17px; }
   .home-page .hero-pena .origin-actions .hero-cta { flex: 1 1 100%; justify-content: center; }
-  /* Keep the engraving to under half a screen so the catalogue starts sooner (L2). */
-  .hero-pena-land img { max-height: 46svh; min-height: 0; }
-  .hero-pena-land figcaption { display: none; }
+  .hero-pena-land img { max-height: none; min-height: 0; }
 }
 
 /* Portada colour roles (docs/superpowers/plans/2026-11-01-home-redesign-audit.md, Phase 2).
@@ -47,7 +43,6 @@
   --rule-heavy: 2px solid var(--moss-700);
 }
 .portada .t-label { color: var(--slate-500); }
-.portada .hero-pena-land figcaption { color: var(--slate-500); }
 
 /* Botany: species names stay ink, Latin names in moss. */
 .portada .species-card h3 { color: var(--text-primary); }
