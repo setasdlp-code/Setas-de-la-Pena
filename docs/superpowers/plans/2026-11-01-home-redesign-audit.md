@@ -124,6 +124,11 @@ Phases 1 and 2 are built on branch `claude/taste-skill-redesign-audit-8bdf5b`. `
   - K2: footer nav (Las setas · Recetas · Restaurantes · El mundo micelar). It overrides the bare `nav` rules in `website.css`.
   - `check_public_website.cjs` was updated for home: section order now includes `plato`, the filter is visible with no `summary`, and the plate is a link with no dialog. Gate 72/72.
   - `check_public_delivery.cjs` wasn't run, because it needs an export (no `fontTools` here). The exporter adds `srcset` and `sizes` to every `img`, so the new image should pass.
+- **Phase 6:** done, with two changes to the plan.
+  - Q1: rules for `.hero`, `.hero-*`, `.origin`, `.origin-*`, `.home-intro`, `.recipe-feature` and `.recipe-artwork` were removed from `website.css`, `home-catalog.css` and `public-pages.css`. No public page or script uses them; the mockups and docs pages that use `.hero` carry their own CSS. `.origin-story`, `.origin-actions` and `.hero-cta` stay, because `index.html` uses them. Sizes: `website.css` 45.2 → 40.6 KB, `home-catalog.css` 17.9 → 12.0 KB, `public-pages.css` 10.4 → 10.1 KB. Computed styles and element boxes are identical before and after on all 16 exported pages at 375, 768 and 1440 px.
+  - Q2, changed: no favicon from the Juaica emblem. Brand guidelines §4 say «No introducir un isotipo o monograma para sustituir el nombre» and keep the mushroom icon as an interface resource, and the engraving doesn't read at 16 px. Instead, `assets/favicon.svg` redraws the mushroom with a 4-unit moss stroke on a paper plate, so it shows on light and dark tabs. `assets/apple-touch-icon.png` (180 px) is opaque on paper-100. The shared `icons/mushroom.svg` is unchanged. All 16 exported pages now link both icons with root-absolute paths. The exporter follows these links, so both files will be exported. An emblem-based icon would be a new brand symbol and needs Sebastián's decision.
+  - C2, deferred: the paper grain wasn't added. Its acceptance line needs a Lighthouse run, which wasn't available, and a full-page overlay could muddy the engravings and the plates that use `mix-blend-mode: multiply`.
+  - Gate 72/72.
 - **Not yet live:** this needs an export and a Cloudflare deploy (Phase 0).
 
 ### Phase 1 · Bugs (S1, S4, S6, K3)
@@ -191,8 +196,8 @@ Phases 1 and 2 are built on branch `claude/taste-skill-redesign-audit-8bdf5b`. `
 
 ### Phase 6 · Clean-up and polish (Q1, Q2, C2)
 - Q1: grep each dead selector across every public page. Delete only the ones used nowhere.
-- Q2: favicon from the Juaica emblem (SVG plus a 180 px PNG for `apple-touch-icon`).
-- C2: optional paper grain on `body::before`, a fixed, `pointer-events:none` SVG noise layer at about 3–4% opacity, with a `--z-overlay` token instead of a raw number. Leave it out in print.
+- Q2: favicon from the Juaica emblem (SVG plus a 180 px PNG for `apple-touch-icon`). *Changed in the build: see Status. Brand guidelines §4 rule out a new isotipo, so the mushroom icon was made legible instead.*
+- C2: optional paper grain on `body::before`, a fixed, `pointer-events:none` SVG noise layer at about 3–4% opacity, with a `--z-overlay` token instead of a raw number. Leave it out in print. *Deferred: see Status.*
 - **Acceptance:** the CSS file sizes for home go down and Lighthouse performance doesn't drop.
 
 ## 5. Optional, not planned

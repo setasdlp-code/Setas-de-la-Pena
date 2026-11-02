@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Favicon: the interface mushroom icon (08_brand/ds-2026/assets/icons/mushroom.svg), redrawn for 16–32 px.
+       Thicker stroke, no gill ticks, moss on a paper plate so it reads on light and dark browser tabs.
+       Not an isotipo: brand guidelines §4 keep the mushroom as an interface resource. -->
+  <rect width="48" height="48" rx="6" fill="#FAF8F3"/>
+  <g fill="none" stroke="#2E3B2F" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M7 26c0-11 7-18 17-18s17 7 17 18Z"/>
+    <path d="M18.5 26v12c0 2 2.5 3 5.5 3s5.5-1 5.5-3V26"/>
+  </g>
+</svg>
