@@ -22,7 +22,12 @@ Las especies usan grabados del DS; las recetas usan nueve gouaches con lápiz ge
 `commercial-data.js` contiene exclusivamente datos públicos confirmados. Por defecto faltan WhatsApp, presentaciones, precios, disponibilidad, entrega y pago; la ficha funciona como consulta, sin prometer producto disponible.
 
 - `whatsapp`: número internacional con `+` y código de país. Sin un número válido no aparece el enlace de WhatsApp.
-- `availability`: `unconfirmed`, `available` o `unavailable`.
+- `availability`:
+  - `pilot` (valor actual): antes de la primera cosecha. La ficha muestra «Antes de la primera cosecha» y el formulario prepara un mensaje de aviso de primera cosecha, sin precio ni medios de pago. Sin `whatsapp`, el botón dice «Preparar mensaje de aviso» y nada da a entender una inscripción; con `whatsapp`, «Pedir aviso» y «Pedir aviso por WhatsApp».
+  - `unconfirmed`: hay producto, pero la disponibilidad se confirma al consultar.
+  - `available` / `unavailable`: disponibilidad confirmada o agotada.
+  - Cualquier otro valor se trata como `unconfirmed`.
+- Comprobación enfocada del piloto y del registro del cultivo: `node scripts/quality/check_public_pilot.cjs` (mismo servidor local; `SETAS_WEBSITE_BASE_URL` para otro puerto).
 - `presentations`: lista de `{ id, name, weightGrams, priceCOP }`; peso positivo en gramos y precio en pesos enteros, o `null` si falta precio.
 - `deliveryAreas`, `deliveryDays`, `paymentMethods`, `batch`, `harvestDate`: texto confirmado o `null`.
 - `deliveryFeeCOP`: pesos enteros, `null` si falta el costo; `0` representa entrega sin costo, sujeta a cobertura.
