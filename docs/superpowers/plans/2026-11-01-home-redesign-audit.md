@@ -113,6 +113,17 @@ Phases 1 and 2 are built on branch `claude/taste-skill-redesign-audit-8bdf5b`. `
   - L2: on mobile the engraving is capped at `46svh` and the species plates are 200 px tall (`.portada` only). At 375 px, «Las setas» now starts at y=751 (was 877) and the page is 3037 px tall (was 3407). At 768 and 1440 the catalog header shows on the first screen.
   - L4: the location was removed from the footer paragraph. It stays in the top strip and the footer's last line.
   - Gate 72/72.
+- **Phase 5:** done. Decision 3.3 was settled as "retire the dialog on home".
+  - S5: the species plates are now links to `/especies/*`, with `tabindex="-1"` and `aria-hidden` because «Leer la ficha» is the accessible link. `#species-dialog` and the `<noscript>` note were removed from `index.html`. In `website.js` the dialog code is guarded with `if (dialog)`, so `/setas` keeps its dialog and all of its tests. `data-species` stays on the links because `applyFilters()` reads it.
+  - S7: the preparation filter is a visible row of buttons (`div#prep-guide`, no `<details>`). It's still hidden without JS. Buttons are 44 px or taller.
+  - K1: new `section#plato` after the catalog, showing the arepa de shiitake.
+    - Text comes from `recetas.html`: lede, 30 min · 2 personas · 300 g.
+    - Status «Estimado · pendiente de prueba en cocina.» sits on an ochre band, on a `moss-tint` panel.
+    - Links: «Ver la receta» (terracotta) and «Todas las recetas».
+    - No purchase claim.
+  - K2: footer nav (Las setas · Recetas · Restaurantes · El mundo micelar). It overrides the bare `nav` rules in `website.css`.
+  - `check_public_website.cjs` was updated for home: section order now includes `plato`, the filter is visible with no `summary`, and the plate is a link with no dialog. Gate 72/72.
+  - `check_public_delivery.cjs` wasn't run, because it needs an export (no `fontTools` here). The exporter adds `srcset` and `sizes` to every `img`, so the new image should pass.
 - **Not yet live:** this needs an export and a Cloudflare deploy (Phase 0).
 
 ### Phase 1 · Bugs (S1, S4, S6, K3)
