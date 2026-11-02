@@ -113,6 +113,10 @@ const commerce = overrides => ({
         const ctas = await page.locator('a, button').evaluateAll(nodes => nodes.map(n => n.textContent.replace(/\s+/g, ' ').trim()));
         const bad = ctas.filter(t => forbidden.test(t));
         assert.deepEqual(bad, [], `${file}: CTA de consulta en piloto`);
+        if (file === 'recetas') {
+          assert.deepEqual(await page.locator('.recipe-cta a').allTextContents().then(items => items.map(text => text.replace(/\s+/g, ' ').trim())), Array(9).fill('Preparar mensaje de aviso ↗'));
+          assert.match(await page.locator('#recipe-notice-status').textContent(), /no envía un mensaje ni registra una suscripción/);
+        }
         if (file === 'restaurantes') assert.doesNotMatch(await page.locator('#chef-title').textContent(), forbidden);
         await context.close();
       }

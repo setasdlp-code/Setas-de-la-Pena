@@ -78,7 +78,7 @@ function ProductionReadinessDashboard({assessment,input,rooms,onRoomChange,onAct
       <div className="readiness-card-heading"><h3>{check.label}</h3><span className="readiness-status">{labels[check.status]}</span></div><p>{check.detail}</p>
       {check.record&&<p className="readiness-record">Registro de {check.record.reviewer} · {new Date(check.record.at).toLocaleString('es-CO',{timeZone:'America/Bogota'})}</p>}
       {check.id==='spawn'&&assessment.spawnLots.length>0&&<p>Lotes de semilla asignados: {assessment.spawnLots.map(l=>l.lotId).join(', ')}</p>}
-      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm check={check} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
+      {manual.includes(check.id)?<details><summary>Registrar evidencia de {check.label}</summary><ReadinessEvidenceForm key={assessment.scope+':'+check.id} check={check} onSave={form=>{if(error)throw Error(error);onSave(form);setMessage(`Revisión de ${check.label} guardada para este plan.`);}}/></details>
         :<button type="button" className="inv-btn inv-btn-sec" onClick={()=>onAction(check.action)}>Revisar {check.action==='recipe'?'Formulador':check.action==='batch'?'cantidades':check.action==='inventory'?'Bodega':'Perito'}</button>}
     </article>)}</div>
     <p className="readiness-boundary">El primer piloto puede no tener historial comparable. El rendimiento sigue siendo una estimación hasta cerrar ciclos con mediciones reales.</p>
@@ -11181,12 +11181,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
     }
     if (tipo === 'riego' || tipo === 'observacion') {
       // Suppress duplicate clicks while the same capture is being handed off.
-      const captureKey=eventOverride?.id||`${lote.id}:${tipo}`;
+      const captureKey=`${lote.id}:${tipo}`;
       if(qrSavingRef.current.has(captureKey)) return;
       qrSavingRef.current.add(captureKey);
       const uid=window.SetasFirebase?.auth?.currentUser?.uid||lote.operador||'operario_local';
       let evento=eventOverride;
       let savedLocally=false;
+      let handedOff=false;
       const updateStatus=patch=>setQrEventoStatuses(previous=>{
         const record={...previous.find(item=>item.eventId===evento.id),...patch,eventId:evento.id,event:evento,tipo,loteId:lote.id,bag,nota};
         return [...previous.filter(item=>item.eventId!==evento.id),record];
@@ -11213,15 +11214,21 @@ body{margin:0;padding:20px 24px;background:#fff;}
           : Promise.reject(new Error('Respaldo de Bitácora no disponible.'));
         // Firestore setDoc resolves after server acknowledgement, not merely
         // local enqueue. Both event and batch-log writes must be acknowledged.
-        Promise.all([result.syncPromise,syncLog]).then(()=>updateStatus({status:'synchronized',savedLocally:true,error:null}))
-          .catch(err=>updateStatus({status:'error',savedLocally:true,error:err.message||'No se pudo sincronizar.'}));
+        handedOff=true;
+        Promise.allSettled([result.syncPromise,syncLog]).then(results=>{
+          const failed=results.find(result=>result.status==='rejected');
+          if(failed) throw failed.reason;
+          updateStatus({status:'synchronized',savedLocally:true,error:null});
+        })
+          .catch(err=>updateStatus({status:'error',savedLocally:true,error:err.message||'No se pudo sincronizar.'}))
+          .finally(()=>qrSavingRef.current.delete(captureKey));
         setQrEventoObsAbierta(false);
         setQrEventoObsNota('');
       }catch(err){
         if(evento) updateStatus({status:'error',savedLocally,error:err.message||'No se pudo guardar el evento.'});
         else setNoticeDlg({title:'No se pudo guardar',msg:err.message});
       }finally{
-        qrSavingRef.current.delete(captureKey);
+        if(!handedOff) qrSavingRef.current.delete(captureKey);
       }
       return;
     }
@@ -11260,6 +11267,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
   const renderQrCaptures=(currentLote,scannedBag,currentSheet)=>{
     if(!currentLote) return null;
+    const qrPending=tipo=>qrEventoStatuses.some(item=>item.loteId===currentLote.id&&item.tipo===tipo&&item.status==='pending');
     const qrAllowedActions=new Set((currentSheet?.actions||[]).filter(action=>!action.blockedBy).map(action=>action.action));
     return <section aria-label="Registrar en este lote" style={{marginBottom:16}}>
                       <div style={{fontFamily:'var(--font-mono)',fontSize:10,letterSpacing:'.08em',textTransform:'uppercase',color:'var(--ink-2)',marginTop:4}}>
@@ -11284,6 +11292,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                         {qrAllowedActions.has('riego') && (<button
                           type="button"
                           data-action="evento-riego"
+                          disabled={qrPending('riego')}
                           style={{minHeight:48,cursor:'pointer',background:'var(--paper-0)',color:'var(--ink-0)',border:'1px solid var(--border-hairline)',borderRadius:'var(--radius-md,3px)',fontFamily:'var(--font-sans)',fontSize:16,fontWeight:600}}
                           onClick={()=>reportarEventoCultivo('riego',currentLote,scannedBag)}
                         >
@@ -11321,7 +11330,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                             type="button"
                             className="inv-btn inv-btn-pri"
                             style={{minHeight:48}}
-                            disabled={!qrEventoObsNota.trim()}
+                            disabled={!qrEventoObsNota.trim()||qrPending('observacion')}
                             onClick={()=>reportarEventoCultivo('observacion',currentLote,scannedBag,qrEventoObsNota)}
                           >
                             Guardar observación
