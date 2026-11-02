@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: a14bd021ed9c57db645cc4e2920cffcb8dcb63812869e894fe85721ee77b8953
+// source-hash: 23969c99313e1d753186eaa6c7b0fd2f61afa9846e6c041df0c7dc3221488c0b
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -84,7 +84,7 @@ function ProductionReadinessDashboard({ assessment, input, rooms, onRoomChange, 
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1e3);
   };
-  return /* @__PURE__ */ React.createElement("section", { id: "production-readiness", className: "production-readiness no-print", "aria-labelledby": "production-readiness-title", "data-testid": "production-readiness-dashboard" }, /* @__PURE__ */ React.createElement("header", { className: "readiness-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "readiness-kicker" }, "Antes de producir"), /* @__PURE__ */ React.createElement("h2", { id: "production-readiness-title" }, "Preparación para producción"), /* @__PURE__ */ React.createElement("p", null, input.lotCode || "Plan sin código", " · ", input.speciesName || "Especie pendiente", " · ", assessment.preparationRevision || "Cantidades pendientes")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportReport }, "Exportar informe")), /* @__PURE__ */ React.createElement("div", { className: `readiness-summary is-${assessment.status}`, role: "status", "aria-live": "polite", "aria-atomic": "true" }, /* @__PURE__ */ React.createElement("strong", null, assessment.status === "verified" ? "Requisitos documentados · revisar autorización del ensayo" : "Requisitos pendientes antes de producir"), /* @__PURE__ */ React.createElement("span", null, assessment.counts.verified, " verificados · ", assessment.counts.blocked, " bloqueados · ", assessment.counts.unknown, " sin verificar")), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico."), /* @__PURE__ */ React.createElement("div", { className: "readiness-context" }, /* @__PURE__ */ React.createElement("label", null, "Sala prevista", /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala prevista para preparación", value: input.roomId, onChange: (e) => onRoomChange(e.target.value) }, rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), assessment.next && /* @__PURE__ */ React.createElement("p", null, /* @__PURE__ */ React.createElement("strong", null, "Siguiente requisito:"), " ", assessment.next.label, ". ", assessment.next.detail)), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error, " No se puede registrar una nueva revisión hasta recuperar estos datos."), /* @__PURE__ */ React.createElement("p", { className: "readiness-local-note" }, "Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación."), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message), /* @__PURE__ */ React.createElement("div", { className: "readiness-grid" }, assessment.checks.map((check) => /* @__PURE__ */ React.createElement("article", { key: check.id, className: `readiness-card is-${check.status}`, "data-testid": `readiness-${check.id}` }, /* @__PURE__ */ React.createElement("div", { className: "readiness-card-heading" }, /* @__PURE__ */ React.createElement("h3", null, check.label), /* @__PURE__ */ React.createElement("span", { className: "readiness-status" }, labels[check.status])), /* @__PURE__ */ React.createElement("p", null, check.detail), check.record && /* @__PURE__ */ React.createElement("p", { className: "readiness-record" }, "Registro de ", check.record.reviewer, " · ", new Date(check.record.at).toLocaleString("es-CO", { timeZone: "America/Bogota" })), check.id === "spawn" && assessment.spawnLots.length > 0 && /* @__PURE__ */ React.createElement("p", null, "Lotes de semilla asignados: ", assessment.spawnLots.map((l) => l.lotId).join(", ")), manual.includes(check.id) ? /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Registrar evidencia de ", check.label), /* @__PURE__ */ React.createElement(ReadinessEvidenceForm, { check, onSave: (form) => {
+  return /* @__PURE__ */ React.createElement("section", { id: "production-readiness", className: "production-readiness no-print", "aria-labelledby": "production-readiness-title", "data-testid": "production-readiness-dashboard" }, /* @__PURE__ */ React.createElement("header", { className: "readiness-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "readiness-kicker" }, "Antes de producir"), /* @__PURE__ */ React.createElement("h2", { id: "production-readiness-title" }, "Preparación para producción"), /* @__PURE__ */ React.createElement("p", null, input.lotCode || "Plan sin código", " · ", input.speciesName || "Especie pendiente", " · ", assessment.preparationRevision || "Cantidades pendientes")), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", onClick: exportReport }, "Exportar informe")), /* @__PURE__ */ React.createElement("div", { className: `readiness-summary is-${assessment.status}`, role: "status", "aria-live": "polite", "aria-atomic": "true" }, /* @__PURE__ */ React.createElement("strong", null, assessment.status === "verified" ? "Requisitos documentados · revisar autorización del ensayo" : "Requisitos pendientes antes de producir"), /* @__PURE__ */ React.createElement("span", null, assessment.counts.verified, " verificados · ", assessment.counts.blocked, " bloqueados · ", assessment.counts.unknown, " sin verificar")), /* @__PURE__ */ React.createElement("p", { className: "readiness-boundary" }, "Este panel reúne la evidencia del plan. La autorización y el registro de ejecución se realizan en Bitácora; el índice del Perito no valida el proceso físico."), /* @__PURE__ */ React.createElement("div", { className: "readiness-context" }, /* @__PURE__ */ React.createElement("label", null, "Sala prevista", /* @__PURE__ */ React.createElement("select", { "aria-label": "Sala prevista para preparación", value: input.roomId, onChange: (e) => onRoomChange(e.target.value) }, rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.id }, r.name)))), assessment.next && /* @__PURE__ */ React.createElement("p", null, /* @__PURE__ */ React.createElement("strong", null, "Siguiente requisito:"), " ", assessment.next.label, ". ", assessment.next.detail)), error && /* @__PURE__ */ React.createElement("p", { role: "alert" }, error, " No se puede registrar una nueva revisión hasta recuperar estos datos."), /* @__PURE__ */ React.createElement("p", { className: "readiness-local-note" }, "Las revisiones se guardan en este equipo y se sincronizan con los demás cuando hay señal. También se incluyen en el respaldo de ensayos, y el informe permite compartir esta evaluación."), message && /* @__PURE__ */ React.createElement("p", { role: "status" }, message), /* @__PURE__ */ React.createElement("div", { className: "readiness-grid" }, assessment.checks.map((check) => /* @__PURE__ */ React.createElement("article", { key: check.id, className: `readiness-card is-${check.status}`, "data-testid": `readiness-${check.id}` }, /* @__PURE__ */ React.createElement("div", { className: "readiness-card-heading" }, /* @__PURE__ */ React.createElement("h3", null, check.label), /* @__PURE__ */ React.createElement("span", { className: "readiness-status" }, labels[check.status])), /* @__PURE__ */ React.createElement("p", null, check.detail), check.record && /* @__PURE__ */ React.createElement("p", { className: "readiness-record" }, "Registro de ", check.record.reviewer, " · ", new Date(check.record.at).toLocaleString("es-CO", { timeZone: "America/Bogota" })), check.id === "spawn" && assessment.spawnLots.length > 0 && /* @__PURE__ */ React.createElement("p", null, "Lotes de semilla asignados: ", assessment.spawnLots.map((l) => l.lotId).join(", ")), manual.includes(check.id) ? /* @__PURE__ */ React.createElement("details", null, /* @__PURE__ */ React.createElement("summary", null, "Registrar evidencia de ", check.label), /* @__PURE__ */ React.createElement(ReadinessEvidenceForm, { key: assessment.scope + ":" + check.id, check, onSave: (form) => {
     if (error) throw Error(error);
     onSave(form);
     setMessage(`Revisión de ${check.label} guardada para este plan.`);
@@ -7362,7 +7362,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "a14bd021ed9c" : null;
+    const appVersion = true ? "23969c99313e" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -8712,12 +8712,13 @@ BATCH (${numBags}×${kgBag} kg):
       return;
     }
     if (tipo === "riego" || tipo === "observacion") {
-      const captureKey = eventOverride?.id || `${lote.id}:${tipo}`;
+      const captureKey = `${lote.id}:${tipo}`;
       if (qrSavingRef.current.has(captureKey)) return;
       qrSavingRef.current.add(captureKey);
       const uid = window.SetasFirebase?.auth?.currentUser?.uid || lote.operador || "operario_local";
       let evento = eventOverride;
       let savedLocally = false;
+      let handedOff = false;
       const updateStatus = (patch) => setQrEventoStatuses((previous) => {
         const record = { ...previous.find((item) => item.eventId === evento.id), ...patch, eventId: evento.id, event: evento, tipo, loteId: lote.id, bag, nota };
         return [...previous.filter((item) => item.eventId !== evento.id), record];
@@ -8741,14 +8742,19 @@ BATCH (${numBags}×${kgBag} kg):
         updateStatus({ status: "pending", savedLocally: true, error: null });
         const result = await qrEvents.persistQuickEvent({ tipo, lote, bag, nota, sheet: buildSheetFor(lote), batchSheetApi, eventDb: window.SetasEventosCultivoDB, awaitPersistence: false, event: evento });
         const syncLog = window.SetasBitacoraDB?.actualizarLote ? Promise.resolve().then(() => window.SetasBitacoraDB.actualizarLote(lote.id, { lifecycleEvents: nextLog })) : Promise.reject(new Error("Respaldo de Bitácora no disponible."));
-        Promise.all([result.syncPromise, syncLog]).then(() => updateStatus({ status: "synchronized", savedLocally: true, error: null })).catch((err) => updateStatus({ status: "error", savedLocally: true, error: err.message || "No se pudo sincronizar." }));
+        handedOff = true;
+        Promise.allSettled([result.syncPromise, syncLog]).then((results) => {
+          const failed = results.find((result2) => result2.status === "rejected");
+          if (failed) throw failed.reason;
+          updateStatus({ status: "synchronized", savedLocally: true, error: null });
+        }).catch((err) => updateStatus({ status: "error", savedLocally: true, error: err.message || "No se pudo sincronizar." })).finally(() => qrSavingRef.current.delete(captureKey));
         setQrEventoObsAbierta(false);
         setQrEventoObsNota("");
       } catch (err) {
         if (evento) updateStatus({ status: "error", savedLocally, error: err.message || "No se pudo guardar el evento." });
         else setNoticeDlg({ title: "No se pudo guardar", msg: err.message });
       } finally {
-        qrSavingRef.current.delete(captureKey);
+        if (!handedOff) qrSavingRef.current.delete(captureKey);
       }
       return;
     }
@@ -8784,6 +8790,7 @@ BATCH (${numBags}×${kgBag} kg):
   };
   const renderQrCaptures = (currentLote, scannedBag, currentSheet) => {
     if (!currentLote) return null;
+    const qrPending = (tipo) => qrEventoStatuses.some((item) => item.loteId === currentLote.id && item.tipo === tipo && item.status === "pending");
     const qrAllowedActions = new Set((currentSheet?.actions || []).filter((action) => !action.blockedBy).map((action) => action.action));
     return /* @__PURE__ */ React.createElement("section", { "aria-label": "Registrar en este lote", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-2)", marginTop: 4 } }, "Reportar evento"), qrEventoStatuses.filter((item) => item.loteId === currentLote.id).map((item) => /* @__PURE__ */ React.createElement("div", { key: item.eventId, "data-testid": "qr-evento-status", "data-sync-status": item.status, role: "status", style: { fontSize: 16, lineHeight: 1.5, padding: 10, border: "1px solid var(--border-soft)", overflowWrap: "anywhere" } }, /* @__PURE__ */ React.createElement("strong", null, item.tipo === "riego" ? "Riego" : "Observación"), " · ", item.nota, /* @__PURE__ */ React.createElement("div", null, item.status === "pending" ? "Guardado en este equipo · sincronización pendiente" : item.status === "synchronized" ? "Sincronizado con el servidor" : `${item.savedLocally ? "Guardado en este equipo. " : "No se guardó en este equipo. "}${item.error}`), item.status === "error" && /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec", style: { minHeight: 48, fontSize: 16 }, onClick: () => reportarEventoCultivo(item.tipo, currentLote, item.bag, item.nota, item.event) }, "Reintentar"))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }, "data-testid": "qr-reportar-evento" }, qrAllowedActions.has("inspection") && /* @__PURE__ */ React.createElement(
       "button",
@@ -8800,6 +8807,7 @@ BATCH (${numBags}×${kgBag} kg):
       {
         type: "button",
         "data-action": "evento-riego",
+        disabled: qrPending("riego"),
         style: { minHeight: 48, cursor: "pointer", background: "var(--paper-0)", color: "var(--ink-0)", border: "1px solid var(--border-hairline)", borderRadius: "var(--radius-md,3px)", fontFamily: "var(--font-sans)", fontSize: 16, fontWeight: 600 },
         onClick: () => reportarEventoCultivo("riego", currentLote, scannedBag)
       },
@@ -8842,7 +8850,7 @@ BATCH (${numBags}×${kgBag} kg):
         type: "button",
         className: "inv-btn inv-btn-pri",
         style: { minHeight: 48 },
-        disabled: !qrEventoObsNota.trim(),
+        disabled: !qrEventoObsNota.trim() || qrPending("observacion"),
         onClick: () => reportarEventoCultivo("observacion", currentLote, scannedBag, qrEventoObsNota)
       },
       "Guardar observación"

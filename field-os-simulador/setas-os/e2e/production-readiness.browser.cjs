@@ -62,7 +62,12 @@ const root=path.resolve(__dirname,'..');
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('sdp_production_readiness')).length),1);
   await page.evaluate(()=>{Storage.prototype.setItem=window.__readinessSetItem;delete window.__readinessSetItem;});await spawn.locator('summary').click();
   console.log('PASS failed local save preserves existing records and never verifies an unsaved inspection.');
+  // A draft belongs to its starting plan scope; changing room must remount it.
+  if(!await equipment.locator('details').evaluate(el=>el.open))await equipment.locator('summary').click();
+  await equipment.getByRole('form').getByLabel('Equipo identificado').fill('BORRADOR-SALA-ANTERIOR');
   await dashboard.getByLabel('Sala prevista para preparación').selectOption('cloudlab_844');
+  await expect(equipment.getByRole('form').getByLabel('Equipo identificado')).toHaveValue('');
+  await expect(equipment.getByRole('form').getByLabel('Resultado de la revisión')).toHaveValue('unknown');
   await expect(equipment.locator('.readiness-status')).toHaveText('Sin verificar');
   await expect(equipment).toContainText('otra receta, cantidad, sala');
   await dashboard.getByLabel('Sala prevista para preparación').selectOption('martha_01');

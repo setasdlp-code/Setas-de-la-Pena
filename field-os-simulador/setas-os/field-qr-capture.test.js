@@ -42,3 +42,30 @@ test('opening structured captures or cancelling them makes no premature event wr
   const h=harness({actions:[action]});await h.run(null,tipo);assert.equal(h.writes.length,0);assert.equal(h.local(),null);
  }
 });
+
+test('pending acknowledgement suppresses a second quick action until both writes settle',async()=>{
+ let finishEvent,finishLog;
+ const h=harness({actions:['riego'],eventWrite:()=>new Promise(r=>{finishEvent=r}),logWrite:()=>new Promise(r=>{finishLog=r})});
+ await h.run(null,'riego');await h.run(null,'riego');
+ assert.equal(h.writes.length,1);assert.equal(h.local()[0].lifecycleEvents.length,1);
+ finishEvent();await tick();await h.run(null,'riego');assert.equal(h.writes.length,1);
+ finishLog();await tick();assert.equal(h.context.qrSavingRef.current.size,0);
+ await h.run(null,'riego');assert.equal(h.writes.length,2);
+ finishEvent();finishLog();await tick();
+});
+
+for(const firstFailure of ['event','log'])test(`a rejected ${firstFailure} write keeps the capture locked until the other write settles`,async()=>{
+ let resolveEvent,rejectEvent,resolveLog,rejectLog,retry=false;
+ const eventPromise=new Promise((resolve,reject)=>{resolveEvent=resolve;rejectEvent=reject});
+ const logPromise=new Promise((resolve,reject)=>{resolveLog=resolve;rejectLog=reject});
+ const h=harness({actions:['riego'],eventWrite:()=>retry?Promise.resolve():eventPromise,logWrite:()=>retry?Promise.resolve():logPromise});
+ await h.run(null,'riego');
+ (firstFailure==='event'?rejectEvent:rejectLog)(Error('offline'));
+ await tick();await h.run(null,'riego');
+ assert.equal(h.writes.length,1);assert.equal(h.context.qrSavingRef.current.size,1);
+ (firstFailure==='event'?resolveLog:resolveEvent)();await tick();
+ assert.equal(h.statuses()[0].status,'error');assert.equal(h.context.qrSavingRef.current.size,0);
+ retry=true;await h.run(h.statuses()[0].event,'riego');await tick();
+ assert.equal(h.statuses()[0].status,'synchronized');assert.equal(h.local()[0].lifecycleEvents.length,1);
+ assert.equal(h.writes[0].id,h.writes[1].id);
+});
