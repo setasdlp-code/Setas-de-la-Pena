@@ -1,6 +1,6 @@
 # Setas de la Peña — Estrategia de marca: lo confirmado y la decisión abierta
 
-1 de noviembre de 2026 · Responsable: Claude · **Estado: propuesta.** No modifica la guía vigente. Las secciones 1 y 2 recogen decisiones ya tomadas; las secciones 3 a 5 son propuestas hasta que Sebastián elija.
+1 de noviembre de 2026 · Responsable: Claude · **Estado: dirección D adoptada el 2026-11-01** e incorporada a la identidad comercial v1.2 y a la voz v2.5. Las inconsistencias de §4 y las preguntas de §5 siguen pendientes.
 
 **Resumen.** El posicionamiento está decidido y es coherente: «Hongos para cocinar con criterio», chefs primero y también hogares, una sola marca. Lo que la estrategia no resuelve todavía es **cómo se comporta la marca mientras no hay producto**. El proyecto tiene 0 lotes, y la especie de arranque, shiitake, tiene un ciclo de 90–150 días. La web ya invita a consultar. La dirección elegida para desarrollar es un **cuaderno de cocina abierto**, una sola cara para chefs y para quienes disfrutan cocinar en casa. Cada entrada une un hito del cultivo con una idea para cocinar la seta, con la profundidad por capas según quién cocina, y hay un solo CTA: «Recibir aviso de la primera cosecha». Así, el rasgo más propio de la marca, decir con exactitud qué sabe y qué no, se vuelve visible antes de la primera venta.
 

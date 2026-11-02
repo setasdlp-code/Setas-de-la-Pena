@@ -1,7 +1,7 @@
 # Guía de Voz de Marca — Setas de la Peña
 
-**Versión:** 2.4 · **Fecha:** 2026-10-30
-**Reemplaza a:** v1.0 (2026-05-11), archivada en `brand-voice-guidelines-2026-10-17.md`.
+**Versión:** 2.5 · **Fecha:** 2026-11-01
+**Reemplaza a:** v2.4 (2026-10-30), que añade aquí el cuaderno de cocina abierto ([estrategia](../docs/brand/brand-strategy-2026-11-01.md)); v1.0 (2026-05-11) sigue archivada en `brand-voice-guidelines-2026-10-17.md`.
 **Alcance:** voz y tono (cómo se escribe). La identidad visual comercial (paleta, tipografía, firma) vive en `docs/brand-guidelines.md` y `08_brand/ds-2026/`; la de Setas OS, en `docs/brand/DESIGN_SYSTEM_CANONICAL.md` y `08_brand/field-os-identity/`. Aquí solo se referencia.
 **Uso:** `/brand-voice:enforce-voice` carga este archivo automáticamente.
 
@@ -84,7 +84,9 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 2. **Frescura con hecho, no con adjetivo.** «Cortada esta mañana» ✓ · «Ultra fresca» ✗.
 3. **Cocina, no ficha técnica.** Cada producto lleva un uso concreto («plancha con mantequilla», «guisos y wok»). Nunca temperatura, humedad ni sustrato.
 4. **Códigos solo en el QR.** El lote (p. ej. `LP·0417·26`) no se imprime como texto visible; el puente es «Origen y registro del producto».
-5. **Precio sin disculpas.** Cifra grande, sin «solo», «oferta» ni tachados. En pesos (COP). Los precios de las plantillas son marcadores («$ — COP / kg») hasta tener cotizaciones propias; no se publica precio antes de conocer el costo por kg (`knowledge_base/07_business/pricing.md`).
+5. **Antes de la primera cosecha, aviso y no consulta.** CTA «Recibir aviso de la primera cosecha». Sin canal abierto, «Preparar mensaje de aviso»: ningún texto da a entender que alguien quedó inscrito. El formulario ofrece «Para casa» o «Para un servicio».
+6. **Cada dato del registro lleva su estado en palabra:** medido, observado, estimado o por confirmar. Lo no medido se escribe «por medir»; nunca se completa con datos de otras fuentes.
+7. **Precio sin disculpas.** Cifra grande, sin «solo», «oferta» ni tachados. En pesos (COP). Los precios de las plantillas son marcadores («$ — COP / kg») hasta tener cotizaciones propias; no se publica precio antes de conocer el costo por kg (`knowledge_base/07_business/pricing.md`).
 
 **Cara interna y técnica (Setas OS, SOPs, socios)**
 1. Datos con unidad y, cuando se pueda, fuente. Eficiencia biológica, humedad, horas de esterilización.
@@ -105,6 +107,7 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 | Pitch a socios | Alta | Media | Alta | «Capacidad instalada de 80 kg/semana con tres módulos.» |
 | Interno / operación | Media | Baja | Alta | «Cámara 2, incubación: 22 °C ± 1, humedad 85 % ± 5. Registrar a las 12:00 y 18:00.» |
 | Editorial / manifiesto | Media | Media | Media | «La orellana madura lento. Por eso la textura aguanta la cocción.» |
+| Registro del cuaderno | Media | Baja | Media | «Shiitake · incubación, semana 3. El micelio cubre el bloque. Estado: observado.» |
 | Crisis (contaminación, plaga) | Alta | Baja | Alta | «Detectamos contaminación en la cámara 2 el martes. Causa, acción y prevención abajo.» |
 | UI de Setas OS | Media | Baja | Alta | Rótulos que dicen la acción: «Registrar cosecha», no «Enviar». |
 
