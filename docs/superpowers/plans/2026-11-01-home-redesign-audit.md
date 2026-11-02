@@ -103,6 +103,10 @@ Phases 1 and 2 are built on branch `claude/taste-skill-redesign-audit-8bdf5b`. `
 
 - **Phase 1:** S1, S4 and S6 are done. S1 also fixes the empty strip on setas, cocina, restaurantes and mundo micelar. S4 is solved with `aria-current="page"` on the home wordmark, because home has no nav item of its own. K3 needs no change: `/recetas` is the shiitake recipe page («Recetas con shiitake»).
 - **Phase 2:** the colour roles are in `home-hero.css` under `.home-page.portada`. Only `index.html` has `portada`, because `.home-page` is shared by `setas`, `cocina`, `restaurantes` and `mundo-micelar`, and those keep their ink-only reset. The bark footer was left out for now. Bands: coral on «Imaginar el plato.» (ink-700 on band 5.7:1), ochre on «Disponibilidad por confirmar.» (8.1:1).
+- **Phase 3:** done.
+  - Card links (`home-hero.css`, `.portada` only, since `/setas` uses the same card markup): both are 16 px and underlined, with the arrow right after the text and a 2 px underline on hover. «Leer la ficha» is ink, «Cocinar con…» terracotta.
+  - Pressed state (`website.css`, all public pages): `translateY(1px)` on `.text-link`, `.sdp-btn`, `.filter`, `summary`, the hero links and the hero species strip. The species image lifts 1 px less when pressed. Turned off under reduced motion.
+  - Keyboard focus shows a 3 px terracotta ring. Gate 72/72.
 - **Not yet live:** this needs an export and a Cloudflare deploy (Phase 0).
 
 ### Phase 1 · Bugs (S1, S4, S6, K3)
