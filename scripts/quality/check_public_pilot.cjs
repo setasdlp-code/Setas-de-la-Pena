@@ -105,6 +105,20 @@ const commerce = overrides => ({
       await context.close();
     }
 
+    {
+      // Textos fijos en estado de piloto (valor por defecto): ningún botón invita a consultar disponibilidad.
+      const forbidden = /Consultar disponibilidad|Preparar consulta|Consultar shiitake|Consultas para restaurantes|preparar una consulta|Recibir aviso/;
+      for (const file of ['home', 'setas', 'shiitake', 'especies/shiitake', 'recetas', 'restaurantes']) {
+        const { context, page } = await open({ javaScriptEnabled: false }, file);
+        const ctas = await page.locator('a, button').evaluateAll(nodes => nodes.map(n => n.textContent.replace(/\s+/g, ' ').trim()));
+        const bad = ctas.filter(t => forbidden.test(t));
+        assert.deepEqual(bad, [], `${file}: CTA de consulta en piloto`);
+        if (file === 'restaurantes') assert.doesNotMatch(await page.locator('#chef-title').textContent(), forbidden);
+        await context.close();
+      }
+      pass('pilot-notice', 'cta-estaticos-piloto');
+    }
+
     if (process.env.SETAS_PILOT_SKIP_LOG !== '1') {
       // --- Registro del cultivo ---
       const entry = (date, extra = {}) => ({ date, milestone: `Hito ${date}`, status: 'observado', text: `Texto ${date}`, kitchen: { home: 'Idea para casa', service: 'Dato para servicio' }, ...extra });
@@ -147,6 +161,13 @@ const commerce = overrides => ({
         const { context, page } = await open({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } }, 'especies/shiitake#registro');
         assert.match(await page.locator('#registro').innerText(), /Todavía no hay registros publicados/);
         pass('pilot-log', 'registro-sin-js');
+        await context.close();
+      }
+      {
+        const { context, page } = await open({ pilotLog: { species: 'shiitake', entries: [entry(' 2026-11-10 '), entry('2026-02-31'), entry('2026-11-20')] } }, 'especies/shiitake#registro');
+        assert.equal(await page.locator('.pilot-log-entry').count(), 2, 'fecha con espacios se normaliza; fecha imposible se omite');
+        assert.deepEqual(await page.locator('.pilot-log-entry time').evaluateAll(n => n.map(t => t.dateTime)), ['2026-11-20', '2026-11-10']);
+        pass('pilot-log', 'fechas-espacios-e-imposibles');
         await context.close();
       }
       for (const width of [320, 390, 1440]) {

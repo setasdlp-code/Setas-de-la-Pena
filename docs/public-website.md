@@ -27,6 +27,7 @@ Las especies usan grabados del DS; las recetas usan nueve gouaches con lápiz ge
   - `unconfirmed`: hay producto, pero la disponibilidad se confirma al consultar.
   - `available` / `unavailable`: disponibilidad confirmada o agotada.
   - Cualquier otro valor se trata como `unconfirmed`.
+- **Al pasar de `pilot` a otro estado** (primera cosecha), cambiar también los textos fijos de piloto, que no dependen de `commercial-data.js`: «Aviso de cosecha» (nav, unas 12 páginas), «Aviso de primera cosecha» (`index.html`, `setas.html`, `shiitake.html`, `especies/shiitake.html`, `recetas.html`), el texto inicial del botón «Preparar mensaje de aviso» en `shiitake.html` y el título y la entradilla de `restaurantes.html`. El caso `cta-estaticos-piloto` de `check_public_pilot.cjs` fija estos textos para el piloto; actualizarlo en el mismo cambio.
 - Comprobación enfocada del piloto y del registro del cultivo: `node scripts/quality/check_public_pilot.cjs` (mismo servidor local; `SETAS_WEBSITE_BASE_URL` para otro puerto).
 - `presentations`: lista de `{ id, name, weightGrams, priceCOP }`; peso positivo en gramos y precio en pesos enteros, o `null` si falta precio.
 - `deliveryAreas`, `deliveryDays`, `paymentMethods`, `batch`, `harvestDate`: texto confirmado o `null`.

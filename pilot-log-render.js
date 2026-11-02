@@ -7,9 +7,11 @@
   if (!list || !log || !Array.isArray(log.entries)) return;
   const STATUSES = ['medido', 'observado', 'estimado', 'por confirmar'];
   const text = value => typeof value === 'string' ? value.trim() : '';
-  const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+  // Fecha AAAA-MM-DD real: la ida y vuelta descarta días imposibles como 2026-02-31.
+  const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
   const entries = log.entries
     .filter(entry => entry && validDate(text(entry.date)) && text(entry.milestone))
+    .map(entry => ({ ...entry, date: text(entry.date) }))
     .sort((a, b) => b.date.localeCompare(a.date));
   if (!entries.length) return;
   const dateFormat = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
