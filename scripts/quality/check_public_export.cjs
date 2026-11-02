@@ -21,6 +21,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.ok(!/(^|\/)(config|node_modules|\.git)(\/|$)/.test(entry.file));
   }
   report.checks.push({ type: 'export-hashes', files: manifest.files.length, result: 'passed' });
+  for (const required of ['pilot-log.js', 'pilot-log-render.js']) assert.ok(manifest.files.some(entry => entry.source === required), `export includes ${required}`);
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined), args: ['--no-sandbox'] });
   try {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
