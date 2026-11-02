@@ -158,7 +158,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
     assert.equal(await page.locator('.catalog-descriptor').count(), 0);
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');
-    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio', 'coleccion'], 'home contains the introduction followed by the species catalogue');
+    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio', 'coleccion', 'plato'], 'home contains the introduction, the species catalogue and one dish');
     assert.ok(await page.locator('#hero-title, .origin-actions').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'headline and project links visible on a small laptop');
     await page.setViewportSize({ width: 390, height: 900 });
     await visit(page, 'home');
@@ -176,13 +176,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('h1').count(), 1);
     assert.equal(await page.locator('#collection-title').evaluate(el => el.tagName), 'H2');
     assert.deepEqual(await page.locator('.species-card h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
-    await page.locator('#prep-guide summary').click();
+    // Home: the preparation filter is always visible and species plates link to their page (no dialog).
+    assert.equal(await page.locator('#prep-guide').isVisible(), true);
+    assert.equal(await page.locator('#prep-guide summary').count(), 0);
     await page.locator('[data-prep="asar"]').click();
     assert.equal(await page.locator('.species-card:not([hidden]) h3').innerText(), 'Eryngii');
-    await page.locator('[data-species="eryngii"]').click();
-    assert.equal(await page.locator('#dialog-title').innerText(), 'Eryngii');
-    await page.keyboard.press('Escape');
-    assert.equal(await page.locator('[data-species="eryngii"]').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('#species-dialog').count(), 0);
+    assert.match(await page.locator('.specimen-button[data-species="eryngii"]').getAttribute('href'), /\/especies\/eryngii$/);
+    assert.equal(await page.locator('.specimen-button[data-species="eryngii"]').getAttribute('tabindex'), '-1');
     await page.locator('#filter-reset').click();
     assert.equal(await page.locator('.species-card:not([hidden])').count(), 3);
     assert.equal(new URL(page.url()).pathname, '/home');

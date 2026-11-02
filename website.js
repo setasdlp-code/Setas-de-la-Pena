@@ -46,7 +46,7 @@ function openSpecies(key, button) {
   dialog.scrollTop = 0;
   dialog.showModal();
 }
-document.querySelectorAll('[data-species]').forEach(button => button.addEventListener('click', () => openSpecies(button.dataset.species, button)));
+if (dialog) document.querySelectorAll('[data-species]').forEach(button => button.addEventListener('click', () => openSpecies(button.dataset.species, button)));
 // Preparation filters suggest sourced uses; they never imply stock.
 const preparations = {
   sopa: { label: 'sopa o caldo', reasons: {
@@ -111,21 +111,23 @@ document.querySelector('#filter-reset').addEventListener('click', () => {
   document.querySelector('[data-prep="any"]').focus();
 });
 document.querySelector('#prep-guide').hidden = false;
-document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
-dialog.addEventListener('keydown', event => {
-  if (event.key !== 'Tab') return;
-  const controls = [...dialog.querySelectorAll('a[href], button:not([disabled]), [tabindex="0"]')]
-    .filter(element => element.getClientRects().length > 0);
-  const first = controls[0];
-  const last = controls[controls.length - 1];
-  if ((!event.shiftKey && document.activeElement === last) || (event.shiftKey && document.activeElement === first)) {
-    event.preventDefault();
-    (event.shiftKey ? last : first).focus();
-  }
-});
-dialog.addEventListener('click', event => {
-  const bounds = dialog.getBoundingClientRect();
-  if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
-});
-dialog.addEventListener('close', () => opener?.focus());
+if (dialog) {
+  document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('keydown', event => {
+    if (event.key !== 'Tab') return;
+    const controls = [...dialog.querySelectorAll('a[href], button:not([disabled]), [tabindex="0"]')]
+      .filter(element => element.getClientRects().length > 0);
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if ((!event.shiftKey && document.activeElement === last) || (event.shiftKey && document.activeElement === first)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+  });
+  dialog.addEventListener('click', event => {
+    const bounds = dialog.getBoundingClientRect();
+    if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
+  });
+  dialog.addEventListener('close', () => opener?.focus());
+}
 document.querySelector('#year').textContent = new Date().getFullYear();
