@@ -1,6 +1,6 @@
 # Setas de la Peña — Identidad comercial v1.2
 
-Edición: **12 de octubre de 2026**; voz comercial revisada el **30 de octubre de 2026**; comportamiento antes de la primera cosecha añadido el **1 de noviembre de 2026** ([estrategia](brand/brand-strategy-2026-11-01.md)). Público: **personas que cocinan, en cocinas profesionales y en casa**.
+Edición: **12 de octubre de 2026**; voz comercial revisada el **30 de octubre de 2026**; comportamiento antes de la primera cosecha añadido el **1 de noviembre de 2026** ([estrategia](brand/brand-strategy-2026-11-01.md)); prioridad de audiencia fijada el **2 de noviembre de 2026**. Público: **personas que cocinan, primero en casa y también en cocinas profesionales**.
 
 [Manual visual](../08_brand/ds-2026/brand-kit/index.html) · [Investigación y decisiones](brand/competitive-research-2026-10.md) · [Recursos](../08_brand/ds-2026/brand-kit/README.md) · [DS vigente](../08_brand/ds-2026/DESIGN_SYSTEM.md)
 
@@ -10,7 +10,7 @@ Edición: **12 de octubre de 2026**; voz comercial revisada el **30 de octubre d
 
 Setas de la Peña acerca el mundo de los hongos a la cocina desde Tenjo, Cundinamarca. Ayuda a reconocer una especie, imaginar una preparación con ingredientes cercanos y reunir información para una consulta comercial. El origen y el proceso se cuentan con información comprobable.
 
-**Territorio propio: conocer la seta para imaginar el plato.** La combinación de lámina micológica, recetas con maíz, coco o plátano y conversación precisa para chefs convierte el conocimiento en una decisión de cocina. Es una elección de marca; no implica exclusividad en el mercado.
+**Territorio propio: conocer la seta para imaginar el plato.** La combinación de lámina micológica, recetas con maíz, coco o plátano para cocinar en casa y una conversación precisa cuando la cocina es para un servicio convierte el conocimiento en una decisión de cocina. Es una elección de marca; no implica exclusividad en el mercado.
 
 Esta definición editorial no demuestra disponibilidad, abastecimiento regular o procedencia de una cosecha: cada afirmación comercial requiere sus propios datos.
 
@@ -36,6 +36,8 @@ Mientras no haya cosecha, la marca comparte la cocina antes que el producto. Cad
 
 ## 2. Audiencia y recorrido
 
+**Prioridad (decisión del 2 de noviembre de 2026):** primero quien quiere cocinar en casa; también quien cocina para un servicio. Las piezas, el orden de las capas y los ejemplos empiezan por la cocina de casa. La conversación profesional se conserva completa como capa siguiente, no como recorrido aparte.
+
 **Una voz para quienes cocinan:** hablar a toda la audiencia con el respeto y la precisión que se ofrecen a un chef. La especie, su sabor y textura documentados y una intención de plato abren la conversación. No se simplifica el lenguaje por tratarse de una cocina doméstica; se explican los términos cuando ayudan a decidir. La información práctica cambia según la preparación y la escala.
 
 Un solo recorrido con capas. El contenido es el mismo y cambia la profundidad según quién cocina:
@@ -47,7 +49,7 @@ Un solo recorrido con capas. El contenido es el mismo y cambia la profundidad se
 | Registro del cultivo | Hito fechado y su estado | Por qué tarda y qué cuidados tiene | Qué se sabe ya de calibre, conservación y vida útil |
 | Consulta | «Recibir aviso de la primera cosecha» | Cantidad para casa | Especie/plato, cantidad, presentación, ciudad y fecha |
 
-El formulario ofrece «Para casa» o «Para un servicio». Pauta para la conversación profesional: **especie/plato, cantidad solicitada, presentación deseada, ciudad y fecha requerida**. La respuesta comercial confirma por separado formato/peso, precio, disponibilidad y condiciones de entrega. No proponer mínimos, calendario recurrente, muestras gratuitas o tiempos de respuesta sin confirmarlos. La marca no se presenta como un proveedor con abastecimiento regular confirmado. Para casa: especie → receta → cantidad → consulta, con ingredientes disponibles en Colombia y conservación con fuentes.
+El formulario ofrece «Para casa» o «Para un servicio», en ese orden. Para casa: **especie → receta → cantidad para la mesa → aviso o consulta**, con ingredientes disponibles en Colombia, cocción segura y conservación con fuentes. Pauta para la conversación profesional: **especie/plato, cantidad solicitada, presentación deseada, ciudad y fecha requerida**. La respuesta comercial confirma por separado formato/peso, precio, disponibilidad y condiciones de entrega. No proponer mínimos, calendario recurrente, muestras gratuitas o tiempos de respuesta sin confirmarlos. La marca no se presenta como un proveedor con abastecimiento regular confirmado.
 
 Ambos recorridos confirman precio, disponibilidad y entrega antes del pedido. No existe una aceptación automática de compra.
 
@@ -61,9 +63,11 @@ La voz despierta curiosidad con una observación sensorial respaldada, una técn
 | --- | --- |
 | Presentación | «Setas de la Peña. Hongos para cocinar con criterio, desde Tenjo, Colombia.» |
 | Introducción web | «La seta se elige por su sabor y textura. Después vienen la preparación, para la carta o para casa, y la cantidad de la consulta.» |
+| Para casa | «¿Qué plato y para cuántas personas? Elegir la receta y calcular la cantidad para la mesa.» |
 | Para chefs | «¿Para qué plato y qué servicio? Consultar cantidades, presentaciones y condiciones de entrega.» |
 | CTA antes de la primera cosecha | «Recibir aviso de la primera cosecha»; sin canal abierto, «Preparar mensaje de aviso» |
 | CTA general (con cosecha) | «Consultar disponibilidad» |
+| CTA para casa | «Recibir aviso de la primera cosecha» con «Para casa» marcado en piloto; «Quiero cocinar esto» desde una receta |
 | CTA para un servicio | «Preparar aviso para un servicio» en piloto; «Consultar para un servicio» con cosecha |
 | CTA mientras solo se prepara un mensaje | «Preparar mi consulta»; aclarar que preparar o copiar no envía el mensaje |
 | CTA receta | «Quiero cocinar esto» |
@@ -74,7 +78,7 @@ La voz despierta curiosidad con una observación sensorial respaldada, una técn
 
 Evitar «premium», «superalimento», «el mejor», promesas medicinales, misticismo, certificaciones sin respaldo y sostenibilidad declarada sin evidencia. «Orgánico», «cosechado hoy», «entrega diaria», «cultivado por nosotros» y «trazabilidad completa» requieren evidencia específica. Una ilustración no demuestra producto cosechado.
 
-**Presentación breve:** «Somos Setas de la Peña, un proyecto de hongos desde Tenjo. Acercamos cada especie a la cocina con láminas para reconocerla e ideas para prepararla con ingredientes cercanos. Para una cocina profesional, la conversación empieza en el plato y continúa con cantidad, presentación y entrega.»
+**Presentación breve:** «Somos Setas de la Peña, un proyecto de hongos desde Tenjo. Acercamos cada especie a la cocina con láminas para reconocerla e ideas para prepararla con ingredientes cercanos. En casa, cada especie llega con una receta y la cantidad para la mesa. Para una cocina profesional, la conversación empieza en el plato y continúa con cantidad, presentación y entrega.»
 
 La voz despierta apetito con ingredientes y acciones: «Shiitake, maíz dorado y aguacate» comunica más que «Una experiencia gastronómica premium». Los avisos van cerca del dato al que afectan; no abrir cada pieza con una lista de pendientes. Una ficha de referencia sigue distinguiéndose de una oferta disponible.
 
@@ -144,11 +148,13 @@ Una pareja editorial puede mostrar la seta en una pieza y el plato en otra. La f
 
 | Pieza | Orden de lectura | Antes de uso comercial |
 | --- | --- | --- |
-| Ficha para chefs | Firma → especie → textura y usos con fuente → consulta → origen del lote | Presentaciones, precio, stock, canal y entrega reales |
-| Empaque | Firma → especie → grabado → peso y campos de lote | Responsable, peso, fechas, conservación y requisitos aplicables |
+| Nota de cocina para casa | Plato → gouache → ingredientes cercanos → cantidad para la mesa → estado de prueba → aviso | Receta probada o marcada como adaptación; cocción y conservación con fuente |
+| Entrada del cuaderno | Fecha → hito del cultivo → estado → idea para cocinar → «Recibir aviso de la primera cosecha» | Hito real y estado de cada dato; «por medir» en lugar de cifras de otras fuentes |
 | Tarjeta de receta | Plato → gouache → cantidades → pasos → consulta | Prueba en cocina y URL pública si se añade QR |
 | Pieza social | Especie → un uso → enlace a ficha | URL pública y estado comercial actual |
 | Pareja editorial | La seta → el plato; una receta documentada une ambas piezas | Ilustraciones aprobadas, aviso de adaptación y enlaces reales |
+| Empaque | Firma → especie → grabado → una preparación → peso y campos de lote | Responsable, peso, fechas, conservación y requisitos aplicables |
+| Ficha para chefs | Firma → especie → textura y usos con fuente → consulta → origen del lote | Presentaciones, precio, stock, canal y entrega reales |
 | Presentación para chefs | Ingrediente → intención de plato → cinco datos de consulta | Canal confirmado antes de afirmar envío o respuesta |
 | Firma de contacto | Nombre → descriptor → Tenjo → canal | Persona y contacto confirmados |
 
@@ -162,11 +168,11 @@ La [guía de agosto](brand/legacy-guidelines-2026-08.md) queda como antecedente.
 
 La identidad queda definida en esta edición. Para producirla: verificar licencia de Gaya, completar datos reales, probar impresión y enlaces públicos. La comprobación local no demuestra publicación del sitio ni registro de marca.
 
-La siguiente validación propuesta es con cuatro chefs y dos personas que cocinen en casa: reconocer qué ofrece la marca, elegir una preparación y reunir una consulta sin confundir ilustración con producto disponible. Ese estudio aún no se ha ejecutado; el protocolo está en la investigación.
+La siguiente validación propuesta es con cuatro personas que cocinen en casa y dos chefs, en ese orden de prioridad: reconocer qué ofrece la marca, elegir una preparación y reunir una consulta sin confundir ilustración con producto disponible. Ese estudio aún no se ha ejecutado; el protocolo está en la investigación.
 
 ```text
 Marca: Setas de la Peña
-Audiencia: quienes cocinan, en cocinas profesionales y en casa
+Audiencia: quienes cocinan; primero en casa, también en cocinas profesionales
 Frase: Del micelio a la mesa.
 Descriptor: Hongos para cocinar con criterio.
 DS: 08_brand/ds-2026/market.css
