@@ -7,19 +7,9 @@ section { scroll-margin-top: 24px; }
 .wordmark span:not(.wordmark-dot) { font-weight: 500; }
 .wordmark-dot { padding-left: 12px; font-family: var(--font-sans); font-size: 36px; }
 nav { display: flex; gap: 32px; } nav a { min-height: 44px; display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font-size: 14px; }
-.hero { display: grid; grid-template-columns: 1fr 1fr; padding-block: 40px 48px; gap: 40px; }
-.hero-copy { display: flex; flex-direction: column; align-items: flex-start; padding-top: 32px; }
 .eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
 .small-rule { width: 24px; height: 2px; background: var(--brand-accent); }
-.hero h1 { font: 900 clamp(64px, 7.5vw, 108px)/.98 var(--font-editorial); letter-spacing: -.035em; color: var(--brand-primary); margin-bottom: 28px; }
-.hero h1 em, .origin h2 em { font-weight: 500; }
-.hero-intro { max-width: 370px; margin-bottom: 32px; font-size: 18px; }
-.hero .sdp-btn { min-height: 52px; gap: 32px; }
-.hero-footnote { display: flex; justify-content: space-between; gap: 16px; width: 100%; margin-top: auto; padding-top: 48px; }
-.hero-specimen { position: relative; margin: 0; padding: 24px; background: var(--surface-recessed); border: var(--rule-hairline); }
 .specimen-top { display: flex; justify-content: space-between; }
-.hero-specimen > img { width: 100%; height: 400px; object-fit: contain; mix-blend-mode: multiply; }
-.hero-specimen figcaption { display: flex; align-items: end; justify-content: space-between; gap: 16px; border-top: var(--rule-hairline); padding-top: 20px; }
 figcaption strong, figcaption .t-latin { display: block; } figcaption > .t-label { line-height: 1.7; text-align: right; }
 .chapter-line { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-block: var(--rule-hairline); padding-block: 20px; } .chapter-line a { min-height: 44px; display: flex; align-items: center; }
 .collection, .journal { padding-block: 80px; }
@@ -38,13 +28,6 @@ figcaption strong, figcaption .t-latin { display: block; } figcaption > .t-label
 .specimen-button:hover img { transform: scale(1.035); } .species-card h3 { margin-top: 20px; margin-bottom: 6px; font-size: 26px; }
 .text-link { display: inline-flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 44px; font: var(--t-small); border: 0; padding: 0; color: var(--brand-primary); background: transparent; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
 .species-card .text-link { width: 100%; } .collection-note { margin: 24px 0 0; }
-.origin { background: var(--brand-primary); color: var(--text-inverse); padding-block: 64px; } .origin .t-label { color: var(--text-inverse); }
-.origin-inner { display: grid; grid-template-columns: 1.25fr 1fr; gap: 96px; }
-.origin h2 { font: 700 clamp(48px, 5vw, 72px)/1.05 var(--font-editorial); margin-block: 24px; }
-.origin p { max-width: 510px; } .origin-link { color: var(--text-inverse); display: inline-flex; gap: 32px; align-items: center; min-height: 48px; margin-top: 16px; }
-.origin-link:hover { color: var(--text-inverse); } .origin-notes { padding-top: 48px; position: relative; }
-.origin-notes > div { padding-block: 20px; border-top: 1px solid currentColor; } .origin-notes p { font: 500 24px/1.4 var(--font-editorial); margin: 12px 0 0; }
-.origin-emblem { display: block; text-align: right; font-size: 12px; line-height: 1.8; margin-top: 32px; }
 .journal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; } .journal-grid article { border-top: var(--rule-hairline); padding-top: 24px; }
 .journal h3 { font: 500 28px/1.2 var(--font-editorial); margin-block: 24px 16px; }
 footer { border-top: var(--rule-heavy); padding-top: 40px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 32px; align-items: start; }
@@ -54,14 +37,10 @@ footer { border-top: var(--rule-heavy); padding-top: 40px; display: grid; grid-t
 dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 32px; border: var(--rule-heavy); background: var(--surface-page); color: var(--text-primary); }
 dialog::backdrop { background: var(--brand-primary); opacity: .65; } .dialog-close { display: flex; margin-left: auto; margin-bottom: 24px; }
 dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: multiply; } dialog h2 { font: var(--t-species); }
-@media (max-width: 1000px) { .page-width { width: calc(100% - 48px); } .location-line { padding-inline: 24px; } .masthead { gap: 24px; } nav { gap: 16px; } .hero { gap: 24px; } .hero h1 { font-size: 76px; } .hero-specimen > img { height: 340px; } figcaption > .t-label { display: none; } .species-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .origin-inner { gap: 48px; } footer .wordmark { font-size: 28px; } }
-@media (max-width: 650px) { .page-width { width: calc(100% - 32px); } .location-line { padding: 12px 16px; font-size: 12px; } .location-line > span:nth-child(2) { display: none; } .masthead { flex-direction: column; align-items: flex-start; padding-block: 20px 8px; gap: 16px; } .wordmark { font-size: 30px; } nav { width: 100%; justify-content: space-between; gap: 8px; } nav a { font-size: 14px; } .hero { grid-template-columns: 1fr; padding-block: 24px 32px; gap: 32px; } .hero-copy { padding-top: 16px; } .hero h1 { font-size: clamp(64px, 16vw, 88px); } .hero-intro { font-size: 16px; } .hero-footnote { padding-top: 32px; } .hero-specimen { padding: 20px; } .hero-specimen > img { height: 300px; } .chapter-line { flex-wrap: wrap; padding-block: 16px; gap: 16px; } .chapter-line > span:nth-child(2) { display: none; } .chapter-line a { width: 100%; } .collection, .journal { padding-block: 48px; } .section-heading { flex-direction: column; align-items: flex-start; gap: 24px; } .section-heading p br { display: none; } .filters { gap: 4px; } .filter { padding: 10px 12px; } .filter span { margin-left: 8px; } .species-grid { gap: 24px 16px; } .card-meta { font-size: 12px; flex-wrap: wrap; gap: 8px; padding-inline: 8px; } .specimen-button { padding-inline: 8px; } .specimen-button img { height: 160px; } .species-card h3 { font-size: 24px; } .species-card .t-latin { font-size: 16px; } .species-card .text-link { gap: 8px; } .origin { padding-block: 48px; } .origin-inner { grid-template-columns: 1fr; gap: 32px; } .origin-notes { padding-top: 0; } .origin-emblem { margin-top: 16px; } .journal-grid { grid-template-columns: 1fr; gap: 32px; } footer { grid-template-columns: 1fr; gap: 20px; } .footer-bottom { font-size: 12px; gap: 16px; } }
+@media (max-width: 1000px) { .page-width { width: calc(100% - 48px); } .location-line { padding-inline: 24px; } .masthead { gap: 24px; } nav { gap: 16px; } figcaption > .t-label { display: none; } .species-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } footer .wordmark { font-size: 28px; } }
+@media (max-width: 650px) { .page-width { width: calc(100% - 32px); } .location-line { padding: 12px 16px; font-size: 12px; } .location-line > span:nth-child(2) { display: none; } .masthead { flex-direction: column; align-items: flex-start; padding-block: 20px 8px; gap: 16px; } .wordmark { font-size: 30px; } nav { width: 100%; justify-content: space-between; gap: 8px; } nav a { font-size: 14px; } .chapter-line { flex-wrap: wrap; padding-block: 16px; gap: 16px; } .chapter-line > span:nth-child(2) { display: none; } .chapter-line a { width: 100%; } .collection, .journal { padding-block: 48px; } .section-heading { flex-direction: column; align-items: flex-start; gap: 24px; } .section-heading p br { display: none; } .filters { gap: 4px; } .filter { padding: 10px 12px; } .filter span { margin-left: 8px; } .species-grid { gap: 24px 16px; } .card-meta { font-size: 12px; flex-wrap: wrap; gap: 8px; padding-inline: 8px; } .specimen-button { padding-inline: 8px; } .specimen-button img { height: 160px; } .species-card h3 { font-size: 24px; } .species-card .t-latin { font-size: 16px; } .species-card .text-link { gap: 8px; } .journal-grid { grid-template-columns: 1fr; gap: 32px; } footer { grid-template-columns: 1fr; gap: 20px; } .footer-bottom { font-size: 12px; gap: 16px; } }
 @media (prefers-reduced-motion: reduce) { :root { scroll-behavior: auto; } .specimen-button img { transition: none; } }
 /* Public market: ingredient discovery, editorial notes and complete species sheets. */
-.hero-secondary { margin-top: 12px; }
-.hero-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.hero-selector button { min-height: 44px; padding: 10px 14px; border: var(--rule-hairline); background: transparent; color: var(--text-primary); font: var(--t-small); cursor: pointer; }
-.hero-selector button[aria-pressed="true"] { background: var(--brand-primary); border-color: var(--brand-primary); color: var(--text-inverse); }
 .card-profile { font: var(--t-small); min-height: 44px; color: var(--text-secondary); margin-bottom: 12px; }
 .kitchen { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; padding-block: 80px; border-bottom: var(--rule-hairline); }
 .kitchen-plate { margin: 0; padding: 32px; background: var(--surface-recessed); display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
@@ -102,8 +81,6 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
 #dialog-journal { display: flex; width: 100%; }
 @media (max-width: 1000px) { .kitchen { gap: 40px; } .dialog-layout { gap: 24px; } .dialog-copy h2 { font: var(--t-heading-01); } }
 @media (max-width: 650px) {
-  .hero-specimen > img { height: 260px; }
-  .hero-footnote { padding-top: 24px; }
   .card-profile { min-height: 64px; }
   .kitchen { grid-template-columns: 1fr; gap: 32px; padding-block: 48px; }
   .kitchen-plate { padding: 24px; }
@@ -191,11 +168,6 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
 .collection .species-card h3 { font-size: 32px; }
 .collection .card-profile { max-width: 32ch; }
 .collection .species-card > .t-latin { font-size: 18px; }
-.origin-notes { padding-top: 0; }
-.origin-mushrooms { margin: 0 0 24px; background: var(--surface-page); color: var(--text-primary); padding: 24px; }
-.origin-mushrooms img { width: 100%; height: 240px; object-fit: contain; }
-.origin-mushrooms figcaption { padding-top: 16px; border-top: var(--rule-hairline); line-height: 1.7; }
-.origin .origin-mushrooms .t-label { color: var(--text-primary); }
 .journal-mushroom { background: var(--surface-recessed); margin-bottom: 24px; padding: 16px; }
 .journal-mushroom img { width: 100%; height: 200px; object-fit: contain; mix-blend-mode: multiply; }
 .mushroom-study { display: grid; grid-template-columns: .8fr 1fr .8fr; gap: 32px; align-items: center; padding-block: 64px; border-bottom: var(--rule-hairline); }
@@ -218,8 +190,6 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
   .collection .specimen-button img { height: 300px; }
   .collection .species-card h3 { font-size: 32px; }
   .collection .card-profile { min-height: 0; }
-  .origin-mushrooms { padding: 16px; }
-  .origin-mushrooms img { height: 200px; }
   .journal-mushroom img { height: 240px; }
   .mushroom-study { grid-template-columns: 1fr; gap: 24px; padding-block: 40px; }
   .study-heading { grid-column: auto; }
@@ -431,10 +401,6 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
 #filter-reset { margin-block: 16px 0; }
 
 /* First commercial iteration: the culinary decision precedes the archive. */
-.hero { grid-template-columns: 1.15fr 1fr; align-items: stretch; }
-.hero h1 { font-size: clamp(48px, 5.3vw, 78px); line-height: 1.06; }
-.hero-intro { max-width: 42ch; }
-.hero-footnote { padding-top: 32px; }
 .chef-route { padding-block: 48px; border-bottom: var(--rule-heavy); }
 .chef-route .section-heading h2 { max-width: 24ch; }
 .chef-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; list-style: none; margin: 0; padding: 0; }
@@ -448,21 +414,15 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
 .recipe-journey a { display: inline-flex; align-items: center; min-height: 44px; }
 .masthead nav { flex-wrap: wrap; }
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; }
-.origin a:focus-visible { outline-color: var(--text-inverse); }
 @media (max-width: 1000px) {
-  .hero { grid-template-columns: 1fr 1fr; }
-  .hero h1 { font-size: clamp(44px, 5.4vw, 60px); }
   .chef-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
   .masthead { flex-wrap: wrap; }
 }
 @media (max-width: 650px) {
-  .hero { grid-template-columns: 1fr; }
-  .hero h1 { font-size: clamp(42px, 11vw, 64px); }
   .masthead nav { column-gap: 16px; justify-content: flex-start; }
   .chef-route { padding-block: 32px; }
   .chef-steps { grid-template-columns: 1fr; gap: 20px; }
   .chef-steps p { max-width: none; margin-bottom: 8px; }
-  .hero-copy .sdp-btn { width: 100%; justify-content: space-between; }
   .species-grid { grid-template-columns: 1fr; }
   .specimen-button img { height: 220px; }
   .card-profile { min-height: 0; }
@@ -471,9 +431,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 
 /* Commercial type selection, independent of the typography laboratory. */
 :root { --size-label: 12px; --size-micro: 12px; }
-.hero h1 { font-weight: 700; letter-spacing: -.02em; }
-.hero-intro, .card-profile, .species-overview dd { font-family: var(--font-sans); font-size: 18px; line-height: 1.6; }
-@media (max-width: 650px) { .hero-intro { font-size: 16px; } }
+.card-profile, .species-overview dd { font-family: var(--font-sans); font-size: 18px; line-height: 1.6; }
 
 @font-face { font-family: 'IBM Plex Sans'; src: url('08_brand/ds-2026/assets/fonts/IBMPlexSans-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
 
@@ -485,9 +443,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 :is(.home-page, .species-page, .recipes-page) .masthead nav .nav-inquiry { padding-inline: 20px; border: 1px solid var(--brand-primary); }
 :is(.home-page, .species-page, .recipes-page) .masthead nav a:hover, :is(.home-page, .species-page, .recipes-page) .masthead nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 5px; }
 :is(.home-page, .species-page, .recipes-page) .masthead nav .nav-inquiry:hover { background: var(--brand-primary); color: var(--text-inverse); }
-.home-page .hero { padding-block: 48px; }
-.home-page .hero h1 { font-size: clamp(48px, 5.6vw, 82px); }
-.home-page .hero-specimen { border: 0; padding-top: 40px; }
 .home-page .specimen-top { padding-inline: 24px; }
 .home-page .collection { padding-bottom: 56px; }
 .home-page .chef-route { border-top: var(--rule-hairline); background: var(--surface-recessed); padding: 40px; }
@@ -514,9 +469,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   :is(.home-page, .species-page, .recipes-page) .masthead nav { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; border-top: var(--rule-hairline); padding-top: 12px; }
   :is(.home-page, .species-page, .recipes-page) .masthead nav a { padding: 8px 12px; }
   :is(.home-page, .species-page, .recipes-page) .masthead nav .nav-inquiry { grid-column: 1 / -1; justify-content: space-between; margin-top: 4px; }
-  .home-page .hero { padding-block: 24px 32px; }
-  .home-page .hero h1 { font-size: clamp(42px, 11vw, 64px); }
-  .home-page .hero-specimen { padding: 32px 20px 20px; }
   .home-page .specimen-top { padding-inline: 12px; font-size: 12px; }
   .home-page .chef-route { padding: 24px; }
   .inquiry-guide { grid-template-columns: 1fr; gap: 32px; padding-block: 40px 48px; }
@@ -537,7 +489,6 @@ sup a { font: 400 12px/1 var(--font-mono); padding-inline: 3px; text-underline-o
 .purchase-restaurant[hidden] { display: none; }
 .purchase-notice { border: 1px solid currentColor; padding: 16px 20px; margin-bottom: 24px; max-width: 70ch; }
 .purchase-notice p { margin: 0 0 8px; }
-.hero-species-note { margin: 8px 0 0; max-width: 40ch; color: var(--text-secondary); }
 .chef-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 640px) { .chef-steps { grid-template-columns: 1fr; } }
 

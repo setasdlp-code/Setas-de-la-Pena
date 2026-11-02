@@ -20,9 +20,7 @@
 .recipe-tile a:hover h2 { text-decoration: underline; text-underline-offset: 5px; }
 .kitchen-discovery .kitchen-routes { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
 .kitchen-discovery .recipe-discovery--lead { grid-row: auto; border-right: 0; padding-right: 0; }
-.kitchen-discovery .recipe-feature { display: block; }
-.kitchen-discovery .recipe-artwork, .kitchen-discovery .recipe-discovery--lead .recipe-artwork { max-width: none; margin: 0 0 20px; }
-.kitchen-discovery .recipe-feature h3, .kitchen-discovery .recipe-discovery--lead h3 { font-size: clamp(25px, 2.2vw, 32px); }
+.kitchen-discovery .recipe-discovery--lead h3 { font-size: clamp(25px, 2.2vw, 32px); }
 @media screen {
   .recipes-page .recipe-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; align-items: start; }
   .recipes-page .recipe-grid > .recipe { display: block; min-width: 0; padding-block: 24px; }
