@@ -107,6 +107,12 @@ Phases 1 and 2 are built on branch `claude/taste-skill-redesign-audit-8bdf5b`. `
   - Card links (`home-hero.css`, `.portada` only, since `/setas` uses the same card markup): both are 16 px and underlined, with the arrow right after the text and a 2 px underline on hover. «Leer la ficha» is ink, «Cocinar con…» terracotta.
   - Pressed state (`website.css`, all public pages): `translateY(1px)` on `.text-link`, `.sdp-btn`, `.filter`, `summary`, the hero links and the hero species strip. The species image lifts 1 px less when pressed. Turned off under reduced motion.
   - Keyboard focus shows a 3 px terracotta ring. Gate 72/72.
+- **Phase 4:** done. Decision 3.2 was settled as "remove".
+  - L1: the hero species strip is gone (markup, its CSS, and its entries in the shared `:active` lists). The engraving's height cap on desktop went from `100svh − 340px` to `100svh − 280px`, so it uses the freed space.
+  - L3: hero padding is now `clamp(32px, 5vw, 64px)` on top and `clamp(48px, 7vw, 96px)` at the bottom (64/96 px at 1440). On mobile it's 24/40 px.
+  - L2: on mobile the engraving is capped at `46svh` and the species plates are 200 px tall (`.portada` only). At 375 px, «Las setas» now starts at y=751 (was 877) and the page is 3037 px tall (was 3407). At 768 and 1440 the catalog header shows on the first screen.
+  - L4: the location was removed from the footer paragraph. It stays in the top strip and the footer's last line.
+  - Gate 72/72.
 - **Not yet live:** this needs an export and a Cloudflare deploy (Phase 0).
 
 ### Phase 1 · Bugs (S1, S4, S6, K3)

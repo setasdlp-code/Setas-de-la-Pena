@@ -552,13 +552,13 @@ sup a { font: 400 12px/1 var(--font-mono); padding-inline: 3px; text-underline-o
 .home-page .specimen-button:focus-visible img { transform: translateY(-4px); }
 :is(.home-page, .species-page, .recipes-page) .masthead nav .nav-inquiry:active { transform: translateY(1px); }
 /* Pressed feedback on every action that has a box (inline links can't move). */
-:is(.home-page, .species-page, .recipes-page) :is(.text-link, .sdp-btn, .filter, summary, .origin-actions a, .hero-pena-species a):active { transform: translateY(1px); }
+:is(.home-page, .species-page, .recipes-page) :is(.text-link, .sdp-btn, .filter, summary, .origin-actions a):active { transform: translateY(1px); }
 .specimen-button img { transition: transform 220ms ease; }
 .home-page .specimen-button:active img { transform: translateY(-1px); transition-duration: 80ms; }
 @media (prefers-reduced-motion: reduce) {
   :is(.home-page, .species-page, .recipes-page) :is(a, .text-link, .sdp-btn, .filter, summary) { transition: none; }
   .specimen-button:focus-visible img, .home-page .specimen-button:focus-visible img { transform: none; }
-  :is(.home-page, .species-page, .recipes-page) :is(.text-link, .sdp-btn, .filter, summary, .origin-actions a, .hero-pena-species a):active, .home-page .specimen-button:active img { transform: none; }
+  :is(.home-page, .species-page, .recipes-page) :is(.text-link, .sdp-btn, .filter, summary, .origin-actions a):active, .home-page .specimen-button:active img { transform: none; }
 }
 
 /* Firma original aprobada para materiales gráficos. */
