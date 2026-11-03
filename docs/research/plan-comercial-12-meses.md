@@ -26,6 +26,32 @@ Estado de partida (`CURRENT_OPERATIONS.md`, 28 oct 2026): pre-producción en Ten
 
 El precio mínimo se calcula con la fórmula de `pricing.md`: costo variable + logística + merma + margen aprobado.
 
+## Sensibilidad del precio mínimo (hipotética, sin datos de finca)
+
+**Clase de dato: escenario.** Ningún valor de esta sección está medido en la finca, porque hay 0 lotes y por eso no hay costo ni rendimiento propios. La tabla solo muestra cómo se mueve el piso de precio. Hay que reemplazarla con los datos del lote piloto antes de cotizar.
+
+Fórmula (`economics.md` y `pricing.md`):
+
+```
+costo variable por kg vendible = costo variable por bloque / kg vendibles por bloque
+precio mínimo por kg = (costo por kg vendible + logística por kg) / (1 − margen)
+```
+
+Supuestos de la tabla, todos elegidos por el autor e ilustrativos: logística de $5.000/kg y margen de contribución del 40 %. El margen real lo decide Sebastián.
+
+| Costo variable por bloque ↓ / kg vendibles por bloque → | 0,3 kg | 0,5 kg | 0,8 kg |
+|---|---|---|---|
+| $4.000 | $30.600/kg | $21.700/kg | $16.700/kg |
+| $7.000 | $47.200/kg | $31.700/kg | $22.900/kg |
+| $10.000 | $63.900/kg | $41.700/kg | $29.200/kg |
+
+Cómo leerla frente al mercado: el shiitake fresco se vende al detal a ≈$65.000–90.000/kg y en caja de 1 kg a ≈$42.000/kg (Bio Bio, dato viejo).
+
+- Si el rendimiento vendible por bloque es bajo y el costo alto (esquina inferior izquierda, ≈$64.000/kg), solo alcanza para vender al detal.
+- Con rendimientos medios o altos también caben los restaurantes.
+
+El dato que más pesa es **kg vendibles por bloque**, y se mide en T1.
+
 ## Fases
 
 ### T1 · Nov 2026 – Ene 2027 — Validar antes de vender
