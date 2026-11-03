@@ -3,7 +3,7 @@ title: Operational Commissioning Protocol v0.1
 document_id: DOC-OPS-COMM-001
 category: operations
 load_priority: selective
-last_reviewed: 2026-08-19
+last_reviewed: 2026-11-03
 confidence: medium
 primary_sources:
   - SETAS_DE_LA_PENA_CANON.md
@@ -369,6 +369,94 @@ At Tenjo altitude, ambient pressure differs materially from sea level. Therefore
 ## Current equipment note
 
 The manufacturer specification for the non-electric All American `1941X` lists **41 qt / 39 L**, not 44 L. Vessel liters do not establish bag capacity. Actual Setas de la Peña bags/cycle and the corresponding thermal behavior remain commissioning measurements.
+
+## Matriz de demostración Go / No-Go — 1941X y shiitake
+
+**Procedencia:** requisitos aportados por Sebastián el 2026-11-03, incorporados como plan de demostración. Los valores numéricos sin respaldo específico para esta carga son **no verificados**, con confianza local baja; no son mediciones ni un ciclo aprobado. Esta matriz complementa C0–C2 y `quality_control.md`; no sustituye seguridad del fabricante ni DEC-019. No se han recibido certificados, curvas ni resultados de estos ensayos.
+
+| ID / requisito | Evidencia objetiva por reunir | Criterio de cierre y límite de transferencia | Estado documental al incorporar |
+|---|---|---|---|
+| G1 — Seguridad mecánica y manometría | Identificación de componentes; manual aplicable al serial; certificado de calibración con error, incertidumbre y corrección; informe técnico de integridad y aptitud; registro presión/temperatura | Error corregido o instrumento sustituido y aceptado. La propuesta de ensayo a **19–20 psig** y estabilidad a **19,0 psig durante 90 min** requiere previamente rango y tolerancias aprobados por fabricante/servicio competente. No demuestra por sí sola temperatura de producto ni esterilidad. | **Pendiente — No-Go** |
+| G2 — Penetración térmica (`t_lag`, letalidad e indicadores) | Series continuas de cámara y producto; mapeo de posiciones, núcleo de bolsas de mayor masa/densidad prevista y punto frío investigado; indicadores de *Geobacillus stearothermophilus* vinculados a ciclo/posición | Meta candidata actualizada por la ficha PQ-1: **F₀ ≥15,0 min en el punto frío en 3 corridas consecutivas** de la misma configuración y **100% de indicadores procesados negativos**, con controles válidos. Antes del cierre se exige justificar organismo objetivo, resistencia térmica, referencia, z, carga inicial y reducción requerida. No usar F₀≥15 como aprobación automática del sustrato; la meta anterior de 12 min queda como antecedente, no como alternativa de aprobación. | **Pendiente — No-Go** |
+| G3 — Integridad de bolsa y asepsia (PQ-2 A/B) | Controles A sellados sin inocular y B abiertos/resellados sin spawn; registros individuales, bolsa/filtro/sello, ciclo, manipulación y temperatura de observación | Meta de ensayo aportada: **0/n contaminados en A y 0/n en B**, tras **15–21 días a 23 °C**. Fijar antes de ejecutar n, duración exacta dentro de esa ventana, tolerancia térmica y frecuencia de lectura; cerrar solo tras completar la duración elegida. Condiciones candidatas, no setpoint del cultivo. | **Pendiente — No-Go** |
+| G4 — Pureza y vigor del spawn (PQ-2 C) | Muestra trazable del lote de spawn en PDA, blanco de medio/manipulación, fotos fechadas, temperatura y evolución; identidad o declaración del proveedor sobre uso en sustrato sintético | Meta aportada: ausencia de bacterias/mohos acompañantes detectables y **salto micelial <5 días**, con definición observable y condiciones de ensayo fijadas previamente. PDA no demuestra identidad genética ni adaptación productiva. DEC-019 conserva la excepción de cepa no identificada para lote 1; exige trazabilidad y caracterización, sin habilitar escala comercial. | **Pendiente — No-Go** |
+| G5 — Rol y tamaño de lote | Comparar rol del 1941X para spawn o bloques; bloques/ciclo validado, ciclos/semana factibles, enfriamiento, trabajo, ocupación, merma, costo/kg vendible y demanda Bogotá | Si el piloto planificado **supera 30 bloques/semana**, exigir validación de una alternativa de mayor volumen antes de comprometer capital de trabajo comercial. Es una compuerta de planificación solicitada, no capacidad demostrada ni autorización de compra; aplicar además C1, C3 y el análisis de cuello de botella de `autoclaves.md`. | **Pendiente — No-Go comercial** |
+
+### G1 — Condiciones previas del ensayo mecánico
+
+La frase de entrada «19,0 psig = 121,1 °C en Tenjo» queda **sin demostrar**: registrar presión ambiente absoluta, presión corregida, purga y temperatura medida; la presión de cámara no sustituye temperatura de núcleo. Tampoco se acepta «válvula de 23 psig» como identificación del componente instalado. El manual oficial consultado describe dispositivos distintos; verificar pieza y revisión aplicable con el fabricante antes de evaluar un supuesto disparo prematuro.
+
+La calibración debe informar puntos de lectura, correcciones e incertidumbre en el rango del ensayo, criterio de aceptación y responsable. La inspección determina si corresponde prueba hidrostática o de vapor: no son pruebas intercambiables. Cualquier prueba de integridad queda a cargo de servicio competente, con procedimiento autorizado y aprobación humana; esta matriz no autoriza al cuidador a presurizar ni a alterar válvulas. Una anomalía mecánica mantiene G1 abierto e impide ensayos presurizados posteriores.
+
+### G2 — Registro térmico e indicadores
+
+- Congelar la configuración de carga descrita en C2B; incluir peor masa, densidad, humedad, geometría y posición. Investigar el punto frío; no presumir que coincide con el centro geométrico o con la bolsa más pesada.
+- Conservar archivos crudos con unidades, timestamps, intervalo de muestreo aprobado, identificación/calibración de sondas y huecos de datos. Definir `t_lag = product_target_reached_at − chamber_setpoint_reached_at`, con objetivo térmico explícito y ambos eventos registrados; no confundirlo con hold.
+- Para cualquier cálculo de letalidad conservar `T_ref`, `z`, modelo/método de integración, intervalo integrado y justificación microbiológica. Sin esa base, reportar caracterización térmica y mantener la meta F₀ pendiente.
+- Registrar fabricante/modelo/lote/caducidad, resistencia declarada y posición de cada indicador. Procesados negativos solo son interpretables con control positivo no procesado del mismo lote que muestre crecimiento y lectura/incubación según instrucciones del indicador; **23 °C y 15–21 días de A/B no se transfieren a los indicadores**.
+- La serie exige tres corridas consecutivas aceptables de una configuración estable, sin omitir fallos. Una corrida fallida o inválida interrumpe la serie; investigar y documentar la corrección antes de reiniciarla. Cambios materiales requieren evaluar recalificación.
+
+### PQ-1 — Ficha candidata de tres corridas
+
+**Estado: borrador de calificación, no ejecutado / No-Go.** Fuente: segunda tabla del propietario del 2026-11-03. Sustituye la meta candidata F₀≥12 por **F₀≥15,0 min**; no aporta resultados ni justificación microbiológica del nuevo umbral. Los demás umbrales de esta ficha son requisitos propuestos por el propietario, **no verificados localmente**, sujetos a aprobación del protocolo y compatibilidad con instrumentos/indicadores. Las celdas `—` significan pendiente, nunca resultado negativo o aprobado.
+
+| Indicador / métrica | Ubicación | Corrida 1 | Corrida 2 | Corrida 3 | Criterio candidato de aceptación PQ-1 |
+|---|---|---|---|---|---|
+| Diferencial de vapor saturado `ΔT = T_sat(P_abs) − T_DL1` | Cámara baja, DL-1 | — | — | — | Durante toda la meseta: `T_DL1 ≥120,1 °C` y `abs(ΔT) ≤1,0 °C`; registrar mínimo/máximo y cobertura de datos. Véase precisión de signo abajo. |
+| Retardo térmico máximo `max(t_lag_DL2, t_lag_DL3)` | Producto, DL-2 y DL-3 | — | — | — | Documentado en cada corrida; rango máximo−mínimo entre las tres corridas ≤10 min, interpretación conservadora de «±10 min» sujeta a aprobación previa. |
+| Minuto de meseta en que ambas sondas acumulan F₀≥15,0 min | `min(F₀_DL2(t), F₀_DL3(t))` | — | — | — | Primer cruce del mínimo acumulado; informa un límite térmico candidato, no libera ni fija por sí solo duración operacional. |
+| Integradores químicos Clase 5, B1 / B2 / B3 | Centro geométrico de cada bloque, ubicación candidata | — / — / — | — / — / — | — / — / — | Resultado Pass conforme a IFU en **9 de 9 tiras**, con rango/ciclo de uso compatible. |
+| IB-1, *G. stearothermophilus* | Centro de B1 | — | — | — | Negativo al completar lectura válida en las tres corridas; propuesta: 48 h a 57 °C, púrpura sin turbidez, solo si corresponde a la IFU. |
+| IB-2, *G. stearothermophilus* | Centro de B3 | — | — | — | Mismo criterio que IB-1; conservar la correspondencia IB-2 → B3. |
+| IB-3, *G. stearothermophilus* | Centro de B2 | — | — | — | Mismo criterio que IB-1; conservar la correspondencia IB-3 → B2. |
+| IB-4, control positivo sin procesar | Incubadora, mismo lote que IB-1–3 | — | — | — | Positivo obligatorio en cada corrida; propuesta: viraje amarillo/turbio en **<24 h**, dentro de observación de 48 h a 57 °C, sujeto a IFU. Registrar hora real de primera lectura positiva. |
+
+**Definiciones y condiciones para interpretar la ficha:**
+
+1. **Mapa:** vincular DL-1/2/3 e IB-1/2/3/4 con ID de dispositivo, calibración, bloque, profundidad/posición y foto de carga. B1/B2/B3 no significan solo tres bolsas totales: documentar la carga completa. Las ubicaciones centrales son candidatas; si el mapeo identifica otro punto frío, adaptar la instrumentación y revisar el protocolo antes de calificar. No extrapolar la ficha a una carga de cuatro bolsas sin demostrar representatividad.
+2. **Vapor y meseta:** calcular `P_abs = P_manométrica_corregida + P_ambiente_absoluta`, en unidades coherentes, usando una tabla/formulación de saturación identificada. No fijar `T_teórica =121,1 °C` por suposición. El requisito original `ΔT≤1,0` era unilateral y admitía diferencias negativas arbitrarias; se propone **magnitud ≤1,0 °C** para cerrar esa ambigüedad, pendiente de aprobación previa. No demuestra ausencia de aire ni calidad de vapor por sí solo. Definir inicio/fin de meseta, banda superior, estabilidad, tolerancias, muestreo y tratamiento de incertidumbre antes del ensayo; no recortar a posteriori segmentos fallidos para aprobar. Huecos o incertidumbre que impidan demostrar el criterio mantienen No-Go.
+3. **Retardo:** usar el mismo objetivo térmico declarado para producto y cámara, con eventos sincronizados conforme a G2. Calcular primero el retardo de cada sonda y después su máximo; no tomar el máximo de temperaturas. La frase «entre corridas ±10 min» no especifica referencia: ±10 alrededor de una referencia permitiría extremos separados por 20 min. Esta ficha propone la interpretación más restrictiva **rango máximo−mínimo de los tres retardos máximos ≤10 min**, sin referencia elegida a posteriori. Informar mínimo, máximo y rango; aprobar esta definición antes de ejecutar la serie. Mientras no esté aprobada, el criterio sigue pendiente.
+4. **Letalidad:** declarar referencia, z y método de integración antes de calcular; F₀ convencional usa `T_ref=121,1 °C` y `z=10 °C`, lo que no prueba que ese modelo ni 15 min satisfagan el objetivo microbiológico del sustrato. Para esta ficha, acumular desde el inicio de meseta declarado (sin crédito previo) y registrar, por sonda, el primer tiempo que alcanza 15,0 min. El tiempo de la fila es el **más tardío de esos dos cruces**, equivalente al primer cruce del mínimo de ambas curvas acumuladas, no la menor lectura de temperatura instantánea. Si alguna no alcanza el umbral, registrar «no alcanzado». Para proponer un tiempo común de ciclo usar la corrida más lenta, margen justificado y nueva verificación cuando corresponda; no acortar ciclos automáticamente desde esta tabla.
+5. **Indicadores:** registrar modelo, lote, caducidad, IFU y compatibilidad con el proceso tanto de Clase 5 como de IB. Las condiciones 48 h / 57 °C, colores y control positivo <24 h no se transfieren entre marcas; si la IFU difiere, revisar y aprobar la ficha antes de ejecutar. No declarar negativos antes de completar el tiempo de lectura requerido, ni prolongar un control ya positivo si la IFU indica retirarlo. Un control positivo que no cumple su criterio hace la corrida inválida y rompe la serie, aunque los IB procesados parezcan negativos. El viraje químico no sustituye evidencia biológica ni penetración.
+6. **Registro y cierre:** por corrida conservar fecha, operador, versión/configuración, `thermal_cycle_id`, datos crudos, presiones, meseta, retardos, cálculo reproducible de letalidad, fotos de las tres tiras, resultados/horas de los cuatro IB e incubadora verificada. Son **9 tiras y 9 IB procesados más 3 controles positivos** en la serie completa, sin reutilizarlos. PQ-1 solo puede declararse conforme con G1 cerrado, fundamento microbiológico y protocolo aprobados, tres corridas consecutivas válidas y todos los criterios satisfechos. Su conformidad alimenta G2; no cierra PQ-2, G3/G4 ni autoriza producción o ventas.
+
+**Apoyo metodológico, sin validación del sustrato:** [NISTIR 5078, propiedades agua/vapor](https://www.nist.gov/srd/nistir-5078) (Tier 1, referencia técnica pública) para la relación de saturación; [STERIGENE, valor esterilizante](https://www.sterigene.com/en/equipements-process/sterilisation-decontamination/valeur-sterilisatrice) (Tier 2, proveedor técnico) para la definición convencional de F₀; [EZTest Biological Indicator-Steam, IFU](https://www.hmark.com/wp-content/uploads/2022/02/Biological-Indicator-Steam-IFU-2022-02-24.pdf) (Tier 2, fabricante) como ejemplo de condiciones y lectura específicas de producto, **no identificación del material disponible en Tenjo**. Consultados 2026-11-03. La procedencia de los umbrales estrictos sigue siendo la tabla del propietario.
+
+### PQ-2 — Controles A, B y C
+
+`PQ-2` identifica aquí el ensayo de integridad/asepsia y spawn solicitado; la ficha PQ-1 precedente sigue sin ejecutar ni aprobar. Antes de comenzar, Sebastián debe aprobar una ficha versionada con n por grupo/corrida, selección y distribución de muestras, método, condiciones y criterios de lectura. **Sin tamaño de muestra definido no hay cierre.** Los controles se dimensionan aparte de las cuatro bolsas productivas del microlote; no se descuenta material ni se aumenta carga térmica sin documentarlo y evaluar su representatividad.
+
+| Grupo | Exposición que se registra | Alcance de interpretación |
+|---|---|---|
+| A | Sustrato procesado, enfriado y conservado sellado, sin spawn | Una contaminación orienta a proceso, bolsa, sello, enfriamiento o almacenamiento; no identifica una causa única. |
+| B | Misma base que A, abierta y resellada en el entorno/procedimiento previsto de inoculación, sin spawn; registrar duración y operador | Comparar con A permite investigar aporte de manipulación; no atribuir causalidad por un único bloque. |
+| C | Muestra del spawn del lote previsto en PDA y blanco sin spawn, bajo método aséptico documentado | Registrar crecimiento y contaminantes detectables. El blanco debe permanecer sin crecimiento; un resultado negativo no certifica pureza absoluta ni adaptación a fructificación. |
+
+Registrar por unidad fecha/hora inicial y final, lecturas/fotos, contaminación detectada, incidencias y disposición. Informar `contaminados / evaluables` por separado de `planificados`, `perdidos` y `pendientes`; **0/0, registros ausentes, controles inválidos o unidades perdidas sin resolver mantienen No-Go**. No excluir una unidad contaminada para obtener 0%. `0/n` describe únicamente las unidades y condiciones observadas, no riesgo poblacional cero.
+
+### Ficha de cierre y secuencia de liberación
+
+Para cada G1–G5 completar este registro; los espacios vacíos no equivalen a aprobación:
+
+```text
+gate_id / versión de protocolo / alcance (piloto o comercial):
+responsable de reunir evidencia / revisor:
+equipo y configuración / PROCESS_BATCH_ID / thermal_cycle_id / spawn_lot:
+archivos de evidencia / certificados / unidades evaluadas / fechas:
+criterio versionado y fundamento / resultados / desviaciones abiertas:
+dictamen: PENDIENTE | NO CONFORME | CONFORME
+decisión humana: RETENER | AUTORIZAR alcance definido
+responsable de autorización / fecha / restricciones / revisión por cambio:
+```
+
+Secuencia: **G1 antes de ensayos presurizados → G2 y PQ-2 con protocolo aprobado → revisión G1–G4 antes de liberar inoculación productiva**, además de las otras compuertas de calidad. Los controles de commissioning pertenecen al ensayo autorizado y no son producción liberada. G5 se resuelve antes de comprometer escala/capital comercial; no bloquea por sí sola una caracterización de menor escala autorizada. Ningún Go parcial libera producción ni ventas, y resolver estos cinco requisitos tampoco sustituye las demás compuertas de cultivo/calidad.
+
+### Fuentes y confianza de la matriz
+
+- **Requisitos del propietario, 2026-11-03:** fuente de las metas 19–20 psig/90 min, F₀≥12 en el primer aporte y F₀≥15,0 en la ficha PQ-1 posterior (meta candidata vigente), tres corridas, A/B 15–21 días a 23 °C, C <5 días y >30 bloques/semana. **No verificados localmente**; sin certificados o resultados adjuntos. No atribuirlos a literatura ni a medición de campo.
+- **Tier 2 — fabricante:** [All American, instrucciones modelos 1915X/1925X/1941X](https://www.allamerican-chefsdesign.com/admin/FileUploads/product_43.pdf), pp. 2 y 6–7, consultado 2026-11-03. Respalda consulta de altitud, manómetro y dispositivos de seguridad; la revisión debe cotejarse con el equipo físico. No valida la carga de sustrato ni un hold de 90 min.
+- **Tier 1 — guía de agencia pública:** [CDC, Sterilizing Practices](https://www.cdc.gov/infection-control/hcp/disinfection-sterilization/sterilizing-practices.html) y [Steam Sterilization](https://www.cdc.gov/infection-control/hcp/disinfection-sterilization/steam-sterilization.html), consultados 2026-11-03. Sustentan el canal de indicadores de *G. stearothermophilus*, control positivo y verificación repetida; transferencia **metodológica desde salud**, no validación del umbral F₀ candidato ni de esterilidad del sustrato local.
+- **Decisión vigente:** [DEC-019](../DECISIONS.md#dec-019--lote-1-de-shiitake-con-cepa-no-identificada-riesgo-aceptado), excepción limitada al primer piloto; no sustituida por esta matriz.
 
 # C3 — Full cost per block and sellable kilogram
 
