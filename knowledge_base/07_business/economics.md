@@ -3,7 +3,7 @@ title: Economía del Programa Inicial de Shiitake
 document_id: DOC-0035
 category: business
 load_priority: on_request
-last_reviewed: 2026-07-24
+last_reviewed: 2026-11-03
 confidence: low
 primary_sources:
   - Internal records
@@ -52,6 +52,25 @@ Separar:
 | Rendimiento vendible | Pendiente del piloto |
 | Pérdida y descarte | Pendiente del piloto |
 | Precio validado por canal | Pendiente de entrevistas/cotizaciones |
+
+# Medición de energía y comparación de rutas
+
+Incorporación de [DOC-0133, F03/F07](../09_research/factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md). Ficha documental para completar durante pruebas autorizadas; no acredita mediciones ni habilita compras.
+
+| Registro por lote/etapa | Unidad y evidencia |
+|---|---|
+| Preparación, tratamiento térmico, incubación, fructificación y frío | Lectura inicial/final kWh, fecha, horas y equipo/medidor |
+| Condiciones y ocupación | Temperatura exterior/interior, carga y etapa; fuente del registro |
+| Tarifa efectiva | Factura/contrato, período, clase de servicio y COP/kWh; indicar contribución incluida o separada |
+| Cargos fijos | COP/período y criterio de asignación; no confundir con costo variable |
+| Agua y descarga | m³ por período/actividad, tarifa y soporte de conexión/factura |
+| Denominador | kg cosechados, liberados y efectivamente vendidos; masa seca inicial para BE |
+
+`kWh/kg liberado = energía atribuida al lote / kg liberados`. Si faltan lecturas, distribución de consumo compartido o kg liberados, registrar **pendiente**, sin convertir potencia nominal × 24 h en consumo medido. Evitar doble conteo entre etapas y de contribuciones/impuestos ya incluidos en factura.
+
+Para comparar bloque comprado precolonizado con producción interna, usar idéntico horizonte y grado comercial: costo puesto en Tenjo, aceptación/descarte, trazabilidad y madurez del bloque, kg vendibles acumulados, mano de obra, energía, frío, empaque, logística y días de ocupación/cartera. Separar capex nuevo de equipo existente. No asumir que ambas rutas tienen la misma BE, ciclos o riesgo; la alternativa no reemplaza el microlote vigente sin revisión.
+
+El precio mínimo y el margen de contribución se rigen por [pricing.md](pricing.md) y DEC-020. No sumar merma otra vez si el costo ya está dividido entre kg vendibles. No reconocer ingresos por SMS o ahorro de briquetas sin validación técnica/comercial separada.
 
 # Fórmulas
 

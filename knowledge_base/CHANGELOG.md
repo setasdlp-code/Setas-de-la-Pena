@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-03
 ---
 
 # CHANGELOG
@@ -23,6 +23,13 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-03
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporado íntegro y con SHA-256 el reporte externo de factibilidad de shiitake en Tenjo (DOC-0132); evaluación trazable DOC-0133 con corrección de 15 psig/121 °C, costos de rehidratación y alcance de evidencias. Fuente original no verificada. |
+| `[BIZ]` | Corregido el alcance ICA/INVIMA en regulatory_framework.md con fuentes oficiales; ampliadas fichas de economics.md y pricing.md para energía, alternativas de suministro y entrevista comercial; AB12–AB15 en preguntas abiertas. Sin nuevas compras, trámites, ensayos, ventas o cambios de SOP/setpoints/Setas OS acreditados. |
 
 ### 2026-11-01
 

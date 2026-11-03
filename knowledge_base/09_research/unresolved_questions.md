@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-03
 confidence: high
 primary_sources:
   - Internal records
@@ -188,8 +188,12 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB09 | ¿La cascarilla de arroz disponible es limpia, homogénea y útil como aireante? | Media | Muestra y ensayo de bloque |
 | AB10 | ¿El pélet de «acacia» comercial (Mandra, Mercado Libre) es *Acacia mangium* pura de fuste, sin corteza ni arrastre, y es compatible con shiitake? | Alta | Confirmación escrita del proveedor; buscar evidencia de *L. edodes* en *A. mangium* (no hallada al 2026-10-31) |
 | AB11 | ¿*Acacia decurrens* (acacia sabanera) sirve para shiitake, o sus taninos de corteza la descartan? | Media | Conflicto entre `deep_research_synthesis_2026.md` y DOC-0130; requiere ensayo |
+| AB12 | ¿Qué prospectos del reporte de factibilidad compran shiitake fresco, en qué plato, a qué precio neto y plazo? | Alta antes de comprometer volumen | Entrevista fechada y soporte; lista externa sin contactos/ventas confirmados (DOC-0133 F05/F06) |
+| AB13 | ¿Costo y rendimiento vendible de bloque precolonizado frente al microlote interno? | Media, alternativa | Cotización puesta en Tenjo, trazabilidad, prueba propia y ficha de economics.md (DOC-0133 F07) |
+| AB14 | ¿Tarifa efectiva y kWh por etapa/kg vendible del módulo real? | Alta antes de presupuestar escala | Factura, medidor y asignación trazable; 20–24 kWh/día externos no verificados (DOC-0133 F03) |
+| AB15 | ¿Trámite sanitario/ICA por actividad y destino, y condiciones de agua/descarga del predio? | Alta antes de comercializar | Respuesta oficial/radicado y conexión real; Res. ICA 115708 no aplica a vegetales (DOC-0133 F02) |
 
-Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores.
+Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores. Ver [evaluación de factibilidad DOC-0133](factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md).
 
 # Investigación futura — Pleurotus djamor
 
