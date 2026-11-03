@@ -8,6 +8,7 @@ confidence: low
 primary_sources:
   - Internal records
 related_documents:
+  - ../09_research/intake/factibilidad_shiitake_tenjo_reporte_externo_2026-11-03.md
   - economics.md
   - colombian_market.md
   - ../06_operations/quality_control.md
@@ -40,8 +41,13 @@ Registrar por comprador:
 | Pago | Contra entrega, días de cartera, factura |
 | Logística | Quién entrega y costo |
 | Calidad | Tamaño, apertura, corte, empaque, vida útil |
-| Sustituto | Producto local/importado con el que compara |
+| Sustituto | Fresco/seco, presentación, precio y uso culinario real en el plato; rendimiento tras preparación si se mide |
+| Evidencia | Fuente, fecha, persona/cargo y soporte; separar estimación de respuesta directa |
+| Validación | Muestra autorizada, devolución, recompra y kg efectivamente recibidos/pagados |
+| Cartera y entrega | Plazo solicitado/acordado, costo de ruta, franja y factura; no prometer frecuencia antes de validar capacidad |
 | Decisión | Interés, muestra, prueba, rechazo y motivo |
+
+Los establecimientos citados en el [reporte externo de factibilidad](../09_research/intake/factibilidad_shiitake_tenjo_reporte_externo_2026-11-03.md) son prospectos **sin validar**. No son cuentas activas ni compromisos de compra; sus volúmenes, precios y plazos no se incorporan al pronóstico. Registrar evidencia de entrevista antes de agregarlos como demanda confirmada. No se ha contactado a terceros por esta incorporación.
 
 # Formación del precio
 

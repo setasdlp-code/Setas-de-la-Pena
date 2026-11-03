@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-03
 ---
 
 # CHANGELOG
@@ -23,6 +23,16 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-03
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporada `09_research/colombia_mushroom_market_synthesis_2026-11-03.md` (DOC-0132): síntesis consultiva de competencia, compradores, precios publicados, comercio 2025 y límites clínico-regulatorios; 39 fuentes enlazadas y sin mediciones de campo. Registro comercial observado no equivale a evidencia científica Tier 2 ni a autorización sanitaria verificada. |
+| `[BIZ]` | `07_business/colombian_market.md`: cualificadas las afirmaciones de crecimiento, ausencia de oferta local y debilidades no verificadas de competidores; cifras históricas por canal marcadas como estimaciones. Evidencia completa en DOC-0132. |
+| `[KB]` | ARK-030 y AB12 capturan medición de demanda y contribución entregada; AB04 mantiene pendiente la recompra. Referencias y entrada de `INDEX.yaml` añadidas. Cambio editorial/de investigación interpretativa: no altera DEC-013, DEC-020, precios activos, SOPs, recetas ni Setas OS. |
+| `[KB]` | Incorporado íntegro y con SHA-256 el reporte externo de factibilidad de shiitake en Tenjo (DOC-0134); evaluación trazable DOC-0133 con corrección de 15 psig/121 °C, costos de rehidratación y alcance de evidencias. Fuente original no verificada. |
+| `[BIZ]` | Corregido el alcance ICA/INVIMA en regulatory_framework.md con fuentes oficiales; ampliadas fichas de economics.md y pricing.md para energía, alternativas de suministro y entrevista comercial; AB13–AB16 en preguntas abiertas. Sin nuevas compras, trámites, ensayos, ventas o cambios de SOP/setpoints/Setas OS acreditados. |
 
 ### 2026-11-02
 
