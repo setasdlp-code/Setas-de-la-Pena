@@ -3,7 +3,7 @@ title: Estrategia de Precio — Shiitake Piloto
 document_id: DOC-0036
 category: business
 load_priority: on_request
-last_reviewed: 2026-07-24
+last_reviewed: 2026-11-03
 confidence: low
 primary_sources:
   - Internal records
@@ -52,6 +52,8 @@ precio mínimo provisional
   + merma esperada
   + margen de contribución aprobado
 ```
+
+Margen aprobado: **40 % sobre el precio neto cobrado** (DEC-020). Como es margen sobre precio, no sobre costo, se aplica dividiendo: `precio mínimo = (costo variable + logística + merma, por kg) / (1 − 0,40)`.
 
 El precio definitivo se aprueba después de:
 
