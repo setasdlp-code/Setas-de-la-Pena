@@ -3,7 +3,7 @@ title: Registro de Abastecimiento y Costos — Insumos y Consumibles
 document_id: DOC-PRC-001
 category: business
 load_priority: on_request
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-02
 confidence: medium
 primary_sources:
   - Internal procurement research, August 2026
@@ -167,6 +167,46 @@ Ofertas tomadas del reporte externo asistido por IA `../09_research/intake/pelle
 | aserrin_eucalipto_chia | Multimaderas Páez (Calle 2 # 1A-76, Variante de Chía), bulto ~20 kg (~25 % hum.) | ~15.000 | ~750 húmedo | *Eucalyptus* spp. | unverified | https://multimaderaspaez.com/ | «Cotización telefónica» afirmada por el reporte, sin confirmar. El aserradero también corta pino y madera inmunizada: exigir corte puro de eucalipto sin tratar (AB07). |
 
 Excluidos por el reporte para shiitake: madera mezcla, madera de cacao y cedro canadiense de Mandra (posibles coníferas, mucílagos, tuyaplicinas) y los pellets híbridos de carbón de CarboProduccol.
+
+# Compras de sustrato registradas en Bodega — 2026-11-02
+
+Lista del dueño reconstruida desde los comprobantes de Mercado Libre (mayo–julio 2026). Es la referencia para cargar estas compras en Setas OS → Bodega. Las cantidades se sincronizan con `../metadata/consumables.yaml` (`REC-CON-2026-11-02-001`). Cal viva, agar y extracto de malta quedan fuera porque no son ingredientes del catálogo de sustratos.
+
+Solo los precios con monto pagado exacto llevan estado `purchased`. Los ítems comprados dentro de un carrito no tienen precio por ítem en el comprobante.
+
+| item_id (Simulador) | Insumo | kg | Pedido / envío | Fecha | COP/kg | estado | notas |
+|---|---|---:|---|---|---:|---|---|
+| cascarilla_arroz | Cascarilla de arroz cruda (Bioespacio) | 1 | #2000012775762051 | 2026-05-02 | 10.000 | purchased | — |
+| cascarilla_arroz | Cascarilla de arroz cruda (bolsa 5 kg / 40 L) | 5 | #2000013707697941 | 2026-06-26 | N/D | unverified | Carrito de 5 productos. Registro anterior: 15 kg; pesar. |
+| cascarilla_coco | Fibra / sustrato de coco buferizado | 10 | #2000013707697941 | 2026-06-26 | N/D | unverified | Saco de 50 L; 10 kg según ficha de Confiabonos. |
+| aserrin_roble | Pellets de madera | 1 | #2000013803135845 | 2026-07-01 | ~9.000 | estimated | Registro anterior: 3 paquetes; pesar. |
+| salvado_trigo | Salvado de trigo | 10 | #2000012776068013 | 2026-05-02 | 4.650 | purchased | 1 bulto; $46.500. |
+| salvado_avena | Salvado de avena (Frutos D' Antaño) | 5 | #2000013707697941 | 2026-06-26 | N/D | unverified | Carrito de 5 productos. |
+| gallinaza | Gallinaza orgánica compostada | 2 | #2000013507152627 | 2026-06-14 | N/D | unverified | Peso cortado en el correo (2/4/10/46 kg); se registra el menor. Pesar. |
+| carbonato_calcio | Carbonato de calcio técnico | 4 | #2000012776068013 | 2026-05-02 | 18.810 | purchased | 4 × 1 kg; $75.240. |
+| yeso | Yeso agrícola Yesoplant | 1 | #2000013507152627 | 2026-06-14 | N/D | unverified | Ficha de envío: 1 kg; la publicación describe bulto de 50 kg (~$78.000). Pesar. |
+| sulfato_magnesio | Sulfato de magnesio USP | 1 | #2000012814433965 | 2026-05-04 | 26.000 | purchased | 2 × 500 g. |
+
+Total: 40 kg en 9 ingredientes.
+
+## Carga en Setas OS
+
+En Bodega → Compras, registra **una compra por pedido**, con la fecha de entrega y marcada como "Ya la recibí". El formulario exige proveedor: crea antes "Mercado Libre" (y "Bioespacio" si quieres separarlo) en la sección de proveedores.
+
+| # | Pedido | Fecha | Ítems (ingrediente · kg · COP/kg) |
+|---|---|---|---|
+| 1 | #2000012775762051 | 2026-05-02 | Cascarilla de arroz · 1 · 10.000 |
+| 2 | #2000012776068013 | 2026-05-02 | Salvado de trigo · 10 · 4.650 — Carbonato de calcio · 4 · 18.810 |
+| 3 | #2000012814433965 | 2026-05-04 | Sulfato de magnesio · 1 · 26.000 |
+| 4 | #2000013507152627 | 2026-06-14 | Gallinaza compostada · 2 · ? — Yeso agrícola · 1 · ? |
+| 5 | #2000013707697941 | 2026-06-26 | Cascarilla de arroz · 5 · ? — Fibra de coco · 10 · ? — Salvado de Avena · 5 · ? |
+| 6 | #2000013803135845 | 2026-07-01 | Aserrín de roble (pellets) · 1 · ~9.000 |
+
+Precauciones:
+
+- **Precio "?":** busca el precio por ítem en el detalle del pedido de Mercado Libre. No uses el precio del catálogo como sustituto: Bodega lo trataría como costo real. Un precio vacío se guarda como 0 y baja el costo ponderado del ingrediente; si lo dejas en 0, recuerda que el costo de bodega de ese insumo queda subestimado.
+- **Duplicados:** si el equipo ya tiene lotes de estos ingredientes (por ejemplo, el salvado de trigo o los pellets cargados antes), registrarlos otra vez duplica el stock. Revisa Bodega → Stock antes de cargar.
+- **Consumo:** estos son kilos comprados, no existencias actuales. Lo que se haya usado desde mayo–julio debe descontarse con un ajuste después de cargar.
 
 # Hallazgos prioritarios
 

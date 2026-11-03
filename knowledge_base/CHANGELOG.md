@@ -34,6 +34,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 | `[KB]` | Incorporado íntegro y con SHA-256 el reporte externo de factibilidad de shiitake en Tenjo (DOC-0134); evaluación trazable DOC-0133 con corrección de 15 psig/121 °C, costos de rehidratación y alcance de evidencias. Fuente original no verificada. |
 | `[BIZ]` | Corregido el alcance ICA/INVIMA en regulatory_framework.md con fuentes oficiales; ampliadas fichas de economics.md y pricing.md para energía, alternativas de suministro y entrevista comercial; AB13–AB16 en preguntas abiertas. Sin nuevas compras, trámites, ensayos, ventas o cambios de SOP/setpoints/Setas OS acreditados. |
 
+### 2026-11-02
+
+| Tipo | Descripción |
+|---|---|
+| `[BIZ]` | Registradas las compras de 9 ingredientes de sustrato (40 kg, mayo–julio 2026, Mercado Libre) en `07_business/procurement_cost_registry.md` con guía de carga en Bodega por pedido, y sincronizadas en `metadata/consumables.yaml` (`REC-CON-2026-11-02-001`). Precios pagados: salvado de trigo $4.650/kg, carbonato de calcio $18.810/kg, sulfato de magnesio $26.000/kg, cascarilla Bioespacio $10.000/kg. Cascarilla (15 → 6 kg) y pellets (3 paquetes → 1 kg) cambian frente al registro anterior; gallinaza (2 kg) y yeso (1 kg) usan el empaque menor. Pendiente pesarlos. |
+
 ### 2026-11-01
 
 | Tipo | Descripción |
