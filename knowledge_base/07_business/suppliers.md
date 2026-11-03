@@ -17,6 +17,7 @@ related_documents:
   - ../05_equipment/autoclaves.md
   - ../05_equipment/environmental_control.md
   - ../09_research/incubation_module_engineering_review_2026-08-05.md
+  - ../09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md
   - ../10_ai_workflows/OAP-0001-modular-incubation-validation.md
 ---
 
@@ -45,6 +46,18 @@ Solicitar y registrar:
 | Evidencia de viabilidad | Muestra o lote pequeño antes de escalar |
 
 Estado: sin proveedor confirmado. La falta de trazabilidad bloquea la compra para producción.
+
+## Candidatos adicionales de spawn (reporte externo, 2026-11-02)
+
+Fungiilab sigue siendo el proveedor del lote 1 (DEC-019). Los siguientes se registran como **candidatos condicionados al cuestionario** (DEC-021). Ninguno está aprobado ni cotizado. Datos de catálogo o de sitio web, nivel C; ver `../09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md`.
+
+| Candidato | Lo que se sabe | Falta confirmar |
+|---|---|---|
+| Setas de Siecha (Fungi Flora) | COP 70.000 por tubo Falcon con 10–15 mL de agar MEA; rango declarado 16–24 °C; «2 presentaciones configurables»; entrega de días a 1 mes | Si la segunda presentación es bolsa de grano; código de cepa y lote; precio de 10–15 kg. Un tubo de agar solo sirve con laboratorio propio o maquila de spawn |
+| Nutrisetas (Bogotá) | Declara producir shiitake fresco, laboratorio propio e «insumos para cultivo» | Si vende spawn o bloques; código de cepa; precio B2B |
+| Los Fungis Colombia | Catálogo con agar, cultivo líquido y bloques de autocultivo; shiitake en su línea funcional; la ficha de producto no cargó | Presentación, cepa, precio por volumen |
+
+Descartados: anuncios anónimos de MercadoLibre y grano seco con esporas de Etsy (sin productor, cepa, lote ni registro ICA). Importar (cepa 3782, Intiwasi IW43) queda fuera del arranque hasta consultar al ICA; ver SH15.
 
 # Prioridad 2 — Materias primas del sustrato
 
@@ -169,7 +182,7 @@ La orden superior a tres unidades requiere expediente aprobado con:
 
 # Preguntas Abiertas
 
-- ¿Qué laboratorios o productores colombianos ofrecen spawn de shiitake con cepa identificada?
+- ¿Qué laboratorios o productores colombianos ofrecen spawn de shiitake con cepa identificada? (Siecha, Nutrisetas y Los Fungis esperan respuesta al cuestionario Q-01 a Q-06.)
 - ¿Qué maderas duras limpias y trazables están disponibles en Cundinamarca?
 - ¿Qué suplemento local permite una formulación repetible?
 - ¿Qué bolsas soportan el ciclo validado del autoclave en la carga real?

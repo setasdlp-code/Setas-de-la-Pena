@@ -24,6 +24,15 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-11-03
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Añadido `09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md` (`DOC-0132`): audita un reporte externo sobre selección de inóculo de shiitake. Registro de hechos con nivel de evidencia, cuestionario a proveedores Q-01 a Q-06 y ocho observaciones (entre ellas: el ensayo propuesto excede el lote de 30 bloques, los umbrales son hipótesis y una cifra de EB mezcla unidades). El texto original del reporte no se archivó. |
+| `[DECISION]` | DEC-021: Siecha, Nutrisetas y Los Fungis quedan como candidatos de spawn condicionados al cuestionario. DEC-019 sigue vigente. |
+| `[BIZ]` | `07_business/suppliers.md`: tabla de candidatos adicionales de spawn, todos sin cotización. |
+| `[KB]` | Pendientes SH12–SH15 en `09_research/unresolved_questions.md` y puntero en `01_species/lentinula_edodes.md`. Sin cambios en Setas OS ni en la ficha de especie. |
+
 ### 2026-11-01
 
 | Tipo | Descripción |
