@@ -21,6 +21,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.ok(!/(^|\/)(config|node_modules|\.git)(\/|$)/.test(entry.file));
   }
   report.checks.push({ type: 'export-hashes', files: manifest.files.length, result: 'passed' });
+  for (const required of ['pilot-log.js', 'pilot-log-render.js']) assert.ok(manifest.files.some(entry => entry.source === required), `export includes ${required}`);
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined), args: ['--no-sandbox'] });
   try {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
@@ -55,11 +56,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.goto(base + 'manual.html', { waitUntil: 'networkidle' });
     await page.locator('[data-canonical-resource="manual"]').click();
     assert.ok(new URL(page.url()).pathname.endsWith('/brand-kit/index.html'));
-    await page.locator('[data-signature="paper"]').click();
-    assert.equal(await page.locator('[data-signature="paper"]').getAttribute('aria-pressed'), 'true');
-    await page.locator('#preview-wordmark').evaluate(img => img.decode());
-    assert.match(await page.locator('#preview-wordmark').getAttribute('src'), /wordmark-horizontal-paper\.svg$/);
-    report.checks.push({ type: 'canonical-brand-manual', result: 'passed', signature: 'paper' });
+    // Since #436 the manual shows the original firma and the horizontal emblem instead of the Gaya signature switcher.
+    for (const src of ['assets/firma-setas-de-la-pena-original.png', 'assets/emblema-horizontal-original.svg']) {
+      const firma = page.locator(`#firma img[src="${src}"]`);
+      await firma.evaluate(img => img.decode());
+      assert.ok(await firma.evaluate(img => img.naturalWidth > 0), src);
+    }
+    assert.equal(await page.locator('#print-kit').isVisible(), true);
+    report.checks.push({ type: 'canonical-brand-manual', result: 'passed', firma: 'original' });
     await page.goto(base + 'home.html?pairing=bricolage#para-chefs');
     await page.locator('#para-chefs a[href*="/recetas"]').click();
     await page.locator('#receta-arepa input[value="3"]').check();
@@ -70,7 +74,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.getByLabel('Municipio de entrega', { exact: true }).fill('Tenjo');
     await page.locator('.purchase-submit').click();
     assert.match(await page.locator('#order-message').inputValue(), /900 g/);
-    assert.match(await page.locator('#order-message').inputValue(), /mi restaurante/);
+    assert.match(await page.locator('#order-message').inputValue(), /un servicio de cocina/);
     assert.equal(await page.locator('#order-whatsapp').isVisible(), false);
     await page.locator('.masthead .wordmark').click();
     assert.equal(new URL(page.url()).pathname, '/home');

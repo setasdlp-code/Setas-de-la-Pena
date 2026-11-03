@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Peña de Juaica · grabado e iconos experimentales | Setas de la Peña</title>
+  <style>
+    :root { color-scheme: light; --moss:#2E3B2F; --paper:#FAF8F3; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:clamp(20px,4vw,56px); font:14px/1.55 system-ui,sans-serif; background:var(--paper); color:var(--moss); }
+    main { max-width:1280px; margin:auto; }
+    header { display:flex; align-items:end; justify-content:space-between; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--moss); padding-bottom:14px; margin-bottom:26px; }
+    h1 { font-size:clamp(22px,3vw,38px); line-height:1.15; margin:0; font-weight:650; }
+    h2 { font-size:16px; margin:0 0 5px; }
+    p { margin:0 0 12px; max-width:70ch; }
+    .mono { font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; letter-spacing:.03em; text-transform:uppercase; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+    .panel { min-width:0; }
+    figure { margin:0; }
+    .tile { width:100%; aspect-ratio:1; display:block; }
+    figcaption { margin-top:10px; }
+    .swatches { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin:18px 0; }
+    .swatch { display:inline-flex; gap:8px; align-items:center; }
+    .chip { width:18px; height:18px; border:1px solid #8b958a; }
+    .micro { display:flex; flex-wrap:wrap; gap:22px; align-items:end; margin-top:12px; }
+    .sample { display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .sample canvas { image-rendering:auto; display:block; }
+    .sample figcaption { margin:0; }
+    .section { padding:28px 0; border-top:1px solid #bac1b8; margin-top:28px; }
+    .export { display:inline-block; margin:12px 10px 0 0; border:1px solid var(--moss); padding:8px 12px; color:inherit; text-decoration:none; font-size:12px; }
+    .export:hover,.export:focus-visible { background:var(--moss); color:var(--paper); }
+    .warning { padding-left:12px; border-left:3px solid var(--moss); }
+    @media(max-width:730px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><div class="mono">Setas de la Peña / DS-2026 / boceto para revisión</div><h1>Peña de Juaica · grabado de tinta</h1></div>
+    <div class="mono">Tenjo, Cundinamarca · 01 Nov 2026</div>
+  </header>
+  <p>Estudio cromático y de reducción de la <strong>ilustración botánica original del repositorio</strong>. Se utilizan sus píxeles y su distribución exacta; no se genera una nueva montaña ni se añaden hongos. El verde queda entre los trazos blancos, como tinta impresa sobre papel oscuro.</p>
+  <div class="swatches mono">
+    <span class="swatch"><span class="chip" style="background:#2E3B2F"></span>Musgo #2E3B2F</span>
+    <span class="swatch"><span class="chip" style="background:#FAF8F3"></span>Papel #FAF8F3</span>
+  </div>
+  <div class="grid">
+    <figure class="panel">
+      <canvas class="tile" id="main-moss" width="1024" height="1024" role="img" aria-label="Grabado botánico original de la Peña de Juaica y hongos, tinta clara sobre fondo verde musgo"></canvas>
+      <figcaption><h2>01 / Tinta blanca sobre musgo</h2><p>Las líneas del grabado se extraen de la tinta oscura del archivo fuente; los huecos conservan el color de fondo.</p></figcaption>
+      <a class="export" href="#" id="save-moss" download="setas-juaica-tinta-blanca-1024.png">Guardar PNG 1024</a>
+    </figure>
+    <figure class="panel">
+      <canvas class="tile" id="main-paper" width="1024" height="1024" role="img" aria-label="El mismo grabado, tinta verde musgo sobre papel claro"></canvas>
+      <figcaption><h2>02 / Inversión sobre papel</h2><p>Misma geometría y misma máscara de tinta; únicamente cambia la pareja de colores.</p></figcaption>
+      <a class="export" href="#" id="save-paper" download="setas-juaica-sobre-papel-1024.png">Guardar PNG 1024</a>
+    </figure>
+  </div>
+  <section class="section">
+    <h2>03 / Prueba de reducción · recorte experimental</h2>
+    <p class="warning">El recorte procede de la ilustración fuente y preserva sus trazos. Todavía no es un favicon aprobado: en 16 px la textura y las estrías se agrupan. No se debe sustituir el icono de producción con este estudio.</p>
+    <div class="grid">
+      <div><div class="mono">Musgo / papel</div><div class="micro" id="samples-moss"></div></div>
+      <div><div class="mono">Papel / musgo</div><div class="micro" id="samples-paper"></div></div>
+    </div>
+  </section>
+  <section class="section">
+    <h2>Origen y límites de fidelidad</h2>
+    <p>Fuente canónica en el repositorio: <code>assets/botanical-mushrooms-mountain.png</code>. El grabado compuesto conserva la anatomía de los hongos y la montaña tal como aparecen en esa fuente. La fidelidad geográfica final debe confrontarse con la referencia independiente de la Peña de Juaica antes de aprobar una micro-marca.</p>
+    <p class="mono">Exploración aislada · sin cambios en favicon, manifest.webmanifest, index.html o assets de producción</p>
+    <p id="status" aria-live="polite">Cargando ilustración fuente…</p>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const SOURCE = '../../../../assets/botanical-mushrooms-mountain.png';
+  const MOSS = [46,59,47], PAPER = [250,248,243];
+  const source = new Image();
+  source.decoding = 'async';
+  source.onload = () => {
+    const scratch = document.createElement('canvas');
+    scratch.width = source.naturalWidth;
+    scratch.height = source.naturalHeight;
+    const ctx = scratch.getContext('2d', {willReadFrequently:true});
+    ctx.drawImage(source,0,0);
+    const raw = ctx.getImageData(0,0,scratch.width,scratch.height);
+    const p = raw.data;
+    // Preserve the original printed DARK strokes as an opacity mask.
+    // Cream highlights and transparent pixels must NOT become white solid areas.
+    for(let i=0;i<p.length;i+=4) {
+      const luminance = p[i]*.299 + p[i+1]*.587 + p[i+2]*.114;
+      const coverage = Math.pow(Math.max(0,Math.min(1,(229-luminance)/125)),.83);
+      p[i]=250; p[i+1]=248; p[i+2]=243;
+      p[i+3]=Math.round(p[i+3]*coverage);
+    }
+    ctx.putImageData(raw,0,0);
+    const draw = (canvas, bg, fg, crop, circular=false) => {
+      const d = canvas.getContext('2d'), w=canvas.width, h=canvas.height;
+      d.clearRect(0,0,w,h);
+      if(circular) {d.save();d.beginPath();d.arc(w/2,h/2,Math.min(w,h)/2,0,Math.PI*2);d.clip();}
+      d.fillStyle='rgb('+bg.join(',')+')'; d.fillRect(0,0,w,h);
+      // Original source geometry for large render, source-derived rock crop for small render.
+      const box=crop||[0,0,scratch.width,scratch.height];
+      const width=w*.80, height=width*box[3]/box[2];
+      const factor=Math.min(1,(h*.80)/height);
+      const dw=width*factor, dh=height*factor;
+      d.imageSmoothingEnabled=true; d.imageSmoothingQuality='high';
+      if(fg===PAPER) d.drawImage(scratch,...box,(w-dw)/2,(h-dh)/2,dw,dh);
+      else {
+        // Tint the same alpha mask green for the inverse treatment.
+        const off=document.createElement('canvas');off.width=w;off.height=h;
+        const x=off.getContext('2d');
+        x.drawImage(scratch,...box,(w-dw)/2,(h-dh)/2,dw,dh);
+        x.globalCompositeOperation='source-in';
+        x.fillStyle='rgb('+fg.join(',')+')';x.fillRect(0,0,w,h);
+        d.drawImage(off,0,0);
+      }
+      if(circular) d.restore();
+    };
+    const fullMoss=document.getElementById('main-moss');
+    const fullPaper=document.getElementById('main-paper');
+    draw(fullMoss,MOSS,PAPER,null); draw(fullPaper,PAPER,MOSS,null);
+    // Crop is confined to the actual central Peña, not a fabricated generic mountain.
+    const rock=[440,15,850,680];
+    [[MOSS,PAPER,'samples-moss'],[PAPER,MOSS,'samples-paper']].forEach(([bg,fg,id])=>{
+      const parent=document.getElementById(id);
+      [16,32,40].forEach(n=>{
+        const fig=document.createElement('figure');fig.className='sample';
+        const tile=document.createElement('canvas');tile.width=n;tile.height=n;
+        tile.setAttribute('aria-label',n+' px'+(n===40?', recorte circular':''));
+        draw(tile,bg,fg,rock,n===40);
+        const cap=document.createElement('figcaption');cap.className='mono';
+        cap.textContent=n+' px'+(n===40?' / avatar':'');
+        fig.append(tile,cap);parent.append(fig);
+      });
+    });
+    document.getElementById('save-moss').href=fullMoss.toDataURL('image/png');
+    document.getElementById('save-paper').href=fullPaper.toDataURL('image/png');
+    document.getElementById('status').textContent='Fuente cargada. Previsualizaciones generadas desde el original.';
+  };
+  source.onerror=()=>{document.getElementById('status').textContent='No se pudo cargar '+SOURCE+'. Revisa la ruta relativa o sirve el repositorio mediante HTTP.';};
+  source.src=SOURCE;
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
-# Setas de la Peña — Identidad comercial v1.1
+# Setas de la Peña — Identidad comercial v1.2
 
-Edición: **12 de octubre de 2026**; voz comercial revisada el **30 de octubre de 2026**. Público: **personas que cocinan, en cocinas profesionales y en casa**.
+Edición: **12 de octubre de 2026**; voz comercial revisada el **30 de octubre de 2026**; comportamiento antes de la primera cosecha añadido el **1 de noviembre de 2026** ([estrategia](brand/brand-strategy-2026-11-01.md)). Público: **personas que cocinan, en cocinas profesionales y en casa**.
 
 [Manual visual](../08_brand/ds-2026/brand-kit/index.html) · [Investigación y decisiones](brand/competitive-research-2026-10.md) · [Recursos](../08_brand/ds-2026/brand-kit/README.md) · [DS vigente](../08_brand/ds-2026/DESIGN_SYSTEM.md)
 
@@ -22,6 +22,7 @@ Esta definición editorial no demuestra disponibilidad, abastecimiento regular o
 | Titular de entrada | **Conocer la seta. Imaginar el plato.** Campañas y presentación del recorrido; subordinado a la firma principal. |
 | Firma territorial | **Tenjo · Cundinamarca · Colombia.** Origen del proyecto, no garantía de origen de cada lote. |
 | Expresión de oficio | **Cultivar. Observar. Aprender.** Sección de proceso, no segunda frase principal. |
+| CTA en piloto | **Recibir aviso de la primera cosecha.** Mientras no haya canal abierto, el botón dice «Preparar mensaje de aviso» y nada da a entender que alguien quedó inscrito. |
 
 «Cultivadas en la Sabana. Cosechadas con criterio» queda como texto histórico de un mockup, no como promesa permanente sin cosecha y procedencia verificadas. «Un archivo vivo» describe el cuaderno de especies, no toda la marca.
 
@@ -29,21 +30,24 @@ La investigación encontró «Del cultivo a tu mesa» en Setas de Cuivá. Nuestr
 
 Una sola marca. «Las setas», «En la cocina», «Origen» y «El cuaderno» son secciones, no submarcas. Setas OS conserva su ámbito operativo.
 
+### Antes de la primera cosecha: cuaderno de cocina abierto
+
+Mientras no haya cosecha, la marca comparte la cocina antes que el producto. Cada entrada del cuaderno une un hito del cultivo con una idea para cocinar la seta, y cada dato lleva su estado: **medido, observado, estimado o por confirmar**. Lo que no se ha medido se escribe «por medir»; no se completa con datos de otras fuentes. Una sola dirección para quien cocina en casa y para un servicio: cambia la profundidad, no la marca. El registro se publica vacío hasta que haya un lote real.
+
 ## 2. Audiencia y recorrido
 
 **Una voz para quienes cocinan:** hablar a toda la audiencia con el respeto y la precisión que se ofrecen a un chef. La especie, su sabor y textura documentados y una intención de plato abren la conversación. No se simplifica el lenguaje por tratarse de una cocina doméstica; se explican los términos cuando ayudan a decidir. La información práctica cambia según la preparación y la escala.
 
-**Cocinas profesionales:** decidir cómo usar el ingrediente y consultar cantidad, presentación, consistencia, fecha y entrega. La ficha empieza con especie, textura y usos; termina con una consulta concreta. La marca no se presenta como un proveedor con abastecimiento regular confirmado.
+Un solo recorrido con capas. El contenido es el mismo y cambia la profundidad según quién cocina:
 
-Pauta para la conversación profesional: **especie/plato, cantidad solicitada, presentación deseada, ciudad y fecha requerida**. La respuesta comercial confirma por separado formato/peso, precio, disponibilidad y condiciones de entrega. No proponer mínimos, calendario recurrente, muestras gratuitas o tiempos de respuesta sin confirmarlos.
+| Capa | Para todos | Quien cocina en casa | Quien cocina para un servicio |
+| --- | --- | --- | --- |
+| Lámina | Reconocer la especie | — | — |
+| Nota de cocina | Una técnica y un plato con ingredientes cercanos | Receta con cantidades para una mesa | Comportamiento en cocción, rendimiento y merma, cuando estén medidos |
+| Registro del cultivo | Hito fechado y su estado | Por qué tarda y qué cuidados tiene | Qué se sabe ya de calibre, conservación y vida útil |
+| Consulta | «Recibir aviso de la primera cosecha» | Cantidad para casa | Especie/plato, cantidad, presentación, ciudad y fecha |
 
-**Hogares:** especie → receta → cantidad → consulta. Mantener pasos accesibles e ingredientes disponibles en Colombia. Explicar conservación con fuentes.
-
-| Para chefs | Para hogares |
-| --- | --- |
-| «Hablemos del plato.» | «¿Qué cocinar en casa?» |
-| «Consultar cantidades y presentaciones de shiitake.» | «Elegir una receta y calcular cuánto shiitake hace falta.» |
-| Ficha culinaria y consulta de volumen | Receta, factor ×1/×2/×3 y consulta para casa |
+El formulario ofrece «Para casa» o «Para un servicio». Pauta para la conversación profesional: **especie/plato, cantidad solicitada, presentación deseada, ciudad y fecha requerida**. La respuesta comercial confirma por separado formato/peso, precio, disponibilidad y condiciones de entrega. No proponer mínimos, calendario recurrente, muestras gratuitas o tiempos de respuesta sin confirmarlos. La marca no se presenta como un proveedor con abastecimiento regular confirmado. Para casa: especie → receta → cantidad → consulta, con ingredientes disponibles en Colombia y conservación con fuentes.
 
 Ambos recorridos confirman precio, disponibilidad y entrega antes del pedido. No existe una aceptación automática de compra.
 
@@ -58,8 +62,9 @@ La voz despierta curiosidad con una observación sensorial respaldada, una técn
 | Presentación | «Setas de la Peña. Hongos para cocinar con criterio, desde Tenjo, Colombia.» |
 | Introducción web | «La seta se elige por su sabor y textura. Después vienen la preparación, para la carta o para casa, y la cantidad de la consulta.» |
 | Para chefs | «¿Para qué plato y qué servicio? Consultar cantidades, presentaciones y condiciones de entrega.» |
-| CTA general | «Consultar disponibilidad» |
-| CTA restaurante | «Consultar para mi cocina» |
+| CTA antes de la primera cosecha | «Recibir aviso de la primera cosecha»; sin canal abierto, «Preparar mensaje de aviso» |
+| CTA general (con cosecha) | «Consultar disponibilidad» |
+| CTA para un servicio | «Preparar aviso para un servicio» en piloto; «Consultar para un servicio» con cosecha |
 | CTA mientras solo se prepara un mensaje | «Preparar mi consulta»; aclarar que preparar o copiar no envía el mensaje |
 | CTA receta | «Quiero cocinar esto» |
 | Precio pendiente | «Precio por confirmar. Preparar la consulta y revisar las condiciones antes de pedir.» |
@@ -124,13 +129,14 @@ Cuerpo mínimo 16 px, acciones de al menos 44 px y foco visible. Comprobar contr
 
 Un protagonista por pieza, jerarquía generosa, márgenes amplios, superficies planas y filetes finos. Bordes rectos, sin sombras flotantes, degradados decorativos, sellos inventados o envejecimiento artificial. Grabado para reconocer; gouache para imaginar una preparación.
 
-### Gramática recurrente: lámina, nota y plato
+### Gramática recurrente: lámina, nota, plato y registro
 
 | Elemento | Contenido | Función visual |
 | --- | --- | --- |
 | Lámina | Nombre cotidiano → grabado → nombre científico secundario | Identificar; contorno completo y un protagonista |
 | Nota | Un uso y una cantidad de receta documentada; fuente/estado de prueba al pie | Relacionar información e intención de cocina; filete y rótulo IBM |
 | Plato | Gouache → nombre de preparación → ingredientes/pasos | Invitar a cocinar; enlazar la receta y su consulta |
+| Registro | Fecha → hito → estado en palabra (medido, observado, estimado, por confirmar) → qué sigue pendiente | Mostrar el cultivo sin prometer cosecha; IBM Mono para fecha y estado, nunca solo color |
 
 Una pareja editorial puede mostrar la seta en una pieza y el plato en otra. La firma, márgenes, papel y filetes las unen. El código de archivo nunca sustituye el nombre. No introducir patrones tropicales, hojas, talismanes o un falso sello de cosecha. La fotografía de producto, cuando exista, se identifica como evidencia y no se reemplaza por un empaque generado.
 

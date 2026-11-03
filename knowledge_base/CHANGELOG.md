@@ -30,6 +30,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 |---|---|
 | `[BIZ]` | Registradas las compras de 9 ingredientes de sustrato (40 kg, mayo–julio 2026, Mercado Libre) en `07_business/procurement_cost_registry.md` con guía de carga en Bodega por pedido, y sincronizadas en `metadata/consumables.yaml` (`REC-CON-2026-11-02-001`). Precios pagados: salvado de trigo $4.650/kg, carbonato de calcio $18.810/kg, sulfato de magnesio $26.000/kg, cascarilla Bioespacio $10.000/kg. Cascarilla (15 → 6 kg) y pellets (3 paquetes → 1 kg) cambian frente al registro anterior; gallinaza (2 kg) y yeso (1 kg) usan el empaque menor. Pendiente pesarlos. |
 
+### 2026-11-01
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Añadido `09_research/auditoria_termica_incubadora_placas_2026-11-01.md` (`DOC-0131`) con modelo Python reproducible y cuatro figuras, que audita `guia_prototipo_incubadora_placas_borrador.md`. A 120 V, el cable de 168 Ω disipa ~86 W (686 W/m²). Con aire quieto la placa alcanza ~90–118 °C, por encima del límite de servicio de las espumas, de modo que el ventilador pasa a ser un componente de seguridad y se proponen dos cortes térmicos, uno de aire y otro de placa. C2 aporta poco frente a C1. El Thermolon de 15 mm queda por debajo de la norma de 25–50 mm de `incubation.md`. En 360 L, 10 CFM equivalen a ~47 renovaciones por hora. `INDEX.yaml`: 134 entradas. **Predicciones de ensayo; sin cambios en el borrador, en la potencia ni en la consigna.** |
+
 ### 2026-10-31
 
 | Tipo | Descripción |

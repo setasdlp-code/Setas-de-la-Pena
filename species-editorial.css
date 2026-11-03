@@ -118,3 +118,11 @@
 /* Uninterrupted species prose; headings mark practical destinations. */
 .editorial-section.editorial-continuation { margin-top: 20px; padding-top: 0; border-top: 0; }
 .editorial-cover + .editorial-section.editorial-continuation { margin-top: 28px; }
+
+/* Registro del cultivo (cuaderno de cocina abierto): estado siempre en palabra. */
+.pilot-log-entries { display: grid; gap: 0; margin: 8px 0 24px; }
+.pilot-log-entry { padding: 20px 0; border-top: var(--rule-hairline); }
+.pilot-log-entry h3 { margin: 6px 0 8px; }
+.pilot-log-status { display: inline-block; font: 500 13px/1.4 var(--font-mono); margin-bottom: 12px; }
+.pilot-log-kitchen { overflow-wrap: anywhere; }
+.pilot-log-empty[hidden] { display: none; }

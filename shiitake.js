@@ -50,15 +50,19 @@ window.addEventListener('afterprint', () => {
     seen.add(item.id);
     return true;
   }).map(item => ({ ...item, priceCOP: isPrice(item.priceCOP) ? item.priceCOP : null }));
-  const available = data.availability === 'available';
-  const availability = available ? 'Disponible' : data.availability === 'unavailable' ? 'No disponible por ahora' : 'Disponibilidad por confirmar';
+  // 'pilot': antes de la primera cosecha. Un valor desconocido se trata como 'unconfirmed'.
+  const normalizeAvailability = value => ['pilot', 'unconfirmed', 'available', 'unavailable'].includes(value) ? value : 'unconfirmed';
+  const state = normalizeAvailability(data.availability);
+  const pilot = state === 'pilot';
+  const available = state === 'available';
+  const availability = pilot ? 'Antes de la primera cosecha' : available ? 'Disponible' : state === 'unavailable' ? 'No disponible por ahora' : 'Disponibilidad por confirmar';
   const phone = text(data.whatsapp).replace(/[\s()-]/g, '');
   const whatsapp = /^\+[1-9]\d{7,14}$/.test(phone) ? phone.slice(1) : null;
   const deliveryFee = isPrice(data.deliveryFeeCOP) ? data.deliveryFeeCOP : null;
   const deliveryText = deliveryFee === null ? 'Por confirmar' : deliveryFee === 0 ? 'Sin costo · confirmar cobertura' : `${formatPrice(deliveryFee)} · confirmar cobertura`;
 
   document.querySelectorAll('[data-availability]').forEach(element => { element.textContent = availability; });
-  setText('#availability-detail', text(data.availabilityNote) || (available ? 'La cantidad y la entrega requieren confirmación al preparar la solicitud.' : data.availability === 'unavailable' ? 'Es posible consultar la próxima disponibilidad.' : 'La disponibilidad y las presentaciones se confirman al consultar.'));
+  setText('#availability-detail', text(data.availabilityNote) || (pilot ? 'El primer lote de shiitake aún no se ha cosechado. El aviso llega cuando haya cosecha confirmada.' : available ? 'La cantidad y la entrega requieren confirmación al preparar la solicitud.' : state === 'unavailable' ? 'Es posible consultar la próxima disponibilidad.' : 'La disponibilidad y las presentaciones se confirman al consultar.'));
   setText('#delivery-areas', text(data.deliveryAreas) || 'Por confirmar para el municipio indicado');
   setText('#delivery-days', text(data.deliveryDays) || 'Se acuerdan al consultar');
   setText('#delivery-fee', deliveryText);
@@ -143,7 +147,7 @@ window.addEventListener('afterprint', () => {
     setText('#order-delivery', deliveryFee === null ? 'Cobertura y costo por confirmar' : deliveryText);
     setText('#offer-format', selected.item ? `${selected.item.name} · ${formatWeight(selected.item.weightGrams)}` : 'El formato se acuerda al consultar');
     setText('#offer-price', selected.item && selected.item.priceCOP !== null ? `${formatPrice(selected.item.priceCOP)} / presentación` : 'Por confirmar');
-    document.querySelector('.purchase-submit').firstChild.textContent = available && selected.item && selected.item.priceCOP !== null ? 'Preparar solicitud ' : noChannel ? 'Preparar borrador ' : 'Preparar consulta ';
+    document.querySelector('.purchase-submit').firstChild.textContent = pilot ? (noChannel ? 'Preparar mensaje de aviso ' : 'Pedir aviso ') : available && selected.item && selected.item.priceCOP !== null ? 'Preparar solicitud ' : noChannel ? 'Preparar borrador ' : 'Preparar consulta ';
   }
 
   function clearReview() {
@@ -179,31 +183,33 @@ window.addEventListener('afterprint', () => {
     if (!form.reportValidity()) return;
     const selected = selection();
     if (!selected.valid) return;
-    const purpose = form.elements.namedItem('purpose').value === 'restaurante' ? 'mi restaurante' : 'cocinar en casa';
+    const service = form.elements.namedItem('purpose').value === 'restaurante';
+    const purpose = service ? 'un servicio de cocina' : 'cocinar en casa';
     const location = text(municipality.value).replace(/\s+/g, ' ');
     const lines = [
       'Hola, Setas de la Peña.',
-      `Me interesa el shiitake para ${purpose}.`,
+      pilot ? `Me gustaría recibir aviso de la primera cosecha de shiitake para ${purpose}.` : `Me interesa el shiitake para ${purpose}.`,
       ...(recipe ? [`Quiero cocinar ${recipe.name} (${recipe.scale > 1 ? `versión ×${recipe.scale}; ` : ''}la receta base usa ${formatWeight(recipe.baseGrams)} de shiitake fresco limpio).`] : []),
       ...(recipe && selected.needed !== null ? [`Necesito unos ${formatWeight(selected.needed)} para la receta.`] : []),
       ...(recipe ? ['La receta indica peso limpio aprovechable; quisiera confirmar el peso de compra según la presentación y su merma.'] : []),
-      selected.item ? `Presentación solicitada: ${selected.item.name} (${formatWeight(selected.item.weightGrams)}).` : 'Presentación: por confirmar.',
+      ...(pilot ? [] : [selected.item ? `Presentación solicitada: ${selected.item.name} (${formatWeight(selected.item.weightGrams)}).` : 'Presentación: por confirmar.',
       selected.item ? `Cantidad: ${count.format(selected.units)} ${selected.units === 1 ? 'presentación' : 'presentaciones'} (${formatWeight(selected.weight)} en total).` : `Cantidad solicitada: ${formatWeight(selected.weight)}.`,
       ...(recipe && selected.needed !== null ? [`Peso declarado de las presentaciones: ${describeDifference(selected)}.`] : []),
-      selected.subtotal === null ? 'Precio: por confirmar.' : `Subtotal del producto: ${formatPrice(selected.subtotal)} (sin envío).`,
+      selected.subtotal === null ? 'Precio: por confirmar.' : `Subtotal del producto: ${formatPrice(selected.subtotal)} (sin envío).`]),
+      ...(pilot ? [`Cantidad solicitada: ${formatWeight(selected.weight)}.`] : []),
       `Municipio de entrega: ${location}.`,
-      ...(purpose === 'mi restaurante' && text(form.elements.namedItem('frequency').value) ? [`Frecuencia de compra: ${text(form.elements.namedItem('frequency').value)}.`] : []),
-      ...(purpose === 'mi restaurante' && text(form.elements.namedItem('desired').value) ? [`Fecha deseada: ${text(form.elements.namedItem('desired').value)}.`] : []),
-      deliveryFee === null ? 'Costo de entrega: por confirmar.' : `Costo de entrega publicado: ${deliveryText}.`,
+      ...(service && text(form.elements.namedItem('frequency').value) ? [`Frecuencia de compra: ${text(form.elements.namedItem('frequency').value)}.`] : []),
+      ...(service && text(form.elements.namedItem('desired').value) ? [`Fecha deseada: ${text(form.elements.namedItem('desired').value)}.`] : []),
+      ...(pilot ? [] : [deliveryFee === null ? 'Costo de entrega: por confirmar.' : `Costo de entrega publicado: ${deliveryText}.`,
       '',
-      data.availability === 'unavailable' ? '¿Cuándo esperan tener disponibilidad? Quisiera confirmar presentación, valor final, entrega y medios de pago.' : '¿Pueden confirmar disponibilidad, presentación, valor final, entrega y medios de pago?'
+      state === 'unavailable' ? '¿Cuándo esperan tener disponibilidad? Quisiera confirmar presentación, valor final, entrega y medios de pago.' : '¿Pueden confirmar disponibilidad, presentación, valor final, entrega y medios de pago?'])
     ];
     message.value = lines.join('\n');
     if (whatsapp) {
       const target = new URL(`https://wa.me/${whatsapp}`);
       target.searchParams.set('text', message.value);
       whatsappLink.href = target.href;
-      whatsappLink.textContent = available && selected.subtotal !== null ? 'Solicitar pedido por WhatsApp ↗' : 'Consultar por WhatsApp ↗';
+      whatsappLink.textContent = pilot ? 'Pedir aviso por WhatsApp ↗' : available && selected.subtotal !== null ? 'Solicitar pedido por WhatsApp ↗' : 'Consultar por WhatsApp ↗';
       whatsappLink.hidden = false;
       setText('#contact-note', 'El enlace abre el mensaje en WhatsApp; el envío es manual. El pedido requiere confirmación de Setas de la Peña.');
     }
@@ -229,7 +235,15 @@ window.addEventListener('afterprint', () => {
   const syncPurpose = () => { restaurantFields.hidden = form.elements.namedItem('purpose').value !== 'restaurante'; };
   form.addEventListener('change', event => { if (event.target.name === 'purpose') syncPurpose(); });
   syncPurpose();
-  if (noChannel) {
+  if (pilot) {
+    const notice = document.querySelector('#channel-notice');
+    notice.querySelector('strong').textContent = 'Antes de la primera cosecha.';
+    notice.querySelector('strong').nextSibling.textContent = ' Todavía no hay producto y el canal aún no está abierto. Es posible preparar el mensaje de aviso y, mientras tanto, conocer la seta y sus recetas.';
+  }
+  if (pilot && noChannel) {
+    document.querySelector('#review-title').textContent = 'Mensaje de aviso listo (aún no enviado).';
+    document.querySelector('.purchase-confirmation').textContent = 'Todavía no hay un canal abierto: este mensaje se prepara en el navegador, no se envía a nadie y no deja ninguna inscripción.';
+  } else if (noChannel) {
     document.querySelector('#review-title').textContent = 'Borrador listo (aún no enviado).';
     document.querySelector('.purchase-confirmation').textContent = 'Todavía no hay un canal de consultas habilitado: este mensaje es un borrador que se prepara en el navegador y no se envía a nadie.';
   }

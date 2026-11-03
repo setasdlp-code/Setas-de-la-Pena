@@ -3,11 +3,11 @@ title: Identidad de Marca — Setas de la Peña
 document_id: DOC-0038
 category: brand
 load_priority: on_request
-last_reviewed: 2026-10-30
+last_reviewed: 2026-11-01
 confidence: high
 primary_sources:
-  - docs/brand-guidelines.md (Identidad comercial v1.1, 12 y 27 oct 2026)
-  - .claude/brand-voice-guidelines.md (Guía de voz v2.4)
+  - docs/brand-guidelines.md (Identidad comercial v1.2, 12 oct y 1 nov 2026)
+  - .claude/brand-voice-guidelines.md (Guía de voz v2.5)
   - 08_brand/ds-2026/DESIGN_SYSTEM.md
 related_documents:
   - illustration_style.md
@@ -24,6 +24,8 @@ La versión anterior de este archivo (julio de 2026) proponía otra paleta, Play
 
 ## Posicionamiento
 **Hongos para cocinar con criterio.** Setas de la Peña acerca el mundo de los hongos a la cocina desde Tenjo, Cundinamarca: ayuda a reconocer una especie, imaginar una preparación con ingredientes cercanos y reunir una consulta comercial. El origen y el proceso se cuentan con información comprobable.
+
+**Antes de la primera cosecha (cuaderno de cocina abierto):** la marca comparte la cocina antes que el producto. Cada entrada une un hito del cultivo con una idea para cocinar; cada dato lleva su estado (medido, observado, estimado o por confirmar) y lo no medido se escribe «por medir». CTA: «Recibir aviso de la primera cosecha»; sin canal abierto, «Preparar mensaje de aviso». El formulario ofrece «Para casa» o «Para un servicio». El registro se publica vacío hasta que haya un lote real.
 
 No es:
 - Una marca mística o *new age* de hongos.
@@ -100,12 +102,12 @@ Entrada única para piezas comerciales: `08_brand/ds-2026/market.css`.
 
 ## Audiencias
 
-Una sola voz para quienes cocinan; cambia la información práctica, no el registro.
+Una sola voz y un solo recorrido para quienes cocinan; cambia la profundidad de la información (lámina, nota de cocina, registro del cultivo, aviso), no el registro.
 
 | Necesidad | Qué busca | Información |
 |---|---|---|
-| Cocina profesional | Uso del ingrediente; cantidad, presentación, fecha y entrega | La conversación empieza en el plato y termina en una consulta concreta |
-| Cocina en casa | Especie → receta → cantidad → consulta | Pasos accesibles, ingredientes disponibles en Colombia |
+| Cocina para un servicio | Uso del ingrediente; comportamiento en cocción, rendimiento y merma cuando estén medidos; cantidad, presentación, ciudad y fecha | La conversación empieza en el plato; en piloto termina en un aviso de primera cosecha |
+| Cocina en casa | Especie → receta → cantidad → aviso o consulta | Pasos accesibles, ingredientes disponibles en Colombia |
 | Interés en salud funcional | Información sobre especies como melena de león | Solo evidencia; cualquier línea funcional requiere revisión regulatoria (INVIMA) antes de redactar |
 
 # Best Practices
