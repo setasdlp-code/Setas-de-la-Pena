@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 133 catalog entries as of 2026-10-31; the completeness of indexing of all
+# 137 catalog entries as of 2026-11-03; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -1119,7 +1119,7 @@ documents:
     canonical: true
     topics: [unit-economics, pilot-batch-costing]
     keywords: [preproducción, DEC-013, capex, costo por kilogramo pendiente]
-    related_documents: [pricing, suppliers, production-schedule, quality-control]
+    related_documents: [pricing, suppliers, production-schedule, quality-control, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1134,7 +1134,7 @@ documents:
     canonical: true
     topics: [pricing-strategy, pilot-product-pricing]
     keywords: [precio mínimo provisional, grados comerciales, COP/kg]
-    related_documents: [economics, colombian-market, quality-control]
+    related_documents: [economics, colombian-market, quality-control, factibilidad-shiitake-tenjo-reporte-externo-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1256,7 +1256,7 @@ documents:
     canonical: true
     topics: [open-questions, batch-1-blockers]
     keywords: [SH01, bloqueante, autoclave sin comisionar, spawn sin proveedor]
-    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03]
+    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1680,11 +1680,11 @@ documents:
     canonical: true
     topics: [regulatory-framework, invima, ica, food-safety, commercialization]
     keywords: [INVIMA, ICA, "regulación sanitaria", etiquetado, comercialización]
-    related_documents: [business-model, packaging]
+    related_documents: [business-model, packaging, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
-    confidence: high
+    confidence: medium
     status: active
 
   - id: design-system-documentation
@@ -2271,3 +2271,33 @@ documents:
     supersedes: null
     confidence: medium
     status: active
+
+  - id: factibilidad-shiitake-tenjo-reporte-externo-2026-11-03
+    title: "Reporte externo — Factibilidad biofísica, termodinámica y comercial de shiitake en Tenjo"
+    path: 09_research/intake/factibilidad_shiitake_tenjo_reporte_externo_2026-11-03.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, feasibility, altitude-sterilization, energy-costs, food-regulation, market-validation]
+    keywords: ["factibilidad Tenjo", "15 psig", "ICA 115708", "bloque precolonizado", "demanda sin verificar"]
+    related_documents: [factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: low
+    status: draft
+
+  - id: factibilidad-shiitake-tenjo-evaluacion-2026-11-03
+    title: "Factibilidad de shiitake en Tenjo — evaluación e incorporación de hallazgos"
+    path: 09_research/factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, feasibility, altitude-sterilization, energy-costs, food-regulation, market-validation]
+    keywords: ["factibilidad Tenjo", "15 psig", "ICA 115708", "bloque precolonizado", "demanda sin verificar"]
+    related_documents: [colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-reporte-externo-2026-11-03, sterilization, decisions, current-operations, regulatory-framework, economics, pricing, unresolved-questions]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft

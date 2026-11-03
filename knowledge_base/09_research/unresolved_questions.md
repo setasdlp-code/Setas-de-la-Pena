@@ -21,6 +21,7 @@ related_documents:
   - ../CURRENT_OPERATIONS.md
   - research_validation_audit_2026-08-29.md
   - colombia_mushroom_market_synthesis_2026-11-03.md
+  - factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md
 ---
 
 # Executive Summary
@@ -190,8 +191,14 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB10 | ¿El pélet de «acacia» comercial (Mandra, Mercado Libre) es *Acacia mangium* pura de fuste, sin corteza ni arrastre, y es compatible con shiitake? | Alta | Confirmación escrita del proveedor; buscar evidencia de *L. edodes* en *A. mangium* (no hallada al 2026-10-31) |
 | AB11 | ¿*Acacia decurrens* (acacia sabanera) sirve para shiitake, o sus taninos de corteza la descartan? | Media | Conflicto entre `deep_research_synthesis_2026.md` y DOC-0130; requiere ensayo |
 | AB12 | ¿Qué precio neto, costos de entrega, rechazo y recompra permiten cumplir DEC-020? | Alta antes de oferta | Cotizaciones fechadas e historial pagado; listados públicos no resuelven el margen |
+| AB13 | ¿Qué prospectos del reporte de factibilidad compran shiitake fresco, en qué plato, a qué precio neto y plazo? | Alta antes de comprometer volumen | Entrevista fechada y soporte; lista externa sin contactos/ventas confirmados (DOC-0133 F05/F06) |
+| AB14 | ¿Costo y rendimiento vendible de bloque precolonizado frente al microlote interno? | Media, alternativa | Cotización puesta en Tenjo, trazabilidad, prueba propia y ficha de economics.md (DOC-0133 F07) |
+| AB15 | ¿Tarifa efectiva y kWh por etapa/kg vendible del módulo real? | Alta antes de presupuestar escala | Factura, medidor y asignación trazable; 20–24 kWh/día externos no verificados (DOC-0133 F03) |
+| AB16 | ¿Trámite sanitario/ICA por actividad y destino, y condiciones de agua/descarga del predio? | Alta antes de comercializar | Respuesta oficial/radicado y conexión real; Res. ICA 115708 no aplica a vegetales (DOC-0133 F02) |
 
 Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores. Para AB04/AB12 y el contexto de R01/R04, ver `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`; sus listados y lectura normativa no cierran esas preguntas ni verifican un registro sanitario individual.
+
+La evaluación `09_research/factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md` sustenta AB13–AB16; el reporte externo no convierte prospectos en compradores ni autoriza cifras operativas.
 
 # Investigación futura — Pleurotus djamor
 
