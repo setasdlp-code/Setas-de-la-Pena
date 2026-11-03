@@ -274,10 +274,9 @@ dialog > img { height: 200px; width: 100%; object-fit: contain; mix-blend-mode: 
 }
 /* Culinary gouache complements the contained specimen engravings. */
 .culinary-figure { margin: 0; background: var(--surface-page); }
-.culinary-figure img { display: block; width: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.culinary-figure img { display: block; width: 100%; object-fit: contain; }
 .culinary-figure figcaption { font: var(--t-small); color: var(--text-secondary); margin-top: 12px; }
 .kitchen-plate.culinary-figure { border: var(--rule-hairline); background: var(--surface-recessed); }
-.kitchen-plate.culinary-figure img { mix-blend-mode: darken; }
 .kitchen-plate.culinary-figure figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
 .recipe-main-plate { padding: 32px; border: var(--rule-hairline); align-self: start; }
 .recipe-main-plate figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px; border-top: var(--rule-hairline); padding-top: 24px; }
