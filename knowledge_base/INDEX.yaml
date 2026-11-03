@@ -1104,7 +1104,7 @@ documents:
     canonical: true
     topics: [colombian-mushroom-market, market-segments]
     keywords: [Bogotá, restaurantes gourmet, champiñón blanco, mercado premium]
-    related_documents: [economics, pricing, identity]
+    related_documents: [economics, pricing, identity, colombia-mushroom-market-synthesis-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1256,7 +1256,7 @@ documents:
     canonical: true
     topics: [open-questions, batch-1-blockers]
     keywords: [SH01, bloqueante, autoclave sin comisionar, spawn sin proveedor]
-    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations]
+    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1725,7 +1725,7 @@ documents:
     canonical: true
     topics: [active-research, ark-registry, p0-literature, evidence-distillation]
     keywords: [ARK, "active research knowledge", "p0 papers", Rocha, Gaitán-Hernández, Atila, Holgado-Rojas, Shi]
-    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus]
+    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus, colombia-mushroom-market-synthesis-2026-11-03]
     depends_on: [literature-database]
     implemented_by: [lentinula-edodes, hericium-erinaceus, incubation, environmental-control]
     supersedes: null
@@ -2256,3 +2256,18 @@ documents:
     supersedes: null
     confidence: low
     status: draft
+
+  - id: colombia-mushroom-market-synthesis-2026-11-03
+    title: "Culinary and medicinal mushrooms in Colombia — research synthesis"
+    path: 09_research/colombia_mushroom_market_synthesis_2026-11-03.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [colombia-market, culinary-mushrooms, medicinal-evidence, trade, pricing]
+    keywords: [Bogotá, Tenjo, WITS, INVIMA, "precios publicados", "recompra"]
+    related_documents: [colombian-market, pricing, decisions, active-research-knowledge, unresolved-questions]
+    depends_on: [decisions, pricing]
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
