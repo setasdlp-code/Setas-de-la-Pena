@@ -24,6 +24,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-11-02
+
+| Tipo | Descripción |
+|---|---|
+| `[BIZ]` | Registradas las compras de 9 ingredientes de sustrato (40 kg, mayo–julio 2026, Mercado Libre) en `07_business/procurement_cost_registry.md` con guía de carga en Bodega por pedido, y sincronizadas en `metadata/consumables.yaml` (`REC-CON-2026-11-02-001`). Precios pagados: salvado de trigo $4.650/kg, carbonato de calcio $18.810/kg, sulfato de magnesio $26.000/kg, cascarilla Bioespacio $10.000/kg. Cascarilla (15 → 6 kg) y pellets (3 paquetes → 1 kg) cambian frente al registro anterior; gallinaza (2 kg) y yeso (1 kg) usan el empaque menor. Pendiente pesarlos. |
+
 ### 2026-10-31
 
 | Tipo | Descripción |
