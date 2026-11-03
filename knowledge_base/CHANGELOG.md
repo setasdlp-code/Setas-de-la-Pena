@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-03
 ---
 
 # CHANGELOG
@@ -24,11 +24,19 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 ## 2026
 
+### 2026-11-03
+
+| Tipo | Descripción |
+|---|---|
+| `[SOP]` | Integrados los cinco hallazgos del propietario como matriz de demostración G1–G5 en `06_operations/operational_commissioning.md`: seguridad/manometría, penetración/letalidad, PQ-2 A/B/C y capacidad/rol del 1941X. Metas numéricas sin evidencia local permanecen no verificadas; todos los requisitos pendientes/No-Go. Añadidos registros de cierre, controles de validez y enlaces desde calidad, equipo y estado operativo. Se conserva DEC-019; no se autoriza presurización, compra, inoculación productiva ni escala comercial. |
+| `[SOP]` | Añadida ficha candidata PQ-1 para tres corridas, DL-1/2/3, nueve integradores Clase 5 y nueve IB procesados con tres controles positivos. La segunda tabla del propietario eleva la meta candidata F₀ de 12 a 15,0 min; se sincroniza G2. Explicitadas ambigüedades de signo del diferencial térmico, ±10 min (propuesta conservadora: rango entre corridas ≤10 min) y cálculo del primer cruce de F₀ en ambas sondas. Incubación/lectura de IB condicionada a IFU del producto real. Sin corridas ejecutadas ni aprobación física/microbiológica. |
+
 ### 2026-11-02
 
 | Tipo | Descripción |
 |---|---|
 | `[BIZ]` | Registradas las compras de 9 ingredientes de sustrato (40 kg, mayo–julio 2026, Mercado Libre) en `07_business/procurement_cost_registry.md` con guía de carga en Bodega por pedido, y sincronizadas en `metadata/consumables.yaml` (`REC-CON-2026-11-02-001`). Precios pagados: salvado de trigo $4.650/kg, carbonato de calcio $18.810/kg, sulfato de magnesio $26.000/kg, cascarilla Bioespacio $10.000/kg. Cascarilla (15 → 6 kg) y pellets (3 paquetes → 1 kg) cambian frente al registro anterior; gallinaza (2 kg) y yeso (1 kg) usan el empaque menor. Pendiente pesarlos. |
+
 
 ### 2026-11-01
 

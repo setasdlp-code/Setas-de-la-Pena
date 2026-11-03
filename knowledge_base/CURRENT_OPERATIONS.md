@@ -3,8 +3,8 @@ title: Estado Operacional Actual — Setas de la Peña
 document_id: DOC-0051
 category: meta
 load_priority: always
-last_updated: 2026-10-28
-last_reviewed: 2026-10-28
+last_updated: 2026-11-03
+last_reviewed: 2026-11-03
 ---
 
 # CURRENT_OPERATIONS
@@ -74,6 +74,8 @@ Estado operacional granular. Actualizar en cada visita al cultivo o cada vez que
 - **Fuente externa:** manual Monte Jongas, transcrito en DOC-0125; auditoría en DOC-0126.
 - **No liberado:** validar pellets y su composición, humedad real, pH, spawn, inoculación aséptica y **ciclo del 1941X a la altitud de Tenjo para esa carga**, con temperatura de producto documentada. 15 psi del manual no garantiza 121 °C a esta altitud; 90–120 min no se aprueban automáticamente.
 - **Escala diferente:** la especificación previa para incubadora de **30 bloques × 2,0 kg** (DOC-0122/DOC-0123) conserva su carácter de borrador y banco de pruebas; no modificar firmware ni declarar que las cuatro bolsas satisfacen esa validación.
+
+**Revisión documental 2026-11-03 — No-Go:** los cinco requisitos G1–G5 siguen pendientes de demostración: seguridad/manometría, penetración térmica, integridad/asepsia A/B, pureza/vigor C y capacidad/rol del 1941X. Criterios, procedencia, límites y ficha de cierre en la [matriz de commissioning](06_operations/operational_commissioning.md#matriz-de-demostración-go--no-go--1941x-y-shiitake). No se recibieron certificados, curvas ni resultados PQ-2 con los hallazgos; esta incorporación no es una visita ni un resultado de campo. **Próxima dependencia:** reunir manual aplicable al equipo, identificación de componentes e informe/calibración para revisión de G1 antes de ensayos presurizados; responsable de coordinación: Sebastián, con servicio competente. G2–G4 requieren protocolo de ensayo aprobado; G5 debe resolverse antes de comprometer capital comercial.
 
 ## ESPECIFICACIÓN AMBIENTAL DEL LOTE 1
 

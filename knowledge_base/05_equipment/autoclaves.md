@@ -3,7 +3,7 @@ title: Autoclaves y Esterilización
 document_id: DOC-0025
 category: equipment
 load_priority: selective
-last_reviewed: 2026-08-19
+last_reviewed: 2026-11-03
 confidence: high
 primary_sources:
   - All American 1930 — 1941X manufacturer specification, accessed 2026-08-19
@@ -70,6 +70,8 @@ Antes de considerar el equipo disponible para producción normal:
 9. Registrar consumo de propano, tiempos de proceso, enfriamiento, trabajo del operador y capacidad real.
 10. Vincular los lotes inoculados con `thermal_cycle_id` y seguir contaminación, integridad de bolsa y desempeño biológico.
 11. Promover un ciclo a estándar operacional únicamente mediante la compuerta definida en `quality_control.md` y `operational_commissioning.md`.
+
+La [matriz Go / No-Go G1–G5](../06_operations/operational_commissioning.md#matriz-de-demostración-go--no-go--1941x-y-shiitake) reúne los requisitos de demostración aportados el 2026-11-03. Las cifras de presión, duración y válvula allí recibidas no certifican el estado del equipo; G1 exige cotejo de componentes/manual, calibración e informe de aptitud antes de ensayos presurizados. Una prueba hidrostática o de vapor requiere servicio competente y procedimiento autorizado; no se delega como ensayo improvisado al cuidador.
 
 # Thermal Process Principles
 
@@ -164,6 +166,8 @@ La compra de una segunda unidad o equipo mayor se justifica únicamente cuando:
 - la alternativa propuesta reduce costo, trabajo o riesgo de forma medible.
 
 No usar umbrales arbitrarios como “20–30” o “>50 bolsas/semana” para activar compra sin el análisis completo.
+
+El umbral solicitado de **más de 30 bloques/semana** en G5 es un checkpoint de planificación: exige validar una alternativa de mayor volumen antes de comprometer capital de trabajo comercial. No activa compra ni acredita un cuello de botella por sí solo; se mantiene el análisis anterior y la aprobación humana de cualquier adquisición.
 
 # Open Questions
 
