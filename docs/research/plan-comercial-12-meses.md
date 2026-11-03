@@ -37,7 +37,7 @@ costo variable por kg vendible = costo variable por bloque / kg vendibles por bl
 precio mínimo por kg = (costo por kg vendible + logística por kg) / (1 − margen)
 ```
 
-Supuestos de la tabla, todos elegidos por el autor e ilustrativos: logística de $5.000/kg y margen de contribución del 40 %. El margen real lo decide Sebastián.
+Supuestos de la tabla, todos elegidos por el autor e ilustrativos: logística de $5.000/kg y margen de contribución del 40 %. Sebastián aprobó el margen del 40 % el 3 nov 2026.
 
 | Costo variable por bloque ↓ / kg vendibles por bloque → | 0,3 kg | 0,5 kg | 0,8 kg |
 |---|---|---|---|
@@ -109,6 +109,6 @@ El dato que más pesa es **kg vendibles por bloque**, y se mide en T1.
 
 ## Decisiones pendientes para Sebastián
 
-1. El margen de contribución mínimo aprobado.
+1. ~~El margen de contribución mínimo~~ → **40 %, decidido el 3 nov 2026.**
 2. Quién hace la logística de entrega y con qué costo.
 3. Cuándo empezar con la melena y el eryngii (DEC nueva).
