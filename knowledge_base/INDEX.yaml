@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 137 catalog entries as of 2026-11-03; the completeness of indexing of all
+# 138 catalog entries as of 2026-11-03; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -2251,6 +2251,21 @@ documents:
     topics: [incubation, heating, heat-balance, insulation, ventilation, electrical-safety]
     keywords: ["placa calefactora", "168 ohm", "densidad de potencia", "Thermolon 15 mm", "ducto 4 pulgadas", "C1 vs C2", "corte térmico"]
     related_documents: [incubation, environmental-control, incubation-module-engineering-review-2026-08-05]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: low
+    status: draft
+
+  - id: auditoria-seleccion-inoculo-shiitake-2026-11-03
+    title: "Auditoría — Selección de material biológico de shiitake y validación local (reporte externo 2026-11-02)"
+    path: 09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, spawn, supplier-selection, strain-traceability, validation-protocol, import-regulation]
+    keywords: ["Setas de Siecha", "Nutrisetas", "Los Fungis", "cuestionario proveedores", "SISPAP", "ITT vs PP", "DEC-021"]
+    related_documents: [suppliers, lentinula-edodes, autoclaves]
     depends_on: []
     implemented_by: []
     supersedes: null

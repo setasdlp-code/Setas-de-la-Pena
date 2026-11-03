@@ -651,6 +651,31 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 
 ---
 
+## DEC-021 — Candidatos nacionales de spawn de shiitake condicionados a cuestionario
+
+**Fecha:** 2026-11-03
+**Estado:** Activa
+**Área:** Producción / Negocio
+
+**Problema:** Un reporte externo (`09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md`, DOC-0135) identifica otros productores nacionales de shiitake. Ninguno publica cepa, lote ni formato de spawn verificables, y el único con precio público vende un tubo de agar, que no inocula bloques sin laboratorio.
+
+**Alternativas evaluadas:**
+
+| Opción | Efecto |
+|---|---|
+| Añadirlos como candidatos condicionados al cuestionario | Fungiilab sigue como proveedor del lote 1; se abre una vía de comparación sin gastar |
+| Sustituir a Fungiilab por Setas de Siecha | Cambia el piloto con una ficha que ni siquiera confirma presentación en grano |
+
+**Decisión:** Se eligen los candidatos condicionados. Setas de Siecha, Nutrisetas y Los Fungis Colombia reciben el cuestionario Q-01 a Q-06 antes de cualquier compra. Pasan a ensayo exploratorio solo con respuesta escrita que cumpla spawn en grano estéril o bloque colonizado, código de cepa con lote y fecha, y reposición por contaminación. Se descartan los anuncios anónimos de MercadoLibre y el grano seco de Etsy. La importación de inóculo queda fuera del arranque. No se compra un tubo de agar para expandirlo mientras el laboratorio no esté comisionado. **DEC-019 no se revoca.**
+
+**Justificación:** La trazabilidad del spawn es lo que permite atribuir resultados. El costo de preguntar es casi nulo y no toca el piloto en curso.
+
+**Criterio de revisión:** Respuesta de un candidato; decisión de ampliar el lote de 30 bloques para un ensayo comparativo (SH14); o respuesta del ICA sobre importación (SH15). Los umbrales de decisión del reporte (EB comercializable ≥ 60 %, CV ≤ 15 %) no están aprobados.
+
+**Documentos afectados:** `07_business/suppliers.md`, `09_research/unresolved_questions.md`, `01_species/lentinula_edodes.md`, `CHANGELOG.md`.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown
