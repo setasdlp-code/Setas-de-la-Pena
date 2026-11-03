@@ -626,6 +626,31 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 
 ---
 
+## DEC-020 — Margen de contribución mínimo del 40 % para shiitake fresco
+
+**Fecha:** 2026-11-03
+**Estado:** Activa
+**Área:** Negocio
+
+**Problema:** `07_business/pricing.md` define el precio mínimo como costo variable + logística + merma + margen aprobado, pero no había un margen aprobado. Sin ese margen no se puede calcular el piso de precio cuando cierre el lote piloto.
+
+**Alternativas evaluadas:**
+
+| Opción | Efecto |
+|---|---|
+| 30 % | Piso más bajo; deja entrar más fácilmente a restaurantes, pero con menos colchón frente a merma y costos no medidos |
+| 40 % | Piso más alto; protege mejor mientras el costo y el rendimiento aún no están medidos |
+
+**Decisión:** Se usa un margen de contribución mínimo del 40 % sobre el precio neto cobrado: `precio mínimo = (costo variable por kg vendible + logística por kg) / (1 − 0,40)`.
+
+**Justificación:** Hay 0 lotes cerrados, así que el costo por kg vendible y la merma son desconocidos. Un margen más amplio cubre ese error mientras se mide. No fija ningún precio publicado: los precios siguen bloqueados hasta que existan datos del lote piloto, según `pricing.md`.
+
+**Criterio de revisión:** Revisar cuando haya 3 lotes cerrados con costo y kg vendibles medidos, o si un canal objetivo (restaurantes) queda fuera de precio de forma sostenida.
+
+**Documentos afectados:** `07_business/pricing.md`, `docs/research/plan-comercial-12-meses.md`
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown
