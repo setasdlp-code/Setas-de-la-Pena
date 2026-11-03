@@ -657,7 +657,7 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 **Estado:** Activa
 **Área:** Producción / Negocio
 
-**Problema:** Un reporte externo (`09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md`, DOC-0132) identifica otros productores nacionales de shiitake. Ninguno publica cepa, lote ni formato de spawn verificables, y el único con precio público vende un tubo de agar, que no inocula bloques sin laboratorio.
+**Problema:** Un reporte externo (`09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md`, DOC-0135) identifica otros productores nacionales de shiitake. Ninguno publica cepa, lote ni formato de spawn verificables, y el único con precio público vende un tubo de agar, que no inocula bloques sin laboratorio.
 
 **Alternativas evaluadas:**
 

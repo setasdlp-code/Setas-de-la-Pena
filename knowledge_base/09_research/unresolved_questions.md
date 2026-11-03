@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-03
 confidence: high
 primary_sources:
   - Internal records
@@ -20,6 +20,8 @@ related_documents:
   - ../01_species/hericium_erinaceus.md
   - ../CURRENT_OPERATIONS.md
   - research_validation_audit_2026-08-29.md
+  - colombia_mushroom_market_synthesis_2026-11-03.md
+  - factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md
 ---
 
 # Executive Summary
@@ -45,7 +47,7 @@ La auditoría documental de pendientes del 2026-08-29 confirmó que SH01–SH06 
 | SH09 | ¿Qué relación CO₂–morfología presenta la cepa bajo el caudal real de la cámara? | Serie de CO₂, caudal, posición y fotografías | Alta antes de escalar |
 | SH10 | ¿Qué pH real dan 1 % Ca(OH)₂ frente a 1 % CaCO₃ en la mezcla de pellets + salvado, antes y después del autoclave, y cuál coloniza mejor? | pH medido con método registrado; comparación exploratoria 2 + 2 (DOC-0130) | Alta |
 | SH11 | ¿Es el retamo espinoso (*Ulex europaeus*) compatible con shiitake, y en qué proporción de leño? | Análisis N/C del leño; placa con extracto; microensayo exploratorio (DOC-0129) | Baja (fuera del piloto) |
-| SH12 | ¿Siecha, Nutrisetas o Los Fungis entregan spawn en grano estéril o bloques colonizados de *L. edodes* con código de cepa y lote? | Respuesta escrita al cuestionario Q-01 a Q-06 (DOC-0132) | Alta (no bloquea el lote 1) |
+| SH12 | ¿Siecha, Nutrisetas o Los Fungis entregan spawn en grano estéril o bloques colonizados de *L. edodes* con código de cepa y lote? | Respuesta escrita al cuestionario Q-01 a Q-06 (DOC-0135) | Alta (no bloquea el lote 1) |
 | SH13 | ¿Cuál es el precio B2B, el mínimo de pedido y el plazo de cada candidato para 5, 15 y 30 kg de spawn? | Cotización con fecha | Media |
 | SH14 | ¿Se puede ampliar o rediseñar el lote de 30 bloques para comparar un segundo proveedor sin perder el control del piloto? | Decisión del propietario sobre tamaño y capacidad del autoclave de 39 L | Media |
 | SH15 | ¿Qué requisitos, costo y plazo tiene importar micelio de *L. edodes* al país? | Respuesta de Cuarentena Vegetal del ICA; texto y vigencia de las resoluciones citadas | Baja (solo si fallan los nacionales) |
@@ -184,7 +186,7 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB01 | ¿Disponibilidad, precio y trazabilidad de spawn shiitake en Colombia? | Alta | Contactar proveedores |
 | AB02 | ¿Disponibilidad, especie, origen legal y especificación de aserrín de madera dura? | Alta | Cotizar, documentar y muestrear |
 | AB03 | ¿Disponibilidad de bolsas PP aptas para el ciclo validado? | Alta | Cotizar y verificar especificación |
-| AB04 | ¿Tamaño de lote mínimo viable para restaurantes? | Media | Validar con clientes |
+| AB04 | ¿Qué lote, especificación y frecuencia de shiitake aceptan compradores alcanzables? | Media | Menús identificados en la síntesis 2026-11-03; cantidades y recompra siguen sin verificar |
 | AB05 | ¿Cadena fría disponible y vida útil real por especie y empaque? | Alta | Ensayo poscosecha |
 | AB06 | ¿Costo por kg de cada celda y etapa a escala media? | Alta antes de réplica | Modelo después del piloto |
 | AB07 | ¿Qué aserraderos/carpinterías entregan residuo sin MDF, pinturas, preservantes o mezcla desconocida? | Alta | Auditoría de proveedor y muestra |
@@ -192,8 +194,15 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB09 | ¿La cascarilla de arroz disponible es limpia, homogénea y útil como aireante? | Media | Muestra y ensayo de bloque |
 | AB10 | ¿El pélet de «acacia» comercial (Mandra, Mercado Libre) es *Acacia mangium* pura de fuste, sin corteza ni arrastre, y es compatible con shiitake? | Alta | Confirmación escrita del proveedor; buscar evidencia de *L. edodes* en *A. mangium* (no hallada al 2026-10-31) |
 | AB11 | ¿*Acacia decurrens* (acacia sabanera) sirve para shiitake, o sus taninos de corteza la descartan? | Media | Conflicto entre `deep_research_synthesis_2026.md` y DOC-0130; requiere ensayo |
+| AB12 | ¿Qué precio neto, costos de entrega, rechazo y recompra permiten cumplir DEC-020? | Alta antes de oferta | Cotizaciones fechadas e historial pagado; listados públicos no resuelven el margen |
+| AB13 | ¿Qué prospectos del reporte de factibilidad compran shiitake fresco, en qué plato, a qué precio neto y plazo? | Alta antes de comprometer volumen | Entrevista fechada y soporte; lista externa sin contactos/ventas confirmados (DOC-0133 F05/F06) |
+| AB14 | ¿Costo y rendimiento vendible de bloque precolonizado frente al microlote interno? | Media, alternativa | Cotización puesta en Tenjo, trazabilidad, prueba propia y ficha de economics.md (DOC-0133 F07) |
+| AB15 | ¿Tarifa efectiva y kWh por etapa/kg vendible del módulo real? | Alta antes de presupuestar escala | Factura, medidor y asignación trazable; 20–24 kWh/día externos no verificados (DOC-0133 F03) |
+| AB16 | ¿Trámite sanitario/ICA por actividad y destino, y condiciones de agua/descarga del predio? | Alta antes de comercializar | Respuesta oficial/radicado y conexión real; Res. ICA 115708 no aplica a vegetales (DOC-0133 F02) |
 
-Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores.
+Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores. Para AB04/AB12 y el contexto de R01/R04, ver `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`; sus listados y lectura normativa no cierran esas preguntas ni verifican un registro sanitario individual.
+
+La evaluación `09_research/factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md` sustenta AB13–AB16; el reporte externo no convierte prospectos en compradores ni autoriza cifras operativas.
 
 # Investigación futura — Pleurotus djamor
 

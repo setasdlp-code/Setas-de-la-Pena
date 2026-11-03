@@ -1,6 +1,6 @@
 ---
 title: "Auditoría — Selección de material biológico de shiitake y validación local (reporte externo 2026-11-02)"
-document_id: DOC-0132
+document_id: DOC-0135
 category: research
 load_priority: selective
 last_reviewed: 2026-11-03
