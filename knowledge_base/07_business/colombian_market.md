@@ -3,7 +3,7 @@ title: Mercado Colombiano de Setas
 document_id: DOC-0034
 category: business
 load_priority: on_request
-last_reviewed: 2026-06-29
+last_reviewed: 2026-11-03
 confidence: medium
 primary_sources:
   - Asohofrucol 2023
@@ -13,10 +13,13 @@ related_documents:
   - economics.md
   - pricing.md
   - 08_brand/identity.md
+  - ../09_research/colombia_mushroom_market_synthesis_2026-11-03.md
 ---
 
 # Executive Summary
-El mercado colombiano de hongos comestibles está en etapa temprana de desarrollo. La mayoría del consumo se concentra en champiñón blanco (*Agaricus bisporus*) importado o de cultivo industrial. Las setas gourmet (Oyster, Lion's Mane, Shiitake) tienen demanda creciente pero penetración baja. Oportunidad de posicionamiento premium en Bogotá y ciudades intermedias.
+La oferta colombiana documentada incluye champiñones industriales, especialidades frescas y productos transformados o posicionados como funcionales. Existen portafolios y aplicaciones culinarias en Bogotá/Sabana; no se dispone aquí de una medición validada de tamaño, penetración ni crecimiento nacional de cada segmento. Shiitake permanece como producto inicial según DEC-013.
+
+**Actualización de evidencia (2026-11-03):** ver `09_research/colombia_mushroom_market_synthesis_2026-11-03.md` para fuentes, precios por vendedor/formato, comercio 2025 y límites regulatorios. Las cifras históricas por canal de este documento son **estimaciones no verificadas**, no precios vigentes, compras observadas ni demanda comprometida. Para fijación de precio gobiernan `07_business/pricing.md` y DEC-020. Esta actualización es investigación/editorial; no modifica la operación ni aprueba nuevas especies.
 
 # Research Consensus
 
@@ -26,9 +29,9 @@ Supported by:
 - Asohofrucol 2023
 - Tendencias gastronomía colombiana
 
-Hay crecimiento en demanda de hongos gourmet impulsado por: auge gastronómico colombiano, tendencia plant-based, interés en productos medicinales/funcionales.
-**Strength of evidence:** ★★★☆☆
-**Conflicting evidence:** El mercado sigue siendo pequeño en términos absolutos. No hay datos de tamaño de mercado confiables y públicos para hongos gourmet específicamente en Colombia.
+La hipótesis de crecimiento gourmet requiere ventas o series comparables. Los menús y catálogos revisados documentan usos y competencia, pero no permiten medir crecimiento nacional ni demanda insatisfecha.
+**Strength of evidence:** hipótesis comercial pendiente de validación; las referencias históricas sin enlace no bastan para cuantificar crecimiento.
+**Conflicting evidence:** Sin un denominador validado no se cuantifica el tamaño absoluto del segmento gourmet. La síntesis fechada distingue oferta visible de ventas y consumo medidos.
 
 # Technical Details
 
@@ -70,11 +73,11 @@ Hay crecimiento en demanda de hongos gourmet impulsado por: auge gastronómico c
 
 | Competidor | Tipo | Fortaleza | Debilidad |
 |---|---|---|---|
-| Champiñones industriales (Bogotá) | Industrial | Precio bajo, volumen | Solo *Agaricus*; no gourmet |
-| Cultivadores artesanales regionales | Artesanal | Precio local, fresco | Sin automatización, calidad variable |
-| Hongos importados (principalmente de China) | Importado | Precio bajo en deshidratado | No frescos; calidad cuestionable |
+| Champiñones industriales (Bogotá) | Industrial | Precio bajo, volumen | Portafolios revisados incluyen también especialidades; no asumir exclusión de gourmet |
+| Cultivadores artesanales regionales | Artesanal | Precio local, fresco | Automatización y calidad no verificadas; evaluar por proveedor y lote |
+| Hongos importados (principalmente de China) | Importado | Precio bajo en deshidratado | Formato, composición y calidad requieren verificación; el origen no demuestra calidad inferior |
 
-**Gap de mercado:** No existe productor local de P. djamor, H. erinaceus y Shiitake frescos con calidad y consistencia garantizada en Cundinamarca/Bogotá.
+**Gap de mercado no demostrado:** Setas Doradas (Tenjo) publica orellanas, shiitake y eryngii; otras ofertas y menús documentan melena de león. La disponibilidad publicada no prueba volumen ni consistencia, pero impide asumir ausencia general de competencia local. La calidad y el servicio de cada proveedor deben verificarse. Fuentes y alcance: `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`, §§4–6.
 
 ## Barreras de Entrada
 
@@ -82,7 +85,7 @@ Hay crecimiento en demanda de hongos gourmet impulsado por: auge gastronómico c
 |---|---|---|
 | Desconocimiento del producto | Alta | Educación + muestras gratuitas a chefs |
 | Precio vs. champiñón blanco | Media | Posicionamiento premium; diferenciación |
-| Logística de producto fresco | Media | Entrega directa; deshidratación como backup |
+| Logística de producto fresco | Media | Validar cadena fría; deshidratación exige producto, proceso y ruta sanitaria propios |
 | Certificaciones (INVIMA, BPA) | Media | Planificar desde el inicio |
 | Estacionalidad | Baja (controlada) | Automatización permite producción todo el año |
 
