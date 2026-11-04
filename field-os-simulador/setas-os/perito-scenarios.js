@@ -1125,6 +1125,9 @@
   };
 
   const confidenceScoreFor = scored => {
+    // Search compatibility coefficient is separate from the public EB band.
+    // Custom/injected scorers without it retain the previous fallback.
+    if (Number.isFinite(scored?.rankingConfidenceScore)) return scored.rankingConfidenceScore;
     const confidenceLevels = [
       scored?.uncertainty?.eb?.confidence,
       scored?.uncertainty?.risk?.confidence,
