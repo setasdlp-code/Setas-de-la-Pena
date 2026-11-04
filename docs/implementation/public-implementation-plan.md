@@ -4,7 +4,7 @@
 
 ## Resultado
 
-Conservar la portada reducida de Juaica y permitir elegir una seta, encontrar una receta y preparar un borrador sin confundirlo con una compra o un mensaje enviado. Priorizar lo existente: nueve recetas y 27 combinaciones de escala/destino verificadas en navegador. Evidencia en recipe-journey-verification.json. El grabado lleva una leyenda breve (DS-2026 §3; decisión del 4 nov 2026); no reintroducir fila de especies duplicada, plato ni carrusel en el hero.
+Conservar la portada reducida de Juaica y permitir elegir una seta, encontrar una receta y preparar un borrador sin confundirlo con una compra o un mensaje enviado. Priorizar lo existente: nueve recetas y 27 combinaciones de escala/destino verificadas en navegador. Evidencia en recipe-journey-verification.json. No reintroducir leyenda, fila duplicada, plato ni carrusel en el hero.
 
 ## Entregas y aceptación
 

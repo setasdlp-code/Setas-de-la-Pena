@@ -169,10 +169,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#primary-nav').isVisible(), false);
     assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
-    // The engraving carries a caption (DS-2026 §3: frame + image + caption); the species strip stays out of the hero.
-    assert.equal(await page.locator('.hero-pena-land figcaption').count(), 1);
-    assert.match(await page.locator('.hero-pena-land figcaption').innerText(), /no representa una cosecha/);
-    assert.equal(await page.locator('.hero-pena-species').count(), 0);
+    assert.equal(await page.locator('.hero-pena-land figcaption, .hero-pena-species').count(), 0);
     const engravingRatio = await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
     assert.ok(Math.abs(engravingRatio - .84) < .01, 'engraving occupies 84% of its column');
     await page.locator('.menu-toggle').click();

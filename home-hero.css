@@ -16,7 +16,6 @@
 .hero-pena-land { position: relative; margin: 0; padding-block: clamp(20px, 3vw, 44px); }
 /* The engraving has a transparent ground, so it sits directly on the paper. */
 .hero-pena-land img { display: block; width: 84%; height: auto; margin-inline: auto; max-height: calc(100svh - 220px); min-height: 0; object-fit: contain; object-position: center bottom; }
-.hero-pena-land figcaption { margin-top: 16px; text-align: center; font: 400 14px/1.6 var(--font-sans); color: var(--text-secondary); }
 
 
 
