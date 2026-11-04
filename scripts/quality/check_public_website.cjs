@@ -152,7 +152,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#hero-title').innerText().then(text => text.replace(/\s+/g, ' ')), 'Del micelio a la mesa.');
     assert.equal(await page.locator('.origin-actions a[href="/setas"]').count(), 1);
     assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
-    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Aviso de cosecha/);
+    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Recibir aviso de la primera cosecha/);
     // The hero opens with cooking, not traceability (identidad comercial v1.1 §3; voz v2.4).
     assert.equal(await page.locator('.origin-story a[href*="fao.org"]').count(), 0);
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
@@ -169,7 +169,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#primary-nav').isVisible(), false);
     assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
-    assert.equal(await page.locator('.hero-pena-land figcaption, .hero-pena-species').count(), 0);
+    // The engraving carries a caption (DS-2026 §3: frame + image + caption); the species strip stays out of the hero.
+    assert.equal(await page.locator('.hero-pena-land figcaption').count(), 1);
+    assert.match(await page.locator('.hero-pena-land figcaption').innerText(), /no representa una cosecha/);
+    assert.equal(await page.locator('.hero-pena-species').count(), 0);
     const engravingRatio = await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
     assert.ok(Math.abs(engravingRatio - .84) < .01, 'engraving occupies 84% of its column');
     await page.locator('.menu-toggle').click();

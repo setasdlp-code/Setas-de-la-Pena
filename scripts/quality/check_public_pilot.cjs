@@ -77,7 +77,7 @@ const commerce = overrides => ({
       assert.equal((await page.locator('.purchase-purpose legend').textContent()).trim(), '¿Para casa o para un servicio?');
       const msg = await fillAndSubmit(page, 'restaurante');
       assert.match(msg, /para un servicio de cocina/);
-      assert.match((await page.locator('#primary-nav .nav-inquiry').textContent()).replace(/\s+/g, ' '), /^Aviso de cosecha/);
+      assert.match((await page.locator('#primary-nav .nav-inquiry').textContent()).replace(/\s+/g, ' '), /^Recibir aviso de la primera cosecha/);
       pass('pilot-notice', 'etiqueta-servicio');
       await context.close();
     }
