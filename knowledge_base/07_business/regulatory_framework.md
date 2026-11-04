@@ -2,7 +2,7 @@
 title: Marco Regulatorio Sanitario — INVIMA, ICA y Comercialización
 category: business
 load_priority: on_request
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 confidence: medium
 primary_sources:
   - Resolución 2674 de 2013 (Ministerio de Salud / INVIMA), modificada en art. 37 por Res. 3168/2015
@@ -43,6 +43,8 @@ Guía documental del marco normativo y sanitario consultado; requiere confirmaci
 
 ### Exención de Registro Sanitario INVIMA
 El artículo 37 de la Res. 2674/2013, modificado por la **Res. 3168/2015**, exceptúa de NSA/PSA/RSA a alimentos naturales sin transformación. No extender automáticamente la excepción a hongos troceados, polvos o preparados; evaluar el proceso y destino concretos con la autoridad competente. La clasificación por riesgo de la Res. 719/2015 no sustituye el análisis de esa excepción.
+
+**Presentación del piloto (DEC-022):** shiitake entero con corte de pie como única intervención. Confirmar con la autoridad competente que esa presentación conserva la excepción antes de vender.
 
 ### Alcance ICA pendiente de confirmación
 

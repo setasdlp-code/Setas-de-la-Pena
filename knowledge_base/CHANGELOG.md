@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 ---
 
 # CHANGELOG
@@ -23,6 +23,13 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-04
+
+| Tipo | Descripción |
+|---|---|
+| `[DECISION]` | DEC-022: shiitake fresco entero como producto del piloto; deshidratado entero de un ingrediente como única línea transformada candidata, condicionada a tres ciclos cerrados, comprador con especificación, margen propio y ruta NSA. Fuera: polvos, extractos, snacks y conservas. |
+| `[BIZ]` | Punteros a DEC-022 en `07_business/pricing.md`, `07_business/regulatory_framework.md`, `08_brand/identity.md` y `08_brand/packaging.md` (la bolsa de deshidratado queda condicionada). Sin cambios en precios, SOPs, setpoints ni Setas OS. |
 
 ### 2026-11-03
 

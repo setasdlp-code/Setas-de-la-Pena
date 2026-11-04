@@ -3,7 +3,7 @@ title: Estrategia de Precio — Shiitake Piloto
 document_id: DOC-0036
 category: business
 load_priority: on_request
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 confidence: low
 primary_sources:
   - Internal records
@@ -80,3 +80,4 @@ Los nombres Premium y Estándar son provisionales. No se usan diámetros, colore
 - No prometer claims medicinales.
 - No fijar descuentos permanentes antes de conocer el margen.
 - No extrapolar precios deshidratados o extractos al programa de fresco.
+- No ofrecer formatos transformados (troceado, deshidratado, polvo, extracto, snack o conserva). El deshidratado entero solo entra con las cuatro condiciones de DEC-022 y con margen propio.
