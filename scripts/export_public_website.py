@@ -18,7 +18,7 @@ CLEAN.update(SPECIES_PAGES)
 PUBLIC_PAGES = {'/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html'}
 CLEAN.update(PUBLIC_PAGES)
 COMMERCIAL = {'index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', '404.html', *SPECIES_PAGES.values(), *PUBLIC_PAGES.values()}
-SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'design-system.html', 'manual.html',
+SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'design-system.html', 'manual.html', 'despensa.html', 'fichas.html',
          *SPECIES_PAGES.values(), *PUBLIC_PAGES.values(), '404.html', 'robots.txt', 'sitemap.xml', 'assets/social/setas-de-la-pena.png',
          '08_brand/ds-2026/brand-kit/assets/firma-setas-de-la-pena-original.png']
 ATTR = re.compile(r'\b(?:href|src)\s*=\s*([\'"])(.*?)\1', re.I)

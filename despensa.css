@@ -1,0 +1,75 @@
+/* DS-2026: editorial archive page with culinary packaging studies.
+   The physical silhouettes are local; branding and type use sdp-pack. */
+.mock-banner { padding: var(--space-2) var(--space-3); background: var(--surface-recessed); border-bottom: var(--rule-hairline); color: var(--text-secondary); text-align: center; }
+.pantry-hero { padding-block: var(--space-7) var(--space-3); }
+.pantry-hero h1 { margin-block: var(--space-3); color: var(--text-primary); }
+.pantry-hero h1 em { font-weight: var(--weight-medium); }
+.pantry-intro { max-width: 520px; font: var(--t-body); margin-bottom: var(--space-3); }
+.pantry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-7) var(--space-4); padding-block: var(--space-3) var(--space-8); }
+.product { min-width: 0; border-bottom: var(--rule-hairline); padding-bottom: var(--space-3); }
+.product[hidden] { display: none; }
+.product-copy { padding-top: var(--space-3); }
+.product-copy h2 { font: var(--t-heading-01); margin-block: var(--space-1) var(--space-2); }
+.product-copy ul { padding-left: var(--space-2); margin: var(--space-2) 0 0; }
+/* A consistent specimen field keeps the packaging family readable together. */
+.pack.sdp-pack { position: relative; isolation: isolate; height: 440px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: var(--space-4); background: var(--surface-recessed); color: var(--text-primary); border: 0; }
+.pack::before { content: ""; position: absolute; z-index: -1; width: 260px; height: 350px; border: var(--rule-hairline); background: var(--surface-page); }
+.pack img { width: 160px; height: 150px; object-fit: contain; mix-blend-mode: multiply; }
+.pack-label { display: flex; flex-direction: column; align-items: center; width: 220px; gap: var(--space-1); text-align: center; }
+.pack-label .sdp-pack__brand { order: -2; font: var(--t-heading-02); text-transform: none; letter-spacing: var(--tracking-tight); color: var(--text-primary); }
+.pack-label > .t-label { color: var(--text-secondary); }
+.pack-label strong { font: var(--t-heading-02); color: var(--text-primary); }
+.pack-label .sdp-pack__net { padding-top: var(--space-1); margin-top: var(--space-half); font: var(--t-data); letter-spacing: normal; text-transform: none; }
+/* The printed brand sits above the botanical illustration on every format. */
+.pack-label .sdp-pack__brand { position: absolute; top: 72px; left: 0; right: 0; }
+.pack--tray::before { width: 300px; height: 320px; background: var(--sand-500); }
+.pack--tray .pack-label { background: var(--surface-page); padding: var(--space-2); width: 260px; }
+.pack--tray .tray-window { display: grid; place-items: center; width: 260px; height: 132px; }
+.pack--tray .tray-window img { height: 128px; }
+.pack--tray .sdp-pack__brand { top: 80px; }
+.pack--jar::before { width: 250px; height: 310px; border-radius: 16px 16px 24px 24px; }
+.jar-lid { position: absolute; top: 49px; width: 250px; height: 30px; background: var(--text-primary); }
+.pack--jar .sdp-pack__brand { top: 94px; }
+.pack--jar img { height: 120px; margin-top: var(--space-3); }
+.pack--pouch::before { border-radius: 0 0 20px 20px; }
+.pouch-notch { position: absolute; top: 62px; width: 228px; border-top: var(--rule-hairline); }
+.pack--tin::before { width: 250px; height: 300px; border-radius: 50% / 6%; }
+.pack--tin .sdp-pack__brand { top: 90px; }
+.pack--tin img { height: 120px; margin-top: var(--space-3); }
+.pack--bag::before { background: var(--sand-500); }
+.pack--bag::after { content: ""; position: absolute; top: 56px; width: 228px; border-top: var(--rule-hairline); }
+.pack--vac::before { background: var(--surface-page); border: 3px double var(--border-heavy); }
+.pack-label strong::after { content: ""; display: block; width: var(--space-4); height: 2px; background: var(--brand-accent); margin: var(--space-1) auto 0; }
+.pantry-note { border-top: var(--rule-heavy); padding-block: var(--space-4) var(--space-7); }
+.pantry-note p { max-width: var(--measure-prose); }
+@media (max-width: 700px) {
+  .pantry-hero { padding-top: var(--space-5); }
+  .pantry-hero h1 { font: var(--t-display-02); }
+  .pantry-grid { grid-template-columns: 1fr; gap: var(--space-5); }
+  .pack.sdp-pack { padding-inline: var(--space-2); }
+}
+
+/* Línea deshidratada */
+.dry-title { font: 700 clamp(40px, 5vw, 68px)/1 var(--font-editorial); letter-spacing: -.02em; color: var(--brand-primary); margin: 16px 0 20px; }
+.dry-title em { font-weight: 500; }
+#deshidratados { border-top: var(--rule-heavy); }
+
+/* Caja de sobres: caja horizontal con un sobre asomado */
+.pack--sachet::before { width: 290px; height: 280px; border-radius: 2px; }
+.pack--sachet::after { content: ""; position: absolute; top: 40px; right: calc(50% - 150px); width: 64px; height: 84px; background: var(--surface-page); border: 1px dashed var(--text-secondary); transform: rotate(8deg); z-index: -1; }
+.pack--sachet .sdp-pack__brand { top: 100px; }
+.pack--sachet img { height: 110px; margin-top: var(--space-3); }
+
+/* Tres líneas */
+.line { border-top: var(--rule-heavy); padding-top: var(--space-6, 56px); display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-5, 40px); align-items: end; }
+.line-facts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2, 16px) var(--space-3, 24px); margin: 0; }
+.line-facts div { border-top: var(--rule-hairline); padding-top: 8px; }
+.line-facts dd { margin: 4px 0 0; font: var(--t-small); }
+.line-index { display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; padding: 0; margin: 0 0 24px; }
+.line-index a { min-height: 44px; display: inline-flex; align-items: center; color: var(--brand-primary); }
+.product-copy h3 { font: 500 28px/1.15 var(--font-editorial); margin: 8px 0 10px; color: var(--brand-primary); }
+#taller { display: block; padding-bottom: var(--space-5, 40px); }
+.taller-list { padding-left: 18px; columns: 2; column-gap: 32px; }
+.taller-list li { margin-bottom: 8px; break-inside: avoid; }
+@media (max-width: 900px) { .line { grid-template-columns: 1fr; } .taller-list { columns: 1; } }
+@media (max-width: 480px) { .line-facts { grid-template-columns: 1fr; } }
