@@ -676,6 +676,53 @@ Un gate `FAIL` u `OPEN` bloquea la compra en volumen. La pantalla mecánica de s
 
 ---
 
+## DEC-022 — Ruta de procesamiento de shiitake: fresco entero primero, deshidratado entero condicionado
+
+**Fecha:** 2026-11-04
+**Estado:** Activa
+**Área:** Negocio / Marca
+
+**Problema:** No había decisión sobre si el shiitake se vende fresco o con algún procesamiento (deshidratado, polvo, extracto, snack, conserva). Cada formato cambia la ruta sanitaria, los competidores, el costo y la identidad de marca. Sin esta decisión, el excedente de cosecha podría terminar en un producto transformado sin comprador ni autorización.
+
+**Evidencia:**
+- Fresco entero sin transformar: exceptuado de NSA/PSA/RSA (Res. 3168/2015, art. 1). Troceado o transformado no hereda la excepción (`07_business/regulatory_framework.md`). Tier 1.
+- Deshidratado de un solo ingrediente: riesgo B (Res. 719/2015, anexo 4.8.1), ruta general NSA; exento de sellos frontales. Tier 1.
+- 120.000–180.000 COP/kg seco equivalen a 24.000–45.000 COP/kg hidratado (DOC-0133), frente a precios publicados de fresco de 48.000–64.000 COP/kg (DOC-0132). Los precios de seco no están verificados; los de fresco son de lista, no transacciones.
+- China aporta ≈93 % de la cantidad importada de hongos secos (WITS H0 071230, 2025). Tier 1.
+- Setas Doradas, en Tenjo, ya ofrece shiitake y snacks/dips (Golden Bites). Observación comercial no verificada (DOC-0132 §3.3).
+- 0 lotes cerrados; G1–G5 en No-Go (`CURRENT_OPERATIONS.md`).
+
+**Alternativas evaluadas:**
+
+| Opción | Efecto |
+|---|---|
+| A. Solo fresco entero | Conserva la excepción sanitaria y el margen de DEC-020; no resuelve merma ni vida útil |
+| B. Fresco entero ahora; deshidratado entero condicionado | Igual que A durante el piloto; abre una segunda línea solo con comprador y economía demostrados |
+| C. Polvos, extractos, snacks o conservas | Clasificación propia por producto y, si es suplemento, registro (Decreto 3249); choca con «sin promesas medicinales»; competidor directo en Tenjo; es un desarrollo de producto aparte |
+
+**Decisión:** Se elige la opción B. Decisión del propietario del proyecto, 2026-11-04.
+
+- El producto comercial del piloto es shiitake **fresco entero**, con corte de pie como única intervención. Confirmar con la autoridad competente que esa presentación conserva la excepción.
+- El **deshidratado entero de un solo ingrediente** es la única línea transformada candidata. Se activa solo cuando se cumplan las cuatro condiciones:
+  1. tres ciclos cerrados con kg vendibles medidos (criterio de DEC-013);
+  2. un comprador identificado con una especificación de seco que el importado no cubre, registrada con la ficha de `07_business/pricing.md`;
+  3. un precio de seco que cumpla un margen de contribución propio, con secado, energía, merma y empaque incluidos. DEC-020 rige solo el fresco; el seco requiere su propia decisión de margen;
+  4. ruta NSA, ficha técnica y rotulado confirmados para el producto concreto.
+- El deshidratado lleva grado y comprador propios. No es salida para el fresco rechazado (`07_business/pricing.md`, Prohibiciones).
+- Quedan fuera polvos, extractos, cápsulas, tinturas, snacks, dips y conservas. Reabrirlos exige una decisión separada.
+
+**Justificación:** Solución más simple aceptable (CANON §16): el fresco entero no añade proceso, trámite ni equipo antes de validar el cultivo. El deshidratado entero es la extensión de menor riesgo sanitario y la única coherente con «Hongos para cocinar con criterio» (caldo, dashi, base umami); su economía no está demostrada y por eso queda condicionado. La opción C contradice la identidad (`08_brand/identity.md`: sin promesas medicinales) y DOC-0132 §10 la trata como otro negocio.
+
+**Implicaciones de marca:** una sola marca, sin submarca para el seco. Rótulo con lote y fecha de cosecha; rendimiento de rehidratación y vida útil «por medir» hasta medirse. Misma voz: uso culinario en infinitivo.
+
+**Medición:** el piloto registra por lote kg cosechados, kg vendibles, merma y vida útil del fresco entero según `06_operations/quality_control.md`. No se ensaya secado hasta cumplir la condición 1.
+
+**Criterio de revisión:** se cumplen las cuatro condiciones del deshidratado; un comprador pide de forma reiterada troceado, seco u otro formato; la autoridad indica que el corte de pie pierde la excepción; o la merma de fresco medida supera lo que el margen de DEC-020 absorbe.
+
+**Documentos afectados:** `07_business/pricing.md`, `07_business/regulatory_framework.md`, `08_brand/identity.md`, `08_brand/packaging.md`, `CHANGELOG.md`.
+
+---
+
 ## Plantilla para nuevas decisiones
 
 ```markdown
