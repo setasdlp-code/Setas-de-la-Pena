@@ -3,7 +3,7 @@ title: Control de Calidad — Programa Inicial de Shiitake
 document_id: DOC-0033
 category: operations
 load_priority: selective
-last_reviewed: 2026-10-28
+last_reviewed: 2026-11-03
 confidence: medium
 primary_sources:
   - Chang & Miles 2004 (book_007, capítulo 13)
@@ -51,6 +51,8 @@ El proyecto está en preproducción, con 0 lotes activos. No existen todavía se
 | Trazabilidad | ID `YYYY-MM-LE-###` y vínculos a spawn, sustrato, ciclo, ubicación y operador | Bloquear liberación |
 
 # Microlote de cuatro bolsas (pellets): compuertas específicas
+
+La evidencia de seguridad, penetración, controles A/B y spawn C se reúne en la [matriz Go / No-Go G1–G5](operational_commissioning.md#matriz-de-demostración-go--no-go--1941x-y-shiitake). G1–G4 requieren cierre documentado y autorización humana antes de inoculación productiva; datos ausentes o ensayos inválidos mantienen retención. Los ensayos de commissioning requieren protocolo aprobado y no equivalen a producción liberada. G5 gobierna el compromiso de escala/capital comercial. Los umbrales candidatos de la matriz no se convierten automáticamente en parámetros validados y la excepción de cepa del lote 1 (DEC-019) se conserva.
 
 El primer microlote de siembra con pellets, documentado en `../02_substrates/shiitake_pellets_microlote_receta_v1.md` y `shiitake_microlote_pellets_sop_v1.md`, tiene **4 bolsas de 2,5 kg de sustrato antes del spawn**, 250 g spawn por bolsa y masa final teórica de 2,75 kg. El lote previsto para calificar la incubadora (30 × 2,0 kg; DOC-0122/DOC-0123) queda separado. Registrar el lote real solamente al inocular.
 

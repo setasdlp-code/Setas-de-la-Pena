@@ -8,6 +8,7 @@ confidence: low
 primary_sources:
   - Internal records
 related_documents:
+  - ../09_research/factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md
   - pricing.md
   - suppliers.md
   - ../06_operations/production_schedule.md

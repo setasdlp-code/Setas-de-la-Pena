@@ -13,6 +13,7 @@ primary_sources:
   - Resolución 719 de 2015, anexo 4.8.1
   - ICA, Resolución 115708 de 2021 y programa de exportación en fresco
 related_documents:
+  - colombia_mushroom_market_synthesis_2026-11-03.md
   - intake/factibilidad_shiitake_tenjo_reporte_externo_2026-11-03.md
   - ../02_substrates/sterilization.md
   - ../DECISIONS.md
@@ -60,6 +61,8 @@ La afirmación de contaminación inevitable >35 % sin autoclave no tiene datos v
 
 **Implementación documental:** corregidas las entradas afectadas de [regulatory_framework.md](../07_business/regulatory_framework.md). No se declara al predio habilitado para vender ni se radican trámites.
 
+La síntesis de mercado `09_research/colombia_mushroom_market_synthesis_2026-11-03.md` (DOC-0132) aporta contexto independiente por formato; el original de este análisis se conserva como DOC-0134. Las preguntas de factibilidad son AB13–AB16; AB12 pertenece a la medición de contribución y recompra.
+
 # Hallazgos conservados con límites
 
 | ID | Hallazgo del reporte | Evidencia / relación | Aplicación y validación pendiente |
@@ -67,7 +70,7 @@ La afirmación de contaminación inevitable >35 % sin autoclave no tiene datos v
 | F03 | Medir consumo por etapa y carga térmica nocturna | Oportunidad de medición; coincide con el modelo económico. Los 20–24 kWh/día y tarifas son no verificados. | Ficha ampliada en [economics.md](../07_business/economics.md). Registrar kWh, horas, carga, tarifa facturada y denominador vendible; no presupuestar con potencias nominales como consumo real. |
 | F04 | Aislamiento y aire exterior podrían reducir costo climático | Hipótesis de diseño; no demuestra PIR superior para esta finca. | Comparar sistema completo: área, espesor, juntas, infiltración, condensación, filtración, caudal y consumo. `R = 1,34` da `U ≈ 0,746` por inversión, pero no demuestra transmitancia de la envolvente instalada. Sin compra ni especificación nueva. |
 | F05 | Diferenciar fresco y seco por uso culinario | Hipótesis comercial útil; no demuestra insustituibilidad, demanda ni superioridad universal. | Ficha de entrevista en [pricing.md](../07_business/pricing.md): plato, producto sustituto, calidad acordada, precio neto y pago. Muestras y entregas solo cuando producción/calidad estén liberadas. |
-| F06 | Prospección Tenjo–Chía–Cota–Cajicá–Bogotá | Lista exploratoria no verificada. | Osaki/Takami, Wok, Ukiyo, Amen Ramen, Tomodachi, Arigato y Watakushi se conservan como prospectos del original, sin asignar contactos, kg/semana, precios o crédito confirmados. Ver AB12 en [preguntas](unresolved_questions.md). |
+| F06 | Prospección Tenjo–Chía–Cota–Cajicá–Bogotá | Lista exploratoria no verificada. | Osaki/Takami, Wok, Ukiyo, Amen Ramen, Tomodachi, Arigato y Watakushi se conservan como prospectos del original, sin asignar contactos, kg/semana, precios o crédito confirmados. Ver AB13 en [preguntas](unresolved_questions.md). |
 | F07 | Evaluar bloques precolonizados frente a producción propia | Alternativa de negocio; contradice la prescripción de arranque único y compra futura del autoclave. | Comparar costo por kg **vendible**, calidad, trazabilidad, transporte, madurez y continuidad de suministro. El bloque comprado traslada parte del proceso, no todo riesgo. Requiere cotización y prueba independiente antes de cambiar ruta. |
 | F08 | Evitar condensación y validar empaque/cadena fría | Coincide con trazabilidad y calidad; cifras de 8 días y humedad/temperatura no validadas localmente. | Medir por lote/empaque tiempo-temperatura, pérdida de masa, daño y vida útil. No prometer entrega martes/viernes o vida útil por este reporte. |
 | F09 | Patología, eucalipto y SMS | Hipótesis sin fuente por afirmación. | No adoptar dosis de peracético/Bti, 50 mesh, pH 6,0, lavado de eucalipto de tres semanas ni CaCO₃ 1,5–2 %. Requieren identificación, evidencia específica, compatibilidad y revisión de seguridad. SMS: no reconocer ingresos ni sustitución energética sin caracterización, legalidad, mercado y balance neto. |

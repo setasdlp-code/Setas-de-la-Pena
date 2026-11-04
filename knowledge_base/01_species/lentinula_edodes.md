@@ -195,6 +195,7 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 - ¿Cuál es el ciclo validado del autoclave con esa carga?
 - ¿Qué perfil térmico real presentan las cámaras de Tenjo?
 - ¿Las cepas L54/L4055 siguen disponibles comercialmente en Colombia?
+- ¿Algún productor nacional distinto de Fungiilab (Siecha, Nutrisetas, Los Fungis) entrega spawn con cepa identificada? Candidatos y cuestionario en `../09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md` (DOC-0132, sin verificar; nada de ese reporte se promueve a esta ficha).
 
 # References
 

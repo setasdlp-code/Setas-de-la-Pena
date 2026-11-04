@@ -8,6 +8,7 @@ confidence: low
 primary_sources:
   - Internal records
 related_documents:
+  - ../09_research/intake/factibilidad_shiitake_tenjo_reporte_externo_2026-11-03.md
   - economics.md
   - colombian_market.md
   - ../06_operations/quality_control.md

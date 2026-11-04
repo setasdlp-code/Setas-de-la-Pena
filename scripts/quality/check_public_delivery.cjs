@@ -45,7 +45,7 @@ const report = { checks: [], errors: [] };
         assert.equal(await page.locator('meta[name="twitter:card"]').getAttribute('content'),'summary_large_image');
         const ogImage=await page.locator('meta[property="og:image"]').getAttribute('content');
         assert.equal(ogImage,origin+'/assets/social/setas-de-la-pena.png');
-        const organization=JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
+        const organization=JSON.parse(await page.locator('script[type="application/ld+json"]').first().textContent());
         assert.equal(organization['@type'],route.startsWith('especies/')?'Article':'Organization');
         assert.ok(!['telephone','email','offers','openingHours','address'].some(k=>k in organization));
         assert.equal(await page.locator('link[rel=stylesheet]').count(),1);

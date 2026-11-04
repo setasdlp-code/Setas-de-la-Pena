@@ -1,6 +1,6 @@
 ---
 title: "Reporte externo — Factibilidad biofísica, termodinámica y comercial de shiitake en Tenjo"
-document_id: DOC-0132
+document_id: DOC-0134
 category: research
 load_priority: on_request
 last_reviewed: 2026-11-03

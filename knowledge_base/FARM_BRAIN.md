@@ -3,7 +3,7 @@ title: Farm Brain — Setas de la Peña
 document_id: DOC-0049
 category: project
 load_priority: always
-last_reviewed: 2026-09-03
+last_reviewed: 2026-11-03
 confidence: high
 ---
 
@@ -23,7 +23,7 @@ confidence: high
 | Incubación modular | Cajas 60 × 40 × 40–41 cm | Calificación autorizada por DEC-015; compra en volumen bloqueada | L. edodes |
 
 **Especie prioritaria:** *Lentinula edodes* (shiitake) — Fase 1.
-**Estado de producción:** Preproducción; 0 lotes activos. El primer lote depende de spawn viable con clase térmica identificada, formulación definida y ciclo de autoclave comisionado y validado.
+**Estado de producción:** Preproducción; 0 lotes activos según el último registro disponible. El primer lote depende de spawn viable y trazable (cepa no identificada permitida solo en lote 1 por DEC-019), formulación definida y ciclo de autoclave comisionado y validado. Los cinco requisitos de la [matriz Go / No-Go del 1941X y shiitake](06_operations/operational_commissioning.md#matriz-de-demostración-go--no-go--1941x-y-shiitake) permanecen pendientes de demostración; detalle y siguiente dependencia en `CURRENT_OPERATIONS.md`. Se añade la matriz dentro de C2 para reunir evidencia y evitar duplicar criterios en los resúmenes.
 **Material biológico en stock:** ~2.0 kg P. djamor, ~2.0 kg H. erinaceus, ~2.0 kg P. ostreatus (spawn en refrigeración 2–4 °C para caracterización y pruebas auxiliares de cámara).
 **Sustrato inicial candidato:** Serrín de madera dura (roble) suplementado; receta final pendiente de validación térmica. Esterilización obligatoria.
 **Capacidad actual validada:** 0 kg/mes. No proyectar capacidad comercial hasta completar los primeros ciclos documentados.

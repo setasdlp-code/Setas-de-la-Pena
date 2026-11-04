@@ -28,8 +28,23 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
-| `[KB]` | Incorporado íntegro y con SHA-256 el reporte externo de factibilidad de shiitake en Tenjo (DOC-0132); evaluación trazable DOC-0133 con corrección de 15 psig/121 °C, costos de rehidratación y alcance de evidencias. Fuente original no verificada. |
-| `[BIZ]` | Corregido el alcance ICA/INVIMA en regulatory_framework.md con fuentes oficiales; ampliadas fichas de economics.md y pricing.md para energía, alternativas de suministro y entrevista comercial; AB12–AB15 en preguntas abiertas. Sin nuevas compras, trámites, ensayos, ventas o cambios de SOP/setpoints/Setas OS acreditados. |
+| `[KB]` | Añadido `09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md` (`DOC-0135`): audita un reporte externo sobre selección de inóculo de shiitake. Registro de hechos con nivel de evidencia, cuestionario a proveedores Q-01 a Q-06 y ocho observaciones (entre ellas: el ensayo propuesto excede el lote de 30 bloques, los umbrales son hipótesis y una cifra de EB mezcla unidades). El texto original del reporte no se archivó. |
+| `[DECISION]` | DEC-021: Siecha, Nutrisetas y Los Fungis quedan como candidatos de spawn condicionados al cuestionario. DEC-019 sigue vigente. |
+| `[BIZ]` | `07_business/suppliers.md`: tabla de candidatos adicionales de spawn, todos sin cotización. |
+| `[KB]` | Pendientes SH12–SH15 en `09_research/unresolved_questions.md` y puntero en `01_species/lentinula_edodes.md`. Sin cambios en Setas OS ni en la ficha de especie. |
+| `[SOP]` | Integrados los cinco hallazgos del propietario como matriz de demostración G1–G5 en `06_operations/operational_commissioning.md`: seguridad/manometría, penetración/letalidad, PQ-2 A/B/C y capacidad/rol del 1941X. Metas numéricas sin evidencia local permanecen no verificadas; todos los requisitos pendientes/No-Go. Añadidos registros de cierre, controles de validez y enlaces desde calidad, equipo y estado operativo. Se conserva DEC-019; no se autoriza presurización, compra, inoculación productiva ni escala comercial. |
+| `[SOP]` | Añadida ficha candidata PQ-1 para tres corridas, DL-1/2/3, nueve integradores Clase 5 y nueve IB procesados con tres controles positivos. La segunda tabla del propietario eleva la meta candidata F₀ de 12 a 15,0 min; se sincroniza G2. Explicitadas ambigüedades de signo del diferencial térmico, ±10 min (propuesta conservadora: rango entre corridas ≤10 min) y cálculo del primer cruce de F₀ en ambas sondas. Incubación/lectura de IB condicionada a IFU del producto real. Sin corridas ejecutadas ni aprobación física/microbiológica. |
+| `[KB]` | Incorporada `09_research/colombia_mushroom_market_synthesis_2026-11-03.md` (DOC-0132): síntesis consultiva de competencia, compradores, precios publicados, comercio 2025 y límites clínico-regulatorios; 39 fuentes enlazadas y sin mediciones de campo. Registro comercial observado no equivale a evidencia científica Tier 2 ni a autorización sanitaria verificada. |
+| `[BIZ]` | `07_business/colombian_market.md`: cualificadas las afirmaciones de crecimiento, ausencia de oferta local y debilidades no verificadas de competidores; cifras históricas por canal marcadas como estimaciones. Evidencia completa en DOC-0132. |
+| `[KB]` | ARK-030 y AB12 capturan medición de demanda y contribución entregada; AB04 mantiene pendiente la recompra. Referencias y entrada de `INDEX.yaml` añadidas. Cambio editorial/de investigación interpretativa: no altera DEC-013, DEC-020, precios activos, SOPs, recetas ni Setas OS. |
+| `[KB]` | Incorporado íntegro y con SHA-256 el reporte externo de factibilidad de shiitake en Tenjo (DOC-0134); evaluación trazable DOC-0133 con corrección de 15 psig/121 °C, costos de rehidratación y alcance de evidencias. Fuente original no verificada. |
+| `[BIZ]` | Corregido el alcance ICA/INVIMA en regulatory_framework.md con fuentes oficiales; ampliadas fichas de economics.md y pricing.md para energía, alternativas de suministro y entrevista comercial; AB13–AB16 en preguntas abiertas. Sin nuevas compras, trámites, ensayos, ventas o cambios de SOP/setpoints/Setas OS acreditados. |
+
+### 2026-11-02
+
+| Tipo | Descripción |
+|---|---|
+| `[BIZ]` | Registradas las compras de 9 ingredientes de sustrato (40 kg, mayo–julio 2026, Mercado Libre) en `07_business/procurement_cost_registry.md` con guía de carga en Bodega por pedido, y sincronizadas en `metadata/consumables.yaml` (`REC-CON-2026-11-02-001`). Precios pagados: salvado de trigo $4.650/kg, carbonato de calcio $18.810/kg, sulfato de magnesio $26.000/kg, cascarilla Bioespacio $10.000/kg. Cascarilla (15 → 6 kg) y pellets (3 paquetes → 1 kg) cambian frente al registro anterior; gallinaza (2 kg) y yeso (1 kg) usan el empaque menor. Pendiente pesarlos. |
 
 ### 2026-11-01
 

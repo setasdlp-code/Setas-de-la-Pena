@@ -6,7 +6,7 @@ status: active_research_registry
 authority: advisory_research
 load_priority: selective
 owner: Setas de la Peña
-last_reviewed: 2026-08-29
+last_reviewed: 2026-11-03
 related_documents:
   - ../00_project/KNOWLEDGE_ARCHITECTURE.md
   - literature_database.md
@@ -16,6 +16,7 @@ related_documents:
   - incubation_fruiting_chambers_state_of_knowledge_2026.md
   - environmental_morphology_customization_2026-08-28.md
   - weekly_reports_knowledge_synthesis_2026-08-29.md
+  - colombia_mushroom_market_synthesis_2026-11-03.md
 ---
 
 # Active Research Knowledge Registry
@@ -272,3 +273,16 @@ Where applicable, experiments should preserve: strain/source identity; formulati
 - `project_interpretation`: treat dry sliced mushrooms, culinary powder and extract as separately specified products with independent process records and validation needs.
 - `next_action`: establish a repeatable dried product first; capture slice thickness, tray load, time/temperature, fresh/dry mass, final moisture/activity of water, storage and grind size.
 - `prohibited_use`: using extract yield or beta-glucan percentage as proof of clinical efficacy, therapeutic claim or interchangeability among fruit body, mycelium and extract.
+
+
+## Commercial evidence — 2026-11-03
+
+### ARK-030 — Buyer-level demand and delivered economics require separate measurement
+- `entry_type`: measurement_opportunity
+- `source_document`: `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`, §§4–7, 10–12, with primary URLs in each section.
+- `source_demonstrates`: named Colombian offers and menu applications coexist with different fresh, preserved and dried trade trajectories; retail asking prices do not identify buyer quantities or farm contribution.
+- `evidence_quality`: Tier 1 for the specified WITS series; commercial listings are unverified observations / Tier 3 context, not confirmed transactions.
+- `project_applicability`: shiitake buyer research can distinguish species/format, accepted kilograms, net collected price, logistics, losses and repeat orders. Complements the record in `07_business/pricing.md`.
+- `transfer_limits`: no national TAM/CAGR, unmet demand, current stock, farm profitability or verified authorization follows from these observations. External species comparisons do not override DEC-013; margin governance remains DEC-020.
+- `next_validation`: resolve AB04 and AB12 in `09_research/unresolved_questions.md` using dated quotes, buyer specifications and paid repeat-order evidence; review R01/R04 before a proposed processed SKU.
+- `prohibited_use`: publishing an active price, adding species, committing volume, authorizing a medicinal claim or making a purchase from the research alone.

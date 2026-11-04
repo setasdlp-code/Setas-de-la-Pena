@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 136 catalog entries as of 2026-11-03; the completeness of indexing of all
+# 138 catalog entries as of 2026-11-03; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -1104,7 +1104,7 @@ documents:
     canonical: true
     topics: [colombian-mushroom-market, market-segments]
     keywords: [Bogotá, restaurantes gourmet, champiñón blanco, mercado premium]
-    related_documents: [economics, pricing, identity]
+    related_documents: [economics, pricing, identity, colombia-mushroom-market-synthesis-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1119,7 +1119,7 @@ documents:
     canonical: true
     topics: [unit-economics, pilot-batch-costing]
     keywords: [preproducción, DEC-013, capex, costo por kilogramo pendiente]
-    related_documents: [pricing, suppliers, production-schedule, quality-control]
+    related_documents: [pricing, suppliers, production-schedule, quality-control, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1134,7 +1134,7 @@ documents:
     canonical: true
     topics: [pricing-strategy, pilot-product-pricing]
     keywords: [precio mínimo provisional, grados comerciales, COP/kg]
-    related_documents: [economics, colombian-market, quality-control]
+    related_documents: [economics, colombian-market, quality-control, factibilidad-shiitake-tenjo-reporte-externo-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1256,7 +1256,7 @@ documents:
     canonical: true
     topics: [open-questions, batch-1-blockers]
     keywords: [SH01, bloqueante, autoclave sin comisionar, spawn sin proveedor]
-    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations]
+    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1680,7 +1680,7 @@ documents:
     canonical: true
     topics: [regulatory-framework, invima, ica, food-safety, commercialization]
     keywords: [INVIMA, ICA, "regulación sanitaria", etiquetado, comercialización]
-    related_documents: [business-model, packaging]
+    related_documents: [business-model, packaging, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1725,7 +1725,7 @@ documents:
     canonical: true
     topics: [active-research, ark-registry, p0-literature, evidence-distillation]
     keywords: [ARK, "active research knowledge", "p0 papers", Rocha, Gaitán-Hernández, Atila, Holgado-Rojas, Shi]
-    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus]
+    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus, colombia-mushroom-market-synthesis-2026-11-03]
     depends_on: [literature-database]
     implemented_by: [lentinula-edodes, hericium-erinaceus, incubation, environmental-control]
     supersedes: null
@@ -2257,6 +2257,36 @@ documents:
     confidence: low
     status: draft
 
+  - id: auditoria-seleccion-inoculo-shiitake-2026-11-03
+    title: "Auditoría — Selección de material biológico de shiitake y validación local (reporte externo 2026-11-02)"
+    path: 09_research/auditoria_seleccion_inoculo_shiitake_2026-11-03.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, spawn, supplier-selection, strain-traceability, validation-protocol, import-regulation]
+    keywords: ["Setas de Siecha", "Nutrisetas", "Los Fungis", "cuestionario proveedores", "SISPAP", "ITT vs PP", "DEC-021"]
+    related_documents: [suppliers, lentinula-edodes, autoclaves]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: low
+    status: draft
+
+  - id: colombia-mushroom-market-synthesis-2026-11-03
+    title: "Culinary and medicinal mushrooms in Colombia — research synthesis"
+    path: 09_research/colombia_mushroom_market_synthesis_2026-11-03.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [colombia-market, culinary-mushrooms, medicinal-evidence, trade, pricing]
+    keywords: [Bogotá, Tenjo, WITS, INVIMA, "precios publicados", "recompra"]
+    related_documents: [colombian-market, pricing, decisions, active-research-knowledge, unresolved-questions]
+    depends_on: [decisions, pricing]
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: active
+
   - id: factibilidad-shiitake-tenjo-reporte-externo-2026-11-03
     title: "Reporte externo — Factibilidad biofísica, termodinámica y comercial de shiitake en Tenjo"
     path: 09_research/intake/factibilidad_shiitake_tenjo_reporte_externo_2026-11-03.md
@@ -2280,7 +2310,7 @@ documents:
     canonical: false
     topics: [shiitake, feasibility, altitude-sterilization, energy-costs, food-regulation, market-validation]
     keywords: ["factibilidad Tenjo", "15 psig", "ICA 115708", "bloque precolonizado", "demanda sin verificar"]
-    related_documents: [factibilidad-shiitake-tenjo-reporte-externo-2026-11-03, sterilization, decisions, current-operations, regulatory-framework, economics, pricing, unresolved-questions]
+    related_documents: [colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-reporte-externo-2026-11-03, sterilization, decisions, current-operations, regulatory-framework, economics, pricing, unresolved-questions]
     depends_on: []
     implemented_by: []
     supersedes: null

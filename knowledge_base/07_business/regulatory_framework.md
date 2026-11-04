@@ -13,6 +13,7 @@ primary_sources:
   - Decreto 1156 de 2018 (Productos fitoterapéuticos)
   - Normativa ICA (Ventanilla Única de Trámites — VUT)
 related_documents:
+  - ../09_research/factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md
   - business_model.md
   - pricing.md
   - suppliers.md
@@ -20,7 +21,7 @@ related_documents:
 ---
 
 # Executive Summary
-Guía exhaustiva del marco normativo y sanitario aplicable al cultivo, empaque, rotulado y comercialización de setas en Colombia (frescas vs. transformadas vs. funcionales), definiendo las competencias entre el INVIMA y el ICA.
+Guía documental del marco normativo y sanitario consultado; requiere confirmación de aplicabilidad al producto y predio. Describe aspectos aplicables al cultivo, empaque, rotulado y comercialización de setas en Colombia (frescas vs. transformadas vs. funcionales), definiendo las competencias entre el INVIMA y el ICA.
 
 ---
 
@@ -32,8 +33,8 @@ Guía exhaustiva del marco normativo y sanitario aplicable al cultivo, empaque, 
 |---|---|---|---|---|
 | **Hongos frescos enteros sin transformar** | **Autoridad sanitaria competente** | Excepción de NSA/PSA/RSA para alimento natural sin transformación; confirmar presentación | Art. 37 Res. 2674/2013, modificado por Res. 3168/2015 | Inscripción del establecimiento según competencia, higiene y trazabilidad; confirmar obligaciones ICA para actividad/destino |
 | **Hongos deshidratados (1 solo ingrediente)** | **INVIMA** | Ruta general de menor riesgo: **NSA**, salvo excepción aplicable al producto/destino | Res. 719/2015, anexo 4.8.1; art. 37 modificado por Res. 3168/2015 | Confirmar clasificación del producto concreto, ficha técnica y requisitos del establecimiento antes de comercializar |
-| **Polvos / Harinas de hongos alimentarios** | **INVIMA** | **Permiso o Notificación Sanitaria (PSA/NSA)** | Res. 2674/2013 | Solo claims nutricionales ("fuente de fibra/proteína") |
-| **Suplementos / Extractos funcionales (Reishi, Lion's Mane)** | **INVIMA** | **Registro Sanitario de Suplemento Dietario** | Decreto 3249/2006 | Ingredientes en listados aprobados (FDA/EFSA/Codex), sin promesas curativas |
+| **Polvos / Harinas de hongos alimentarios** | **INVIMA** | Confirmar clasificación y autorización según proceso, composición y destino | Res. 2674/2013 y Res. 719/2015 | Declaraciones sujetas a reglas alimentarias y composición demostrada; no inferir permiso por el nombre de la especie |
+| **Productos clasificados como suplementos dietarios** | **INVIMA** | Registro Sanitario de Suplemento Dietario; un extracto no adquiere esta clasificación automáticamente | Decreto 3249/2006 | Evaluar composición, presentación y uso; declaraciones y publicidad específicas, sin promesas preventivas o terapéuticas |
 | **Fitoterapéuticos (Uso medicinal comprobado)** | **INVIMA** | **Registro Sanitario Fitoterapéutico** | Decreto 1156/2018 | Ensayos clínicos, farmacopea, trámite de alta complejidad |
 
 ---
@@ -67,7 +68,7 @@ Cuando las setas se comercializan empacadas bajo la marca *Setas de la Peña*, l
 2. **Nombre y ubicación del productor:** *Setas de la Peña S.A.S. — Tenjo, Cundinamarca, Colombia*.
 3. **Contenido neto:** en gramos o kilogramos.
 4. **Número de lote:** trazabilidad lote-a-lote conforme a `batch_tracking.md`.
-5. **Fecha de empaque y fecha de vencimiento:** ej. *Consumir preferentemente antes de 10 días desde empaque*.
+5. **Fecha de empaque y fecha de vencimiento:** definir a partir de validación para el producto, lote, empaque y cadena fría; no usar diez días como vida útil garantizada.
 6. **Instrucciones de conservación:** *Manténgase refrigerado entre 2°C y 6°C. Lavar antes de consumir*.
 
 ---
@@ -79,7 +80,7 @@ Aunque el producto fresco no requiera registro INVIMA, la sala de poscosecha y e
 *   **Superficies de contacto:** Mesas de acero inoxidable o polietileno grado alimenticio, lavables y desinfectables con alcohol al 70%.
 *   **Indumentaria de operario:** Cofia, tapabocas, guantes de nitrilo y delantal impermeable durante cosecha y empaque.
 *   **Empaque:** Cajas plásticas ventiladas o bandejas grado alimenticio (Res. 683/2012 para materiales en contacto con alimentos).
-*   **Cadena de frío en transporte:** Temperatura controlada entre **2°C y 6°C** en el trayecto Tenjo → Bogotá para garantizar vida útil de 7 a 10 días. Prohibido transportar simultáneamente agroquímicos o sustancias tóxicas.
+*   **Cadena de frío en transporte:** Condición de transporte definida y registrada según validación local del producto y empaque; no se acredita una vida útil por mantener una temperatura nominal. Prohibido transportar simultáneamente agroquímicos o sustancias tóxicas.
 
 ---
 
