@@ -40,6 +40,11 @@ const arranca=async(server,browser,recipe)=>{
   await page.waitForFunction(()=>window.SetasFormulatorAPI&&window.SetasFormulatorAPI.adapterType()==='native');
   await page.selectOption('#form-species-context-select',ESPECIE);
   await page.evaluate(r=>window.SetasFormulatorAPI.applyRecipe(r),recipe);
+  // Technical metrics are collapsed on desktop and mobile. Use the same
+  // visible control as the operator before verifying the nutrient disclosure.
+  await page.locator('#bl-perito').getByTestId('perito-deep-details')
+    .filter({has:page.locator('summary').filter({hasText:'Métricas del modelo'})})
+    .locator('summary').click();
   await page.getByTestId('formulator-provenance-details').locator('summary').click();
   await page.locator('[data-testid="prov-cn"]').first().waitFor({state:'attached'});
   return {page,errores};
