@@ -56,7 +56,25 @@ const root=path.resolve(__dirname,'..');
    await openForm();
    await expect.poll(()=>page.evaluate(()=>window.__setasPeritoAssessment?.historyEligibility?.eligibleN)).toBe(2);
    const history=await page.evaluate(()=>window.__setasPeritoAssessment.model.calibration.history);
-   assert.equal(history.n,2);assert.equal(history.meanEB,40);
+   // The active forecast uses the same Bitácora pool as the Formulador.
+   // Eligible saved trials remain in the evidence context, not a second forecast.
+   assert.equal(history.n,1);assert.equal(history.meanEB,80);
+   const forecast=await page.evaluate(()=>window.__setasPeritoInput.forecast);
+   const eb=await page.evaluate(()=>window.__setasPeritoAssessment.model.uncertainty.eb);
+   assert.equal(eb.central,forecast.central);assert.equal(eb.low,forecast.low);assert.equal(eb.high,forecast.high);
+   const active=page.locator('#bl-perito');
+   await expect(active.getByTestId('recipe-eb-forecast')).toContainText(`EB estimada · ${forecast.central}%`);
+   await expect(active.getByTestId('recipe-eb-forecast')).toContainText(`rango ${forecast.low}–${forecast.high}%`);
+   await active.getByTestId('recipe-eb-forecast').screenshot({path:path.join(os.tmpdir(),`perito-forecast-${width}.png`)});
+   const deep=active.getByTestId('perito-deep-details').filter({has:page.locator('summary').filter({hasText:'Métricas del modelo'})});
+   await expect(deep).not.toHaveAttribute('open','');
+   await deep.locator('summary').press('Enter');
+   await expect(active.locator('.ebdial')).toContainText(`${forecast.low}–${forecast.high}`);
+   await expect(active.locator('.ebdial')).toContainText(`central ${forecast.central}%`);
+   await deep.locator('summary').press('Enter');
+   await page.getByTestId('form-review-gauges').locator('summary').press('Enter');
+   await expect(page.locator('#recipe-live-evaluation')).toContainText(`Rango ${forecast.low}–${forecast.high}%`);
+   await page.getByTestId('form-review-gauges').locator('summary').press('Enter');
    await page.locator('#perito-model-v2 [data-perito-detail="estimates"] summary').click();
    const summary=page.locator('[data-history-eligibility]');
    await expect(summary).toContainText('2 resultado(s) final(es) elegible(s) · 6 excluido(s)');

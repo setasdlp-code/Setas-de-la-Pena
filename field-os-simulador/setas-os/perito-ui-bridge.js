@@ -73,7 +73,11 @@
     // pass the quantitative context to scoring when all its inputs are known.
     const preflight = globalThis.SetasPeritoReadiness.assessReadiness(detail, null, history);
     const ctx = {
-      recipe: detail.recipe, treatment: detail.treatment, historyCalibration: history,
+      recipe: detail.recipe, treatment: detail.treatment,
+      // React owns the active forecast. History from other stores remains
+      // context; it must not silently replace the Formulador prediction.
+      historyCalibration: detail.forecast ? detail.forecast.history : history,
+      ...(detail.forecast?.history ? {blendedEB:detail.forecast.value} : {}),
       criticals: sev.criticals, warnings: sev.warnings, severity: sev.severity,
       __bridgeRecompute: true,
       ...(preflight.stock ? {
@@ -86,6 +90,7 @@
     const model = globalThis.SetasScoring.scoreRecipe(detail.an, ctx);
     const assessment = globalThis.SetasPeritoReadiness.assessReadiness(detail, model, history);
     const eb = model.uncertainty?.eb || {};
+    const forecastHistory = detail.forecast ? detail.forecast.history : history;
     const ph = model.uncertainty?.ph || {};
     const labels = {ready:'Verificado',blocked:'Corregir',unknown:'Por verificar'};
     const title = {ready:'Comprobaciones completas',blocked:'Hay bloqueos por resolver',verify:'Faltan verificaciones'}[assessment.status];
@@ -113,7 +118,7 @@
       ${shortages.length ? `<div style="margin-top:12px"><strong>Faltantes estimados según Bodega</strong><ul>${shortages.map(row=>`<li>${escapeHtml(row.name)}: requiere ${row.requiredWetKg.toFixed(2)} kg · registrado ${row.availableWetKg.toFixed(2)} kg · faltan ${row.missingWetKg.toFixed(2)} kg (peso del ingrediente con su humedad declarada).</li>`).join('')}</ul></div>` : ''}
       <details data-perito-detail="estimates" ${expanded.has('estimates') ? 'open' : ''} style="margin-top:12px"><summary style="cursor:pointer;min-height:48px">Estimaciones y evidencia del modelo</summary>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-          <div><b>EB estimada</b><br>${escapeHtml(eb.low ?? '—')}–${escapeHtml(eb.high ?? '—')}% · confianza ${CONFIDENCE_ES[eb.confidence] || 'BAJA'}<br>${history ? `${history.n} registro(s) · similitud ${Math.round(history.similarity*100)}% · ${history.matched ? 'seleccionados por receta' : 'extrapolación'}` : 'sin pruebas comparables con EB real · base teórica'}</div>
+          <div><b>EB estimada</b><br>${escapeHtml(eb.low ?? '—')}–${escapeHtml(eb.high ?? '—')}% · confianza ${CONFIDENCE_ES[eb.confidence] || 'BAJA'}<br>${forecastHistory ? `${forecastHistory.n} registro(s) · similitud ${Math.round(forecastHistory.similarity*100)}% · ${forecastHistory.matched ? 'seleccionados por receta' : 'extrapolación'}` : 'sin pruebas comparables con EB real · base teórica'}<br>${escapeHtml(eb.note || '')}</div>
           <div><b>pH</b><br>${escapeHtml(ph.trend || 'tendencia no disponible')}<br>medir mezcla hidratada; no es una medición calculada</div>
           <div><b>Riesgo</b><br>inferido, no observado<br>${escapeHtml(model.uncertainty?.risk?.note || '')}</div>
         </div>

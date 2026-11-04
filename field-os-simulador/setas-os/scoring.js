@@ -222,16 +222,23 @@ const SEVERITY_CAPS = { critical: 55, warning: 88 };
 const confidenceRank = { low: 0, medium: 1, high: 2 };
 const minConfidence = (...levels) => levels.reduce((a, b) => confidenceRank[b] < confidenceRank[a] ? b : a, 'high');
 
-// ADR-0007: high requiere n>=20 filas RECIENTES (recentN), no meramente 20
-// filas alguna vez registradas — h.n sigue siendo el tamaño total del pool
-// (usado para 'medium' y para el ancho de banda), h.recentN es el subconjunto
-// dentro de la ventana de recencia (historical-calibration.js). Si el
-// llamador no provee recentN (dato no disponible), se trata como 0 — la
-// ausencia de evidencia de recencia nunca promueve a 'high' por omisión.
-// No implementa el criterio "sin cambio de material/proceso conocido" del
-// ADR: no existe ninguna fuente de datos para eso todavía; queda como brecha
-// documentada, no como chequeo simulado.
-const EB_HIGH_MIN_RECENT_N = 20;
+// ADR-0007: sample count and similarity alone cannot certify a validated
+// prediction band. Category/process stability and held-out coverage/error are
+// not available in this path yet, so confidence is capped at medium.
+// Legacy ranking compatibility coefficient, NOT a probability or confidence
+// on the evidence/prediction scales. Preserve the pre-ADR-0007 search utility
+// while correcting the public prediction band independently.
+const rankingConfidenceScore = calibration => {
+  const h = calibration?.history;
+  let ebCoefficient = 35;
+  if (h && Number.isFinite(h.n)) {
+    const sim = clamp01(Number.isFinite(h.similarity) ? h.similarity : 0.5);
+    const recentN = Number.isFinite(h.recentN) ? h.recentN : 0;
+    if (recentN >= 20 && sim >= 0.8) ebCoefficient = 90;
+    else if (h.n >= 3 && sim >= 0.6) ebCoefficient = 65;
+  }
+  return Math.round((ebCoefficient + 65) / 2); // existing risk coefficient
+};
 
 const buildUncertainty = (an, ctx, calibration) => {
   const sp = an?.sp;
@@ -241,11 +248,12 @@ const buildUncertainty = (an, ctx, calibration) => {
   let halfWidth = Math.max(15, Math.abs(calEb) * 0.20);
   if (h && Number.isFinite(h.n)) {
     const sim = clamp01(Number.isFinite(h.similarity) ? h.similarity : 0.5);
-    const recentN = Number.isFinite(h.recentN) ? h.recentN : 0;
-    if (recentN >= EB_HIGH_MIN_RECENT_N && sim >= 0.8) ebConfidence = 'high';
-    else if (h.n >= 3 && sim >= 0.6) ebConfidence = 'medium';
-    if (Number.isFinite(h.sd) && h.sd > 0) halfWidth = Math.max(h.sd * 1.5, Math.abs(calEb) * (ebConfidence === 'high' ? 0.08 : 0.12));
-    else halfWidth = Math.abs(calEb) * (ebConfidence === 'high' ? 0.10 : ebConfidence === 'medium' ? 0.15 : 0.20);
+    if (h.n >= 3 && sim >= 0.6) ebConfidence = 'medium';
+    const historicalWidth = Number.isFinite(h.sd) && h.sd > 0
+      ? Math.max(h.sd * 1.5, Math.abs(calEb) * 0.12)
+      : Math.abs(calEb) * (ebConfidence === 'medium' ? 0.15 : 0.20);
+    // Weak evidence may widen uncertainty, never remove the heuristic floor.
+    halfWidth = ebConfidence === 'low' ? Math.max(halfWidth, historicalWidth) : historicalWidth;
   }
   const eb = {
     central: Math.round(calEb),
@@ -253,9 +261,10 @@ const buildUncertainty = (an, ctx, calibration) => {
     high: Math.max(0, Math.round(calEb + halfWidth)),
     confidence: ebConfidence,
     source: calibration?.source || 'theoretical',
+    validation: 'unvalidated',
     note: ebConfidence === 'low'
       ? 'Estimación heurística; usar como rango comparativo, no como rendimiento garantizado.'
-      : 'Rango ajustado con resultados históricos comparables de Setas de la Peña.',
+      : 'Rango ajustado con resultados históricos comparables; sin validación independiente de cobertura o error.',
   };
 
   let phTrend = 'sin referencia';
@@ -403,6 +412,7 @@ const scoreRecipe = (an, ctx = {}) => {
 
   return {
     score, status, breakdown, weights, caps: SEVERITY_CAPS,
+    rankingConfidenceScore: rankingConfidenceScore(calibration),
     dimensions,
     confidence,
     uncertainty,

@@ -4291,11 +4291,11 @@ const IngredientItem=({ing,onAdd,stockKg=0})=>{
   );
 };
 
-const EBDial=({an,sp})=>{
+const EBDial=({an,sp,forecast})=>{
   if(!an||!sp||!an.cn) return null;
-  const eb=Math.max(0,an.eb||0);
+  const eb=Math.max(0,forecast?.value??an.eb??0);
   const base=sp.eb_baseline, opt=sp.eb_optimal;
-  const maxV=Math.max(160, Math.ceil((opt*1.2)/10)*10);
+  const maxV=Math.max(160, Math.ceil((opt*1.2)/10)*10, forecast?.high||0);
   const cx=130, cy=112, R=90;
   const rad=d=>d*Math.PI/180;
   const ang=v=>135+(Math.min(Math.max(v,0),maxV)/maxV)*270;
@@ -4303,7 +4303,7 @@ const EBDial=({an,sp})=>{
   const arc=(v0,v1,r)=>{const[x0,y0]=pt(v0,r);const[x1,y1]=pt(v1,r);const large=(ang(v1)-ang(v0))>180?1:0;return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;};
   const status=eb<base?'low':eb<=opt?'good':'high';
   const needleCol=status==='low'?'var(--coral-500)':status==='high'?'var(--status-ok)':'var(--accent-olive)';
-  const stLabel=status==='low'?'Por debajo del rango':status==='high'?'Excelente — sobre el óptimo':'Dentro del rango óptimo';
+  const stLabel=status==='low'?'Por debajo de la referencia':status==='high'?'Sobre la referencia':'Dentro de la referencia';
   const [nx,ny]=pt(eb,R-8);
   const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round((f*maxV)/5)*5);
   return (
@@ -4322,11 +4322,11 @@ const EBDial=({an,sp})=>{
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'transform .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
         <circle cx={cx} cy={cy} r="7" fill="var(--paper-50)" stroke="var(--ink-900)" strokeWidth="1.6"/>
         <circle cx={cx} cy={cy} r="2.4" fill="var(--ink-900)"/>
-        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="var(--brand-accent-text)">{an.ebLow}–{an.ebHigh}</text>
-        <text x={cx} y={cy+52} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-400)">% RANGO ESPERADO</text>
-        <text x={cx} y={cy+66} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="9" fill="var(--ink-300)">central {eb.toFixed(0)}% · índice {an.ebIndex}/100</text>
+        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="var(--brand-accent-text)">{forecast?.low??an.ebLow}–{forecast?.high??an.ebHigh}</text>
+        <text x={cx} y={cy+52} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-400)">% RANGO ESTIMADO</text>
+        <text x={cx} y={cy+66} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="9" fill="var(--ink-300)">central {eb.toFixed(0)}% · índice de fórmula {an.ebIndex}/100</text>
       </svg>
-      <div className="ebdial-note">{stLabel} · franja óptima {base}–{opt}%</div>
+      <div className="ebdial-note">{stLabel} · referencia {base}–{opt}%</div>
     </div>
   );
 };
@@ -4378,6 +4378,23 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
 const blendEBWithHistory=(an,historical)=>{
   const hasHist=historical&&historical.n>0&&historical.avg!=null;
   return hasHist?(an.eb*(1-historical.weight)+historical.avg*historical.weight):an.eb;
+};
+
+// One forecast for Formulador, Perito and the presentation bridge. Preserve
+// the existing central EB and carry the exact historical pool with its band.
+const recipeEBForecast=(an,historical)=>{
+  if(!an) return null;
+  const value=blendEBWithHistory(an,historical);
+  const history=historical?.n>0&&historical.weight>0?historical:null;
+  const model=globalThis.SetasScoring.scoreRecipe(an,{...(history?{blendedEB:value}:{}),historyCalibration:history,__bridgeRecompute:true});
+  return {...model.uncertainty.eb,value,history};
+};
+
+const storedPredictionError=rows=>{
+  const comparable=rows.filter(t=>finiteEB(t.eb)!=null);
+  if(!comparable.length) return null;
+  const mae=comparable.reduce((sum,t)=>sum+Math.abs(t.ebReal-finiteEB(t.eb)),0)/comparable.length;
+  return {mae:Math.round(mae*10)/10,n:comparable.length};
 };
 
 // ── Procedencia de las métricas de nutrientes (C:N, N, pH, digestibilidad) ──
@@ -4638,7 +4655,7 @@ const IconPause = ({ size = 12, color = 'currentColor' }) => (
   </svg>
 );
 
-const RecipeGauges=({an,sp,optimalAn,historical})=>{
+const RecipeGauges=({an,sp,optimalAn,historical,forecast})=>{
   if(!sp||!an||!an.cn) return (
     <aside className="bg-wrap recipe-live-evaluation is-empty" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
       <div className="bg-eyebrow" id="recipe-live-title">Evaluación en vivo</div>
@@ -4649,7 +4666,7 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
       </div>
     </aside>
   );
-  const hasHist=historical&&historical.n>0&&historical.avg!=null;
+  const hasHist=historical&&historical.n>0&&historical.avg!=null&&historical.weight>0;
   const blendedEB=blendEBWithHistory(an,historical);
   return (
     <aside className="bg-wrap recipe-live-evaluation" id="recipe-live-evaluation" aria-labelledby="recipe-live-title">
@@ -4673,9 +4690,9 @@ const RecipeGauges=({an,sp,optimalAn,historical})=>{
         min={sp.eb_baseline} max={sp.eb_optimal} ideal={sp.eb_optimal}
         value={an?Math.round(blendedEB):null}
         reference={optimalAn?Math.round(optimalAn.eb):null}
-        scaleMin={0} scaleMax={Math.max(200,Math.ceil(sp.eb_optimal*1.4/10)*10)}
+        scaleMin={0} scaleMax={Math.max(200,Math.ceil(sp.eb_optimal*1.4/10)*10,forecast?.high||0)}
         color="var(--brand-accent-text)" warnColor="var(--accent-terracotta)"/>
-      {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {an.ebLow}–{an.ebHigh}% · índice {an.ebIndex}/100 · la aguja es el valor central</div>}
+      {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {forecast?.low??an.ebLow}–{forecast?.high??an.ebHigh}% · índice de fórmula {an.ebIndex}/100 · la aguja es el valor central</div>}
       <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft)')}}>
         {hasHist?(
           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800)',lineHeight:1.5}}>
@@ -8439,6 +8456,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // Perito para que ambos coincidan: antes el gauge mostraba un EB ajustado
   // por lotes reales pero el score de al lado seguía siendo 100% teórico.
   const blendedEB=an?blendEBWithHistory(an,histStats):null;
+  const ebForecast=useMemo(()=>recipeEBForecast(an,histStats),[an,histStats]);
   // Memoria de sesión de qué bandera/ícono se atacó desde el Perito — ver
   // repeatedApply en generateOptimizer. Por ícono, no por operación exacta:
   // refinar el mismo ingrediente para un problema distinto no cuenta como
@@ -8511,12 +8529,12 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
       ingredients:effectiveINGS.map(g=>({id:g.id,name:g.name})),
       ingredientMoistureById:Object.fromEntries(prodIngs.map(g=>[g.id,g.moisture??null])),
       processCapabilities:null,approval:null,
-      treatment:tr,an,
+      treatment:tr,an,forecast:ebForecast,
       historicalEvidence:{trials:saved,lotes:bitLotes,harvests:bitCosechas},
     };
     globalThis.__setasPeritoInput=input;
     window.dispatchEvent(new CustomEvent('setas-perito-input',{detail:input}));
-  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded,preparation,prodIngs]);
+  },[recipe,sKey,sp,hasPickedSpecies,lockedIds,numBags,kgBag,hObj,stockMap,effectiveINGS,tr,an,saved,bitLotes,bitCosechas,peritoInventoryLoaded,preparation,prodIngs,ebForecast]);
   useEffect(()=>{
     const navigate=event=>{
       const action=event.detail?.action;
@@ -8556,13 +8574,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
   // mostrar qué tan preciso ha sido el modelo aquí en esta bodega y (b) avisar
   // si la receta activa se parece a una prueba ya hecha, con su resultado real.
   const trialsWithReal=useMemo(()=>assessHistory(saved.filter(s=>s.sKey===sKey)).eligibleRows,[saved,sKey]);
-  const modelAccuracy=useMemo(()=>{
-    if(!trialsWithReal.length) return null;
-    const comparable=trialsWithReal.filter(t=>finiteEB(t.eb)!=null);
-    if(!comparable.length) return null;
-    const avgAbsDiff=comparable.reduce((s,t)=>s+Math.abs(t.ebReal-finiteEB(t.eb)),0)/comparable.length;
-    return Math.round(avgAbsDiff*10)/10;
-  },[trialsWithReal]);
+  const modelAccuracy=useMemo(()=>storedPredictionError(trialsWithReal),[trialsWithReal]);
   const similarTrial=useMemo(()=>{
     if(!recipe.length||!trialsWithReal.length) return null;
     let best=null,bestSim=0;
@@ -8666,7 +8678,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
     const restrictiveFactor=isWorkbench?(engineCalcRestrictiveFactor?engineCalcRestrictiveFactor(an,sp,{treatment:tr}):(engineCalcLiebigBottleneck?engineCalcLiebigBottleneck(an,sp):null)):null;
     const reqPsi=isWorkbench?(engineTenjoPhysicalContext?.requiredGaugePressurePsi||(engineCalcRequiredGaugePressurePsi?engineCalcRequiredGaugePressurePsi(2600):19.03)):null;
     const optHold=isWorkbench&&engineCalcOptimalHoldTime?engineCalcOptimalHoldTime({weightKg:kgBag||2.0,moisturePct:hObj||65,altitudeM:2600,gaugePressurePsi:reqPsi}):null;
-    const wrapDeep=(summary,node)=>(phoneCompact&&!isWorkbench)
+    const wrapDeep=(summary,node)=>!isWorkbench
       ?<details className="perito-deep-details" data-testid="perito-deep-details"><summary className="summary-tap">{summary}</summary>{node}</details>
       :node;
     const onMorph=tgt=>{setMorphTargetRecipe(tgt);setWorkbenchMode('morphing');if(!isWorkbench) openBuilderSubTab('generador');};
@@ -8708,6 +8720,11 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
           </div>
         )}
         {hasPer&&<div style={{marginTop:-8,marginBottom:12}}><SubstrateClassNote info={substrateClassInfo}/></div>}
+        {hasPer&&ebForecast&&<div data-testid="recipe-eb-forecast" style={{marginBottom:12}}>
+          <strong>EB estimada · {ebForecast.central}%</strong> · rango {ebForecast.low}–{ebForecast.high}%
+          <div className="os-provenance-line">Confianza de predicción {ebForecast.confidence==='medium'?'media':'baja'} · {ebForecast.history?`${ebForecast.history.n} lote${ebForecast.history.n===1?'':'s'} · peso histórico ${Math.round(ebForecast.history.weight*100)}%`:'modelo heurístico'}</div>
+          <div>{ebForecast.note}</div>
+        </div>}
         {hasPer&&<AutoImproveSummary result={autoImproveSummary} onUndo={undoLastRec} canUndo={recipeHistory.length>0}/>}
 
         {isWorkbench&&<>
@@ -8762,20 +8779,22 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
         </>}
 
-        {wrapDeep(`Métricas del modelo · C:N ${an.cn>0?an.cn.toFixed(1)+':1':'—'} · N ${an.avgN>0?an.avgN.toFixed(2)+'%':'—'} · EB ${an.ebLow&&an.ebHigh?an.ebLow+'–'+an.ebHigh:an.eb.toFixed(0)}%`,<>
+        {wrapDeep(`Métricas del modelo · C:N ${an.cn>0?an.cn.toFixed(1)+':1':'—'} · N ${an.avgN>0?an.avgN.toFixed(2)+'%':'—'} · EB ${ebForecast?ebForecast.low+'–'+ebForecast.high:an.eb.toFixed(0)}%`,<>
         <div className="mgrid" style={{marginBottom:12}}>
           {[
                         {l:'C:N',v:an.cn>0?`${an.cn.toFixed(1)}:1`:'—',ok:sp&&an.cn>=sp.cn_optimal.min&&an.cn<=sp.cn_optimal.max,prov:an.cn>0?procedenciaNutriente('cn'):procedenciaSinMatrizNutritiva()},
                         {l:'Nitrógeno',v:an.avgN>0?`${an.avgN.toFixed(2)}%`:'—',ok:sp&&an.avgN>=sp.n_optimal.min&&an.avgN<=sp.n_optimal.max,prov:an.avgN>0?procedenciaNutriente('n'):procedenciaSinMatrizNutritiva()},
-                        {l:'EB esperada',v:an.ebLow&&an.ebHigh?`${an.ebLow}–${an.ebHigh}%`:`${an.eb.toFixed(0)}%`,ok:an.eb>100,w:an.eb>70&&an.eb<=100},
-                        {l:'Costo / kg seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,neutral:true,prov:procedenciaCosto(an.cost,realCostPerKg),sub:an.eb>0?`≈ $${Math.round((an.cost||0)/(an.eb/100)).toLocaleString('es-CO')} por kg de hongo con la EB estimada`:null},
+                        {l:'EB esperada',v:ebForecast?`${ebForecast.low}–${ebForecast.high}%`:`${an.eb.toFixed(0)}%`,forecast:true},
+                        {l:'Costo / kg seco',v:`$${Math.round(an.cost||0).toLocaleString('es-CO')}`,neutral:true,prov:procedenciaCosto(an.cost,realCostPerKg),sub:ebForecast?.value>0?`≈ $${Math.round((an.cost||0)/(ebForecast.value/100)).toLocaleString('es-CO')} por kg de hongo con la EB estimada`:null},
                         {l:'pH estimado',v:an.avgPh?.toFixed(1)||'—',ok:sp&&an.avgPh>=sp.ph_optimal?.min&&an.avgPh<=sp.ph_optimal?.max,w:false,prov:procedenciaNutriente('ph')},
                         {l:'Digestibilidad',v:`${an.avgDig?.toFixed(1)||'—'}/10`,ok:an.avgDig>=7,w:an.avgDig>=4&&an.avgDig<7,prov:procedenciaNutriente('dig')},
                     ].map(m=>(
                       <div key={m.l} className="mc">
                         <div className="mlbl">{m.l}</div>
                         <div className="mval">{m.v}</div>
-                        {m.neutral
+                        {m.forecast
+                          ?<span className="mbadge bwarn">Conf. {ebForecast?.confidence==='medium'?'media':'baja'}</span>
+                          :m.neutral
                           ?<span className="mbadge bneutral" data-testid="metric-no-target" title={COST_NO_TARGET_TITLE}>Sin objetivo</span>
                           :<span className={`mbadge ${m.ok?'bgood':m.w?'bwarn':'bbad'}`}>{m.ok?'Óptimo':m.w?'Aceptable':'Ajustar'}</span>}
                         {m.prov&&<span className="os-provenance-line" title={m.prov.title||undefined}>{m.prov.texto}</span>}
@@ -8787,7 +8806,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
 
         {/* ── EB + C:N ── */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))',gap:16,margin:'12px 0'}}>
-          <EBDial an={an} sp={sp}/>
+          <EBDial an={an} sp={sp} forecast={ebForecast}/>
                   {sp&&an.cn>0&&(
                     <div className="gauge-wrap">
                       <div className="gauge-hdr">
@@ -8808,13 +8827,13 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
         {/* ── EVIDENCIA + SUGERENCIAS ── */}
         {hasPer&&(
           <>
-                      {histStats&&histStats.n>0&&
+                      {histStats&&histStats.n>0&&histStats.weight>0&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
                           Score ajustado con {histStats.n} lote{histStats.n!==1?'s':''} real{histStats.n!==1?'es':''}{histStats.matched?' con receta similar':' de la especie'} ({histStats.subs.join(', ')}) — peso {Math.round(histStats.weight*100)}% histórico / {Math.round((1-histStats.weight)*100)}% fórmula
                         </div>}
                       {modelAccuracy!=null&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-600)',marginBottom:8}}>
-                          Precisión del modelo para {sp?.name||'esta especie'} con la bodega actual: ±{modelAccuracy}% EB (basado en {trialsWithReal.length} prueba{trialsWithReal.length!==1?'s':''} con EB real registrado)
+                          Error absoluto medio histórico para {sp?.name||'esta especie'}: {modelAccuracy.mae} puntos de EB · {modelAccuracy.n} predicciones guardadas comparables. No valida el modelo actual ni la cobertura del rango.
                         </div>}
                       {similarTrial&&
                         <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--status-warn-text)',background:'rgba(160,120,40,.08)',border:'1px solid rgba(160,120,40,.2)',borderRadius:4,padding:'6px 9px',marginBottom:8}}>
@@ -16005,7 +16024,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               {renderPeritoPanel('formulador')}
               <details className="review-details" data-testid="form-review-gauges">
                 <summary>Medidores y comparación del modelo</summary>
-                <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats}/>
+                <RecipeGauges an={an} sp={sp} optimalAn={optimalAn} historical={histStats} forecast={ebForecast}/>
               </details>
           {recipe.length>0&&(
           <details className="form-support-details" data-testid="formulator-provenance-details">
@@ -16057,7 +16076,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   // confianza aquí porque la banda de predicción la calcula
                   // scoring.js y no está en alcance en esta franja — inventarle un
                   // nivel sería exactamente el defecto que esto viene a corregir.
-                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null);
+                  const conHistorial=!!(histStats&&histStats.n>0&&histStats.avg!=null&&histStats.weight>0);
                   const d=prov.describe({vocabulary:'ebType',value:conHistorial?'model+field-data':'heuristic-model'});
                   if(!d) return 'Estimado';
                   const muestra=conHistorial

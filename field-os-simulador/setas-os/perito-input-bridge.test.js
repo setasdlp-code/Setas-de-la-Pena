@@ -38,3 +38,15 @@ test('missing moisture cannot claim quantity coverage',()=>{
  assert.equal(h.calls[0].stockKgById,undefined);
  assert.equal(h.context.__setasPeritoAssessment.assessment.checks.find(c=>c.id==='stock').status,'unknown');
 });
+
+test('React forecast is preserved when contextual evidence uses another pool',()=>{
+ const h=harness();
+ const detail=input(1);
+ detail.forecast={value:150,history:{n:4,meanEB:200,avg:200,weight:0.5,similarity:1,sd:0}};
+ h.send(detail);h.flush();
+ const model=h.context.__setasPeritoAssessment.model;
+ assert.equal(model.uncertainty.eb.central,150);
+ assert.equal(model.calibration.history.n,4);
+ assert.ok(model.uncertainty.eb.low<=150 && model.uncertainty.eb.high>=150);
+ assert.match(h.box().innerHTML,/sin validación independiente/);
+});
