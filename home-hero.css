@@ -30,3 +30,19 @@
   .home-page .hero-pena .origin-actions .hero-cta { flex: 1 1 100%; justify-content: center; }
   .hero-pena-land img { max-height: none; min-height: 0; }
 }
+
+/* Home gateway: four entries to the pages that now stand on their own. */
+.home-paths { padding-block: 24px 72px; }
+.home-paths h2 { margin: 0 0 8px; padding-bottom: 16px; border-bottom: var(--rule-hairline); color: var(--text-secondary); }
+.home-paths-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 4vw; margin: 0; padding: 0; list-style: none; }
+.home-paths-list a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; min-height: 44px; padding: 20px 0; border-bottom: var(--rule-hairline); color: var(--text-primary); text-decoration: none; }
+.home-paths-list .path-name { font: 700 clamp(24px, 2.4vw, 32px)/1.1 var(--font-editorial); letter-spacing: -.01em; }
+.home-paths-list .path-note { grid-column: 1; max-width: 42ch; font: 400 16px/1.5 var(--font-sans); color: var(--text-secondary); }
+.home-paths-list .path-arrow { grid-row: 1; grid-column: 2; transition: transform .2s ease; }
+.home-paths-list a:hover .path-name { text-decoration: underline; text-underline-offset: 4px; }
+.home-paths-list a:hover .path-arrow { transform: translate(2px, -2px); }
+.home-paths-list a:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 3px; }
+@media (max-width: 760px) {
+  .home-paths { padding-block: 8px 48px; }
+  .home-paths-list { grid-template-columns: 1fr; }
+}

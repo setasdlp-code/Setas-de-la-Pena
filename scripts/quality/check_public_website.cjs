@@ -150,7 +150,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await visit(page, 'home');
     await page.screenshot({ path: path.join(out, 'catalogo-1280.png') });
     assert.equal(await page.locator('#hero-title').innerText().then(text => text.replace(/\s+/g, ' ')), 'Del micelio a la mesa.');
-    assert.equal(await page.locator('.origin-actions a[href="#coleccion"]').count(), 1);
+    assert.equal(await page.locator('.origin-actions a[href="/setas"]').count(), 1);
     assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
     assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Aviso de cosecha/);
     // The hero opens with cooking, not traceability (identidad comercial v1.1 §3; voz v2.4).
@@ -158,7 +158,9 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
     assert.equal(await page.locator('.catalog-descriptor').count(), 0);
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');
-    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio', 'coleccion'], 'approved reduced home contains only introduction and species catalogue');
+    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio', 'empezar'], 'home contains only the introduction and the four entries; the species catalogue lives on /setas');
+    assert.equal(await page.locator('.species-card, #species-dialog').count(), 0);
+    assert.deepEqual(await page.locator('.home-paths-list a').evaluateAll(nodes => nodes.map(a => a.getAttribute('href'))), ['/setas', '/cocina', '/restaurantes', '/mundo-micelar']);
     assert.ok(await page.locator('#hero-title, .origin-actions').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'headline and project links visible on a small laptop');
     await page.setViewportSize({ width: 390, height: 900 });
     await visit(page, 'home');
@@ -167,14 +169,17 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#primary-nav').isVisible(), false);
     assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator('.hero-pena-land figcaption, .hero-pena-species').count(), 0);
+    const engravingRatio = await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
+    assert.ok(Math.abs(engravingRatio - .84) < .01, 'engraving occupies 84% of its column');
     await page.locator('.menu-toggle').click();
-    await page.locator('#primary-nav a[href="#coleccion"]').click();
-    await page.waitForURL('**/home#coleccion');
+    await page.locator('#primary-nav a[href="/setas"]').click();
+    await page.waitForURL('**/setas');
     await page.waitForLoadState('networkidle');
     assert.equal(await page.locator('#primary-nav').isVisible(), false);
-    assert.equal(new URL(page.url()).pathname, '/home');
+    assert.equal(new URL(page.url()).pathname, '/setas');
     assert.equal(await page.locator('h1').count(), 1);
-    assert.equal(await page.locator('#collection-title').evaluate(el => el.tagName), 'H2');
+    assert.equal(await page.locator('#collection-title').evaluate(el => el.tagName), 'H1');
     assert.deepEqual(await page.locator('.species-card h3').allTextContents(), ['Shiitake', 'Melena de león', 'Eryngii']);
     // Approved reduced home keeps its preparation guide collapsed and species dialog.
     assert.equal(await page.locator('#prep-guide').isVisible(), true);
@@ -182,12 +187,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('[data-prep="asar"]').click();
     assert.equal(await page.locator('.species-card:not([hidden]) h3').innerText(), 'Eryngii');
     assert.equal(await page.locator('#species-dialog').count(), 1);
-    assert.equal(await page.locator('.hero-pena-land figcaption, .hero-pena-species').count(), 0);
-    const engravingRatio = await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
-    assert.ok(Math.abs(engravingRatio - .84) < .01, 'engraving occupies 84% of its column');
     await page.locator('#filter-reset').click();
     assert.equal(await page.locator('.species-card:not([hidden])').count(), 3);
-    assert.equal(new URL(page.url()).pathname, '/home');
+    assert.equal(new URL(page.url()).pathname, '/setas');
+    await visit(page, 'home#coleccion');
+    await page.waitForURL('**/setas#coleccion');
     report.checks.push({ type: 'catalogue-first-viewport-and-mobile-menu', result: 'passed', covers: ['brief introduction and project links at 1280×800', 'mobile menu closes with Escape and restores focus', 'menu link reaches catalogue'] });
     await visit(page, 'mundo-micelar');
     assert.equal(await page.locator('h1').innerText().then(t => t.replace(/\s+/g, ' ')), 'El mundo micelar.');
@@ -707,7 +711,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
 
     const noJs = await contextWith(undefined, { javaScriptEnabled: false });
     const staticPage = await noJs.newPage();
-    await staticPage.goto(base + 'home#coleccion');
+    await staticPage.goto(base + 'setas#coleccion');
     assert.equal(await staticPage.locator('.species-card').count(), 3);
     assert.equal(await staticPage.locator('.card-recipes').count(), 3);
     assert.equal(await staticPage.locator('#source-culinary').count(), 1);
