@@ -8,6 +8,7 @@ confidence: high
 primary_sources:
   - literature_database.md
 related_documents:
+  - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - instalacion_bioseguridad_2026-11-04/informe.md
   - literature_database.md
   - literature_audit_2026-07-23.md
@@ -246,6 +247,12 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 Dossier consultivo incorporado el 2026-11-05: [informe DOC-0138](microclima_operacion_remota_2026-11-04/informe.md) y [bibliografía DOC-0139](microclima_operacion_remota_2026-11-04/bibliografia.md), con 26 fuentes locales S01–S26 y límites de lectura explícitos.
 
 Cubre compensación SCD30/MH-Z19C por presión, calibración/condensación, caudal efectivo y distribución, calor de núcleo, agua/rocío y recuperación sin red. Incluye matriz de evidencia, campaña reversible, comparación manual/automática y esquemas de registro para ALT01–ALT07, SH06 y SH09. Señala soporte pendiente del factor MH y la referencia bibliográfica incorrecta de calor metabólico, sin cambiar ni retirar protecciones. El estado descrito corresponde al corte del informe; no constituye dato de campo nuevo, setpoint ni cierre de esas preguntas. Sus candidatos de medición/diseño permanecen consultivos; la incorporación no modifica ARK ni reglas operativas.
+
+## Dossier consultivo — calidad, poscosecha y economía de shiitake (2026-11-04)
+
+Ver `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md` (DOC-0136) y `references/calidad_poscosecha_economia_shiitake_2026-11-04_bibliografia.md` (DOC-0137). La bibliografía reúne 17 fuentes con enlaces y nivel real de lectura: S3–S5 tienen acceso parcial; S7 es el artículo original de Schill et al. (2021), DOI `10.3390/foods10040816`, con métodos y resultados comprobados. S1–S17 son identificadores locales del dossier, no nuevos IDs del catálogo global.
+
+La incorporación amplía ARK-028/030 y añade ARK-031. Los escenarios reproducibles de `09_research/annexes/calidad_poscosecha_economia_shiitake_2026-11-04/` son supuestos ilustrativos, no datos de finca. DEC-022 gobierna fresco entero y deshidratado entero condicionado: no ensayar secado antes de tres ciclos cerrados. No se promueven duraciones, consignas térmicas ni criterios nuevos a SOP.
 
 ## Investigación consultiva — instalación y bioseguridad, 2026-11-04
 

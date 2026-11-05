@@ -34,6 +34,7 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
+| `[KB]` | Incorporado DOC-0136: investigación consultiva de calidad, poscosecha, trazabilidad/retiro y economía de shiitake; bibliografía DOC-0137 con 17 fuentes y acceso declarado, modelo Python y CSV con diez escenarios de supuestos. Actualizados INDEX, literature_index, ARK-028/030, nueva ARK-031 y pendientes AB05/06/12. Conserva DEC-022; sin cambios de SOP, cifras operativas, estado productivo ni Setas OS. |
 | `[DECISION]` | DEC-022: shiitake fresco entero como producto del piloto; deshidratado entero de un ingrediente como única línea transformada candidata, condicionada a tres ciclos cerrados, comprador con especificación, margen propio y ruta NSA. Fuera: polvos, extractos, snacks y conservas. |
 | `[BIZ]` | Punteros a DEC-022 en `07_business/pricing.md`, `07_business/regulatory_framework.md`, `08_brand/identity.md` y `08_brand/packaging.md` (la bolsa de deshidratado queda condicionada). Sin cambios en precios, SOPs, setpoints ni Setas OS. |
 

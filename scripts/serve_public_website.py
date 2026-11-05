@@ -34,7 +34,7 @@ class Handler(SimpleHTTPRequestHandler):
         route = unquote(urlsplit(path).path)
         mapping = {'/': 'design-system.html' if self.source else 'index.html',
                    '/home': 'index.html' if self.source else 'home.html',
-                   '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html',
+                   '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html',
                    '/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html',
                    '/manual': 'manual.html', '/typography': 'typography.html',
                    **{f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}}
