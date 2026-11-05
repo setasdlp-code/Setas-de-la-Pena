@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ORIGIN = "https://setas-de-la-pena.pages.dev"
 HOME = ("Inicio", "/home")
 
-RECIPE_PAGES = ["recetas.html", "recetas-eryngii.html", "recetas-melena.html"]
+RECIPE_PAGES = ["recetas.html", "recetas-eryngii.html", "recetas-melena.html", "recetas-encurtidos.html"]
 BREADCRUMBS = {
     "setas.html": [HOME, ("Las setas", "/setas")],
     "cocina.html": [HOME, ("Recetas", "/cocina")],
@@ -33,6 +33,7 @@ BREADCRUMBS = {
     "recetas.html": [HOME, ("Recetas", "/cocina"), ("Recetas con shiitake", "/recetas")],
     "recetas-eryngii.html": [HOME, ("Recetas", "/cocina"), ("Recetas con eryngii", "/recetas-eryngii")],
     "recetas-melena.html": [HOME, ("Recetas", "/cocina"), ("Recetas con melena de león", "/recetas-melena")],
+    "recetas-encurtidos.html": [HOME, ("Recetas", "/cocina"), ("Encurtidos y soya", "/recetas-encurtidos")],
     "especies/shiitake.html": [HOME, ("Las setas", "/setas"), ("Shiitake", "/especies/shiitake")],
     "especies/melena-de-leon.html": [HOME, ("Las setas", "/setas"), ("Melena de león", "/especies/melena-de-leon")],
     "especies/eryngii.html": [HOME, ("Las setas", "/setas"), ("Eryngii", "/especies/eryngii")],

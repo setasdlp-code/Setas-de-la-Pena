@@ -12,13 +12,13 @@ from urllib.parse import urlsplit, unquote
 ROOT = Path(__file__).resolve().parents[1]
 ORIGIN = 'https://setas-de-la-pena.pages.dev'
 ROUTES = {'index.html': 'home.html', 'design-system.html': 'index.html'}
-CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html'}
+CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html'}
 SPECIES_PAGES = {f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}
 CLEAN.update(SPECIES_PAGES)
 PUBLIC_PAGES = {'/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html'}
 CLEAN.update(PUBLIC_PAGES)
-COMMERCIAL = {'index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', '404.html', *SPECIES_PAGES.values(), *PUBLIC_PAGES.values()}
-SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'design-system.html', 'manual.html', 'despensa.html', 'fichas.html',
+COMMERCIAL = {'index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', '404.html', *SPECIES_PAGES.values(), *PUBLIC_PAGES.values()}
+SEEDS = ['index.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'design-system.html', 'manual.html', 'despensa.html', 'fichas.html',
          *SPECIES_PAGES.values(), *PUBLIC_PAGES.values(), '404.html', 'robots.txt', 'sitemap.xml', 'assets/social/setas-de-la-pena.png',
          '08_brand/ds-2026/brand-kit/assets/firma-setas-de-la-pena-original.png']
 ATTR = re.compile(r'\b(?:href|src)\s*=\s*([\'"])(.*?)\1', re.I)
@@ -207,7 +207,7 @@ class Exporter:
         self.write('_headers', (ROOT / 'public-headers.txt').read_bytes(), 'public-headers.txt')
         self.write('_redirects', (ROOT / 'public-redirects.txt').read_bytes(), 'public-redirects.txt')
         records = sorted(self.records.values(), key=lambda r: r['file'])
-        audit = {'result': 'exported locally; not deployed', 'routes': {'/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', **SPECIES_PAGES, **PUBLIC_PAGES},
+        audit = {'result': 'exported locally; not deployed', 'routes': {'/': 'index.html', '/home': 'home.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', **SPECIES_PAGES, **PUBLIC_PAGES},
                  'commercialCss': css_bundle, 'cssInputs': sorted(self.css_inputs), 'files': records}
         (self.output.parent / 'export-audit.json').write_text(json.dumps(audit, indent=2, ensure_ascii=False)+'\n')
         print(json.dumps({'output': str(self.output), 'files': len(records), 'bytes': sum(r['bytes'] for r in records)}))

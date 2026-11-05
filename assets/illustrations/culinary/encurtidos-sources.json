@@ -1,0 +1,40 @@
+{
+  "createdDate": "2026-11-04",
+  "method": "Built-in image_gen tool. New culinary illustrations using arepa-shiitake-gouache.webp as style reference.",
+  "reference": "arepa-shiitake-gouache.webp",
+  "recipeStatus": "Ilustraciones orientativas; no documentan ensayos culinarios ni validación de conservación.",
+  "encoding": "WebP quality 86, original dimensions and composition; no crop.",
+  "sharedPrompt": "Use case illustration-story, original culinary artwork. Match reference opaque gouache and colored-pencil technique, restrained brushstrokes, soft organic edges and sparse contours. Square, elevated three-quarter view; vessel centered and fully visible with clear margins. Warm off-white #FAF8F3, oak brown #594631, moss #2E3B2F/#6D7C5A, sand #BFA98B and muted ochre. No text, logos, hands, cutlery, flowers, loose ingredients, cast shadow, 3D or photography. Replace arepa entirely; no maize or avocado.",
+  "images": [
+    {
+      "file": "encurtido-shiitake-gouache.webp",
+      "source": "exec-4ca1146d-1251-42a4-a9a0-0c38bb8d225e.png",
+      "sha256": "091a970b962a585b3587ddb92c84709bba570e3d10a335282e568b445b36ff6c",
+      "originalSHA256": "069822a5ce12a2f6318bcd030da2676d0499befa36a917d705ef526e111b00aa",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 166588,
+      "subjectPrompt": "Single open clear glass jar filled with cooked sliced shiitake, carrot batons, cucumber and red sweet pepper in pale amber vinegar pickling liquid; no lid or label."
+    },
+    {
+      "file": "tsukudani-jengibre-gouache.webp",
+      "source": "exec-1235c3c9-88da-4216-a26c-d716f28ed838.png",
+      "sha256": "7d1b28fbfc0868f07bfc258d62e14ac4c23866d55ba26bcf5688a22ab6d06a8d",
+      "originalSHA256": "7879f02e339798974261eb9e7257515069dc3e1a273555de096fc56ca1dceb43",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 138708,
+      "subjectPrompt": "Single shallow cream ceramic bowl with small fully cooked shiitake caps glazed in dark soy sauce and fine pale golden ginger matchsticks; no rice or extra garnish."
+    },
+    {
+      "file": "tsukudani-kombu-gouache.webp",
+      "source": "exec-a67866e5-eaf8-4753-af7d-2ea226a76dbb.png",
+      "sha256": "559cf8c4645104f5c76f656b85b60db60408e3b470cc5c084d1ffede53bb1c89",
+      "originalSHA256": "c44683f1d80ece9848efe8aecd61efa9c44ebfc9d8c90b00b1073eb05a447959",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 124910,
+      "subjectPrompt": "Single shallow cream ceramic bowl with cooked quartered shiitake, dark olive kombu strips and restrained red chili fragments in reduced soy and mirin glaze; no rice or extra garnish."
+    }
+  ]
+}
