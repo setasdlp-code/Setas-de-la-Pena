@@ -360,16 +360,16 @@
       {
         "icon": "↑EB",
         "priority": "warning",
-        "action": "Agregar <b>Estiércol de Gallina Deshidratado</b> 8% · quedan 20% de margen seguro",
+        "action": "Agregar <b>Harina de Pescado Deshidratada</b> 8% · quedan 20% de margen seguro",
         "apply": {
           "mode": "add",
-          "id": "estierc_gallina_deshid",
+          "id": "harina_pescado",
           "delta": 8
         },
-        "deltaEb": -8.4,
+        "deltaEb": 13.3,
         "deltaEbRange": [
-          -38.4,
-          21.6
+          -17.7,
+          44.3
         ]
       },
       {

@@ -438,6 +438,9 @@
   // `evaluate` (opcional, de createRecipeEvaluator) fija el contexto de score
   // del veredicto y de las predicciones. Sin él se conserva el comportamiento
   // histórico (oráculo de paridad y tests que no lo pasan).
+  // Mejora mínima de EB simulada para proponer un suplemento en la tarjeta ↑EB
+  // (misma regla de empate que la vista Mejor con Bodega).
+  const UEB_MIN_GAIN_PTS = 1;
   const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}, spp, usageCounts = {}, evaluate = null) => {
     const effectiveINGS = getEffectiveINGS(ings);
     const effectiveSPP = getEffectiveSPP(spp);
@@ -593,18 +596,66 @@
         apply: { mode: subir ? (inRec ? 'increase' : 'add') : 'decrease', id: ing.id, delta: 4 }
       });
     }
+    // Evaluación de una receta candidata: objetivos propios de esa receta (la
+    // clase de sustrato puede cambiar al aplicar el ajuste) y mismo contexto
+    // de score que el veredicto. Sin evaluador: comportamiento histórico.
+    const evalCandidate = (cand) => {
+      if (typeof evaluate === 'function') {
+        const e = evaluate(cand);
+        return e ? { an: e.an, scoreObj: e.scoreObj, spp: e.spp } : null;
+      }
+      const a = analyze(cand, sKey, effectiveINGS, effectiveSPP);
+      if (!a) return null;
+      return { an: a, scoreObj: scoreAn(a, { treatment: calcTreatment(a, sKey, effectiveSPP), recipe: cand, stockIds }), spp: effectiveSPP };
+    };
+
     if (flags.ebWarn) {
+      // Mismo orden de preferencia que antes (el que ya está en la receta, luego
+      // el más barato; Bodega primero), pero cada candidato se simula con el
+      // evaluador del veredicto: se propone el primero que sube la EB estimada
+      // al menos UEB_MIN_GAIN_PTS sin críticos nuevos. Si ninguno, la tarjeta
+      // lo dice en vez de proponer un ajuste.
       const margen = sp.supplementation_max - an.suppP;
-      const ing = bestStock(g => g.n >= 2 && g.role === 'suplemento_n', (a, b) => a.cost - b.cost);
-      const inRec = recipe?.find(r => ing && r.id === ing.id);
-      if (ing) {
-        const d = Math.min(8, Math.round(margen)); items.push({
+      const d = Math.min(8, Math.round(margen));
+      const baseE = evalCandidate(recipe);
+      const critOf = e => (e && SetasScoring.assessSeverity ? SetasScoring.assessSeverity(e.an).criticals : 0);
+      const baseEb = baseE ? baseE.an.eb : an.eb;
+      const baseCrit = critOf(baseE);
+      const all = effectiveINGS
+        .filter(g => g.cs && g.cs.includes(sKey) && g.n >= 2 && g.role === 'suplemento_n' && !lockedIds.includes(g.id))
+        .sort((a, b) => a.cost - b.cost || a.id.localeCompare(b.id));
+      const inStock = useStock ? all.filter(g => stockIds.size === 0 || stockIds.has(g.id)) : [];
+      const pool = inStock.length ? inStock : all;
+      const inRecipeOf = g => (recipe || []).some(r => r.id === g.id);
+      const ordered = [...pool.filter(inRecipeOf), ...pool.filter(g => !inRecipeOf(g))];
+      let best = null;
+      if (d > 0) for (const g of ordered) {
+        const inRec = inRecipeOf(g);
+        const apply = { mode: inRec ? 'increase' : 'add', id: g.id, delta: d };
+        const e = evalCandidate(applyOptToRecipe(recipe, apply, lockedIds, effectiveINGS));
+        if (!e) continue;
+        if (e.an.eb - baseEb < UEB_MIN_GAIN_PTS || critOf(e) > baseCrit) continue;
+        best = { g, inRec, apply };
+        break;
+      }
+      if (best) {
+        recommendedIds.add(best.g.id);
+        items.push({
           priority: 'warning', icon: '↑EB',
           label: 'Potencial de EB sin explotar',
-          action: `${inRec ? 'Aumentar' : 'Agregar'} <b>${ing.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
-        effect: `La estimación heurística actual es ${an.eb.toFixed(0)}% y queda margen de suplementación. Ensayar en lote controlado antes de atribuir una mejora de EB.`,
-        delta: 'Hipótesis para ensayo; no es rendimiento garantizado',
-          apply: { mode: inRec ? 'increase' : 'add', id: ing.id, delta: d }
+          action: `${best.inRec ? 'Aumentar' : 'Agregar'} <b>${best.g.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
+          effect: `La estimación heurística actual es ${an.eb.toFixed(0)}% y queda margen de suplementación. Ensayar en lote controlado antes de atribuir una mejora de EB.`,
+          delta: 'Hipótesis para ensayo; no es rendimiento garantizado',
+          apply: best.apply,
+        });
+      } else {
+        items.push({
+          priority: 'info', icon: '↑EB',
+          label: 'Potencial de EB sin explotar',
+          action: `Ningún suplemento de nitrógeno compatible sube la EB estimada dentro del margen de suplementación (${Math.max(0, Math.round(margen))}%).`,
+          effect: `La estimación heurística actual es ${an.eb.toFixed(0)}%. El límite parece estar en otra variable (C:N, N, pH o la base); revisar las demás tarjetas.`,
+          delta: 'Sin ajuste propuesto',
+          apply: null,
         });
       }
     }
@@ -770,19 +821,6 @@
     const { score, status: statusFromScore } = baseEval
       ? baseEval.scoreObj
       : scoreAn(an, { treatment: tr13, recipe, stockIds, blendedEB });
-    // Evaluación de una receta candidata: objetivos propios de esa receta (la
-    // clase de sustrato puede cambiar al aplicar el ajuste) y mismo contexto
-    // de score que el veredicto. Sin evaluador: comportamiento histórico.
-    const evalCandidate = (cand) => {
-      if (typeof evaluate === 'function') {
-        const e = evaluate(cand);
-        return e ? { an: e.an, scoreObj: e.scoreObj, spp: e.spp } : null;
-      }
-      const a = analyze(cand, sKey, effectiveINGS, effectiveSPP);
-      if (!a) return null;
-      return { an: a, scoreObj: scoreAn(a, { treatment: calcTreatment(a, sKey, effectiveSPP), recipe: cand, stockIds }), spp: effectiveSPP };
-    };
-
     const SIDE_EFFECT_FLAGS = ['cnHigh', 'cnLow', 'nLow', 'nHigh', 'phLow', 'phHigh'];
     const FLAG_OWNER_ICON = { cnHigh: '↓C:N', cnLow: '↑C:N', nLow: '↑N', nHigh: '↓N', phLow: '↑pH', phHigh: '↓pH' };
     const FLAG_LABEL = { cnHigh: 'C:N demasiado alto', cnLow: 'C:N demasiado bajo', nLow: 'N insuficiente', nHigh: 'exceso de N', phLow: 'pH ácido', phHigh: 'pH alcalino' };
@@ -1068,6 +1106,7 @@
     ROLE_CAP_INCREASE,
     capForRole,
     applyOptToRecipe,
+    UEB_MIN_GAIN_PTS,
     calcMaxBatchFromStock,
     quantifyItem,
     generateOptimizer,
