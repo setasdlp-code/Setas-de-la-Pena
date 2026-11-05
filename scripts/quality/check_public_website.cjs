@@ -53,7 +53,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const page = await context.newPage();
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
-      for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
+      for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
         await visit(page, file);
         const metrics = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth, brokenImages: [...document.images].filter(img => !img.complete || img.naturalWidth === 0).map(img => img.getAttribute('src')), pairing: document.documentElement.dataset.pairing }));
         assert.ok(metrics.content <= width, `${file} overflow at ${width}`);
@@ -428,14 +428,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'recipe-navigation-keyboard-print', result: 'passed', covers: ['three home recipe links', 'hash opens recipe', 'keyboard toggles instructions', 'shortcut reopens same hash', 'print expands and restores instructions'] });
 
     const brokenLinks = [];
-    for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
+    for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
       await visit(page, file);
       const ids = await page.locator('[id]').evaluateAll(elements => elements.map(el => el.id));
       assert.equal(ids.length, new Set(ids).size, `${file} duplicate IDs`);
       const links = await page.locator('a[href]').evaluateAll(links => [...new Set(links.map(el => el.href))]);
       for (const link of links.filter(link => link.startsWith(base))) {
         const url = new URL(link);
-        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
+        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
         const filePath = path.join(root, cleanSources[url.pathname] || decodeURIComponent(url.pathname));
         if (!fs.existsSync(filePath)) { brokenLinks.push(link); continue; }
         if (url.hash && filePath.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
