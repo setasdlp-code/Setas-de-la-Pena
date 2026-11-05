@@ -3,11 +3,12 @@ title: Índice de Literatura
 document_id: DOC-0043
 category: research
 load_priority: on_request
-last_reviewed: 2026-08-28
+last_reviewed: 2026-11-05
 confidence: high
 primary_sources:
   - literature_database.md
 related_documents:
+  - instalacion_bioseguridad_2026-11-04/informe.md
   - literature_database.md
   - literature_audit_2026-07-23.md
   - research_summaries.md
@@ -237,3 +238,11 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 | paper_039 | Silva et al. | 2025 | Storage temperature and shelf-life of H. erinaceus | *H. erinaceus*; poscosecha | ★★★★★ |
 
 **Aplicación curada:** estas fuentes respaldan priorizar formulaciones comparativas, trazabilidad de contaminación, cadena fría, pruebas de secado y polvo culinario. No promueven parámetros a SOP, CANON ni setpoints.
+
+
+## Investigación consultiva — instalación y bioseguridad, 2026-11-04
+
+| Documento | Alcance y evidencia | Límite de uso |
+|---|---|---|
+| [Informe de instalación, higiene y continuidad](instalacion_bioseguridad_2026-11-04/informe.md) | Reconversión modular de la marranera; riesgos, mediciones as-built, alternativas y compuertas de piloto/réplica | Investigación consultiva, sin mediciones nuevas ni aprobación profesional, sanitaria o constructiva |
+| [Bibliografía y registro de verificación](instalacion_bioseguridad_2026-11-04/bibliografia.md) | Fuentes primarias y oficiales, Tier, representación leída y accesos fallidos | Distingue texto completo, resumen y aplicabilidad local pendiente; no promueve parámetros a SOP |
