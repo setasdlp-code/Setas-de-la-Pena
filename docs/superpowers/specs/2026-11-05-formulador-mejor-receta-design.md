@@ -14,8 +14,13 @@ Today there are three separate ways to reach a recommendation (Perito fix cards,
 Auto-mejorar, Generador with four modes), about 15–20 controls on the path, each using a
 different search, and the engines underneath disagree with each other (two `analyze`
 copies, three cost formulas, two EB bands, two history paths). Some outputs are plainly
-wrong (observed: ΔEB "+53.8% → 119%" with a ±0.5 band labelled low confidence; a C:N fix
-that adds a new ingredient at 80.5% of the mix).
+wrong. Observed on Orellana Gris, eucalyptus 80 / wheat bran 20:
+- ΔEB intervals that do not contain their own estimate or are inverted:
+  `+53.8 [+54, +55]`, `+0.3 [+1, +1]`, `+2.6 [+5, +1]`, and labelled "%" although they
+  are EB points. (Correction 2026-11-05: the projected EB of 119 itself is **not** a bug —
+  Orellana Gris `eb_optimal` is 130; EB above 100 is normal.)
+- A C:N "fix" that adds retamo espinoso at 80.5% — i.e. replaces the base, worded as
+  "agregar", above the 80% `ROLE_CAP_ADD.base_carbono`, while Bodega holds 4 kg.
 
 ## Goals
 
@@ -176,16 +181,45 @@ Calls made by Claude (correctable):
 - **Mixed pricing.** Per-ingredient: FIFO over Bodega lots where they exist, catalog
   price otherwise; provenance records which. An ingredient with no price at all
   excludes that recipe from "Más barata" and is flagged on the card.
-- **Bug fix expected behavior.** Displayed EB never exceeds the species' optimal EB;
-  ΔEB is shown in points, not relative %. A fix may not add a new ingredient above
-  its category's declared role limit; if no fix fits within limits, the card says so
-  instead of proposing one.
+- **Bug fix expected behavior.** ΔEB is shown in points, not %, and its interval always
+  contains the estimate (see Revisions below — the "EB above optimum" item was wrong).
+  A fix may not add a new ingredient above its category's declared role limit; if no
+  fix fits within limits, the card says so instead of proposing one.
 - **Compatibility authority.** The predicate used by `constraintFailures` in
   `perito-scenarios.js` is authoritative for "incompatible/forbidden".
 - **Band display change.** Moving the displayed band to `buildUncertainty` visibly
   changes ranges on existing recipes; accepted as a consolidation change and listed in
   the PR 1 description.
 - Planned-batch defaults, worker integration, and which dead code to delete: builder.
+
+## Revisions from planning (2026-11-05, Claude — supersede PR 1 items above)
+
+Found while planning; they narrow PR 1, they don't change what Sebastián chose.
+
+- **`substrate-analysis.js` is not edited in PR 1.** Its header makes
+  `npm run perito:regression` mandatory for any change, and that gate cannot run (no
+  corpus). `analyze` already cannot exceed `eb_optimal` (all factors ≤ 1), so no clamp.
+- **Bug 1 replaced:** the defect is the ΔEB interval in `simulateSuggestionDelta`
+  (`perito-workbench-core.js` ~L325-330), built as (newLow−prevLow, newHigh−prevHigh).
+  Fix: interval = (newLow − prevHigh, newHigh − prevLow) from the Scale-B band, so it
+  always contains the point estimate; display in "pts", not "%".
+- **Bug 2 refined:** new-ingredient additions must respect `ROLE_CAP_ADD`; an
+  alternative that introduces a new `base_carbono` is worded as a base replacement
+  ("Reemplazar base por …") and shows the kg in Bodega when known.
+- **Item 2 (single supplement %) deferred.** The only live divergent copy is the
+  Generador's `hybridSupplementPct`, a conservative search cap; changing it alters
+  Escenarios, which this work keeps as is.
+- **Item 3 (cost) narrowed.** `calculateFifoRecipeCost` already does per-ingredient
+  FIFO + catalog with provenance; it becomes the single cost basis for the new view.
+  PR 1 adds `unpricedIds` to it (a zero-price ingredient currently looks free) and
+  `costPerKgFreshMushroom`. Escenarios' Pareto transform stays (its ordering is kept).
+- **Item 5 (single history path) deferred.** Swapping which calibration feeds the main
+  panel touches `historyCalibration`/Scale-B gating — ADR-0004/0007 territory that needs
+  its own review and real lots. Both paths are empty today, so nothing diverges yet.
+- **Lot-1 recipe is not representable.** DOC-0127 (pellets 80 / salvado 20 + 1%
+  Ca(OH)₂) uses hardwood pellets and hydrated lime, neither in `substrate-catalog.js`.
+  The snapshot uses aserrín de roble 80 / salvado 20 / carbonato 1 as a labelled proxy.
+  Adding those two ingredients is catalog/KB work, out of scope.
 
 ## Left to the builder
 
