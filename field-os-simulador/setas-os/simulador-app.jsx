@@ -2124,7 +2124,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
             ΔScore: {deltaSim.diff.deltaScore>=0?`+${deltaSim.diff.deltaScore}`:deltaSim.diff.deltaScore} pts ({deltaSim.diff.newScore})
           </span>
           <span style={{padding:'2px 7px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:700,background:deltaSim.diff.deltaEb>=0?'rgba(77,98,53,.15)':'color-mix(in srgb, var(--status-error) 15%, transparent)',color:deltaSim.diff.deltaEb>=0?'var(--moss-800)':'var(--coral-700)'}}>
-            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}%`:`${deltaSim.diff.deltaEb}%`} {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}%, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}%]`:''} ({Math.round(deltaSim.diff.newEb)}%)
+            ΔEB: {deltaSim.diff.deltaEb>=0?`+${deltaSim.diff.deltaEb}`:`${deltaSim.diff.deltaEb}`} pts {deltaSim.diff.deltaEbRange?`[${deltaSim.diff.deltaEbRange[0]>=0?'+':''}${deltaSim.diff.deltaEbRange[0]}, ${deltaSim.diff.deltaEbRange[1]>=0?'+':''}${deltaSim.diff.deltaEbRange[1]}]`:''} ({Math.round(deltaSim.diff.newEb)}%)
           </span>
           {deltaSim.diff.confidence&&(
             <span style={{padding:'2px 6px',borderRadius:3,fontFamily:'var(--font-mono)',fontSize:'var(--text-micro)',fontWeight:600,background:'rgba(43,76,126,.1)',color:'var(--slate-800)'}}>

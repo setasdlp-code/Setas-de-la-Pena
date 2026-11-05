@@ -317,14 +317,26 @@
     const deltaEb = Math.round((newEb - prevEb) * 10) / 10;
     const deltaCn = Math.round((newCn - prevCn) * 10) / 10;
 
-    // Rango de incertidumbre agronómica en ΔEB:
-    const prevEbLow = Number.isFinite(baseAn?.ebLow) ? baseAn.ebLow : Math.round(prevEb * 0.9);
-    const prevEbHigh = Number.isFinite(baseAn?.ebHigh) ? baseAn.ebHigh : Math.round(prevEb * 1.1);
-    const newEbLow = Number.isFinite(nextAn?.ebLow) ? nextAn.ebLow : Math.round(newEb * 0.9);
-    const newEbHigh = Number.isFinite(nextAn?.ebHigh) ? nextAn.ebHigh : Math.round(newEb * 1.1);
-
-    const deltaEbLow = Math.round((newEbLow - prevEbLow) * 10) / 10;
-    const deltaEbHigh = Math.round((newEbHigh - prevEbHigh) * 10) / 10;
+    // Rango de incertidumbre agronómica en ΔEB, en puntos de EB.
+    // Cada estado aporta la semiamplitud de su banda (Escala B, la misma del
+    // veredicto; si no hay, la de analyze; si tampoco, ±10 %). El rango del
+    // cambio es el peor caso de ambas: [Δ − (sa₀+sa₁), Δ + (sa₀+sa₁)], que
+    // equivale a (bajo nuevo − alto previo, alto nuevo − bajo previo) y siempre
+    // contiene la estimación. Antes se restaban bajos con bajos y altos con
+    // altos, lo que podía dejar la estimación fuera o invertir el rango.
+    const halfWidthOf = (an, scoreObj, eb) => {
+      const band = scoreObj?.uncertainty?.eb;
+      if (Number.isFinite(band?.low) && Number.isFinite(band?.high)) return Math.abs(band.high - band.low) / 2;
+      if (Number.isFinite(an?.ebLow) && Number.isFinite(an?.ebHigh)) return Math.abs(an.ebHigh - an.ebLow) / 2;
+      return Math.abs(eb) * 0.1;
+    };
+    const prevScoreObj = hasEvaluate ? (evaluate(recipe)?.scoreObj || null) : (baseScore && typeof baseScore === 'object' ? baseScore : null);
+    const spread = halfWidthOf(baseAn, prevScoreObj, prevEb) + halfWidthOf(nextAn, nextScoreObj, newEb);
+    const deltaEbLow = Math.round((deltaEb - spread) * 10) / 10;
+    const deltaEbHigh = Math.round((deltaEb + spread) * 10) / 10;
+    const newHalf = halfWidthOf(nextAn, nextScoreObj, newEb);
+    const newEbLow = Math.max(0, Math.round(newEb - newHalf));
+    const newEbHigh = Math.round(newEb + newHalf);
     const confidence = nextScoreObj?.uncertainty?.eb?.confidence || 'medium';
 
     // Comparativa de cambios por ingrediente
