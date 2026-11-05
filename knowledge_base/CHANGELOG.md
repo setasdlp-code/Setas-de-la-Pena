@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-05
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporado DOC-0138: investigación consultiva de jerky vegano de shiitake, melena de león y orellana (variables de proceso, rangos Tier 3, conservación refrigerada 1–2 semanas, diagnóstico de fallas, fuentes por verificar). Punteros en fichas de *L. edodes*, *H. erinaceus* y *P. ostreatus*; nuevas AB17–AB19; literature_index. Conserva DEC-022; sin cambios de SOP, cifras operativas ni Setas OS. Uso público: receta casera en la web. |
 
 ### 2026-11-04
 
