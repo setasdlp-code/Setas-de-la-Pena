@@ -158,3 +158,7 @@ El hero del Home sustituye la ilustración fija `hero-specimens.png` por un carr
 Verificación local: `check_public_website.cjs` (72 comprobaciones, 0 errores de navegador), `check_public_export.cjs` (72) y `check_public_delivery.cjs` (52); fuera de Linux, `check_public_delivery.cjs` necesita `CHROMIUM_EXECUTABLE_PATH` apuntando al Chromium de Playwright.
 
 Despliegue verificado: `711c5084`, proyecto `setas-de-la-pena`, producción `main`, fuente `81229a0c` (rama `claude/setas-banner-design-588fad`, PR 424, aún sin fusionar). Sustituye a `b43224c7` (fuente `858b931`, ya incluida en esta rama). `check_public_live.py` verificó 246 archivos y 17 rutas. Hasta fusionar el PR, producción va por delante de `main`.
+
+## Despensa: mockups de derivados (ensayo)
+
+`despensa.html` y `fichas.html` son páginas de prueba, con `noindex` y sin enlace desde la portada ni el sitemap. `despensa.html` presenta tres líneas: deshidratadas, sazonadores y fresco entero para chefs, clasificado por tamaño y sin precortar. `fichas.html` reúne las tres hojas A4 de la prueba de cuatro semanas con chefs y mercados; el PDF exportado está en `outputs/fichas-lineas/`. Ninguna de las dos muestra precio, disponibilidad ni registro sanitario, y no hacen afirmaciones de salud.
