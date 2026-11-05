@@ -44,7 +44,7 @@ const recipes = {
     yield: [{ n: 8 }, ' bases pequeñas · ', { n: 2, max: 4 }, ' personas'],
     ingredients: [
       { id: 'platanos', qty: count(2, 'plátano verde', 'plátanos verdes') },
-      { id: 'aceite-sal', text: 'Aceite para pincelar la bandeja y los plátanos y para saltear los hongos; sal al gusto' },
+      { id: 'aceite-sal', text: 'Aceite para pincelar la bandeja y los plátanos y para saltear las setas; sal al gusto' },
       { id: 'shiitake', qty: amount(250, 'g', 'de shiitake fresco limpio, en láminas') },
       { id: 'aguacate', qty: count(1, 'aguacate pequeño', 'aguacates pequeños') },
       { id: 'al-gusto', text: 'Limón, cilantro y cebolla larga al gusto' }
