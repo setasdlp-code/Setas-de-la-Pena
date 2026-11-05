@@ -10,6 +10,10 @@
 .home-page .hero-pena .origin-actions a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 400 17px/1.3 var(--font-sans); color: var(--text-primary); text-decoration: underline; text-underline-offset: 5px; }
 .home-page .hero-pena .origin-actions .hero-cta { min-height: 56px; padding: 0 28px; background: var(--brand-primary); color: var(--text-inverse); font-weight: 500; text-decoration: none; border: 1px solid var(--brand-primary); }
 .home-page .hero-pena .origin-actions .hero-cta:hover { background: var(--moss-900); }
+/* Commercial state, said once in the page body: the nav button is hidden behind «Menú» on phones. */
+.home-page .hero-pena .origin-story > p.harvest-note { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; max-width: none; margin: 28px 0 0; padding-top: 14px; border-top: var(--rule-hairline); width: fit-content; font: 400 16px/1.4 var(--font-sans); color: var(--text-secondary); }
+.home-page .hero-pena .harvest-note-k { color: var(--text-secondary); }
+.home-page .hero-pena .harvest-note a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--brand-accent-text, var(--coral-700)); text-decoration: underline; text-underline-offset: 4px; }
 .home-page .hero-pena a:focus-visible { outline: 3px solid var(--focus-ring, var(--coral-500)); outline-offset: 3px; }
 
 .hero-pena-visual { min-width: 0; }
@@ -36,7 +40,7 @@
 .home-paths h2 { margin: 0 0 8px; padding-bottom: 16px; border-bottom: var(--rule-hairline); color: var(--text-secondary); }
 .home-paths-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 4vw; margin: 0; padding: 0; list-style: none; }
 .home-paths-list a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; min-height: 44px; padding: 20px 0; border-bottom: var(--rule-hairline); color: var(--text-primary); text-decoration: none; }
-.home-paths-list .path-name { font: 700 clamp(24px, 2.4vw, 32px)/1.1 var(--font-editorial); letter-spacing: -.01em; }
+.home-paths-list .path-name { margin: 0; font: 700 clamp(24px, 2.4vw, 32px)/1.1 var(--font-editorial); letter-spacing: -.01em; }
 .home-paths-list .path-note { grid-column: 1; max-width: 42ch; font: 400 16px/1.5 var(--font-sans); color: var(--text-secondary); }
 .home-paths-list .path-arrow { grid-row: 1; grid-column: 2; transition: transform .2s ease; }
 .home-paths-list a:hover .path-name { text-decoration: underline; text-underline-offset: 4px; }
