@@ -89,3 +89,14 @@ test('calculateFifoRecipeCost: sin bodega declara proveniencia catalog y realCos
   assert.ok(costResult.procurementEstimate > 0);
   assert.equal(costResult.stockCoveragePct, 0);
 });
+
+test('calculateFifoRecipeCost marca insumos sin precio en vez de tratarlos como gratis', () => {
+  const ings = [
+    { id: 'base', moisture: 10, cost: 500 },
+    { id: 'gratis', moisture: 10, cost: 0 },
+  ];
+  const recipe = [{ id: 'base', p: 80 }, { id: 'gratis', p: 20 }];
+  assert.deepEqual(calculateFifoRecipeCost(recipe, ings, []).unpricedIds, ['gratis']);
+  const lots = [{ id: 'l1', ingredienteId: 'gratis', fechaIngreso: '2026-10-01', cantidadKgDisponible: 100, precioPorKgCOP: 300, activo: true }];
+  assert.deepEqual(calculateFifoRecipeCost(recipe, ings, lots).unpricedIds, []);
+});

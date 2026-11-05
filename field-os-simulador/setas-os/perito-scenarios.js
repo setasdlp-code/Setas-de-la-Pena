@@ -181,6 +181,10 @@
     let totalNeededWetKg = 0;
     let totalAllocatedWetKg = 0;
     const details = [];
+    // Insumos cuyo costo depende de un precio de catálogo ausente o ≤ 0: sin
+    // esto, un insumo sin precio cuenta como gratis y abarata la receta.
+    const unpricedIds = [];
+    const hasPrice = g => Number.isFinite(Number(g?.cost)) && Number(g?.cost) > 0;
 
     for (const r of normalized) {
       const g = ingById.get(r.id);
@@ -201,6 +205,7 @@
 
         const procurementCostCOP = round2(missingKg * catalogPricePerKg);
         totalProcurementEstimate += procurementCostCOP;
+        if (missingKg > 0 && !hasPrice(g)) unpricedIds.push(r.id);
 
         details.push({
           id: r.id,
@@ -214,6 +219,7 @@
       } else {
         const procurementCostCOP = round2(itemWetKg * catalogPricePerKg);
         totalProcurementEstimate += procurementCostCOP;
+        if (itemWetKg > 0 && !hasPrice(g)) unpricedIds.push(r.id);
         details.push({
           id: r.id,
           neededWetKg: round3(itemWetKg),
@@ -251,6 +257,7 @@
       stockCoveragePct,
       realCostKnown: isPhysical,
       realCost: isPhysical ? Math.round(totalCostPerDryKg) : null,
+      unpricedIds,
       details,
     };
   };

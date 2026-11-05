@@ -66,3 +66,11 @@ test('Recetario conserva economía en el snapshot versionado', () => {
   assert.match(recetario, /sustrato\/kg hongo/);
   assert.match(recetario, /Comparables/);
 });
+
+test('costPerKgFreshMushroom divide el costo seco por la EB y no inventa valores', () => {
+  const { costPerKgFreshMushroom } = require('./perito-economy.js');
+  assert.equal(costPerKgFreshMushroom(1000, 80), 1250);
+  assert.equal(costPerKgFreshMushroom(1000, 0), null);
+  assert.equal(costPerKgFreshMushroom(NaN, 80), null);
+  assert.equal(costPerKgFreshMushroom(1000, undefined), null);
+});
