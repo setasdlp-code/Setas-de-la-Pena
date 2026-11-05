@@ -148,3 +148,42 @@ test('la marca "tope alcanzado" no queda en una alternativa que deja la métrica
   assert.ok(val >= range.min && val <= range.max, it.delta);
   assert.equal(it.capped, false);
 });
+
+// Plan PR 1, tarea 3: una alternativa no puede pasar el tope de su rol, y una
+// base nueva que pasa a ser mayoría de la receta es un reemplazo de base, no un
+// "agregar".
+const plain = s => String(s || '').replace(/<[^>]+>/g, '');
+const retamoCase = () => setup('p_ostreatus_gris', [{ id: 'aserrin_eucalipto', p: 80 }, { id: 'salvado_trigo', p: 20 }], {
+  stockIds: new Set(['aserrin_eucalipto', 'retamo_espinoso']), useStock: true,
+});
+const capOf = (id, recipe) => RO.capForRole(id, recipe.some(r => r.id === id) ? RO.ROLE_CAP_INCREASE : RO.ROLE_CAP_ADD, 100, cat.INGS);
+
+test('alternativa nunca supera el tope de rol', () => {
+  const cases = [
+    ['p_ostreatus_gris', [{ id: 'aserrin_eucalipto', p: 80 }, { id: 'salvado_trigo', p: 20 }], { stockIds: new Set(['aserrin_eucalipto', 'retamo_espinoso']), useStock: true }],
+    ['lions_mane', [{ id: 'guadua', p: 80 }, { id: 'harina_soya', p: 20 }], {}],
+  ];
+  for (const [sKey, recipe, opts] of cases) {
+    const { opt } = setup(sKey, recipe, opts);
+    for (const it of opt.items.filter(i => i.alternativeFor && i.apply)) {
+      assert.ok(it.apply.value <= capOf(it.apply.id, recipe), `${sKey}: ${it.apply.id} a ${it.apply.value}% supera el tope ${capOf(it.apply.id, recipe)}%`);
+    }
+  }
+});
+
+test('alternativa que introduce una base nueva mayoritaria se redacta como reemplazo', () => {
+  const { opt } = retamoCase();
+  const it = opt.items.find(i => i.alternativeFor && i.apply?.id === 'retamo_espinoso' && i.apply.value >= 50);
+  assert.ok(it, 'se esperaba una alternativa con retamo ≥ 50 %');
+  assert.equal(it.replacesBase, true);
+  assert.match(plain(it.action), /Reemplazar base por Retamo espinoso/);
+  assert.doesNotMatch(plain(it.action), /agregar/i);
+});
+
+test('alternativa que introduce una base nueva minoritaria se presenta como segunda base', () => {
+  const { opt } = setup('p_ostreatus_gris', [{ id: 'paja_avena', p: 97 }, { id: 'paja_soya', p: 3 }]);
+  const it = opt.items.find(i => i.alternativeFor && i.apply?.id === 'papel_periodico');
+  assert.ok(it, 'se esperaba la alternativa con papel periódico');
+  assert.ok(!it.replacesBase);
+  assert.match(plain(it.action), /como segunda base/);
+});

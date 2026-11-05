@@ -12,7 +12,7 @@ from urllib.parse import urlsplit, unquote
 ROOT = Path(__file__).resolve().parents[1]
 ORIGIN = 'https://setas-de-la-pena.pages.dev'
 ROUTES = {'index.html': 'home.html', 'design-system.html': 'index.html'}
-CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html'}
+CLEAN = {'/home': 'index.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html'}
 SPECIES_PAGES = {f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}
 CLEAN.update(SPECIES_PAGES)
 PUBLIC_PAGES = {'/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html'}

@@ -39,7 +39,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         for (const link of links) {
           const url = new URL(link);
           if (!url.href.startsWith(base)) continue;
-          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/setas':'setas.html', '/cocina':'cocina.html', '/restaurantes':'restaurantes.html', '/mundo-micelar':'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
+          const cleanFiles = { '/': 'index.html', '/home': 'home.html', '/setas':'setas.html', '/cocina':'cocina.html', '/restaurantes':'restaurantes.html', '/mundo-micelar':'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
           const target = path.join(publicDir, cleanFiles[url.pathname] || decodeURIComponent(url.pathname));
           assert.ok(fs.existsSync(target), link);
           if (url.hash && target.endsWith('.html')) assert.ok(fs.readFileSync(target, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), link);

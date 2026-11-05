@@ -89,3 +89,23 @@ test('calculateFifoRecipeCost: sin bodega declara proveniencia catalog y realCos
   assert.ok(costResult.procurementEstimate > 0);
   assert.equal(costResult.stockCoveragePct, 0);
 });
+
+test('calculateFifoRecipeCost marca insumos sin precio en vez de tratarlos como gratis', () => {
+  const ings = [
+    { id: 'base', moisture: 10, cost: 500 },
+    { id: 'gratis', moisture: 10, cost: 0 },
+  ];
+  const recipe = [{ id: 'base', p: 80 }, { id: 'gratis', p: 20 }];
+  assert.deepEqual(calculateFifoRecipeCost(recipe, ings, []).unpricedIds, ['gratis']);
+  const lots = [{ id: 'l1', ingredienteId: 'gratis', fechaIngreso: '2026-10-01', cantidadKgDisponible: 100, precioPorKgCOP: 300, activo: true }];
+  assert.deepEqual(calculateFifoRecipeCost(recipe, ings, lots).unpricedIds, []);
+});
+
+test('calculateFifoRecipeCost marca un lote de Bodega sin precio aunque cubra todo', () => {
+  const ings = [{ id: 'salvado', moisture: 10, cost: 900 }];
+  const recipe = [{ id: 'salvado', p: 100 }];
+  const sinPrecio = [{ id: 'l1', ingredienteId: 'salvado', fechaIngreso: '2026-10-01', cantidadKgDisponible: 100, activo: true }];
+  const enCero = [{ ...sinPrecio[0], precioPorKgCOP: 0 }];
+  assert.deepEqual(calculateFifoRecipeCost(recipe, ings, sinPrecio).unpricedIds, ['salvado']);
+  assert.deepEqual(calculateFifoRecipeCost(recipe, ings, enCero).unpricedIds, ['salvado']);
+});

@@ -232,3 +232,30 @@ test('analyzeMorphTrajectory evalúa factibilidad a lo largo de alpha [0, 1] y d
   assert.equal(res.feasibleInterval[0], 0);
   assert.ok(res.feasibleInterval[1] <= 0.3); // Solo hasta ~20% de salvado
 });
+
+test('simulateSuggestionDelta: el rango de ΔEB contiene la estimación (positivo y negativo)', () => {
+  const T = require('./species-targets.js');
+  const RO = require('./recipe-optimizer.js');
+  const cat = require('./substrate-catalog.js');
+  Object.assign(globalThis, cat);
+  globalThis.SetasScoring = require('./scoring.js');
+  const { analyze } = require('./substrate-analysis.js');
+  const sKey = 'p_ostreatus_gris';
+  const recipe = [{ id: 'aserrin_eucalipto', p: 80 }, { id: 'salvado_trigo', p: 20 }];
+  const resolveSpp = r => T.applyToSpp(cat.SPP, sKey, r, cat.INGS);
+  const evaluate = RO.createRecipeEvaluator({ sKey, ings: cat.INGS, resolveSpp, analyzeFn: analyze, blendEB: a => a.eb });
+  const spp = resolveSpp(recipe);
+  const an = analyze(recipe, sKey, cat.INGS, spp);
+  const opt = RO.generateOptimizer(an, sKey, new Set(), recipe, cat.INGS, [], an.eb, false, {}, spp, {}, evaluate);
+  const applies = opt.items.filter(it => it.apply).map(it => it.apply);
+  applies.push({ mode: 'set', id: 'salvado_trigo', value: 5 });
+  let negatives = 0;
+  for (const apply of applies) {
+    const sim = workbench.simulateSuggestionDelta({ recipe, apply, ingredients: cat.INGS, applyOptToRecipe: RO.applyOptToRecipe, evaluate });
+    const d = sim.diff.deltaEb;
+    const [lo, hi] = sim.diff.deltaEbRange;
+    if (d < 0) negatives += 1;
+    assert.ok(lo <= d && d <= hi, `${JSON.stringify(apply)}: ΔEB ${d} fuera de [${lo}, ${hi}]`);
+  }
+  assert.ok(negatives >= 1, 'se esperaba al menos un caso con ΔEB negativo');
+});

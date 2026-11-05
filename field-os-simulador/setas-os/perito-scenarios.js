@@ -181,6 +181,10 @@
     let totalNeededWetKg = 0;
     let totalAllocatedWetKg = 0;
     const details = [];
+    // Insumos cuyo costo depende de un precio de catálogo ausente o ≤ 0: sin
+    // esto, un insumo sin precio cuenta como gratis y abarata la receta.
+    const unpricedIds = [];
+    const hasPrice = g => Number.isFinite(Number(g?.cost)) && Number(g?.cost) > 0;
 
     for (const r of normalized) {
       const g = ingById.get(r.id);
@@ -195,12 +199,15 @@
 
       if (Array.isArray(invLotes) && invLotes.length > 0) {
         const { allocations, missingKg, physicalCostCOP } = allocateFifo(invLotes, r.id, itemWetKg);
+        // Un lote de Bodega sin precio (ausente o ≤ 0) tampoco es gratis.
+        const lotUnpriced = allocations.some(a => a.quantity > 0 && !(a.unitPriceCOP > 0));
         const allocatedKg = Math.max(0, itemWetKg - missingKg);
         totalAllocatedWetKg += allocatedKg;
         totalPhysicalCost += physicalCostCOP;
 
         const procurementCostCOP = round2(missingKg * catalogPricePerKg);
         totalProcurementEstimate += procurementCostCOP;
+        if (lotUnpriced || (missingKg > 0 && !hasPrice(g))) unpricedIds.push(r.id);
 
         details.push({
           id: r.id,
@@ -214,6 +221,7 @@
       } else {
         const procurementCostCOP = round2(itemWetKg * catalogPricePerKg);
         totalProcurementEstimate += procurementCostCOP;
+        if (itemWetKg > 0 && !hasPrice(g)) unpricedIds.push(r.id);
         details.push({
           id: r.id,
           neededWetKg: round3(itemWetKg),
@@ -251,6 +259,7 @@
       stockCoveragePct,
       realCostKnown: isPhysical,
       realCost: isPhysical ? Math.round(totalCostPerDryKg) : null,
+      unpricedIds,
       details,
     };
   };
@@ -1524,6 +1533,9 @@
     spawnOverride = undefined,
     structuralRootLimit = 4,
     structuralSeedCap = 300,
+    // Opt-in: devuelve todas las candidatas permitidas (vista Mejor con Bodega).
+    // No cambia ranked, pareto ni recommended.
+    includePool = false,
   }) => {
     if (!['local', 'global', 'hybrid'].includes(searchMode)) {
       throw new Error(`searchMode inválido: ${searchMode}`);
@@ -1609,6 +1621,7 @@
         ranked: [],
         pareto: [],
         recommended: [],
+        ...(includePool ? { pool: [] } : {}),
         best: baseline,
         lockedIds: [...locked],
         profile: {
@@ -1851,6 +1864,7 @@
       ranked,
       pareto,
       recommended,
+      ...(includePool ? { pool: baseline.evaluation?.allowed ? [baseline, ...allowed] : allowed.slice() } : {}),
       best: pareto[0] || ranked[0] || baseline,
       lockedIds: [...locked],
       profile: {

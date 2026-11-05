@@ -99,6 +99,17 @@ function runHybrid(targetKey, profileKey) {
   });
 }
 
+// Salida congelada del motor legado (runAutoOptimizer, eliminado en el plan
+// PR 1 del Formulador, 2026-11-05): top-12 por especie y perfil, generada con
+// el analyze canónico justo antes de borrarlo. Es el oráculo contra el que el
+// motor híbrido debe cubrir composiciones y no empeorar el mejor score.
+const LEGACY_GOLDEN = require('./recipe-optimizer-legacy-golden.json');
+function legacyGolden(targetKey, profileKey) {
+  const out = LEGACY_GOLDEN[`${targetKey}/${profileKey}`];
+  assert.ok(out, `falta la salida legada congelada para ${targetKey}/${profileKey}`);
+  return out;
+}
+
 function keys(rows) {
   return rows.map(r => scenarios.canonicalRecipeKey(r.recipe));
 }
@@ -106,7 +117,7 @@ function keys(rows) {
 for (const targetKey of ['p_ostreatus_gris', 'shiitake']) {
   for (const profileKey of ['rescate', 'produccion', 'premium']) {
     test(`oracle parity ${targetKey}/${profileKey}: no pierde top legacy y no regresa score`, () => {
-      const legacyOut = legacy.runAutoOptimizer(targetKey, [], 0, INGS, false, profileKey, {}, SPP);
+      const legacyOut = legacyGolden(targetKey, profileKey);
       const hybridOut = runHybrid(targetKey, profileKey);
 
       assert.equal(legacyOut.noStock, false);
@@ -254,7 +265,24 @@ test('searchScenarios diversifica recommended por base, no solo ranked (que el o
   );
 });
 
-// This test intentionally depends on runAutoOptimizer while it is the parity
-// oracle. After this gate passes in the complete checkout, freeze the observed
-// legacy top-12 compositions/scores as static golden fixtures; only then remove
-// runAutoOptimizer and migrate/delete its direct unit test.
+
+test('el optimizador usa el analyze canónico (substrate-analysis.js)', () => {
+  const cat = require('./substrate-catalog.js');
+  const canonical = require('./substrate-analysis.js').analyze;
+  const medio = cat.INGS.find(g => g.role === 'suplemento_medio' && g.cs?.includes('p_ostreatus_gris'));
+  const cases = [
+    ['p_ostreatus_gris', [{ id: 'aserrin_eucalipto', p: 75 }, { id: medio.id, p: 25 }]],
+    ['shiitake', [{ id: 'aserrin_roble', p: 80 }, { id: 'salvado_trigo', p: 20 }, { id: 'carbonato_calcio', p: 1 }]],
+  ];
+  for (const [sKey, recipe] of cases) {
+    const strip = a => JSON.parse(JSON.stringify({ ...a, sp: undefined }));
+    assert.deepEqual(strip(legacy.analyze(recipe, sKey, cat.INGS, cat.SPP)), strip(canonical(recipe, sKey, cat.INGS, cat.SPP)));
+  }
+});
+
+test('el analyze del optimizador no falla con insumos sin lista de compatibilidad', () => {
+  const ings = [{ id: 'paja', name: 'Paja', c: 45, n: 1.5, cn: 30, moisture: 10, ph: 7.0, dig: 6, cra: 3, role: 'base_carbono', cost: 300 }];
+  const spp = { x: { cn_optimal: { min: 20, max: 40, ideal: 30 }, n_optimal: { min: 1, max: 2, ideal: 1.5 }, eb_baseline: 60, eb_optimal: 100, supplementation_max: 20 } };
+  const an = legacy.analyze([{ id: 'paja', p: 100 }], 'x', ings, spp);
+  assert.deepEqual(an.incompat, []);
+});

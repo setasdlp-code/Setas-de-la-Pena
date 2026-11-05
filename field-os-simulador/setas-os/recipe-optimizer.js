@@ -4,7 +4,6 @@
 // receta actual, inventarios) como argumentos explícitos.
 (function () {
 
-  const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
 
   const SetasScoring = (typeof require !== 'undefined')
     ? require('./scoring.js')
@@ -13,105 +12,38 @@
   const getEffectiveINGS = (ings) => (ings && ings.length) ? ings : (typeof globalThis !== 'undefined' && globalThis.INGS ? globalThis.INGS : []);
   const getEffectiveSPP = (spp) => spp || (typeof globalThis !== 'undefined' && globalThis.SPP ? globalThis.SPP : {});
 
-  // ── analyze — análisis nutricional, fisicoquímico y estimación de EB ──
+  // ── analyze — delega en el motor canónico (substrate-analysis.js) ──
+  // Aquí vivía una copia que se había separado del original (no contaba
+  // suplemento_medio ni suppEffectiveP, así que elegía tratamiento distinto).
+  // El optimizador conserva solo su forma de resolver INGS/SPP ausentes.
+  const SubstrateAnalysis = (typeof require !== 'undefined')
+    ? require('./substrate-analysis.js')
+    : (globalThis.SetasSubstrateAnalysis || null);
+  if (!SubstrateAnalysis || typeof SubstrateAnalysis.analyze !== 'function') {
+    throw new Error('recipe-optimizer.js requiere substrate-analysis.js cargado antes.');
+  }
+  // Un insumo sin lista `cs` no tiene datos de compatibilidad: la copia
+  // anterior no lo marcaba incompatible, y el motor canónico exige la lista.
+  // Se completa solo para la especie evaluada, sin tocar el catálogo real.
+  const withCompatDefaults = (ings, sKey) => (ings.some(g => g && !Array.isArray(g.cs))
+    ? ings.map(g => (g && !Array.isArray(g.cs) ? { ...g, cs: sKey ? [sKey] : [] } : g))
+    : ings);
+  // Rango óptimo de ancho cero (min === max) haría 0/0 en el motor canónico.
+  // La copia anterior usaba una semiamplitud mínima (0,1 C:N; 0,01 % N); se
+  // conserva solo para ese caso degenerado — ninguna especie del catálogo lo tiene.
+  const widenRange = (range, minHalf) => (range && Number.isFinite(range.min) && Number.isFinite(range.max) && (range.max - range.min) / 2 < minHalf)
+    ? { ...range, min: range.min - (minHalf - (range.max - range.min) / 2), max: range.max + (minHalf - (range.max - range.min) / 2) }
+    : range;
+  const withRangeGuards = (spp, sKey) => {
+    const sp = spp && sKey ? spp[sKey] : null;
+    if (!sp) return spp;
+    const cn = widenRange(sp.cn_optimal, 0.1);
+    const n = widenRange(sp.n_optimal, 0.01);
+    return (cn === sp.cn_optimal && n === sp.n_optimal) ? spp : { ...spp, [sKey]: { ...sp, cn_optimal: cn, n_optimal: n } };
+  };
   const analyze = (recipe, sKey, ings, spp) => {
     if (!recipe || !recipe.length) return null;
-    const effectiveINGS = getEffectiveINGS(ings);
-    const effectiveSPP = getEffectiveSPP(spp);
-    const tot = recipe.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
-    if (!tot) return null;
-    let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, suppP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
-    const DENSOS = ['aserrin_roble', 'aserrin_eucalipto', 'aserrin_pino', 'aserrin_pino_compostado', 'borra_cafe', 'afrecho_cerveceria', 'chips_poda_urbana', 'guadua', 'carton_corrugado', 'pulpa_papel'];
-    recipe.forEach(r => {
-      const g = effectiveINGS.find(i => i.id === r.id);
-      if (!g) return;
-      const p = parseFloat(r.p) || 0;
-      const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
-      // % de receta en base seca: ponderar por p (D18).
-      if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
-      wPh += g.ph * p; wDig += g.dig * p; wCra += g.cra * p;
-      if (g.role === 'suplemento_n') suppP += p;
-      if (g.role === 'base_carbono') baseP += p;
-      if (['aditivo_ph', 'aditivo_estructura', 'aditivo_micronutriente'].includes(g.role)) addP += p;
-      if (g.role === 'aireador') airP += p;
-      if (g.cat === 'cafe') cafeP += p;
-      if (g.cat === 'est') manP += p;
-      if (DENSOS.includes(g.id)) densaP += p;
-      if (sKey && g.cs && !g.cs.includes(sKey) && g.cn > 0) incompat.push(g.name);
-    });
-    const avgN = nP ? wN / nP : 0;
-    const cn = avgN > 0 ? (nP ? wC / nP : 0) / avgN : 0;
-    const avgPh = tot ? wPh / tot : 7;
-    const avgDig = tot ? wDig / tot : 5;
-    const avgCra = tot ? wCra / tot : 3;
-    // COP por kg de mezcla seca (precio por kg tal cual se recibe) — D6.
-    const cost = recipe.reduce((s, r) => {
-      const g = effectiveINGS.find(i => i.id === r.id);
-      if (!g) return s;
-      const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
-      return s + (g.cost / (1 - m)) * (parseFloat(r.p) || 0) / 100;
-    }, 0);
-    const sp = effectiveSPP[sKey];
-    let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
-    let phF, aerF, digF, ebMods, ebCvVal, ebLow, ebHigh, ebIndex;
-    if (sp) {
-      const cnIdeal = Number.isFinite(sp.cn_optimal?.ideal) ? sp.cn_optimal.ideal : 30;
-      const cnMin = Number.isFinite(sp.cn_optimal?.min) ? sp.cn_optimal.min : cnIdeal - 5;
-      const cnMax = Number.isFinite(sp.cn_optimal?.max) ? sp.cn_optimal.max : cnIdeal + 5;
-      const cnHalfSpan = Math.max(0.1, (cnMax - cnMin) / 2);
-
-      const nIdeal = Number.isFinite(sp.n_optimal?.ideal) ? sp.n_optimal.ideal : 1.4;
-      const nMin = Number.isFinite(sp.n_optimal?.min) ? sp.n_optimal.min : nIdeal - 0.3;
-      const nMax = Number.isFinite(sp.n_optimal?.max) ? sp.n_optimal.max : nIdeal + 0.3;
-      const nHalfSpan = Math.max(0.01, (nMax - nMin) / 2);
-
-      const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - cnIdeal) / cnHalfSpan, 1.5));
-      const nF = Math.max(0, 1 - Math.pow(Math.abs(avgN - nIdeal) / nHalfSpan, 1.5));
-      const baseline = Number.isFinite(sp.eb_baseline) ? sp.eb_baseline : 60;
-      const optimal = Number.isFinite(sp.eb_optimal) ? sp.eb_optimal : 95;
-      eb = baseline + (optimal - baseline) * (cF * 0.6 + nF * 0.4);
-      const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
-      const needsAutoclave = suppP > suppLimit;
-      const nThresh = needsAutoclave ? nMax * 1.2 : nMax * 1.15;
-      if (avgN > nThresh && !needsAutoclave) { trichoderma = true; eb *= 0.45; }
-      else if (avgN > nThresh && needsAutoclave) { eb *= 0.80; }
-      else if (needsAutoclave) eb *= 0.85;
-      if (incompat.length) eb *= 0.9;
-      if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
-      phF = 1;
-      if (sp.ph_optimal) {
-        if (avgPh < sp.ph_optimal.min) phF = Math.max(0.70, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
-        else if (avgPh > sp.ph_optimal.max) phF = Math.max(0.80, 1 - (avgPh - sp.ph_optimal.max) * 0.10);
-      }
-      aerF = 1;
-      if (densaP > 60 && airP < 10) aerF = 0.85;
-      else if (densaP > 40 && airP < 8) aerF = 0.93;
-      const isLigninSpp = ['shiitake', 'reishi'].includes(sKey);
-      digF = isLigninSpp ? 1 : (avgDig >= 6 ? 1 : Math.max(0.85, 1 - (6 - avgDig) * 0.03));
-      eb = eb * phF * aerF * digF;
-      ebMods = { phF, aerF, digF };
-      ebCvVal = 0.18;
-      if (ebMods.phF < 0.95) ebCvVal += 0.05;
-      if (ebMods.aerF < 0.95) ebCvVal += 0.05;
-      if (ebMods.digF < 0.95) ebCvVal += 0.04;
-      if (incompat.length) ebCvVal += 0.08;
-      if (suppP > sp.supplementation_max) ebCvVal += 0.10;
-      if (trichoderma) ebCvVal = 0.50;
-      ebCvVal = Math.min(trichoderma ? 0.50 : 0.40, ebCvVal);
-      ebLow = Math.round(eb * (1 - ebCvVal));
-      ebHigh = Math.round(eb * (1 + ebCvVal));
-      ebIndex = Math.round(Math.max(0, Math.min(100, (eb - baseline) / Math.max(1, optimal - baseline) * 100)));
-      dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppP / 5));
-    }
-    const eucPct = recipe.reduce((s, r) => r.id === 'aserrin_eucalipto' ? s + (parseFloat(r.p) || 0) : s, 0);
-    const pescPct = recipe.reduce((s, r) => r.id === 'harina_pescado' ? s + (parseFloat(r.p) || 0) : s, 0);
-    return {
-      tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
-      ebLow: ebLow !== undefined ? ebLow : Math.round(eb),
-      ebHigh: ebHigh !== undefined ? ebHigh : Math.round(eb),
-      ebIndex: ebIndex !== undefined ? ebIndex : 0,
-      ebMods: ebMods !== undefined ? ebMods : null
-    };
+    return SubstrateAnalysis.analyze(recipe, sKey, withCompatDefaults(getEffectiveINGS(ings), sKey), withRangeGuards(getEffectiveSPP(spp), sKey));
   };
 
   // ── analyzeCoFormulation — evaluación multi-especie ponderada ──
@@ -206,148 +138,6 @@
       allIncompatibilities,
       bottlenecks,
       baseAnalysis
-    };
-  };
-
-  // ── computeParetoFrontier — frontera óptima entre coste ($/kg) y rendimiento (EB%) ──
-  const computeParetoFrontier = (sKey, ings, spp, options = {}) => {
-    const effectiveINGS = getEffectiveINGS(ings);
-    const effectiveSPP = getEffectiveSPP(spp);
-    const sp = effectiveSPP[sKey] || effectiveSPP.p_ostreatus_gris;
-    if (!sp) return { points: [], milestones: {} };
-
-    const freshPricePerKg = options.freshPricePerKg || 12000;
-    const kgBag = options.kgBag || 1.5;
-    const moistureSubstrate = options.moistureSubstrate || 0.67;
-    const dryKgPerBag = kgBag * (1 - moistureSubstrate);
-
-    const compatible = effectiveINGS.filter(g => {
-      if (!g || g.cost == null || isNaN(g.cost)) return false;
-      if (g.cs && !g.cs.includes(sKey)) return false;
-      if (sp.incompat_ings && sp.incompat_ings.includes(g.id)) return false;
-      return true;
-    });
-
-    const isBase = g => g.role === 'base_carbono' || g.cat === 'base' || g.cat === 'paja' || g.cat === 'maderas' || g.cat === 'bagazo';
-    const isSupp = g => g.role === 'suplemento_n' || g.role === 'suplemento_medio' || g.cat === 'suplemento' || g.cat === 'salvados' || g.cat === 'harinas' || g.cat === 'tortas';
-    const isMin = g => g.role === 'aditivo_ph' || g.role === 'aditivo_estructura' || g.role === 'aditivo_micronutriente' || g.cat === 'adit' || g.cat === 'mineral';
-
-    const bases = compatible.filter(isBase);
-    const supps = compatible.filter(isSupp);
-    const mins = compatible.filter(isMin);
-
-    const candidates = [];
-    const defaultMineral = mins.find(m => m.id === 'yeso_agricola' || m.id === 'yeso') || mins[0] || { id: 'yeso_agricola', cost: 700 };
-    const minPct = 3;
-    const maxSupp = sp.supplementation_max || sp.max_supp || 20;
-    const suppSteps = [0, 5, 10, 15, 20, maxSupp].filter(s => s <= maxSupp);
-
-    bases.forEach(base => {
-      const pureRecipe = [
-        { id: base.id, p: 100 - minPct },
-        { id: defaultMineral.id, p: minPct }
-      ];
-      const an = analyze(pureRecipe, sKey, effectiveINGS, effectiveSPP);
-      if (an && an.eb && !an.crit?.length) {
-        candidates.push({ recipe: pureRecipe, an, baseName: base.name, suppName: 'Sin suplemento' });
-      }
-
-      supps.forEach(supp => {
-        suppSteps.forEach(sPct => {
-          if (sPct === 0) return;
-          const rec = [
-            { id: base.id, p: 100 - minPct - sPct },
-            { id: supp.id, p: sPct },
-            { id: defaultMineral.id, p: minPct }
-          ];
-          const a = analyze(rec, sKey, effectiveINGS, effectiveSPP);
-          if (a && a.eb && !a.crit?.length && a.cn >= (sp.cn_optimal?.min || 15) && a.cn <= (sp.cn_optimal?.max || 60)) {
-            candidates.push({ recipe: rec, an: a, baseName: base.name, suppName: `${supp.name} (${sPct}%)` });
-          }
-        });
-      });
-    });
-
-    if (bases.length >= 2 && supps.length > 0) {
-      const topSupp = supps.find(s => s.id === 'salvado_trigo') || supps[0];
-      for (let i = 0; i < Math.min(bases.length, 6); i++) {
-        for (let j = i + 1; j < Math.min(bases.length, 6); j++) {
-          const b1 = bases[i], b2 = bases[j];
-          [10, 15].filter(s => s <= maxSupp).forEach(sPct => {
-            const rem = 100 - minPct - sPct;
-            const rec = [
-              { id: b1.id, p: rem * 0.5 },
-              { id: b2.id, p: rem * 0.5 },
-              { id: topSupp.id, p: sPct },
-              { id: defaultMineral.id, p: minPct }
-            ];
-            const a = analyze(rec, sKey, effectiveINGS, effectiveSPP);
-            if (a && a.eb && !a.crit?.length && a.cn >= (sp.cn_optimal?.min || 15) && a.cn <= (sp.cn_optimal?.max || 60)) {
-              candidates.push({ recipe: rec, an: a, baseName: `${b1.name} + ${b2.name}`, suppName: `${topSupp.name} (${sPct}%)` });
-            }
-          });
-        }
-      }
-    }
-
-    const evaluated = candidates.map(c => {
-      const costPerKgDry = c.an.cost || 0;
-      const eb = c.an.eb || 0;
-      const yieldKgPerBag = dryKgPerBag * (eb / 100);
-      const subCostPerBag = dryKgPerBag * costPerKgDry;
-      const revPerBag = yieldKgPerBag * freshPricePerKg;
-      const grossMarginPerBag = revPerBag - subCostPerBag;
-      const costPerKgFresh = yieldKgPerBag > 0 ? (subCostPerBag / yieldKgPerBag) : 0;
-      const roiPct = subCostPerBag > 0 ? ((grossMarginPerBag / subCostPerBag) * 100) : 0;
-
-      return {
-        recipe: c.recipe,
-        baseName: c.baseName,
-        suppName: c.suppName,
-        costPerKgDry: Math.round(costPerKgDry),
-        eb: Math.round(eb * 10) / 10,
-        cn: Math.round((c.an.cn || 0) * 10) / 10,
-        n: Math.round((c.an.n || 0) * 100) / 100,
-        yieldKgPerBag: Math.round(yieldKgPerBag * 1000) / 1000,
-        subCostPerBag: Math.round(subCostPerBag),
-        grossMarginPerBag: Math.round(grossMarginPerBag),
-        costPerKgFresh: Math.round(costPerKgFresh),
-        roiPct: Math.round(roiPct),
-        score: c.an.score || 0
-      };
-    });
-
-    evaluated.sort((a, b) => a.costPerKgDry - b.costPerKgDry || b.eb - a.eb);
-
-    const paretoPoints = [];
-    let maxEbSoFar = -1;
-
-    for (const item of evaluated) {
-      if (item.eb > maxEbSoFar) {
-        paretoPoints.push(item);
-        maxEbSoFar = item.eb;
-      }
-    }
-
-    const minCostPoint = paretoPoints[0] || evaluated[0] || null;
-    const maxEbPoint = paretoPoints[paretoPoints.length - 1] || evaluated[evaluated.length - 1] || null;
-    let maxMarginPoint = paretoPoints[0] || null;
-    paretoPoints.forEach(p => {
-      if (!maxMarginPoint || p.grossMarginPerBag > maxMarginPoint.grossMarginPerBag) {
-        maxMarginPoint = p;
-      }
-    });
-
-    return {
-      speciesKey: sKey,
-      speciesName: sp.name,
-      points: paretoPoints,
-      allEvaluatedCount: evaluated.length,
-      milestones: {
-        minCost: minCostPoint,
-        maxMargin: maxMarginPoint,
-        maxEB: maxEbPoint
-      }
     };
   };
 
@@ -648,6 +438,9 @@
   // `evaluate` (opcional, de createRecipeEvaluator) fija el contexto de score
   // del veredicto y de las predicciones. Sin él se conserva el comportamiento
   // histórico (oráculo de paridad y tests que no lo pasan).
+  // Mejora mínima de EB simulada para proponer un suplemento en la tarjeta ↑EB
+  // (misma regla de empate que la vista Mejor con Bodega).
+  const UEB_MIN_GAIN_PTS = 1;
   const generateOptimizer = (an, sKey, stockIds = new Set(), recipe = [], ings, lockedIds = [], blendedEB = null, useStock = true, appliedIcons = {}, spp, usageCounts = {}, evaluate = null) => {
     const effectiveINGS = getEffectiveINGS(ings);
     const effectiveSPP = getEffectiveSPP(spp);
@@ -803,18 +596,66 @@
         apply: { mode: subir ? (inRec ? 'increase' : 'add') : 'decrease', id: ing.id, delta: 4 }
       });
     }
+    // Evaluación de una receta candidata: objetivos propios de esa receta (la
+    // clase de sustrato puede cambiar al aplicar el ajuste) y mismo contexto
+    // de score que el veredicto. Sin evaluador: comportamiento histórico.
+    const evalCandidate = (cand) => {
+      if (typeof evaluate === 'function') {
+        const e = evaluate(cand);
+        return e ? { an: e.an, scoreObj: e.scoreObj, spp: e.spp } : null;
+      }
+      const a = analyze(cand, sKey, effectiveINGS, effectiveSPP);
+      if (!a) return null;
+      return { an: a, scoreObj: scoreAn(a, { treatment: calcTreatment(a, sKey, effectiveSPP), recipe: cand, stockIds }), spp: effectiveSPP };
+    };
+
     if (flags.ebWarn) {
+      // Mismo orden de preferencia que antes (el que ya está en la receta, luego
+      // el más barato; Bodega primero), pero cada candidato se simula con el
+      // evaluador del veredicto: se propone el primero que sube la EB estimada
+      // al menos UEB_MIN_GAIN_PTS sin críticos nuevos. Si ninguno, la tarjeta
+      // lo dice en vez de proponer un ajuste.
       const margen = sp.supplementation_max - an.suppP;
-      const ing = bestStock(g => g.n >= 2 && g.role === 'suplemento_n', (a, b) => a.cost - b.cost);
-      const inRec = recipe?.find(r => ing && r.id === ing.id);
-      if (ing) {
-        const d = Math.min(8, Math.round(margen)); items.push({
+      const d = Math.min(8, Math.round(margen));
+      const baseE = evalCandidate(recipe);
+      const critOf = e => (e && SetasScoring.assessSeverity ? SetasScoring.assessSeverity(e.an).criticals : 0);
+      const baseEb = baseE ? baseE.an.eb : an.eb;
+      const baseCrit = critOf(baseE);
+      const all = effectiveINGS
+        .filter(g => g.cs && g.cs.includes(sKey) && g.n >= 2 && g.role === 'suplemento_n' && !lockedIds.includes(g.id))
+        .sort((a, b) => a.cost - b.cost || a.id.localeCompare(b.id));
+      const inStock = useStock ? all.filter(g => stockIds.size === 0 || stockIds.has(g.id)) : [];
+      const pool = inStock.length ? inStock : all;
+      const inRecipeOf = g => (recipe || []).some(r => r.id === g.id);
+      const ordered = [...pool.filter(inRecipeOf), ...pool.filter(g => !inRecipeOf(g))];
+      let best = null;
+      if (d > 0) for (const g of ordered) {
+        const inRec = inRecipeOf(g);
+        const apply = { mode: inRec ? 'increase' : 'add', id: g.id, delta: d };
+        const e = evalCandidate(applyOptToRecipe(recipe, apply, lockedIds, effectiveINGS));
+        if (!e) continue;
+        if (e.an.eb - baseEb < UEB_MIN_GAIN_PTS || critOf(e) > baseCrit) continue;
+        best = { g, inRec, apply };
+        break;
+      }
+      if (best) {
+        recommendedIds.add(best.g.id);
+        items.push({
           priority: 'warning', icon: '↑EB',
           label: 'Potencial de EB sin explotar',
-          action: `${inRec ? 'Aumentar' : 'Agregar'} <b>${ing.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
-        effect: `La estimación heurística actual es ${an.eb.toFixed(0)}% y queda margen de suplementación. Ensayar en lote controlado antes de atribuir una mejora de EB.`,
-        delta: 'Hipótesis para ensayo; no es rendimiento garantizado',
-          apply: { mode: inRec ? 'increase' : 'add', id: ing.id, delta: d }
+          action: `${best.inRec ? 'Aumentar' : 'Agregar'} <b>${best.g.name}</b> ${d}% · quedan ${Math.round(margen)}% de margen seguro`,
+          effect: `La estimación heurística actual es ${an.eb.toFixed(0)}% y queda margen de suplementación. Ensayar en lote controlado antes de atribuir una mejora de EB.`,
+          delta: 'Hipótesis para ensayo; no es rendimiento garantizado',
+          apply: best.apply,
+        });
+      } else {
+        items.push({
+          priority: 'info', icon: '↑EB',
+          label: 'Potencial de EB sin explotar',
+          action: `Ningún suplemento de nitrógeno compatible sube la EB estimada dentro del margen de suplementación (${Math.max(0, Math.round(margen))}%).`,
+          effect: `La estimación heurística actual es ${an.eb.toFixed(0)}%. El límite parece estar en otra variable (C:N, N, pH o la base); revisar las demás tarjetas.`,
+          delta: 'Sin ajuste propuesto',
+          apply: null,
         });
       }
     }
@@ -980,19 +821,6 @@
     const { score, status: statusFromScore } = baseEval
       ? baseEval.scoreObj
       : scoreAn(an, { treatment: tr13, recipe, stockIds, blendedEB });
-    // Evaluación de una receta candidata: objetivos propios de esa receta (la
-    // clase de sustrato puede cambiar al aplicar el ajuste) y mismo contexto
-    // de score que el veredicto. Sin evaluador: comportamiento histórico.
-    const evalCandidate = (cand) => {
-      if (typeof evaluate === 'function') {
-        const e = evaluate(cand);
-        return e ? { an: e.an, scoreObj: e.scoreObj, spp: e.spp } : null;
-      }
-      const a = analyze(cand, sKey, effectiveINGS, effectiveSPP);
-      if (!a) return null;
-      return { an: a, scoreObj: scoreAn(a, { treatment: calcTreatment(a, sKey, effectiveSPP), recipe: cand, stockIds }), spp: effectiveSPP };
-    };
-
     const SIDE_EFFECT_FLAGS = ['cnHigh', 'cnLow', 'nLow', 'nHigh', 'phLow', 'phHigh'];
     const FLAG_OWNER_ICON = { cnHigh: '↓C:N', cnLow: '↑C:N', nLow: '↑N', nHigh: '↓N', phLow: '↑pH', phHigh: '↓pH' };
     const FLAG_LABEL = { cnHigh: 'C:N demasiado alto', cnLow: 'C:N demasiado bajo', nLow: 'N insuficiente', nHigh: 'exceso de N', phLow: 'pH ácido', phHigh: 'pH alcalino' };
@@ -1051,6 +879,9 @@
           try {
             const res = solveTargetPct(fromRecipe, sKey, effectiveINGS, g.id, metric, target, lockedIds, effectiveSPP);
             if (!res) continue;
+            // Una alternativa no puede pasar el tope de su rol (agregar o subir).
+            const inRecipe = fromRecipe.some(r => r.id === g.id);
+            if (res.pct > capForRole(g.id, inRecipe ? ROLE_CAP_INCREASE : ROLE_CAP_ADD, 100, effectiveINGS)) continue;
             const apply = { mode: 'set', id: g.id, value: res.pct };
             const e = evalCandidate(applyOptToRecipe(fromRecipe, apply, lockedIds, effectiveINGS));
             if (!e) continue;
@@ -1067,11 +898,20 @@
         return best;
       };
       const nameOf = id => (effectiveINGS.find(g => g.id === id) || {}).name || id;
+      // Una base nueva que queda como mayoría de la receta la reemplaza; por
+      // debajo de la mitad entra como segunda base. Decirlo así evita que un
+      // "agregar" esconda un cambio de base.
+      const REPLACES_BASE_PCT = 50;
+      const isNewBase = best => !best.from.some(r => r.id === best.g.id) && best.g.role === 'base_carbono';
+      const replacesBase = best => isNewBase(best) && best.res.pct >= REPLACES_BASE_PCT;
+      const stockNote = best => (stockIds && stockIds.size > 0 && !stockIds.has(best.g.id)) ? ' · no está en Bodega' : '';
       const actionFor = (best) => {
         const cur = best.from.find(r => r.id === best.g.id);
         const curP = cur ? parseFloat(cur.p) || 0 : 0;
+        if (replacesBase(best)) return `Reemplazar base por <b>${best.g.name}</b> (<b>${best.res.pct}%</b>)${stockNote(best)}`;
+        if (isNewBase(best)) return `agregar <b>${best.g.name}</b> como segunda base a <b>${best.res.pct}%</b> (nuevo)${stockNote(best)}`;
         const verb = !cur ? 'agregar' : best.res.pct > curP ? 'subir' : 'bajar';
-        return `${verb} <b>${best.g.name}</b> a <b>${best.res.pct}%</b>${cur ? ` (actual ${curP.toFixed(1)}%)` : ' (nuevo)'}`;
+        return `${verb} <b>${best.g.name}</b> a <b>${best.res.pct}%</b>${cur ? ` (actual ${curP.toFixed(1)}%)` : ` (nuevo)${stockNote(best)}`}`;
       };
       items.forEach(it => {
         if (it.priority !== 'critical' && it.priority !== 'warning') return;
@@ -1084,6 +924,7 @@
           if (best) {
             it.apply = best.apply;
             it.alternativeFor = need.excludeId;
+            if (replacesBase(best)) it.replacesBase = true;
             it.action = `<b>${nameOf(need.excludeId)}</b> ya no acerca ${METRIC_LABEL[need.metric]} al objetivo dentro de su tope. Alternativa: ${actionFor(best)}`;
             it.delta = `→ ${METRIC_LABEL[need.metric]} ${fmtMetric(need.metric, best.val)}`;
             // "tope alcanzado" solo si la alternativa tampoco deja la métrica en rango.
@@ -1255,213 +1096,6 @@
     return active.reduce((s, l) => s + l.precioPorKgCOP * l.cantidadKgDisponible, 0) / totalKg;
   };
 
-  // ── runAutoOptimizer — generador de recetas por enumeración combinatoria ──
-  const runAutoOptimizer = (targetKey, invLotes = [], maxCost = 0, effectiveINGS = [], useStock = true, profileKey = 'produccion', stockMap = {}, spp = null) => {
-    const ings = getEffectiveINGS(effectiveINGS);
-    const effectiveSPP = getEffectiveSPP(spp);
-    const sp = effectiveSPP[targetKey];
-    if (!sp) return { results: [], noStock: false };
-    const profile = OPT_PROFILES[profileKey] || OPT_PROFILES.produccion;
-    const stockIds = new Set(invLotes.filter(l => l && l.activo && l.cantidadKgDisponible > 0).map(l => l.ingredienteId));
-    const hasStock = stockIds.size > 0;
-    if (useStock && !hasStock) return { results: [], noStock: true };
-    const pool = useStock ? ings.filter(g => stockIds.has(g.id)) : ings.filter(g => g.cs && g.cs.includes(targetKey));
-    const bases = pool.filter(g => g.role === 'base_carbono' && g.cs && g.cs.includes(targetKey) && g.cn > 0 && g.n > 0);
-    const supps = pool.filter(g => (g.role === 'suplemento_n' || g.role === 'suplemento_medio') && g.cs && g.cs.includes(targetKey) && g.cn > 0 && g.n > 0);
-    const aers = pool.filter(g => g.role === 'aireador');
-    const calAvail = ings.some(g => g.id === 'carbonato_calcio');
-    const yesoAvail = ings.some(g => g.id === 'yeso');
-    const suppLimit = profile.maxSupp != null ? Math.min(sp.supplementation_max || 20, profile.maxSupp) : (sp.supplementation_max || 20);
-    const cafeLimit = profile.maxCafe != null ? profile.maxCafe : 30;
-    const results = [];
-    const tried = new Set();
-
-    const realCostFor = (rec) => {
-      let known = false;
-      const total = rec.reduce((s, r) => {
-        const pp = precioPonderado(r.id, invLotes);
-        const g = ings.find(i => i.id === r.id);
-        if (pp != null) known = true;
-        const price = pp != null ? pp : (g ? g.cost : 0);
-        return s + price * (parseFloat(r.p) || 0) / 100;
-      }, 0);
-      return known ? Math.round(total) : null;
-    };
-
-    const evalRec = (rec) => {
-      const an0 = analyze(rec, targetKey, ings, effectiveSPP);
-      if (!an0) return;
-      const realCost = useStock ? realCostFor(rec) : null;
-      const an = realCost != null ? { ...an0, cost: realCost } : an0;
-      if (profile.spawnOverride != null) an.dynSpawn = profile.spawnOverride;
-      const suppOverLimit = an.suppP > suppLimit;
-      if (suppOverLimit && profileKey === 'rescate') return;
-      if (an.cafeP > cafeLimit) return;
-      if (maxCost > 0 && an.cost > maxCost) return;
-      const tr = calcTreatment(an, targetKey, effectiveSPP);
-      const { score: resultScore, breakdown } = scoreAn(an, { treatment: tr, recipe: rec, stockIds: useStock ? stockIds : undefined });
-      const maxKgWet = Object.keys(stockMap).length > 0 ? calcMaxBatchFromStock(rec, stockMap, 10, sp.moisture?.ideal || 65, ings) : null;
-      results.push({ recipe: rec, an, score: resultScore, riskScore: breakdown ? breakdown.risk : 50, treatmentName: tr?.name || '', maxKgWet, suppOverLimit, realCostKnown: realCost != null });
-    };
-
-    const aerOpts = [null, ...aers.slice(0, 2)];
-    const calOpts = calAvail ? [0, 3] : [0];
-    const yesoOpts = yesoAvail ? [0, 2] : [0];
-
-    // MODO 1: 1 base + 1 suplemento
-    bases.forEach(base => {
-      supps.forEach(supp => {
-        if (base.id === supp.id) return;
-        aerOpts.forEach(aer => {
-          calOpts.forEach(calP => {
-            yesoOpts.forEach(yesoP => {
-              const aerP = aer ? 10 : 0; const fixedPct = calP + yesoP + aerP; const remaining = 100 - fixedPct;
-              if (remaining < 40) return;
-              const key = `1b1s|${base.id}|${supp.id}|${aer?.id || ''}|${calP}|${yesoP}`;
-              if (tried.has(key)) return; tried.add(key);
-              const T = sp.cn_optimal.ideal;
-              const bDry1 = 1 - Math.min(0.92, Math.max(0, (base.moisture || 0) / 100));
-              const sDry1 = 1 - Math.min(0.92, Math.max(0, (supp.moisture || 0) / 100));
-              const bCe1 = base.c * bDry1, bNe1 = base.n * bDry1, sCe1 = supp.c * sDry1, sNe1 = supp.n * sDry1;
-              const denom = (bCe1 - sCe1) - T * (bNe1 - sNe1);
-              if (Math.abs(denom) < 0.001) return;
-              const ps = remaining * (bCe1 - T * bNe1) / denom; const pb = remaining - ps;
-              if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
-              const rec = [{ id: base.id, p: Math.round(pb * 10) / 10 }, { id: supp.id, p: Math.round(ps * 10) / 10 }];
-              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
-              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
-              if (aer) rec.push({ id: aer.id, p: aerP });
-              evalRec(rec);
-            });
-          });
-        });
-      });
-    });
-
-    // MODO 2: 2 bases + 1 suplemento
-    for (let bi = 0; bi < bases.length; bi++) {
-      for (let bj = bi + 1; bj < bases.length; bj++) {
-        const b1 = bases[bi], b2 = bases[bj];
-        supps.forEach(supp => {
-          if (b1.id === supp.id || b2.id === supp.id) return;
-          aerOpts.forEach(aer => {
-            const aerP = aer ? 10 : 0, calP = calAvail ? 3 : 0, yesoP = yesoAvail ? 2 : 0;
-            const fixedPct = calP + yesoP + aerP; const remaining = 100 - fixedPct;
-            if (remaining < 40) return;
-            [[0.5, 0.5], [0.6, 0.4], [0.4, 0.6]].forEach(([f1, f2]) => {
-              const key = `2b1s|${b1.id}|${b2.id}|${supp.id}|${aer?.id || ''}|${f1}`;
-              if (tried.has(key)) return; tried.add(key);
-              const b1Dry2 = 1 - Math.min(0.92, Math.max(0, (b1.moisture || 0) / 100));
-              const b2Dry2 = 1 - Math.min(0.92, Math.max(0, (b2.moisture || 0) / 100));
-              const sDry2 = 1 - Math.min(0.92, Math.max(0, (supp.moisture || 0) / 100));
-              const cBlend = b1.c * b1Dry2 * f1 + b2.c * b2Dry2 * f2, nBlend = b1.n * b1Dry2 * f1 + b2.n * b2Dry2 * f2;
-              const sCe2 = supp.c * sDry2, sNe2 = supp.n * sDry2, T = sp.cn_optimal.ideal;
-              const denom = (cBlend - sCe2) - T * (nBlend - sNe2);
-              if (Math.abs(denom) < 0.001) return;
-              const ps = remaining * (cBlend - T * nBlend) / denom; const pb = remaining - ps;
-              if (ps < 2 || pb < 15 || ps > suppLimit || pb > 95) return;
-              const rec = [{ id: b1.id, p: Math.round(pb * f1 * 10) / 10 }, { id: b2.id, p: Math.round(pb * f2 * 10) / 10 }, { id: supp.id, p: Math.round(ps * 10) / 10 }];
-              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
-              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
-              if (aer) rec.push({ id: aer.id, p: aerP });
-              evalRec(rec);
-            });
-          });
-        });
-      }
-    }
-
-    // MODO 3: 1 base + 2 suplementos
-    const suppSplits = [[0.6, 0.4], [0.5, 0.5]];
-    bases.forEach(base => {
-      for (let i = 0; i < supps.length; i++) {
-        for (let j = i + 1; j < supps.length; j++) {
-          const s1 = supps[i], s2 = supps[j];
-          if (base.id === s1.id || base.id === s2.id) continue;
-          aerOpts.forEach(aer => {
-            const aerP = aer ? 10 : 0; const calP = calAvail ? 3 : 0; const yesoP = yesoAvail ? 2 : 0;
-            const fixedPct = calP + yesoP + aerP; const remaining = 100 - fixedPct;
-            if (remaining < 35) return;
-            suppSplits.forEach(([f1, f2]) => {
-              const key = `1b2s|${base.id}|${s1.id}|${s2.id}|${aer?.id || ''}|${f1}`;
-              if (tried.has(key)) return;
-              tried.add(key);
-              const bDry3 = 1 - Math.min(0.92, Math.max(0, (base.moisture || 0) / 100));
-              const s1Dry3 = 1 - Math.min(0.92, Math.max(0, (s1.moisture || 0) / 100));
-              const s2Dry3 = 1 - Math.min(0.92, Math.max(0, (s2.moisture || 0) / 100));
-              const cBlend = s1.c * s1Dry3 * f1 + s2.c * s2Dry3 * f2;
-              const nBlend = s1.n * s1Dry3 * f1 + s2.n * s2Dry3 * f2;
-              const T = sp.cn_optimal.ideal;
-              const cb = base.c * bDry3, nb = base.n * bDry3;
-              const denom = (cb - cBlend) - T * (nb - nBlend);
-              if (Math.abs(denom) < 0.001) return;
-              const psTotal = remaining * (cb - T * nb) / denom;
-              const pb = remaining - psTotal;
-              if (psTotal < 4 || psTotal > suppLimit || pb < 20 || pb > 85) return;
-              const ps1 = Math.round(psTotal * f1 * 10) / 10;
-              const ps2 = Math.round(psTotal * f2 * 10) / 10;
-              const rec = [{ id: base.id, p: Math.round(pb * 10) / 10 }, { id: s1.id, p: ps1 }, { id: s2.id, p: ps2 }];
-              if (calP > 0) rec.push({ id: 'carbonato_calcio', p: calP });
-              if (yesoP > 0) rec.push({ id: 'yeso', p: yesoP });
-              if (aer) rec.push({ id: aer.id, p: aerP });
-              evalRec(rec);
-            });
-          });
-        }
-      }
-    });
-
-    const filteredResults = profile.forceLowRisk
-      ? (() => { const hi = results.filter(r => r.riskScore >= 30); return hi.length > 0 ? hi : results; })()
-      : results;
-
-    // Dedup por composición real (ids + % redondeado al entero), no por score/cn/costo —
-    // ese bucketing colapsaba recetas con ingredientes distintos que caían en el mismo rango.
-    const seen = new Set();
-    const deduped = filteredResults.sort((a, b) => b.score - a.score)
-      .filter(r => {
-        const k = r.recipe.map(i => `${i.id}:${Math.round(parseFloat(i.p) || 0)}`).sort().join('|');
-        if (seen.has(k)) return false; seen.add(k); return true;
-      });
-
-    // Diversidad estructural: sin esto, el top-30 quedaba dominado por 1-2 pares de
-    // ingredientes base que puntúan mejor, repetidos con variantes triviales de un solo
-    // suplemento distinto (el resto del score apenas se mueve). Se agrupa por la identidad
-    // de los ingredientes base_carbono de cada receta y se limita cuántos resultados puede
-    // aportar un mismo grupo en la primera pasada; si sobra espacio en el límite de 30, se
-    // rellena con lo que quede (mejor score primero) para no acortar la lista cuando la
-    // especie/catálogo realmente no ofrece más variedad estructural.
-    const roleById = new Map(ings.map(g => [g.id, g.role]));
-    const groupKeyFor = rec => rec.filter(i => roleById.get(i.id) === 'base_carbono').map(i => i.id).sort().join('+') || 'sin_base';
-    const RESULT_LIMIT = 30;
-    const PER_GROUP_CAP = 3;
-    const groupCounts = new Map();
-    const diverse = [];
-    const leftovers = [];
-    deduped.forEach(r => {
-      const k = groupKeyFor(r.recipe);
-      const count = groupCounts.get(k) || 0;
-      if (count < PER_GROUP_CAP) { groupCounts.set(k, count + 1); diverse.push(r); }
-      else leftovers.push(r);
-    });
-    const top = diverse.concat(leftovers).slice(0, RESULT_LIMIT).sort((a, b) => b.score - a.score);
-    const diag = {
-      stockIds: stockIds.size,
-      poolSize: pool.length,
-      bases: bases.length,
-      supps: supps.length,
-      aers: aers.length,
-      tried: tried.size,
-      resultsRaw: results.length,
-      suppLimit,
-      profileKey,
-      targetKey,
-      baseNames: bases.map(g => g.name),
-      suppNames: supps.map(g => g.name),
-    };
-    return { results: top, noStock: false, stockCount: stockIds.size, diag };
-  };
-
   const api = {
     analyze,
     setPctProportional,
@@ -1472,6 +1106,7 @@
     ROLE_CAP_INCREASE,
     capForRole,
     applyOptToRecipe,
+    UEB_MIN_GAIN_PTS,
     calcMaxBatchFromStock,
     quantifyItem,
     generateOptimizer,
@@ -1482,9 +1117,7 @@
     calcTreatment,
     OPT_PROFILES,
     precioPonderado,
-    runAutoOptimizer,
     analyzeCoFormulation,
-    computeParetoFrontier,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -2381,6 +2381,36 @@ documents:
     confidence: medium
     status: draft
 
+  - id: esterilizacion-contaminacion-investigacion-2026-11-04
+    title: "Preparación térmica, inoculación y contaminación — investigación 2026-11-04"
+    path: 09_research/esterilizacion_contaminacion_2026-11-04/informe.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [thermal-validation, altitude, sterilization, contamination, commissioning]
+    keywords: ["1941X", "SH05", "presión absoluta", "penetración térmica", "indicadores biológicos", "controles A/B/C"]
+    related_documents: [esterilizacion-contaminacion-bibliografia-2026-11-04, autoclaves, sterilization, laboratory, quality-control, operational-commissioning, commissioning-validation-research, decisions, current-operations, farm-brain, unresolved-questions, research-summaries]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: esterilizacion-contaminacion-bibliografia-2026-11-04
+    title: "Bibliografía verificada — esterilización y contaminación 2026-11-04"
+    path: 09_research/esterilizacion_contaminacion_2026-11-04/bibliografia.md
+    authority: research_library
+    category: references
+    canonical: false
+    topics: [thermal-validation, altitude, sterilization, contamination, commissioning]
+    keywords: ["1941X", "SH05", "presión absoluta", "penetración térmica", "indicadores biológicos", "controles A/B/C"]
+    related_documents: [esterilizacion-contaminacion-investigacion-2026-11-04]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
   - id: genetica-sustratos-shiitake-2026-11-04
     title: "Base biológica reproducible de shiitake para Tenjo"
     path: 09_research/genetica_sustratos_shiitake_2026-11-04/informe.md

@@ -95,7 +95,18 @@
     };
   };
 
-  const api = { priceMapFromLots, recipeCostPerKgAsFormulated, calculateLotEconomics };
+  // Costo de insumos por kg de seta fresca: EB es kg de seta fresca por cada
+  // 100 kg de sustrato seco, así que costo/kg seco ÷ (EB/100). Sin EB positiva
+  // no hay costo por kg de seta que reportar.
+  const costPerKgFreshMushroom = (costPerDryKg, ebPct) => {
+    if (costPerDryKg == null || costPerDryKg === '' || ebPct == null || ebPct === '') return null;
+    const c = Number(costPerDryKg);
+    const eb = Number(ebPct);
+    if (!Number.isFinite(c) || c < 0 || !Number.isFinite(eb) || eb <= 0) return null;
+    return Math.round(c / (eb / 100));
+  };
+
+  const api = { priceMapFromLots, recipeCostPerKgAsFormulated, calculateLotEconomics, costPerKgFreshMushroom };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasEconomy = api;
 })();
