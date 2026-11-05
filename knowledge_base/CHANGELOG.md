@@ -28,6 +28,7 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
+| `[KB]` | Incorporados el informe consultivo de genética/sustratos de shiitake y bibliografía del 2026-11-04 en `09_research/genetica_sustratos_shiitake_2026-11-04/` (DOC-0140/0141), con SHA-256 originales, alcance de lectura, línea base histórica y nota de incorporación. Indexados y enlazados desde síntesis y preguntas SH01–SH04/SH07/SH08; conciliadas implicaciones en ARK-006/026. Aclarada en la síntesis de investigación la atribución de Cenicafé por cepa/proceso y sus denominadores. Sin aprobación de ensayos, proveedores, receta, setpoints ni cambios de SOP/Setas OS. |
 | `[KB]` | Incorporado DOC-0138: investigación consultiva de jerky vegano de shiitake, melena de león y orellana (variables de proceso, rangos Tier 3, conservación refrigerada 1–2 semanas, diagnóstico de fallas, fuentes por verificar). Punteros en fichas de *L. edodes*, *H. erinaceus* y *P. ostreatus*; nuevas AB17–AB19; literature_index. Conserva DEC-022; sin cambios de SOP, cifras operativas ni Setas OS. Uso público: receta casera en la web. |
 
 ### 2026-11-04
