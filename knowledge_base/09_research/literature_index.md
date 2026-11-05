@@ -3,12 +3,13 @@ title: Índice de Literatura
 document_id: DOC-0043
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 confidence: high
 primary_sources:
   - literature_database.md
 related_documents:
   - calidad_poscosecha_economia_shiitake_2026-11-04.md
+  - instalacion_bioseguridad_2026-11-04/informe.md
   - literature_database.md
   - literature_audit_2026-07-23.md
   - research_summaries.md
@@ -245,3 +246,10 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 Ver `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md` (DOC-0136) y `references/calidad_poscosecha_economia_shiitake_2026-11-04_bibliografia.md` (DOC-0137). La bibliografía reúne 17 fuentes con enlaces y nivel real de lectura: S3–S5 tienen acceso parcial; S7 es el artículo original de Schill et al. (2021), DOI `10.3390/foods10040816`, con métodos y resultados comprobados. S1–S17 son identificadores locales del dossier, no nuevos IDs del catálogo global.
 
 La incorporación amplía ARK-028/030 y añade ARK-031. Los escenarios reproducibles de `09_research/annexes/calidad_poscosecha_economia_shiitake_2026-11-04/` son supuestos ilustrativos, no datos de finca. DEC-022 gobierna fresco entero y deshidratado entero condicionado: no ensayar secado antes de tres ciclos cerrados. No se promueven duraciones, consignas térmicas ni criterios nuevos a SOP.
+
+## Investigación consultiva — instalación y bioseguridad, 2026-11-04
+
+| Documento | Alcance y evidencia | Límite de uso |
+|---|---|---|
+| [Informe de instalación, higiene y continuidad](instalacion_bioseguridad_2026-11-04/informe.md) | Reconversión modular de la marranera; riesgos, mediciones as-built, alternativas y compuertas de piloto/réplica | Investigación consultiva, sin mediciones nuevas ni aprobación profesional, sanitaria o constructiva |
+| [Bibliografía y registro de verificación](instalacion_bioseguridad_2026-11-04/bibliografia.md) | Fuentes primarias y oficiales, Tier, representación leída y accesos fallidos | Distingue texto completo, resumen y aplicabilidad local pendiente; no promueve parámetros a SOP |
