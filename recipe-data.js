@@ -688,7 +688,7 @@ const recipes = {
       "qty": {
         "n": 15,
         "unit": "ml",
-        "rest": "de salsa de soja"
+        "rest": "de salsa de soya"
       }
     },
     {
