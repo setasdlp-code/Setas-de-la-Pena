@@ -114,6 +114,9 @@ const PROTECTED_APP_SCRIPTS = [
   "../perito-context.js",
   "../recipe-optimizer.js",
   "../perito-scenarios.js",
+  // Vista "Mejor con Bodega" del Formulador; lee SetasPeritoScenarios y
+  // SetasEconomy en cada llamada, no al cargar.
+  "../formulador-best.js",
   // Cuaderno de campo offline. setas-os-workflow.js llega después, en
   // DC_RUNTIME_SCRIPTS, así que field-events-model.js resuelve ese global de
   // forma perezosa en cada llamada en vez de capturarlo al cargarse.

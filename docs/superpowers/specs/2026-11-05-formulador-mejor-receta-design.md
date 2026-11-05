@@ -192,6 +192,15 @@ Calls made by Claude (correctable):
   the PR 1 description.
 - Planned-batch defaults, worker integration, and which dead code to delete: builder.
 
+## Tie rule revised (2026-11-05, Sebastián — supersedes the tie-rule call above)
+
+Two candidates tie on EB only when `|EB_a − EB_b| < 1` pt; among tied candidates
+"Más producción" goes to the lower cost per kg fresh mushroom. "Para mejorar" shows an
+EB gain when it is ≥ 1 pt. Reason: with today's Scale-B band (±15–26 pts at confidence
+`low`) the band-wide tie merged both picks into one recipe (Gris and Shiitake, catalog),
+and on Gris with Bodega only it chose EB 106 when EB 120 was available. The card still
+shows each pick's band.
+
 ## Revisions from planning (2026-11-05, Claude — supersede PR 1 items above)
 
 Found while planning; they narrow PR 1, they don't change what Sebastián chose.
