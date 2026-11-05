@@ -2191,7 +2191,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Aplicado {item.repeatedApply}x en esta sesión y el problema sigue — considerar un ingrediente distinto o cambiar a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
-      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bEvidence}{bWhy}{bRisk}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bSide}{bCombo}</>}
+      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bRisk}{bSide}{bPreview}{bCombo}{(item.evidence||item.why||hasPrediction||classChange)&&<details className="pi-more" data-testid="pi-evidence"><summary className="summary-tap">Ver evidencia</summary>{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}</details>}</>}
     </div>
     <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
@@ -15360,6 +15360,10 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <span>Generador de Recetas</span>
               </button>
             </nav>
+            {/* Co-Formulación queda fuera del camino principal (Mejor con Bodega):
+                detrás de «Avanzado», abierto mientras esté activa. */}
+            <details className="formulador-avanzado" data-testid="formulador-avanzado" open={coFormMode||undefined}>
+            <summary className="formulador-avanzado-summary">Avanzado</summary>
             <div className="formular-coform-control" role="group" aria-label="Co-Formulación">
               <button
                 type="button"
@@ -15375,6 +15379,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                 <small>{coFormMode?'Ocultar ponderación':'Combinar especies'}</small>
               </button>
             </div>
+            </details>
             {coFormMode&&(
               <section id="co-form-panel" className="co-form-panel" data-testid="co-form-panel" aria-labelledby="formular-coform-toggle">
                 <header className="co-form-panel-head">

@@ -27,16 +27,16 @@ const LOTS=[
  let browser;
  try{
   browser=await chromium.launch({executablePath:process.env.SETAS_CHROMIUM_EXECUTABLE||undefined});
-  const open=async(viewport,lots=LOTS)=>{
+  const open=async(viewport,lots=LOTS,recipe=[])=>{
    const errors=[];
    const page=await browser.newPage({viewport});
    page.on('pageerror',e=>errors.push(e.message));
    await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
-   await page.addInitScript(lots=>{
+   await page.addInitScript(({lots,recipe})=>{
     localStorage.setItem('sdp_seeded','1');
     localStorage.setItem('sdp_lotes',JSON.stringify(lots));
-    localStorage.setItem('setas_formulator_draft_v1',JSON.stringify({version:1,recipe:[],sKey:'p_ostreatus_gris',hasPickedSpecies:true,lockedIds:[]}));
-   },lots);
+    localStorage.setItem('setas_formulator_draft_v1',JSON.stringify({version:1,recipe,sKey:'p_ostreatus_gris',hasPickedSpecies:true,lockedIds:[]}));
+   },{lots,recipe});
    await page.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=formular`);
    await page.waitForFunction(()=>window.SetasFormulatorAPI?.adapterType()==='native');
    // Con la receta vacía el borrador no recuerda la especie: se elige como lo haría el operador.
@@ -79,6 +79,23 @@ const LOTS=[
   assert.deepEqual(empty.errors,[]);
   await empty.page.close();
   console.log('PASS Bodega vacía lo dice y sugiere del catálogo.');
+
+  // Camino más calmo: Co-Formulación detrás de «Avanzado» y evidencia plegada.
+  const adv=await open({width:1366,height:900},LOTS,[{id:'aserrin_eucalipto',p:75},{id:'salvado_trigo',p:25}]);
+  const avanzado=adv.page.getByTestId('formulador-avanzado');
+  await expect(avanzado).toBeAttached();
+  assert.equal(await avanzado.evaluate(el=>el.open),false);
+  await expect(adv.page.getByTestId('co-form-toggle')).toBeHidden();
+  await avanzado.locator('summary').click();
+  await expect(adv.page.getByTestId('co-form-toggle')).toBeVisible();
+  const card=adv.page.locator('#bl-perito .perito-item').filter({has:adv.page.getByText('Evidencia:')}).first();
+  await expect(card).toBeAttached({timeout:15000});
+  await expect(card.getByText('Evidencia:')).toBeHidden();
+  await card.getByText('Ver evidencia',{exact:true}).click();
+  await expect(card.getByText('Evidencia:')).toBeVisible();
+  assert.deepEqual(adv.errors,[]);
+  await adv.page.close();
+  console.log('PASS Co-Formulación queda en Avanzado y la evidencia de los ajustes se pliega.');
 
   const mob=await open({width:375,height:812});
   const mp=mob.page.getByTestId('best-bodega-panel');

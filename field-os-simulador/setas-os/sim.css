@@ -7046,3 +7046,5 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .best-improvement-buy{font-weight:700;overflow-wrap:anywhere;min-width:0}
 .sim-root .best-improvement .best-pick-use{margin:0 0 0 auto}
 @media (max-width:700px){.sim-root .best-pick-use,.sim-root .best-improvement .best-pick-use{width:100%;margin-left:0;white-space:normal}}
+.sim-root .formulador-avanzado{min-width:0}
+.sim-root .formulador-avanzado-summary{cursor:pointer;padding:var(--sp-4) var(--sp-6);font:700 var(--text-xs)/1.2 var(--font-mono);letter-spacing:var(--sim-tracking-wide);text-transform:uppercase;color:var(--text-secondary)}
