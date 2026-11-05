@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: cf882dbb82577b7286a7e3d34697ff784a475d83ede6394559f031beeb7a544f
+// source-hash: 0e412750091b2ab4c0e7ef2378646acc774e346aefde2919debe64292b35d241
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3187,7 +3187,9 @@ const runHybridRecipeSearch = ({
   lockedIds = [],
   // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
   // spp explícito se conserva el catálogo heredado para los llamadores viejos.
-  spp = SPP
+  spp = SPP,
+  // Todas las candidatas permitidas (vista Mejor con Bodega); no altera ranked.
+  includePool = false
 }) => {
   const engine = globalThis.SetasPeritoScenarios;
   if (!engine?.searchScenarios) throw new Error("SetasPeritoScenarios no disponible");
@@ -3234,7 +3236,8 @@ const runHybridRecipeSearch = ({
     maxCost,
     roleCaps: hybridRoleCaps(target),
     ingredientCaps: hybridIngredientCaps(compatible, target),
-    lockedIds: new Set(lockedIds || [])
+    lockedIds: new Set(lockedIds || []),
+    includePool
   });
 };
 const autoImproveIsBetter = (next, cur) => next.criticals < cur.criticals && next.score >= cur.score || next.criticals === cur.criticals && next.score > cur.score;
@@ -7375,7 +7378,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "cf882dbb8257" : null;
+    const appVersion = true ? "0e412750091b" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));

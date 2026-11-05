@@ -4833,6 +4833,8 @@ const runHybridRecipeSearch=({
   // Objetivos por especie ya resueltos (SetasSpeciesTargets.applyToSpp). Sin
   // spp explícito se conserva el catálogo heredado para los llamadores viejos.
   spp=SPP,
+  // Todas las candidatas permitidas (vista Mejor con Bodega); no altera ranked.
+  includePool=false,
 })=>{
   const engine=globalThis.SetasPeritoScenarios;
   if(!engine?.searchScenarios) throw new Error('SetasPeritoScenarios no disponible');
@@ -4882,6 +4884,7 @@ const runHybridRecipeSearch=({
     roleCaps:hybridRoleCaps(target),
     ingredientCaps:hybridIngredientCaps(compatible,target),
     lockedIds:new Set(lockedIds||[]),
+    includePool,
   });
 };
 // ── Auto-mejorar: aplica en cadena (hasta maxIter pasos) el ajuste crítico o

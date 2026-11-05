@@ -1533,6 +1533,9 @@
     spawnOverride = undefined,
     structuralRootLimit = 4,
     structuralSeedCap = 300,
+    // Opt-in: devuelve todas las candidatas permitidas (vista Mejor con Bodega).
+    // No cambia ranked, pareto ni recommended.
+    includePool = false,
   }) => {
     if (!['local', 'global', 'hybrid'].includes(searchMode)) {
       throw new Error(`searchMode inválido: ${searchMode}`);
@@ -1618,6 +1621,7 @@
         ranked: [],
         pareto: [],
         recommended: [],
+        ...(includePool ? { pool: [] } : {}),
         best: baseline,
         lockedIds: [...locked],
         profile: {
@@ -1860,6 +1864,7 @@
       ranked,
       pareto,
       recommended,
+      ...(includePool ? { pool: baseline.evaluation?.allowed ? [baseline, ...allowed] : allowed.slice() } : {}),
       best: pareto[0] || ranked[0] || baseline,
       lockedIds: [...locked],
       profile: {
