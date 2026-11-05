@@ -4,7 +4,6 @@
 // receta actual, inventarios) como argumentos explícitos.
 (function () {
 
-  const EB_PENALTY_BALANCE_BAND = { min: 95, max: 105 };
 
   const SetasScoring = (typeof require !== 'undefined')
     ? require('./scoring.js')
@@ -13,105 +12,38 @@
   const getEffectiveINGS = (ings) => (ings && ings.length) ? ings : (typeof globalThis !== 'undefined' && globalThis.INGS ? globalThis.INGS : []);
   const getEffectiveSPP = (spp) => spp || (typeof globalThis !== 'undefined' && globalThis.SPP ? globalThis.SPP : {});
 
-  // ── analyze — análisis nutricional, fisicoquímico y estimación de EB ──
+  // ── analyze — delega en el motor canónico (substrate-analysis.js) ──
+  // Aquí vivía una copia que se había separado del original (no contaba
+  // suplemento_medio ni suppEffectiveP, así que elegía tratamiento distinto).
+  // El optimizador conserva solo su forma de resolver INGS/SPP ausentes.
+  const SubstrateAnalysis = (typeof require !== 'undefined')
+    ? require('./substrate-analysis.js')
+    : (globalThis.SetasSubstrateAnalysis || null);
+  if (!SubstrateAnalysis || typeof SubstrateAnalysis.analyze !== 'function') {
+    throw new Error('recipe-optimizer.js requiere substrate-analysis.js cargado antes.');
+  }
+  // Un insumo sin lista `cs` no tiene datos de compatibilidad: la copia
+  // anterior no lo marcaba incompatible, y el motor canónico exige la lista.
+  // Se completa solo para la especie evaluada, sin tocar el catálogo real.
+  const withCompatDefaults = (ings, sKey) => (ings.some(g => g && !Array.isArray(g.cs))
+    ? ings.map(g => (g && !Array.isArray(g.cs) ? { ...g, cs: sKey ? [sKey] : [] } : g))
+    : ings);
+  // Rango óptimo de ancho cero (min === max) haría 0/0 en el motor canónico.
+  // La copia anterior usaba una semiamplitud mínima (0,1 C:N; 0,01 % N); se
+  // conserva solo para ese caso degenerado — ninguna especie del catálogo lo tiene.
+  const widenRange = (range, minHalf) => (range && Number.isFinite(range.min) && Number.isFinite(range.max) && (range.max - range.min) / 2 < minHalf)
+    ? { ...range, min: range.min - (minHalf - (range.max - range.min) / 2), max: range.max + (minHalf - (range.max - range.min) / 2) }
+    : range;
+  const withRangeGuards = (spp, sKey) => {
+    const sp = spp && sKey ? spp[sKey] : null;
+    if (!sp) return spp;
+    const cn = widenRange(sp.cn_optimal, 0.1);
+    const n = widenRange(sp.n_optimal, 0.01);
+    return (cn === sp.cn_optimal && n === sp.n_optimal) ? spp : { ...spp, [sKey]: { ...sp, cn_optimal: cn, n_optimal: n } };
+  };
   const analyze = (recipe, sKey, ings, spp) => {
     if (!recipe || !recipe.length) return null;
-    const effectiveINGS = getEffectiveINGS(ings);
-    const effectiveSPP = getEffectiveSPP(spp);
-    const tot = recipe.reduce((s, r) => s + (parseFloat(r.p) || 0), 0);
-    if (!tot) return null;
-    let wC = 0, wN = 0, wPh = 0, wDig = 0, wCra = 0, nP = 0, suppP = 0, baseP = 0, addP = 0, cafeP = 0, manP = 0, airP = 0, densaP = 0, incompat = [];
-    const DENSOS = ['aserrin_roble', 'aserrin_eucalipto', 'aserrin_pino', 'aserrin_pino_compostado', 'borra_cafe', 'afrecho_cerveceria', 'chips_poda_urbana', 'guadua', 'carton_corrugado', 'pulpa_papel'];
-    recipe.forEach(r => {
-      const g = effectiveINGS.find(i => i.id === r.id);
-      if (!g) return;
-      const p = parseFloat(r.p) || 0;
-      const esAditivoSeco = (g.role === 'aditivo_ph' || g.role === 'aditivo_estructura');
-      // % de receta en base seca: ponderar por p (D18).
-      if (g.cn > 0 && !esAditivoSeco) { wC += g.c * p; wN += g.n * p; nP += p; }
-      wPh += g.ph * p; wDig += g.dig * p; wCra += g.cra * p;
-      if (g.role === 'suplemento_n') suppP += p;
-      if (g.role === 'base_carbono') baseP += p;
-      if (['aditivo_ph', 'aditivo_estructura', 'aditivo_micronutriente'].includes(g.role)) addP += p;
-      if (g.role === 'aireador') airP += p;
-      if (g.cat === 'cafe') cafeP += p;
-      if (g.cat === 'est') manP += p;
-      if (DENSOS.includes(g.id)) densaP += p;
-      if (sKey && g.cs && !g.cs.includes(sKey) && g.cn > 0) incompat.push(g.name);
-    });
-    const avgN = nP ? wN / nP : 0;
-    const cn = avgN > 0 ? (nP ? wC / nP : 0) / avgN : 0;
-    const avgPh = tot ? wPh / tot : 7;
-    const avgDig = tot ? wDig / tot : 5;
-    const avgCra = tot ? wCra / tot : 3;
-    // COP por kg de mezcla seca (precio por kg tal cual se recibe) — D6.
-    const cost = recipe.reduce((s, r) => {
-      const g = effectiveINGS.find(i => i.id === r.id);
-      if (!g) return s;
-      const m = Math.min(0.92, Math.max(0, (Number(g.moisture) || 0) / 100));
-      return s + (g.cost / (1 - m)) * (parseFloat(r.p) || 0) / 100;
-    }, 0);
-    const sp = effectiveSPP[sKey];
-    let eb = 0, trichoderma = false, dynSpawn = sp?.spawn_rate || 8;
-    let phF, aerF, digF, ebMods, ebCvVal, ebLow, ebHigh, ebIndex;
-    if (sp) {
-      const cnIdeal = Number.isFinite(sp.cn_optimal?.ideal) ? sp.cn_optimal.ideal : 30;
-      const cnMin = Number.isFinite(sp.cn_optimal?.min) ? sp.cn_optimal.min : cnIdeal - 5;
-      const cnMax = Number.isFinite(sp.cn_optimal?.max) ? sp.cn_optimal.max : cnIdeal + 5;
-      const cnHalfSpan = Math.max(0.1, (cnMax - cnMin) / 2);
-
-      const nIdeal = Number.isFinite(sp.n_optimal?.ideal) ? sp.n_optimal.ideal : 1.4;
-      const nMin = Number.isFinite(sp.n_optimal?.min) ? sp.n_optimal.min : nIdeal - 0.3;
-      const nMax = Number.isFinite(sp.n_optimal?.max) ? sp.n_optimal.max : nIdeal + 0.3;
-      const nHalfSpan = Math.max(0.01, (nMax - nMin) / 2);
-
-      const cF = Math.max(0, 1 - Math.pow(Math.abs(cn - cnIdeal) / cnHalfSpan, 1.5));
-      const nF = Math.max(0, 1 - Math.pow(Math.abs(avgN - nIdeal) / nHalfSpan, 1.5));
-      const baseline = Number.isFinite(sp.eb_baseline) ? sp.eb_baseline : 60;
-      const optimal = Number.isFinite(sp.eb_optimal) ? sp.eb_optimal : 95;
-      eb = baseline + (optimal - baseline) * (cF * 0.6 + nF * 0.4);
-      const suppLimit = Number.isFinite(sp.supplementation_max) ? sp.supplementation_max : 20;
-      const needsAutoclave = suppP > suppLimit;
-      const nThresh = needsAutoclave ? nMax * 1.2 : nMax * 1.15;
-      if (avgN > nThresh && !needsAutoclave) { trichoderma = true; eb *= 0.45; }
-      else if (avgN > nThresh && needsAutoclave) { eb *= 0.80; }
-      else if (needsAutoclave) eb *= 0.85;
-      if (incompat.length) eb *= 0.9;
-      if (tot < EB_PENALTY_BALANCE_BAND.min || tot > EB_PENALTY_BALANCE_BAND.max) eb *= 0.95;
-      phF = 1;
-      if (sp.ph_optimal) {
-        if (avgPh < sp.ph_optimal.min) phF = Math.max(0.70, 1 - (sp.ph_optimal.min - avgPh) * 0.12);
-        else if (avgPh > sp.ph_optimal.max) phF = Math.max(0.80, 1 - (avgPh - sp.ph_optimal.max) * 0.10);
-      }
-      aerF = 1;
-      if (densaP > 60 && airP < 10) aerF = 0.85;
-      else if (densaP > 40 && airP < 8) aerF = 0.93;
-      const isLigninSpp = ['shiitake', 'reishi'].includes(sKey);
-      digF = isLigninSpp ? 1 : (avgDig >= 6 ? 1 : Math.max(0.85, 1 - (6 - avgDig) * 0.03));
-      eb = eb * phF * aerF * digF;
-      ebMods = { phF, aerF, digF };
-      ebCvVal = 0.18;
-      if (ebMods.phF < 0.95) ebCvVal += 0.05;
-      if (ebMods.aerF < 0.95) ebCvVal += 0.05;
-      if (ebMods.digF < 0.95) ebCvVal += 0.04;
-      if (incompat.length) ebCvVal += 0.08;
-      if (suppP > sp.supplementation_max) ebCvVal += 0.10;
-      if (trichoderma) ebCvVal = 0.50;
-      ebCvVal = Math.min(trichoderma ? 0.50 : 0.40, ebCvVal);
-      ebLow = Math.round(eb * (1 - ebCvVal));
-      ebHigh = Math.round(eb * (1 + ebCvVal));
-      ebIndex = Math.round(Math.max(0, Math.min(100, (eb - baseline) / Math.max(1, optimal - baseline) * 100)));
-      dynSpawn = Math.min(15, (sp.spawn_rate || 8) + Math.floor(suppP / 5));
-    }
-    const eucPct = recipe.reduce((s, r) => r.id === 'aserrin_eucalipto' ? s + (parseFloat(r.p) || 0) : s, 0);
-    const pescPct = recipe.reduce((s, r) => r.id === 'harina_pescado' ? s + (parseFloat(r.p) || 0) : s, 0);
-    return {
-      tot, avgN, cn, cost, eb, moistureTarget: sp?.moisture?.ideal ?? null, targets: sp?.targets ?? null, suppP, baseP, addP, cafeP, manP, airP, densaP, incompat, sp, trichoderma, dynSpawn, avgPh, avgDig, avgCra, eucPct, pescPct,
-      ebLow: ebLow !== undefined ? ebLow : Math.round(eb),
-      ebHigh: ebHigh !== undefined ? ebHigh : Math.round(eb),
-      ebIndex: ebIndex !== undefined ? ebIndex : 0,
-      ebMods: ebMods !== undefined ? ebMods : null
-    };
+    return SubstrateAnalysis.analyze(recipe, sKey, withCompatDefaults(getEffectiveINGS(ings), sKey), withRangeGuards(getEffectiveSPP(spp), sKey));
   };
 
   // ── analyzeCoFormulation — evaluación multi-especie ponderada ──
