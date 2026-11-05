@@ -1,0 +1,526 @@
+[
+  {
+    "name": "gris-euc-salvado",
+    "sKey": "p_ostreatus_gris",
+    "recipe": [
+      {
+        "id": "aserrin_eucalipto",
+        "p": 80
+      },
+      {
+        "id": "salvado_trigo",
+        "p": 20
+      }
+    ],
+    "analyze": {
+      "eb": 65.4,
+      "ebLow": 44,
+      "ebHigh": 86,
+      "cn": 72.1,
+      "avgN": 0.7,
+      "cost": 2954.5,
+      "suppEffectiveP": 20
+    },
+    "score": {
+      "score": 29,
+      "eb": {
+        "low": 50,
+        "high": 80,
+        "central": 65,
+        "confidence": "low"
+      }
+    },
+    "treatment": "thermal",
+    "items": [
+      {
+        "icon": "↓C:N",
+        "priority": "critical",
+        "action": "<b>Salvado de trigo</b> ya no acerca C:N al objetivo dentro de su tope. Alternativa: agregar <b>Estiércol de Gallina Deshidratado</b> a <b>20%</b> (nuevo)",
+        "apply": {
+          "mode": "set",
+          "id": "estierc_gallina_deshid",
+          "value": 20
+        },
+        "deltaEb": 20.1,
+        "deltaEbRange": [
+          -12.4,
+          52.6
+        ]
+      },
+      {
+        "icon": "↑N",
+        "priority": "critical",
+        "action": "<b>Salvado de trigo</b> ya no acerca N al objetivo dentro de su tope. Alternativa: agregar <b>Estiércol de Gallina Deshidratado</b> a <b>18.4%</b> (nuevo)",
+        "apply": {
+          "mode": "set",
+          "id": "estierc_gallina_deshid",
+          "value": 18.4
+        },
+        "deltaEb": 19.1,
+        "deltaEbRange": [
+          -12.4,
+          50.6
+        ]
+      },
+      {
+        "icon": "↑pH",
+        "priority": "critical",
+        "action": "Agregar <b>Carbonato de calcio</b> a <b>1%</b> (nuevo) · dosis típica documentada 0,5–1 %",
+        "apply": {
+          "mode": "set",
+          "id": "carbonato_calcio",
+          "value": 1
+        },
+        "deltaEb": 0.3,
+        "deltaEbRange": [
+          -29.7,
+          30.3
+        ]
+      },
+      {
+        "icon": "Ca",
+        "priority": "warning",
+        "action": "Agregar <b>Yeso agrícola</b> hasta 1–1,5%",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "Dig",
+        "priority": "tip",
+        "action": "Incorporar <b>Cartón corrugado troceado</b> (dig. 9/10) reemplazando parte de la base",
+        "apply": {
+          "mode": "add",
+          "id": "carton_corrugado",
+          "delta": 10
+        },
+        "deltaEb": 2.6,
+        "deltaEbRange": [
+          -27.4,
+          32.6
+        ]
+      },
+      {
+        "icon": "⛰",
+        "priority": "info",
+        "action": "Tratamiento térmico: validar temperatura de núcleo y el tiempo efectivo para el equipo y la carga reales. CWLP: verificar pH≥12 antes de sumergir.",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      }
+    ]
+  },
+  {
+    "name": "shiitake-lote1-proxy",
+    "sKey": "shiitake",
+    "recipe": [
+      {
+        "id": "aserrin_roble",
+        "p": 80
+      },
+      {
+        "id": "salvado_trigo",
+        "p": 20
+      },
+      {
+        "id": "carbonato_calcio",
+        "p": 1
+      }
+    ],
+    "proxyOf": "DOC-0127 pellets 80 / salvado 20 / Ca(OH)2 1 — pellets y cal hidratada no están en el catálogo",
+    "analyze": {
+      "eb": 45.2,
+      "ebLow": 35,
+      "ebHigh": 56,
+      "cn": 76.6,
+      "avgN": 0.6,
+      "cost": 3439.1,
+      "suppEffectiveP": 20
+    },
+    "score": {
+      "score": 49,
+      "eb": {
+        "low": 30,
+        "high": 60,
+        "central": 45,
+        "confidence": "low"
+      }
+    },
+    "treatment": "autoclave",
+    "items": [
+      {
+        "icon": "↓C:N",
+        "priority": "critical",
+        "action": "Ya está en <b>Salvado de trigo</b> a <b>20%</b> (actual 20%)",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "↑pH",
+        "priority": "critical",
+        "action": "<b>Carbonato de calcio</b> ya está en 1.0% (dosis típica documentada 0,5–1 %)",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "→N+",
+        "priority": "warning",
+        "action": "Ya está en <b>Salvado de trigo</b> a <b>20%</b> (actual 20%)",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "Dig",
+        "priority": "tip",
+        "action": "Incorporar <b>Cartón corrugado troceado</b> (dig. 9/10) reemplazando parte de la base",
+        "apply": {
+          "mode": "add",
+          "id": "carton_corrugado",
+          "delta": 10
+        },
+        "deltaEb": -2.7,
+        "deltaEbRange": [
+          -32.7,
+          27.3
+        ]
+      },
+      {
+        "icon": "⛰",
+        "priority": "info",
+        "action": "Tratamiento térmico: validar temperatura de núcleo y el tiempo efectivo para el equipo y la carga reales. CWLP: verificar pH≥12 antes de sumergir.",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      }
+    ]
+  },
+  {
+    "name": "gris-paja-balanceada",
+    "sKey": "p_ostreatus_gris",
+    "recipe": [
+      {
+        "id": "paja_trigo",
+        "p": 85
+      },
+      {
+        "id": "salvado_trigo",
+        "p": 12
+      },
+      {
+        "id": "carbonato_calcio",
+        "p": 2
+      },
+      {
+        "id": "yeso",
+        "p": 1
+      }
+    ],
+    "analyze": {
+      "eb": 90,
+      "ebLow": 74,
+      "ebHigh": 106,
+      "cn": 57.4,
+      "avgN": 0.8,
+      "cost": 3171.4,
+      "suppEffectiveP": 12
+    },
+    "score": {
+      "score": 46,
+      "eb": {
+        "low": 72,
+        "high": 108,
+        "central": 90,
+        "confidence": "low"
+      }
+    },
+    "treatment": "cwlp",
+    "items": [
+      {
+        "icon": "↓C:N",
+        "priority": "critical",
+        "action": "Subir <b>Salvado de trigo</b> a <b>20%</b> (actual 12%)",
+        "apply": {
+          "mode": "set",
+          "id": "salvado_trigo",
+          "value": 20
+        },
+        "deltaEb": 11.1,
+        "deltaEbRange": [
+          -26.9,
+          49.1
+        ]
+      },
+      {
+        "icon": "↑EB",
+        "priority": "warning",
+        "action": "Aumentar <b>Salvado de trigo</b> 8% · quedan 8% de margen seguro",
+        "apply": {
+          "mode": "increase",
+          "id": "salvado_trigo",
+          "delta": 8
+        },
+        "deltaEb": 5.6,
+        "deltaEbRange": [
+          -31.9,
+          43.1
+        ]
+      },
+      {
+        "icon": "↑N",
+        "priority": "critical",
+        "action": "Se corrige con el mismo ajuste que «C:N demasiado alto»: Subir <b>Salvado de trigo</b> a <b>20%</b> (actual 12%)",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "pH+",
+        "priority": "tip",
+        "action": "<b>Carbonato de calcio</b> ya está en 2.0% (dosis típica documentada 0,5–1 %)",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "⛰",
+        "priority": "info",
+        "action": "Tratamiento térmico: validar temperatura de núcleo y el tiempo efectivo para el equipo y la carga reales. CWLP: verificar pH≥12 antes de sumergir.",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      }
+    ]
+  },
+  {
+    "name": "gris-suplemento-medio",
+    "sKey": "p_ostreatus_gris",
+    "recipe": [
+      {
+        "id": "aserrin_eucalipto",
+        "p": 75
+      },
+      {
+        "id": "paja_soya",
+        "p": 25
+      }
+    ],
+    "analyze": {
+      "eb": 66.5,
+      "ebLow": 45,
+      "ebHigh": 88,
+      "cn": 86.7,
+      "avgN": 0.6,
+      "cost": 1846.6,
+      "suppEffectiveP": 15
+    },
+    "score": {
+      "score": 25,
+      "eb": {
+        "low": 52,
+        "high": 82,
+        "central": 67,
+        "confidence": "low"
+      }
+    },
+    "treatment": "cwlp",
+    "items": [
+      {
+        "icon": "↓C:N",
+        "priority": "critical",
+        "action": "<b>Paja / rastrojo de soya</b> ya no acerca C:N al objetivo dentro de su tope. Alternativa: agregar <b>Estiércol de Gallina Deshidratado</b> a <b>20%</b> (nuevo)",
+        "apply": {
+          "mode": "set",
+          "id": "estierc_gallina_deshid",
+          "value": 20
+        },
+        "deltaEb": 26,
+        "deltaEbRange": [
+          -7.5,
+          59.5
+        ]
+      },
+      {
+        "icon": "↑N",
+        "priority": "critical",
+        "action": "Agregar <b>Sustrato agotado (SMS)</b> a <b>20%</b> (nuevo)",
+        "apply": {
+          "mode": "set",
+          "id": "sms",
+          "value": 20
+        },
+        "deltaEb": 2.5,
+        "deltaEbRange": [
+          -27.5,
+          32.5
+        ]
+      },
+      {
+        "icon": "↑EB",
+        "priority": "warning",
+        "action": "Agregar <b>Harina de Pescado Deshidratada</b> 8% · quedan 20% de margen seguro",
+        "apply": {
+          "mode": "add",
+          "id": "harina_pescado",
+          "delta": 8
+        },
+        "deltaEb": 13.3,
+        "deltaEbRange": [
+          -17.7,
+          44.3
+        ]
+      },
+      {
+        "icon": "↑pH",
+        "priority": "critical",
+        "action": "Agregar <b>Carbonato de calcio</b> a <b>1%</b> (nuevo) · dosis típica documentada 0,5–1 %",
+        "apply": {
+          "mode": "set",
+          "id": "carbonato_calcio",
+          "value": 1
+        },
+        "deltaEb": 0.3,
+        "deltaEbRange": [
+          -29.7,
+          30.3
+        ]
+      },
+      {
+        "icon": "Ca",
+        "priority": "warning",
+        "action": "Agregar <b>Yeso agrícola</b> hasta 1–1,5%",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      },
+      {
+        "icon": "Dig",
+        "priority": "tip",
+        "action": "Incorporar <b>Cartón corrugado troceado</b> (dig. 9/10) reemplazando parte de la base",
+        "apply": {
+          "mode": "add",
+          "id": "carton_corrugado",
+          "delta": 10
+        },
+        "deltaEb": 2.5,
+        "deltaEbRange": [
+          -27.5,
+          32.5
+        ]
+      },
+      {
+        "icon": "⛰",
+        "priority": "info",
+        "action": "Tratamiento térmico: validar temperatura de núcleo y el tiempo efectivo para el equipo y la carga reales. CWLP: verificar pH≥12 antes de sumergir.",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      }
+    ]
+  },
+  {
+    "name": "blanca-n-alto",
+    "sKey": "p_ostreatus_blanco",
+    "recipe": [
+      {
+        "id": "aserrin_eucalipto",
+        "p": 70
+      },
+      {
+        "id": "salvado_trigo",
+        "p": 30
+      }
+    ],
+    "analyze": {
+      "eb": 49.3,
+      "ebLow": 30,
+      "ebHigh": 69,
+      "cn": 51.3,
+      "avgN": 0.9,
+      "cost": 3295.5,
+      "suppEffectiveP": 30
+    },
+    "score": {
+      "score": 36,
+      "eb": {
+        "low": 34,
+        "high": 64,
+        "central": 49,
+        "confidence": "low"
+      }
+    },
+    "treatment": "autoclave",
+    "items": [
+      {
+        "icon": "↓C:N",
+        "priority": "critical",
+        "action": "<b>Salvado de trigo</b> ya no acerca C:N al objetivo dentro de su tope. Alternativa: agregar <b>Harina de Alfalfa</b> a <b>18%</b> (nuevo)",
+        "apply": {
+          "mode": "set",
+          "id": "harina_alfalfa",
+          "value": 18
+        },
+        "deltaEb": 28.6,
+        "deltaEbRange": [
+          -1.9,
+          59.1
+        ]
+      },
+      {
+        "icon": "→N+",
+        "priority": "warning",
+        "action": "<b>Salvado de trigo</b> ya no acerca N al objetivo dentro de su tope. Alternativa: agregar <b>Harina de Alfalfa</b> a <b>16.4%</b> (nuevo)",
+        "apply": {
+          "mode": "set",
+          "id": "harina_alfalfa",
+          "value": 16.4
+        },
+        "deltaEb": 27.5,
+        "deltaEbRange": [
+          -3,
+          58
+        ]
+      },
+      {
+        "icon": "↑pH",
+        "priority": "critical",
+        "action": "Agregar <b>Carbonato de calcio</b> a <b>1%</b> (nuevo) · dosis típica documentada 0,5–1 %",
+        "apply": {
+          "mode": "set",
+          "id": "carbonato_calcio",
+          "value": 1
+        },
+        "deltaEb": 0.2,
+        "deltaEbRange": [
+          -29.8,
+          30.2
+        ]
+      },
+      {
+        "icon": "Dig",
+        "priority": "tip",
+        "action": "Incorporar <b>Cartón corrugado troceado</b> (dig. 9/10) reemplazando parte de la base",
+        "apply": {
+          "mode": "add",
+          "id": "carton_corrugado",
+          "delta": 10
+        },
+        "deltaEb": -1.3,
+        "deltaEbRange": [
+          -31.3,
+          28.7
+        ]
+      },
+      {
+        "icon": "⛰",
+        "priority": "info",
+        "action": "Tratamiento térmico: validar temperatura de núcleo y el tiempo efectivo para el equipo y la carga reales. CWLP: verificar pH≥12 antes de sumergir.",
+        "apply": null,
+        "deltaEb": null,
+        "deltaEbRange": null
+      }
+    ]
+  }
+]

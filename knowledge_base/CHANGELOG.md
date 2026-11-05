@@ -28,7 +28,8 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
-| `[KB]` | Incorporado el dossier consultivo `09_research/microclima_operacion_remota_2026-11-04/`: informe DOC-0138 y bibliografía DOC-0139, con procedencia SHA-256, corte 2026-11-04 y 26 fuentes. Campaña de medición y recuperación; evidencia local pendiente. Enlazado en literatura e INDEX. Sin cambios en SOP, decisiones, umbrales, protecciones, firmware, ARK ni estado productivo. |
+| `[KB]` | Incorporado el dossier consultivo `09_research/microclima_operacion_remota_2026-11-04/`: informe DOC-0142 y bibliografía DOC-0143, con procedencia SHA-256, corte 2026-11-04 y 26 fuentes. Campaña de medición y recuperación; evidencia local pendiente. Enlazado en literatura e INDEX. Sin cambios en SOP, decisiones, umbrales, protecciones, firmware, ARK ni estado productivo. |
+| `[KB]` | Incorporado DOC-0138: investigación consultiva de jerky vegano de shiitake, melena de león y orellana (variables de proceso, rangos Tier 3, conservación refrigerada 1–2 semanas, diagnóstico de fallas, fuentes por verificar). Punteros en fichas de *L. edodes*, *H. erinaceus* y *P. ostreatus*; nuevas AB17–AB19; literature_index. Conserva DEC-022; sin cambios de SOP, cifras operativas ni Setas OS. Uso público: receta casera en la web. |
 
 ### 2026-11-04
 

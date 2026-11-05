@@ -244,7 +244,7 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 
 ## Microclima y operación remota — investigación 2026-11-04
 
-Dossier consultivo incorporado el 2026-11-05: [informe DOC-0138](microclima_operacion_remota_2026-11-04/informe.md) y [bibliografía DOC-0139](microclima_operacion_remota_2026-11-04/bibliografia.md), con 26 fuentes locales S01–S26 y límites de lectura explícitos.
+Dossier consultivo incorporado el 2026-11-05: [informe DOC-0142](microclima_operacion_remota_2026-11-04/informe.md) y [bibliografía DOC-0143](microclima_operacion_remota_2026-11-04/bibliografia.md), con 26 fuentes locales S01–S26 y límites de lectura explícitos.
 
 Cubre compensación SCD30/MH-Z19C por presión, calibración/condensación, caudal efectivo y distribución, calor de núcleo, agua/rocío y recuperación sin red. Incluye matriz de evidencia, campaña reversible, comparación manual/automática y esquemas de registro para ALT01–ALT07, SH06 y SH09. Señala soporte pendiente del factor MH y la referencia bibliográfica incorrecta de calor metabólico, sin cambiar ni retirar protecciones. El estado descrito corresponde al corte del informe; no constituye dato de campo nuevo, setpoint ni cierre de esas preguntas. Sus candidatos de medición/diseño permanecen consultivos; la incorporación no modifica ARK ni reglas operativas.
 
@@ -260,3 +260,5 @@ La incorporación amplía ARK-028/030 y añade ARK-031. Los escenarios reproduci
 |---|---|---|
 | [Informe de instalación, higiene y continuidad](instalacion_bioseguridad_2026-11-04/informe.md) | Reconversión modular de la marranera; riesgos, mediciones as-built, alternativas y compuertas de piloto/réplica | Investigación consultiva, sin mediciones nuevas ni aprobación profesional, sanitaria o constructiva |
 | [Bibliografía y registro de verificación](instalacion_bioseguridad_2026-11-04/bibliografia.md) | Fuentes primarias y oficiales, Tier, representación leída y accesos fallidos | Distingue texto completo, resumen y aplicabilidad local pendiente; no promueve parámetros a SOP |
+
+Ver `09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138): síntesis consultiva de un informe externo sobre jerky de shiitake, melena de león y orellana. Fuentes registradas por nombre sin URL ni DOI (marcadores de cita rotos en el original): Penn State Extension, NCHFP y Catálogo de Hongos de Colombia (Tier 2); estudio mecánico-sensorial de *H. erinaceus* 2026 y literatura de sabor de *L. edodes* / *P. ostreatus* (Tier 1 según el informe, por verificar); Mushroom Council, Alan Bergo, FreshCap, Helsieni y Wild Vegan Flower (Tier 3). Uso público: receta casera; DEC-022 sin cambios.

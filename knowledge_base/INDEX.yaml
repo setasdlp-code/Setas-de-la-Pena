@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 142 catalog entries as of 2026-11-05; the completeness of indexing of all
+# 144 catalog entries as of 2026-11-05; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -200,6 +200,7 @@ documents:
     status: active
 
   # Tier 2 — a Governance Standard. Illustrates authority: governance_standards.
+
   - id: ai-agent-protocol
     title: "AI Agent Protocol"
     path: 00_project/AI_AGENT_PROTOCOL.md
@@ -218,6 +219,7 @@ documents:
   # Tier 3 — the decision log, indexed at file level (individual DEC-NNN
   # entries are not separately cataloged — see ROADMAP.md on identifier
   # convention debt for why DEC-NNN is not yet a clean machine key).
+
   - id: decisions
     title: "Registro de Decisiones — Setas de la Peña"
     path: DECISIONS.md
@@ -235,6 +237,7 @@ documents:
 
   # Tier 4 — Canonical Knowledge. The representative species entry mirrors
   # DEC-013 and the current startup priority.
+
   - id: lentinula-edodes
     title: "Lentinula edodes — Shiitake"
     path: 01_species/lentinula_edodes.md
@@ -255,6 +258,7 @@ documents:
   # canonical-knowledge document (the canonical home for the parameter it
   # applies as an acceptance threshold — see CROSS_REFERENCE_STANDARD.md §2's
   # worked FAE example).
+
   - id: quality-control
     title: "Control de Calidad"
     path: 06_operations/quality_control.md
@@ -271,6 +275,7 @@ documents:
     status: active
 
   # Tier 6 — Lessons and Historical Records.
+
   - id: lessons-learned
     title: "Lecciones Aprendidas — Setas de la Peña"
     path: LESSONS_LEARNED.md
@@ -289,6 +294,7 @@ documents:
   # Tier 7 — Research Library. Illustrates confidence distinct from status:
   # a research entry can be `active` (in use) with per-source reliability
   # already captured inline (see the document itself), not duplicated here.
+
   - id: literature-database
     title: "Base de Datos de Literatura"
     path: 09_research/literature_database.md
@@ -303,8 +309,6 @@ documents:
     supersedes: null
     confidence: high
     status: active
-
-
 
   - id: weekly-brief-2026-08-14
     title: "Briefing de literatura — 2026-08-14"
@@ -321,7 +325,6 @@ documents:
     source_documents: [paper_019, paper_022, paper_027, paper_028]
     confidence: medium
     status: active
-
 
   - id: deep-literature-pass-2026-08-15
     title: "Pasada profunda de literatura — 2026-08-15"
@@ -343,6 +346,7 @@ documents:
   # (CANON §14.2) and the scoped meaning of `canonical` (§0 above): this
   # document IS the source of truth for "current snapshot," and is NEVER a
   # source of truth for cultivation parameters.
+
   - id: farm-brain
     title: "Farm Brain — Setas de la Peña"
     path: FARM_BRAIN.md
@@ -361,6 +365,7 @@ documents:
   # A Phase 2 synthesis document — illustrates authority: none and
   # canonical: false, the two fields together expressing "this document makes
   # no independent claim that could ever be in conflict with anything."
+
   - id: system-map
     title: "System Map"
     path: 00_project/SYSTEM_MAP.md
@@ -378,6 +383,7 @@ documents:
 
   # A template — illustrates canonical: false and status: draft for a
   # document that holds no content of its own, only a structure to be filled.
+
   - id: workflow-template
     title: "Workflow Template"
     path: 10_ai_workflows/templates/workflow_template.md
@@ -1369,7 +1375,6 @@ documents:
     confidence: experimental
     status: active
 
-
   - id: weekly-reports-knowledge-synthesis-2026-08-29
     title: "Síntesis de conocimiento procedente de informes semanales"
     path: 09_research/weekly_reports_knowledge_synthesis_2026-08-29.md
@@ -1385,7 +1390,6 @@ documents:
     source_documents: [paper_008, paper_009, paper_010, paper_011, paper_012, paper_013, paper_014, paper_015, paper_016, paper_019, paper_022, paper_027, paper_028, paper_033, paper_034, paper_035, paper_036, paper_037, paper_038, paper_039]
     confidence: medium
     status: active
-
 
   - id: research-validation-audit-2026-08-29
     title: "Auditoría de validación de investigación pendiente"
@@ -2377,6 +2381,36 @@ documents:
     confidence: medium
     status: draft
 
+  - id: esterilizacion-contaminacion-investigacion-2026-11-04
+    title: "Preparación térmica, inoculación y contaminación — investigación 2026-11-04"
+    path: 09_research/esterilizacion_contaminacion_2026-11-04/informe.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [thermal-validation, altitude, sterilization, contamination, commissioning]
+    keywords: ["1941X", "SH05", "presión absoluta", "penetración térmica", "indicadores biológicos", "controles A/B/C"]
+    related_documents: [esterilizacion-contaminacion-bibliografia-2026-11-04, autoclaves, sterilization, laboratory, quality-control, operational-commissioning, commissioning-validation-research, decisions, current-operations, farm-brain, unresolved-questions, research-summaries]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: esterilizacion-contaminacion-bibliografia-2026-11-04
+    title: "Bibliografía verificada — esterilización y contaminación 2026-11-04"
+    path: 09_research/esterilizacion_contaminacion_2026-11-04/bibliografia.md
+    authority: research_library
+    category: references
+    canonical: false
+    topics: [thermal-validation, altitude, sterilization, contamination, commissioning]
+    keywords: ["1941X", "SH05", "presión absoluta", "penetración térmica", "indicadores biológicos", "controles A/B/C"]
+    related_documents: [esterilizacion-contaminacion-investigacion-2026-11-04]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
   - id: microclima-operacion-remota-2026-11-04
     title: "Microclima verificable y operación recuperable en Tenjo — investigación consultiva"
     path: 09_research/microclima_operacion_remota_2026-11-04/informe.md
@@ -2401,6 +2435,11 @@ documents:
     topics: [microclimate, altitude, co2-sensors, calibration, airflow, condensation, local-fallback]
     keywords: [SCD30, MH-Z19C, SHT4x, ESPHome, ALT01, SH06, SH09, "punto de rocío"]
     related_documents: [microclima-operacion-remota-2026-11-04]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
     depends_on: []
     implemented_by: []
     supersedes: null

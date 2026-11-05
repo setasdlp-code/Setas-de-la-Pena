@@ -3,7 +3,7 @@ title: Hericium erinaceus — Lion's Mane / Melena de León
 document_id: DOC-0006
 category: species
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-11-05
 confidence: medium
 primary_sources:
   - Friedman 2015 (paper_003)
@@ -260,3 +260,7 @@ Solo después de obtener un primer ciclo estable. Comparar bandas definidas por 
 - Lu, Z. et al. (2024). Optimization of substrate formulation for *Hericium erinaceus* by replacing wood by straw and their effect on enzyme activities. *Frontiers in Plant Science*, 15, 1436385. https://doi.org/10.3389/fpls.2024.1436385
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Ver `../09_research/high_altitude_microclimate_shiitake_hericium_2026-08-05.md` para la auditoría de altitud, ventilación, sustratos y poscosecha.
+
+## Procesamiento: jerky (consultivo)
+
+La melena da el jerky más fibroso de las especies revisadas; requiere precocción y placas de 8–12 mm (55–57 °C, 6–8 h; Tier 3, sin validación propia). Ver `../09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138). Uso público: receta casera; no es producto en venta.

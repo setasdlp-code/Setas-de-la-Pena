@@ -3,7 +3,7 @@ title: Lentinula edodes — Shiitake
 document_id: DOC-0007
 category: species
 load_priority: selective
-last_reviewed: 2026-09-03
+last_reviewed: 2026-11-05
 confidence: high
 primary_sources:
   - Chang & Miles 2004 (book_007, cap. 13)
@@ -207,3 +207,7 @@ Tenjo puede ofrecer condiciones compatibles con cepas frías o medias, pero la d
 - Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
 - Stamets, P. (2000). *Growing Gourmet and Medicinal Mushrooms*. Ten Speed Press.
 - Zied, D. C., & Pardo-Giménez, A. (2017). *Edible and Medicinal Mushrooms: Technology and Applications*. Wiley-Blackwell.
+
+## Procesamiento: jerky (consultivo)
+
+Recetas y rangos de secado para jerky de shiitake (láminas 5–7 mm, 57–60 °C, 5–7 h; Tier 3, sin validación propia) en `../09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138). No modifica DEC-022: el producto comercial sigue siendo fresco entero.
