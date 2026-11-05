@@ -8,6 +8,7 @@ confidence: high
 primary_sources:
   - literature_database.md
 related_documents:
+  - instalacion_bioseguridad_2026-11-04/informe.md
   - literature_database.md
   - literature_audit_2026-07-23.md
   - research_summaries.md
@@ -245,3 +246,10 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 Dossier consultivo incorporado el 2026-11-05: [informe DOC-0138](microclima_operacion_remota_2026-11-04/informe.md) y [bibliografía DOC-0139](microclima_operacion_remota_2026-11-04/bibliografia.md), con 26 fuentes locales S01–S26 y límites de lectura explícitos.
 
 Cubre compensación SCD30/MH-Z19C por presión, calibración/condensación, caudal efectivo y distribución, calor de núcleo, agua/rocío y recuperación sin red. Incluye matriz de evidencia, campaña reversible, comparación manual/automática y esquemas de registro para ALT01–ALT07, SH06 y SH09. Señala soporte pendiente del factor MH y la referencia bibliográfica incorrecta de calor metabólico, sin cambiar ni retirar protecciones. El estado descrito corresponde al corte del informe; no constituye dato de campo nuevo, setpoint ni cierre de esas preguntas. Sus candidatos de medición/diseño permanecen consultivos; la incorporación no modifica ARK ni reglas operativas.
+
+## Investigación consultiva — instalación y bioseguridad, 2026-11-04
+
+| Documento | Alcance y evidencia | Límite de uso |
+|---|---|---|
+| [Informe de instalación, higiene y continuidad](instalacion_bioseguridad_2026-11-04/informe.md) | Reconversión modular de la marranera; riesgos, mediciones as-built, alternativas y compuertas de piloto/réplica | Investigación consultiva, sin mediciones nuevas ni aprobación profesional, sanitaria o constructiva |
+| [Bibliografía y registro de verificación](instalacion_bioseguridad_2026-11-04/bibliografia.md) | Fuentes primarias y oficiales, Tier, representación leída y accesos fallidos | Distingue texto completo, resumen y aplicabilidad local pendiente; no promueve parámetros a SOP |
