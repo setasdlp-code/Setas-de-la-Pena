@@ -8,6 +8,7 @@ load_priority: selective
 owner: Setas de la Peña
 last_reviewed: 2026-11-05
 related_documents:
+  - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - ../00_project/KNOWLEDGE_ARCHITECTURE.md
   - literature_database.md
   - literature_index.md
@@ -262,6 +263,11 @@ Where applicable, experiments should preserve: strain/source identity; formulati
 - `prohibited_use`: automatic adoption of published inclusion rates, calcium amendments or pasteurization as equivalents to the current process.
 
 ### ARK-028 — Fresh-product quality is a measured harvest-to-cold-chain response
+- `additional_source_document`: `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md`, §§3–4; bibliography S7 (Schill et al. 2021, DOI 10.3390/foods10040816).
+- `evidence_quality`: Tier 1 original observational study; methods and discussion checked. Sensory status and microbial load did not always vary together. No local measurement.
+- `project_applicability`: measure product temperature under actual load and sensory quality separately from the professionally assigned microbiological sampling plan.
+- `transfer_limits`: retail history, strain, packaging and sample size differ; seven days in a paper is not a local shelf life. Proposed physical replicates do not replace statutory n/c/m/M.
+- `next_validation`: approved protocol, traceable independent lots, laboratory classification and packaging/cold-chain comparison; no release from the research alone.
 - `entry_type`: measurement_opportunity
 - `source_ids`: `paper_010`, `paper_011`, `paper_016`, `paper_035`, `paper_039`
 - `source_demonstrates`: mushroom quality changes with time, temperature, water loss, packaging and species-specific deterioration mechanisms.
@@ -281,6 +287,9 @@ Where applicable, experiments should preserve: strain/source identity; formulati
 ## Commercial evidence — 2026-11-03
 
 ### ARK-030 — Buyer-level demand and delivered economics require separate measurement
+- `additional_source_document`: `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md`, §§7–8, 10; illustrative model and CSV in its annex directory.
+- `additional_measurement_opportunity`: distinguish released kg from ultimately sold kg; allocate losses once; track labor, occupancy by stage, paid reorders and maximum cumulative cash deficit.
+- `model_limit`: the ten calculated scenarios use assumptions only. Arithmetic verification establishes no production capacity or profitability. DEC-020 applies to fresh; dried requires its own margin decision under DEC-022.
 - `entry_type`: measurement_opportunity
 - `source_document`: `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`, §§4–7, 10–12, with primary URLs in each section.
 - `source_demonstrates`: named Colombian offers and menu applications coexist with different fresh, preserved and dried trade trajectories; retail asking prices do not identify buyer quantities or farm contribution.
@@ -289,3 +298,14 @@ Where applicable, experiments should preserve: strain/source identity; formulati
 - `transfer_limits`: no national TAM/CAGR, unmet demand, current stock, farm profitability or verified authorization follows from these observations. External species comparisons do not override DEC-013; margin governance remains DEC-020.
 - `next_validation`: resolve AB04 and AB12 in `09_research/unresolved_questions.md` using dated quotes, buyer specifications and paid repeat-order evidence; review R01/R04 before a proposed processed SKU.
 - `prohibited_use`: publishing an active price, adding species, committing volume, authorizing a medicinal claim or making a purchase from the research alone.
+
+
+### ARK-031 — Traceability must resolve harvest and packaging events through the customer
+- `entry_type`: design_implication
+- `source_document`: `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md`, §5; bibliography S11, FAO, https://www.fao.org/food-safety/food-control-systems/traceability---recalls/en .
+- `source_demonstrates`: FAO identifies traceability and recall as tools for identifying, locating and withdrawing implicated food lots across distribution.
+- `evidence_quality`: Tier 1 institutional guidance; no local recall or traceability exercise measured.
+- `project_applicability`: preserve parent lots when combining harvests; link packaging material, dispatch, accepted/rejected mass, customer and inventory. Reconcile mass and prepare a documentary mock recall.
+- `transfer_limits`: the proposed fields and acceptance screen are a design, not an implemented system, legal response deadline or proof of food safety.
+- `next_validation`: authorized documentary simulation, all destinations identifiable and mass differences explained; responsible sanitary review before real release/recall procedures.
+- `prohibited_use`: treating a lot code as proof of safety, changing SOP or contacting customers/authorities from this entry alone.

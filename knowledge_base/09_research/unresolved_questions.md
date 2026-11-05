@@ -11,6 +11,7 @@ primary_sources:
   - facility_adaptation_literature_2026-08-03.md
   - high_altitude_microclimate_shiitake_hericium_2026-08-05.md
 related_documents:
+  - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - literature_database.md
   - literature_audit_2026-07-23.md
   - facility_adaptation_literature_2026-08-03.md
@@ -192,7 +193,7 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB02 | ¿Disponibilidad, especie, origen legal y especificación de aserrín de madera dura? | Alta | Cotizar, documentar y muestrear |
 | AB03 | ¿Disponibilidad de bolsas PP aptas para el ciclo validado? | Alta | Cotizar y verificar especificación |
 | AB04 | ¿Qué lote, especificación y frecuencia de shiitake aceptan compradores alcanzables? | Media | Menús identificados en la síntesis 2026-11-03; cantidades y recompra siguen sin verificar |
-| AB05 | ¿Cadena fría disponible y vida útil real por especie y empaque? | Alta | Ensayo poscosecha |
+| AB05 | ¿Cadena fría disponible y vida útil real por especie y empaque? | Alta | Diseño consultivo DOC-0136 §§3–4: temperatura del producto bajo carga, calidad y plan microbiológico profesional separados; ensayo local pendiente |
 | AB06 | ¿Costo por kg de cada celda y etapa a escala media? | Alta antes de réplica | Modelo después del piloto |
 | AB07 | ¿Qué aserraderos/carpinterías entregan residuo sin MDF, pinturas, preservantes o mezcla desconocida? | Alta | Auditoría de proveedor y muestra |
 | AB08 | ¿El bagazo cervecero puede recibirse con humedad y estabilidad compatibles con el proceso? | Media | Caracterización, logística y piloto |
@@ -246,3 +247,8 @@ Una pregunta se cierra únicamente cuando existe:
 - definición de la decisión;
 - actualización del documento afectado;
 - identificación de cualquier límite de extrapolación.
+
+
+## Evidencia consultiva añadida — 2026-11-04
+
+`09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md` desarrolla AB05 (frío/vida útil), AB06 (ocupación y costo por etapa) y AB12 (kg vendidos, contribución, recompra y caja). Incluye diseño de simulacro de trazabilidad/retiro y diez escenarios económicos ilustrativos; no cierra estas preguntas. Sus conflictos documentales de umbrales requieren decisión humana. Para seco gobierna DEC-022: no ensayar antes de tres ciclos cerrados ni activar producto sin sus cuatro condiciones.

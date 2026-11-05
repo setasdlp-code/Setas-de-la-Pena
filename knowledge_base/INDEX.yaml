@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 142 catalog entries as of 2026-11-05; the completeness of indexing of all
+# 144 catalog entries as of 2026-11-05; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -200,6 +200,7 @@ documents:
     status: active
 
   # Tier 2 — a Governance Standard. Illustrates authority: governance_standards.
+
   - id: ai-agent-protocol
     title: "AI Agent Protocol"
     path: 00_project/AI_AGENT_PROTOCOL.md
@@ -218,6 +219,7 @@ documents:
   # Tier 3 — the decision log, indexed at file level (individual DEC-NNN
   # entries are not separately cataloged — see ROADMAP.md on identifier
   # convention debt for why DEC-NNN is not yet a clean machine key).
+
   - id: decisions
     title: "Registro de Decisiones — Setas de la Peña"
     path: DECISIONS.md
@@ -235,6 +237,7 @@ documents:
 
   # Tier 4 — Canonical Knowledge. The representative species entry mirrors
   # DEC-013 and the current startup priority.
+
   - id: lentinula-edodes
     title: "Lentinula edodes — Shiitake"
     path: 01_species/lentinula_edodes.md
@@ -255,6 +258,7 @@ documents:
   # canonical-knowledge document (the canonical home for the parameter it
   # applies as an acceptance threshold — see CROSS_REFERENCE_STANDARD.md §2's
   # worked FAE example).
+
   - id: quality-control
     title: "Control de Calidad"
     path: 06_operations/quality_control.md
@@ -271,6 +275,7 @@ documents:
     status: active
 
   # Tier 6 — Lessons and Historical Records.
+
   - id: lessons-learned
     title: "Lecciones Aprendidas — Setas de la Peña"
     path: LESSONS_LEARNED.md
@@ -289,6 +294,7 @@ documents:
   # Tier 7 — Research Library. Illustrates confidence distinct from status:
   # a research entry can be `active` (in use) with per-source reliability
   # already captured inline (see the document itself), not duplicated here.
+
   - id: literature-database
     title: "Base de Datos de Literatura"
     path: 09_research/literature_database.md
@@ -303,8 +309,6 @@ documents:
     supersedes: null
     confidence: high
     status: active
-
-
 
   - id: weekly-brief-2026-08-14
     title: "Briefing de literatura — 2026-08-14"
@@ -321,7 +325,6 @@ documents:
     source_documents: [paper_019, paper_022, paper_027, paper_028]
     confidence: medium
     status: active
-
 
   - id: deep-literature-pass-2026-08-15
     title: "Pasada profunda de literatura — 2026-08-15"
@@ -343,6 +346,7 @@ documents:
   # (CANON §14.2) and the scoped meaning of `canonical` (§0 above): this
   # document IS the source of truth for "current snapshot," and is NEVER a
   # source of truth for cultivation parameters.
+
   - id: farm-brain
     title: "Farm Brain — Setas de la Peña"
     path: FARM_BRAIN.md
@@ -361,6 +365,7 @@ documents:
   # A Phase 2 synthesis document — illustrates authority: none and
   # canonical: false, the two fields together expressing "this document makes
   # no independent claim that could ever be in conflict with anything."
+
   - id: system-map
     title: "System Map"
     path: 00_project/SYSTEM_MAP.md
@@ -378,6 +383,7 @@ documents:
 
   # A template — illustrates canonical: false and status: draft for a
   # document that holds no content of its own, only a structure to be filled.
+
   - id: workflow-template
     title: "Workflow Template"
     path: 10_ai_workflows/templates/workflow_template.md
@@ -1225,7 +1231,7 @@ documents:
     canonical: true
     topics: [literature-catalog, evidence-rating-index]
     keywords: [paper_001, book_007, guide_002, star rating]
-    related_documents: [genetica-sustratos-shiitake-2026-11-04, genetica-sustratos-shiitake-bibliografia-2026-11-04, literature-database, literature-audit-2026-07-23, research-summaries, unresolved-questions]
+    related_documents: ["literature-database", "literature-audit-2026-07-23", "research-summaries", "unresolved-questions", "calidad-poscosecha-economia-shiitake-2026-11-04", "genetica-sustratos-shiitake-2026-11-04", "genetica-sustratos-shiitake-bibliografia-2026-11-04"]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1256,7 +1262,7 @@ documents:
     canonical: true
     topics: [open-questions, batch-1-blockers]
     keywords: [SH01, bloqueante, autoclave sin comisionar, spawn sin proveedor]
-    related_documents: [genetica-sustratos-shiitake-2026-11-04, literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
+    related_documents: ["literature-database", "literature-audit-2026-07-23", "lentinula-edodes", "current-operations", "colombia-mushroom-market-synthesis-2026-11-03", "factibilidad-shiitake-tenjo-evaluacion-2026-11-03", "calidad-poscosecha-economia-shiitake-2026-11-04", "genetica-sustratos-shiitake-2026-11-04"]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1369,7 +1375,6 @@ documents:
     confidence: experimental
     status: active
 
-
   - id: weekly-reports-knowledge-synthesis-2026-08-29
     title: "Síntesis de conocimiento procedente de informes semanales"
     path: 09_research/weekly_reports_knowledge_synthesis_2026-08-29.md
@@ -1385,7 +1390,6 @@ documents:
     source_documents: [paper_008, paper_009, paper_010, paper_011, paper_012, paper_013, paper_014, paper_015, paper_016, paper_019, paper_022, paper_027, paper_028, paper_033, paper_034, paper_035, paper_036, paper_037, paper_038, paper_039]
     confidence: medium
     status: active
-
 
   - id: research-validation-audit-2026-08-29
     title: "Auditoría de validación de investigación pendiente"
@@ -1725,7 +1729,7 @@ documents:
     canonical: true
     topics: [active-research, ark-registry, p0-literature, evidence-distillation]
     keywords: [ARK, "active research knowledge", "p0 papers", Rocha, Gaitán-Hernández, Atila, Holgado-Rojas, Shi]
-    related_documents: [genetica-sustratos-shiitake-bibliografia-2026-11-04, genetica-sustratos-shiitake-2026-11-04, literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus, colombia-mushroom-market-synthesis-2026-11-03]
+    related_documents: ["literature-database", "unresolved-questions", "lentinula-edodes", "hericium-erinaceus", "colombia-mushroom-market-synthesis-2026-11-03", "calidad-poscosecha-economia-shiitake-2026-11-04", "genetica-sustratos-shiitake-bibliografia-2026-11-04", "genetica-sustratos-shiitake-2026-11-04"]
     depends_on: [literature-database]
     implemented_by: [lentinula-edodes, hericium-erinaceus, incubation, environmental-control]
     supersedes: null
@@ -2317,37 +2321,35 @@ documents:
     confidence: medium
     status: draft
 
-
-  - id: genetica-sustratos-shiitake-2026-11-04
-    title: "Base biológica reproducible de shiitake para Tenjo"
-    path: 09_research/genetica_sustratos_shiitake_2026-11-04/informe.md
+  - id: calidad-poscosecha-economia-shiitake-2026-11-04
+    title: "Calidad, poscosecha y economía de shiitake — investigación consultiva"
+    path: 09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md
     authority: research_library
     category: research
     canonical: false
-    topics: [shiitake, strain-traceability, spawn-storage, dry-matter, substrate-comparison, maturity, induction]
-    keywords: ["SH01", "SH02", "SH03", "SH04", "SH07", "SH08", "genética", "materia seca", "Cenicafé", "conservación de spawn"]
-    related_documents: [genetica-sustratos-shiitake-bibliografia-2026-11-04, active-research-knowledge, unresolved-questions, research-summaries, decisions, current-operations]
+    topics: [shiitake, postharvest, shelf-life, food-safety, traceability, unit-economics]
+    keywords: ["cadena fría", "kg vendidos", "DEC-022", "vida útil", "retiro", "margen de contribución"]
+    related_documents: [calidad-poscosecha-economia-bibliografia-2026-11-04, quality-control, production-schedule, batch-tracking, economics, pricing, decisions, active-research-knowledge, unresolved-questions]
     depends_on: []
     implemented_by: []
     supersedes: null
     confidence: medium
-    status: consultative_research
+    status: draft
 
-
-  - id: genetica-sustratos-shiitake-bibliografia-2026-11-04
-    title: "Bibliografía y verificación — genética y sustratos de shiitake"
-    path: 09_research/genetica_sustratos_shiitake_2026-11-04/bibliografia.md
+  - id: calidad-poscosecha-economia-bibliografia-2026-11-04
+    title: "Bibliografía — Calidad, poscosecha y economía de shiitake"
+    path: references/calidad_poscosecha_economia_shiitake_2026-11-04_bibliografia.md
     authority: research_library
     category: research
     canonical: false
-    topics: [shiitake, strain-traceability, spawn-storage, dry-matter, substrate-comparison, maturity, induction]
-    keywords: ["SH01", "SH02", "SH03", "SH04", "SH07", "SH08", "genética", "materia seca", "Cenicafé", "conservación de spawn"]
-    related_documents: [genetica-sustratos-shiitake-2026-11-04, active-research-knowledge, unresolved-questions, research-summaries, decisions, current-operations]
+    topics: [shiitake, postharvest, shelf-life, food-safety, traceability, unit-economics]
+    keywords: ["cadena fría", "kg vendidos", "DEC-022", "vida útil", "retiro", "margen de contribución"]
+    related_documents: [calidad-poscosecha-economia-shiitake-2026-11-04]
     depends_on: []
     implemented_by: []
     supersedes: null
     confidence: medium
-    status: consultative_research
+    status: draft
 
   - id: instalacion-bioseguridad-2026-11-04
     title: "Instalación modular, higiene y continuidad — investigación consultiva"
@@ -2378,3 +2380,33 @@ documents:
     supersedes: null
     confidence: medium
     status: draft
+
+  - id: genetica-sustratos-shiitake-2026-11-04
+    title: "Base biológica reproducible de shiitake para Tenjo"
+    path: 09_research/genetica_sustratos_shiitake_2026-11-04/informe.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, strain-traceability, spawn-storage, dry-matter, substrate-comparison, maturity, induction]
+    keywords: ["SH01", "SH02", "SH03", "SH04", "SH07", "SH08", "genética", "materia seca", "Cenicafé", "conservación de spawn"]
+    related_documents: [genetica-sustratos-shiitake-bibliografia-2026-11-04, active-research-knowledge, unresolved-questions, research-summaries, decisions, current-operations]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: consultative_research
+
+  - id: genetica-sustratos-shiitake-bibliografia-2026-11-04
+    title: "Bibliografía y verificación — genética y sustratos de shiitake"
+    path: 09_research/genetica_sustratos_shiitake_2026-11-04/bibliografia.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, strain-traceability, spawn-storage, dry-matter, substrate-comparison, maturity, induction]
+    keywords: ["SH01", "SH02", "SH03", "SH04", "SH07", "SH08", "genética", "materia seca", "Cenicafé", "conservación de spawn"]
+    related_documents: [genetica-sustratos-shiitake-2026-11-04, active-research-knowledge, unresolved-questions, research-summaries, decisions, current-operations]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: consultative_research
