@@ -1,0 +1,1234 @@
+{
+  "p_ostreatus_gris/rescate": {
+    "noStock": false,
+    "results": []
+  },
+  "p_ostreatus_gris/produccion": {
+    "noStock": false,
+    "results": [
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 90
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10
+          }
+        ],
+        "score": 95
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 88.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.8
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 95
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 87.3
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.7
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 85.5
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.5
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 77.8
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 10.3
+          },
+          {
+            "id": "harina_pescado",
+            "p": 6.9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 79.9
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 7.6
+          },
+          {
+            "id": "harina_pescado",
+            "p": 7.6
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 76
+          },
+          {
+            "id": "harina_pescado",
+            "p": 12
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 50.5
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 33.6
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10.9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 37.5
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 37.5
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10.1
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 45.1
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 30.1
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.8
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 67.1
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 9
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 81
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 79.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 8.8
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 78.3
+          },
+          {
+            "id": "harina_pescado",
+            "p": 8.7
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 76.5
+          },
+          {
+            "id": "harina_pescado",
+            "p": 8.5
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 29.9
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 44.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10.4
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 69.7
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 9.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 6.1
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 75.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.8
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 73.4
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.6
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 41.9
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 41.9
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.2
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 71.5
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 6.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 6.8
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 33.4
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 50
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.6
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 86
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 77.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 12.2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 84
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 86.4
+          },
+          {
+            "id": "harina_pescado",
+            "p": 13.6
+          }
+        ],
+        "score": 74
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 84.7
+          },
+          {
+            "id": "harina_pescado",
+            "p": 13.3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 74
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 83.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 13.2
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          }
+        ],
+        "score": 74
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 82.1
+          },
+          {
+            "id": "harina_pescado",
+            "p": 12.9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 74
+      }
+    ]
+  },
+  "p_ostreatus_gris/premium": {
+    "noStock": false,
+    "results": [
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 90
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10
+          }
+        ],
+        "score": 95
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 88.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.8
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 95
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 87.3
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.7
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 85.5
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.5
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 77.8
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 10.3
+          },
+          {
+            "id": "harina_pescado",
+            "p": 6.9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 79.9
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 7.6
+          },
+          {
+            "id": "harina_pescado",
+            "p": 7.6
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 93
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 76
+          },
+          {
+            "id": "harina_pescado",
+            "p": 12
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 50.5
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 33.6
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10.9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 37.5
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 37.5
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10.1
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 45.1
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 30.1
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9.8
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 67.1
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 9
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 81
+          },
+          {
+            "id": "harina_pescado",
+            "p": 9
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 79.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 8.8
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 78.3
+          },
+          {
+            "id": "harina_pescado",
+            "p": 8.7
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 76.5
+          },
+          {
+            "id": "harina_pescado",
+            "p": 8.5
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 29.9
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 44.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 10.4
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 69.7
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 9.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 6.1
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 88
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 75.2
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.8
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 73.4
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.6
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 41.9
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 41.9
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.2
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 71.5
+          },
+          {
+            "id": "salvado_trigo",
+            "p": 6.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 6.8
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 87
+      },
+      {
+        "recipe": [
+          {
+            "id": "paja_trigo",
+            "p": 33.4
+          },
+          {
+            "id": "aserrin_roble",
+            "p": 50
+          },
+          {
+            "id": "harina_pescado",
+            "p": 11.6
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 86
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 77.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 12.2
+          },
+          {
+            "id": "cascarilla_arroz",
+            "p": 10
+          }
+        ],
+        "score": 84
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 86.4
+          },
+          {
+            "id": "harina_pescado",
+            "p": 13.6
+          }
+        ],
+        "score": 74
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 84.7
+          },
+          {
+            "id": "harina_pescado",
+            "p": 13.3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 74
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 83.8
+          },
+          {
+            "id": "harina_pescado",
+            "p": 13.2
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          }
+        ],
+        "score": 74
+      },
+      {
+        "recipe": [
+          {
+            "id": "aserrin_roble",
+            "p": 82.1
+          },
+          {
+            "id": "harina_pescado",
+            "p": 12.9
+          },
+          {
+            "id": "carbonato_calcio",
+            "p": 3
+          },
+          {
+            "id": "yeso",
+            "p": 2
+          }
+        ],
+        "score": 74
+      }
+    ]
+  },
+  "shiitake/rescate": {
+    "noStock": false,
+    "results": []
+  },
+  "shiitake/produccion": {
+    "noStock": false,
+    "results": []
+  },
+  "shiitake/premium": {
+    "noStock": false,
+    "results": []
+  }
+}
