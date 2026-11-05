@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 140 catalog entries as of 2026-11-05; the completeness of indexing of all
+# 142 catalog entries as of 2026-11-05; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -2341,6 +2341,36 @@ documents:
     topics: [thermal-validation, altitude, sterilization, contamination, commissioning]
     keywords: ["1941X", "SH05", "presión absoluta", "penetración térmica", "indicadores biológicos", "controles A/B/C"]
     related_documents: [esterilizacion-contaminacion-investigacion-2026-11-04]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: instalacion-bioseguridad-2026-11-04
+    title: "Instalación modular, higiene y continuidad — investigación consultiva"
+    path: 09_research/instalacion_bioseguridad_2026-11-04/informe.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [facility, hygiene, biosafety, maintenance, occupational-safety, regulation]
+    keywords: [marranera, celda-piloto, condensacion, drenajes, esporas, RETIE]
+    related_documents: [bibliografia-instalacion-bioseguridad-2026-11-04]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: bibliografia-instalacion-bioseguridad-2026-11-04
+    title: "Bibliografía y verificación — instalación y bioseguridad"
+    path: 09_research/instalacion_bioseguridad_2026-11-04/bibliografia.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [facility, hygiene, biosafety, maintenance, occupational-safety, regulation]
+    keywords: [marranera, celda-piloto, condensacion, drenajes, esporas, RETIE]
+    related_documents: [instalacion-bioseguridad-2026-11-04]
     depends_on: []
     implemented_by: []
     supersedes: null
