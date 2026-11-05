@@ -99,9 +99,10 @@
   // 100 kg de sustrato seco, así que costo/kg seco ÷ (EB/100). Sin EB positiva
   // no hay costo por kg de seta que reportar.
   const costPerKgFreshMushroom = (costPerDryKg, ebPct) => {
+    if (costPerDryKg == null || costPerDryKg === '' || ebPct == null || ebPct === '') return null;
     const c = Number(costPerDryKg);
     const eb = Number(ebPct);
-    if (!Number.isFinite(c) || !Number.isFinite(eb) || eb <= 0) return null;
+    if (!Number.isFinite(c) || c < 0 || !Number.isFinite(eb) || eb <= 0) return null;
     return Math.round(c / (eb / 100));
   };
 

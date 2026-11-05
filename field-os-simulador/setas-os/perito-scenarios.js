@@ -199,13 +199,15 @@
 
       if (Array.isArray(invLotes) && invLotes.length > 0) {
         const { allocations, missingKg, physicalCostCOP } = allocateFifo(invLotes, r.id, itemWetKg);
+        // Un lote de Bodega sin precio (ausente o ≤ 0) tampoco es gratis.
+        const lotUnpriced = allocations.some(a => a.quantity > 0 && !(a.unitPriceCOP > 0));
         const allocatedKg = Math.max(0, itemWetKg - missingKg);
         totalAllocatedWetKg += allocatedKg;
         totalPhysicalCost += physicalCostCOP;
 
         const procurementCostCOP = round2(missingKg * catalogPricePerKg);
         totalProcurementEstimate += procurementCostCOP;
-        if (missingKg > 0 && !hasPrice(g)) unpricedIds.push(r.id);
+        if (lotUnpriced || (missingKg > 0 && !hasPrice(g))) unpricedIds.push(r.id);
 
         details.push({
           id: r.id,
