@@ -1722,11 +1722,10 @@ const NitrogenChart=({recipe})=>{
 };
 
 // ── v3: FlushChart — projected yield per flush ──
-const FlushChart=({an,sKey})=>{
+const FlushChart=({an,sKey,forecast})=>{
   if(!an||!an.eb||an.eb<10) return null;
   const eb=an.eb;
-  const ebLow=an.ebLow??Math.round(eb*0.82);
-  const ebHigh=an.ebHigh??Math.round(eb*1.18);
+  const {low:ebLow,high:ebHigh}=ebBandFor(an,forecast);
   const speciesKey=sKey||an?.sp?.id||an?.speciesKey||'p_ostreatus_gris';
   const profile=(typeof getSpeciesFlushProfile==='function'&&getSpeciesFlushProfile(speciesKey))
     ||(typeof SPECIES_FLUSH_PROFILES!=='undefined'&&SPECIES_FLUSH_PROFILES[speciesKey]);
@@ -4322,7 +4321,7 @@ const EBDial=({an,sp,forecast})=>{
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={needleCol} strokeWidth="3" strokeLinecap="round" style={{transition:'transform .5s cubic-bezier(0.32,0.72,0.36,1)'}}/>
         <circle cx={cx} cy={cy} r="7" fill="var(--paper-50)" stroke="var(--ink-900)" strokeWidth="1.6"/>
         <circle cx={cx} cy={cy} r="2.4" fill="var(--ink-900)"/>
-        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="var(--brand-accent-text)">{forecast?.low??an.ebLow}–{forecast?.high??an.ebHigh}</text>
+        <text x={cx} y={cy+36} textAnchor="middle" fontFamily="var(--font-num)" fontSize="32" fill="var(--brand-accent-text)">{ebBandFor(an,forecast).low}–{ebBandFor(an,forecast).high}</text>
         <text x={cx} y={cy+52} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="var(--ink-400)">% RANGO ESTIMADO</text>
         <text x={cx} y={cy+66} textAnchor="middle" fontFamily="var(--font-mono)" fontSize="9" fill="var(--ink-300)">central {eb.toFixed(0)}% · índice de fórmula {an.ebIndex}/100</text>
       </svg>
@@ -4388,6 +4387,14 @@ const recipeEBForecast=(an,historical)=>{
   const history=historical?.n>0&&historical.weight>0?historical:null;
   const model=globalThis.SetasScoring.scoreRecipe(an,{...(history?{blendedEB:value}:{}),historyCalibration:history,__bridgeRecompute:true});
   return {...model.uncertainty.eb,value,history};
+};
+
+// Banda de EB que muestran todas las vistas: la de Escala B del pronóstico
+// (scoring.js). analyze() calcula otra (ebLow/ebHigh por CV); no se muestra.
+const ebBandFor=(an,forecast)=>{
+  if(!an) return null;
+  const f=forecast||recipeEBForecast(an,null);
+  return f?{low:f.low,high:f.high}:{low:Math.round(an.eb),high:Math.round(an.eb)};
 };
 
 const storedPredictionError=rows=>{
@@ -4692,7 +4699,7 @@ const RecipeGauges=({an,sp,optimalAn,historical,forecast})=>{
         reference={optimalAn?Math.round(optimalAn.eb):null}
         scaleMin={0} scaleMax={Math.max(200,Math.ceil(sp.eb_optimal*1.4/10)*10,forecast?.high||0)}
         color="var(--brand-accent-text)" warnColor="var(--accent-terracotta)"/>
-      {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {forecast?.low??an.ebLow}–{forecast?.high??an.ebHigh}% · índice de fórmula {an.ebIndex}/100 · la aguja es el valor central</div>}
+      {an&&<div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-700)',marginTop:-6,marginBottom:8,paddingLeft:2,fontWeight:500}}>Rango {ebBandFor(an,forecast).low}–{ebBandFor(an,forecast).high}% · índice de fórmula {an.ebIndex}/100 · la aguja es el valor central</div>}
       <div style={{marginTop:2,padding:'8px 10px',borderRadius:6,background:hasHist?'rgba(122,142,96,0.12)':'rgba(0,0,0,0.04)',border:'1px solid '+(hasHist?'var(--accent-olive)':'var(--border-soft)')}}>
         {hasHist?(
           <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-800)',lineHeight:1.5}}>
@@ -8860,7 +8867,7 @@ function sowingRecommendation(deficitKg, speciesKey = 'p_ostreatus_gris', option
                     <button className={`tog${showCompChart?' on':''}`} aria-pressed={showCompChart} onClick={()=>setShowCompChart(!showCompChart)}>Composición</button>
                     <button className={`tog${showSpeciesRec?' on':''}`} aria-pressed={showSpeciesRec} onClick={()=>setShowSpeciesRec(!showSpeciesRec)}>Compat. especies</button>
                   </div>
-                  {showFlush&&<FlushChart an={an}/>}
+                  {showFlush&&<FlushChart an={an} forecast={ebForecast}/>}
                   {showCompChart&&<CompositionChart recipe={recipe}/>}
                   {showSpeciesRec&&<SpeciesRecommender recipe={recipe}/>}
 
@@ -16764,7 +16771,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                           return[
                                             {l:'C:N',v:`${r.an.cn.toFixed(1)}:1`},
                                             {l:'N%',v:`${r.an.avgN.toFixed(2)}%`},
-                                            {l:'EB',v:r.an.ebLow&&r.an.ebHigh?`${r.an.ebLow}–${r.an.ebHigh}%`:`${r.an.eb.toFixed(0)}%`},
+                                            {l:'EB',v:(b=>`${b.low}–${b.high}%`)(ebBandFor(r.an))},
                                             {l:'Insumos + trat./kg seco',v:totalCost>0?`${totalCost.toLocaleString('es-CO')}`:'--',
                                              sub:eCost>0?`ing ${Math.round(r.an.cost).toLocaleString()}+proc ${eCost.toLocaleString()}`:null},
                                           ];
@@ -17021,7 +17028,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                       {[
                                         {l:'C:N logrado',v:`${invResult.an.cn.toFixed(1)}:1`,ok:sp&&invResult.an.cn>=sp.cn_optimal.min&&invResult.an.cn<=sp.cn_optimal.max},
                                         {l:'Nitrógeno',v:`${invResult.an.avgN.toFixed(2)}%`,ok:sp&&invResult.an.avgN>=sp.n_optimal.min&&invResult.an.avgN<=sp.n_optimal.max},
-                                        {l:'EB esperada',v:invResult.an.ebLow&&invResult.an.ebHigh?`${invResult.an.ebLow}–${invResult.an.ebHigh}%`:`${invResult.an.eb.toFixed(0)}%`,ok:invResult.an.eb>=90},
+                                        {l:'EB esperada',v:(b=>`${b.low}–${b.high}%`)(ebBandFor(invResult.an)),ok:invResult.an.eb>=90},
                                         {l:'Costo/kg seco',v:`$${Math.round(invResult.an.cost).toLocaleString('es-CO')}`,neutral:true},
                                       ].map((m,i)=>(
                                         <div key={i} title={m.neutral?COST_NO_TARGET_TITLE:undefined} style={{background:'var(--paper-50)',border:`1px solid ${!m.neutral&&m.ok?'var(--moss-500)':'var(--border-soft)'}`,padding:'10px 12px',textAlign:'center'}}>
@@ -17531,7 +17538,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
                   {[
                     ['C:N',an.cn.toFixed(1)+':1','relaci\u00f3n'],
                     ['Nitr\u00f3geno',an.avgN.toFixed(2)+'%','total'],
-                    ['Ef. biol\u00f3gica',(an.ebLow??an.eb.toFixed(0))+'\u2013'+(an.ebHigh??an.eb.toFixed(0))+'%','estimada'],
+                    ['Ef. biol\u00f3gica',ebBandFor(an,ebForecast).low+'\u2013'+ebBandFor(an,ebForecast).high+'%','estimada'],
                     ['Score',(opt?.score!=null?opt.score:'0')+'/100','perito'],
                     ['Costo/kg','$'+Math.round(an.cost).toLocaleString('es-CO'),'estimado'],
                   ].map(([l,v,s])=>(
