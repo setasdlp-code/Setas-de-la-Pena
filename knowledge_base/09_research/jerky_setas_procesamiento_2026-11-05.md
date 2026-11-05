@@ -22,14 +22,14 @@ related_documents:
 
 # Jerky vegano de setas
 
-**Origen:** informe externo entregado por el propietario el 2026-11-05 (síntesis de recetas publicadas y literatura). El informe llegó con marcadores de cita rotos y sin URL ni DOI; las fuentes se registran por nombre y quedan **por verificar**. Las cifras son rangos de formulación culinaria, no parámetros validados en finca ni en laboratorio.
+**Origen:** informe externo entregado por el propietario el 2026-11-05 (síntesis de recetas publicadas y literatura). El informe llegó con marcadores de cita rotos y sin URL ni DOI. El 2026-11-05 se verificaron por consulta directa las URL de Penn State, NCHFP, Mushroom Council y FreshCap; el resto queda **por verificar**. Las cifras son rangos de formulación culinaria, no parámetros validados en finca ni en laboratorio.
 
 ## 1. Pregunta y posición del proyecto
 
 ¿Cómo se obtiene un jerky de setas flexible, seco al tacto y sin centro húmedo, y qué tan transferible es a Setas de la Peña?
 
 - **Comercial:** fuera de alcance mientras rija DEC-022 (fresco entero primero; deshidratado entero condicionado a tres ciclos cerrados, comprador y margen). Un jerky marinado no hereda la excepción sanitaria del fresco entero (`07_business/regulatory_framework.md`).
-- **Público:** se usa como receta casera de melena de león y shiitake en la web, con indicaciones de conservación conservadoras.
+- **Público:** receta casera de jerky de melena de león, con variante de shiitake, en `recetas-melena.html` (receta 07). Conservación conservadora; sin vida útil propia.
 - **Especies:** el informe cubre *Pleurotus ostreatus* (orellana), que el proyecto no vende; no cubre *P. eryngii*, que sí. Extrapolar a eryngii requiere prueba propia.
 
 ## 2. Variables de proceso
@@ -58,7 +58,7 @@ Lote de referencia del informe: 450 g de seta fresca ≈ 4 porciones de snack (e
 - **Melena.** Red porosa de hifas; percibida fibrosa, húmeda y «cárnica». Estudio mecánico-sensorial de 2026: poca anisotropía mecánica global, así que desgarrar controla tamaño y sensación de fibra, no sigue una orientación tipo músculo (revisado por pares según el informe; referencia por verificar). FreshCap la prefirió frente a maitake, shiitake y king oyster, partiendo de seta seca rehidratada (Tier 3). Agua interna alta: el grosor cambia mucho el tiempo. Prensar agresivamente antes de cocinar da piezas delgadas y quebradizas.
 - **Orellana.** En Colombia «orellana» designa *P. ostreatus*, pero el Catálogo de Hongos de Colombia también registra el nombre para *P. pulmonarius*; el nombre común no garantiza especie (taxonomía, Tier 2). Conservar la unión sombrero–pie para evitar bordes secos antes que el centro.
 
-**Marinadas del informe (por 450 g):** base salada-ahumada (tamari bajo en sodio 50–60 ml, agua 40–45 ml, vinagre de manzana 15 ml, arce 10–15 ml, pimentón ahumado, ajo y cebolla en polvo, pimienta, humo líquido ¼–½ cdta) y base picante asiática (tamari, agua, vinagre de arroz o lima, aceite de sésamo tostado, arce, sambal o gochujang, jengibre, ajo, sésamo). Sustituciones: sin gluten (tamari certificado, pasta de chile sin trigo), sin soya (aminoácidos de coco, menos endulzante), sin azúcar añadido (omitir arce, +10–15 ml de agua), sin sésamo (aceite neutro). Las fórmulas completas usadas en la web están en `recetas-melena.html` y `recetas-encurtidos.html`.
+**Marinadas del informe (por 450 g):** base salada-ahumada (tamari bajo en sodio 50–60 ml, agua 40–45 ml, vinagre de manzana 15 ml, arce 10–15 ml, pimentón ahumado, ajo y cebolla en polvo, pimienta, humo líquido ¼–½ cdta) y base picante asiática (tamari, agua, vinagre de arroz o lima, aceite de sésamo tostado, arce, sambal o gochujang, jengibre, ajo, sésamo). Sustituciones: sin gluten (tamari certificado, pasta de chile sin trigo), sin soya (aminoácidos de coco, menos endulzante), sin azúcar añadido (omitir arce, +10–15 ml de agua), sin sésamo (aceite neutro). La fórmula publicada en la web es la receta 07 de `recetas-melena.html` (melena salada-ahumada, con variante picante y variante con shiitake).
 
 ## 4. Conservación y seguridad
 
@@ -82,18 +82,18 @@ Lote de referencia del informe: 450 g de seta fresca ≈ 4 porciones de snack (e
 
 | Fuente | Uso en el informe | Nivel |
 |---|---|---|
-| Penn State Extension — secado doméstico de frutas y verduras | Temperaturas, *case hardening*, horno | Tier 2 |
-| National Center for Home Food Preservation (NCHFP) | Envasado, enfriamiento, moho, almacenamiento | Tier 2 |
+| Penn State Extension — [Let's Preserve: Drying Fruits and Vegetables](https://extension.psu.edu/lets-preserve-drying-fruits-and-vegetables-dehydration) | 62 °C mientras hay humedad superficial y 57–60 °C después; *case hardening* | Tier 2, verificada |
+| NCHFP — [Packaging and Storing Dried Foods](https://nchfp.uga.edu/how/dry/drying-general/packaging-and-storing-dried-foods) | Envases secos y cerrados, lugar fresco y oscuro; 4 meses a 1 año para alimentos **totalmente** secos (no aplica a jerky flexible) | Tier 2, verificada |
 | Catálogo de Hongos de Colombia | «Orellana» = *P. ostreatus* y *P. pulmonarius* | Tier 2 |
 | Estudio mecánico-sensorial de *H. erinaceus* (2026) | Microestructura y percepción fibrosa | Tier 1 según el informe; por verificar |
 | Literatura sobre sabor de *L. edodes* y volátiles de *P. ostreatus* | Umami, efecto de cocción | Tier 1 según el informe; por verificar |
-| Mushroom Council — shiitake jerky | Horno a 121 °C | Tier 3 |
-| Alan Bergo / Forager Chef | Precocción, punto final, corte ≈6 mm | Tier 3 |
-| FreshCap | Melena desde seta seca; 2 semanas refrigerado | Tier 3 |
+| Mushroom Council — [Shiitake Mushroom Jerky](https://www.mushroomcouncil.com/recipes/shiitake-mushroom-jerky/) | Marinado nocturno; horno 121 °C, 60 min + 30–45 min | Tier 3, verificada |
+| Alan Bergo / Forager Chef — mushroom jerky (foragerchef.com) | Precocción, punto final, corte ≈6 mm | Tier 3; página bloqueada a consulta automática, datos por verificar |
+| FreshCap — [Mushroom Jerky](https://freshcap.com/blogs/recipes/mushroom-jerky) | Melena preferida entre cuatro setas; parte de seta seca; 4–6 h de secado; hasta 2 semanas refrigerado | Tier 3, verificada |
 | Helsieni | *Pleurotus* 60–70 °C 6–8 h | Tier 3 |
 | Wild Vegan Flower | *Pleurotus* ≈57 °C ≈15 h; aminoácidos de coco | Tier 3 |
 
-Ninguna URL ni DOI quedó capturada en el informe. Los foros citados solo ilustran variabilidad entre equipos; no establecen vida útil ni seguridad.
+Las URL verificadas se añadieron en esta incorporación; el informe original no traía ninguna. NCHFP tiene además una página de envasado al vacío que, según búsqueda (no consultada), no lo recomienda en casa por falta de vida útil investigada. Los foros citados solo ilustran variabilidad entre equipos; no establecen vida útil ni seguridad.
 
 ## 6. Confianza, relevancia y enrutamiento
 
