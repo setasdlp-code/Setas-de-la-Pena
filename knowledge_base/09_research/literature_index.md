@@ -3,7 +3,7 @@ title: Índice de Literatura
 document_id: DOC-0043
 category: research
 load_priority: on_request
-last_reviewed: 2026-08-28
+last_reviewed: 2026-11-05
 confidence: high
 primary_sources:
   - literature_database.md
@@ -24,6 +24,7 @@ related_documents:
   - p0_full_pdf_reprocessing_2026-08-13.md
   - active_research_knowledge.md
   - incubation_fruiting_chambers_state_of_knowledge_2026.md
+  - microclima_operacion_remota_2026-11-04/informe.md
   - ../04_facility/marranera_medium_scale_design_basis.md
 ---
 
@@ -237,3 +238,10 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 | paper_039 | Silva et al. | 2025 | Storage temperature and shelf-life of H. erinaceus | *H. erinaceus*; poscosecha | ★★★★★ |
 
 **Aplicación curada:** estas fuentes respaldan priorizar formulaciones comparativas, trazabilidad de contaminación, cadena fría, pruebas de secado y polvo culinario. No promueven parámetros a SOP, CANON ni setpoints.
+
+
+## Microclima y operación remota — investigación 2026-11-04
+
+Dossier consultivo incorporado el 2026-11-05: [informe DOC-0138](microclima_operacion_remota_2026-11-04/informe.md) y [bibliografía DOC-0139](microclima_operacion_remota_2026-11-04/bibliografia.md), con 26 fuentes locales S01–S26 y límites de lectura explícitos.
+
+Cubre compensación SCD30/MH-Z19C por presión, calibración/condensación, caudal efectivo y distribución, calor de núcleo, agua/rocío y recuperación sin red. Incluye matriz de evidencia, campaña reversible, comparación manual/automática y esquemas de registro para ALT01–ALT07, SH06 y SH09. Señala soporte pendiente del factor MH y la referencia bibliográfica incorrecta de calor metabólico, sin cambiar ni retirar protecciones. El estado descrito corresponde al corte del informe; no constituye dato de campo nuevo, setpoint ni cierre de esas preguntas. Sus candidatos de medición/diseño permanecen consultivos; la incorporación no modifica ARK ni reglas operativas.

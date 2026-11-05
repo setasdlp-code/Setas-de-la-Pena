@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-05
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporado el dossier consultivo `09_research/microclima_operacion_remota_2026-11-04/`: informe DOC-0138 y bibliografía DOC-0139, con procedencia SHA-256, corte 2026-11-04 y 26 fuentes. Campaña de medición y recuperación; evidencia local pendiente. Enlazado en literatura e INDEX. Sin cambios en SOP, decisiones, umbrales, protecciones, firmware, ARK ni estado productivo. |
 
 ### 2026-11-04
 
