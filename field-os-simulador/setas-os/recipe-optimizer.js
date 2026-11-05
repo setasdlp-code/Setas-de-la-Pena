@@ -1051,6 +1051,9 @@
           try {
             const res = solveTargetPct(fromRecipe, sKey, effectiveINGS, g.id, metric, target, lockedIds, effectiveSPP);
             if (!res) continue;
+            // Una alternativa no puede pasar el tope de su rol (agregar o subir).
+            const inRecipe = fromRecipe.some(r => r.id === g.id);
+            if (res.pct > capForRole(g.id, inRecipe ? ROLE_CAP_INCREASE : ROLE_CAP_ADD, 100, effectiveINGS)) continue;
             const apply = { mode: 'set', id: g.id, value: res.pct };
             const e = evalCandidate(applyOptToRecipe(fromRecipe, apply, lockedIds, effectiveINGS));
             if (!e) continue;
@@ -1067,11 +1070,20 @@
         return best;
       };
       const nameOf = id => (effectiveINGS.find(g => g.id === id) || {}).name || id;
+      // Una base nueva que queda como mayoría de la receta la reemplaza; por
+      // debajo de la mitad entra como segunda base. Decirlo así evita que un
+      // "agregar" esconda un cambio de base.
+      const REPLACES_BASE_PCT = 50;
+      const isNewBase = best => !best.from.some(r => r.id === best.g.id) && best.g.role === 'base_carbono';
+      const replacesBase = best => isNewBase(best) && best.res.pct >= REPLACES_BASE_PCT;
+      const stockNote = best => (stockIds && stockIds.size > 0 && !stockIds.has(best.g.id)) ? ' · no está en Bodega' : '';
       const actionFor = (best) => {
         const cur = best.from.find(r => r.id === best.g.id);
         const curP = cur ? parseFloat(cur.p) || 0 : 0;
+        if (replacesBase(best)) return `Reemplazar base por <b>${best.g.name}</b> (<b>${best.res.pct}%</b>)${stockNote(best)}`;
+        if (isNewBase(best)) return `agregar <b>${best.g.name}</b> como segunda base a <b>${best.res.pct}%</b> (nuevo)${stockNote(best)}`;
         const verb = !cur ? 'agregar' : best.res.pct > curP ? 'subir' : 'bajar';
-        return `${verb} <b>${best.g.name}</b> a <b>${best.res.pct}%</b>${cur ? ` (actual ${curP.toFixed(1)}%)` : ' (nuevo)'}`;
+        return `${verb} <b>${best.g.name}</b> a <b>${best.res.pct}%</b>${cur ? ` (actual ${curP.toFixed(1)}%)` : ` (nuevo)${stockNote(best)}`}`;
       };
       items.forEach(it => {
         if (it.priority !== 'critical' && it.priority !== 'warning') return;
@@ -1084,6 +1096,7 @@
           if (best) {
             it.apply = best.apply;
             it.alternativeFor = need.excludeId;
+            if (replacesBase(best)) it.replacesBase = true;
             it.action = `<b>${nameOf(need.excludeId)}</b> ya no acerca ${METRIC_LABEL[need.metric]} al objetivo dentro de su tope. Alternativa: ${actionFor(best)}`;
             it.delta = `→ ${METRIC_LABEL[need.metric]} ${fmtMetric(need.metric, best.val)}`;
             // "tope alcanzado" solo si la alternativa tampoco deja la métrica en rango.
