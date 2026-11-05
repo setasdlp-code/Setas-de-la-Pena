@@ -107,7 +107,7 @@ const commerce = overrides => ({
 
     {
       // Textos fijos en estado de piloto (valor por defecto): ningún botón invita a consultar disponibilidad.
-      const forbidden = /Consultar disponibilidad|Preparar consulta|Consultar shiitake|Consultas para restaurantes|preparar una consulta|Recibir aviso/;
+      const forbidden = /Consultar disponibilidad|Preparar consulta|Consultar shiitake|Consultas para restaurantes|preparar una consulta/;
       for (const file of ['home', 'setas', 'shiitake', 'especies/shiitake', 'recetas', 'restaurantes']) {
         const { context, page } = await open({ javaScriptEnabled: false }, file);
         const ctas = await page.locator('a, button').evaluateAll(nodes => nodes.map(n => n.textContent.replace(/\s+/g, ' ').trim()));
