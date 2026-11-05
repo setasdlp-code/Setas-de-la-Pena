@@ -1684,6 +1684,8 @@ const RadarChart=({an,cAn,sKey,cmpKey})=>{
   );
 };
 
+// Colores de gráficos (DS-2026 domain.color.viz): identidad u orden, nunca estado.
+const VIZ_ORDINAL=['var(--viz-ordinal-1, #1D4868)','var(--viz-ordinal-2, #3A73A0)','var(--viz-ordinal-3, #7FAAD0)'];
 const NitrogenChart=({recipe})=>{
   if(!recipe||!recipe.length) return null;
   const items=recipe.map(r=>{
@@ -1694,25 +1696,25 @@ const NitrogenChart=({recipe})=>{
   }).filter(Boolean).sort((a,b)=>b.contrib-a.contrib);
   const total=items.reduce((s,i)=>s+i.contrib,0);
   if(!total||items.length===0) return null;
-  const PAL=['var(--coral-700)','var(--accent-olive)','var(--ochre-600)','var(--accent-blue-grey)','var(--accent-terracotta)','var(--moss-700)','var(--ochre-500)','var(--slate-600,var(--accent-blue-grey))','var(--coral-700)','var(--moss-500)'];
+  // Barras ordenadas, un solo color: el nombre está junto a cada barra, así
+  // que el color no tiene que identificar al ingrediente (antes: 10 colores
+  // cíclicos sin significado, y se repetían).
   return(
     <div style={{marginBottom:20,background:'var(--paper-100)',border:'1px solid var(--border-soft)',padding:'14px 16px'}}>
       <div style={{fontFamily:"var(--font-body)",fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',marginBottom:10}}>Contribución de Nitrógeno por ingrediente</div>
-      <div style={{height:18,display:'flex',borderRadius:2,overflow:'hidden',marginBottom:11,border:'1px solid rgba(0,0,0,.07)'}}>
-        {items.map((it,i)=>(
-          <div key={i} title={`${it.name}: ${((it.contrib/total)*100).toFixed(1)}% del N total`}
-            style={{width:`${(it.contrib/total)*100}%`,background:PAL[i%PAL.length],transition:'width .35s',minWidth:it.contrib/total>0.01?2:0}}/>
-        ))}
-      </div>
-      <div style={{display:'flex',flexWrap:'wrap',gap:'5px 16px'}}>
-        {items.map((it,i)=>(
-          <div key={i} style={{display:'flex',alignItems:'center',gap:5}}>
-            <div style={{width:9,height:9,background:PAL[i%PAL.length],flexShrink:0,border:'1px solid rgba(0,0,0,.1)'}}/>
-            <span style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500}}>
-              {it.name.length>22?it.name.slice(0,22)+'…':it.name}&nbsp;<strong style={{color:'var(--ink-900)'}}>{((it.contrib/total)*100).toFixed(1)}%</strong>
-            </span>
-          </div>
-        ))}
+      <div role="list" data-testid="nitrogen-bars" style={{display:'grid',gridTemplateColumns:'minmax(0,auto) 1fr auto',alignItems:'center',gap:'6px 10px'}}>
+        {items.map((it,i)=>{
+          const share=it.contrib/total;
+          return(
+            <div role="listitem" key={i} style={{display:'contents'}}>
+              <span title={it.name} style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-700)',fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:180}}>{it.name}</span>
+              <div aria-hidden="true" style={{height:8,background:'var(--paper-200)',borderRadius:2,overflow:'hidden'}}>
+                <div style={{height:'100%',width:`${share*100}%`,background:'var(--viz-series-1, #2F78B8)',borderRadius:'0 2px 2px 0',transition:'width .35s'}}/>
+              </div>
+              <strong style={{fontFamily:"var(--font-mono)",fontSize:"var(--text-sm)",color:'var(--ink-900)',textAlign:'right'}}>{(share*100).toFixed(1)}%</strong>
+            </div>
+          );
+        })}
       </div>
       <div style={{marginTop:9,fontFamily:"var(--font-mono)",fontSize:"var(--text-xs)",color:'var(--ink-600)',borderTop:'1px solid var(--paper-300)',paddingTop:7}}>
         N absoluto en sustrato: {total.toFixed(3)} g/100g (masa seca)
@@ -1734,15 +1736,14 @@ const FlushChart=({an,sKey,forecast})=>{
     {flushNumber:2,pct:0.30,daysAfterInoc:55,label:'2ª Cosecha'},
     {flushNumber:3,pct:0.15,daysAfterInoc:75,label:'3ª Cosecha'}
   ];
-  const colors=['var(--coral-500)','var(--accent-olive)','var(--ochre-500)'];
-  const bgs=['rgba(184,97,77,.08)','rgba(77,98,53,.07)','rgba(160,120,40,.07)'];
+  // Oleadas tienen orden (1ª > 2ª > 3ª): rampa ordinal de un tono, no colores
+  // de estado — verde/ocre se leían como «bien»/«alerta».
   const flushes=fProfile.map((f,i)=>({
     label:`${f.flushNumber||i+1}ª`,
     sub:'Cosecha',
     pct:f.pct,
     days:f.daysAfterInoc?`~${f.daysAfterInoc} d`:`${35+i*20} d`,
-    color:colors[i%colors.length],
-    bg:bgs[i%bgs.length],
+    color:VIZ_ORDINAL[Math.min(i,VIZ_ORDINAL.length-1)],
   }));
   const maxPct=Math.max(...flushes.map(f=>f.pct),0.01);
   return(
@@ -1758,11 +1759,11 @@ const FlushChart=({an,sKey,forecast})=>{
           const val=(eb*f.pct);
           const barH=Math.round((f.pct/maxPct)*72);
           return(
-            <div key={i} style={{flex:1,borderRight:i<flushes.length-1?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',background:f.bg,position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
+            <div key={i} style={{flex:1,borderRight:i<flushes.length-1?'1px solid var(--border-soft)':'none',padding:'12px 12px 10px',position:'relative',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4}}>
               {/* ordinal label */}
-              <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:f.color,fontWeight:700,opacity:.85}}>{f.label} {f.sub}</div>
+              <div style={{fontFamily:'var(--font-body)',fontSize:"var(--text-xs)",letterSpacing:'var(--sim-tracking-wide)',textTransform:'uppercase',color:'var(--ink-500)',fontWeight:700}}>{f.label} {f.sub}</div>
               {/* big number */}
-              <div style={{fontFamily:'var(--font-mono)',fontSize:28,fontWeight:700,lineHeight:1,color:f.color,letterSpacing:'var(--sim-tracking-tight)'}}>{val.toFixed(0)}<span style={{fontSize:"var(--text-base)",fontWeight:400,opacity:.7}}>%</span></div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:28,fontWeight:700,lineHeight:1,color:'var(--ink-900)',letterSpacing:'var(--sim-tracking-tight)'}}>{val.toFixed(0)}<span style={{fontSize:"var(--text-base)",fontWeight:400,opacity:.7}}>%</span></div>
               {/* kg/kg */}
               <div style={{fontFamily:'var(--font-mono)',fontSize:"var(--text-xs)",color:'var(--ink-500)',letterSpacing:'var(--sim-tracking-label)'}}>{(val/100).toFixed(2)} kg/kg</div>
               {/* bar visual */}
@@ -11990,13 +11991,13 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--ink-2)'}}>Aporte Histórico por Oleada (Flushes Cosechados)</div>
               <div className="os-flush-bar-container">
                 {stats.flushes.map((f,i)=>(
-                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',background:['var(--status-ok)','var(--border-hairline)','var(--status-warn-text)'][i%3]||'var(--text-metadata)'}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
+                  <div key={f.flush} style={{width:`${f.pctTotal}%`,height:'100%',boxSizing:'border-box',borderRight:i<stats.flushes.length-1?'2px solid var(--paper-0)':'none',background:VIZ_ORDINAL[Math.min(i,VIZ_ORDINAL.length-1)]}} title={`Flush ${f.flush}: ${f.kg.toFixed(2)} kg (${f.pctTotal.toFixed(1)}%)`}></div>
                 ))}
               </div>
               <div className="os-flush-list">
-                {stats.flushes.map(f=>(
+                {stats.flushes.map((f,i)=>(
                   <div className="os-flush-item" key={f.flush}>
-                    <span>Flush {f.flush}</span>
+                    <span><span aria-hidden="true" style={{display:"inline-block",width:8,height:8,marginRight:6,borderRadius:2,background:VIZ_ORDINAL[Math.min(i,VIZ_ORDINAL.length-1)]}}/>Flush {f.flush}</span>
                     <span>{f.kg.toFixed(2)} kg ({f.pctTotal.toFixed(1)}%)</span>
                     <span>+${Math.round(f.ingreso).toLocaleString('es-CO')}</span>
                   </div>
@@ -13704,9 +13705,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="climate-svg-wrap">
                 <svg role="img" aria-label={`Temperatura: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
-                  {tempBand && <rect data-testid="climate-band-temp" x="0" y={tempBand.y} width="500" height={tempBand.height} fill="rgba(74, 110, 66, 0.12)" />}
-                  {tempBand && tempBand.target != null && <line x1="0" y1={tempBand.target} x2="500" y2={tempBand.target} stroke="rgba(74, 110, 66, 0.4)" strokeDasharray="4 4" strokeWidth="1" />}
-                  <polyline fill="none" stroke="var(--moss-700)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={tempPoints} />
+                  {tempBand && <rect data-testid="climate-band-temp" x="0" y={tempBand.y} width="500" height={tempBand.height} fill="color-mix(in srgb, var(--viz-series-2, #C4552B) 12%, transparent)" />}
+                  {tempBand && tempBand.target != null && <line x1="0" y1={tempBand.target} x2="500" y2={tempBand.target} stroke="color-mix(in srgb, var(--viz-series-2, #C4552B) 45%, transparent)" strokeDasharray="4 4" strokeWidth="1" />}
+                  <polyline fill="none" stroke="var(--viz-series-2, #C4552B)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={tempPoints} />
                 </svg>
               </div>
             </div>
@@ -13720,9 +13721,9 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="climate-svg-wrap">
                 <svg role="img" aria-label={`Humedad relativa: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
-                  {rhBand && <rect data-testid="climate-band-rh" x="0" y={rhBand.y} width="500" height={rhBand.height} fill="rgba(56, 120, 180, 0.12)" />}
-                  {rhBand && rhBand.target != null && <line x1="0" y1={rhBand.target} x2="500" y2={rhBand.target} stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />}
-                  <polyline fill="none" stroke="var(--status-info)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
+                  {rhBand && <rect data-testid="climate-band-rh" x="0" y={rhBand.y} width="500" height={rhBand.height} fill="color-mix(in srgb, var(--viz-series-1, #2F78B8) 12%, transparent)" />}
+                  {rhBand && rhBand.target != null && <line x1="0" y1={rhBand.target} x2="500" y2={rhBand.target} stroke="color-mix(in srgb, var(--viz-series-1, #2F78B8) 45%, transparent)" strokeDasharray="4 4" strokeWidth="1" />}
+                  <polyline fill="none" stroke="var(--viz-series-1, #2F78B8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
                 </svg>
               </div>
             </div>
@@ -13735,8 +13736,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="climate-svg-wrap">
                 <svg role="img" aria-label={`CO₂: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
-                  {co2LimitY != null && <line data-testid="climate-limit-co2" x1="0" y1={co2LimitY} x2="500" y2={co2LimitY} stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />}
-                  <polyline fill="none" stroke="var(--accent-terracotta)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
+                  {co2LimitY != null && <line data-testid="climate-limit-co2" x1="0" y1={co2LimitY} x2="500" y2={co2LimitY} stroke="color-mix(in srgb, var(--viz-series-3, #0F8F6A) 55%, transparent)" strokeDasharray="4 4" strokeWidth="1" />}
+                  <polyline fill="none" stroke="var(--viz-series-3, #0F8F6A)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
                 </svg>
               </div>
             </div>

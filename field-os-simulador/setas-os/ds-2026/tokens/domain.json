@@ -176,7 +176,41 @@
           "value": "#6A3010"
         }
       },
-      "description": "Colores de dominio de Setas OS. role: rol del ingrediente en la mezcla. perito: veredicto de viabilidad (el estado 'critical' usa --status-error*)."
+      "description": "Colores de dominio de Setas OS. role: rol del ingrediente en la mezcla. perito: veredicto de viabilidad (el estado 'critical' usa --status-error*).",
+      "viz": {
+        "series-1": {
+          "value": "#2F78B8",
+          "description": "Color de serie para gráficos (identidad, no estado). Validado: banda L, croma, CVD y visión normal ≥15 en todos los pares sobre paper-100. Azul — humedad / serie A."
+        },
+        "series-2": {
+          "value": "#C4552B",
+          "description": "Color de serie para gráficos (identidad, no estado). Validado: banda L, croma, CVD y visión normal ≥15 en todos los pares sobre paper-100. Terracota — temperatura / serie B."
+        },
+        "series-3": {
+          "value": "#0F8F6A",
+          "description": "Color de serie para gráficos (identidad, no estado). Validado: banda L, croma, CVD y visión normal ≥15 en todos los pares sobre paper-100. Verde azulado — CO₂ / serie C."
+        },
+        "series-4": {
+          "value": "#C9971E",
+          "description": "Color de serie para gráficos (identidad, no estado). Validado: banda L, croma, CVD y visión normal ≥15 en todos los pares sobre paper-100. Ocre — contraste 2.5:1: solo con etiqueta visible."
+        },
+        "ordinal-1": {
+          "value": "#1D4868",
+          "description": "Rampa ordinal (un solo tono, oscuro→claro) para series con orden: oleada 1."
+        },
+        "ordinal-2": {
+          "value": "#3A73A0",
+          "description": "Rampa ordinal: oleada 2."
+        },
+        "ordinal-3": {
+          "value": "#7FAAD0",
+          "description": "Rampa ordinal: oleada 3+."
+        },
+        "rest": {
+          "value": "#C9C2B6",
+          "description": "Gris de des-énfasis: el resto cuando un gráfico resalta solo las series importantes."
+        }
+      }
     }
   },
   "markGrid": {

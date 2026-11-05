@@ -219,7 +219,7 @@
   --sync-offline-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M7 .75 2.5 7H6L5 11.25 9.5 5H6Z'/%3E%3C/svg%3E");
   --status-quarantine-border-style: dashed;
 
-  /* Domain colours: ingredient role in the mix + perito verdict */
+  /* Domain colours: ingredient role in the mix + perito verdict + chart series (viz) */
   --role-base-carbono: #5A7042;
   --role-suplemento-n: #C68F2C;
   --role-suplemento-medio: #D4A838;
@@ -239,6 +239,14 @@
   --perito-needs-work-border: #C87040;
   --perito-needs-work-badge: #8C4020;
   --perito-needs-work-txt: #6A3010;
+  --viz-series-1: #2F78B8;
+  --viz-series-2: #C4552B;
+  --viz-series-3: #0F8F6A;
+  --viz-series-4: #C9971E;
+  --viz-ordinal-1: #1D4868;
+  --viz-ordinal-2: #3A73A0;
+  --viz-ordinal-3: #7FAAD0;
+  --viz-rest: #C9C2B6;
 }
 
 /* Density profiles are semantic surface modes, never viewport aliases. */
