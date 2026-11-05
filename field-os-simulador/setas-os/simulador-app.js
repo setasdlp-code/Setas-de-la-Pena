@@ -1,6 +1,6 @@
 // AUTO-GENERATED from simulador-app.jsx by build.js — do not edit directly.
 // Run `node build.js` after changing simulador-app.jsx and commit this file.
-// source-hash: 0e412750091b2ab4c0e7ef2378646acc774e346aefde2919debe64292b35d241
+// source-hash: 566f8d1d5be6f57249d23b85f08eee7ec18b6379090da4b4d268fd5ef74bd15f
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 function BagObservationEditor({ bolsa, onSave }) {
   const key = "setas_bag_observation_draft:" + bolsa.id;
@@ -3239,6 +3239,59 @@ const runHybridRecipeSearch = ({
     lockedIds: new Set(lockedIds || []),
     includePool
   });
+};
+const BEST_CONF_LABEL = { low: "baja", medium: "media", high: "alta" };
+const bestCOP = (n) => `$${Math.round(Math.abs(Number(n) || 0)).toLocaleString("es-CO")}`;
+const bestKg = (n) => `${(Math.round(Number(n) * 10) / 10).toLocaleString("es-CO")} kg`;
+const bestRecipeText = (recipe, nameOf) => (recipe || []).filter((r) => Number(r.p) > 0).slice().sort((a, b) => b.p - a.p).map((r) => `${nameOf(r.id)} ${Math.round(r.p)}`).join(" · ");
+const BestPickCard = ({ testid, title, pick, other, which, api, nameOf, stockKg, batch, onUse }) => {
+  const bags = api.bagsCovered(pick.recipe, batch.ingredients, stockKg, batch);
+  const short = api.shortfall(pick.recipe, batch.ingredients, stockKg, batch);
+  const reason = other ? api.reasonLine(pick, other, which) : "";
+  return /* @__PURE__ */ React.createElement("article", { className: "best-pick", "data-testid": testid, "data-recipe-ids": pick.recipe.map((r) => r.id).join(",") }, /* @__PURE__ */ React.createElement("header", { className: "best-pick-head" }, /* @__PURE__ */ React.createElement("span", { className: "best-pick-title" }, title), pick.requiresAutoclave && /* @__PURE__ */ React.createElement("span", { className: "best-autoclave", "data-testid": "best-autoclave-badge" }, "requiere autoclave (no habilitado)")), /* @__PURE__ */ React.createElement("p", { className: "best-pick-recipe" }, bestRecipeText(pick.recipe, nameOf)), /* @__PURE__ */ React.createElement("p", { className: "best-pick-metrics" }, /* @__PURE__ */ React.createElement("strong", null, "EB est. ", Math.round(pick.band.low), "–", Math.round(pick.band.high), " · confianza ", BEST_CONF_LABEL[pick.band.confidence] || pick.band.confidence, " (escala B)"), pick.atModelCap && /* @__PURE__ */ React.createElement("span", null, " · al tope del modelo")), /* @__PURE__ */ React.createElement("p", { className: "best-pick-metrics" }, pick.costPerKgSeta != null ? /* @__PURE__ */ React.createElement("span", null, bestCOP(pick.costPerKgSeta), "/kg seta") : /* @__PURE__ */ React.createElement("span", null, "sin precio: ", pick.unpricedIds.map(nameOf).join(", ")), /* @__PURE__ */ React.createElement("span", null, " · alcanza para ", bags, " bolsa", bags === 1 ? "" : "s")), short.length > 0 && /* @__PURE__ */ React.createElement("p", { className: "best-pick-short" }, "Para ", batch.numBags, " bolsas faltan: ", short.map((s) => `${nameOf(s.id)} ${bestKg(s.kg)}`).join(", ")), reason && /* @__PURE__ */ React.createElement("p", { className: "best-pick-reason" }, reason), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-pri best-pick-use", "data-testid": "best-pick-use", onClick: () => onUse(pick.recipe) }, "Usar esta receta"));
+};
+const MejorConBodegaPanel = ({ sKey, spp, ingredients, invLotes, stockMap, numBags, kgBag, hObj, onUse }) => {
+  const [state, setState] = useState({ status: "idle", sKey: null, result: null, error: "" });
+  const reqRef = useRef(0);
+  const batchRef = useRef(null);
+  const batch = { numBags: Number(numBags) || 0, kgPerBag: Number(kgBag) || 0, moisturePct: Number(hObj) || 0, ingredients };
+  batchRef.current = batch;
+  useEffect(() => {
+    const id = ++reqRef.current;
+    setState({ status: "loading", sKey, result: null, error: "" });
+    const t = setTimeout(() => {
+      try {
+        const api2 = globalThis.SetasFormuladorBest;
+        if (!api2?.computeBestWithBodega) throw new Error("SetasFormuladorBest no disponible");
+        const result = api2.computeBestWithBodega({
+          search: (p) => runHybridRecipeSearch({ ...p, lockedIds: [] }),
+          sKey,
+          spp,
+          ingredients,
+          invLotes,
+          stockMap,
+          calcTreatment,
+          batch: batchRef.current
+        });
+        if (reqRef.current === id) setState({ status: "done", sKey, result, error: "" });
+      } catch (e) {
+        if (reqRef.current === id) setState({ status: "error", sKey, result: null, error: e?.message || String(e) });
+      }
+    }, 0);
+    return () => clearTimeout(t);
+  }, [sKey, spp, ingredients, invLotes, stockMap]);
+  const api = globalThis.SetasFormuladorBest;
+  const byId = new Map((ingredients || []).map((g) => [g.id, g]));
+  const nameOf = (id) => byId.get(id)?.name || id;
+  const spName = spp?.[sKey]?.name || "esta especie";
+  const ready = state.status === "done" && state.sKey === sKey && state.result;
+  const r = ready ? state.result : null;
+  const s = r?.stock;
+  return /* @__PURE__ */ React.createElement("section", { className: "best-bodega", "data-testid": "best-bodega-panel", "aria-labelledby": "best-bodega-title", "aria-busy": !ready && state.status !== "error" }, /* @__PURE__ */ React.createElement("header", { className: "best-bodega-head" }, /* @__PURE__ */ React.createElement("h3", { id: "best-bodega-title" }, "Mejor receta con Bodega"), /* @__PURE__ */ React.createElement("span", null, "Lote planeado: ", batch.numBags, " bolsas × ", batch.kgPerBag, " kg")), state.status === "error" && state.sKey === sKey ? /* @__PURE__ */ React.createElement("p", { className: "best-bodega-status", role: "alert" }, "No se pudo calcular la mejor receta: ", state.error) : !ready ? /* @__PURE__ */ React.createElement("p", { className: "best-bodega-status", role: "status" }, "Calculando la mejor receta con Bodega…") : /* @__PURE__ */ React.createElement(React.Fragment, null, r.noStock || !s.produccion ? /* @__PURE__ */ React.createElement("p", { className: "best-bodega-status" }, "Bodega no tiene insumos compatibles con ", spName, ".") : /* @__PURE__ */ React.createElement("div", { className: "best-picks" }, s.same ? /* @__PURE__ */ React.createElement(BestPickCard, { testid: "best-pick-produccion", title: "Más producción y más barata (con Bodega)", pick: s.produccion, other: s.barata, which: "produccion", api, nameOf, stockKg: r.stockKg, batch, onUse }) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(BestPickCard, { testid: "best-pick-produccion", title: "Más producción (con Bodega)", pick: s.produccion, other: s.barata, which: "produccion", api, nameOf, stockKg: r.stockKg, batch, onUse }), s.barata ? /* @__PURE__ */ React.createElement(BestPickCard, { testid: "best-pick-barata", title: "Más barata por kg de seta (con Bodega)", pick: s.barata, other: s.produccion, which: "barata", api, nameOf, stockKg: r.stockKg, batch, onUse }) : /* @__PURE__ */ React.createElement("article", { className: "best-pick", "data-testid": "best-pick-barata" }, /* @__PURE__ */ React.createElement("span", { className: "best-pick-title" }, "Más barata por kg de seta (con Bodega)"), /* @__PURE__ */ React.createElement("p", { className: "best-pick-metrics" }, "Ninguna receta segura tiene todos sus insumos con precio.")))), r.improvements.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "best-improvements", "data-testid": "best-improvements" }, /* @__PURE__ */ React.createElement("h4", null, "Para mejorar, conseguir…"), /* @__PURE__ */ React.createElement("ul", null, r.improvements.map((it) => {
+    const toBuy = api.shortfall(it.annotated.recipe, ingredients, r.stockKg, batch);
+    const gain = it.kind === "eb" ? it.deltaEb != null ? `EB +${Math.round(it.deltaEb)} pts` : `EB est. ${Math.round(it.annotated.band.low)}–${Math.round(it.annotated.band.high)}` : `${bestCOP(it.deltaCostPerKgSeta)} menos por kg de seta`;
+    return /* @__PURE__ */ React.createElement("li", { key: it.annotated.key, className: "best-improvement", "data-testid": "best-improvement", "data-recipe-ids": it.annotated.recipe.map((x) => x.id).join(",") }, /* @__PURE__ */ React.createElement("span", { className: "best-improvement-buy" }, "+ ", toBuy.map((t) => `${nameOf(t.id)} ${bestKg(t.kg)}`).join(", ")), /* @__PURE__ */ React.createElement("span", { className: "best-improvement-gain" }, "→ ", gain, it.annotated.costPerKgSeta != null ? ` · ${bestCOP(it.annotated.costPerKgSeta)}/kg seta` : ""), it.annotated.requiresAutoclave && /* @__PURE__ */ React.createElement("span", { className: "best-autoclave", "data-testid": "best-autoclave-badge" }, "requiere autoclave (no habilitado)"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "inv-btn inv-btn-sec best-pick-use", onClick: () => onUse(it.annotated.recipe) }, "Usar esta receta"));
+  })))));
 };
 const autoImproveIsBetter = (next, cur) => next.criticals < cur.criticals && next.score >= cur.score || next.criticals === cur.criticals && next.score > cur.score;
 const AUTO_IMPROVE_PAIR_POOL = 8;
@@ -7378,7 +7431,7 @@ ${errors.slice(0, 5).join("\n")}` : "");
   const exportarSyncPendientes = async () => {
     const q = typeof window !== "undefined" ? window.SetasSyncQueue : null;
     if (!q) return;
-    const appVersion = true ? "0e412750091b" : null;
+    const appVersion = true ? "566f8d1d5be6" : null;
     const fbUser = window.SetasFirebase?.auth?.currentUser;
     const out = q.exportStuck(syncQueueRef.current, { appVersion, device: deviceSyncCtxRef.current?.deviceId || null, user: fbUser?.uid || null }, Date.now());
     const url = URL.createObjectURL(new Blob([out.json], { type: "application/json" }));
@@ -10836,7 +10889,25 @@ BATCH (${numBags}×${kgBag} kg):
     },
     formNextState === "species" ? /* @__PURE__ */ React.createElement(IconTarget, { size: 15, color: "currentColor" }) : formNextState === "balance" ? /* @__PURE__ */ React.createElement(IconBolt, { size: 15, color: "currentColor" }) : /* @__PURE__ */ React.createElement(IconBox, { size: 15, color: "currentColor" }),
     /* @__PURE__ */ React.createElement("span", null, formNextLabel)
-  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Receta cargada en Mesa de Mezcla"), /* @__PURE__ */ React.createElement("section", { className: `form-species-context ${recipe.length > 0 ? "has-recipe" : "is-empty"}`, "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp?.name || "Especie activa" : "Seleccionar una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp?.scientific || "Sin clasificar" : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-origin-toggle" }, /* @__PURE__ */ React.createElement("span", null, "Origen de ingredientes"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Origen de ingredientes en la receta activa" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")))), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Aún no hay ingredientes en la receta" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "sin ingredientes"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Añadir insumos manualmente o generar una primera mezcla."), /* @__PURE__ */ React.createElement("div", { className: "recipe-start-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: focusIngredientCatalog }, "Elegir ingredientes"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: () => {
+  )), tab === "formular" && builderSubTab === "formular" && /* @__PURE__ */ React.createElement("div", { id: "formular-panel-mesa", className: "builder-wrap", "data-tab": tab, role: "tabpanel", "aria-labelledby": "formular-tab-mesa" }, loadedFlash && /* @__PURE__ */ React.createElement("div", { className: "loaded-toast", role: "status", "aria-live": "polite" }, /* @__PURE__ */ React.createElement(AppIcon, { name: "check", size: 13, style: { marginRight: 4 } }), " Receta cargada en Mesa de Mezcla"), /* @__PURE__ */ React.createElement("section", { className: `form-species-context ${recipe.length > 0 ? "has-recipe" : "is-empty"}`, "aria-labelledby": "form-species-context-title" }, /* @__PURE__ */ React.createElement("div", { className: "form-species-identity" }, /* @__PURE__ */ React.createElement("span", { className: "form-species-kicker" }, "Especie activa"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("strong", { id: "form-species-context-title" }, hasPickedSpecies ? sp?.name || "Especie activa" : "Seleccionar una especie"), /* @__PURE__ */ React.createElement("em", null, hasPickedSpecies ? sp?.scientific || "Sin clasificar" : "La evaluación se adapta a sus objetivos biológicos."))), /* @__PURE__ */ React.createElement("label", { className: "form-species-picker", htmlFor: "form-species-context-select" }, /* @__PURE__ */ React.createElement("span", null, "Cambiar especie"), /* @__PURE__ */ React.createElement("select", { id: "form-species-context-select", name: "formSpeciesContext", value: hasPickedSpecies ? sKey : "", onChange: (e) => e.target.value && setSKey(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Elegir especie…"), Object.entries(SPP).map(([k, d]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, d.name)))), /* @__PURE__ */ React.createElement("div", { className: "form-species-origin-toggle" }, /* @__PURE__ */ React.createElement("span", null, "Origen de ingredientes"), /* @__PURE__ */ React.createElement("div", { role: "group", "aria-label": "Origen de ingredientes en la receta activa" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "produccion" ? "is-active" : "", "aria-pressed": globalMode === "produccion", onClick: () => setGlobalWorkMode("produccion") }, "Bodega"), /* @__PURE__ */ React.createElement("button", { type: "button", className: globalMode === "investigacion" ? "is-active" : "", "aria-pressed": globalMode === "investigacion", onClick: () => setGlobalWorkMode("investigacion") }, "Catálogo")))), hasPickedSpecies && /* @__PURE__ */ React.createElement(
+    MejorConBodegaPanel,
+    {
+      sKey,
+      spp: searchSPP,
+      ingredients: optimizerINGS,
+      invLotes,
+      stockMap,
+      numBags,
+      kgBag,
+      hObj,
+      onUse: (rec) => {
+        setRecipe(rec.map((r) => ({ ...r })));
+        setLockedIds([]);
+        setLoadedFlash(true);
+        setTimeout(() => setLoadedFlash(false), 2200);
+      }
+    }
+  ), /* @__PURE__ */ React.createElement("div", { className: "sim-live-dashboard", id: "sim-live-dash" }, recipe.length === 0 ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "live-dash-bar" }, /* @__PURE__ */ React.createElement("div", { className: "live-dash-left" }, /* @__PURE__ */ React.createElement("span", { className: "live-dash-species", title: "Aún no hay ingredientes en la receta" }, "Receta activa"), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", fontSize: "11px", padding: "1px 4px", borderRadius: 2, background: "rgba(77,98,53,.15)", color: "color-mix(in oklab, var(--moss-700) 80%, black)", fontWeight: 700, textTransform: "uppercase" } }, "sin ingredientes"))), /* @__PURE__ */ React.createElement("div", { className: "live-dash-tray", id: "bl-receta" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty" }, /* @__PURE__ */ React.createElement("div", { className: "rec-empty-hed" }, "Sin ingredientes aún."), /* @__PURE__ */ React.createElement("div", { className: "rec-empty-sub" }, "Añadir insumos manualmente o generar una primera mezcla."), /* @__PURE__ */ React.createElement("div", { className: "recipe-start-actions" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: focusIngredientCatalog }, "Elegir ingredientes"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "rec-empty-action", onClick: () => {
     setShowOptimizer(true);
     openBuilderSubTab("generador");
   } }, "Abrir Generador"))))) : (() => {

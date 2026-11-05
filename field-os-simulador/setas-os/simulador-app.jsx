@@ -4887,6 +4887,117 @@ const runHybridRecipeSearch=({
     includePool,
   });
 };
+// ── Mejor con Bodega (diseño 2026-11-05): dos recetas desde Bodega y qué
+//    conseguir para mejorar. Orden de producto, no inferencia de campo
+//    (ADR-0004); la banda de EB es la de escala B tal como la calcula scoring.
+const BEST_CONF_LABEL={low:'baja',medium:'media',high:'alta'};
+const bestCOP=n=>`$${Math.round(Math.abs(Number(n)||0)).toLocaleString('es-CO')}`;
+const bestKg=n=>`${(Math.round(Number(n)*10)/10).toLocaleString('es-CO')} kg`;
+const bestRecipeText=(recipe,nameOf)=>(recipe||[]).filter(r=>Number(r.p)>0).slice().sort((a,b)=>b.p-a.p).map(r=>`${nameOf(r.id)} ${Math.round(r.p)}`).join(' · ');
+const BestPickCard=({testid,title,pick,other,which,api,nameOf,stockKg,batch,onUse})=>{
+  const bags=api.bagsCovered(pick.recipe,batch.ingredients,stockKg,batch);
+  const short=api.shortfall(pick.recipe,batch.ingredients,stockKg,batch);
+  const reason=other?api.reasonLine(pick,other,which):'';
+  return(
+    <article className="best-pick" data-testid={testid} data-recipe-ids={pick.recipe.map(r=>r.id).join(',')}>
+      <header className="best-pick-head">
+        <span className="best-pick-title">{title}</span>
+        {pick.requiresAutoclave&&<span className="best-autoclave" data-testid="best-autoclave-badge">requiere autoclave (no habilitado)</span>}
+      </header>
+      <p className="best-pick-recipe">{bestRecipeText(pick.recipe,nameOf)}</p>
+      <p className="best-pick-metrics">
+        <strong>EB est. {Math.round(pick.band.low)}–{Math.round(pick.band.high)} · confianza {BEST_CONF_LABEL[pick.band.confidence]||pick.band.confidence} (escala B)</strong>
+        {pick.atModelCap&&<span> · al tope del modelo</span>}
+      </p>
+      <p className="best-pick-metrics">
+        {pick.costPerKgSeta!=null?<span>{bestCOP(pick.costPerKgSeta)}/kg seta</span>:<span>sin precio: {pick.unpricedIds.map(nameOf).join(', ')}</span>}
+        <span> · alcanza para {bags} bolsa{bags===1?'':'s'}</span>
+      </p>
+      {short.length>0&&<p className="best-pick-short">Para {batch.numBags} bolsas faltan: {short.map(s=>`${nameOf(s.id)} ${bestKg(s.kg)}`).join(', ')}</p>}
+      {reason&&<p className="best-pick-reason">{reason}</p>}
+      <button type="button" className="inv-btn inv-btn-pri best-pick-use" data-testid="best-pick-use" onClick={()=>onUse(pick.recipe)}>Usar esta receta</button>
+    </article>
+  );
+};
+const MejorConBodegaPanel=({sKey,spp,ingredients,invLotes,stockMap,numBags,kgBag,hObj,onUse})=>{
+  const [state,setState]=useState({status:'idle',sKey:null,result:null,error:''});
+  const reqRef=useRef(0);
+  const batchRef=useRef(null);
+  const batch={numBags:Number(numBags)||0,kgPerBag:Number(kgBag)||0,moisturePct:Number(hObj)||0,ingredients};
+  batchRef.current=batch;
+  useEffect(()=>{
+    const id=++reqRef.current;
+    setState({status:'loading',sKey,result:null,error:''});
+    // Diferido: la búsqueda corre en el hilo principal (~0,5 s en laptop) y no
+    // debe bloquear el primer render del Formulador.
+    const t=setTimeout(()=>{
+      try{
+        const api=globalThis.SetasFormuladorBest;
+        if(!api?.computeBestWithBodega) throw new Error('SetasFormuladorBest no disponible');
+        const result=api.computeBestWithBodega({
+          search:p=>runHybridRecipeSearch({...p,lockedIds:[]}),
+          sKey,spp,ingredients,invLotes,stockMap,calcTreatment,batch:batchRef.current,
+        });
+        if(reqRef.current===id) setState({status:'done',sKey,result,error:''});
+      }catch(e){
+        if(reqRef.current===id) setState({status:'error',sKey,result:null,error:e?.message||String(e)});
+      }
+    },0);
+    return()=>clearTimeout(t);
+  },[sKey,spp,ingredients,invLotes,stockMap]);
+  const api=globalThis.SetasFormuladorBest;
+  const byId=new Map((ingredients||[]).map(g=>[g.id,g]));
+  const nameOf=id=>byId.get(id)?.name||id;
+  const spName=spp?.[sKey]?.name||'esta especie';
+  const ready=state.status==='done'&&state.sKey===sKey&&state.result;
+  const r=ready?state.result:null;
+  const s=r?.stock;
+  return(
+    <section className="best-bodega" data-testid="best-bodega-panel" aria-labelledby="best-bodega-title" aria-busy={!ready&&state.status!=='error'}>
+      <header className="best-bodega-head">
+        <h3 id="best-bodega-title">Mejor receta con Bodega</h3>
+        <span>Lote planeado: {batch.numBags} bolsas × {batch.kgPerBag} kg</span>
+      </header>
+      {state.status==='error'&&state.sKey===sKey?<p className="best-bodega-status" role="alert">No se pudo calcular la mejor receta: {state.error}</p>
+      :!ready?<p className="best-bodega-status" role="status">Calculando la mejor receta con Bodega…</p>
+      :<>
+        {(r.noStock||!s.produccion)
+          ?<p className="best-bodega-status">Bodega no tiene insumos compatibles con {spName}.</p>
+          :<div className="best-picks">
+            {s.same
+              ?<BestPickCard testid="best-pick-produccion" title="Más producción y más barata (con Bodega)" pick={s.produccion} other={s.barata} which="produccion" api={api} nameOf={nameOf} stockKg={r.stockKg} batch={batch} onUse={onUse}/>
+              :<>
+                <BestPickCard testid="best-pick-produccion" title="Más producción (con Bodega)" pick={s.produccion} other={s.barata} which="produccion" api={api} nameOf={nameOf} stockKg={r.stockKg} batch={batch} onUse={onUse}/>
+                {s.barata
+                  ?<BestPickCard testid="best-pick-barata" title="Más barata por kg de seta (con Bodega)" pick={s.barata} other={s.produccion} which="barata" api={api} nameOf={nameOf} stockKg={r.stockKg} batch={batch} onUse={onUse}/>
+                  :<article className="best-pick" data-testid="best-pick-barata"><span className="best-pick-title">Más barata por kg de seta (con Bodega)</span><p className="best-pick-metrics">Ninguna receta segura tiene todos sus insumos con precio.</p></article>}
+              </>}
+          </div>}
+        {r.improvements.length>0&&(
+          <div className="best-improvements" data-testid="best-improvements">
+            <h4>Para mejorar, conseguir…</h4>
+            <ul>
+              {r.improvements.map(it=>{
+                const toBuy=api.shortfall(it.annotated.recipe,ingredients,r.stockKg,batch);
+                const gain=it.kind==='eb'
+                  ?(it.deltaEb!=null?`EB +${Math.round(it.deltaEb)} pts`:`EB est. ${Math.round(it.annotated.band.low)}–${Math.round(it.annotated.band.high)}`)
+                  :`${bestCOP(it.deltaCostPerKgSeta)} menos por kg de seta`;
+                return(
+                  <li key={it.annotated.key} className="best-improvement" data-testid="best-improvement" data-recipe-ids={it.annotated.recipe.map(x=>x.id).join(',')}>
+                    <span className="best-improvement-buy">+ {toBuy.map(t=>`${nameOf(t.id)} ${bestKg(t.kg)}`).join(', ')}</span>
+                    <span className="best-improvement-gain">→ {gain}{it.annotated.costPerKgSeta!=null?` · ${bestCOP(it.annotated.costPerKgSeta)}/kg seta`:''}</span>
+                    {it.annotated.requiresAutoclave&&<span className="best-autoclave" data-testid="best-autoclave-badge">requiere autoclave (no habilitado)</span>}
+                    <button type="button" className="inv-btn inv-btn-sec best-pick-use" onClick={()=>onUse(it.annotated.recipe)}>Usar esta receta</button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </>}
+    </section>
+  );
+};
 // ── Auto-mejorar: aplica en cadena (hasta maxIter pasos) el ajuste crítico o
 //    de advertencia que más avanza — evalúa todos los ajustes accionables y
 //    sus correcciones combinadas, y si ninguno avanza solo, pares de ajustes.
@@ -15403,6 +15514,11 @@ body{margin:0;padding:20px 24px;background:#fff;}
             </div>
 
           </section>
+
+          {hasPickedSpecies&&<MejorConBodegaPanel
+            sKey={sKey} spp={searchSPP} ingredients={optimizerINGS} invLotes={invLotes} stockMap={stockMap}
+            numBags={numBags} kgBag={kgBag} hObj={hObj}
+            onUse={rec=>{setRecipe(rec.map(r=>({...r})));setLockedIds([]);setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}/>}
 
 
           {/* ── STICKY LIVE MINI DASHBOARD (ULTRA-COMPACT SINGLE-LINE & COLLAPSIBLE TRAY) ──
