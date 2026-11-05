@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 confidence: high
 primary_sources:
   - Internal records
@@ -11,6 +11,7 @@ primary_sources:
   - facility_adaptation_literature_2026-08-03.md
   - high_altitude_microclimate_shiitake_hericium_2026-08-05.md
 related_documents:
+  - jerky_setas_procesamiento_2026-11-05.md
   - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - literature_database.md
   - literature_audit_2026-07-23.md
@@ -200,6 +201,9 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB14 | ¿Costo y rendimiento vendible de bloque precolonizado frente al microlote interno? | Media, alternativa | Cotización puesta en Tenjo, trazabilidad, prueba propia y ficha de economics.md (DOC-0133 F07) |
 | AB15 | ¿Tarifa efectiva y kWh por etapa/kg vendible del módulo real? | Alta antes de presupuestar escala | Factura, medidor y asignación trazable; 20–24 kWh/día externos no verificados (DOC-0133 F03) |
 | AB16 | ¿Trámite sanitario/ICA por actividad y destino, y condiciones de agua/descarga del predio? | Alta antes de comercializar | Respuesta oficial/radicado y conexión real; Res. ICA 115708 no aplica a vegetales (DOC-0133 F02) |
+| AB17 | ¿Qué actividad de agua (aw) y humedad final alcanza un jerky flexible de melena o shiitake hecho en la finca, y qué vida útil sostiene sin refrigeración? | Baja (fuera de DEC-022) | Medición de aw por lote y ensayo de almacenamiento; sin ella, solo refrigerado 1–2 semanas (DOC-0138) |
+| AB18 | ¿Qué ruta INVIMA y qué rotulado aplican a un snack de setas marinado y deshidratado? | Baja hasta abrir la opción C de DEC-022 | Consulta oficial; no hereda la excepción del fresco entero ni la ruta del deshidratado de un solo ingrediente |
+| AB19 | ¿El protocolo de jerky de *P. ostreatus* transfiere a *P. eryngii* (tallo denso) y en qué grosor y tiempo? | Baja | Prueba culinaria propia; DOC-0138 no cubre eryngii |
 
 Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores. Para AB04/AB12 y el contexto de R01/R04, ver `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`; sus listados y lectura normativa no cierran esas preguntas ni verifican un registro sanitario individual.
 
@@ -247,3 +251,7 @@ Una pregunta se cierra únicamente cuando existe:
 ## Evidencia consultiva añadida — 2026-11-04
 
 `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md` desarrolla AB05 (frío/vida útil), AB06 (ocupación y costo por etapa) y AB12 (kg vendidos, contribución, recompra y caja). Incluye diseño de simulacro de trazabilidad/retiro y diez escenarios económicos ilustrativos; no cierra estas preguntas. Sus conflictos documentales de umbrales requieren decisión humana. Para seco gobierna DEC-022: no ensayar antes de tres ciclos cerrados ni activar producto sin sus cuatro condiciones.
+
+## Evidencia consultiva añadida — 2026-11-05
+
+`09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138) sintetiza un informe externo sobre jerky de shiitake, melena de león y orellana: variables de proceso, rangos culinarios Tier 3, conservación conservadora (refrigerado 1–2 semanas) y diagnóstico de fallas. Abre AB17–AB19; no cierra preguntas ni modifica DEC-022.

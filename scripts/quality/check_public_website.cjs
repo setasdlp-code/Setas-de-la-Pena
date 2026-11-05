@@ -108,8 +108,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await visit(page, 'especies/melena-de-leon#cocina');
     await page.locator('#cocina a[href="/recetas-melena"]').click();
     assert.equal(new URL(page.url()).pathname, '/recetas-melena');
-    assert.equal(await page.locator('.recipe').count(), 6);
-    for (const [slug, grams] of [['posta',600],['encocado',560],['mote',480],['atollado',520],['laminas',500],['envuelto',480]]) {
+    assert.equal(await page.locator('.recipe').count(), 7);
+    for (const [slug, grams] of [['posta',600],['encocado',560],['mote',480],['atollado',520],['laminas',500],['envuelto',480],['jerky',450]]) {
       const recipe = page.locator(`#melena-${slug}`);
       for (const factor of [2,3,1]) {
         await recipe.locator(`input[value="${factor}"]`).check();
@@ -131,7 +131,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await page.locator('#melena-envuelto .recipe-method').waitFor({ state: 'visible' });
     await page.locator('#melena-envuelto details summary').click();
     await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
-    assert.equal(await page.locator('.recipe-details[open]').count(), 6);
+    assert.equal(await page.locator('.recipe-details[open]').count(), 7);
     await page.emulateMedia({media:'print'});
     await page.pdf({path:path.join(out,'recetas-melena.pdf'),format:'A4',printBackground:true});
     await page.emulateMedia({media:'screen'});
@@ -141,11 +141,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const melenaNoJs = await contextWith(undefined,{javaScriptEnabled:false,viewport:{width:390,height:900}});
     const melenaStatic = await melenaNoJs.newPage();
     await visit(melenaStatic,'recetas-melena');
-    assert.equal(await melenaStatic.locator('.recipe-details[open]').count(),6);
+    assert.equal(await melenaStatic.locator('.recipe-details[open]').count(),7);
     assert.equal(await melenaStatic.locator('.recipe-scale:visible').count(),0);
     assert.ok(await melenaStatic.locator('#melena-posta .recipe-ingredients').first().innerText().then(t=>t.includes('600 g')));
     await melenaNoJs.close();
-    report.checks.push({type:'melena-recipes',result:'passed',covers:['local editorial roundtrip','six recipes','4/8/12 portions','two mushroom cuts','frying bath quantities','repeated anchor','print PDF','no JavaScript']});
+    report.checks.push({type:'melena-recipes',result:'passed',covers:['local editorial roundtrip','seven recipes','4/8/12 portions','two mushroom cuts','frying bath quantities','repeated anchor','print PDF','no JavaScript']});
     await page.setViewportSize({ width: 1280, height: 800 });
     await visit(page, 'home');
     await page.screenshot({ path: path.join(out, 'catalogo-1280.png') });

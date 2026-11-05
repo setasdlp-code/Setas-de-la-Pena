@@ -3,7 +3,7 @@ title: Pleurotus ostreatus — Oyster / Orellana
 document_id: DOC-0009
 category: species
 load_priority: selective
-last_reviewed: 2026-10-03
+last_reviewed: 2026-11-05
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -125,3 +125,7 @@ Mismo fenómeno físico ya documentado para *L. edodes*; aquí se consigna para 
 - Cotter, T. (2014). *Organic Mushroom Farming and Mycoremediation*. Chelsea Green.
 - Cornell Mushroom Blog. https://blog.mycology.cornell.edu
 - Shi, Y., et al. (2026). Modeling core substrate temperature dynamics and metabolic heat dissipation in mushroom solid-state cultivation using time-series EWMA. *Computers and Electronics in Agriculture*, 218, 108722. [paper_026]
+
+## Procesamiento: jerky (consultivo)
+
+«Orellana» designa *P. ostreatus* y también *P. pulmonarius* en el Catálogo de Hongos de Colombia. Rangos de jerky (57–60 °C, 6–10 h; Tier 3) en `../09_research/jerky_setas_procesamiento_2026-11-05.md` (DOC-0138). Especie no comercializada por el proyecto; la transferencia a *P. eryngii* está abierta (AB19).
