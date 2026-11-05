@@ -99,6 +99,17 @@ function runHybrid(targetKey, profileKey) {
   });
 }
 
+// Salida congelada del motor legado (runAutoOptimizer, eliminado en el plan
+// PR 1 del Formulador, 2026-11-05): top-12 por especie y perfil, generada con
+// el analyze canónico justo antes de borrarlo. Es el oráculo contra el que el
+// motor híbrido debe cubrir composiciones y no empeorar el mejor score.
+const LEGACY_GOLDEN = require('./recipe-optimizer-legacy-golden.json');
+function legacyGolden(targetKey, profileKey) {
+  const out = LEGACY_GOLDEN[`${targetKey}/${profileKey}`];
+  assert.ok(out, `falta la salida legada congelada para ${targetKey}/${profileKey}`);
+  return out;
+}
+
 function keys(rows) {
   return rows.map(r => scenarios.canonicalRecipeKey(r.recipe));
 }
@@ -106,7 +117,7 @@ function keys(rows) {
 for (const targetKey of ['p_ostreatus_gris', 'shiitake']) {
   for (const profileKey of ['rescate', 'produccion', 'premium']) {
     test(`oracle parity ${targetKey}/${profileKey}: no pierde top legacy y no regresa score`, () => {
-      const legacyOut = legacy.runAutoOptimizer(targetKey, [], 0, INGS, false, profileKey, {}, SPP);
+      const legacyOut = legacyGolden(targetKey, profileKey);
       const hybridOut = runHybrid(targetKey, profileKey);
 
       assert.equal(legacyOut.noStock, false);
@@ -254,10 +265,6 @@ test('searchScenarios diversifica recommended por base, no solo ranked (que el o
   );
 });
 
-// This test intentionally depends on runAutoOptimizer while it is the parity
-// oracle. After this gate passes in the complete checkout, freeze the observed
-// legacy top-12 compositions/scores as static golden fixtures; only then remove
-// runAutoOptimizer and migrate/delete its direct unit test.
 
 test('el optimizador usa el analyze canónico (substrate-analysis.js)', () => {
   const cat = require('./substrate-catalog.js');
