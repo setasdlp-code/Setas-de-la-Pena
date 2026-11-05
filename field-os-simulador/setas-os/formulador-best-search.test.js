@@ -94,3 +94,20 @@ test('el catálogo también se explora desde la receta de Bodega', () => {
   });
   assert.deepStrictEqual(calls, [{ useStock: true, seeded: false }, { useStock: false, seeded: false }, { useStock: false, seeded: true }]);
 });
+
+test('las sugerencias se recalculan con otro tamaño de lote sin buscar de nuevo', () => {
+  const { out } = run('p_ostreatus_gris', GRIS_LOTS);
+  assert.ok(Array.isArray(out.catalogAnnotated) && out.catalogAnnotated.length > 0);
+  const small = { ...BATCH, numBags: 1 };
+  const again = B.improvements({ stockPicks: out.stock, catalogAnnotated: out.catalogAnnotated, stockKg: out.stockKg, ingredients: cat.INGS, batch: small });
+  assert.ok(again.every(i => i.toBuy.length > 0));
+});
+
+test('sin precios en Bodega: Más barata vacía nombra los insumos sin precio', () => {
+  const free = GRIS_LOTS.map(l => ({ ...l, precioPorKgCOP: 0 }));
+  const { out } = run('p_ostreatus_gris', free);
+  assert.equal(out.stock.barata, null);
+  assert.ok(out.stock.produccion);
+  assert.ok(out.stock.unpricedIds.length > 0);
+  assert.ok(out.stock.unpricedIds.every(id => free.some(l => l.ingredienteId === id)));
+});

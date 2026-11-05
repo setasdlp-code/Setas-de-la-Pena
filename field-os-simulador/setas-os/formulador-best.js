@@ -236,7 +236,12 @@
         ...picks,
         bags: { produccion: bagsOf(picks.produccion), barata: bagsOf(picks.barata) },
         short: { produccion: shortOf(picks.produccion), barata: shortOf(picks.barata) },
+        // Insumos sin precio entre las recetas seguras de Bodega: explican una
+        // "Más barata" vacía.
+        unpricedIds: [...new Set(stockAnnotated.filter(a => a.safe).flatMap(a => a.unpricedIds))],
       },
+      // Para recalcular las sugerencias con otro lote planeado sin buscar de nuevo.
+      catalogAnnotated,
       improvements: improvements({ stockPicks: picks, catalogAnnotated, stockKg, ingredients, batch }),
       noStock,
       stockKg,

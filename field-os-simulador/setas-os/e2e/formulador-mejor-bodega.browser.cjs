@@ -82,6 +82,13 @@ const LOTS=[
 
   // Camino más calmo: Co-Formulación detrás de «Avanzado» y evidencia plegada.
   const adv=await open({width:1366,height:900},LOTS,[{id:'aserrin_eucalipto',p:75},{id:'salvado_trigo',p:25}]);
+  // Con receta cargada el panel arranca plegado (la Mesa queda a la vista) y
+  // su resumen ya dice la receta de más producción.
+  const advPanel=adv.page.getByTestId('best-bodega-panel');
+  assert.equal(await advPanel.evaluate(el=>el.open),false);
+  await expect(advPanel.locator('summary')).toContainText(/Más producción: EB est\. \d+–\d+/,{timeout:15000});
+  await advPanel.locator('summary').click();
+  await expect(advPanel.getByTestId('best-pick-produccion')).toBeVisible();
   const avanzado=adv.page.getByTestId('formulador-avanzado');
   await expect(avanzado).toBeAttached();
   assert.equal(await avanzado.evaluate(el=>el.open),false);

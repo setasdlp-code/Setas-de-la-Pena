@@ -7025,7 +7025,11 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 
 /* ── Formulador · Mejor con Bodega (2026-11-05) ── */
 .sim-root .best-bodega{margin:0 0 14px;padding:var(--sp-8);border:1px solid var(--border-soft);border-left:4px solid var(--accent-olive);border-radius:var(--sim-radius-sm);background:var(--paper-50);min-width:0}
-.sim-root .best-bodega-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--sp-4) var(--sp-8);margin:0 0 var(--sp-6)}
+.sim-root .best-bodega-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--sp-4) var(--sp-8);cursor:pointer;list-style:none}
+.sim-root .best-bodega-head::-webkit-details-marker{display:none}
+.sim-root .best-bodega-head h3::before{content:'▸ ';color:var(--text-secondary)}
+.sim-root .best-bodega[open] > .best-bodega-head{margin:0 0 var(--sp-6)}
+.sim-root .best-bodega[open] > .best-bodega-head h3::before{content:'▾ '}
 .sim-root .best-bodega-head h3{margin:0;font:800 var(--text-base)/1.2 var(--font-display)}
 .sim-root .best-bodega-head span,.sim-root .best-bodega-status{color:var(--text-secondary);font-size:var(--text-sm)}
 .sim-root .best-bodega-status{margin:0}
@@ -7048,3 +7052,4 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 @media (max-width:700px){.sim-root .best-pick-use,.sim-root .best-improvement .best-pick-use{width:100%;margin-left:0;white-space:normal}}
 .sim-root .formulador-avanzado{min-width:0}
 .sim-root .formulador-avanzado-summary{cursor:pointer;padding:var(--sp-4) var(--sp-6);font:700 var(--text-xs)/1.2 var(--font-mono);letter-spacing:var(--sim-tracking-wide);text-transform:uppercase;color:var(--text-secondary)}
+.sim-root .best-improvements-note{margin:0 0 var(--sp-4);color:var(--text-secondary);font-size:var(--text-xs)}

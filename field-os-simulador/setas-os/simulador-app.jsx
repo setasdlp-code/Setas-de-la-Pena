@@ -4919,7 +4919,9 @@ const BestPickCard=({testid,title,pick,other,which,api,nameOf,stockKg,batch,onUs
     </article>
   );
 };
-const MejorConBodegaPanel=({sKey,spp,ingredients,invLotes,stockMap,numBags,kgBag,hObj,onUse})=>{
+const MejorConBodegaPanel=({sKey,spp,ingredients,invLotes,stockMap,numBags,kgBag,hObj,onUse,startOpen=true})=>{
+  // Abierto sin receta; con receta cargada arranca plegado para dejar la Mesa a la vista.
+  const [open,setOpen]=useState(startOpen);
   const [state,setState]=useState({status:'idle',sKey:null,result:null,error:''});
   const reqRef=useRef(0);
   const batchRef=useRef(null);
@@ -4952,12 +4954,18 @@ const MejorConBodegaPanel=({sKey,spp,ingredients,invLotes,stockMap,numBags,kgBag
   const ready=state.status==='done'&&state.sKey===sKey&&state.result;
   const r=ready?state.result:null;
   const s=r?.stock;
+  // El lote planeado no cambia el orden: las sugerencias se recalculan con el
+  // lote actual sobre el pool ya buscado.
+  const improvementsNow=useMemo(()=>r&&api?api.improvements({stockPicks:r.stock,catalogAnnotated:r.catalogAnnotated,stockKg:r.stockKg,ingredients,batch}):[],
+    [r,api,ingredients,batch.numBags,batch.kgPerBag,batch.moisturePct]);
   return(
-    <section className="best-bodega" data-testid="best-bodega-panel" aria-labelledby="best-bodega-title" aria-busy={!ready&&state.status!=='error'}>
-      <header className="best-bodega-head">
+    <details className="best-bodega" data-testid="best-bodega-panel" open={open} onToggle={e=>setOpen(e.currentTarget.open)} aria-busy={!ready&&state.status!=='error'}>
+      <summary className="best-bodega-head">
         <h3 id="best-bodega-title">Mejor receta con Bodega</h3>
-        <span>Lote planeado: {batch.numBags} bolsas × {batch.kgPerBag} kg</span>
-      </header>
+        <span>{!open&&s?.produccion
+          ?`Más producción: EB est. ${Math.round(s.produccion.band.low)}–${Math.round(s.produccion.band.high)}${s.produccion.costPerKgSeta!=null?` · ${bestCOP(s.produccion.costPerKgSeta)}/kg seta`:''}`
+          :`Lote planeado: ${batch.numBags} bolsas × ${batch.kgPerBag} kg`}</span>
+      </summary>
       {state.status==='error'&&state.sKey===sKey?<p className="best-bodega-status" role="alert">No se pudo calcular la mejor receta: {state.error}</p>
       :!ready?<p className="best-bodega-status" role="status">Calculando la mejor receta con Bodega…</p>
       :<>
@@ -4970,15 +4978,16 @@ const MejorConBodegaPanel=({sKey,spp,ingredients,invLotes,stockMap,numBags,kgBag
                 <BestPickCard testid="best-pick-produccion" title="Más producción (con Bodega)" pick={s.produccion} other={s.barata} which="produccion" api={api} nameOf={nameOf} stockKg={r.stockKg} batch={batch} onUse={onUse}/>
                 {s.barata
                   ?<BestPickCard testid="best-pick-barata" title="Más barata por kg de seta (con Bodega)" pick={s.barata} other={s.produccion} which="barata" api={api} nameOf={nameOf} stockKg={r.stockKg} batch={batch} onUse={onUse}/>
-                  :<article className="best-pick" data-testid="best-pick-barata"><span className="best-pick-title">Más barata por kg de seta (con Bodega)</span><p className="best-pick-metrics">Ninguna receta segura tiene todos sus insumos con precio.</p></article>}
+                  :<article className="best-pick" data-testid="best-pick-barata"><span className="best-pick-title">Más barata por kg de seta (con Bodega)</span><p className="best-pick-metrics">Ninguna receta segura tiene todos sus insumos con precio{s.unpricedIds?.length?`. Sin precio: ${s.unpricedIds.map(nameOf).join(', ')}`:''}.</p></article>}
               </>}
           </div>}
-        {r.improvements.length>0&&(
+        {improvementsNow.length>0&&(
           <div className="best-improvements" data-testid="best-improvements">
             <h4>Para mejorar, conseguir…</h4>
+            {!r.noStock&&<p className="best-improvements-note">Solo sugerencias que piden hasta {api.MAX_NEW_INGREDIENTS} insumos que Bodega no tiene.</p>}
             <ul>
-              {r.improvements.map(it=>{
-                const toBuy=api.shortfall(it.annotated.recipe,ingredients,r.stockKg,batch);
+              {improvementsNow.map(it=>{
+                const toBuy=it.toBuy;
                 const gain=it.kind==='eb'
                   ?(it.deltaEb!=null?`EB +${Math.round(it.deltaEb)} pts`:`EB est. ${Math.round(it.annotated.band.low)}–${Math.round(it.annotated.band.high)}`)
                   :`${bestCOP(it.deltaCostPerKgSeta)} menos por kg de seta`;
@@ -4995,7 +5004,7 @@ const MejorConBodegaPanel=({sKey,spp,ingredients,invLotes,stockMap,numBags,kgBag
           </div>
         )}
       </>}
-    </section>
+    </details>
   );
 };
 // ── Auto-mejorar: aplica en cadena (hasta maxIter pasos) el ajuste crítico o
@@ -15522,7 +15531,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
           {hasPickedSpecies&&<MejorConBodegaPanel
             sKey={sKey} spp={searchSPP} ingredients={optimizerINGS} invLotes={invLotes} stockMap={stockMap}
-            numBags={numBags} kgBag={kgBag} hObj={hObj}
+            numBags={numBags} kgBag={kgBag} hObj={hObj} startOpen={recipe.length===0}
             onUse={rec=>{setRecipe(rec.map(r=>({...r})));setLockedIds([]);setLoadedFlash(true);setTimeout(()=>setLoadedFlash(false),2200);}}/>}
 
 
