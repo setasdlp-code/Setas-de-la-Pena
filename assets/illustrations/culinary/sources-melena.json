@@ -79,6 +79,18 @@
       "sha256": "148f63885b54fdad56e4d12523ee5441b36db4d9372e1d4c216409187be15a40",
       "originalSHA256": "86698ed5a6a066f88affdf2c00c2bc4c687e2d01d4e0031cee3326e33efe3d98",
       "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
+    },
+    {
+      "slug": "jerky",
+      "source": "codex exec (image_gen), 2026-11-05",
+      "prompt": "Use your built-in image generation tool to create ONE square image (1254x1254 or nearest square), then save it as a PNG file in the current working directory named exactly jerky-melena.png. Do not edit any other file. When done, print the absolute file path.\n\nThe three attached images are STYLE REFERENCES ONLY (same illustrator, same series), not food to repeat. Style: original culinary artwork, opaque gouache and colored-pencil technique, restrained small brushstrokes, soft organic edges and sparse pencil contours, appetizing hand-painted detail. Square, slightly elevated three-quarter view; vessel centered and fully visible with compact margins (88–92% of width). Warm ivory speckled ceramic with a thin ochre rim. Flat off-white #FAF8F3 background. Palette: oak brown #594631, moss #2E3B2F/#6D7C5A, sand #BFA98B, muted ochre, cream. No text, logos, labels, hands, cutlery, tablecloth, flowers, decorative foliage, loose ingredients, cast shadow, 3D, photography or watercolor wash. Conceptual illustration of a proposed home recipe, not a photograph.\n\nImage 1 — jerky-melena.png: On one shallow oval ivory ceramic plate, a loose pile of about eight dried lion's mane mushroom jerky pieces: thick irregular torn slabs with visible stringy fibrous ivory-to-amber interior where torn, deep reddish-brown glossy smoky-paprika marinade on the surface, slightly curled and leathery, a few with a bend showing flexibility. Lion's mane is Hericium erinaceus: fibrous, shaggy, NO caps, NO gills, NO stems. A tiny sprinkle of coarse black pepper only. No beef, no meat, no dip, no bread.",
+      "file": "jerky-melena-gouache.webp",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 301846,
+      "sha256": "a644066ecb2e32d7b7eb2590e0a439480cf6c69b514506939904cf129aa9eea7",
+      "originalSHA256": "4a19521e3b4f6615c858fdf9dd3bb51beb93e1100f84faf4aa2c3f80f4cb19aa",
+      "encoding": "WebP calidad86, sin recorte ni cambio de dimensiones."
     }
   ]
 }
