@@ -179,3 +179,14 @@ test('improvements: Bodega vacía sigue sugiriendo del catálogo', () => {
   assert.equal(out[0].deltaEb, null);
   assert.equal(out[0].toBuy.length, 2);
 });
+
+test('improvements: con Bodega, no sugiere recetas que piden más de 2 insumos nuevos', () => {
+  const extra = ['n1', 'n2', 'n3'].map(id => ({ id, cost: 100, moisture: 0 }));
+  const three = withRecipe(ann('tres', 125, 900), [{ id: 'aserrin_eucalipto', p: 70 }, { id: 'n1', p: 10 }, { id: 'n2', p: 10 }, { id: 'n3', p: 10 }]);
+  const two = withRecipe(ann('dos', 115, 900), [{ id: 'aserrin_eucalipto', p: 80 }, { id: 'n1', p: 10 }, { id: 'n2', p: 10 }]);
+  const out = B.improvements({ stockPicks, catalogAnnotated: [three, two], stockKg: STOCK, ingredients: [...INGS2, ...extra], batch: BATCH });
+  assert.equal(B.MAX_NEW_INGREDIENTS, 2);
+  assert.deepStrictEqual(out.map(i => i.annotated.key), ['dos']);
+  const empty = B.improvements({ stockPicks: { produccion: null, barata: null }, catalogAnnotated: [three], stockKg: {}, ingredients: [...INGS2, ...extra], batch: BATCH });
+  assert.equal(empty.length, 1);
+});

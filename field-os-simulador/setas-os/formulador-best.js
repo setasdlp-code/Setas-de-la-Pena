@@ -16,6 +16,9 @@
   const EB_TIE_PTS = 1;
   // Mismo umbral de seguridad que usa searchScenarios dentro del beam.
   const SAFETY_MIN = 45;
+  // Una sugerencia que pide comprar más de 2 insumos que Bodega no tiene ya no
+  // es "conseguir algo", es otra receta: con Bodega no vacía se descarta.
+  const MAX_NEW_INGREDIENTS = 2;
 
   const scenarios = () => globalThis.SetasPeritoScenarios
     || (typeof require !== 'undefined' ? require('./perito-scenarios.js') : null);
@@ -174,6 +177,7 @@
       if (!a || !a.safe) return;
       const toBuy = shortfall(a.recipe, ingredients, stockKg, batch);
       if (!toBuy.length) return;
+      if (!noStockPicks && toBuy.filter(t => !(Number(stockKg[t.id]) > 0)).length > MAX_NEW_INGREDIENTS) return;
       const deltaEb = prod ? round1(a.eb - prod.eb) : null;
       const deltaCostPerKgSeta = bar && bar.costPerKgSeta != null && a.costPerKgSeta != null
         ? a.costPerKgSeta - bar.costPerKgSeta : null;
@@ -201,9 +205,49 @@
     return out;
   };
 
+  // ── Dos búsquedas: solo Bodega y catálogo ──
+  // `search` es runHybridRecipeSearch en la app (con includePool). Ambas
+  // corridas usan los mismos lotes, así que el costo tiene una sola base.
+  const computeBestWithBodega = ({ search, sKey, spp = {}, ingredients = [], invLotes = [], stockMap = {}, calcTreatment = null, batch = {} } = {}) => {
+    if (typeof search !== 'function') throw new Error('computeBestWithBodega requiere search()');
+    const stockKg = stockKgById(invLotes, stockMap);
+    const ebOptimal = Number(spp?.[sKey]?.eb_optimal);
+    const opts = { ingredients, invLotes, ebOptimal, calcTreatment, sKey, spp };
+    const annotate = res => (res?.pool || []).map(c => annotateCandidate(c, opts));
+    const base = { targetKey: sKey, invLotes, stockMap, ingredients, spp, includePool: true };
+
+    const hasStock = Object.keys(stockKg).length > 0;
+    const stockRes = hasStock ? search({ ...base, useStock: true }) : null;
+    const stockAnnotated = stockRes ? annotate(stockRes) : [];
+    const noStock = !hasStock || !!stockRes?.noStock;
+    const picks = noStock ? { produccion: null, barata: null, same: false, safeCount: 0 } : selectPicks(stockAnnotated);
+
+    const catalogRes = search({ ...base, useStock: false });
+    // La búsqueda desde cero rara vez prueba "la receta de Bodega + un insumo";
+    // una segunda corrida de catálogo sembrada con esa receta sí.
+    const seededRes = picks.produccion ? search({ ...base, useStock: false, recipe: picks.produccion.recipe }) : null;
+    const seen = new Set();
+    const catalogAnnotated = [...annotate(catalogRes), ...annotate(seededRes)].filter(a => (seen.has(a.key) ? false : seen.add(a.key)));
+    const bagsOf = p => (p ? bagsCovered(p.recipe, ingredients, stockKg, batch) : null);
+    const shortOf = p => (p ? shortfall(p.recipe, ingredients, stockKg, batch) : []);
+
+    return {
+      stock: {
+        ...picks,
+        bags: { produccion: bagsOf(picks.produccion), barata: bagsOf(picks.barata) },
+        short: { produccion: shortOf(picks.produccion), barata: shortOf(picks.barata) },
+      },
+      improvements: improvements({ stockPicks: picks, catalogAnnotated, stockKg, ingredients, batch }),
+      noStock,
+      stockKg,
+      explored: { stock: stockRes?.explored ?? 0, catalog: (catalogRes?.explored ?? 0) + (seededRes?.explored ?? 0) },
+    };
+  };
+
   const api = {
     EB_TIE_PTS,
     SAFETY_MIN,
+    MAX_NEW_INGREDIENTS,
     isEbTie,
     annotateCandidate,
     selectPicks,
@@ -213,6 +257,7 @@
     bagsCovered,
     shortfall,
     improvements,
+    computeBestWithBodega,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasFormuladorBest = api;
