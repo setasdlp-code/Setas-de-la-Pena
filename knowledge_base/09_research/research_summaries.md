@@ -3,7 +3,7 @@ title: Síntesis de Investigación Aplicada
 document_id: DOC-0044
 category: research
 load_priority: on_request
-last_reviewed: 2026-07-24
+last_reviewed: 2026-11-05
 confidence: medium
 primary_sources:
   - book_007
@@ -15,6 +15,7 @@ related_documents:
   - literature_database.md
   - unresolved_questions.md
   - ../01_species/lentinula_edodes.md
+  - genetica_sustratos_shiitake_2026-11-04/informe.md
 ---
 
 # Alcance
@@ -36,7 +37,7 @@ Para troncos sintéticos, la literatura describe colonización, formación de pr
 
 El programa prioriza la familia de serrín de madera dura suplementado y esterilizado. La receta exacta sigue pendiente.
 
-paper_006 reporta la formulación T2 de subproductos de café y un rendimiento medio de 57,6% en su contexto experimental. Ese resultado:
+La relectura de paper_006 (§3.7, pp. 44–48) atribuye el rendimiento medio de 57,6% a L13/T2 con tratamiento térmico y 75,7% a L4055/T2 esterilizada. El rendimiento incluye todas las bolsas sembradas; la eficiencia biológica media del boletín se calcula sobre bolsas productivas. Localizadores y límites en `genetica_sustratos_shiitake_2026-11-04/informe.md`, A9 y §8. Ese resultado:
 
 - conserva la definición del estudio y no se traduce automáticamente a BE;
 - fue obtenido con cepas y clima específicos;
@@ -79,6 +80,12 @@ La corrección de paper_002 confirma que Mori et al. (2009) fue un ensayo peque�
 4. Definir criterios de madurez, inducción, ambiente y cosecha en la especificación del lote.
 5. Medir BE, contaminación, calidad y pérdidas sin imponer metas previas al piloto.
 6. Mantener *P. djamor* fuera del arranque hasta revisar los primeros ciclos documentados de shiitake.
+
+# Base biológica reproducible — investigación 2026-11-04
+
+El informe `genetica_sustratos_shiitake_2026-11-04/informe.md` (DOC-0140) y su bibliografía `genetica_sustratos_shiitake_2026-11-04/bibliografia.md` (DOC-0141) incorporan evidencia de identidad y clase térmica, conservación de spawn, materia seca, madurez e inducción. Separan material comercial/proveedor de genética pura y proponen una secuencia de ensayos con pérdidas incluidas. La lectura de fuentes fue heterogénea: métodos/resultados en algunos artículos, resumen original en otros y acceso incompleto en Rocha/Furlan; no hay mediciones nuevas de Tenjo.
+
+Las propuestas de muestreo, tamaño de ensayo y retención no son estándares operativos. DEC-019/021 siguen vigentes. SH01–SH04/SH07/SH08 requieren trazabilidad, decisiones o validación local; la literatura no cierra los ensayos. Las implicaciones se consolidan en ARK-006 y ARK-026 de `active_research_knowledge.md`.
 
 # Referencias
 

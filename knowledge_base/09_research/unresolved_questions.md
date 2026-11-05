@@ -24,6 +24,7 @@ related_documents:
   - research_validation_audit_2026-08-29.md
   - colombia_mushroom_market_synthesis_2026-11-03.md
   - factibilidad_shiitake_tenjo_evaluacion_2026-11-03.md
+  - genetica_sustratos_shiitake_2026-11-04/informe.md
 ---
 
 # Executive Summary
@@ -53,6 +54,10 @@ La auditoría documental de pendientes del 2026-08-29 confirmó que SH01–SH06 
 | SH13 | ¿Cuál es el precio B2B, el mínimo de pedido y el plazo de cada candidato para 5, 15 y 30 kg de spawn? | Cotización con fecha | Media |
 | SH14 | ¿Se puede ampliar o rediseñar el lote de 30 bloques para comparar un segundo proveedor sin perder el control del piloto? | Decisión del propietario sobre tamaño y capacidad del autoclave de 39 L | Media |
 | SH15 | ¿Qué requisitos, costo y plazo tiene importar micelio de *L. edodes* al país? | Respuesta de Cuarentena Vegetal del ICA; texto y vigencia de las resoluciones citadas | Baja (solo si fallan los nacionales) |
+
+## Evidencia consultiva para SH01–SH04/SH07/SH08 — 2026-11-05
+
+Véase `genetica_sustratos_shiitake_2026-11-04/informe.md` (DOC-0140), especialmente §§4–6, y su bibliografía. Mantener abiertas las validaciones de campo: DEC-019 permite identidad desconocida para lote 1, sin eliminar lote/recepción; una comparación de proveedores con genética y matriz diferentes estima material comercial, no genética pura. SH08 cuenta con la aclaración documental de Cenicafé sobre bolsas productivas frente a todas las sembradas, pero la definición que empleará el proyecto todavía requiere aprobación y masa seca registrada. Los tamaños de ensayo y criterios de retención del informe son propuestas, no liberaciones.
 
 # Alta altitud y balance gaseoso
 

@@ -28,6 +28,7 @@ related_documents:
   - incubation_fruiting_chambers_state_of_knowledge_2026.md
   - microclima_operacion_remota_2026-11-04/informe.md
   - ../04_facility/marranera_medium_scale_design_basis.md
+  - genetica_sustratos_shiitake_2026-11-04/bibliografia.md
 ---
 
 # Executive Summary
@@ -241,6 +242,10 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 
 **Aplicación curada:** estas fuentes respaldan priorizar formulaciones comparativas, trazabilidad de contaminación, cadena fría, pruebas de secado y polvo culinario. No promueven parámetros a SOP, CANON ni setpoints.
 
+
+## Genética y sustratos de shiitake — investigación 2026-11-04
+
+Véanse `genetica_sustratos_shiitake_2026-11-04/informe.md` (DOC-0140) y `genetica_sustratos_shiitake_2026-11-04/bibliografia.md` (DOC-0141). Los identificadores S1–S15 son locales a esa bibliografía; no sustituyen los `paper_XXX` existentes. El registro diferencia métodos/resultados abiertos, resúmenes originales y accesos incompletos, e incluye DOI/URL y límites de aplicación. Las fuentes sustentan implicaciones consultivas en ARK-006/026 de `active_research_knowledge.md`, sin aprobar conservación, receta, calendario ni inducción.
 
 ## Microclima y operación remota — investigación 2026-11-04
 
