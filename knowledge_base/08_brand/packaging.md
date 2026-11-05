@@ -3,7 +3,7 @@ title: Empaque y Presentación del Producto
 document_id: DOC-0040
 category: brand
 load_priority: on_request
-last_reviewed: 2026-07-24
+last_reviewed: 2026-11-04
 confidence: low
 primary_sources:
   - Internal records
@@ -58,6 +58,8 @@ Especificaciones provisionales para el piloto de shiitake. El empaque comercial,
 | Tamaños | 250g, 500g, 1kg |
 
 ### Bolsa Deshidratado (Fase 2–3)
+
+Condicionada a DEC-022: no diseñar ni imprimir hasta cumplir sus cuatro condiciones. Rendimiento de rehidratación y vida útil «por medir» hasta medirse.
 
 | Elemento | Especificación |
 |---|---|

@@ -27,7 +27,7 @@ Las especies usan grabados del DS; las recetas usan nueve gouaches con lápiz ge
   - `unconfirmed`: hay producto, pero la disponibilidad se confirma al consultar.
   - `available` / `unavailable`: disponibilidad confirmada o agotada.
   - Cualquier otro valor se trata como `unconfirmed`.
-- **Al pasar de `pilot` a otro estado** (primera cosecha), cambiar también los textos fijos de piloto, que no dependen de `commercial-data.js`: «Aviso de cosecha» (nav, unas 12 páginas), «Aviso de primera cosecha» (`index.html`, `setas.html`, `shiitake.html`, `especies/shiitake.html`, `recetas.html`), el texto inicial del botón «Preparar mensaje de aviso» en `shiitake.html` y el título y la entradilla de `restaurantes.html`. El caso `cta-estaticos-piloto` de `check_public_pilot.cjs` fija estos textos para el piloto; actualizarlo en el mismo cambio.
+- **Al pasar de `pilot` a otro estado** (primera cosecha), cambiar también los textos fijos de piloto, que no dependen de `commercial-data.js`: «Recibir aviso de la primera cosecha» (nav, unas 12 páginas), «Aviso de primera cosecha» (`index.html`, `setas.html`, `shiitake.html`, `especies/shiitake.html`, `recetas.html`), el texto inicial del botón «Preparar mensaje de aviso» en `shiitake.html` y el título y la entradilla de `restaurantes.html`. El caso `cta-estaticos-piloto` de `check_public_pilot.cjs` fija estos textos para el piloto; actualizarlo en el mismo cambio.
 - Comprobación enfocada del piloto y del registro del cultivo: `node scripts/quality/check_public_pilot.cjs` (mismo servidor local; `SETAS_WEBSITE_BASE_URL` para otro puerto).
 - `presentations`: lista de `{ id, name, weightGrams, priceCOP }`; peso positivo en gramos y precio en pesos enteros, o `null` si falta precio.
 - `deliveryAreas`, `deliveryDays`, `paymentMethods`, `batch`, `harvestDate`: texto confirmado o `null`.
@@ -158,3 +158,7 @@ El hero del Home sustituye la ilustración fija `hero-specimens.png` por un carr
 Verificación local: `check_public_website.cjs` (72 comprobaciones, 0 errores de navegador), `check_public_export.cjs` (72) y `check_public_delivery.cjs` (52); fuera de Linux, `check_public_delivery.cjs` necesita `CHROMIUM_EXECUTABLE_PATH` apuntando al Chromium de Playwright.
 
 Despliegue verificado: `711c5084`, proyecto `setas-de-la-pena`, producción `main`, fuente `81229a0c` (rama `claude/setas-banner-design-588fad`, PR 424, aún sin fusionar). Sustituye a `b43224c7` (fuente `858b931`, ya incluida en esta rama). `check_public_live.py` verificó 246 archivos y 17 rutas. Hasta fusionar el PR, producción va por delante de `main`.
+
+## Despensa: mockups de derivados (ensayo)
+
+`despensa.html` y `fichas.html` son páginas de prueba, con `noindex` y sin enlace desde la portada ni el sitemap. `despensa.html` presenta tres líneas: deshidratadas, sazonadores y fresco entero para chefs, clasificado por tamaño y sin precortar. `fichas.html` reúne las tres hojas A4 de la prueba de cuatro semanas con chefs y mercados; el PDF exportado está en `outputs/fichas-lineas/`. Ninguna de las dos muestra precio, disponibilidad ni registro sanitario, y no hacen afirmaciones de salud.

@@ -3,7 +3,7 @@ title: Identidad de Marca — Setas de la Peña
 document_id: DOC-0038
 category: brand
 load_priority: on_request
-last_reviewed: 2026-11-01
+last_reviewed: 2026-11-04
 confidence: high
 primary_sources:
   - docs/brand-guidelines.md (Identidad comercial v1.2, 12 oct y 1 nov 2026)
@@ -115,6 +115,7 @@ Una sola voz y un solo recorrido para quienes cocinan; cambia la profundidad de 
 - No inventar pesos, lotes, precios, teléfonos ni QR en maquetas.
 - Una ilustración no demuestra producto disponible.
 - Empaque y etiqueta comunican fecha de cosecha y lote cuando existan datos reales.
+- Formatos (DEC-022): fresco entero en el piloto. El deshidratado entero, si se activa, va bajo la misma marca, sin submarca, como ingrediente de cocina. Sin polvos, extractos ni snacks.
 
 # Open Questions
 - Licencia comercial de Gaya, o redibujo de la firma como logotipo propio.
