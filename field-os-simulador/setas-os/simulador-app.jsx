@@ -2191,7 +2191,7 @@ const PeritoItem=React.memo(({item,onApply,baseScore,recipe,lockedIds,ingredient
       {item.repeatedApply&&<div style={{fontSize:"var(--text-sm)",color:'var(--status-warn-text)',fontFamily:'var(--font-mono)',marginBottom:2}}>↻ Aplicado {item.repeatedApply}x en esta sesión y el problema sigue — considerar un ingrediente distinto o cambiar a “Paleta completa”.</div>}
       <div className="pi-action" dangerouslySetInnerHTML={{__html:item.action}}/>
       <div className="pi-effect">{item.effect}</div>
-      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bRisk}{bSide}{bPreview}{bCombo}{(item.evidence||item.why||hasPrediction||classChange)&&<details className="pi-more" data-testid="pi-evidence"><summary className="summary-tap">Ver evidencia</summary>{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}</details>}</>}
+      {compact?<>{bRisk}{bSide}<details className="pi-more" data-testid="pi-more"><summary className="summary-tap">Detalle del ajuste</summary>{bDeltas}{bEvidence}{bWhy}{bIndice}{bDisclaimer}{bClassNote}{bPreview}{bCombo}</details></>:<>{bDeltas}{bIndice}{bDisclaimer}{bRisk}{bSide}{bPreview}{bCombo}{(item.evidence||item.why||classChange)&&<details className="pi-more" data-testid="pi-evidence"><summary className="summary-tap">Ver evidencia</summary>{bEvidence}{bWhy}{bClassNote}</details>}</>}
     </div>
     <div className="pi-actions" style={{display:'flex',gap:6,alignItems:'center',flexDirection:'column'}}>
       {item.apply
