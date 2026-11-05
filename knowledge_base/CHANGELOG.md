@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-05
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Incorporados el informe consultivo de genética/sustratos de shiitake y bibliografía del 2026-11-04 en `09_research/genetica_sustratos_shiitake_2026-11-04/` (DOC-0140/0141), con SHA-256 originales, alcance de lectura, línea base histórica y nota de incorporación. Indexados y enlazados desde síntesis y preguntas SH01–SH04/SH07/SH08; conciliadas implicaciones en ARK-006/026. Aclarada en la síntesis de investigación la atribución de Cenicafé por cepa/proceso y sus denominadores. Sin aprobación de ensayos, proveedores, receta, setpoints ni cambios de SOP/Setas OS. |
 
 ### 2026-11-04
 

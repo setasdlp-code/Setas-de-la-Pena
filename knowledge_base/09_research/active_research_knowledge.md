@@ -6,7 +6,7 @@ status: active_research_registry
 authority: advisory_research
 load_priority: selective
 owner: Setas de la Peña
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 related_documents:
   - ../00_project/KNOWLEDGE_ARCHITECTURE.md
   - literature_database.md
@@ -17,6 +17,7 @@ related_documents:
   - environmental_morphology_customization_2026-08-28.md
   - weekly_reports_knowledge_synthesis_2026-08-29.md
   - colombia_mushroom_market_synthesis_2026-11-03.md
+  - genetica_sustratos_shiitake_2026-11-04/informe.md
 ---
 
 # Active Research Knowledge Registry
@@ -80,6 +81,7 @@ ARK is advisory. Promotion to a setpoint, SOP action, safety limit, purchase aut
 - `project_interpretation`: spawn formulation and genetic identity must be preserved together in experiment/batch records.
 - `next_action`: record spawn substrate/formula, inoculation rate, strain and outcome; only test preadapted/supplemented spawn as an explicit experimental factor.
 - `prohibited_use`: copying F1/F2 as a universal spawn recipe.
+- `reconciliation_2026_11_05`: see `genetica_sustratos_shiitake_2026-11-04/informe.md`, §§4.1, 5/E2, and `genetica_sustratos_shiitake_2026-11-04/bibliografia.md`, S6. The original factorial supports preserving strain and spawn matrix together (Tier 1, context-specific straw experiment). If vendors supply different genetics and spawn matrices, a local comparison estimates commercial-material performance; it does not isolate genotype. A common matrix/process prepared by a qualified laboratory would be needed for a genetic comparison. This design implication does not authorize internal spawn expansion or supplier substitution.
 
 ### ARK-007 — Bag/process geometry is required experimental metadata
 - `entry_type`: design_implication
@@ -249,6 +251,7 @@ Where applicable, experiments should preserve: strain/source identity; formulati
 - `project_interpretation`: a formulation result is interpretable only if its biological identity, dry/wet basis, bag geometry/filter, thermal cycle and maturity history are preserved together.
 - `next_action`: keep a single control formulation; change one factor per experiment and record the complete context.
 - `prohibited_use`: deriving a universal recipe, incubation duration, block mass or browning threshold from any one study.
+- `reconciliation_2026_11_05`: source representation and claim locators in `genetica_sustratos_shiitake_2026-11-04/bibliografia.md`, S4–S5/S8–S9; synthesis in `genetica_sustratos_shiitake_2026-11-04/informe.md`, §§4–6. Original storage abstracts show that growth recovery alone does not establish retained productive quality (Tier 1, partial-source reading; strain/support limits). Alberti 2022 separates incubation age from browning treatment (Tier 1, methods/results read). Cenicafé §3.7 distinguishes productive-unit efficiency from yield across all inoculated bags (Tier 2, original institutional bulletin). Preserve storage history, maturity observations, initial dry matter and all assigned units including losses; no universal storage expiry, browning threshold or performance target follows. Local validation and the applicable approval path remain required; no measurements from Tenjo were added.
 
 ### ARK-027 — Local substrate substitution is a bounded comparison, not a recipe transfer
 - `entry_type`: project_hypothesis
