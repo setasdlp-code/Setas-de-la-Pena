@@ -152,7 +152,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#hero-title').innerText().then(text => text.replace(/\s+/g, ' ')), 'Del micelio a la mesa.');
     assert.equal(await page.locator('.origin-actions a[href="/setas"]').count(), 1);
     assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
-    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Aviso de cosecha/);
+    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Recibir aviso de la primera cosecha/);
     // The hero opens with cooking, not traceability (identidad comercial v1.1 §3; voz v2.4).
     assert.equal(await page.locator('.origin-story a[href*="fao.org"]').count(), 0);
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
