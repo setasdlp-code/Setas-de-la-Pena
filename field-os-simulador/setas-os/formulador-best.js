@@ -114,6 +114,93 @@
     return c ? `${c} · ${ebPart}` : ebPart;
   };
 
+  // ── Cobertura de Bodega ──
+  // Kg disponibles por insumo: lotes activos con kg > 0; stockMap solo para
+  // insumos sin lotes (la app deriva stockMap de los lotes y no se suma dos veces).
+  const stockKgById = (invLotes = [], stockMap = {}) => {
+    const out = {};
+    (invLotes || []).forEach(l => {
+      const kg = Number(l?.cantidadKgDisponible) || 0;
+      if (!l || l.activo === false || kg <= 0 || !l.ingredienteId) return;
+      out[l.ingredienteId] = (out[l.ingredienteId] || 0) + kg;
+    });
+    Object.keys(stockMap || {}).forEach(id => {
+      const kg = Number(stockMap[id]);
+      if (out[id] == null && kg > 0) out[id] = kg;
+    });
+    return out;
+  };
+
+  // Misma cuenta que launch-plan.js: la receta es base seca; cada insumo se pesa
+  // tal cual se recibe (corregido por su humedad). El spawn no entra.
+  const kgPerBagById = (recipe = [], ingredients = [], { kgPerBag, moisturePct } = {}) => {
+    const byId = new Map((ingredients || []).map(g => [g.id, g]));
+    const h = Math.min(0.95, Math.max(0, (Number(moisturePct) || 0) / 100));
+    const dryPerBag = (Number(kgPerBag) || 0) * (1 - h);
+    const out = {};
+    (recipe || []).forEach(r => {
+      const p = Number(r.p) || 0;
+      if (p <= 0) return;
+      const m = Math.min(0.92, Math.max(0, (Number(byId.get(r.id)?.moisture) || 0) / 100));
+      out[r.id] = (out[r.id] || 0) + dryPerBag * (p / 100) / (1 - m);
+    });
+    return out;
+  };
+
+  const bagsCovered = (recipe, ingredients, stockKg = {}, batch = {}) => {
+    const per = kgPerBagById(recipe, ingredients, batch);
+    const ids = Object.keys(per).filter(id => per[id] > 0);
+    if (!ids.length) return 0;
+    return Math.max(0, Math.floor(Math.min(...ids.map(id => (Number(stockKg[id]) || 0) / per[id])) + 1e-9));
+  };
+
+  const ceil1 = x => Math.ceil(x * 10 - 1e-9) / 10;
+  const shortfall = (recipe, ingredients, stockKg = {}, batch = {}) => {
+    const per = kgPerBagById(recipe, ingredients, batch);
+    const bags = Number(batch.numBags) || 0;
+    return Object.keys(per)
+      .map(id => ({ id, kg: ceil1(per[id] * bags - (Number(stockKg[id]) || 0)) }))
+      .filter(x => x.kg > 0);
+  };
+
+  // ── "Para mejorar, conseguir…" ──
+  const round1 = x => Math.round(x * 10) / 10;
+  const improvements = ({ stockPicks = {}, catalogAnnotated = [], stockKg = {}, ingredients = [], batch = {}, limit = 3 } = {}) => {
+    const prod = stockPicks.produccion || null;
+    const bar = stockPicks.barata || null;
+    const noStockPicks = !prod && !bar;
+    const items = [];
+    (catalogAnnotated || []).forEach(a => {
+      if (!a || !a.safe) return;
+      const toBuy = shortfall(a.recipe, ingredients, stockKg, batch);
+      if (!toBuy.length) return;
+      const deltaEb = prod ? round1(a.eb - prod.eb) : null;
+      const deltaCostPerKgSeta = bar && bar.costPerKgSeta != null && a.costPerKgSeta != null
+        ? a.costPerKgSeta - bar.costPerKgSeta : null;
+      let kind = null;
+      if (noStockPicks) kind = 'eb';
+      else if (prod && a.eb - prod.eb >= EB_TIE_PTS) kind = 'eb';
+      else if (deltaCostPerKgSeta != null && a.costPerKgSeta < bar.costPerKgSeta * 0.99) kind = 'costo';
+      if (!kind) return;
+      items.push({ annotated: a, kind, deltaEb, deltaCostPerKgSeta, toBuy });
+    });
+    items.sort((x, y) => {
+      if (x.kind !== y.kind) return x.kind === 'eb' ? -1 : 1;
+      if (x.kind === 'eb') return (y.annotated.eb - x.annotated.eb) || byCost(x.annotated, y.annotated) || byKey(x.annotated, y.annotated);
+      return (x.deltaCostPerKgSeta - y.deltaCostPerKgSeta) || (y.annotated.eb - x.annotated.eb) || byKey(x.annotated, y.annotated);
+    });
+    const seen = new Set();
+    const out = [];
+    for (const it of items) {
+      const k = it.toBuy.map(t => t.id).sort().join('|');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(it);
+      if (out.length >= limit) break;
+    }
+    return out;
+  };
+
   const api = {
     EB_TIE_PTS,
     SAFETY_MIN,
@@ -121,6 +208,11 @@
     annotateCandidate,
     selectPicks,
     reasonLine,
+    stockKgById,
+    kgPerBagById,
+    bagsCovered,
+    shortfall,
+    improvements,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof globalThis !== 'undefined') globalThis.SetasFormuladorBest = api;

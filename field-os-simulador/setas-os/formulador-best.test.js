@@ -103,3 +103,79 @@ test('reasonLine: textos numéricos sin tuteo', () => {
   assert.equal(B.reasonLine(ann('t', 120.2, 500), ann('u', 120, 500.4), 'produccion'), 'EB igual a la más barata · $ igual por kg de seta');
   assert.equal(B.reasonLine(ann('t', 120.2, 500), ann('u', 120, 500.4), 'barata'), '$ igual por kg de seta · EB igual');
 });
+
+// ── Cobertura de Bodega y "Para mejorar, conseguir…" ──
+const BATCH = { numBags: 20, kgPerBag: 2.5, moisturePct: 65 };
+const EUC_SAL = [{ id: 'aserrin_eucalipto', p: 80 }, { id: 'salvado_trigo', p: 20 }];
+const lot = (ingredienteId, kg, activo = true) => ({ ingredienteId, cantidadKgDisponible: kg, activo });
+
+test('stockKgById ignora lotes inactivos o vacíos y usa stockMap solo sin lotes', () => {
+  const kg = B.stockKgById(
+    [lot('aserrin_eucalipto', 10), lot('aserrin_eucalipto', 5), lot('salvado_trigo', 7, false), lot('regalo', 0)],
+    { aserrin_eucalipto: 99, salvado_trigo: 3 },
+  );
+  assert.deepStrictEqual(kg, { aserrin_eucalipto: 15, salvado_trigo: 3 });
+});
+
+test('bagsCovered usa la masa tal cual por bolsa', () => {
+  // seco por bolsa 2.5·0.35 = 0.875; eucalipto 0.875·0.8/0.7 = 1.0 kg; salvado 0.875·0.2/0.88 ≈ 0.1989 kg
+  const per = B.kgPerBagById(EUC_SAL, INGS, BATCH);
+  assert.ok(Math.abs(per.aserrin_eucalipto - 1.0) < 1e-9);
+  assert.ok(Math.abs(per.salvado_trigo - 0.875 * 0.2 / 0.88) < 1e-9);
+  assert.equal(B.bagsCovered(EUC_SAL, INGS, { aserrin_eucalipto: 10, salvado_trigo: 1 }, BATCH), 5);
+  assert.equal(B.bagsCovered(EUC_SAL, INGS, { aserrin_eucalipto: 10 }, BATCH), 0);
+});
+
+test('shortfall redondea hacia arriba a 0.1 kg', () => {
+  // 20 bolsas: eucalipto 20 kg (hay 10), salvado ≈ 3.977 kg (hay 1)
+  assert.deepStrictEqual(
+    B.shortfall(EUC_SAL, INGS, { aserrin_eucalipto: 10, salvado_trigo: 1 }, BATCH),
+    [{ id: 'aserrin_eucalipto', kg: 10 }, { id: 'salvado_trigo', kg: 3 }],
+  );
+  assert.deepStrictEqual(B.shortfall(EUC_SAL, INGS, { aserrin_eucalipto: 100, salvado_trigo: 100 }, BATCH), []);
+});
+
+const withRecipe = (a, recipe) => ({ ...a, recipe });
+const STOCK = { aserrin_eucalipto: 500, salvado_trigo: 500 };
+const stockPicks = {
+  produccion: withRecipe(ann('sp', 110, 800), EUC_SAL),
+  barata: withRecipe(ann('sb', 90, 500), [{ id: 'aserrin_eucalipto', p: 100 }]),
+};
+const INGS2 = [...INGS, { id: 'harina_soya', cost: 2500, moisture: 10 }, { id: 'cascarilla_cafe', cost: 300, moisture: 12 }];
+
+test('improvements: solo candidatas que piden algo que falta, y que ganan por ≥1 pt o por costo', () => {
+  const catalog = [
+    withRecipe(ann('todo-en-bodega', 130, 100), EUC_SAL),
+    withRecipe(ann('soya+1.0', 111, 900), [{ id: 'aserrin_eucalipto', p: 85 }, { id: 'harina_soya', p: 15 }]),
+    withRecipe(ann('soya+0.9', 110.9, 900), [{ id: 'aserrin_eucalipto', p: 84 }, { id: 'harina_soya', p: 16 }]),
+    withRecipe(ann('cafe-barata', 95, 400), [{ id: 'aserrin_eucalipto', p: 80 }, { id: 'cascarilla_cafe', p: 20 }]),
+  ];
+  const out = B.improvements({ stockPicks, catalogAnnotated: catalog, stockKg: STOCK, ingredients: INGS2, batch: BATCH });
+  assert.deepStrictEqual(out.map(i => [i.annotated.key, i.kind]), [['soya+1.0', 'eb'], ['cafe-barata', 'costo']]);
+  assert.equal(out[0].deltaEb, 1);
+  assert.equal(out[1].deltaCostPerKgSeta, -100);
+  assert.deepStrictEqual(out[0].toBuy.map(t => t.id), ['harina_soya']);
+});
+
+test('improvements: agrupa por lo que hay que comprar y corta en 3', () => {
+  const soya = p => withRecipe(ann(`soya${p}`, 115 + p, 900), [{ id: 'aserrin_eucalipto', p: 100 - p }, { id: 'harina_soya', p }]);
+  const other = (id, eb) => withRecipe(ann(id, eb, 900), [{ id: 'aserrin_eucalipto', p: 90 }, { id, p: 10 }]);
+  const extra = [{ id: 'x1', cost: 1, moisture: 0 }, { id: 'x2', cost: 1, moisture: 0 }, { id: 'x3', cost: 1, moisture: 0 }];
+  const out = B.improvements({
+    stockPicks, ingredients: [...INGS2, ...extra], stockKg: STOCK, batch: BATCH,
+    catalogAnnotated: [soya(5), soya(6), other('x1', 112), other('x2', 113), other('x3', 114)],
+  });
+  assert.equal(out.length, 3);
+  assert.deepStrictEqual(out.map(i => i.annotated.key), ['soya6', 'x3', 'x2']);
+});
+
+test('improvements: Bodega vacía sigue sugiriendo del catálogo', () => {
+  const out = B.improvements({
+    stockPicks: { produccion: null, barata: null }, stockKg: {}, ingredients: INGS2, batch: BATCH,
+    catalogAnnotated: [withRecipe(ann('a', 120, 500), EUC_SAL)],
+  });
+  assert.equal(out.length, 1);
+  assert.equal(out[0].kind, 'eb');
+  assert.equal(out[0].deltaEb, null);
+  assert.equal(out[0].toBuy.length, 2);
+});
