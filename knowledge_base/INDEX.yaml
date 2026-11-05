@@ -2440,3 +2440,33 @@ documents:
     supersedes: null
     confidence: medium
     status: consultative_research
+
+  - id: microclima-operacion-remota-2026-11-04
+    title: "Microclima verificable y operación recuperable en Tenjo — investigación consultiva"
+    path: 09_research/microclima_operacion_remota_2026-11-04/informe.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [microclimate, altitude, co2-sensors, calibration, airflow, condensation, local-fallback]
+    keywords: [SCD30, MH-Z19C, SHT4x, ESPHome, ALT01, SH06, SH09, "punto de rocío"]
+    related_documents: [microclima-operacion-remota-bibliografia-2026-11-04, environmental-control, incubation, active-research-knowledge, unresolved-questions]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: microclima-operacion-remota-bibliografia-2026-11-04
+    title: "Bibliografía — Microclima y operación remota en Tenjo"
+    path: 09_research/microclima_operacion_remota_2026-11-04/bibliografia.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [microclimate, altitude, co2-sensors, calibration, airflow, condensation, local-fallback]
+    keywords: [SCD30, MH-Z19C, SHT4x, ESPHome, ALT01, SH06, SH09, "punto de rocío"]
+    related_documents: [microclima-operacion-remota-2026-11-04]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft

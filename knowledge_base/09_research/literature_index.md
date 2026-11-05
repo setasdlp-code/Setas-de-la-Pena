@@ -26,6 +26,7 @@ related_documents:
   - p0_full_pdf_reprocessing_2026-08-13.md
   - active_research_knowledge.md
   - incubation_fruiting_chambers_state_of_knowledge_2026.md
+  - microclima_operacion_remota_2026-11-04/informe.md
   - ../04_facility/marranera_medium_scale_design_basis.md
   - genetica_sustratos_shiitake_2026-11-04/bibliografia.md
 ---
@@ -245,6 +246,12 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 ## Genética y sustratos de shiitake — investigación 2026-11-04
 
 Véanse `genetica_sustratos_shiitake_2026-11-04/informe.md` (DOC-0140) y `genetica_sustratos_shiitake_2026-11-04/bibliografia.md` (DOC-0141). Los identificadores S1–S15 son locales a esa bibliografía; no sustituyen los `paper_XXX` existentes. El registro diferencia métodos/resultados abiertos, resúmenes originales y accesos incompletos, e incluye DOI/URL y límites de aplicación. Las fuentes sustentan implicaciones consultivas en ARK-006/026 de `active_research_knowledge.md`, sin aprobar conservación, receta, calendario ni inducción.
+
+## Microclima y operación remota — investigación 2026-11-04
+
+Dossier consultivo incorporado el 2026-11-05: [informe DOC-0142](microclima_operacion_remota_2026-11-04/informe.md) y [bibliografía DOC-0143](microclima_operacion_remota_2026-11-04/bibliografia.md), con 26 fuentes locales S01–S26 y límites de lectura explícitos.
+
+Cubre compensación SCD30/MH-Z19C por presión, calibración/condensación, caudal efectivo y distribución, calor de núcleo, agua/rocío y recuperación sin red. Incluye matriz de evidencia, campaña reversible, comparación manual/automática y esquemas de registro para ALT01–ALT07, SH06 y SH09. Señala soporte pendiente del factor MH y la referencia bibliográfica incorrecta de calor metabólico, sin cambiar ni retirar protecciones. El estado descrito corresponde al corte del informe; no constituye dato de campo nuevo, setpoint ni cierre de esas preguntas. Sus candidatos de medición/diseño permanecen consultivos; la incorporación no modifica ARK ni reglas operativas.
 
 ## Dossier consultivo — calidad, poscosecha y economía de shiitake (2026-11-04)
 
