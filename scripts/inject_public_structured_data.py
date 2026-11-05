@@ -39,6 +39,37 @@ BREADCRUMBS = {
     "especies/eryngii.html": [HOME, ("Las setas", "/setas"), ("Eryngii", "/especies/eryngii")],
 }
 
+# Categoría y cocina de cada receta; las palabras clave salen de la página.
+_MAIN, _STARTER, _SIDE, _SNACK = "Plato principal", "Entrada", "Acompañamiento", "Pasabocas"
+_CO, _JP = "Colombiana", "Japonesa"
+RECIPE_TAGS = {
+    "receta-arepa": (_MAIN, _CO), "receta-sopa": (_STARTER, "Asiática"),
+    "receta-patacones": (_STARTER, _CO), "receta-atollado": (_MAIN, _CO),
+    "receta-ajiaco": (_MAIN, _CO), "receta-mote": (_MAIN, _CO),
+    "receta-encocado": (_MAIN, _CO), "receta-sudado": (_MAIN, _CO),
+    "receta-maduro": (_MAIN, _CO),
+    "melena-posta": (_MAIN, _CO), "melena-encocado": (_MAIN, _CO),
+    "melena-mote": (_MAIN, _CO), "melena-atollado": (_MAIN, _CO),
+    "melena-laminas": (_MAIN, _CO), "melena-envuelto": (_MAIN, _CO),
+    "melena-jerky": (_SNACK, "Contemporánea"),
+    "eryngii-medallones": (_MAIN, _CO), "eryngii-laminas": (_MAIN, _CO),
+    "eryngii-sudado": (_MAIN, "Contemporánea"), "eryngii-atollado": (_STARTER, _CO),
+    "eryngii-chuzos": (_STARTER, _CO), "eryngii-pipian": (_STARTER, _CO),
+    "encurtido-vegetales": (_SIDE, _JP), "soya-jengibre": (_SIDE, _JP),
+    "soya-kombu": (_SIDE, _JP),
+}
+PAGE_KEYWORDS = {
+    "recetas": "shiitake, setas, hongos comestibles, cocina colombiana",
+    "recetas-melena": "melena de león, Hericium erinaceus, setas, hongos comestibles",
+    "recetas-eryngii": "eryngii, Pleurotus eryngii, setas, hongos comestibles",
+    "recetas-encurtidos": "shiitake, encurtidos, tsukudani, setas",
+}
+
+
+def _page_key(url: str) -> str:
+    return url.rstrip("/").rsplit("/", 1)[-1].removesuffix(".html")
+
+
 GENERATED = re.compile(
     r'[ \t]*<script type="application/ld\+json" id="ld-(?:recipes|breadcrumb)">.*?</script>\n?',
     re.S,
@@ -74,7 +105,7 @@ class RecipeParser(HTMLParser):
             self._target = []
         if tag == "article" and "recipe" in cls:
             self._cur = {"id": a.get("id", ""), "name": "", "description": "",
-                         "image": "", "ingredients": [], "steps": []}
+                         "image": "", "ingredients": [], "steps": [], "dl": {}}
             self._depth = 1
             self._desc_done = False
             self._after_h2 = False
@@ -83,6 +114,11 @@ class RecipeParser(HTMLParser):
             return
         if tag == "article":
             self._depth += 1
+        if tag in ("dt", "dd") and "recipe-meta" in self._dl_cls:
+            self._dtag = tag
+            self._target = []
+        elif tag == "dl":
+            self._dl_cls = cls
         if tag == "h2":
             self._h2 = True
             self._target = []
@@ -101,6 +137,9 @@ class RecipeParser(HTMLParser):
             self._in_list = "ol"
 
     _in_list = ""
+    _dl_cls: list[str] = []
+    _dtag = ""
+    _dt = ""
 
     def handle_endtag(self, tag):
         if tag == "span" and self._meta_span:
@@ -110,6 +149,16 @@ class RecipeParser(HTMLParser):
             self._link = None
         if self._cur is None:
             return
+        if tag in ("dt", "dd") and self._dtag == tag:
+            text = _clean("".join(self._target or []))
+            if tag == "dt":
+                self._dt = text
+            else:
+                self._cur["dl"][self._dt] = text
+            self._dtag, self._target = "", None
+            return
+        if tag == "dl":
+            self._dl_cls = []
         if tag == "h2" and self._h2:
             self._cur["name"] = _clean("".join(self._target or [])).rstrip(".")
             self._h2, self._target, self._after_h2 = False, None, True
@@ -143,15 +192,23 @@ def _clean(text: str) -> str:
 
 
 def _max_minutes(meta: str) -> int | None:
-    m = re.search(r"(\d+)(?:\s*–\s*(\d+))?\s*min", meta)
-    if not m:
-        return None
-    return int(m.group(2) or m.group(1))
+    """Tiempo máximo en minutos: suma los tramos en horas y en minutos que aparezcan."""
+    total = 0
+    for m in re.finditer(r"(\d+)(?:\s*–\s*(\d+))?\s*(h|min)\b", meta):
+        n = int(m.group(2) or m.group(1))
+        total += n * 60 if m.group(3) == "h" else n
+    return total or None
 
 
 def _yield(meta: str) -> str | None:
-    m = re.search(r"min(?:\s+estimados?)?\s*·\s*([^·]+?)\s*(?:·|$)", meta)
-    return m.group(1).strip() if m else None
+    for part in meta.split("·"):
+        if re.search(r"porci|persona|entrada", part):
+            return part.strip()
+    return None
+
+
+def _from_dl(dl: dict, prefixes: tuple[str, ...]) -> str:
+    return next((v for k, v in dl.items() if k.startswith(prefixes)), "")
 
 
 def _abs(src: str) -> str:
@@ -185,12 +242,17 @@ def recipes_graph(html: str) -> dict:
         }
         if r["image"]:
             node["image"] = _abs(r["image"])
-        minutes = _max_minutes(meta)
+        minutes = _max_minutes(meta) or _max_minutes(_from_dl(r["dl"], ("Tiempo", "Cocción")))
         if minutes:
             node["totalTime"] = f"PT{minutes}M"
-        yld = _yield(meta)
+        yld = _yield(meta) or _yield(_from_dl(r["dl"], ("Porciones", "Rendimiento")))
         if yld:
             node["recipeYield"] = yld
+        extra = RECIPE_TAGS.get(r["id"])
+        if not extra:
+            raise SystemExit(f"falta categoría y cocina en RECIPE_TAGS: {r['id']}")
+        node["recipeCategory"], node["recipeCuisine"] = extra
+        node["keywords"] = PAGE_KEYWORDS[_page_key(base)]
         graph.append(node)
     return {"@context": "https://schema.org", "@graph": graph}
 
