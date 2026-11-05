@@ -20,7 +20,7 @@
 #     reference and an entry here disagree, the in-body reference governs.
 #
 # STATUS: Full production document catalog (Phase 2 completed).
-# 138 catalog entries as of 2026-11-03; the completeness of indexing of all
+# 140 catalog entries as of 2026-11-04; the completeness of indexing of all
 # repository documents must be reassessed, as some later operational documents
 # were created after the original 126-entry census.
 #
@@ -1225,7 +1225,7 @@ documents:
     canonical: true
     topics: [literature-catalog, evidence-rating-index]
     keywords: [paper_001, book_007, guide_002, star rating]
-    related_documents: [literature-database, literature-audit-2026-07-23, research-summaries, unresolved-questions]
+    related_documents: [literature-database, literature-audit-2026-07-23, research-summaries, unresolved-questions, calidad-poscosecha-economia-shiitake-2026-11-04]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1256,7 +1256,7 @@ documents:
     canonical: true
     topics: [open-questions, batch-1-blockers]
     keywords: [SH01, bloqueante, autoclave sin comisionar, spawn sin proveedor]
-    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-evaluacion-2026-11-03]
+    related_documents: [literature-database, literature-audit-2026-07-23, lentinula-edodes, current-operations, colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-evaluacion-2026-11-03, calidad-poscosecha-economia-shiitake-2026-11-04]
     depends_on: []
     implemented_by: []
     supersedes: null
@@ -1725,7 +1725,7 @@ documents:
     canonical: true
     topics: [active-research, ark-registry, p0-literature, evidence-distillation]
     keywords: [ARK, "active research knowledge", "p0 papers", Rocha, Gaitán-Hernández, Atila, Holgado-Rojas, Shi]
-    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus, colombia-mushroom-market-synthesis-2026-11-03]
+    related_documents: [literature-database, unresolved-questions, lentinula-edodes, hericium-erinaceus, colombia-mushroom-market-synthesis-2026-11-03, calidad-poscosecha-economia-shiitake-2026-11-04]
     depends_on: [literature-database]
     implemented_by: [lentinula-edodes, hericium-erinaceus, incubation, environmental-control]
     supersedes: null
@@ -2311,6 +2311,36 @@ documents:
     topics: [shiitake, feasibility, altitude-sterilization, energy-costs, food-regulation, market-validation]
     keywords: ["factibilidad Tenjo", "15 psig", "ICA 115708", "bloque precolonizado", "demanda sin verificar"]
     related_documents: [colombia-mushroom-market-synthesis-2026-11-03, factibilidad-shiitake-tenjo-reporte-externo-2026-11-03, sterilization, decisions, current-operations, regulatory-framework, economics, pricing, unresolved-questions]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: calidad-poscosecha-economia-shiitake-2026-11-04
+    title: "Calidad, poscosecha y economía de shiitake — investigación consultiva"
+    path: 09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, postharvest, shelf-life, food-safety, traceability, unit-economics]
+    keywords: ["cadena fría", "kg vendidos", "DEC-022", "vida útil", "retiro", "margen de contribución"]
+    related_documents: [calidad-poscosecha-economia-bibliografia-2026-11-04, quality-control, production-schedule, batch-tracking, economics, pricing, decisions, active-research-knowledge, unresolved-questions]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
+
+  - id: calidad-poscosecha-economia-bibliografia-2026-11-04
+    title: "Bibliografía — Calidad, poscosecha y economía de shiitake"
+    path: references/calidad_poscosecha_economia_shiitake_2026-11-04_bibliografia.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, postharvest, shelf-life, food-safety, traceability, unit-economics]
+    keywords: ["cadena fría", "kg vendidos", "DEC-022", "vida útil", "retiro", "margen de contribución"]
+    related_documents: [calidad-poscosecha-economia-shiitake-2026-11-04]
     depends_on: []
     implemented_by: []
     supersedes: null

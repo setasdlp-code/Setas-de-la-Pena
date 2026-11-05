@@ -3,11 +3,12 @@ title: Índice de Literatura
 document_id: DOC-0043
 category: research
 load_priority: on_request
-last_reviewed: 2026-08-28
+last_reviewed: 2026-11-04
 confidence: high
 primary_sources:
   - literature_database.md
 related_documents:
+  - calidad_poscosecha_economia_shiitake_2026-11-04.md
   - literature_database.md
   - literature_audit_2026-07-23.md
   - research_summaries.md
@@ -237,3 +238,10 @@ Ver `literature_database.md` para fichas generales; `p0_reprocessed_sources_2026
 | paper_039 | Silva et al. | 2025 | Storage temperature and shelf-life of H. erinaceus | *H. erinaceus*; poscosecha | ★★★★★ |
 
 **Aplicación curada:** estas fuentes respaldan priorizar formulaciones comparativas, trazabilidad de contaminación, cadena fría, pruebas de secado y polvo culinario. No promueven parámetros a SOP, CANON ni setpoints.
+
+
+## Dossier consultivo — calidad, poscosecha y economía de shiitake (2026-11-04)
+
+Ver `09_research/calidad_poscosecha_economia_shiitake_2026-11-04.md` (DOC-0136) y `references/calidad_poscosecha_economia_shiitake_2026-11-04_bibliografia.md` (DOC-0137). La bibliografía reúne 17 fuentes con enlaces y nivel real de lectura: S3–S5 tienen acceso parcial; S7 es el artículo original de Schill et al. (2021), DOI `10.3390/foods10040816`, con métodos y resultados comprobados. S1–S17 son identificadores locales del dossier, no nuevos IDs del catálogo global.
+
+La incorporación amplía ARK-028/030 y añade ARK-031. Los escenarios reproducibles de `09_research/annexes/calidad_poscosecha_economia_shiitake_2026-11-04/` son supuestos ilustrativos, no datos de finca. DEC-022 gobierna fresco entero y deshidratado entero condicionado: no ensayar secado antes de tres ciclos cerrados. No se promueven duraciones, consignas térmicas ni criterios nuevos a SOP.
