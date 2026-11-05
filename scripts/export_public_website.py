@@ -37,7 +37,7 @@ def local_target(source, value):
         target = ROOT / 'design-system.html'
     else:
         target = (ROOT / unquote(url.path.lstrip('/')) if url.path.startswith('/') else source.parent / unquote(url.path)).resolve()
-    if not target.is_relative_to(ROOT) or target.suffix.lower() not in {'.html', '.css', '.js', '.png', '.webp', '.svg', '.ttf', '.otf', '.woff', '.woff2', '.md', '.json', '.txt', '.xml'}:
+    if not target.is_relative_to(ROOT) or target.suffix.lower() not in {'.html', '.css', '.js', '.png', '.webp', '.svg', '.ttf', '.otf', '.woff', '.woff2', '.md', '.json', '.txt', '.xml', '.pdf'}:
         raise ValueError(f'Unsupported public dependency: {source.relative_to(ROOT)} -> {value}')
     if not target.is_file():
         raise FileNotFoundError(f'{source.relative_to(ROOT)} -> {value}')
