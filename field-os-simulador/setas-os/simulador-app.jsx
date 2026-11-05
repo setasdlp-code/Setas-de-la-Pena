@@ -4352,7 +4352,7 @@ const BandGauge=({label,unit,min,max,ideal,value,reference,scaleMin,scaleMax,col
         <span className="bg-val" style={{color:cursorCol}}>{fmtVal(value)}{unit}</span>
       </div>
       <div className="bg-track">
-        <div className="bg-band" style={{left:`${bandLeft}%`,width:`${bandW}%`,background:`${color}28`}}/>
+        <div className="bg-band" style={{left:`${bandLeft}%`,width:`${bandW}%`,background:`color-mix(in srgb, ${color} 16%, transparent)`}}/>
         <div className="bg-ideal" style={{left:`${idealPos}%`,background:`${color}66`}}/>
         {reference!=null&&<div style={{position:'absolute',left:`${toPos(reference)}%`,top:0,bottom:0,width:'1.5px',background:'rgba(191,169,139,0.7)',borderLeft:'1.5px dashed rgba(191,169,139,0.8)',pointerEvents:'none'}} title={`Referencia óptima: ${reference}${unit}`}/>}
         {valPos!=null&&<div className="bg-cursor" style={{left:`${valPos}%`,background:cursorCol,boxShadow:`0 0 0 1.5px ${cursorCol}`}}/>}
@@ -12935,9 +12935,27 @@ body{margin:0;padding:20px 24px;background:#fff;}
     const co2Min = Math.min(...co2Series);
     const co2Max = Math.max(...co2Series);
 
-    const tempPoints = climateMath ? climateMath.generateSvgPolyline(tempSeries, null, { width: 500, height: 120, padding: 8, yMin: 12, yMax: 24 }) : '';
-    const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: 70, yMax: 100 }) : '';
-    const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: 300, yMax: 1200 }) : '';
+    const CLIMATE_SCALE = { temp: [12, 24], rh: [70, 100], co2: [300, 1200] };
+    const tempPoints = climateMath ? climateMath.generateSvgPolyline(tempSeries, null, { width: 500, height: 120, padding: 8, yMin: CLIMATE_SCALE.temp[0], yMax: CLIMATE_SCALE.temp[1] }) : '';
+    const rhPoints = climateMath ? climateMath.generateSvgPolyline(rhSeries, null, { width: 500, height: 120, padding: 8, yMin: CLIMATE_SCALE.rh[0], yMax: CLIMATE_SCALE.rh[1] }) : '';
+    const co2Points = climateMath ? climateMath.generateSvgPolyline(co2Series, null, { width: 500, height: 120, padding: 8, yMin: CLIMATE_SCALE.co2[0], yMax: CLIMATE_SCALE.co2[1] }) : '';
+    // Bandas objetivo con la misma escala que generateSvgPolyline (alto 120,
+    // padding 8), derivadas de las bandas de la sala — antes eran rectángulos
+    // en píxeles fijos que solo coincidían por casualidad con martha_01.
+    const climateY = (value, [lo, hi]) => {
+      const v = Math.min(hi, Math.max(lo, Number(value)));
+      return 112 - ((v - lo) / ((hi - lo) || 1)) * 104;
+    };
+    const climateBand = (band, scale) => {
+      if (!band || !Number.isFinite(Number(band.min)) || !Number.isFinite(Number(band.max))) return null;
+      const yTop = climateY(band.max, scale);
+      const yBottom = climateY(band.min, scale);
+      const target = Number.isFinite(Number(band.target)) ? climateY(band.target, scale) : null;
+      return { y: yTop, height: Math.max(0, yBottom - yTop), target };
+    };
+    const tempBand = climateBand(defaultTargets.temperature_c, CLIMATE_SCALE.temp);
+    const rhBand = climateBand(defaultTargets.rh_pct, CLIMATE_SCALE.rh);
+    const co2LimitY = Number.isFinite(Number(defaultTargets.co2_ppm?.max)) ? climateY(defaultTargets.co2_ppm.max, CLIMATE_SCALE.co2) : null;
 
     // Severidad de room-state.js ('critical'|'warning'|'info') → vocabulario
     // ya usado por .os-live-alert en este archivo ('critico'|'alarma'|'aviso').
@@ -13686,8 +13704,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="climate-svg-wrap">
                 <svg role="img" aria-label={`Temperatura: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
-                  <rect x="0" y="40" width="500" height="45" fill="rgba(74, 110, 66, 0.12)" />
-                  <line x1="0" y1="62.5" x2="500" y2="62.5" stroke="rgba(74, 110, 66, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
+                  {tempBand && <rect data-testid="climate-band-temp" x="0" y={tempBand.y} width="500" height={tempBand.height} fill="rgba(74, 110, 66, 0.12)" />}
+                  {tempBand && tempBand.target != null && <line x1="0" y1={tempBand.target} x2="500" y2={tempBand.target} stroke="rgba(74, 110, 66, 0.4)" strokeDasharray="4 4" strokeWidth="1" />}
                   <polyline fill="none" stroke="var(--moss-700)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={tempPoints} />
                 </svg>
               </div>
@@ -13702,8 +13720,8 @@ body{margin:0;padding:20px 24px;background:#fff;}
               <div className="climate-svg-wrap">
                 <svg role="img" aria-label={`Humedad relativa: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
                   {/* Sombreado de banda óptima */}
-                  <rect x="0" y="20" width="500" height="60" fill="rgba(56, 120, 180, 0.12)" />
-                  <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />
+                  {rhBand && <rect data-testid="climate-band-rh" x="0" y={rhBand.y} width="500" height={rhBand.height} fill="rgba(56, 120, 180, 0.12)" />}
+                  {rhBand && rhBand.target != null && <line x1="0" y1={rhBand.target} x2="500" y2={rhBand.target} stroke="rgba(56, 120, 180, 0.4)" strokeDasharray="4 4" strokeWidth="1" />}
                   <polyline fill="none" stroke="var(--status-info)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={rhPoints} />
                 </svg>
               </div>
@@ -13717,7 +13735,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
               </div>
               <div className="climate-svg-wrap">
                 <svg role="img" aria-label={`CO₂: ${climateTimeRange} · ${seriesAreLive ? 'serie medida' : 'curva de referencia'}`} viewBox="0 0 500 120" preserveAspectRatio="none" style={{width:'100%',height:'100%',display:'block'}}>
-                  <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />
+                  {co2LimitY != null && <line data-testid="climate-limit-co2" x1="0" y1={co2LimitY} x2="500" y2={co2LimitY} stroke="rgba(168, 92, 50, 0.5)" strokeDasharray="4 4" strokeWidth="1" />}
                   <polyline fill="none" stroke="var(--accent-terracotta)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={co2Points} />
                 </svg>
               </div>
