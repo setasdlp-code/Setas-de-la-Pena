@@ -152,15 +152,15 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#hero-title').innerText().then(text => text.replace(/\s+/g, ' ')), 'Del micelio a la mesa.');
     assert.equal(await page.locator('.origin-actions a[href="/setas"]').count(), 1);
     assert.equal(await page.locator('.origin-actions a[href="/cocina"]').count(), 1);
-    assert.match((await page.locator('#primary-nav .nav-inquiry').innerText()).replace(/\s+/g, ' '), /^Recibir aviso de la primera cosecha/);
+    assert.equal(await page.locator('a[href="/shiitake#producto"]').count(), 0, 'no harvest notification on the homepage');
     // The hero opens with cooking, not traceability (identidad comercial v1.1 §3; voz v2.4).
     assert.equal(await page.locator('.origin-story a[href*="fao.org"]').count(), 0);
     assert.equal(await page.locator('.catalog-intro-copy').count(), 0);
     assert.equal(await page.locator('.catalog-descriptor').count(), 0);
     assert.ok(await page.locator('#hero-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 44), 'headline reads as the page title, not a caption');
-    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio', 'empezar'], 'home contains only the introduction and the four entries; the species catalogue lives on /setas');
+    assert.deepEqual(await page.locator('main > section').evaluateAll(nodes => nodes.map(el => el.id)), ['inicio'], 'home keeps one introduction; the species catalogue lives on /setas');
     assert.equal(await page.locator('.species-card, #species-dialog').count(), 0);
-    assert.deepEqual(await page.locator('.home-paths-list a').evaluateAll(nodes => nodes.map(a => a.getAttribute('href'))), ['/setas', '/cocina', '/restaurantes', '/mundo-micelar']);
+    assert.deepEqual(await page.locator('footer nav a').evaluateAll(nodes => nodes.map(a => a.getAttribute('href'))), ['/despensa', '/mundo-micelar']);
     assert.ok(await page.locator('#hero-title, .origin-actions').evaluateAll(nodes => nodes.every(el => el.getBoundingClientRect().bottom <= innerHeight)), 'headline and project links visible on a small laptop');
     await page.setViewportSize({ width: 390, height: 900 });
     await visit(page, 'home');
@@ -170,8 +170,8 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#primary-nav').isVisible(), false);
     assert.equal(await page.locator('.menu-toggle').evaluate(el => el === document.activeElement), true);
     assert.equal(await page.locator('.hero-pena-land figcaption, .hero-pena-species').count(), 0);
-    const engravingRatio = await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
-    assert.ok(Math.abs(engravingRatio - .84) < .01, 'engraving occupies 84% of its column');
+    assert.ok(await page.locator('.hero-pena-land img').evaluate(el => el.getBoundingClientRect().width <= el.parentElement.getBoundingClientRect().width), 'engraving fits its column');
+    assert.equal(await page.locator('.origin-story > p').last().innerText(), 'Hongos cultivados a la sombra de Juaica.');
     await page.locator('.menu-toggle').click();
     await page.locator('#primary-nav a[href="/setas"]').click();
     await page.waitForURL('**/setas');
