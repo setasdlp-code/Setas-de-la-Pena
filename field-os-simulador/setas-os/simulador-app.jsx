@@ -15630,7 +15630,7 @@ body{margin:0;padding:20px 24px;background:#fff;}
 
                       {/* EB */}
                       <div className="live-dash-pill" title={`Eficiencia Biológica Estimada: ${Math.round(ebVal)}% (Meta: ${ebOpt}%)`}>
-                        <span className="live-dash-pill-label">EB</span>
+                        <span className="live-dash-pill-label">EB estimada</span>
                         <span style={{color:ebColor}}>{Math.round(ebVal)}%</span>
                       </div>
 
@@ -15644,6 +15644,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                           {totOk ? <IconCheck size={10} color={totColor} /> : <IconAlert size={10} color={totColor} />}
                         </span>
                       </div>
+                    </div>
+
+                    <div className="live-dash-context" aria-label="Indicadores de composición y costo de catálogo">
+                      <span>C:N <b>{an?.cn>0?an.cn.toFixed(1):'—'}:1</b> / {sp?.cn_optimal?.min}–{sp?.cn_optimal?.max}</span>
+                      <span>N <b>{an?.avgN!=null?an.avgN.toFixed(2):'—'}%</b></span>
+                      <span>Catálogo <b>${an?.cost!=null?Math.round(an.cost).toLocaleString('es-CO'):'—'}</b>/kg seco</span>
                     </div>
 
                     {/* Región viva para lectores de pantalla: anuncia cambios de estado
@@ -16889,6 +16895,12 @@ body{margin:0;padding:20px 24px;background:#fff;}
                                     </div>
                                   );
                                 })()}
+                                <div className="generator-comparison" role="region" aria-label="Comparación de alternativas" tabIndex={0}>
+                                  <table><caption>Alternativas · valores estimados del modelo · costo de catálogo sin tratamiento</caption>
+                                    <thead><tr><th scope="col">Alternativa</th><th scope="col">Score</th><th scope="col">C:N</th><th scope="col">N %</th><th scope="col">COP/kg seco</th><th scope="col">Detalle</th></tr></thead>
+                                    <tbody>{optResults[optProfile].map((r,i)=><tr key={i}><th scope="row">#{i+1}</th><td>{r.score}</td><td>{r.an.cn.toFixed(1)}</td><td>{r.an.avgN.toFixed(2)}</td><td>{Math.round(r.an.cost).toLocaleString('es-CO')}</td><td><button type="button" onClick={()=>document.querySelector(`[data-result-id="${i}"]`)?.scrollIntoView({block:'start'})}>Ver composición</button></td></tr>)}</tbody>
+                                  </table>
+                                </div>
                                 {optResults[optProfile].map((r,i)=>{
                                   const mainIngs=r.recipe.map(x=>{const g=INGS.find(ing=>ing.id===x.id);return g?`${g.name} ${x.p}%`:x.id;}).filter(Boolean);
                                   const baseSig=r.recipe.map(x=>x.id).filter(id=>{const g=INGS.find(ing=>ing.id===id);return g&&g.role==='base_carbono';}).sort().join('+');
