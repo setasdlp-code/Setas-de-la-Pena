@@ -65,7 +65,11 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('#print-kit').isVisible(), true);
     report.checks.push({ type: 'canonical-brand-manual', result: 'passed', firma: 'original' });
     await page.goto(base + 'home.html?pairing=bricolage#para-chefs');
-    await page.locator('#para-chefs a[href*="/recetas"]').click();
+    await page.locator('#para-chefs').getByRole('link', { name: 'Explorar las técnicas ↗', exact: true }).click();
+    assert.equal(await page.locator('#tecnicas .knowledge-art').count(), 4);
+    await page.goto(base + 'setas?pairing=bricolage#del-cultivo', { waitUntil: 'networkidle' });
+    assert.equal(await page.locator('#del-cultivo .knowledge-art').count(), 4);
+    await page.goto(base + 'recetas?pairing=bricolage&purpose=restaurante#receta-arepa', { waitUntil: 'networkidle' });
     await page.locator('#receta-arepa input[value="3"]').check();
     await page.locator('#receta-arepa .recipe-cta a').click();
     await page.waitForLoadState('networkidle');
