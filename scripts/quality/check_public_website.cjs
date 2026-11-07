@@ -60,14 +60,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const page = await context.newPage();
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
-      for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
+      for (const file of ['index.html', 'setas.html', 'cocina.html', 'tecnicas.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
         await visit(page, file);
         const metrics = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth, brokenImages: [...document.images].filter(img => !img.complete || img.naturalWidth === 0).map(img => img.getAttribute('src')), pairing: document.documentElement.dataset.pairing }));
         assert.ok(metrics.content <= width, `${file} overflow at ${width}`);
         assert.deepEqual(metrics.brokenImages, []);
         if (file !== 'typography.html') assert.equal(metrics.pairing, 'mono');
-        if (['setas.html', 'cocina.html', 'recetas.html', 'recetas-melena.html', 'recetas-eryngii.html', 'recetas-encurtidos.html'].includes(file)) {
-          assert.equal(await page.locator('#primary-nav a').count(), 2, 'brief shared navigation');
+        if (['setas.html', 'cocina.html', 'tecnicas.html', 'recetas.html', 'recetas-melena.html', 'recetas-eryngii.html', 'recetas-encurtidos.html'].includes(file)) {
+          assert.equal(await page.locator('#primary-nav a').count(), 3, 'brief shared navigation');
           assert.equal(await page.locator('#primary-nav .nav-inquiry').count(), 0);
           if (file.startsWith('recetas')) {
             assert.equal(await page.locator('.recipe-status').count(), 1);
@@ -453,14 +453,14 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     report.checks.push({ type: 'recipe-navigation-keyboard-print', result: 'passed', covers: ['three home recipe links', 'hash opens recipe', 'keyboard toggles instructions', 'shortcut reopens same hash', 'print expands and restores instructions'] });
 
     const brokenLinks = [];
-    for (const file of ['index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
+    for (const file of ['index.html', 'setas.html', 'cocina.html', 'tecnicas.html', 'restaurantes.html', 'mundo-micelar.html', 'shiitake.html', 'recetas.html', 'recetas-eryngii.html', 'recetas-melena.html', 'recetas-encurtidos.html', 'typography.html', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html']) {
       await visit(page, file);
       const ids = await page.locator('[id]').evaluateAll(elements => elements.map(el => el.id));
       assert.equal(ids.length, new Set(ids).size, `${file} duplicate IDs`);
       const links = await page.locator('a[href]').evaluateAll(links => [...new Set(links.map(el => el.href))]);
       for (const link of links.filter(link => link.startsWith(base))) {
         const url = new URL(link);
-        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/setas': 'setas.html', '/cocina': 'cocina.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
+        const cleanSources = { '/': 'design-system.html', '/home': 'index.html', '/setas': 'setas.html', '/cocina': 'cocina.html', '/tecnicas': 'tecnicas.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html', '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html', '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html', ...Object.fromEntries(['shiitake', 'melena-de-leon', 'eryngii'].map(slug => [`/especies/${slug}`, `especies/${slug}.html`])) };
         const filePath = path.join(root, cleanSources[url.pathname] || decodeURIComponent(url.pathname));
         if (!fs.existsSync(filePath)) { brokenLinks.push(link); continue; }
         if (url.hash && filePath.endsWith('.html') && !fs.readFileSync(filePath, 'utf8').includes(`id="${decodeURIComponent(url.hash.slice(1))}"`)) brokenLinks.push(link);
@@ -770,12 +770,23 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await staticPage.locator('#order-whatsapp').getAttribute('href'), null);
     await noJs.close();
     report.checks.push({ type: 'no-js-fallback', result: 'passed' });
+    const techniquesNoJs = await contextWith(undefined, { javaScriptEnabled: false });
+    const techniquesPage = await techniquesNoJs.newPage();
+    await visit(techniquesPage, 'tecnicas');
+    assert.equal(await techniquesPage.locator('h1').textContent(), 'Técnicas');
+    assert.equal(await techniquesPage.locator('#primary-nav a[aria-current="page"]').textContent(), 'Técnicas');
+    assert.equal(await techniquesPage.locator('.knowledge-art').count(), 8);
+    await visit(techniquesPage, 'cocina#tecnicas');
+    assert.equal(await techniquesPage.locator('#tecnicas a[href="/tecnicas"]').count(), 1);
+    await techniquesNoJs.close();
+    report.checks.push({ type: 'primary-techniques-no-js', result: 'passed', covers: ['dedicated navigation entry', 'eight illustrated entries', 'legacy fragment fallback without JavaScript'] });
     const chefContext = await contextWith();
     const chefPage = await chefContext.newPage();
     await visit(chefPage, 'restaurantes#para-chefs');
-    await chefPage.locator('#para-chefs a[href="/cocina#tecnicas"]').click();
+    await chefPage.locator('#para-chefs a[href="/tecnicas#tecnicas"]').click();
     assert.equal(await chefPage.locator('#tecnicas h3').count(), 4);
     await visit(chefPage, 'setas#del-cultivo');
+    await chefPage.waitForURL('**/tecnicas#del-cultivo');
     assert.equal(await chefPage.locator('#del-cultivo h3').count(), 4);
     assert.equal(await chefPage.locator('#del-cultivo input, #tecnicas input').count(), 0);
     await visit(chefPage, 'recetas?purpose=restaurante#receta-arepa');
@@ -803,7 +814,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await chefContext.close();
     report.checks.push({ type: 'chef-journey', result: 'passed', covers: ['chef entry to recipe', '×3 transfers 900 g', 'restaurant purpose retained', 'reviewed message', 'no WhatsApp without phone', 'invalid purpose uses home default'] });
     assert.deepEqual(report.browserErrors, []);
-    report.sources = ['recipe-showcase.js', 'public-minimal.css', 'species-recipes.js', 'index.html', 'setas.html', 'cocina.html', 'restaurantes.html', 'mundo-micelar.html', 'public-pages.css', 'home-navigation.js', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'species-editorial.css', 'editorial.js', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html', 'home-catalog.css', 'commercial.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'recipe-data.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
+    report.sources = ['commercial-navigation.js', 'recipe-showcase.js', 'public-minimal.css', 'species-recipes.js', 'index.html', 'setas.html', 'cocina.html', 'tecnicas.html', 'restaurantes.html', 'mundo-micelar.html', 'public-pages.css', 'home-navigation.js', 'shiitake.html', 'shiitake.js', 'website.js', 'website.css', 'species-editorial.css', 'editorial.js', 'especies/shiitake.html', 'especies/melena-de-leon.html', 'especies/eryngii.html', 'home-catalog.css', 'commercial.css', 'commercial-data.js', 'recetas.html', 'recetas.js', 'recipe-data.js', 'typography.html', 'typography-trials.css', 'typography-trials.js'].map(file => ({ file, sha256: sha(path.join(root, file)) }));
     fs.writeFileSync(path.join(out, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
     console.log(JSON.stringify({ result: 'passed', checks: report.checks.length, renders: report.renders.length, browserErrors: report.browserErrors.length, auditDirectory: out }));
   } finally { await browser.close(); }

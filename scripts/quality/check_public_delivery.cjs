@@ -32,7 +32,7 @@ const report = { checks: [], errors: [] };
     page.on('pageerror',e=>report.errors.push(e.message));
     for (const width of [320,390,768,1440]) {
       await page.setViewportSize({width,height:900});
-      for (const route of ['home','setas','cocina','restaurantes','mundo-micelar','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
+      for (const route of ['home','setas','cocina','tecnicas','restaurantes','mundo-micelar','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
         const requests=[];
         const listener=request=>requests.push(request.url());
         page.on('request',listener);
