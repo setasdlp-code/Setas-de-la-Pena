@@ -177,3 +177,21 @@
 
 .minimal-public :is(.recipe-focusbar a, .recipe-focusbar button, .recipe-empty button):hover { text-decoration-thickness: 2px; }
 .minimal-public .recipe-search:hover { border-bottom-color: var(--text-primary); }
+
+/* Shared editorial knowledge, integrated into catalogue and recipe index. */
+.minimal-public .knowledge-section { padding-block: 56px 80px; scroll-margin-top: 32px; }
+.minimal-public #tecnicas { scroll-margin-top: 144px; }
+.minimal-public .knowledge-heading { max-width: 680px; margin-bottom: 40px; }
+.minimal-public .knowledge-heading h2 { font: 500 clamp(32px, 4vw, 48px)/1.15 var(--font-editorial); margin-block: 16px 24px; }
+.minimal-public .knowledge-section p { line-height: 1.7; }
+.minimal-public .knowledge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 80px; margin-bottom: 40px; }
+.minimal-public .knowledge-grid h3 { font: 500 26px/1.25 var(--font-editorial); margin-block: 0 16px; }
+.minimal-public .knowledge-grid p { max-width: 55ch; margin-block: 0 16px; }
+.minimal-public .knowledge-grid .text-link { display: block; width: fit-content; margin-block: 12px; }
+.minimal-public .knowledge-note { max-width: 78ch; margin-bottom: 24px; }
+@media (max-width: 700px) {
+  .minimal-public .knowledge-section { padding-block: 40px 56px; }
+  .minimal-public .knowledge-grid { grid-template-columns: 1fr; gap: 32px; }
+}
+
+.minimal-public .knowledge-art { display: block; width: min(100%, 248px); height: 224px; margin: 0 0 24px; object-fit: contain; }
