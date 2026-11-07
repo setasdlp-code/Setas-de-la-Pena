@@ -1,0 +1,75 @@
+{
+  "generator": "Built-in image_gen",
+  "date": "2026-11-07",
+  "style_references": [
+    "assets/illustrations/culinary/medallones-limon-eryngii-gouache.webp",
+    "assets/illustrations/culinary/atollado-melena-gouache.webp"
+  ],
+  "assets": [
+    {
+      "file": "cepas-shiitake-gouache.webp",
+      "generated_original": "exec-6d4110b3-2551-4b63-8b35-8d83145d6cc0.png",
+      "prompt": "Create ONE standalone square editorial illustration for Setas de la Peña, subject SELECTING A SHIITAKE STRAIN. The two input images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, visible dry-brush texture, warm ochre brown and cream palette, soft natural volume, isolated object composition. Subject: a small considered still life of three fresh shiitake specimens side by side, displaying subtly different cap sizes, brown surface textures and thicknesses, all anatomically plausible Lentinula edodes with brown convex caps, cream gills and slender tan stems. Show variation within same species, no other species, no laboratory gear. Three-quarter top view, centered with generous clear margin, no board required. No text, labels, borders, diagram arrows, people, or watermark. Transparent background with real alpha, no black or white square. Uncooked specimens, not a plated dish.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 331288
+    },
+    {
+      "file": "forma-eryngii-gouache.webp",
+      "generated_original": "exec-fd644d85-5a69-4bc7-bb11-2c195ad3812c.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: WORKING WITH FORM: three anatomically plausible fresh king oyster / Pleurotus eryngii mushrooms arranged as specimens, creamy thick cylindrical stems and small tan caps, with subtle differences of stem length and cap opening, one lying diagonally showing creamy gills. An ingredient study, not a promise of causal environmental effects. No apparatus. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 278222
+    },
+    {
+      "file": "raleo-eryngii-gouache.webp",
+      "generated_original": "exec-8a0025e5-8e4d-4e95-b262-f9609a161476.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: THINNING YOUNG KING OYSTER MUSHROOMS: one small realistic bottle cultivation vignette, an open clear cylindrical cultivation jar with brown sawdust substrate, a few young Pleurotus eryngii growing upright with thick pale stems and small tan caps; beside the jar lie two tiny removed young mushrooms. Simple credible horticultural still life. No hands, no cutting tool, no mature mushroom roots, no laboratory sci-fi. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 290370
+    },
+    {
+      "file": "cosecha-shiitake-gouache.webp",
+      "generated_original": "exec-b236f44e-bf06-4fe0-b2c8-98e47ed1b898.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: SHIITAKE HARVEST MATURITY: two intact fresh shiitake mushrooms beside one another; one brown convex cap with edge still gently curled inward, another more open cap; one tilted to reveal creamy gills. Show gradual natural maturity differences, not huge versus tiny mushrooms, no rot, no knives. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 308144
+    },
+    {
+      "file": "cortes-eryngii-gouache.webp",
+      "generated_original": "exec-39b86d1c-325a-4722-9590-27d099eb4c65.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: MEDALLIONS VERSUS LENGTHWISE SLICES: on a small warm neutral ceramic oval plate, one whole raw king oyster mushroom with thick creamy stem and tan cap, three neat raw circular cross-sections cut from its stem, and one long lengthwise slice preserving the cap-and-stem silhouette. Anatomically plausible smooth fine-grained cream flesh. No knife or text, clear distinct cuts. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 355356
+    },
+    {
+      "file": "hebras-melena-gouache.webp",
+      "generated_original": "exec-9c0cb6af-0d45-4dd2-8eea-c1cba918e12b.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: SHREDS VERSUS THICK SLICES: on a small warm neutral ceramic plate, one ivory fresh lion's mane mushroom segment showing cascading short teeth, a small loose mound of torn natural fibrous shreds, and two thick ivory slices with irregular rounded edges. Anatomically plausible Hericium erinaceus, not oyster mushroom caps, not spaghetti, not coral, not chicken. Fresh uncooked ingredient study. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 348318
+    },
+    {
+      "file": "dorado-tandas-gouache.webp",
+      "generated_original": "exec-89c6a27c-4cb8-4520-a397-a9673618ccfc.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: BROWNING IN BATCHES: a shallow well-seasoned dark iron skillet at three-quarter overhead angle, with five thick king oyster slices well spaced across the pan, warm golden browned faces, a little oil sheen, abundant visible pan between pieces, subtle steam only. The mushrooms are the focus, not a full meal. No fire or stove, no hands, no text. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 404114
+    },
+    {
+      "file": "coccion-liquido-gouache.webp",
+      "generated_original": "exec-ed5200bf-e369-4311-9aa9-a558393c8776.png",
+      "prompt": "Use case: illustration-story. Generate ONE standalone square editorial gouache illustration for a culinary knowledge entry at Setas de la Peña. The two provided images are STYLE REFERENCES ONLY, not edit targets. Match their detailed hand-painted gouache, textured natural dry brush edges, warm ochre, cream, burnt sienna and brown palette, gentle natural dimensional shading, artisanal food illustration rather than photorealism or flat vector. SUBJECT: COOKING WITH LIQUID: a small low terracotta cooking pot seen at three-quarter overhead angle, a modest quantity of brown shiitake cap halves with creamy gills visible in a tomato-onion broth, tiny onion and tomato pieces, warm amber liquid, a very delicate steam wisp. Clearly a mushroom braise, not creamy soup, mushrooms identifiable, no garnish excess, no utensils. Composition: isolated centered still life with entire object visible and generous negative margin, matches small editorial recipe illustrations. True transparent background with alpha. No text, letters, numbers, labels, arrows, frames, backdrop, watermark, hands or people. Keep the subject visually simple and believable.",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 306934
+    }
+  ],
+  "processing": "WebP quality 88, original dimensions and alpha retained; generated PNG originals preserved in Codex generated_images."
+}
