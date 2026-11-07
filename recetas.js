@@ -32,7 +32,7 @@ function applyScale(article, scale, updateUrl) {
   cta.href = target.href;
   article.querySelector('.recipe-cta p').textContent = `${grams} g de shiitake fresco limpio para ${scale > 1 ? `la receta ×${scale}` : 'la receta base'}. Cantidad editable en la consulta; peso de compra sujeto a presentación y merma.`;
   const status = article.querySelector('.recipe-scale-status');
-  status.textContent = scale === 1 ? 'Receta base (×1). Cantidades estimadas, pendientes de prueba.' : `Cantidades para ${scaleInfo.labels[scale].toLowerCase()} (×${scale}): estimaciones pendientes de prueba. Los tiempos no escalan con los ingredientes: dependen de la carga y del equipo. Las cantidades mayores pueden requerir tandas o recipientes de mayor capacidad.`;
+  status.textContent = scale === 1 ? 'Receta base (×1).' : `Cantidades al ${scaleInfo.labels[scale].toLowerCase()} (×${scale}). Los tiempos no se multiplican; cocina por tandas si hace falta.`;
   status.hidden = false;
   article.querySelector(`input[name="scale-${article.id}"][value="${scale}"]`).checked = true;
   if (updateUrl) {
