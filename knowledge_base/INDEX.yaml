@@ -2202,14 +2202,14 @@ documents:
     status: draft
 
   - id: retamo-espinoso-shiitake-2026-10-31
-    title: "Retamo espinoso (Ulex europaeus) como sustrato para shiitake — evidencia y Formulador (2026-10-31)"
+    title: "Retamo espinoso (Ulex europaeus) como sustrato para shiitake y melena de león — evidencia y Formulador (2026-10-31, act. 2026-11-06)"
     path: 09_research/retamo_espinoso_shiitake_2026-10-31.md
     authority: research_library
     category: research
     canonical: false
-    topics: [shiitake, retamo-espinoso, invasive-biomass, substrate-compatibility, legume-shrub]
-    keywords: ["retamo espinoso", "Ulex europaeus", "Caragana", "alcaloides quinolizidínicos", "Res. 684/2018"]
-    related_documents: [auditoria-pellets-maderas-shiitake-2026-10-31, substrate-library, shiitake-pellets-microlote-receta-v1, procurement-cost-registry]
+    topics: [shiitake, hericium, pleurotus, retamo-espinoso, invasive-biomass, substrate-compatibility, legume-shrub]
+    keywords: ["retamo espinoso", "Ulex europaeus", "Caragana", "alcaloides quinolizidínicos", "Res. 684/2018", "Res. SDA 7615/2009", "CERESA", "Pleurotus pulmonarius", "melena de león"]
+    related_documents: [auditoria-pellets-maderas-shiitake-2026-10-31, substrate-library, shiitake-pellets-microlote-receta-v1, procurement-cost-registry, hericium-erinaceus]
     depends_on: []
     implemented_by: []
     supersedes: null

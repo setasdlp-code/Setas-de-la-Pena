@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 confidence: high
 primary_sources:
   - Internal records
@@ -49,7 +49,7 @@ La auditoría documental de pendientes del 2026-08-29 confirmó que SH01–SH06 
 | SH08 | ¿Qué definición se usará para rendimiento y BE? | Fórmula canónica y masa seca inicial registrada | Alta |
 | SH09 | ¿Qué relación CO₂–morfología presenta la cepa bajo el caudal real de la cámara? | Serie de CO₂, caudal, posición y fotografías | Alta antes de escalar |
 | SH10 | ¿Qué pH real dan 1 % Ca(OH)₂ frente a 1 % CaCO₃ en la mezcla de pellets + salvado, antes y después del autoclave, y cuál coloniza mejor? | pH medido con método registrado; comparación exploratoria 2 + 2 (DOC-0130) | Alta |
-| SH11 | ¿Es el retamo espinoso (*Ulex europaeus*) compatible con shiitake, y en qué proporción de leño? | Análisis N/C del leño; placa con extracto; microensayo exploratorio (DOC-0129) | Baja (fuera del piloto) |
+| SH11 | ¿Es el retamo espinoso (*Ulex europaeus*) compatible con shiitake, y en qué proporción de leño? | Análisis N/C del chip leñoso (CERESA/CAR); placa con extracto; microensayo exploratorio (DOC-0129). Requisitos CAR para Tenjo sin confirmar (2026-11-06) | Baja (fuera del piloto) |
 | SH12 | ¿Siecha, Nutrisetas o Los Fungis entregan spawn en grano estéril o bloques colonizados de *L. edodes* con código de cepa y lote? | Respuesta escrita al cuestionario Q-01 a Q-06 (DOC-0135) | Alta (no bloquea el lote 1) |
 | SH13 | ¿Cuál es el precio B2B, el mínimo de pedido y el plazo de cada candidato para 5, 15 y 30 kg de spawn? | Cotización con fecha | Media |
 | SH14 | ¿Se puede ampliar o rediseñar el lote de 30 bloques para comparar un segundo proveedor sin perder el control del piloto? | Decisión del propietario sobre tamaño y capacidad del autoclave de 39 L | Media |
@@ -85,6 +85,7 @@ La estimación de atmósfera estándar a 2.600 m produce una relación volumétr
 | HE06 | ¿Qué formulación regional produce BE repetible y contaminación aceptable? | Ensayo con control, base seca y réplicas | Media |
 | HE07 | ¿La sustitución parcial de madera con paja, cascarilla o residuos locales es viable? | Piloto comparativo y análisis de proceso | Media |
 | HE08 | ¿Qué vida útil real se logra a 4–5°C con el empaque y transporte disponibles? | Ensayo de calidad y microbiología | Alta antes de venta |
+| HE09 | ¿Tolera *H. erinaceus* el retamo espinoso (*Ulex europaeus*), rico en fenólicos? Sin evidencia publicada; riesgo juzgado mayor que en shiitake (DOC-0129, 2026-11-06) | Placa con decocción de retamo 0/1/5/10 %; bolsas solo si la placa no inhibe y SH11 T1/T2 salen limpios | Baja (fuera del piloto) |
 
 No usar `<1.000 ppm`, `18–22°C`, `14–21 días`, `2–3 flushes` o una BE esperada como especificación hasta resolver HE01–HE05 con la cepa adquirida.
 

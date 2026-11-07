@@ -3,7 +3,7 @@ title: Biblioteca de Sustratos
 document_id: DOC-0013
 category: substrates
 load_priority: selective
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-06
 confidence: high
 primary_sources:
   - Stamets 2000
@@ -102,7 +102,7 @@ La guía externa Monte Jongas aporta 80% pellets de madera dura + 20% salvado en
 
 **Pendientes:** pH objetivo 5,5–6,0 y Ca(OH)₂ al 1% deben verificarse; a ~2.600 m, 15 psi no equivale automáticamente a 121 °C y 90–120 min no constituyen ciclo aprobado. No extrapolar esta geometría de cuatro bolsas al diseño independiente de 30 bloques de 2,0 kg (DOC-0122/0123).
 
-**Abastecimiento y alternativas (2026-10-31):** la auditoría `../09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md` (DOC-0130) revisa un reporte externo de pellets y maderas. Candidato con mayor puntaje en ese reporte: pélet de *Acacia mangium* de Mandra Renovable (Cogua), con compatibilidad con shiitake **no verificada**. También registra el conflicto abierto de Ca(OH)₂ frente a CaCO₃. El retamo espinoso **no tiene evidencia de cultivo de shiitake** y no se usa como base del piloto (`../09_research/retamo_espinoso_shiitake_2026-10-31.md`, DOC-0129).
+**Abastecimiento y alternativas (2026-10-31):** la auditoría `../09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md` (DOC-0130) revisa un reporte externo de pellets y maderas. Candidato con mayor puntaje en ese reporte: pélet de *Acacia mangium* de Mandra Renovable (Cogua), con compatibilidad con shiitake **no verificada**. También registra el conflicto abierto de Ca(OH)₂ frente a CaCO₃. El retamo espinoso **no tiene evidencia de cultivo de shiitake ni de melena de león** y no se usa como base del piloto (`../09_research/retamo_espinoso_shiitake_2026-10-31.md`, DOC-0129). Una tesis de pregrado de Bogotá (2016) cultivó *P. pulmonarius* con 30 % de retamo pulverizado sin inhibición (actualización 2026-11-06).
 
 ## Perfiles de Sustratos
 

@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-06
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Actualizado DOC-0129 (retamo espinoso) con una segunda pasada de investigación, ahora también sobre melena de león. Añade: tesis de la Universidad Distrital (2016) con *P. pulmonarius* al 30 % de retamo sin inhibición; perfil UHPLC-MS de biomasa procesada (SDA 2020: fenólicos, flavonoides y saponinas, sin alcaloides); flujo legal de chip leñoso sin semilla (CERESA). Corrige las cifras de Pesenti 2017 (celulosa 47,5 %, hemicelulosa 22,2 %, extractivos 6,7 %) y añade la germinación de Tighe-Neira 2014. Marca como no confirmada la Res. CAR 469 de 2009 y como no aplicable en Tenjo la Res. SDA 7615 de 2009. Nueva pregunta HE09; SH11 ajustada; fila de retamo en la ficha de *H. erinaceus*; nota en substrate_library. Detalle en `docs/research/retamo_hericium_shiitake_deep_research_2026-11-06.md`. Sin cambios en catálogo, piloto, SOP ni decisiones. |
 
 ### 2026-11-05
 
