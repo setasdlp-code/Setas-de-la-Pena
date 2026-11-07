@@ -69,6 +69,10 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         if (['setas.html', 'cocina.html', 'recetas.html', 'recetas-melena.html', 'recetas-eryngii.html', 'recetas-encurtidos.html'].includes(file)) {
           assert.equal(await page.locator('#primary-nav a').count(), 3, 'brief shared navigation');
           assert.equal(await page.locator('#primary-nav .nav-inquiry').count(), 0);
+          if (file.startsWith('recetas')) {
+            assert.equal(await page.locator('.recipe-status').count(), 1);
+            assert.equal(await page.locator('.recipe .recipe-status, .recipe .recipe-chip').count(), 0);
+          }
         }
         if (width === 390 && ['recetas.html', 'recetas-melena.html', 'recetas-eryngii.html'].includes(file)) {
           assert.ok(await page.locator('.recipe-preview').first().evaluate(el => el.getBoundingClientRect().top < innerHeight), `${file} reaches its recipe gallery within one mobile screen`);
@@ -340,8 +344,9 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     assert.equal(await page.locator('.chef-steps > li').count(), 2);
     await visit(page, 'recetas.html');
     assert.equal(await page.locator('.recipe-shortcuts a').count(), 9);
-    assert.equal(await page.locator('.recipe-chip').count(), 3);
-    report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'direct catalogue entries for three species', 'two chef steps', 'nine links in the optional recipe index', 'pending-trial labels'] });
+    assert.equal(await page.locator('.recipe-chip').count(), 0);
+    assert.equal(await page.locator('.recipe-status').count(), 1, 'one general development note per recetario');
+    report.checks.push({ type: 'integrated-main-ux', result: 'passed', covers: ['no-channel draft notice', 'restaurant frequency and desired date in local message', 'direct catalogue entries for three species', 'two chef steps', 'nine links in the optional recipe index', 'one general note without repeated trial labels'] });
     // Fase 4: guía de preparación sobre la colección.
     const visibleSpecies = () => page.locator('.species-card:not([hidden]) h3').allTextContents();
     await visit(page, 'setas#coleccion');
@@ -649,7 +654,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     await sp.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
     await sp.emulateMedia({ media: 'print' });
     assert.equal(await sp.locator('#receta-sopa .recipe-scale').isVisible(), false);
-    assert.match(await sp.locator('#receta-sopa .recipe-scale-status').innerText(), /doble.*×2.*estimaciones/is);
+    assert.match(await sp.locator('#receta-sopa .recipe-scale-status').innerText(), /doble.*×2.*tiempos/is);
     assert.equal(await ing('receta-sopa', 'caldo'), '1200 ml de caldo vegetal');
     assert.equal(await sp.locator('#receta-sopa .recipe-scale-status').isVisible(), true);
     await sp.pdf({ path: path.join(out, 'recetas-x2.pdf'), format: 'A4', printBackground: true, margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' } });
