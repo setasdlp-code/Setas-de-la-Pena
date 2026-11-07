@@ -52,7 +52,7 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         report['files'] = list(pool.map(check_file, public_files))
     product_routes = [(route.lstrip('/'), file) for route, file in manifest['routes'].items()
-                      if route in {'/', '/home', '/shiitake', '/recetas', '/recetas-melena', '/recetas-eryngii', '/setas', '/cocina', '/restaurantes', '/mundo-micelar'}
+                      if route in {'/', '/home', '/shiitake', '/recetas', '/recetas-melena', '/recetas-eryngii', '/setas', '/cocina', '/tecnicas', '/restaurantes', '/mundo-micelar'}
                       or route.startswith('/especies/')]
     for route, file in product_routes:
         status, headers, body, url = fetch(route)
