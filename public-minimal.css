@@ -1,0 +1,179 @@
+/* Public catalogue and recipe pages. Keep this treatment independent of the homepage. */
+.minimal-public { background: #fafaf7; }
+.minimal-public .page-width { width: min(1232px, calc(100% - 96px)); }
+.minimal-public .masthead { min-height: 0; padding-block: 40px; border: 0; gap: 32px; }
+.minimal-public .masthead .wordmark img { width: 152px; }
+.minimal-public .masthead nav { gap: 32px; }
+.minimal-public .menu-toggle { border: 0; padding-inline: 0; }
+.minimal-public :is(a, button, summary):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 5px; }
+.minimal-public :is(h1, h2, h3) { text-wrap: balance; }
+.minimal-public .collection { padding-block: 32px 80px; }
+.minimal-public .catalog-toolbar { border: 0; margin-bottom: 40px; min-height: 0; gap: 24px; }
+.minimal-public .catalog-index { gap: 24px; }
+.minimal-public .catalog-index h1 { font-weight: 500; }
+.minimal-public .species-grid { gap: 64px; }
+.minimal-public .specimen-link { display: block; padding: 16px 0; }
+.minimal-public .specimen-link img { width: 100%; height: 260px; object-fit: contain; }
+.minimal-public .species-card h3 { margin-block: 20px 8px; font-size: 32px; }
+.minimal-public .species-card .card-discover { font: inherit; text-decoration: none; }
+.minimal-public .card-discover:hover { text-decoration: underline; text-underline-offset: 6px; }
+.minimal-public .species-card .t-latin { font-size: 17px; font-weight: 300; }
+.minimal-public .card-profile { margin-block: 20px 24px; }
+.minimal-public .card-actions { margin-top: auto; }
+.minimal-public .catalog-colophon { border: 0; padding-top: 0; margin-top: 48px; }
+.minimal-public .prep-guide-body { padding-top: 20px; }
+.minimal-public .prep-filters .filter { border: 0; background: transparent; color: var(--text-primary); padding: 8px 12px; }
+.minimal-public .prep-filters .filter[aria-pressed="true"] { text-decoration: underline; text-underline-offset: 6px; font-weight: 600; }
+.minimal-public .page-intro { padding-block: 32px 24px; }
+.minimal-public .page-intro h1 { margin-bottom: 16px; }
+.minimal-public .page-intro > p { margin-block: 12px 0; }
+.minimal-public .page-intro > .recipe-index-note { font-size: 14px; line-height: 1.6; }
+.minimal-public .recipe-index { border: 0; background: #fafaf7; }
+.minimal-public .recipe-collections { flex-wrap: wrap; gap: 8px 32px; }
+.minimal-public .recipe-chapter { padding-block: 40px 64px; border: 0; }
+.minimal-public .recipe-chapter-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px 32px; margin-bottom: 32px; }
+.minimal-public .recipe-chapter-head h2 { font-size: clamp(32px, 3vw, 42px); }
+.minimal-public .recipe-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 40px; }
+.minimal-public .recipe-tile > a { border: 0; }
+.minimal-public .recipe-tile img { max-width: 280px; align-self: center; }
+.minimal-public .recipe-tile h3 { font-weight: 500; font-size: 24px; line-height: 1.25; }
+.minimal-public .recipe-tile-facts { border: 0; padding-top: 8px; font-size: 12px; line-height: 1.6; }
+.minimal-public .species-breadcrumb { border: 0; padding-block: 0 16px; font-size: 13px; }
+.minimal-public .recipes-intro { display: block; padding-block: 24px; }
+.minimal-public .recipes-intro h1 { font: 500 clamp(36px, 4.5vw, 60px)/1.1 var(--font-editorial); letter-spacing: -.025em; margin: 0 0 16px; }
+.minimal-public .recipes-intro .recipes-lead { max-width: 58ch; margin: 16px 0; font: 400 18px/1.6 var(--font-sans); }
+.minimal-public .recipe-status { background: transparent; padding: 0; max-width: 65ch; font-size: 14px; line-height: 1.6; }
+.minimal-public .recipes-intro .text-link { margin-right: 24px; font-size: 14px; }
+.minimal-public .recipe-picker { margin-block: 0 24px; }
+.minimal-public :is(.recipe-picker, .recipe-guide) > summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 48px; cursor: pointer; list-style: none; color: var(--text-primary); font: 400 16px/1.5 var(--font-sans); }
+.minimal-public :is(.recipe-picker, .recipe-guide) > summary::-webkit-details-marker { display: none; }
+.minimal-public :is(.recipe-picker, .recipe-guide)[open] > summary > span { transform: rotate(45deg); }
+.minimal-public .recipe-shortcuts { border: 0; margin: 24px 0; padding: 0; gap: 16px 32px; }
+.minimal-public .recipe-shortcuts a { border: 0; min-height: 48px; padding-block: 8px; font-size: 16px; }
+.minimal-public .recipe-safety { max-width: 80ch; margin: 0 0 32px; font: 400 14px/1.6 var(--font-sans); }
+.minimal-public .recipe-weight-note { max-width: 80ch; margin-block: 0 32px; }
+.minimal-public :is(.recipe, .recipe-meta > div, .recipe-ingredients li, .recipe-source, .recipe-details, .recipe-details > summary, .recipe-cta, .species-section, .recipes-end) { border: 0; }
+.minimal-public .recipe-grid { gap: 64px 40px; }
+.minimal-public .recipe-illustration { padding: 0; background: transparent; border: 0; }
+.minimal-public .recipe-illustration figcaption { border: 0; }
+.minimal-public .recipe-guide { margin-block: 32px; }
+.minimal-public .recipe-guide > :is(section, div) { padding-block: 24px; margin: 0; background: transparent; }
+.minimal-public .study-intro { padding-block: 24px; }
+.minimal-public .study-card, .minimal-public .study-cold-note { border: 0; background: transparent; }
+.minimal-public footer { display: block; border: 0; padding-block: 32px 48px; }
+.minimal-public .public-footer-main { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; }
+.minimal-public .public-footer-main p { margin: 0; color: var(--text-secondary); font-size: 13px; }
+.minimal-public .public-footer-main nav { flex-wrap: wrap; gap: 8px 32px; }
+.minimal-public .public-footer-main nav a { font-size: 13px; color: var(--text-secondary); }
+.minimal-public .public-sources { margin-top: 24px; max-width: 80ch; font-size: 14px; }
+.minimal-public .public-sources > summary { display: list-item; min-height: 44px; padding-block: 10px; cursor: pointer; }
+.minimal-public .editorial-notes { border: 0; margin-top: 16px; padding: 0; }
+@media (max-width: 1000px) {
+  .minimal-public .species-grid { gap: 32px; }
+  .minimal-public .recipe-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 32px; }
+}
+@media (max-width: 760px) {
+  .minimal-public .page-width { width: calc(100% - 48px); }
+}
+@media (max-width: 650px) {
+  .minimal-public .masthead { padding-block: 28px; }
+  .minimal-public .masthead .wordmark img { width: 128px; }
+  .minimal-public .masthead nav { gap: 4px 24px; padding-top: 24px; border: 0; }
+  .minimal-public .masthead nav a { padding-inline: 0; }
+  .minimal-public .catalog-toolbar { margin-bottom: 24px; padding-block: 0; }
+  .minimal-public .collection { padding-block: 24px 48px; }
+  .minimal-public .species-grid { gap: 48px; }
+  .minimal-public .specimen-link img { height: 240px; }
+  .minimal-public .card-profile { min-height: 0; margin-block: 16px; }
+  .minimal-public .species-card h3 { font-size: 30px; }
+  .minimal-public .recipe-collections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; overflow: visible; }
+  .minimal-public .recipe-chapter { padding-block: 32px 48px; }
+  .minimal-public .recipe-card-grid { grid-template-columns: 1fr; gap: 24px; }
+  .minimal-public .recipe-tile > a { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 20px; padding-block: 0; }
+  .minimal-public .recipe-tile h3 { font-size: 22px; }
+  .minimal-public .recipe-tile-copy { padding: 0; }
+  .minimal-public .recipes-intro { padding-block: 16px; }
+  .minimal-public .recipes-intro .recipes-lead { font-size: 17px; }
+  .minimal-public .recipe-shortcuts { grid-template-columns: 1fr; }
+  .minimal-public .recipe-grid { gap: 48px; }
+  .minimal-public .public-footer-main { flex-direction: column; align-items: flex-start; }
+}
+@media print {
+  .minimal-public .recipe-picker, .minimal-public .public-sources { display: none; }
+  .minimal-public .recipe-guide > summary { display: none; }
+}
+
+/* Browse the illustrations, then read one complete recipe. No modal or separate data model. */
+.minimal-public .recipe-gallery { margin-block: 16px 64px; scroll-margin-top: 32px; }
+.minimal-public .recipe-gallery-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px 48px; }
+.minimal-public .recipe-gallery-heading h2 { margin: 0; font: 500 clamp(28px, 2.5vw, 36px)/1.15 var(--font-editorial); letter-spacing: -.02em; }
+.minimal-public .recipe-search-label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--text-secondary); min-width: 240px; }
+.minimal-public .recipe-search { width: 100%; min-height: 48px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--text-secondary); background: transparent; border-radius: 0; color: var(--text-primary); font: 400 16px/1.5 var(--font-sans); }
+.minimal-public .recipe-gallery-status { margin: 16px 0 32px; font-size: 13px; color: var(--text-secondary); }
+.minimal-public .recipe-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px 48px; }
+.minimal-public .recipe-preview { display: flex; flex-direction: column; min-width: 0; color: var(--text-primary); text-decoration: none; touch-action: manipulation; }
+.minimal-public .recipe-preview img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; }
+.minimal-public .recipe-preview-copy { display: flex; flex-direction: column; align-items: flex-start; flex: 1; padding-top: 24px; }
+.minimal-public .recipe-preview h3 { margin: 0 0 12px; font: 500 clamp(24px, 2.1vw, 30px)/1.2 var(--font-editorial); letter-spacing: -.015em; }
+.minimal-public .recipe-preview-time { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+.minimal-public .recipe-preview-action { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: auto; font-size: 14px; text-decoration: underline; text-underline-offset: 6px; }
+.minimal-public .recipe-preview:hover h3 { text-decoration: underline; text-underline-offset: 6px; }
+.minimal-public :is(.recipe-preview, .recipe-search, .recipe-switcher select, .recipe-focusbar a, .recipe-focusbar button, .recipe-empty button):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 5px; }
+.minimal-public .recipe-empty { padding-block: 40px; font-size: 17px; }
+.minimal-public :is(.recipe-empty button, .recipe-focusbar button) { border: 0; background: transparent; color: var(--text-primary); font: 400 15px/1.5 var(--font-sans); text-decoration: underline; text-underline-offset: 6px; min-height: 44px; padding: 0; cursor: pointer; touch-action: manipulation; }
+.minimal-public .recipe-focusbar { position: sticky; top: 0; z-index: 6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px 32px; padding-block: 16px; margin-bottom: 32px; background: #fafaf7; }
+.minimal-public .recipe-focusbar a { min-height: 44px; display: inline-flex; align-items: center; font-size: 14px; }
+.minimal-public .recipe-switcher { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 420px; font-size: 12px; color: var(--text-secondary); }
+.minimal-public .recipe-switcher select { min-height: 44px; width: 100%; max-width: 100%; padding: 8px 32px 8px 0; border: 0; background-color: #fafaf7; color: var(--text-primary); font: 400 16px/1.4 var(--font-sans); }
+.minimal-public.recipe-showcase-ready .recipe-grid { display: block; }
+.minimal-public.recipe-showcase-ready .recipe-grid > .recipe { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 64px; padding-block: 0 64px; scroll-margin-top: 128px; }
+.minimal-public.recipe-showcase-ready .recipe-heading { min-width: 0; display: flex; flex-direction: column; }
+.minimal-public.recipe-showcase-ready .recipe-heading > h2 { font-size: clamp(32px, 3.2vw, 46px); line-height: 1.12; letter-spacing: -.02em; }
+.minimal-public.recipe-showcase-ready .recipe-illustration { order: -1; margin: 0 0 32px; }
+.minimal-public.recipe-showcase-ready .recipe-illustration figcaption { display: none; }
+.minimal-public.recipe-showcase-ready .recipe-details { min-width: 0; }
+.minimal-public.recipe-showcase-ready .recipe-method { display: grid; grid-template-columns: 1fr; gap: 32px; }
+.minimal-public.recipe-showcase-ready .recipe-ingredients { columns: 1; }
+.minimal-public.recipe-showcase-ready .recipe-details > summary { min-height: 48px; font-size: 18px; }
+.minimal-public.recipe-showcase-ready .recipe-steps li { margin-bottom: 20px; line-height: 1.75; }
+.minimal-public.recipe-showcase-ready :is(.recipe-picker[hidden], .recipe-gallery[hidden], .recipe-focusbar[hidden], .recipe-preview[hidden], .recipe-empty[hidden], .recipe[hidden]) { display: none; }
+@media (max-width: 1000px) {
+  .minimal-public .recipe-preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 32px; }
+  .minimal-public.recipe-showcase-ready .recipe-grid > .recipe { gap: 40px; }
+}
+@media (max-width: 650px) {
+  .minimal-public .recipe-gallery-heading { align-items: stretch; flex-direction: column; gap: 24px; }
+  .minimal-public .recipe-search-label { min-width: 0; }
+  .minimal-public .recipe-preview-grid { grid-template-columns: 1fr; gap: 40px; }
+  .minimal-public .recipe-preview { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .minimal-public .recipe-preview-copy { padding-top: 0; }
+  .minimal-public .recipe-preview h3 { font-size: 24px; }
+  .minimal-public .recipe-preview-time { margin-bottom: 4px; }
+  .minimal-public .recipe-focusbar { align-items: stretch; gap: 8px; padding-block: 8px; }
+  .minimal-public .recipe-switcher { order: 3; flex-basis: 100%; max-width: none; }
+  .minimal-public.recipe-showcase-ready .recipe-grid > .recipe { display: block; scroll-margin-top: 160px; }
+  .minimal-public.recipe-showcase-ready .recipe-illustration img { max-height: 320px; }
+  .minimal-public.recipe-showcase-ready .recipe-details { margin-top: 32px; }
+}
+@media print {
+  .minimal-public :is(.recipe-gallery, .recipe-focusbar) { display: none; }
+  .minimal-public.recipe-showcase-ready .recipe-grid > .recipe { display: block; break-before: page; }
+  .minimal-public.recipe-showcase-ready .recipe-grid > .recipe[hidden] { display: none; }
+}
+
+@media print {
+  .minimal-public.recipe-showcase-ready:not(.recipe-is-selected) .recipe-focus-safety { display: none; }
+  .minimal-public.recipe-is-selected main > .recipe-safety { display: none; }
+}
+
+.minimal-public.recipe-showcase-ready .recipes-intro { padding-block: 8px 16px; }
+.minimal-public.recipe-showcase-ready .recipes-intro .recipes-lead { margin-block: 12px; font-size: 16px; }
+.minimal-public.recipe-showcase-ready .recipes-intro .recipe-status { max-width: none; margin-block: 12px; }
+/* Hidden recipes must stay hidden at mobile breakpoints as well as desktop. */
+.minimal-public.recipe-showcase-ready .recipe-grid > .recipe[hidden] { display: none; }
+
+/* Keep one copy of the cooking warning visible in the selected recipe. */
+.minimal-public.recipe-is-selected main > .recipe-safety { display: none; }
+
+.minimal-public :is(.recipe-focusbar a, .recipe-focusbar button, .recipe-empty button):hover { text-decoration-thickness: 2px; }
+.minimal-public .recipe-search:hover { border-bottom-color: var(--text-primary); }

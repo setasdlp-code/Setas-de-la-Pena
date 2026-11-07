@@ -49,7 +49,7 @@ document.querySelectorAll('.recipe-grid .recipe-details').forEach(details => { d
   // Print collapsed recipes as well, then restore the reader's open/closed state.
   let closed = [];
   window.addEventListener('beforeprint', () => {
-    closed = [...document.querySelectorAll('.recipe-details:not([open])')];
+    closed = [...document.querySelectorAll('.recipe-details:not([open]), .recipe-guide:not([open])')];
     closed.forEach(details => { details.open = true; });
   });
   window.addEventListener('afterprint', () => {
