@@ -35,7 +35,7 @@ class Handler(SimpleHTTPRequestHandler):
         mapping = {'/': 'design-system.html' if self.source else 'index.html',
                    '/home': 'index.html' if self.source else 'home.html',
                    '/shiitake': 'shiitake.html', '/recetas': 'recetas.html', '/recetas-eryngii': 'recetas-eryngii.html', '/recetas-melena': 'recetas-melena.html', '/recetas-encurtidos': 'recetas-encurtidos.html',
-                   '/setas': 'setas.html', '/cocina': 'cocina.html', '/tecnicas': 'tecnicas.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html',
+                   '/setas': 'setas.html', '/cocina': 'cocina.html', '/tecnicas': 'tecnicas.html', '/cultivo': 'cultivo.html', '/restaurantes': 'restaurantes.html', '/mundo-micelar': 'mundo-micelar.html',
                    '/manual': 'manual.html', '/typography': 'typography.html', '/despensa': 'despensa.html', '/fichas': 'fichas.html',
                    **{f'/especies/{slug}': f'especies/{slug}.html' for slug in ('shiitake', 'melena-de-leon', 'eryngii')}}
         return super().translate_path('/' + mapping[route] if route in mapping else path)

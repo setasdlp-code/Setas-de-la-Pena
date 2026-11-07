@@ -35,3 +35,6 @@
 
 /tecnicas
   Cache-Control: public, max-age=0, must-revalidate
+
+/cultivo
+  Cache-Control: public, max-age=0, must-revalidate
