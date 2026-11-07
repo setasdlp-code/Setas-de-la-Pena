@@ -67,7 +67,7 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
         assert.deepEqual(metrics.brokenImages, []);
         if (file !== 'typography.html') assert.equal(metrics.pairing, 'mono');
         if (['setas.html', 'cocina.html', 'recetas.html', 'recetas-melena.html', 'recetas-eryngii.html', 'recetas-encurtidos.html'].includes(file)) {
-          assert.equal(await page.locator('#primary-nav a').count(), 3, 'brief shared navigation');
+          assert.equal(await page.locator('#primary-nav a').count(), 2, 'brief shared navigation');
           assert.equal(await page.locator('#primary-nav .nav-inquiry').count(), 0);
           if (file.startsWith('recetas')) {
             assert.equal(await page.locator('.recipe-status').count(), 1);
@@ -773,7 +773,12 @@ const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).di
     const chefContext = await contextWith();
     const chefPage = await chefContext.newPage();
     await visit(chefPage, 'restaurantes#para-chefs');
-    await chefPage.locator('#para-chefs a[href*="/recetas"]').click();
+    await chefPage.locator('#para-chefs a[href="/cocina#tecnicas"]').click();
+    assert.equal(await chefPage.locator('#tecnicas h3').count(), 4);
+    await visit(chefPage, 'setas#del-cultivo');
+    assert.equal(await chefPage.locator('#del-cultivo h3').count(), 4);
+    assert.equal(await chefPage.locator('#del-cultivo input, #tecnicas input').count(), 0);
+    await visit(chefPage, 'recetas?purpose=restaurante#receta-arepa');
     await chooseRecipe(chefPage, 'receta-arepa');
     await chefPage.locator('#receta-arepa input[value="3"]').check();
     await chefPage.locator('#receta-arepa .recipe-cta a').click();
