@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-07
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-07
+
+| Tipo | Descripción |
+|---|---|
+| `[BIZ]` | Actualizada la oferta de pellet LINUXPBX (MCO4419677338 / MCO2123989000) en `07_business/procurement_cost_registry.md`: $9.000/1 kg observado, acacia/cerezo predeterminados y retamo bajo solicitud. Precio `observed_market`; composición, fabricante, aditivos y desempeño biológico pendientes. Registradas preguntas de validación; sin compra, contacto al vendedor ni cambios de receta, SOP o Setas OS. |
 
 ### 2026-11-06
 

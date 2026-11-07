@@ -3,11 +3,12 @@ title: Registro de Abastecimiento y Costos — Insumos y Consumibles
 document_id: DOC-PRC-001
 category: business
 load_priority: on_request
-last_reviewed: 2026-11-02
+last_reviewed: 2026-11-07
 confidence: medium
 primary_sources:
   - Internal procurement research, August 2026
   - Public Colombian supplier and marketplace observations, 2026-08-19
+  - "Mercado Libre MCO4419677338 / catálogo MCO2123989000, vendedor LINUXPBX; publicación leída en navegador el 2026-11-07"
 related_documents:
   - suppliers.md
   - economics.md
@@ -154,19 +155,33 @@ Para materiales húmedos, el indicador económico preferido para comparación t�
 
 # Pellets y maderas para shiitake — reporte externo 2026-10-28
 
-Ofertas tomadas del reporte externo asistido por IA `../09_research/intake/pellets_maderas_shiitake_colombia_reporte_externo_2026-10-28.md` (auditoría: `../09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md`, DOC-0130). **Todas en estado `unverified`:** son precios, stock y cotizaciones afirmados por el reporte el 2026-10-28; la verificación directa del sitio de Mandra falló (HTTP 429) el 2026-10-31. Confirmar con el proveedor antes de usarlos para compra. Costo por kg seco calculado por el reporte con 8 % de humedad para pellets.
+Ofertas tomadas del reporte externo asistido por IA `../09_research/intake/pellets_maderas_shiitake_colombia_reporte_externo_2026-10-28.md` (auditoría: `../09_research/auditoria_pellets_maderas_shiitake_2026-10-31.md`, DOC-0130). **Estado original `unverified`, salvo la oferta de LINUXPBX observada directamente el 2026-11-07 (detalle debajo):** son precios, stock y cotizaciones afirmados por el reporte el 2026-10-28; la verificación directa del sitio de Mandra falló (HTTP 429) el 2026-10-31. Confirmar con el proveedor antes de usarlos para compra. Costo por kg seco calculado por el reporte con 8 % de humedad para pellets.
 
 | item | proveedor / presentación | precio reportado (COP) | COP/kg | especie declarada | estado | fuente | notas |
 |---|---|---:|---:|---|---|---|---|
 | pellet_acacia_mangium | Mandra Renovable (Km 6 Vía Zipaquirá–Ubaté, Cogua), saco 15 kg, línea ahumado | 75.000 | 5.000 | *Acacia mangium* («acacia magium») de plantaciones | unverified | https://mandra.com.co/products/pelet-de-cacao | Candidato del microlote DOC-0127. Confirmar por escrito especie única, corteza <10 %, sin hojas ni aglutinantes. Compatibilidad con shiitake no verificada. |
 | pellet_retamo_espinoso | Mandra Renovable / Humo Artesanal, saco 15 kg | 60.000 | 4.000 | *Ulex europaeus* | unverified | https://mandra.com.co/products/pelet-de-cacao | Clasificado por el fabricante para *Pleurotus*. No apto para el piloto de shiitake (DOC-0129). |
 | pellet_bagazo_caña | Mandra Renovable, línea setas, saco 15 kg | 60.000 | 4.000 | Bagazo de caña (Tequendama) | unverified | https://mandra.com.co/products/pelets-para-cultivo-de-setas | Recomendado por el fabricante para *Pleurotus*. Otras biomasas de esa línea (paja de cebada, arroz, cedro) figuraban agotadas en 15 kg; paja de arroz en lote de 150 kg a $570.000. |
-| pellet_acacia_cerezo_ml | Mercado Libre MCO2123989000, bolsa 1 kg | 9.000 | 9.000 | «Acacia/cerezo» por defecto; retamo bajo pedido | unverified | https://www.mercadolibre.com.co/pellets-madera-parrilla-fungicultura-1-kg/p/MCO2123989000 | Proporción acacia/cerezo y especie del cerezo no declaradas; posible reempaque de Mandra (inferencia del reporte). |
+| pellet_acacia_cerezo_ml | LINUXPBX, Mercado Libre MCO4419677338 / catálogo MCO2123989000, bolsa 1 kg | 9.000 | 9.000 | «Acacia/cerezo» por defecto; retamo bajo pedido | observed_market | https://www.mercadolibre.com.co/p/MCO2123989000?pdp_filters=item_id%3AMCO4419677338 | Observado 2026-11-07; precio publicado sin envío, no compra ni cotización. Identidad y composición del material por confirmar; ver verificación debajo. |
 | pellet_acacia_homecenter | Homecenter SKU 3081094, 700 g | 49.900 | 71.286 | Acacia, especie no declarada | unverified | https://www.homecenter.com.co/homecenter-co/product/3081094/pellets-ahumadores-de-madera-acacia-x-700g/3081094/ | Sobrecosto extremo; especie desconocida. |
 | pellet_aliso_importado | Bear Mountain (Mercado Libre, importado), 9 kg | 226.455–236.422 | ~25.000 | *Alnus* | unverified | Mercado Libre Colombia | Referencia biológica; inviable en costo. Entrega ~12 días. |
 | aserrin_eucalipto_chia | Multimaderas Páez (Calle 2 # 1A-76, Variante de Chía), bulto ~20 kg (~25 % hum.) | ~15.000 | ~750 húmedo | *Eucalyptus* spp. | unverified | https://multimaderaspaez.com/ | «Cotización telefónica» afirmada por el reporte, sin confirmar. El aserradero también corta pino y madera inmunizada: exigir corte puro de eucalipto sin tratar (AB07). |
 
 Excluidos por el reporte para shiitake: madera mezcla, madera de cacao y cedro canadiense de Mandra (posibles coníferas, mucílagos, tuyaplicinas) y los pellets híbridos de carbón de CarboProduccol.
+
+## Verificación comercial de LINUXPBX — 2026-11-07
+
+**Fuente primaria comercial:** [publicación MCO4419677338](https://www.mercadolibre.com.co/p/MCO2123989000?pdp_filters=item_id%3AMCO4419677338), recibida del propietario mediante [enlace compartido](https://meli.la/266i3cZ). Lectura directa en navegador; título «Pellets Madera Parrilla / Fungicultura 1 Kg», vendedor LINUXPBX. No se recibió ficha técnica ni respuesta del vendedor.
+
+- **Observado:** bolsa de 1 kg a $9.000 COP. Es precio publicado por masa recibida; envío y humedad no cuantificados. No representa COP/kg seco ni costo real de Bodega.
+- **Declarado por el vendedor:** envía acacia/cerezo por defecto y pide que el comprador solicite retamo después de comprar. El enlace no garantiza recibir retamo. No se verificó la identidad botánica de ninguna variante.
+- **Declarado por el vendedor:** ausencia de químicos añadidos y aglutinantes artificiales; humedad baja sin porcentaje. No hay caracterización de C, N, cenizas, tejidos incluidos ni lote en la descripción leída. El campo de marca indica «Bagazo» y la descripción ofrece distintas maderas: identidad del producto pendiente de aclaración.
+- **Afirmación comercial no validada biológicamente:** menciona uso en melena de león, shiitake y Pleurotus, sin datos de receta, colonización, cosecha o eficiencia biológica en la ficha leída. No permite atribuir resultados específicamente al retamo.
+- **Procedencia pendiente:** no se estableció quién fabrica el pellet ni una relación con Mandra. La hipótesis de reempaque del reporte externo no se adopta como hecho.
+
+**Clasificación y aplicación:** `observed_market` se refiere exclusivamente a la oferta y precio observados. Composición, ausencia efectiva de aditivos, inocuidad y desempeño en cultivo permanecen **unverified**; la publicación no constituye evidencia científica Tier 1/2. Se conserva la evaluación de investigación de [DOC-0129](../09_research/retamo_espinoso_shiitake_2026-10-31.md); no se aprueba una receta ni se incorpora retamo al piloto.
+
+**Validación pendiente con el proveedor:** confirmar por escrito (1) lote separado de 100 % *Ulex europaeus* sin mezcla; (2) tejidos incluidos; (3) fabricante, procedencia, fecha y código de lote; (4) aditivos o lubricantes incorporados y humedad medida; (5) si la experiencia anunciada con Hericium y Lentinula corresponde a retamo y qué registros la respaldan. No se enviaron preguntas ni se realizó compra durante esta verificación.
 
 # Compras de sustrato registradas en Bodega — 2026-11-02
 
