@@ -28,6 +28,7 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 
 | Tipo | Descripción |
 |---|---|
+| `[KB]` | Incorporado DOC-0144 (`09_research/tendencias_cultivo_shiitake_2026-11-08.md`): investigación verificada de tendencias de cultivo de shiitake (10 hallazgos, 7 refutados, fuentes R1–R12). Novedad: luz LED azul tenue tras incubación oscura. Abre SH16–SH17; resumen consultivo en la ficha de *L. edodes*; indexado en INDEX y literature_index. Sin cambios en SOP, receta, setpoints, tablas sincronizadas ni Setas OS. |
 | `[KB]` | Integrada la revisión de evidencia sobre acacia y nogal para shiitake (`docs/research/acacia_nogal_shiitake_research_2026-11-07.md`). No hay ensayos publicados de *L. edodes* en *A. mangium*, *A. decurrens*, *A. melanoxylon*, *A. mearnsii*, *Juglans* (incl. *J. neotropica*) ni *Cordia alliodora*; el 22,4 % de BE en «acacia» de Chang 2016 no se puede atribuir a shiitake, y la advertencia de extensión contra el nogal es para troncos y sin datos. Actualizadas AB10 y AB11 (siguen abiertas); nueva AB20 (nogal); notas en substrate_library y en la receta del microlote. Sin cambios en catálogo, piloto, SOP ni decisiones. |
 
 ### 2026-11-07

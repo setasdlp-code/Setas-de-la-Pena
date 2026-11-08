@@ -2470,3 +2470,18 @@ documents:
     supersedes: null
     confidence: medium
     status: draft
+
+  - id: tendencias-cultivo-shiitake-2026-11-08
+    title: "Tendencias y técnicas recientes en cultivo de shiitake en bloque — investigación verificada"
+    path: 09_research/tendencias_cultivo_shiitake_2026-11-08.md
+    authority: research_library
+    category: research
+    canonical: false
+    topics: [shiitake, substrates, carbon-nitrogen, light, browning, strains, trichoderma, sterilization]
+    keywords: ["LED azul", "pardeamiento", "tusa de maíz", "bagazo", "C:N", "BE", SH16, SH17]
+    related_documents: [lentinula-edodes, genetica-sustratos-shiitake-2026-11-04, unresolved-questions, literature-index]
+    depends_on: []
+    implemented_by: []
+    supersedes: null
+    confidence: medium
+    status: draft
