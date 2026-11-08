@@ -16,7 +16,7 @@ La identidad visual y la jerarquía de mensajes se cumplen. La firma original ap
 |---|---|---|
 | Firma | Cumple | `firma-setas-de-la-pena-original.png` en las 27 apariciones; imagen social con firma, frase, descriptor y firma territorial |
 | Paleta | Cumple | 0 hex, rgb o hsl sueltos en los 8 CSS públicos; todo pasa por tokens de DS-2026 vía `commercial.css` → `market.css` |
-| Tipografía | Cumple | Solo `var(--font-sans)` y `var(--font-mono)`; un `@font-face` de IBM Plex Sans en `website.css:435` |
+| Tipografía | Cumple | Titulares con `var(--font-editorial)` (Gaya Patched), lectura con `var(--font-sans)` y cantidades con `var(--font-mono)`; un `@font-face` de IBM Plex Sans en `website.css:435`. *Corregido el 8 nov: esta fila decía «solo sans y mono», lo que no era cierto.* |
 | Sombras, degradados y radios | Cumple | 0 en CSS público (la `.franja` de `color-bands.css` es un subrayado de corte duro y ninguna página la usa) |
 | Contraste | Cumple | `contrast-audit.py` 34/34 · `visual-contract.mjs` 17/17 · `validate.py` sin errores. Estos validadores cubren las maquetas del DS; la cobertura del sitio sale de la revisión de CSS de arriba |
 | Coral como texto pequeño | Cumple | Ningún `color: var(--coral-500)` en CSS público |

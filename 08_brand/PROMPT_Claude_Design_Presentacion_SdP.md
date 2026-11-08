@@ -4,7 +4,7 @@ Copiar el bloque completo de abajo en Claude Design o ChatGPT.
 
 ---
 
-Crea una presentación institucional de **12 slides** sobre **Setas de la Peña**, una empresa colombiana de cultivo de setas gourmet en Tenjo, Cundinamarca (2.592 msnm, a las faldas de la Peña de Juaica). Formato 16:9. Idioma: español.
+Crea una presentación institucional de **12 slides** sobre **Setas de la Peña**, una empresa colombiana de cultivo de setas gourmet en Tenjo, Cundinamarca (unos 2.600 m, a las faldas de la Peña de Juaica). Formato 16:9. Idioma: español.
 
 ## Sistema visual (obligatorio — FOS v3.0 Editorial)
 
@@ -38,13 +38,13 @@ Registro **técnico-agronómico & gastronómico de alta gama**: sobrio, honesto,
 
 - Sin signos de exclamación. Sin superlativos vacíos ("el mejor", "increíble", "único")
 - **Prohibido lenguaje místico o new-age**: nada de "sagrado", "energía", "alimento vivo", "escuchar la tierra", "guardián de la niebla", "alma"
-- Tenjo y la Peña de Juaica aparecen como **datos** (clima, altitud 2.592 msnm, presión 74.5 kPa, logística a Bogotá), no como decoración pintoresca
+- Tenjo y la Peña de Juaica aparecen como **datos** (clima, altitud unos 2.600 m, presión 74.5 kPa, logística a Bogotá), no como decoración pintoresca
 - Vocabulario preferido: setas, orellanas, *Pleurotus ostreatus*, sustrato, cultivo en sombra, cuerpo fructífero, micelio, módulo de cultivo, cámara de incubación, cámara de fructificación, maridaje de terroir, Reacción de Maillard
 - Densidad de texto baja: máximo 5 bullets por slide, frases cortas y sustantivas
 
 ## Estructura de slides
 
-1. **Portada** — "Setas de la Peña". Descriptor territorial: Tenjo, Cundinamarca · 2.592 msnm. Logo monocromático Terracota `#A44C27` en Gaya Patched Black 900. Máximo espacio negativo.
+1. **Portada** — "Setas de la Peña". Descriptor territorial: Tenjo, Cundinamarca · unos 2.600 m. Logo monocromático Terracota `#A44C27` en Gaya Patched Black 900. Máximo espacio negativo.
 
 2. **Qué es Setas de la Peña** — Empresa de cultivo y comercialización de setas comestibles. Posicionamiento: ni fábrica industrial anónima ni emprendimiento artesanal — cultivo de precisión a escala modular, producto premium con identidad geográfica precisa.
 
@@ -58,7 +58,7 @@ Registro **técnico-agronómico & gastronómico de alta gama**: sobrio, honesto,
 
 5. **Producto & Dossier Gastronómico** — *Pleurotus ostreatus* (orellanas) fresco, deshidratado 50 g, extractos. En hoja de ruta: shiitake, *Hericium erinaceus*, harinas. Ficha organoléptica de 4 ejes: densidad cárnica, umami, retención de humedad, aroma en crudo.
 
-6. **Territorio & Pasaporte de Provenance** — Tenjo / Serranía de Juaica / Sabana de Bogotá. Altitud 2.592 msnm, clima estable, proximidad logística al mercado de alta cocina de Bogotá. Presentar como datos operativos y competitivos.
+6. **Territorio & Pasaporte de Provenance** — Tenjo / Serranía de Juaica / Sabana de Bogotá. Altitud unos 2.600 m, clima estable, proximidad logística al mercado de alta cocina de Bogotá. Presentar como datos operativos y competitivos.
 
 7. **El Knowledge System — arquitectura** — El repositorio es el sistema nervioso de la operación. Tres dominios que nunca se mezclan:
    - `knowledge_base/` — conocimiento organizacional validado

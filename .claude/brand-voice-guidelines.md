@@ -21,7 +21,7 @@
 
 ## 1. Esencia
 
-Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (2.592 msnm, vertiente oriental de la Peña de Juaica). Combina rigor técnico con arraigo territorial: producción controlada, trazable y a escala humana.
+Setas de la Peña cultiva y vende hongos comestibles en Tenjo, Cundinamarca (unos 2.600 m, vertiente oriental de la Peña de Juaica). Combina rigor técnico con arraigo territorial: producción controlada, trazable y a escala humana.
 
 **Concepto verbal: «Sombra y Silencio».** Literal, no metafórico. *Sombra* es el método (cultivo en sombra controlada) y el lugar. *Silencio* es el registro: sin ruido, sin adorno, sin lenguaje promocional vacío.
 
@@ -101,7 +101,7 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 | Contexto | Formalidad | Energía | Profundidad técnica | Ejemplo |
 |---|---|---|---|---|
 | Empaque / etiqueta | Media | Baja | Baja | «Orellana. Cortada esta mañana en Tenjo. Plancha con mantequilla.» |
-| Web de producto | Media | Media | Media | «Textura firme y sabor que aguanta guisos largos. Cultivada a 2.592 msnm.» |
+| Web de producto | Media | Media | Media | «Textura firme y sabor que aguanta guisos largos. Cultivada a unos 2.600 m.» |
 | Redes sociales | Baja | Media | Baja | «Cosecha del miércoles: 38 kg de orellanas rumbo a Bogotá.» |
 | Correo a clientes B2B | Media | Media | Media | «Disponibilidad esta semana: orellana fresca, 40 kg. Pedido mínimo 5 kg.» |
 | Pitch a socios | Alta | Media | Alta | «Capacidad instalada de 80 kg/semana con tres módulos.» |
@@ -123,7 +123,7 @@ Una ficha de especie presenta nombre, sabor y textura documentados, una preparac
 | Cultivo en sombra | Descriptor real del método |
 | Sustrato, cuerpo fructífero, micelio | Vocabulario técnico cotidiano |
 | Cámara de incubación / fructificación, módulo | Vocabulario operativo |
-| Tenjo, Peña de Juaica, Sabana de Bogotá, 2.592 msnm | Geografía como dato |
+| Tenjo, Peña de Juaica, Sabana de Bogotá, unos 2.600 m | Geografía como dato |
 | Cosecha del día / bajo pedido | Solo si es cierto |
 
 **Evitar**
@@ -163,7 +163,7 @@ Los ejemplos son modelos de redacción, no confirmaciones de capacidad, stock, p
 > 250 g
 
 **Descripción web (~45 palabras)**
-> Orellana cultivada a la sombra de la Peña de Juaica, en Tenjo, a 2.592 msnm. Madura lento y por eso la textura es firme y el sabor aguanta cocciones largas. La información de origen y cosecha acompaña al producto cuando está documentada.
+> Orellana cultivada a la sombra de la Peña de Juaica, en Tenjo, a unos 2.600 m. Madura lento y por eso la textura es firme y el sabor aguanta cocciones largas. La información de origen y cosecha acompaña al producto cuando está documentada.
 
 **Correo B2B**
 > Hola [nombre],

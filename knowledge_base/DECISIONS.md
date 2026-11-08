@@ -402,6 +402,12 @@ Registro estructurado de decisiones operacionales, de ingeniería y de negocio q
 
 **Implementación:** El propietario autorizó explícitamente la propagación operacional el 2026-07-24. Cualquier documento que presente *P. djamor* como especie activa, producto principal, sustrato inicial o referencia de setpoints contradice esta decisión. Los rangos de shiitake se aprueban por cepa y lote; no se heredan de Pleurotus.
 
+**Enmienda 2026-11-08 (presentación comercial):** El propietario decidió mantener la melena de león (*Hericium erinaceus*) junto al shiitake al frente de la presentación comercial (hero, imagen social y ficha de especie). Esto cambia la presentación, no el arranque de producción. Shiitake sigue siendo la única especie con spawn, sustrato y lote previstos; para la melena no hay cepa identificada, sustrato validado, ciclo ni fecha de producción. En consecuencia:
+- La frase «No se introduce una segunda especie antes de completar y revisar los primeros ciclos documentados de shiitake» rige la **producción**. No rige qué especies aparecen en piezas comerciales.
+- La ficha de melena lleva el mismo aviso de interés que la de shiitake. Ningún texto afirma disponibilidad, precio, fecha de cosecha ni beneficios.
+- Cuándo se cultiva la melena lo fija una decisión de producción separada, tras el criterio de revisión de arriba.
+- Las demás especies (eryngii, ostra y otras) siguen como láminas del cuaderno, sin aviso de consulta.
+
 **Documentos afectados:** `README_MCP.md`, `INDEX.yaml`, `FARM_BRAIN.md`, `CURRENT_OPERATIONS.md`, `00_project/current_state.md`, fichas de especie, `02_substrates/`, `03_spawn/`, `04_facility/`, `05_equipment/`, `06_operations/`, `07_business/`, `08_brand/packaging.md`, `09_research/research_summaries.md`, `metadata/species.yaml`, `metadata/substrates.yaml`, `metadata/kpis.yaml` y `CHANGELOG.md`.
 
 ---

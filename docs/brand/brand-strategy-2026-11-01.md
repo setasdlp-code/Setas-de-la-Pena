@@ -18,7 +18,7 @@
 | Gramática visual | Lámina → nota → plato. Grabado para reconocer, gouache para imaginar, fotografía propia solo como evidencia. | `competitive-research-2026-10.md` §7 |
 | Sistema | DS-2026: papel, tinta, musgo, coral puntual; Gaya + IBM Plex Sans/Mono. | `08_brand/ds-2026/DESIGN_SYSTEM.md` |
 | Firma | PNG original en minúsculas, dos líneas («de la» en cursiva). No hay isotipo que sustituya el nombre. | Decisión de Sebastián, 31 oct (#436) |
-| Especie de arranque | Shiitake. Ninguna segunda especie antes de tres ciclos. | `knowledge_base/DECISIONS.md` DEC-013 (14 jul) |
+| Especie de arranque | Shiitake. Ninguna segunda especie en producción antes de tres ciclos. Desde el 8 nov, la melena puede ir al frente de la presentación comercial (§4 #1). | `knowledge_base/DECISIONS.md` DEC-013 (14 jul) y su enmienda del 8 nov |
 
 ## 2. Evidencia y sus límites
 
@@ -104,10 +104,10 @@ Elegida por Sebastián el 1 de noviembre como dirección a desarrollar: **una so
 
 | # | Inconsistencia | Propuesta | Decide |
 |---|---|---|---|
-| 1 | La melena de león aparece como especie insignia, con ficha web y al frente del grabado del hero, pero DEC-013 impide una segunda especie antes de tres ciclos de shiitake. | Shiitake como única especie comercial. Melena, eryngii y las demás se quedan como láminas del cuaderno, sin CTA de consulta, hasta que una decisión de producción las habilite. | Sebastián |
+| 1 | La melena de león aparece como especie insignia, con ficha web y al frente del grabado del hero, pero DEC-013 impide una segunda especie antes de tres ciclos de shiitake. | **Resuelto el 8 nov (Sebastián): shiitake y melena al frente** del hero, la imagen social y las fichas. DEC-013 se enmendó: su límite de segunda especie rige la producción, no la presentación. La melena lleva el aviso de interés de la primera cosecha, sin afirmar disponibilidad, precio, fecha ni beneficios. Eryngii y las demás siguen como láminas del cuaderno, sin CTA. | Resuelto |
 | 2 | Los segmentos del plan de negocio (plataformas orgánicas, mercados campesinos, D2C) no encajan con «chefs primero, también hogares». | Tratarlos como **canales**, no como audiencias. La audiencia sigue siendo quien cocina; la plataforma o el mercado es por dónde le llega. Actualizar `business_model.md`. | Sebastián |
 | 3 | `business_model.md` llama a «Sombra y Silencio» una «marca» con «posicionamiento premium». | Mantenerlo como concepto verbal interno (v2.4 §1), no como nombre público ni promesa. Retirar «premium», que la voz prohíbe. | Revisión editorial |
-| 4 | La altitud aparece como 2.592 m y como 2.600 m. | Una sola cifra con fuente: 2.592 msnm si viene de una medición o de la cartografía, o «unos 2.600 m» si es redondeo. | Sebastián (fuente) |
+| 4 | La altitud aparece como 2.592 m y como 2.600 m. | **Resuelto el 8 nov (Sebastián):** en piezas comerciales se escribe «unos 2.600 m». Los cálculos de Setas OS conservan 2.600 msnm / 74,5 kPa como valor nominal. | Resuelto |
 | 5 | Línea funcional (melena, reishi): ya tiene un perfil de audiencia en `identity.md`, pero no hay decisión de producto ni trámite INVIMA. | Fuera de la estrategia comercial hasta que exista esa decisión. Ninguna pieza alude a beneficios. | Sebastián |
 | 6 | `PACKAGING_SPECS.md` usa colores fuera de DS-2026 y un QR hacia `/trace?lote=` que no existe. | Alinear con los tokens de DS-2026 y no imprimir QR sin destino real. | Diseño |
 | 7 | `business_model.md` conserva proyecciones de *P. djamor* que DEC-013 dejó atrás. | Marcarlas como históricas. | Revisión editorial |
@@ -116,9 +116,9 @@ Elegida por Sebastián el 1 de noviembre como dirección a desarrollar: **una so
 
 1. ¿Cadencia realista del cuaderno: por hito del cultivo o mensual?
 2. ¿Hay disposición a publicar fallos del piloto (contaminación, pérdida de lote) con el registro de crisis?
-3. ¿Melena sale del frente comercial (hero y fichas con consulta) hasta que se habilite como especie? En el cuaderno puede seguir como lámina.
+3. ~~¿Melena sale del frente comercial?~~ Resuelta el 8 nov: se queda al frente junto al shiitake (ver §4 #1).
 4. ¿Quién responde las consultas y por qué canal? El aviso de primera cosecha necesita una persona detrás.
-5. ¿Qué altitud se fija y con qué fuente?
+5. ~~¿Qué altitud se fija?~~ Resuelta el 8 nov: «unos 2.600 m» (ver §4 #4).
 
 ## Implicaciones si se elige D
 
