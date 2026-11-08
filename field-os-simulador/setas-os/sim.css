@@ -7101,7 +7101,7 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .generator-comparison th:first-child{text-align:left}
 .sim-root .generator-comparison button{min-height:44px;background:var(--paper-0);color:var(--ink-900);border:1px solid var(--border-strong);cursor:pointer}
 
-/* Minimalism: grouping by space and type, without decorative card layers.
+/* Minimalism: grouping by space and DS-2026 type, without decorative card layers.
    Inputs, selection, focus rings and semantic alerts retain their contracts. */
 html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   background-image: none;
@@ -7117,14 +7117,13 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   margin-bottom: 48px;
 }
 .sim-root .sec {
-  font-family: var(--font-sans);
-  font-weight: 500;
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
   border-bottom: 0;
   padding-bottom: 0;
   margin-bottom: 24px;
 }
 .sim-root .home-cockpit {
-  --font-serif: var(--font-sans);
   gap: 32px;
 }
 .sim-root .home-header-cockpit {
@@ -7132,8 +7131,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   padding: 24px 0 0;
 }
 .sim-root .home-shift-title {
-  font-family: var(--font-sans);
-  font-weight: 400;
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
   text-wrap: balance;
 }
@@ -7162,8 +7161,8 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .home-session-panel h2,
 .sim-root .home-overview h2,
 .sim-root .home-followup-tools h2 {
-  font-family: var(--font-sans);
-  font-weight: 500;
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
 .sim-root .home-quick-actions-strip { gap: 16px; }
