@@ -20,7 +20,7 @@ Esta definición editorial no demuestra disponibilidad, abastecimiento regular o
 | Frase principal | **Del micelio a la mesa.** Portadas, presentación y cierre de piezas. |
 | Descriptor | **Hongos para cocinar con criterio.** Presentación comercial y materiales para cocina. |
 | Titular de entrada | **Conocer la seta. Imaginar el plato.** Campañas y presentación del recorrido; subordinado a la firma principal. |
-| Firma territorial | **Tenjo · Cundinamarca · Colombia.** Origen del proyecto, no garantía de origen de cada lote. |
+| Firma territorial | **Tenjo · Cundinamarca · Colombia.** Origen del proyecto, no garantía de origen de cada lote. Si se cita la altitud, escribir «unos 2.600 m» (decisión de Sebastián, 8 nov 2026); no usar 2.592. |
 | Expresión de oficio | **Cultivar. Observar. Aprender.** Sección de proceso, no segunda frase principal. |
 | CTA en piloto | **Recibir aviso de la primera cosecha.** Mientras no haya canal abierto, el botón dice «Preparar mensaje de aviso» y nada da a entender que alguien quedó inscrito. |
 
@@ -91,7 +91,7 @@ Dejar espacio libre alrededor de la firma. No deformar, rotar, alterar la compos
 
 Los mínimos de la antigua firma Gaya no son aplicables a este archivo. En etiquetas pequeñas, comprobar el nombre completo y omitir elementos secundarios antes de reducirlo. La revisión en pantalla no equivale a una prueba física.
 
-Los seis SVG Gaya del kit son exploraciones anteriores, no la firma seleccionada. [SOURCES.md](../08_brand/ds-2026/SOURCES.md) describe archivos Gaya de prueba y no documenta licencia comercial. **Confirmar los derechos de uso de la firma recibida y la licencia de Gaya donde siga utilizándose antes de producción o distribución.** Convertir un diseño a contornos no resuelve la licencia.
+Los seis SVG Gaya del kit son exploraciones anteriores, no la firma seleccionada. [SOURCES.md](../08_brand/ds-2026/SOURCES.md) describe archivos Gaya de prueba y no documenta licencia comercial. **Confirmar los derechos de uso de la firma recibida antes de producción o distribución; para la licencia de Gaya, ver §5.** Convertir un diseño a contornos no resuelve la licencia.
 
 ## 5. Tipografía y color
 
@@ -99,11 +99,15 @@ Los seis SVG Gaya del kit son exploraciones anteriores, no la firma seleccionada
 
 | Familia | Función |
 | --- | --- |
-| Gaya Patched | Titulares y especie; itálica para nombre científico. Su licencia comercial sigue pendiente de verificación. |
+| Gaya Patched | Titulares y especie; itálica para nombre científico. **Tipografía de titulares confirmada por Sebastián el 8 nov 2026**: ya cableada en el sitio. Licencia comercial en trámite (hoy los archivos son la versión de prueba); ver abajo y `08_brand/ds-2026/SOURCES.md`. |
 | IBM Plex Sans | Lectura, navegación, instrucciones y acciones |
 | IBM Plex Mono | Cantidades, códigos y rótulos breves; no párrafos |
 
 Gaya + IBM es la combinación de marca. Bricolage y Libre siguen como exploraciones del estudio tipográfico. PP Object Sans y JetBrains Mono de la guía anterior no dirigen esta edición comercial.
+
+Los titulares usan Gaya Patched, que ya está cableada en el sitio: `--font-editorial` resuelve a `'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif` (`08_brand/ds-2026/tokens/fonts.css`), `fonts.css` declara los diez cortes de la familia y el exportador público los convierte a WOFF2. Comprobado el 8 nov 2026: el `h1` de `shiitake.html` se renderiza en Gaya Patched. La pila de respaldo solo actúa si un soporte no puede cargar la fuente.
+
+**Licencia de Gaya (estado a 8 nov 2026): en trámite.** Sebastián confirmó que se obtendrá. Los archivos del repo son la versión de prueba de la fundición WrittenShape, y `SOURCES.md` registra qué falta anotar (alcance, comprobante, fecha). Mientras se obtiene, Gaya Patched se usa como acordado en diseño, maquetas, la web de revisión (hoy `noindex`) y piezas de trabajo. **La licencia debe estar anotada en `SOURCES.md` antes de:** abrir el sitio al índice o lanzarlo, imprimir, empacar, o distribuir los archivos de fuente fuera del equipo. Este párrafo se actualiza cuando la licencia exista.
 
 | Token | Hex | Función |
 | --- | --- | --- |
@@ -160,7 +164,7 @@ Esta guía gobierna lenguaje y aplicaciones **comerciales**; DS-2026 gobierna to
 
 La [guía de agosto](brand/legacy-guidelines-2026-08.md) queda como antecedente. La [investigación de octubre](brand/competitive-research-2026-10.md) documenta diez marcas y cinco casos tipográficos. Smallhold aporta claridad de especie/uso; Foraged y Far West Fungi, consulta profesional; Burlap & Barrel, estructura del ingrediente; Goldi y Fonts In Use, jerarquía editorial. Son referencias, no un DS compartido ni prueba de conversión.
 
-La identidad queda definida en esta edición. Para producirla: verificar licencia de Gaya, completar datos reales, probar impresión y enlaces públicos. La comprobación local no demuestra publicación del sitio ni registro de marca.
+La identidad queda definida en esta edición. Para producirla en impreso o empaque: registrar la licencia de Gaya (§5), completar datos reales, probar impresión y enlaces públicos. La comprobación local no demuestra publicación del sitio ni registro de marca.
 
 La siguiente validación propuesta es con cuatro chefs y dos personas que cocinen en casa: reconocer qué ofrece la marca, elegir una preparación y reunir una consulta sin confundir ilustración con producto disponible. Ese estudio aún no se ha ejecutado; el protocolo está en la investigación.
 

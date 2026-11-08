@@ -9,7 +9,7 @@ confidence: high
 
 # Setas de la Peña — Design System Documentation (FOS Core + FOS Editorial)
 
-**Sistema vigente: Field Operating System (FOS v3.0).** Este documento es la norma técnica unificada para la identidad visual, tipográfica, cromática y de empaque de Setas de la Peña en Tenjo, Cundinamarca (2.592 msnm).
+**Sistema vigente: Field Operating System (FOS v3.0).** Este documento es la norma técnica unificada para la identidad visual, tipográfica, cromática y de empaque de Setas de la Peña en Tenjo, Cundinamarca (unos 2.600 m).
 
 FOS opera bajo una **arquitectura bimodal integrada**:
 1. **FOS Core (Capa Operativa de Campo):** Software de producción (Setas OS), formularios de captura táctil, telemetría ambiental, tablas de sustratos y cuadernos de laboratorio. Alta densidad, cero sombras, contraste estricto y bordes de 1px de tinta cálida.
@@ -64,7 +64,7 @@ El sistema utiliza Custom Properties en la escala **Paper**, **Ink**, **Line**, 
 | Token | Hex | Referencia Botánica / Terroir | Aplicación Editorial / Gastronómica |
 |-------|-----|-------------------------------|-------------------------------------|
 | `accent-forest-moss` | `#2D3D24` | Musgo de bosque andino de niebla | Sello de marca primario, origen Tenjo, sello botánico |
-| `accent-tenjo-terracotta` | `#A44C27` | Arcilla mineral de la Peña de Juaica | Altitud (2.592 msnm), hora de corte, notas de tostado |
+| `accent-tenjo-terracotta` | `#A44C27` | Arcilla mineral de la Peña de Juaica | Altitud (unos 2.600 m), hora de corte, notas de tostado |
 | `accent-shiitake-umber` | `#4F4339` | Umbra terrosa de sustrato maduro | Densidad cárnica, perfil de umami profundo, maridajes |
 | `accent-spore-blush` | `#D99C8D` | Rosa tenue de espora (*P. djamor*) | Destacados de cosecha estacional, notas florales |
 | `accent-ochre-ray` | `#8A6312` | Ocre solar de espora madura | Sellos de certificación orgánicos, notas de cata doradas |
@@ -84,7 +84,7 @@ La tipografía fusiona el rigor taxonómico de los tratados de botánica con la 
 |---------|-------------------|---------------|
 | **Gaya Patched** | `'Gaya Patched'`, `'GayaPatched'`, Georgia, serif | **Display Identidad**: Títulos de vista, marcas de empaque, monografías, dossiers de cata |
 | **IBM Plex Sans Display** | `'IBM Plex Sans Display'`, `'IBM Plex Sans'`, sans-serif | **Cuerpo & UI**: Prosa de manuales, botones, labels de formulario, guías de cocción |
-| **IBM Plex Mono** | `'IBM Plex Mono'`, ui-monospace, monospace | **Datos & Terroir**: Códigos de lote (SDP-..), telemetría, altitud (2.592 msnm), tablas nutricionales |
+| **IBM Plex Mono** | `'IBM Plex Mono'`, ui-monospace, monospace | **Datos & Terroir**: Códigos de lote (SDP-..), telemetría, altitud (unos 2.600 m), tablas nutricionales |
 
 ### 2.2. Espectro Tipográfico Multi-Peso (Gaya Patched Editorial)
 
@@ -177,7 +177,7 @@ Ficha técnica gastronómica para restaurantes de alta cocina y brigadas de serv
 
 #### FOS-06.7 · The Terroir & Provenance Passport (`.fos-passport`)
 Superficie web responsiva accesible vía QR en empaque o menú:
-- **Cabezal Geográfico:** Silueta vectorial minimalista de la Peña de Juaica (2.592 msnm).
+- **Cabezal Geográfico:** Silueta vectorial minimalista de la Peña de Juaica (unos 2.600 m).
 - **Métricas de Cosecha:** Hora exacta de corte matutino (ej: `06:15 AM`), sustrato certificado y 0 aditivos.
 - **Ilustración Botánica:** Grabado botánico de alta resolución de la especie cosechada.
 
@@ -198,7 +198,7 @@ Monografía botánica desplegable de una sola especie:
 Para generar presentaciones o interfaces editoriales con el sistema completo, utilizar este prompt consolidado:
 
 ```markdown
-Crea una publicación / presentación de alta gama sobre Setas de la Peña (cultivo de precisión en Tenjo, Cundinamarca, 2.592 msnm).
+Crea una publicación / presentación de alta gama sobre Setas de la Peña (cultivo de precisión en Tenjo, Cundinamarca, unos 2.600 m).
 
 SISTEMA VISUAL OBLIGATORIO (FOS v3.0 Editorial):
 - Paleta: Terracota #A44C27, Musgo de Bosque #2D3D24, Umbra #4F4339, Lino #ECE6D8, Tinta #1E1D19.

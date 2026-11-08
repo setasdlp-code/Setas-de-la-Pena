@@ -12,7 +12,7 @@
 
 ## 1. Misión, Territorio y Posicionamiento
 
-Setas de la Peña opera un sistema modular, técnicamente medible y recuperable de cultivo de hongos gourmet y funcionales en **Tenjo, Cundinamarca** (2.592 msnm, en la vertiente oriental de la Peña de Juaica).
+Setas de la Peña opera un sistema modular, técnicamente medible y recuperable de cultivo de hongos gourmet y funcionales en **Tenjo, Cundinamarca** (unos 2.600 m, en la vertiente oriental de la Peña de Juaica).
 
 ### El Concepto: *De la Parcela a la Mesa*
 La identidad visual resuelve la tensión entre dos mundos que no se contradicen:
@@ -140,7 +140,7 @@ La conexión entre el cultivo y el consumidor/chef se articula a través de dos 
 
 ### 6.1. La Etiqueta Térmica (Física · 40x30 / 50x30 / 60x40 mm)
 - Funciona como un **sello de cata de autor**.
-- Encabezado: Especie en **Gaya** + descriptor territorial (`TENJO · 2.592 msnm`).
+- Encabezado: Especie en **Gaya** + descriptor territorial (`TENJO · UNOS 2.600 M`).
 - Cuerpo: Código de lote unívoco en **IBM Plex Mono**, fecha de cosecha y número de flush.
 - Pie: Código QR de alta densidad que apunta a la ficha de trazabilidad pública.
 

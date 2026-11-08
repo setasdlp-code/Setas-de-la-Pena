@@ -175,3 +175,44 @@ sales presentation, and an illustration is not evidence of a harvest.
 
 This addition does not establish a commercial license for Gaya. Confirm the
 required web/logo rights before external distribution or production.
+
+## Gaya Patched · estado de uso y licencia · 8 November 2026
+
+**Decisión.** Sebastián confirmó el 8 nov 2026 que Gaya Patched es la tipografía de
+titulares de la marca y que la licencia se obtendrá (ver `docs/brand-guidelines.md`
+§5). Esta sección registra de dónde vienen los archivos y qué falta anotar. No
+sustituye una licencia.
+
+**Procedencia de los archivos**
+- Gaya es una familia de la fundición WrittenShape (Raphaël de La Morinerie, 2021),
+  según `fonts/INSTALAR.md`, que la describe como **trial mientras se compra la
+  licencia oficial**.
+- La familia declarada son diez archivos: Thin, Light, Medium, Bold y Black, con sus
+  itálicas (`tokens/fonts.css`; commit `b794ab65`). No existe corte Regular 400.
+- `GayaPatched-Regular.otf` y `GayaPatched-Italic.otf` siguen en `assets/fonts/`
+  pero **no son de la familia** (280 glifos frente a 328) y ningún CSS los declara.
+  No usarlos; retirarlos cuando se confirme que nada los referencia.
+- Los hashes SHA-256 de la tabla de integridad identifican exactamente estos archivos.
+
+**Uso en el repo (comprobado el 8 nov 2026).** `--font-editorial` resuelve a
+`'Gaya Patched', 'Gaya', 'Iowan Old Style', Georgia, serif`. El sitio público
+(`commercial.css` → `market.css` → `tokens/fonts.css`) renderiza sus titulares en
+Gaya Patched, y `scripts/quality/check_public_website.cjs` lo comprueba. El
+exportador (`scripts/export_public_website.py`) convierte los `.otf` a WOFF2.
+
+**Licencia comercial: en trámite.** El repo no contiene contrato, factura, EULA ni
+correo de la fundición. Completar al obtenerla:
+
+| Campo | Valor |
+|---|---|
+| Fundición / titular de derechos | WrittenShape (según `fonts/INSTALAR.md`) |
+| Licencia adquirida (nombre y alcance: desktop, web, app, empaque) | en trámite |
+| Número de pedido o comprobante | por anotar |
+| Fecha | por anotar |
+| ¿Cubre incrustar en web (`@font-face`) y WOFF2? | por confirmar |
+| ¿Cubre un repositorio público o privado con los archivos? | por confirmar |
+
+**Uso mientras tanto.** Diseño, maquetas, la web de revisión (`noindex`) y piezas de
+trabajo. Antes de abrir el sitio al índice o lanzarlo, imprimir, empacar o distribuir
+los archivos fuera del equipo, rellenar la tabla y, si la licencia trae archivos
+distintos de los de prueba, sustituirlos y regenerar las sumas de verificación.
