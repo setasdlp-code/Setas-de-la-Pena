@@ -49,7 +49,7 @@ const root=path.resolve(__dirname,'..');
   const keyboardAdd=keyboard.getByRole('button',{name:'Agregar Paja de trigo a la receta',exact:true});
   await keyboardAdd.focus();
   await expect(keyboardAdd).toBeFocused();
-  await keyboardAdd.press('Enter');
+  await keyboard.keyboard.press('Enter');
   await expect(keyboard.locator('#bl-receta .rec-pct-input')).toHaveValue('10');
   await expect(keyboard.locator('.sim-live-dashboard')).toContainText('Paja de trigo');
   await expect(keyboardAdd).toHaveCount(0);
