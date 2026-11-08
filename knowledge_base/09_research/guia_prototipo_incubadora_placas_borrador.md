@@ -5,7 +5,7 @@ category: research
 load_priority: on_request
 status: draft
 confidence: low
-last_reviewed: 2026-10-31
+last_reviewed: 2026-11-08
 related_documents:
   - ../04_facility/incubation.md
   - ../05_equipment/environmental_control.md
@@ -76,6 +76,29 @@ Identificar cada sonda física y marcar puntos de aire a altura de carga, superf
 
 Para C1 y C2 mantener las coordenadas horizontales, ventilador, carga y condiciones de ensayo. El sensor de la cara superior necesariamente se traslada de A1 a A2: documentar el cambio. Si se usan rondas por falta de sondas, conservar una referencia fija y comparar solo cuando las condiciones sean comparables.
 
+**Instrumentación disponible e integración propuesta con Setas OS.** La asignación se basa en el [inventario de equipos](../metadata/equipment.yaml); es evidencia documental de disponibilidad, no una verificación física del montaje. El [diseño de sensores y materiales](../../field-os-simulador/setas-os/telemetry-publisher/hardware-design.md) conserva las cantidades, reservas y contradicciones detectadas en el repositorio.
+
+| Elemento para la incubadora | Asignación propuesta y condición previa |
+|---|---|
+| Aire: temperatura y HR | Un SHT45 breakout de los dos registrados. Instalar únicamente después de comprobar membrana o capuchón protector equivalente; no exponer la placa desnuda al ambiente húmedo. |
+| Nodo de lectura | Uno de los tres ESP32-WROOM-32. Identidad lógica propuesta: `setas-incubacion-01`; verificar y registrar qué unidad física recibe ese nombre. |
+| Gabinete y alimentación | Los dos TICONN documentados están propuestos para Martha y Cloudlab; el gabinete del tercer nodo sigue pendiente. Verificar alimentación del ESP32 y protección del conjunto. Las fuentes Mean Well registradas son de 12 V: no conectarlas directamente a los pines de alimentación lógica. |
+| Mapa térmico y núcleo | No se confirmó stock de DS18B20 ni direcciones de sondas. Las exigencias de calificación siguen vigentes; el SHT45 de aire no las sustituye. No habilitar lecturas de núcleo o sustrato a partir de valores de ejemplo. |
+| CO₂ | El único MH-Z19C registrado está propuesto para Cloudlab. No asignar CO₂ a esta incubadora por defecto. La propiedad de SCD30 sigue en contradicción entre documentos y no se presupone resuelta. |
+
+El perfil [esphome-incubacion.yaml](../../field-os-simulador/setas-os/telemetry-publisher/esphome-incubacion.yaml) propone I²C con SDA en GPIO21, SCL en GPIO22 y dirección `0x44`. Confirmar el pinout y la alimentación de la sonda concreta antes de conectar; estos valores de firmware no identifican colores ni terminales de un cable físico. El perfil es **solo de telemetría**: no reemplaza el firmware de control térmico ni añade acciones de relé.
+
+La ruta propuesta es **SHT45 → ESP32/ESPHome → HTTPS en Raspberry Pi Zero 2 W → Firestore → Módulos de Setas OS**. El Pi 4 conserva su función de Home Assistant. El sistema operativo, alimentación, almacenamiento, dirección de red y certificado del Pi Zero aún requieren verificación; su existencia en inventario no demuestra que el publicador esté instalado.
+
+Para preparar y comprobar la conexión:
+
+1. Montar e identificar el sensor protegido y el nodo, con el calefactor desconectado. Registrar posición, fijación e identificación física; conservar la comparación de sondas indicada arriba.
+2. Seguir la [configuración del publicador](../../field-os-simulador/setas-os/telemetry-publisher/README.md). En su archivo privado, vincular `setas-incubacion-01` con `incubacion_01`. Mantener credenciales fuera del repositorio; el arranque con identidad de servicio y el flasheo requieren aprobación humana. No utilizar los binarios de validación, que contienen secretos sintéticos.
+3. Confirmar que `telemetria_salas/incubacion_01` recibe `metric_readings.temperature_c` y `metric_readings.rh_pct`, cada uno con su unidad, dispositivo y hora de observación. El perfil registra la hora al recibir cada muestra del sensor; retransmitir un valor guardado no lo convierte en una observación nueva.
+4. Comprobar que esas mismas lecturas aparecen en el módulo de incubación, sin CO₂ ni temperatura de sustrato inventados. Interrumpir la señal de forma controlada y verificar que la lectura envejece y se indica como antigua. Si falla la conexión, detener la puesta en servicio de la telemetría y registrar el fallo; no modificar el control térmico para compensarlo.
+
+**Estado de validación:** los tres perfiles propuestos, incluido el de incubación, pasaron validación de configuración y compilación completa con ESPHome 2026.10.2 y ESP-IDF 5.5.6 el 2026-11-08; ver [evidencia de compilación](../../field-os-simulador/setas-os/telemetry-publisher/firmware-validation.json). Se usaron secretos de prueba. No se realizó flasheo, puesta en servicio del publicador ni verificación de lecturas físicas. Esta integración no cierra la puerta eléctrica de la sección 5 ni la calificación térmica de la sección 6.
+
 ## 5. Puerta previa a una prueba energizada
 
 Un electricista debe revisar y documentar: identificación, aislamiento y terminaciones del cable; continuidad de tierra de partes metálicas cuando corresponda; diferencial, sobrecorriente y desconexión; limitador térmico independiente, fusible térmico, ubicación de sus sensores; protección y comportamiento ante falla real del ventilador; soportes y materiales próximos. La clasificación del relé y la instalación de la fuente también requieren verificación. No se proporciona un circuito de red porque faltan esos datos.
@@ -100,5 +123,8 @@ La [QuietWarmth Float](https://mpglobalproducts.com/floor-heating-systems/float/
 | Fotos y separación visible A1/A2 | Pendiente |
 | Fijaciones, soporte y distancias | Pendiente |
 | Ventilador y puntos/identificadores de sensores | Pendiente |
+| Nodo físico / identidad lógica / módulo Setas OS | Pendiente; propuesta: `setas-incubacion-01` / `incubacion_01` |
+| Protección del SHT45, gabinete y alimentación del nodo | Pendiente de verificación física |
+| Telemetría real: hora de muestra, recepción y envejecimiento | Pendiente; compilación de prueba no equivale a conexión física |
 | Protecciones existentes y revisión profesional | Pendiente |
 | Condición para prueba energizada | Bloqueada hasta verificación documentada |
