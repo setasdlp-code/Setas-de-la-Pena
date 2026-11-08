@@ -163,19 +163,22 @@ test.describe('desktop navigation contract', () => {
     const catalogBtn = origin.getByRole('button', { name: 'Catálogo', exact: true });
     await catalogBtn.click();
     await expect(catalogBtn).toHaveAttribute('aria-pressed', 'true');
-    // Exercise native keyboard activation here. The pointer path is covered by
-    // formulator-decisions.browser.cjs (Gate 4); in authenticated CI its click
-    // dispatch can time out even after React has added the ingredient.
+    // Exercise native keyboard activation here. Gate 4 covers the pointer path.
+    // Send the key to the verified focus instead of using a locator action:
+    // locator actions also wait for frame navigation signals. Completion here
+    // is the recipe update below, with the current page URL preserved.
+    const recipeUrl = page.url();
     const addIngredient = page.getByRole('button', { name: 'Agregar Paja de trigo a la receta', exact: true });
     await addIngredient.focus();
     await expect(addIngredient).toBeFocused();
-    await addIngredient.press('Enter');
+    await page.keyboard.press('Enter');
     await expect(liveSummary).toBeVisible();
     await expect(liveSummary).toContainText('Paja de trigo');
     // Editing lives in the recipe summary — the panel below has no row list.
     await expect(recipe).toContainText('Paja de trigo');
     await expect(recipe.locator('.rec-pct-input')).toHaveValue('10');
     await expect(addIngredient).toHaveCount(0);
+    await expect(page).toHaveURL(recipeUrl);
     await expect(summary).toBeVisible();
     await expect(summary).not.toContainText('Paja de trigo');
     await expect(command).toBeVisible();
