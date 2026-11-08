@@ -7101,3 +7101,34 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .generator-comparison th,.sim-root .generator-comparison td{padding:4px 8px;border:1px solid var(--border-soft);text-align:right;white-space:nowrap}
 .sim-root .generator-comparison th:first-child{text-align:left}
 .sim-root .generator-comparison button{min-height:44px;background:var(--paper-0);color:var(--ink-900);border:1px solid var(--border-strong);cursor:pointer}
+
+/* Editorial continuity with website.css and home-hero.css. Retain DS-2026
+   typography, semantic status colours and the operational grid. */
+.sim-root .home-header-cockpit { border-bottom:1px solid var(--border-hairline); padding-bottom:24px; }
+.sim-root .home-shift-title { font-family:var(--font-editorial); font-weight:500; color:var(--brand-primary); text-wrap:balance; }
+.sim-root .home-primary-column > .sdp-band--ahora,
+.sim-root .home-lots-shell { border-radius:0; padding:0; background:transparent; box-shadow:none; }
+.sim-root .home-shift-core,
+.sim-root .home-pending-panel,
+.sim-root .home-session-panel,
+.sim-root .home-overview,
+.sim-root .home-followup-tools { border-radius:0; border:0; border-top:1px solid var(--border-hairline); background:transparent; box-shadow:none; }
+.sim-root .home-panel-heading h2,
+.sim-root .home-session-panel h2,
+.sim-root .home-overview h2,
+.sim-root .home-followup-tools h2 { font-family:var(--font-editorial); font-weight:500; color:var(--brand-primary); }
+.sim-root .home-quick-action,
+.sim-root .home-quick-action.is-jornada,
+.sim-root .home-quick-action.is-primary { border-radius:var(--radius-sm); border:1px solid var(--border-hairline); background:var(--surface-panel); box-shadow:none; }
+.sim-root .home-quick-action.is-jornada,
+.sim-root .home-quick-action.is-primary { border-color:var(--brand-primary); background:var(--surface-recessed); color:var(--text-primary); }
+.sim-root .home-quick-action.is-jornada .home-action-arrow,
+.sim-root .home-quick-action.is-primary .home-action-arrow { color:var(--brand-primary); background:transparent; }
+.sim-root .home-quick-action:hover { border-color:var(--brand-primary); background:var(--surface-recessed); color:var(--text-primary); }
+.sim-root .home-quick-action.is-jornada:hover,
+.sim-root .home-quick-action.is-primary:hover { background:var(--surface-panel); color:var(--text-primary); }
+.sim-root .home-dashboard-switch { border-bottom:1px solid var(--border-hairline); padding-bottom:16px; }
+.sim-root .home-dashboard-switch button { border:1px solid transparent; background:transparent; font-weight:400; }
+.sim-root .home-dashboard-switch button[aria-pressed="true"] { border-color:var(--brand-primary); background:var(--brand-primary); color:var(--text-inverse); }
+.sim-root .home-tools-grid button { border-top:1px solid var(--border-hairline); background:var(--surface-recessed); }
+.sim-root .home-tools-grid button:hover { background:var(--surface-panel); }
