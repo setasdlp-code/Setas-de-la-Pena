@@ -1,52 +1,4 @@
 'use strict';
-const species = {
-  shiitake: { code: 'SP. 001', name: 'Shiitake', latin: 'Lentinula edodes', image: 'shiitake', category: 'Una especie para la cocina', description: 'Perfil de sabor y textura del shiitake, con ideas para cocinarlo.', profile: 'Umami intenso, con notas ligeramente ahumadas.', use: 'Para sopas y otras preparaciones cocinadas. Ideas para explorar su sabor y textura.', culinary: true },
-  melena: { code: 'SP. 002', name: 'Melena de león', latin: 'Hericium erinaceus', image: 'lions-mane', category: 'Una especie para explorar', description: 'Su silueta singular le da nombre. Una de las protagonistas de nuestro archivo de hongos, con una textura que invita a probar otras preparaciones.', profile: 'Textura suave y esponjosa, con notas dulces y sabrosas.', use: 'Desmenuzada, en piezas o incorporada a una sopa.', culinary: true },
-  eryngii: { code: 'SP. 003', name: 'Eryngii', latin: 'Pleurotus eryngii', image: 'cardo', category: 'Una especie para explorar', description: 'También conocido como seta de cardo o king trumpet. Su pie grueso y sus láminas son protagonistas de esta ficha.', profile: 'Pie carnoso y textura firme.', use: 'Cortado a lo largo para saltear o en rodajas para asar.', culinary: true }
-};
-const dialog = document.querySelector('#species-dialog');
-let opener;
-// Reuse the responsive image already present in the collection, including exported variants.
-function setSpeciesImage(image, key) {
-  const source = document.querySelector(`.specimen-button[data-species="${key}"] img`);
-  image.src = source.src;
-  if (source.srcset) image.srcset = source.srcset;
-  else image.removeAttribute('srcset');
-  image.sizes = '(max-width: 650px) 90vw, 550px';
-}
-function openSpecies(key, button) {
-  const item = species[key];
-  if (!item) return;
-  opener = button;
-  document.querySelector('#dialog-code').textContent = `${item.code} · Ficha de especie`;
-  for (const field of ['title', 'latin', 'description', 'category', 'profile', 'use']) {
-    document.querySelector(`#dialog-${field}`).textContent = field === 'title' ? item.name : item[field];
-  }
-  document.querySelector('#dialog-profile-label').textContent = item.culinary ? 'Perfil de referencia' : 'Identidad';
-  document.querySelector('#dialog-use-label').textContent = item.culinary ? 'En la cocina' : 'En el archivo';
-  const image = document.querySelector('#dialog-image');
-  setSpeciesImage(image, key);
-  image.alt = `Ilustración de ${item.name.toLowerCase()}`;
-  document.querySelector('#dialog-source').hidden = !item.culinary;
-  const sourceNote = document.querySelector('#dialog-source-note');
-  sourceNote.hidden = !item.culinary;
-  sourceNote.textContent = 'Perfil de referencia de la especie; no corresponde a una cata de nuestra cosecha.';
-  const editorial = document.querySelector('#dialog-full-page');
-  const routes = { shiitake: 'shiitake', melena: 'melena-de-leon', eryngii: 'eryngii' };
-  const editorialURL = new URL(`/especies/${routes[key]}`, location.origin);
-  const pairing = new URLSearchParams(location.search).get('pairing');
-  if (['mono', 'bricolage', 'libre'].includes(pairing)) editorialURL.searchParams.set('pairing', pairing);
-  editorial.href = editorialURL.href;
-  editorial.textContent = `Leer la ficha de ${item.name.toLowerCase()} ↗`;
-  editorial.hidden = false;
-  document.querySelector('#dialog-order').hidden = key !== 'shiitake';
-  document.querySelector('#species-dialog .availability-note').textContent = key === 'shiitake'
-    ? 'Disponibilidad, presentaciones y entrega por confirmar. La consulta se prepara en la ficha de shiitake.'
-    : 'Disponibilidad, formatos y precios por confirmar.';
-  dialog.scrollTop = 0;
-  dialog.showModal();
-}
-if (dialog) document.querySelectorAll('[data-species]').forEach(button => button.addEventListener('click', () => openSpecies(button.dataset.species, button)));
 // Preparation filters suggest sourced uses; they never imply stock.
 const preparations = {
   sopa: { label: 'sopa o caldo', reasons: {
@@ -111,23 +63,4 @@ document.querySelector('#filter-reset').addEventListener('click', () => {
   document.querySelector('[data-prep="any"]').focus();
 });
 document.querySelector('#prep-guide').hidden = false;
-if (dialog) {
-  document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('keydown', event => {
-    if (event.key !== 'Tab') return;
-    const controls = [...dialog.querySelectorAll('a[href], button:not([disabled]), [tabindex="0"]')]
-      .filter(element => element.getClientRects().length > 0);
-    const first = controls[0];
-    const last = controls[controls.length - 1];
-    if ((!event.shiftKey && document.activeElement === last) || (event.shiftKey && document.activeElement === first)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
-  });
-  dialog.addEventListener('click', event => {
-    const bounds = dialog.getBoundingClientRect();
-    if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
-  });
-  dialog.addEventListener('close', () => opener?.focus());
-}
 document.querySelector('#year').textContent = new Date().getFullYear();

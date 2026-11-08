@@ -85,6 +85,18 @@ jobs:
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: npm run test:e2e
 
+      - name: Preserve failed E2E visual diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: setas-os-e2e-failure
+          path: |
+            field-os-simulador/setas-os/test-results/**/error-context.md
+            field-os-simulador/setas-os/test-results/**/*.png
+          if-no-files-found: ignore
+          retention-days: 3
+
+
       # Compuerta empírica: ¿el cambio predice mejor o peor el EB real?
       # El corpus trae rendimientos de la finca y este repositorio es público,
       # así que no está versionado: se inyecta como secret (GROUND_TRUTH_CORPUS,

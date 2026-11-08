@@ -331,11 +331,10 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
   display: none;
 }
 .sim-root .panel-accent{ 
-  background-color: var(--paper-0) !important;
+  background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
-  border:1px solid var(--border-soft) !important;
-  border-top:3px solid var(--accent-terracotta) !important;
+  border: 0 !important;
 }
 .sim-root .spp-sect{
   background: var(--paper-0);
@@ -7101,3 +7100,119 @@ html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
 .sim-root .generator-comparison th,.sim-root .generator-comparison td{padding:4px 8px;border:1px solid var(--border-soft);text-align:right;white-space:nowrap}
 .sim-root .generator-comparison th:first-child{text-align:left}
 .sim-root .generator-comparison button{min-height:44px;background:var(--paper-0);color:var(--ink-900);border:1px solid var(--border-strong);cursor:pointer}
+
+/* Minimalism: grouping by space and DS-2026 type, without decorative card layers.
+   Inputs, selection, focus rings and semantic alerts retain their contracts. */
+html[data-setas-auth-state="authenticated"] .fos-bg-mountain {
+  background-image: none;
+}
+.sim-root { background-color: var(--surface-page); }
+.sim-root .panel,
+.sim-root .spp-sect {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 24px 0;
+  margin-bottom: 48px;
+}
+.sim-root .sec {
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 24px;
+}
+.sim-root .home-cockpit {
+  gap: 32px;
+}
+.sim-root .home-header-cockpit {
+  border: 0;
+  padding: 24px 0 0;
+}
+.sim-root .home-shift-title {
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+.sim-root .home-primary-column > .sdp-band--ahora,
+.sim-root .home-lots-shell {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-shift-core,
+.sim-root .home-pending-panel,
+.sim-root .home-session-panel,
+.sim-root .home-overview,
+.sim-root .home-followup-tools {
+  border: 0;
+  border-radius: 0;
+  padding: 24px 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-primary-column,
+.sim-root .home-followup { gap: 32px; }
+.sim-root .home-panel-heading h2,
+.sim-root .home-session-panel h2,
+.sim-root .home-overview h2,
+.sim-root .home-followup-tools h2 {
+  font-family: var(--font-editorial);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.sim-root .home-quick-actions-strip { gap: 16px; }
+.sim-root .home-quick-action,
+.sim-root .home-quick-action.is-jornada,
+.sim-root .home-quick-action.is-primary {
+  border: 1px solid var(--border-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sim-root .home-quick-action.is-jornada,
+.sim-root .home-quick-action.is-primary { border-color: var(--text-primary); }
+.sim-root .home-action-arrow { background: transparent; }
+.sim-root .home-quick-action:hover { background: var(--surface-recessed); }
+.sim-root .home-dashboard-switch {
+  border: 0;
+  gap: 24px;
+  margin-bottom: 0;
+}
+.sim-root .home-dashboard-switch button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding-inline: 0;
+  background: transparent;
+  color: var(--text-metadata);
+  font-weight: 400;
+}
+.sim-root .home-dashboard-switch button[aria-pressed="true"] {
+  border-color: var(--text-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.sim-root .home-tools-grid { gap: 24px; }
+.sim-root .home-tools-grid button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 0;
+}
+.sim-root .home-tools-grid button:hover { background: var(--surface-recessed); }
+@media (min-width: 961px) {
+  .sim-root .home-cockpit { padding-block: 24px; }
+  .sim-root .home-primary-column,
+  .sim-root .home-followup { gap: 48px; }
+}
+@media (max-width: 560px) {
+  .sim-root .home-cockpit { gap: 24px; padding-inline: 16px; }
+  .sim-root .home-header-cockpit { padding-top: 8px; }
+  .sim-root .home-shift-core { padding-top: 8px; }
+  .sim-root .home-quick-actions-strip { gap: 8px; }
+}

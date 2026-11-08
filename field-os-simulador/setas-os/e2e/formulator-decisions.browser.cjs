@@ -4,6 +4,7 @@ const path=require('node:path');
 const http=require('node:http');
 const assert=require('node:assert/strict');
 const {chromium,expect}=require('@playwright/test');
+const {expectDesktopWorkspace,expectDesktopIngredientScroll,expectMobileWorkspace}=require('./formulator-layout-contract.cjs');
 const root=path.resolve(__dirname,'..');
 
 (async()=>{
@@ -30,10 +31,19 @@ const root=path.resolve(__dirname,'..');
     localStorage.setItem('setas_formulator_draft_v1',JSON.stringify({version:1,recipe,sKey:'p_ostreatus_gris',hasPickedSpecies:confirmed,lockedIds}));
    },{recipe,lockedIds,confirmed});
    await page.goto(`http://127.0.0.1:${server.address().port}/__harness.html?view=formular`);
-   await expect(page.locator('.rec-pct-input').first()).toBeVisible();
+   await expect(page.locator('#bl-ingredientes')).toBeVisible();
    await page.waitForFunction(()=>window.SetasFormulatorAPI?.adapterType()==='native');
    return page;
   };
+  const empty=await open([]);
+  await empty.getByRole('button',{name:'Catálogo',exact:true}).first().click();
+  await empty.getByTestId('form-review-gauges').locator('summary').click();
+  await expectDesktopWorkspace(empty);
+  await empty.getByRole('button',{name:'Agregar Paja de trigo a la receta',exact:true}).click({timeout:10000});
+  await expect(empty.locator('.rec-pct-input').first()).toHaveValue('10');
+  await empty.close();
+  console.log('PASS empty recipe accepts a catalog ingredient.');
+
   const initial=[{id:'aserrin_eucalipto',p:13.3333},{id:'paja_trigo',p:1},{id:'cascarilla_arroz',p:1},{id:'salvado_trigo',p:1}];
   const balance=await open(initial,['aserrin_eucalipto']);
   await balance.getByTestId('formulator-next-action').click();
@@ -44,6 +54,58 @@ const root=path.resolve(__dirname,'..');
   assert.deepEqual(await balance.evaluate(()=>SetasFormulatorAPI.getRecipe()),initial);
   await balance.close();
   console.log('PASS precise balance preserves fixed values and can be undone.');
+
+  const layoutProbe=await open([{id:'paja_trigo',p:100}]);
+  await layoutProbe.getByRole('button',{name:'Catálogo',exact:true}).first().click();
+  await layoutProbe.getByTestId('form-review-gauges').locator('summary').click();
+  await expectDesktopWorkspace(layoutProbe);
+  await expectDesktopIngredientScroll(layoutProbe);
+  // Negative controls: the shared contract must reject actual regressions,
+  // rather than merely stop checking the old single-column assumptions.
+  const stacked=await layoutProbe.addStyleTag({content:'.sim-root .builder-wrap .form-recipe-workspace{grid-template-columns:1fr!important;grid-template-areas:"active-head" "ingredients" "review"!important}'});
+  try { await assert.rejects(()=>expectDesktopWorkspace(layoutProbe)); }
+  finally { await stacked.evaluate(el=>el.remove()); }
+  const unbounded=await layoutProbe.addStyleTag({content:'.sim-root .form-recipe-workspace>.builder-left{overflow:visible!important}'});
+  try { await assert.rejects(()=>expectDesktopIngredientScroll(layoutProbe)); }
+  finally { await unbounded.evaluate(el=>el.remove()); }
+  const roleHeaders=layoutProbe.locator('.role-group-hdr');
+  const firstRole=roleHeaders.nth(0);
+  const secondRole=roleHeaders.nth(1);
+  await firstRole.click();
+  await expect(firstRole).toHaveAttribute('aria-expanded','false');
+  await expect(secondRole).toHaveAttribute('aria-expanded','true');
+  await secondRole.click();
+  await expect(firstRole).toHaveAttribute('aria-expanded','false');
+  await expect(secondRole).toHaveAttribute('aria-expanded','false');
+  await firstRole.click();
+  await expect(firstRole).toHaveAttribute('aria-expanded','true');
+  await expect(secondRole).toHaveAttribute('aria-expanded','false');
+  await layoutProbe.setViewportSize({width:390,height:844});
+  await expectMobileWorkspace(layoutProbe);
+  await layoutProbe.close();
+  console.log('PASS desktop columns, bounded sidebar wheel scroll, independent groups and mobile page flow.');
+
+  const ownership=await open([{id:'paja_trigo',p:100}]);
+  const untouched=await ownership.evaluate(()=>{
+   const snapshot=SetasFormulatorAPI.getRecipe();
+   snapshot[0].p=1;
+   return SetasFormulatorAPI.getRecipe();
+  });
+  assert.deepEqual(untouched,[{id:'paja_trigo',p:100}]);
+  assert.equal(await ownership.evaluate(async()=>{
+   const target=[{id:' paja_trigo ',pct:80},{id:'salvado_trigo',pct:20}];
+   const result=await SetasFormulatorAPI.applyRecipe(target);
+   target[0].pct=1;
+   if(result.ok) result.recipe[0].p=2;
+   return result.ok;
+  }),true);
+  await expect.poll(()=>ownership.evaluate(()=>SetasFormulatorAPI.getRecipe().map(({id,p})=>({id,p}))))
+   .toEqual([{id:'paja_trigo',p:80},{id:'salvado_trigo',p:20}]);
+  await expect(ownership.locator('.rec-pct-input').first()).toHaveValue('80');
+  assert.equal((await ownership.evaluate(()=>SetasFormulatorAPI.undoRecipe())).ok,true);
+  await expect.poll(()=>ownership.evaluate(()=>SetasFormulatorAPI.getRecipe())).toEqual([{id:'paja_trigo',p:100}]);
+  await ownership.close();
+  console.log('PASS native recipe snapshots, canonical input and undo preserve actual React state.');
 
   const fixed=await open([{id:'aserrin_eucalipto',p:80},{id:'salvado_trigo',p:10}],['aserrin_eucalipto','salvado_trigo']);
   await fixed.getByTestId('formulator-next-action').click();

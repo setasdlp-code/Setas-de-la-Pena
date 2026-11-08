@@ -32,7 +32,7 @@ const report = { checks: [], errors: [] };
     page.on('pageerror',e=>report.errors.push(e.message));
     for (const width of [320,390,768,1440]) {
       await page.setViewportSize({width,height:900});
-      for (const route of ['home','setas','cocina','restaurantes','mundo-micelar','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
+      for (const route of ['home','setas','cocina','tecnicas','cultivo','restaurantes','mundo-micelar','shiitake','recetas','recetas-eryngii','recetas-melena','especies/shiitake','especies/melena-de-leon','especies/eryngii']) {
         const requests=[];
         const listener=request=>requests.push(request.url());
         page.on('request',listener);
@@ -58,24 +58,16 @@ const report = { checks: [], errors: [] };
         report.checks.push({type:'metadata-type-links-labels-responsive-images',route,width,result:'passed'});
       }
     }
-    await page.goto(base+'setas#coleccion');
-    const opener=page.locator('.specimen-button[data-species="shiitake"]');
-    await opener.focus(); await page.keyboard.press('Enter');
-    const dialog=page.locator('#species-dialog');
-    assert.equal(await dialog.getAttribute('aria-describedby'),'dialog-description');
-    assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('dialog-close')),true);
-    for(let i=0;i<12;i++) { await page.keyboard.press('Tab'); assert.equal(await page.evaluate(()=>document.activeElement.closest('dialog')?.id),'species-dialog'); }
-    await page.keyboard.press('Escape');
-    assert.equal(await page.evaluate(()=>document.activeElement.dataset.species),'shiitake');
-    for (const [key, image] of [['melena', 'lions-mane'], ['eryngii', 'cardo']]) {
-      await page.locator(`.specimen-button[data-species="${key}"]`).click();
-      await page.locator('#dialog-image').evaluate(i=>i.decode());
-      assert.match(await page.locator('#dialog-image').getAttribute('src'),new RegExp(image+'.*\\.webp$'));
-      assert.ok((await page.locator('#dialog-image').getAttribute('srcset')).includes('320w'));
-      assert.equal(await page.locator('#dialog-order').isVisible(),false);
-      await page.keyboard.press('Escape');
+    for (const [key, slug] of [['shiitake', 'shiitake'], ['melena', 'melena-de-leon'], ['eryngii', 'eryngii']]) {
+      await page.goto(base+'setas#coleccion');
+      const link=page.locator(`.specimen-link[data-species="${key}"]`);
+      const image=link.locator('img');
+      assert.ok((await image.getAttribute('srcset')).includes('320w'));
+      await link.focus(); await page.keyboard.press('Enter');
+      await page.waitForURL(`**/especies/${slug}`);
+      assert.equal(await page.locator('h1').count(),1);
     }
-    report.checks.push({type:'keyboard-dialog-focus-responsive-dynamic-images',result:'passed'});
+    report.checks.push({type:'keyboard-direct-species-links-responsive-images',result:'passed'});
     for (const [route,status,type] of [['nonexistent-audit-page',404,'text/html'],['nested/missing/page',404,'text/html'],['robots.txt',200,'text/plain'],['sitemap.xml',200,'application/xml']]) {
       const response=await context.request.get(base+route);
       assert.equal(response.status(),status,route);
