@@ -17,64 +17,80 @@ related_documents:
 
 ## Materiales y nomenclatura
 
-- Cámara descrita como 80 × 50 × 90 cm: confirmar si son dimensiones interiores. El volumen de 360 L solo aplica si lo son.
-- A1 y B1: láminas de 25 × 50 cm, 0,3 mm nominales, cada una con cable existente debajo. A2 y B2: láminas adicionales.
-- C1: A1 sola. C2: A1 con A2 apoyada encima. La sujeción de A2 debe ser reversible y no modificar el serpentín de A1.
-- Una resistencia de 168 Ω fue comunicada para un cable; confirmar su identificación y medir ambas. No extrapolar el valor al segundo.
-- Ventilador de 12 V, ESP32, SHT45 y sondas DS18B20: identificar unidades y estado. Soporte, resguardo y protecciones adecuados: **pendientes de inventario y revisión**.
+**Procedencia y alcance de la revisión (2026-11-08).** Se revisaron los chats «SOL 6.1 — Calefacción incubadora» y «Crear manual técnico de incubadora», incluida su guía Rev7 y guía rápida Ed4. Las aclaraciones del propietario en el chat «Wire sensors to the módulos of setas OS» prevalecen para describir el montaje actual. Son datos comunicados por el propietario; no constituyen una inspección presencial ni mediciones certificadas. Las propuestas anteriores no se presentan como elementos ya instalados.
+
+- Dimensiones interiores comunicadas: **90 × 60 × 80 cm**, interpretadas como largo × ancho × alto. Volumen geométrico calculado: **432 L**, antes de descontar componentes y carga. Confirmar los puntos de medición; no equivale al volumen útil para bolsas.
+- Superficie calefactora: **cuatro láminas de aluminio contiguas**, que el propietario indica que cubren la base. Encima descansan directamente **dos láminas de acero contiguas**, sin separadores, formando la misma superficie conjunta. Las cotas anteriores de 25 × 50 cm por lámina no permiten justificar por sí solas la cobertura actual de 90 × 60 cm: medir las piezas, juntas y superficie realmente cubierta. Espesores actuales por verificar.
+- **Dos cables iguales, de unos 5 m**, fijados homogéneamente en serpentinas bajo el aluminio, conectados **en serie a 120 V**, según el propietario. Una resistencia de **168 Ω** fue medida en un solo cable. Suponiendo igual resistencia en el segundo: 336 Ω totales, 0,357 A y **42,9 W totales**; es una estimación eléctrica, no consumo medido ni aprobación térmica.
+- La [publicación original del cable](https://www.mercadolibre.com.co/resistencia-electrica-de-silicona-incubadora-100w-110220v/up/MCOU2590062546?pdp_filters=item_id:MCO532589727), consultada el 2026-11-08, mezcla un título de 100 W con 74 W a 110 V y menciona tanto 5 m como 5,2 m y 33 Ω/m. Sus datos de aislamiento y temperatura son declaraciones comerciales sin validación del montaje. No trasladar la temperatura anunciada al aluminio, acero, madera, PVC o aislamiento.
+- Separación comunicada: **10 cm libres desde el punto más bajo del cable hasta el Mylar del piso**. Es una cota geométrica, no una distancia de seguridad validada.
+- Apoyo de las láminas: **bloques de madera en zonas sin cable**. Hay tres varillas metálicas en un riel protegido, sin contacto directo con aluminio o acero según el propietario. El material, la unión y el recorrido de cargas del riel necesitan documentación; identificar la cinta descrita como «para calor». No se presupone aislamiento eléctrico ni aptitud térmica de esa cinta o de la madera.
+- Paredes sujetas por perfiles de aluminio en L en las esquinas; **las L sostienen solo las paredes**, no el conjunto calefactor. Envolvente con cielorraso de PVC blanco revestido interiormente de Mylar. Compatibilidad con temperatura, adhesivos y fijaciones pendiente.
+- Piso, de arriba abajo: Mylar → EPS de 2 cm → EPS de 2 cm → EPS de 1,5 cm → Yumbolón → colchoneta de camping → Yumbolón → colchoneta de camping. Cinta de gotera aluminizada refuerza el exterior; no se le atribuye función estructural, ignífuga o dieléctrica. El conjunto se apoya en **cuatro bloques de vidrio acostados**, con su cara de vidrio hacia arriba. Base rígida de reparto y ubicación de apoyos por comprobar.
+- El [Yumbolón enlazado](https://www.homecenter.com.co/homecenter-co/product/3093417/aislante-termico-3mm-122mx10m-1-cara-aluminio-yumbolon/3093417/) declara polietileno y 3 mm por capa; la [colchoneta enlazada](https://www.homecenter.com.co/homecenter-co/product/162919/aislante-termico-para-camping-180-x-50-cm/162919/) declara 6 mm por capa. Con las tres capas de EPS comunicadas, la suma nominal es **7,3 cm**, sin Mylar, cinta ni compresión; falta medición del conjunto. El [bloque Holztek](https://www.homecenter.com.co/homecenter-co/product/79180/bloque-vidrio-19x19x8cm-transparente-holztek/79180/) mide nominalmente 19 × 19 × 8 cm y tiene cámara de aire; la ficha consultada no valida su capacidad como apoyo horizontal de esta incubadora.
+- Tapa: **unos 10 cm de espesor total**, incluyendo las capas, con icopor y materiales aislantes del mismo tipo que el piso, y protección superior de PVC de cielorraso cortado a medida. No interpretar esta cota como 10 cm de EPS más revestimientos; espesores y orden de la tapa por verificar.
+- **Estado actual:** Inkbird con sonda usado para mediciones preliminares; modelo y posición de sonda por registrar. No se presupone que controle los cables. **No hay ventilador instalado.** Se selecciona un Noctua de 12 cm del inventario para preparar la circulación; comprobar la variante exacta de la unidad.
+
+**Herramientas y materiales para presentar el montaje en frío.** Preparar multímetro, cinta métrica, elementos de rotulado, cámara, herramientas de fijación y cableado adecuadas, ordenador y cable USB de datos para el ESP32. Reservar del inventario ESP32, SHT45 protegido, Noctua, gabinete y pasamuros, conectores y fuentes compatibles; identificar sus unidades físicas. Las fuentes Mean Well de 12 V no alimentan directamente los pines lógicos del ESP32. Sondas DS18B20, resistencia de 4,7 kΩ si el bus no la incorpora, protección del SHT45, soporte/resguardo del ventilador y protecciones térmicas independientes siguen pendientes de existencia o selección. No convertir esta lista en una orden de compra: verificar primero lo disponible y la necesidad de cada componente.
 
 ## 1. Inspeccionar y medir con todo desconectado
 
-1. Desconectar el calefactor de todas las fuentes. Fotografiar cada lámina, serpentín, fijación, terminación y cualquier daño.
-2. En Ω, comprobar la lectura de puntas del multímetro; medir entre terminales del cable A y después del B. Registrar lecturas y temperatura ambiente. Una resistencia correcta **no demuestra aislamiento eléctrico seguro**.
-3. Conservar A1 y su fijación intactas. No reparar ni energizar un cable dañado o sin terminaciones verificadas.
+1. Desconectar el conjunto calefactor de todas las fuentes. Fotografiar las dos capas metálicas, las serpentinas, sus fijaciones y terminaciones, madera, riel, varillas y aislamiento. Rotular los cables como A y B, sin atribuir a ambos la medición de uno solo.
+2. En Ω, comprobar la lectura de puntas del multímetro; medir y registrar cada cable y, cuando pueda hacerse sin alterar conexiones inseguras, el conjunto en serie. Anotar temperatura ambiente. Una resistencia correcta **no demuestra aislamiento eléctrico seguro**; su comprobación corresponde a la revisión técnica.
+3. Conservar las fijaciones intactas. No reparar ni energizar un cable dañado o con terminaciones sin verificar. Documentar dónde tocan los bloques de madera el aluminio y la separación real del cable a cada material cercano.
 
 ```text
-A1: cara superior de aluminio
-    ──────────────────────────
-    ∿∿∿ cable existente debajo ∿∿∿
-
-Conjunto desconectado: fotografiar y medir resistencia.
+Dos láminas de acero contiguas
+Cuatro láminas de aluminio contiguas
+Cable A y cable B en serpentinas debajo del aluminio
+Apoyos de madera únicamente en zonas sin cable
+10 cm libres: punto inferior del cable → Mylar
+Piso multicapa → cuatro bloques de vidrio
 ```
 
-## 2. Presentar C2 y conservar C1
+## 2. Verificar las capas y sus apoyos
 
-1. Apoyar A2 encima de A1. Comprobar planitud y documentar separaciones visibles desde los bordes.
-2. Identificar posibles fijaciones, sin comprimir, perforar ni modificar el cable. Si no hay fijación apta, dejarla pendiente.
-3. No introducir una sonda convencional entre las láminas: altera el contacto. No usar adhesivo ni pasta térmica sin verificar su aptitud.
-4. A2 debe poder retirarse sin alterar A1. El contacto real y la presión de las fijaciones son variables de ensayo.
+1. Presentar las cuatro piezas de aluminio contiguas y las dos de acero sobre ellas. Registrar medidas de cada pieza, juntas, planitud y contacto real. El acero descansa directamente sobre el aluminio; no se propone añadir pasta, adhesivo ni otra capa.
+2. Identificar fijaciones que eviten desplazamiento o caída sin perforar, comprimir ni pinzar el cable. La ausencia de cable bajo la madera no valida la temperatura del apoyo: incluir esos puntos en la revisión y futura instrumentación.
+3. Documentar el riel protegido y sus tres varillas sin asignarles una función estructural no comprobada. Verificar estabilidad y reparto de cargas del piso sobre los cuatro bloques de vidrio; falta caracterizar una base rígida de reparto. No cargar bolsas para dar por probado el soporte.
+4. No introducir una sonda convencional entre acero y aluminio: alteraría el contacto. Reservar puntos de medición accesibles en la cara superior, cerca del cable sin tocarlo eléctricamente, en apoyos de madera y piso aislado.
 
 ```text
-C1                         C2
-────────── A1              ────────── A2
-∿∿∿ cable debajo          ────────── A1
-                           ∿∿∿ cable debajo
+VISTA FUNCIONAL DE CAPAS, SIN ESCALA
+Acero: dos piezas juntas, apoyadas directamente
+Aluminio: cuatro piezas juntas
+Serpentinas bajo el aluminio; apoyos en zonas sin cable
+No se representa un circuito de conexión de 120 V
 ```
+
+La comparación histórica C1/C2 (una o dos láminas de aluminio superpuestas) **no describe el montaje actual** y deja de ser la secuencia de armado de esta guía. Tampoco se transfieren a la geometría de 90 × 60 × 80 cm las temperaturas o densidades de potencia calculadas para la placa anterior de 25 × 50 cm. Los documentos históricos se conservan como antecedentes, no como validación del conjunto corregido.
 
 ## 3. Presentar cámara, soporte y circulación
 
-Medir el interior y presentar el conjunto sin tensión; anotar distancias desde placa y cable al piso, paredes y futura carga. Los 5–9 cm mencionados como geometría preliminar **no son una separación de seguridad validada**. El soporte y el resguardo siguen por diseñar con fotografías y fichas; no deben permitir caída, contacto con bolsas o contacto con EPS.
+Medir el interior y registrar distancias desde cable y metales a piso, paredes, apoyos y futura carga. Mantener los **10 cm desde cable a Mylar** como dato comunicado; no confundirlos con altura de placa, espesor del piso o separación térmica aprobada. Verificar el resguardo frente a contacto con bolsas o caída de piezas. El Mylar, el PVC y las espumas no se convierten en protecciones contra incendio por ser reflectantes o aislantes.
 
-Considerar una zona protegida de circulación separada de las bolsas; su geometría y materiales no están diseñados. No cerrar la cámara herméticamente ni cubrir filtros de bolsas. Una posible recirculación se representa de manera funcional, no dimensional:
+Los chats anteriores ya indicaban la placa al ras de las paredes. Para esa geometría, presentar el **Noctua por encima del conjunto metálico, vertical y con descarga horizontal sobre la cara superior de acero**, en un soporte independiente con aspas protegidas. Dejar libres aspiración hacia el interior, salida, paso ascendente en el extremo contrario y retorno alrededor de la carga. Su ubicación y holguras siguen pendientes de ensayo; no son una posición óptima demostrada. No perforar ni recortar las placas para reproducir el dibujo.
 
 ```mermaid
 flowchart LR
-    B[Volumen de bolsas] --> R[Retorno de aire por definir]
-    R --> F[Ventilador: posición por ensayar]
-    F --> H[Calefactor protegido por diseñar]
-    H --> S[Salida hacia cámara por definir]
+    B[Zona de carga] --> R[Retorno superior y lateral libre]
+    R --> F[Noctua sobre la placa: propuesto]
+    F --> H[Flujo sobre la cara superior de acero]
+    H --> S[Subida en el extremo opuesto]
     S --> B
 ```
 
-Este esquema no determina aberturas, ventilación exterior, caudal ni compatibilidad eléctrica. La recirculación no sustituye el intercambio de aire necesario ni garantiza enfriamiento.
+Esta recirculación propuesta **no ventila directamente el cable bajo el aluminio**. No hay pasos de ida y retorno comprobados entre la zona inferior y la superior. La recirculación tampoco sustituye el intercambio exterior necesario para retirar calor y CO₂. Aberturas y extracción siguen pendientes de definir; no operar herméticamente con carga biológica.
 
 ## 4. Ventilador y sensores
 
-Identificar modelo y corriente del ventilador. Comparar en frío un flujo horizontal sobre la placa con el ventilador sobre la placa soplando hacia arriba; mantener entrada y salida libres, proteger aspas y sujetarlo independientemente. Probar a 12 V solo si la fuente y su entrada de red ya están instaladas de forma segura.
+Identificar el Noctua de 12 cm seleccionado y contrastar su etiqueta con el NF-P12 del inventario. El propietario confirmó que todavía no está instalado. Sujetarlo independientemente de las láminas y con cables fuera de la zona caliente. Comprobar tensión, corriente, conector y tacómetro de la unidad antes de alimentarlo desde una fuente adecuada; el diseño requiere detectar su parada, no limitarse a enviar una orden de encendido.
 
-Identificar cada sonda física y marcar puntos de aire a altura de carga, superficie superior, extremos de placa, zona próxima al cable, piso aislado y ambiente exterior. Registrar coordenadas y método de fijación. No poner una sonda metálica en contacto con un cable cuyo aislamiento no esté validado. Comparar las sondas juntas y registrar offsets; el documento de incubación propone 48–72 h para DS18B20.
+El **Inkbird actual es una referencia de medición preliminar**. Registrar modelo, posición y resultados; no asumir que corta el calefactor. El control previsto usa **SHT45 protegido → ESP32/ESPHome → relé adecuado → dos cables en serie**. El ESP32 manda la señal del relé; no alimenta los cables de 120 V. La clasificación, polaridad, aislamiento y alimentación del relé requieren verificación técnica antes de adaptar el circuito real.
 
-Para C1 y C2 mantener las coordenadas horizontales, ventilador, carga y condiciones de ensayo. El sensor de la cara superior necesariamente se traslada de A1 a A2: documentar el cambio. Si se usan rondas por falta de sondas, conservar una referencia fija y comparar solo cuando las condiciones sean comparables.
+Mantener el lazo de control en el ESP32, con respuesta segura ante sensor inválido, ventilador detenido, sobretemperatura y corte/retorno de energía. Home Assistant y Setas OS supervisan y registran; no sustituyen el control local ni los cortes térmicos físicos. No fijar una consigna biológica ni reutilizar umbrales de otro lote por defecto. El archivo de control del piloto es de banco, contiene parámetros y direcciones por completar y no se carga directamente como adaptación aprobada a esta incubadora.
+
+Identificar cada sonda física y marcar aire a altura de carga, cara superior de acero, extremos y juntas, zona próxima al cable, apoyos de madera, Mylar del piso y ambiente exterior. No poner una sonda metálica en contacto con un cable cuyo aislamiento no esté validado. Comparar las sondas juntas y registrar offsets; el documento de incubación propone 48–72 h para DS18B20. Mantener coordenadas y condiciones de carga comparables entre ensayos; una sola sonda de aire no califica la zona del cable ni los apoyos.
 
 **Instrumentación disponible e integración propuesta con Setas OS.** La asignación se basa en el [inventario de equipos](../metadata/equipment.yaml); es evidencia documental de disponibilidad, no una verificación física del montaje. El [diseño de sensores y materiales](../../field-os-simulador/setas-os/telemetry-publisher/hardware-design.md) conserva las cantidades, reservas y contradicciones detectadas en el repositorio.
 
@@ -107,7 +123,7 @@ Un electricista debe revisar y documentar: identificación, aislamiento y termin
 
 ## 6. Validación posterior a la revisión
 
-Con límites de interrupción definidos por el técnico y fichas de los componentes, ensayar supervisadamente C1 y C2. Registrar potencia medida, ambiente, temperaturas del aire, placa, zona próxima al cable y aislamiento; detener ante cualquier falla de ventilación, sensor crítico, protección, olor, humo o deformación. No inferir temperatura del conductor a partir de una sonda cercana.
+Con límites de interrupción definidos por el técnico y fichas de los componentes, ensayar supervisadamente el conjunto actual de acero, aluminio y dos cables en serie. No modificar simultáneamente soporte, ventilador, carga y control durante una comparación. Registrar potencia medida, ambiente, temperaturas del aire, placa, zona próxima al cable y aislamiento; detener ante cualquier falla de ventilación, sensor crítico, protección, olor, humo o deformación. No inferir temperatura del conductor a partir de una sonda cercana.
 
 Luego ensayar con masa de agua y una disposición representativa. El agua muestra inercia y recuperación, pero no reproduce la geometría exacta ni el calor metabólico de las bolsas. Un ciclo biológico requiere especificación del lote, aprobación y vigilancia de aire y sustrato; 22 °C es únicamente una consigna experimental, no un valor biológico aprobado.
 
@@ -118,13 +134,13 @@ La [QuietWarmth Float](https://mpglobalproducts.com/floor-heating-systems/float/
 | Campo | Valor |
 |---|---|
 | Fecha y responsable | Pendiente |
-| Dimensiones interiores | Pendiente |
-| Resistencia A / B y temperatura ambiente | Pendiente |
-| Fotos y separación visible A1/A2 | Pendiente |
-| Fijaciones, soporte y distancias | Pendiente |
-| Ventilador y puntos/identificadores de sensores | Pendiente |
+| Dimensiones interiores | 90 × 60 × 80 cm comunicados; 432 L geométricos calculados, no volumen útil |
+| Resistencia A / B y temperatura ambiente | 168 Ω en un cable, según propietario; segundo y total por medir. Dos cables iguales en serie a 120 V; unos 43 W estimados |
+| Capas y contacto | Cuatro aluminios contiguos + dos aceros en contacto directo; dimensiones, espesores y juntas por medir |
+| Fijaciones, soporte y distancias | Madera en zonas sin cable; riel y tres varillas; 10 cm cable–Mylar comunicados. Estabilidad/aptitud pendientes |
+| Ventilador y sensores actuales | Noctua 12 cm seleccionado, no instalado. Inkbird para medición preliminar; posiciones/modelos por registrar |
 | Nodo físico / identidad lógica / módulo Setas OS | Pendiente; propuesta: `setas-incubacion-01` / `incubacion_01` |
-| Protección del SHT45, gabinete y alimentación del nodo | Pendiente de verificación física |
+| Protección del SHT45, gabinete y alimentación del nodo | Pendiente de verificación física; control ESP32/relé aún por integrar y validar |
 | Telemetría real: hora de muestra, recepción y envejecimiento | Pendiente; compilación de prueba no equivale a conexión física |
 | Protecciones existentes y revisión profesional | Pendiente |
 | Condición para prueba energizada | Bloqueada hasta verificación documentada |
