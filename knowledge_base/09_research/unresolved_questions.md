@@ -3,7 +3,7 @@ title: Preguntas Abiertas y Áreas de Investigación
 document_id: DOC-0045
 category: research
 load_priority: on_request
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-08
 confidence: high
 primary_sources:
   - Internal records
@@ -200,8 +200,8 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB07 | ¿Qué aserraderos/carpinterías entregan residuo sin MDF, pinturas, preservantes o mezcla desconocida? | Alta | Auditoría de proveedor y muestra |
 | AB08 | ¿El bagazo cervecero puede recibirse con humedad y estabilidad compatibles con el proceso? | Media | Caracterización, logística y piloto |
 | AB09 | ¿La cascarilla de arroz disponible es limpia, homogénea y útil como aireante? | Media | Muestra y ensayo de bloque |
-| AB10 | ¿El pélet de «acacia» comercial (Mandra, Mercado Libre) es *Acacia mangium* pura de fuste, sin corteza ni arrastre, y es compatible con shiitake? | Alta | Confirmación escrita del proveedor; buscar evidencia de *L. edodes* en *A. mangium* (no hallada al 2026-10-31) |
-| AB11 | ¿*Acacia decurrens* (acacia sabanera) sirve para shiitake, o sus taninos de corteza la descartan? | Media | Conflicto entre `deep_research_synthesis_2026.md` y DOC-0130; requiere ensayo |
+| AB10 | ¿El pélet de «acacia» comercial (Mandra, Mercado Libre) es *Acacia mangium* pura de fuste, sin corteza ni arrastre, y es compatible con shiitake? | Alta | Confirmación escrita del proveedor. Revisión del 2026-11-07 (`../../docs/research/acacia_nogal_shiitake_research_2026-11-07.md`): sigue sin evidencia publicada de *L. edodes* en *A. mangium*; solo *Pleurotus*. Microensayo con control de madera probada y sustitución 0/30/50/100 % tras la ficha del fabricante |
+| AB11 | ¿*Acacia decurrens* (acacia sabanera) sirve para shiitake, o sus taninos de corteza la descartan? | Media | Conflicto entre `deep_research_synthesis_2026.md` y DOC-0130; requiere ensayo. La literatura no lo resuelve (2026-11-07): sin datos de shiitake en *A. decurrens*, *A. melanoxylon* ni *A. mearnsii*; los 30–40 % de taninos son de corteza y no hay cifras para leño descortezado. Solo ensayar leño descortezado e identificado (se confunde con *A. mearnsii*) |
 | AB12 | ¿Qué precio neto, costos de entrega, rechazo y recompra permiten cumplir DEC-020? | Alta antes de oferta | Cotizaciones fechadas e historial pagado; listados públicos no resuelven el margen |
 | AB13 | ¿Qué prospectos del reporte de factibilidad compran shiitake fresco, en qué plato, a qué precio neto y plazo? | Alta antes de comprometer volumen | Entrevista fechada y soporte; lista externa sin contactos/ventas confirmados (DOC-0133 F05/F06) |
 | AB14 | ¿Costo y rendimiento vendible de bloque precolonizado frente al microlote interno? | Media, alternativa | Cotización puesta en Tenjo, trazabilidad, prueba propia y ficha de economics.md (DOC-0133 F07) |
@@ -210,6 +210,7 @@ El autoclave está físicamente en el sitio, pero no ha sido comisionado ni vali
 | AB17 | ¿Qué actividad de agua (aw) y humedad final alcanza un jerky flexible de melena o shiitake hecho en la finca, y qué vida útil sostiene sin refrigeración? | Baja (fuera de DEC-022) | Medición de aw por lote y ensayo de almacenamiento; sin ella, solo refrigerado 1–2 semanas (DOC-0138) |
 | AB18 | ¿Qué ruta INVIMA y qué rotulado aplican a un snack de setas marinado y deshidratado? | Baja hasta abrir la opción C de DEC-022 | Consulta oficial; no hereda la excepción del fresco entero ni la ruta del deshidratado de un solo ingrediente |
 | AB19 | ¿El protocolo de jerky de *P. ostreatus* transfiere a *P. eryngii* (tallo denso) y en qué grosor y tiempo? | Baja | Prueba culinaria propia; DOC-0138 no cubre eryngii |
+| AB20 | ¿Sirve el aserrín de «nogal» para shiitake: *Cordia alliodora* (nogal cafetero) o *Juglans* (*J. neotropica*), con juglona y extractivos antifúngicos? | Baja | Sin ensayos publicados con *L. edodes* (2026-11-07, `../../docs/research/acacia_nogal_shiitake_research_2026-11-07.md`). Extensión de EE. UU. advierte contra nogal en troncos sin datos; un pariente de *Cordia* tiene duramen antifúngico. Placa con albura y duramen por separado al 0/5/10/25 %; bolsas ≤20–30 % solo si no inhibe |
 
 Los municipios mencionados en investigación externa son zonas de prospección, no un mapa confirmado de proveedores. Para AB04/AB12 y el contexto de R01/R04, ver `09_research/colombia_mushroom_market_synthesis_2026-11-03.md`; sus listados y lectura normativa no cierran esas preguntas ni verifican un registro sanitario individual.
 

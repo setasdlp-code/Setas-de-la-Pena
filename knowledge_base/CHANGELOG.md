@@ -4,7 +4,7 @@ document_id: DOC-0047
 category: meta
 load_priority: selective
 version_format: YYYY-MM-DD | TYPE | Description
-last_reviewed: 2026-11-07
+last_reviewed: 2026-11-08
 ---
 
 # CHANGELOG
@@ -23,6 +23,12 @@ Registro cronológico de cambios significativos a la knowledge base, equipos, SO
 ---
 
 ## 2026
+
+### 2026-11-08
+
+| Tipo | Descripción |
+|---|---|
+| `[KB]` | Integrada la revisión de evidencia sobre acacia y nogal para shiitake (`docs/research/acacia_nogal_shiitake_research_2026-11-07.md`). No hay ensayos publicados de *L. edodes* en *A. mangium*, *A. decurrens*, *A. melanoxylon*, *A. mearnsii*, *Juglans* (incl. *J. neotropica*) ni *Cordia alliodora*; el 22,4 % de BE en «acacia» de Chang 2016 no se puede atribuir a shiitake, y la advertencia de extensión contra el nogal es para troncos y sin datos. Actualizadas AB10 y AB11 (siguen abiertas); nueva AB20 (nogal); notas en substrate_library y en la receta del microlote. Sin cambios en catálogo, piloto, SOP ni decisiones. |
 
 ### 2026-11-07
 
